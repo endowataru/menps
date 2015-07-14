@@ -21,6 +21,12 @@ typedef uint32_t  mgcom_handle_t;
 
 typedef uint64_t  mgcom_size_t;
 
+typedef enum {
+    MGCOM_CAS_INT64,
+    MGCOM_FAA_INT64
+}
+mgcom_operation_t;
+
 /**
  * Initialize and start the communication.
  */
@@ -97,6 +103,17 @@ bool mgcom_get_strided_async(
     mgcom_remote_region_id_t remote_region_id, mgcom_remote_addr_t remote_addr, mgcom_size_t* remote_stride,
     mgcom_size_t* count, mgcom_size_t stride_level,
     mgcom_process_id_t src_proc, mgcom_handle_t* handle
+);
+
+/**
+ * Remote atomic operation.
+ */
+bool mgcom_rmw(
+    mgcom_operation_t op,
+    void* local_expected,
+    mgcom_local_region_id_t local_region_id, mgcom_local_addr_t local_addr,
+    mgcom_remote_region_id_t remote_region_id, mgcom_remote_addr_t remote_addr,
+    mgcom_process_id_t dest_proc, mgcom_handle_t* handle
 );
 
 /**
