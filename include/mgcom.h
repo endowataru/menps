@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <mgbase/lang.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,168 +19,200 @@ typedef uint64_t  mgcom_remote_addr_t;
 typedef uint32_t  mgcom_local_region_id_t;
 typedef uint32_t  mgcom_remote_region_id_t;
 
-typedef uint32_t  mgcom_handle_t;
+typedef uint64_t  mgcom_index_t;
 
-typedef uint64_t  mgcom_size_t;
-
-typedef enum {
-    MGCOM_CAS_INT64,
-    MGCOM_FAA_INT64
+typedef enum mgcom_local_operation_tag {
+    MGCOM_LOCAL_ASSIGN_INT64
+,   MGCOM_LOCAL_FAA_INT64
 }
-mgcom_operation_t;
+mgcom_local_operation_t;
+
+typedef struct mgcom_notifier {
+    mgcom_local_operation_t op;
+    void*                   pointer;
+    uint64_t                value;
+}
+mgcom_notifier_t;
+
+typedef enum mgcom_remote_operation_tag {
+    MGCOM_REMOTE_CAS_INT64,
+    MGCOM_REMOTE_FAA_INT64
+}
+mgcom_remote_operation_t;
+
+
+enum mgcom_error_t {
+    MGCOM_SUCCESS
+,   MGCOM_FAILURE
+};
 
 /**
  * Initialize and start the communication.
  */
-bool mgcom_initialize(int* argc, char* argv[]);
+mgcom_error_t mgcom_initialize(int* argc, char*** argv) MGBASE_NOEXCEPT;
 
 /**
  * Finalize the communication.
  */
-bool mgcom_finalize(void);
+mgcom_error_t mgcom_finalize(void) MGBASE_NOEXCEPT;
 
 /**
  * Register a region located on the current process.
  */
-bool mgcom_register_local_region(
-    void*                    local_ptr,
-    mgcom_size_t             size_in_bytes,
-    mgcom_local_region_id_t* region_id_result,
-    mgcom_local_addr_t*      region_addr_result
-);
+mgcom_error_t mgcom_register_local_region(
+    void*                    local_ptr
+,   mgcom_index_t            size_in_bytes
+,   mgcom_local_region_id_t* region_id_result
+,   mgcom_local_addr_t*      region_addr_result
+) MGBASE_NOEXCEPT;
 
 /**
  * Prepare a region located on a remote process.
  */
-bool mgcom_use_remote_region(
-    mgcom_process_id_t        proc_id,
-    mgcom_local_region_id_t   local_region_id,
-    void*                     remote_ptr,
-    mgcom_size_t              size_in_bytes,
-    mgcom_remote_region_id_t* region_id_result,
-    mgcom_remote_addr_t*      region_addr_result
-);
+mgcom_error_t mgcom_use_remote_region(
+    mgcom_process_id_t        proc_id
+,   mgcom_local_region_id_t   local_region_id
+,   void*                     remote_ptr
+,   mgcom_index_t             size_in_bytes
+,   mgcom_remote_region_id_t* region_id_result
+,   mgcom_remote_addr_t*      region_addr_result
+) MGBASE_NOEXCEPT;
 
 /**
  * De-register the region located on the current process.
  */
-void mgcom_deregister_local_region(
-    void*                    local_ptr,
-    mgcom_size_t             size_in_size,
-    mgcom_local_region_id_t  local_region_id,
-    mgcom_local_addr_t       local_addr
-);
+mgcom_error_t mgcom_deregister_local_region(
+    void*                    local_ptr
+,   mgcom_index_t            size_in_size
+,   mgcom_local_region_id_t  local_region_id
+,   mgcom_local_addr_t       local_addr
+) MGBASE_NOEXCEPT;
 
 /**
  * Non-blocking contiguous "put".
  */
-bool mgcom_put_async(
-    mgcom_local_region_id_t  local_region_id,
-    mgcom_local_addr_t       local_addr,
-    mgcom_remote_region_id_t remote_region_id,
-    mgcom_remote_addr_t      remote_addr,
-    mgcom_process_id_t       dest_proc,
-    mgcom_handle_t*          handle
-);
+mgcom_error_t mgcom_try_put_async(
+    mgcom_local_region_id_t  local_region_id
+,   mgcom_local_addr_t       local_addr
+,   mgcom_remote_region_id_t remote_region_id
+,   mgcom_remote_addr_t      remote_addr
+,   mgcom_index_t            size_in_bytes
+,   mgcom_process_id_t       dest_proc
+,   mgcom_notifier_t         on_complete
+,   bool*                    succeeded
+) MGBASE_NOEXCEPT;
 
 /**
  * Non-blocking contiguous "get".
  */
-bool mgcom_get_async(
-    mgcom_local_region_id_t  local_region_id,
-    mgcom_local_addr_t       local_addr,
-    mgcom_remote_region_id_t remote_region_id,
-    mgcom_remote_addr_t      remote_addr,
-    mgcom_process_id_t       dest_proc,
-    mgcom_handle_t*          handle
-);
+mgcom_error_t mgcom_try_get_async(
+    mgcom_local_region_id_t  local_region_id
+,   mgcom_local_addr_t       local_addr
+,   mgcom_remote_region_id_t remote_region_id
+,   mgcom_remote_addr_t      remote_addr
+,   mgcom_index_t            size_in_bytes
+,   mgcom_process_id_t       dest_proc
+,   mgcom_notifier_t         on_complete
+,   bool*                    succeeded
+) MGBASE_NOEXCEPT;
 
 typedef struct {
     mgcom_local_region_id_t  local_region_ids;
     mgcom_local_addr_t*      local_addrs;
     mgcom_remote_region_id_t remote_region_ids;
     mgcom_remote_addr_t*     remote_addrs;
-    mgcom_size_t             num_addrs;
-    mgcom_size_t             bytes;
+    mgcom_index_t            num_addrs;
+    mgcom_index_t            bytes;
 }
 mgcom_vector_access_t;
 
 /**
  * Non-blocking vector "put".
  */
-bool mgcom_put_vector_async(
-    mgcom_vector_access_t* accesses,
-    mgcom_size_t           num_accesses,
-    mgcom_process_id_t     dest_proc,
-    mgcom_handle_t*        handle
-);
+mgcom_error_t mgcom_try_put_vector_async(
+    mgcom_vector_access_t*   accesses
+,   mgcom_index_t            num_accesses
+,   mgcom_process_id_t       dest_proc
+,   mgcom_notifier_t         on_complete
+,   bool*                    succeeded
+) MGBASE_NOEXCEPT;
 
 /**
  * Non-blocking vector "get".
  */
-bool mgcom_get_vector_async(
-    mgcom_vector_access_t* accesses,
-    mgcom_size_t           num_accesses,
-    mgcom_process_id_t     src_proc,
-    mgcom_handle_t*        handle
-);
+mgcom_error_t mgcom_try_get_vector_async(
+    mgcom_vector_access_t*   accesses
+,   mgcom_index_t            num_accesses
+,   mgcom_process_id_t       src_proc
+,   mgcom_notifier_t         on_complete
+,   bool*                    succeeded
+) MGBASE_NOEXCEPT;
 
 /**
  * Non-blockng strided "put".
  */
-bool mgcom_put_strided_async(
-    mgcom_local_region_id_t  local_region_id,
-    mgcom_local_addr_t       local_addr,
-    mgcom_size_t*            local_stride,
-    mgcom_remote_region_id_t remote_region_id,
-    mgcom_remote_addr_t      remote_addr,
-    mgcom_size_t*            remote_stride,
-    mgcom_size_t*            count,
-    mgcom_size_t             stride_level,
-    mgcom_process_id_t       dest_proc,
-    mgcom_handle_t*          handle
-);
+mgcom_error_t mgcom_try_put_strided_async(
+    mgcom_local_region_id_t  local_region_id
+,   mgcom_local_addr_t       local_addr
+,   mgcom_index_t*           local_stride
+,   mgcom_remote_region_id_t remote_region_id
+,   mgcom_remote_addr_t      remote_addr
+,   mgcom_index_t*           remote_stride
+,   mgcom_index_t*           count
+,   mgcom_index_t            stride_level
+,   mgcom_process_id_t       dest_proc
+,   mgcom_notifier_t         on_complete
+,   bool*                    succeeded
+) MGBASE_NOEXCEPT;
 
 /**
  * Non-blockng strided "get".
  */
-bool mgcom_get_strided_async(
-    mgcom_local_region_id_t  local_region_id,
-    mgcom_local_addr_t       local_addr,
-    mgcom_size_t*            local_stride,
-    mgcom_remote_region_id_t remote_region_id,
-    mgcom_remote_addr_t      remote_addr,
-    mgcom_size_t*            remote_stride,
-    mgcom_size_t*            count,
-    mgcom_size_t             stride_level,
-    mgcom_process_id_t       src_proc,
-    mgcom_handle_t*          handle
-);
+mgcom_error_t mgcom_try_get_strided_async(
+    mgcom_local_region_id_t  local_region_id
+,   mgcom_local_addr_t       local_addr
+,   mgcom_index_t*           local_stride
+,   mgcom_remote_region_id_t remote_region_id
+,   mgcom_remote_addr_t      remote_addr
+,   mgcom_index_t*           remote_stride
+,   mgcom_index_t*           count
+,   mgcom_index_t            stride_level
+,   mgcom_process_id_t       src_proc
+,   mgcom_notifier_t         on_complete
+,   bool*                    succeeded
+) MGBASE_NOEXCEPT;
 
 /**
  * Non-blocking remote atomic operation.
  */
-bool mgcom_rmw_async(
-    mgcom_operation_t        op,
-    void*                    local_expected,
-    mgcom_local_region_id_t  local_region_id,
-    mgcom_local_addr_t       local_addr,
-    mgcom_remote_region_id_t remote_region_id,
-    mgcom_remote_addr_t      remote_addr,
-    mgcom_process_id_t       dest_proc,
-    mgcom_handle_t*          handle
-);
+mgcom_error_t mgcom_try_rmw_async(
+    mgcom_remote_operation_t op
+,   void*                    local_expected
+,   mgcom_local_region_id_t  local_region_id
+,   mgcom_local_addr_t       local_addr
+,   mgcom_remote_region_id_t remote_region_id
+,   mgcom_remote_addr_t      remote_addr
+,   mgcom_process_id_t       dest_proc
+,   mgcom_notifier_t         on_complete
+,   bool*                    succeeded
+) MGBASE_NOEXCEPT;
+
 
 /**
- * Wait for the completion of a non-blocking operation.
+ * Polling.
  */
-bool mgcom_wait(mgcom_handle_t* handle);
+mgcom_error_t mgcom_poll(void) MGBASE_NOEXCEPT;
+
 
 /**
  * Barrier (Collective)
  */
-bool mgcom_barrier(void);
+mgcom_error_t mgcom_barrier(void) MGBASE_NOEXCEPT;
 
+
+mgcom_process_id_t mgcom_current_process_id(void) MGBASE_NOEXCEPT;
+
+mgcom_index_t mgcom_number_of_processes(void) MGBASE_NOEXCEPT;
 
 #ifdef __cplusplus
 }
