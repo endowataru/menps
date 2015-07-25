@@ -3,9 +3,12 @@
     'targets' : [
         {
             'target_name' : 'test',
-            'type' : 'static_library',
+            'type' : 'executable',
             'sources' : [
-                '../src/fjmpi.cpp',
+                '../example/test.cpp',
+            ],
+            'dependencies' : [
+                './fjmpi.gyp:fjmpi',
             ],
         }
     ],

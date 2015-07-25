@@ -1,7 +1,6 @@
 
 #include <mpi.h>
 #include <mpi-ext.h>
-//#include <fjmpi-compile.h>
 
 #include <mgcom.hpp>
 
@@ -200,6 +199,14 @@ private:
 
 com_fjmpi g_com;
 
+}
+
+void initialize(int* argc, char*** argv) {
+    g_com.initialize(argc, argv);
+}
+
+void finalize() {
+    g_com.finalize();
 }
 
 bool try_put_async(
