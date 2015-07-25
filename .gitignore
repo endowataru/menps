@@ -1,0 +1,5 @@
+/Makefile
+/build-script/*.Makefile
+/build-script/*.mk
+/out
+

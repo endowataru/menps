@@ -1,6 +1,6 @@
 
 #include <mpi.h>
-#include <fjmpi-compile.h>
+//#include <fjmpi-compile.h>
 
 #include <mgcom.hpp>
 
