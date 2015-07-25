@@ -1,5 +1,6 @@
 
 #include <mpi.h>
+#include <mpi-ext.h>
 //#include <fjmpi-compile.h>
 
 #include <mgcom.hpp>
@@ -10,6 +11,8 @@
 #include <mgbase/threading/spinlock.hpp>
 
 #include "impl.hpp"
+
+#include <mgbase/stdint.hpp>
 
 namespace mgcom {
 
@@ -53,7 +56,7 @@ public:
         delete[] info_by_procs_;
     }
     
-    bool try_put_async(int dest, std::uint64_t laddr, std::uint64_t raddr, std::size_t size_in_bytes, const notifier_t& on_complete) {
+    bool try_put_async(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const notifier_t& on_complete) {
         const int nic = select_nic(dest);
         
         int tag;
@@ -74,7 +77,7 @@ public:
         return false;
     }
     
-    bool try_get_async(int dest, std::uint64_t laddr, std::uint64_t raddr, std::size_t size_in_bytes, const notifier_t& on_complete) {
+    bool try_get_async(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const notifier_t& on_complete) {
         const int nic = select_nic(dest);
         
         int tag;
@@ -101,7 +104,7 @@ private:
     }
     
     bool try_new_tag(int proc, int nic, int* tag_result) MGBASE_NOEXCEPT {
-        std::int32_t tag;
+        mgbase::int32_t tag;
         if (!info_by_procs_[proc].by_nics[nic].free_tags.try_dequeue(tag))
             return false;
         
@@ -126,7 +129,7 @@ public:
         const int next_nic = next_nic_;
         int nic = next_nic;
         do {
-            const std::uint32_t number_of_outstandings = number_of_outstandings_[nic].load(mgbase::memory_order_relaxed);
+            const mgbase::uint32_t number_of_outstandings = number_of_outstandings_[nic].load(mgbase::memory_order_relaxed);
             if (number_of_outstandings > 0)
                 return poll_nic(nic);
             
@@ -176,7 +179,7 @@ private:
         tag_info by_tags[max_tag_count];
         
         // Use a 32-bit integer because of the support of atomic operations on SPARC
-        mgbase::static_bounded_index_queue<std::int32_t, 16> free_tags;
+        mgbase::static_bounded_index_queue<mgbase::int32_t, 16> free_tags;
     };
     
     struct processor_info {
@@ -190,7 +193,7 @@ private:
     mgcom_index_t number_of_processes_;
     
     int next_nic_;
-    mgbase::atomic<std::uint32_t> number_of_outstandings_[max_nic_count];
+    mgbase::atomic<mgbase::uint32_t> number_of_outstandings_[max_nic_count];
     processor_info* info_by_procs_;
 };
 
