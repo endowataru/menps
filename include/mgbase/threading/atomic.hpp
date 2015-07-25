@@ -131,7 +131,7 @@ inline bool atomic_compare_exchange_weak(volatile T& obj, T& expected, T desired
         }
     }
     
-    if (old == expected)
+    if (old == expected_val)
         return true;
     else {
         expected = old;
