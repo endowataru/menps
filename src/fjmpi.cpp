@@ -1,6 +1,7 @@
 
 #include <mpi.h>
-#include <mpi-ext.h>
+//#include <mpi-ext.h>
+#include "mpi-ext.h"
 
 #include <mgcom.hpp>
 
@@ -209,30 +210,38 @@ void finalize() {
     g_com.finalize();
 }
 
-bool try_put_async(
-    local_region_id_t  /*local_region_id*/
-,   local_addr_t       local_addr
-,   remote_region_id_t /*remote_region_id*/
-,   remote_addr_t      remote_addr
-,   index_t            size_in_bytes
-,   process_id_t       dest_proc
-,   notifier_t         on_complete
+bool try_write_async(
+    local_address_t                local_address
+,   remote_address_t               remote_address
+,   index_t                        size_in_bytes
+,   process_id_t                   dest_proc
+,   notifier_t                     on_complete
 )
 {
-    return g_com.try_put_async(static_cast<int>(dest_proc), local_addr, remote_addr, size_in_bytes, on_complete);
+    return g_com.try_put_async(
+        static_cast<int>(dest_proc),
+        get_absolute_address(local_address),
+        get_absolute_address(remote_address),
+        size_in_bytes,
+        on_complete
+    );
 }
 
-bool try_get_async(
-    local_region_id_t  /*local_region_id*/
-,   local_addr_t       local_addr
-,   remote_region_id_t /*remote_region_id*/
-,   remote_addr_t      remote_addr
-,   index_t            size_in_bytes
-,   process_id_t       dest_proc
-,   notifier_t         on_complete
+bool try_read_async(
+    local_address_t                local_address
+,   remote_address_t               remote_address
+,   index_t                        size_in_bytes
+,   process_id_t                   dest_proc
+,   notifier_t                     on_complete
 )
 {
-    return g_com.try_get_async(static_cast<int>(dest_proc), local_addr, remote_addr, size_in_bytes, on_complete);
+    return g_com.try_get_async(
+        static_cast<int>(dest_proc),
+        get_absolute_address(local_address),
+        get_absolute_address(remote_address),
+        size_in_bytes,
+        on_complete
+    );
 }
 
 void poll() {

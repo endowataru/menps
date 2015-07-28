@@ -2,4 +2,5 @@
 /build-script/*.Makefile
 /build-script/*.mk
 /out
+gyp-mac-tool
 

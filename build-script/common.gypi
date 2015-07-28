@@ -1,11 +1,11 @@
 {
   'target_defaults': {
     'default_configuration': 'Release',
-    'xcode_settings': {
-        'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
-        'MACOSX_DEPLOYMENT_TARGET': '10.8',
-        'CLANG_CXX_LIBRARY': 'libc++',
-    },
+    #'xcode_settings': {
+    #    'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
+    #    'MACOSX_DEPLOYMENT_TARGET': '10.8',
+    #    'CLANG_CXX_LIBRARY': 'libc++',
+    #},
     'configurations': {
       'Debug': {
         'defines':[],
