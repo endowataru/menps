@@ -6,7 +6,7 @@
 #ifndef __cplusplus
     // For C
     #if __STDC_VERSION__ < 199901L
-        #error "C99"
+        #error "C99 or later is only supported"
     #endif
     
     #define MGBASE_EXPLICIT_OPERATOR
