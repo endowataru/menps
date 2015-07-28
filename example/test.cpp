@@ -29,13 +29,11 @@ int main(int argc, char* argv[])
         x = 123;
         
         bool finished = false;
-        notifier_t notif = { MGCOM_LOCAL_ASSIGN_INT8, &finished, 1 };
-        
-        while (!try_write_async(local_addr, remote_addr, sizeof(x), other, notif)) {
+        while (!try_write_async(local_addr, remote_addr, sizeof(x), other, make_notifier(&finished, true))) {
             poll();
         }
         
-        if (!finished)
+        while (!finished)
             poll();
     }
     

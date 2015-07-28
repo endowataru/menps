@@ -164,5 +164,13 @@ process_id_t current_process_id() MGBASE_NOEXCEPT;
 
 index_t number_of_processes() MGBASE_NOEXCEPT;
 
+
+
+
+inline notifier_t make_notifier(bool* ptr, bool value) {
+    notifier_t result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
+    return result;
+}
+
 }
 

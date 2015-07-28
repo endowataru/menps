@@ -37,7 +37,7 @@ public:
         ::MPI_Comm_size(MPI_COMM_WORLD, &size);
         ::MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         
-        process_id_ = static_cast<process_id_t>(rank);
+        current_process_id_ = static_cast<process_id_t>(rank);
         number_of_processes_ = static_cast<index_t>(size);
         
         info_by_procs_ = new processor_info[number_of_processes_];
@@ -67,6 +67,14 @@ public:
         
         *address_result = address;
         return memid;
+    }
+    
+    mgbase::uint64_t get_remote_addr(int pid, int memid) {
+        mgbase::uint64_t raddr = ::FJMPI_Rdma_get_remote_addr(pid, memid);
+        if (raddr == FJMPI_RDMA_ERROR)
+            throw fjmpi_error();
+        
+        return raddr;
     }
     
     void deregister_memory(int memid) {
@@ -119,6 +127,13 @@ public:
         
         free_tag(dest, nic, tag);
         return false;
+    }
+    
+    process_id_t current_process_id() const MGBASE_NOEXCEPT {
+        return current_process_id_;
+    }
+    index_t number_of_processes() const MGBASE_NOEXCEPT {
+        return number_of_processes_;
     }
     
 private:
@@ -215,8 +230,8 @@ private:
     
     lock_type mpi_lock_;
     
-    mgcom_process_id_t process_id_;
-    mgcom_index_t number_of_processes_;
+    process_id_t current_process_id_;
+    index_t number_of_processes_;
     
     int next_nic_;
     mgbase::atomic<mgbase::uint32_t> number_of_outstandings_[max_nic_count];
@@ -247,6 +262,20 @@ local_region_t register_region(
     local_region_t region;
     region.local_id = static_cast<local_region_id_t>(memid);
     region.local_address = address;
+    return region;
+}
+
+remote_region_t use_remote_region(
+    process_id_t                   proc_id
+,   local_region_t                 local_region
+,   index_t                        /*size_in_bytes*/
+) {
+    mgbase::uint64_t raddr =
+        g_com.get_remote_addr(static_cast<int>(proc_id), static_cast<int>(local_region.local_id));
+    
+    remote_region_t region;
+    region.remote_id      = local_region.local_id;
+    region.remote_address = raddr;
     return region;
 }
 
@@ -288,6 +317,14 @@ bool try_read_async(
         size_in_bytes,
         on_complete
     );
+}
+
+process_id_t current_process_id() MGBASE_NOEXCEPT {
+    return g_com.current_process_id();
+}
+
+index_t number_of_processes() MGBASE_NOEXCEPT {
+    return g_com.number_of_processes();
 }
 
 void poll() {
