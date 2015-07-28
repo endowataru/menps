@@ -49,11 +49,32 @@ public:
     }
     
     void finalize() {
-        ::FJMPI_Rdma_finalize();
+        int ret = ::FJMPI_Rdma_finalize();
+        if (ret != 0)
+            throw fjmpi_error();
         
         ::MPI_Finalize();
         
         delete[] info_by_procs_;
+    }
+    
+    int register_memory(void* buf, std::size_t length, mgbase::uint64_t* address_result) {
+        int memid = new_memid();
+        
+        mgbase::uint64_t address = ::FJMPI_Rdma_reg_mem(memid, buf, length);
+        if (address == FJMPI_RDMA_ERROR)
+            throw fjmpi_error();
+        
+        *address_result = address;
+        return memid;
+    }
+    
+    void deregister_memory(int memid) {
+        int ret = ::FJMPI_Rdma_dereg_mem(memid);
+        if (ret != 0)
+            throw fjmpi_error();
+        
+        free_memid(memid);
     }
     
     bool try_put_async(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const notifier_t& on_complete) {
@@ -67,10 +88,11 @@ public:
             const int ret = ::FJMPI_Rdma_put(dest, tag, raddr, laddr, size_in_bytes, nic);
             mpi_lock_.unlock();
             
-            if (ret == 0) {
-                set_notifier(dest, nic, tag, on_complete);
-                return true;
-            }
+            if (ret != 0)
+                throw fjmpi_error();
+            
+            set_notifier(dest, nic, tag, on_complete);
+            return true;
         }
         
         free_tag(dest, nic, tag);
@@ -88,10 +110,11 @@ public:
             const int ret = ::FJMPI_Rdma_get(dest, tag, raddr, laddr, size_in_bytes, nic);
             mpi_lock_.unlock();
             
-            if (ret == 0) {
-                set_notifier(dest, nic, tag, on_complete);
-                return true;
-            }
+            if (ret != 0)
+                throw fjmpi_error();
+            
+            set_notifier(dest, nic, tag, on_complete);
+            return true;
         }
         
         free_tag(dest, nic, tag);
@@ -99,6 +122,9 @@ public:
     }
     
 private:
+    int new_memid();
+    void free_memid(int memid);
+    
     int select_nic(int proc) MGBASE_NOEXCEPT {
         return mod_by_nic_count(info_by_procs_[proc].prev_nic + 1);
     }
@@ -195,6 +221,7 @@ private:
     int next_nic_;
     mgbase::atomic<mgbase::uint32_t> number_of_outstandings_[max_nic_count];
     processor_info* info_by_procs_;
+    
 };
 
 
@@ -210,14 +237,34 @@ void finalize() {
     g_com.finalize();
 }
 
+local_region_t register_region(
+    void*                          local_pointer
+,   index_t                        size_in_bytes
+) {
+    mgbase::uint64_t address;
+    int memid = g_com.register_memory(local_pointer, size_in_bytes, &address);
+    
+    local_region_t region;
+    region.local_id = static_cast<local_region_id_t>(memid);
+    region.local_address = address;
+    return region;
+}
+
+void deregister_region(
+    local_region_t                 local_region
+,   void*                          /*local_pointer*/
+,   index_t                        /*size_in_bytes*/
+) {
+    g_com.deregister_memory(static_cast<int>(local_region.local_id));
+}
+
 bool try_write_async(
     local_address_t                local_address
 ,   remote_address_t               remote_address
 ,   index_t                        size_in_bytes
 ,   process_id_t                   dest_proc
 ,   notifier_t                     on_complete
-)
-{
+) {
     return g_com.try_put_async(
         static_cast<int>(dest_proc),
         get_absolute_address(local_address),
@@ -233,8 +280,7 @@ bool try_read_async(
 ,   index_t                        size_in_bytes
 ,   process_id_t                   dest_proc
 ,   notifier_t                     on_complete
-)
-{
+) {
     return g_com.try_get_async(
         static_cast<int>(dest_proc),
         get_absolute_address(local_address),
@@ -246,6 +292,10 @@ bool try_read_async(
 
 void poll() {
     g_com.poll();
+}
+
+void barrier() {
+    ::MPI_Barrier(MPI_COMM_WORLD);
 }
 
 }

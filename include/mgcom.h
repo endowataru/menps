@@ -50,7 +50,8 @@ mgcom_remote_address_t;
 
 
 typedef enum mgcom_local_operation_tag {
-    MGCOM_LOCAL_ASSIGN_INT64
+    MGCOM_LOCAL_ASSIGN_INT8
+,   MGCOM_LOCAL_ASSIGN_INT64
 ,   MGCOM_LOCAL_FAA_INT64
 }
 mgcom_local_operation_t;
@@ -88,7 +89,7 @@ mgcom_error_t mgcom_finalize(void) MGBASE_NOEXCEPT;
 /**
  * Register a region located on the current process.
  */
-mgcom_error_t mgcom_register_local_region(
+mgcom_error_t mgcom_register_region(
     void*                          local_pointer
 ,   mgcom_index_t                  size_in_bytes
 ,   mgcom_local_region_t*          result
@@ -107,7 +108,7 @@ mgcom_error_t mgcom_use_remote_region(
 /**
  * De-register the region located on the current process.
  */
-mgcom_error_t mgcom_deregister_local_region(
+mgcom_error_t mgcom_deregister_region(
     mgcom_local_region_t           local_region
 ,   void*                          local_pointer
 ,   mgcom_index_t                  size_in_bytes

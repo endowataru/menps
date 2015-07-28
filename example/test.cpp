@@ -1,6 +1,7 @@
 
 #include <mgcom.hpp>
 #include <mgbase/stdint.hpp>
+#include <mpi.h>
 
 int main(int argc, char* argv[])
 {
@@ -8,13 +9,39 @@ int main(int argc, char* argv[])
     
     initialize(&argc, &argv);
     
-    /*mgbase::int32_t val;
-    local_region_id_t local_region_id;
-    local_addr_t local_addr;
-    register_local_region(&val, sizeof(val), &local_region_id, &local_addr);*/
+    int x = 0;
+    local_region_t local_region = register_region(&x, sizeof(x));
     
+    local_region_t remote_region;
     
+    process_id_t current = current_process_id();
+    process_id_t other = 1 - current_process_id();
+    MPI_Sendrecv(&local_region, sizeof(local_region), MPI_BYTE,
+                 other, 0,
+                 &remote_region, sizeof(remote_region), MPI_BYTE,
+                 current, 0,
+                 MPI_COMM_WORLD, MGBASE_NULLPTR);
     
+    local_address_t local_addr = { local_region, 0 };
+    remote_address_t remote_addr = { use_remote_region(other, remote_region, sizeof(x)), 0 };
+    
+    if (current == 0) {
+        x = 123;
+        
+        bool finished = false;
+        notifier_t notif = { MGCOM_LOCAL_ASSIGN_INT8, &finished, 1 };
+        
+        while (!try_write_async(local_addr, remote_addr, sizeof(x), other, notif)) {
+            poll();
+        }
+        
+        if (!finished)
+            poll();
+    }
+    
+    barrier();
+    
+    std::cout << x << std::endl;
     
     finalize();
     

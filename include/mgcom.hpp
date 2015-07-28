@@ -44,26 +44,24 @@ void finalize();
 /**
  * Register a region located on the current process.
  */
-void register_local_region(
+local_region_t register_region(
     void*                          local_pointer
 ,   index_t                        size_in_bytes
-,   local_region_t*                result
 );
 
 /**
  * Prepare a region located on a remote process.
  */
-void register_remote_region(
+remote_region_t use_remote_region(
     process_id_t                   proc_id
 ,   local_region_t                 local_region
 ,   index_t                        size_in_bytes
-,   remote_region_t*               result
 );
 
 /**
  * De-register the region located on the current process.
  */
-void deregister_local_region(
+void deregister_region(
     local_region_t                 local_region
 ,   void*                          local_pointer
 ,   index_t                        size_in_bytes
