@@ -81,7 +81,7 @@ public:
                 // Wait for a while.
                 for (std::size_t i = 0; i < wait; i++) {
                     // Insert a relax instruction. (x86 only)
-                    cpu_relax();
+                    //cpu_relax(); // TODO
                 }
                 
                 //  Exponential backoff
