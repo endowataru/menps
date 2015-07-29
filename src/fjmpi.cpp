@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include <mgbase/lockfree/static_bounded_index_queue.hpp>
+#include <mgbase/lockfree/mpmc_bounded_queue.hpp>
 #include <mgbase/threading/spinlock.hpp>
 
 #include "impl.hpp"
@@ -25,6 +26,9 @@ class com_fjmpi
     typedef mgbase::spinlock  lock_type;
     
 public:
+    com_fjmpi()
+        : memid_queue_(max_tag_count + 1) { }
+    
     void initialize(int* argc, char*** argv) {
         int provided;
         ::MPI_Init_thread(argc, argv, MPI_THREAD_SERIALIZED, &provided);
@@ -59,7 +63,9 @@ public:
     }
     
     int register_memory(void* buf, std::size_t length, mgbase::uint64_t* address_result) {
-        int memid = new_memid();
+        int memid;
+        if (!memid_queue_.dequeue(memid))
+            throw fjmpi_error();
         
         mgbase::uint64_t address = ::FJMPI_Rdma_reg_mem(memid, buf, length);
         if (address == FJMPI_RDMA_ERROR)
@@ -82,7 +88,7 @@ public:
         if (ret != 0)
             throw fjmpi_error();
         
-        free_memid(memid);
+        memid_queue_.enqueue(memid);
     }
     
     bool try_put_async(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const notifier_t& on_complete) {
@@ -137,9 +143,6 @@ public:
     }
     
 private:
-    int new_memid();
-    void free_memid(int memid);
-    
     int select_nic(int proc) MGBASE_NOEXCEPT {
         return mod_by_nic_count(info_by_procs_[proc].prev_nic + 1);
     }
@@ -236,7 +239,7 @@ private:
     int next_nic_;
     mgbase::atomic<mgbase::uint32_t> number_of_outstandings_[max_nic_count];
     processor_info* info_by_procs_;
-    
+    mgbase::mpmc_bounded_queue<int> memid_queue_;
 };
 
 
