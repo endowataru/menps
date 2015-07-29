@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 namespace mgbase {
 
@@ -13,6 +14,10 @@ using ::uint32_t;
 using ::int32_t;
 using ::uint64_t;
 using ::int64_t;
+
+using ::size_t;
+//using ::ssize_t;
+typedef int64_t  ssize_t;
 
 }
 
