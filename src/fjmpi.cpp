@@ -1,7 +1,6 @@
 
 #include <mpi.h>
-//#include <mpi-ext.h>
-#include "mpi-ext.h"
+#include <mpi-ext.h>
 
 #include <mgcom.hpp>
 
@@ -48,6 +47,9 @@ public:
         
         for (std::size_t i = 0; i < max_nic_count; i++)
             number_of_outstandings_[i].store(0, mgbase::memory_order_relaxed);
+        
+        for (int memid = 0; memid < max_memid_count; memid++)
+            memid_queue_.enqueue(memid);
         
         next_nic_ = 0;
     }
@@ -201,6 +203,7 @@ private:
     }
     
 private:
+    static const int max_memid_count = 510;
     static const int max_tag_count = 15;
     static const int max_nic_count = 4;
     
@@ -224,6 +227,11 @@ private:
         
         // Use a 32-bit integer because of the support of atomic operations on SPARC
         mgbase::static_bounded_index_queue<mgbase::int32_t, 16> free_tags;
+        
+        nic_info() {
+            for (mgbase::int32_t tag = 0; tag < max_tag_count; ++tag)
+                free_tags.enqueue(tag);
+        }
     };
     
     struct processor_info {

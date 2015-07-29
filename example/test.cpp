@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     MPI_Sendrecv(&local_region, sizeof(local_region), MPI_BYTE,
                  other, 0,
                  &remote_region, sizeof(remote_region), MPI_BYTE,
-                 current, 0,
+                 other, 0,
                  MPI_COMM_WORLD, MGBASE_NULLPTR);
     
     local_address_t local_addr = { local_region, 0 };
@@ -30,11 +30,14 @@ int main(int argc, char* argv[])
         
         bool finished = false;
         while (!try_write_async(local_addr, remote_addr, sizeof(x), other, make_notifier(&finished, true))) {
+            std::cout << "write failed" << std::endl;
             poll();
         }
         
-        while (!finished)
+        while (!finished) {
+            std::cout << "poll" << std::endl;
             poll();
+        }
     }
     
     barrier();
