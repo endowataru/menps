@@ -1,6 +1,6 @@
 
 #include <mpi.h>
-#include <mpi-ext.h>
+#include "mpi-ext.h"
 
 #include <mgcom.hpp>
 

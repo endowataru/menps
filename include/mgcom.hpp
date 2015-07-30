@@ -9,15 +9,9 @@ typedef ::mgcom_index_t                  index_t;
 
 typedef ::mgcom_process_id_t             process_id_t;
 
-
-typedef ::mgcom_local_region_id_t        local_region_id_t;
-typedef ::mgcom_local_region_address_t   local_region_address_t;
-
-typedef ::mgcom_remote_region_id_t       remote_region_id_t;
-typedef ::mgcom_remote_region_address_t  remote_region_address_t;
-
 typedef ::mgcom_address_offset_t         address_offset_t;
 
+typedef ::mgcom_region_key_t             region_key_t;
 typedef ::mgcom_local_region_t           local_region_t;
 typedef ::mgcom_remote_region_t          remote_region_t;
 
@@ -54,7 +48,7 @@ local_region_t register_region(
  */
 remote_region_t use_remote_region(
     process_id_t                   proc_id
-,   local_region_t                 local_region
+,   region_key_t                   key
 ,   index_t                        size_in_bytes
 );
 

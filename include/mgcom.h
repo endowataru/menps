@@ -15,24 +15,21 @@ typedef uint64_t  mgcom_index_t;
 
 typedef uint32_t  mgcom_process_id_t;
 
-typedef uint32_t  mgcom_local_region_id_t;
-typedef uint64_t  mgcom_local_region_address_t;
-
-typedef uint32_t  mgcom_remote_region_id_t;
-typedef uint64_t  mgcom_remote_region_address_t;
-
 typedef uint64_t  mgcom_address_offset_t;
 
+typedef struct mgcom_region_key_tag {
+    uint64_t info[2];
+}
+mgcom_region_key_t;
+
 typedef struct mgcom_local_region_tag {
-    mgcom_local_region_id_t       local_id;       // Used by Tofu, Infiniband
-    mgcom_remote_region_id_t      remote_id;      // Used by Infiniband
-    mgcom_local_region_address_t  local_address;  // Used by Tofu, Infiniband
+    uint64_t local;
+    mgcom_region_key_t key;
 }
 mgcom_local_region_t;
 
 typedef struct mgcom_remote_region_tag {
-    mgcom_remote_region_id_t      remote_id;      // Used by Infiniband
-    mgcom_remote_region_address_t remote_address; // Used by Tofu, Infiniband
+    uint64_t info[2];
 }
 mgcom_remote_region_t;
 
@@ -95,12 +92,13 @@ mgcom_error_t mgcom_register_region(
 ,   mgcom_local_region_t*          result
 ) MGBASE_NOEXCEPT;
 
+
 /**
  * Prepare a region located on a remote process.
  */
 mgcom_error_t mgcom_use_remote_region(
     mgcom_process_id_t             proc_id
-,   mgcom_local_region_t           local_region
+,   mgcom_region_key_t             key
 ,   mgcom_index_t                  size_in_bytes
 ,   mgcom_remote_region_t*         result
 ) MGBASE_NOEXCEPT;

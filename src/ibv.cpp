@@ -13,6 +13,7 @@ namespace mgcom {
 
 namespace {
 
+
 struct ibv_error { };
 
 class com_ibv
@@ -153,7 +154,7 @@ public:
         ::MPI_Comm_size(MPI_COMM_WORLD, &size);
         ::MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         
-        current_process_id_ = static_cast<process_id_t>(rank);
+        current_process_id_  = static_cast<process_id_t>(rank);
         number_of_processes_ = static_cast<index_t>(size);
         
         conns_          = new connection[number_of_processes_];
@@ -162,6 +163,15 @@ public:
         lids_           = new mgbase::uint16_t[number_of_processes_];
         
         init_ibv();
+    }
+    
+    void finalize() {
+        ::MPI_Finalize();
+        
+        delete[] conns_;
+        delete[] local_qp_nums_;
+        delete[] remote_qp_nums_;
+        delete[] lids_;
     }
     
     bool try_write_async(
@@ -183,6 +193,14 @@ public:
             free_request(req);
             return false;
         }
+    }
+    
+    ::ibv_mr* register_memory(void* buf, std::size_t size_in_bytes) {
+        ::ibv_mr* mr = ibv_reg_mr(pd_, buf, size_in_bytes, 
+            IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE |
+            IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_ATOMIC);
+        
+        return mr;
     }
     
 private:
@@ -299,12 +317,25 @@ private:
 
 com_ibv g_com;
 
+struct region_key_ibv {
+    mgbase::uint64_t addr;
+    mgbase::uint32_t rkey;
+};
+
+struct remote_region_ibv {
+    mgbase::uint64_t addr;
+    mgbase::uint32_t rkey;
+};
+
 }
 
 void initialize(int* argc, char*** argv) {
     g_com.initialize(argc, argv);
 }
 
+void finalize() {
+    g_com.finalize();
+}
 
 bool try_write_async(
     local_address_t                local_address
@@ -314,15 +345,45 @@ bool try_write_async(
 ,   notifier_t                     on_complete
 )
 {
+    const remote_region_ibv* const remote_region = reinterpret_cast<const remote_region_ibv*>(&remote_address.region);
+    const ::ibv_mr* local_mr = reinterpret_cast<const ::ibv_mr*>(local_address.region.local);
+    
     return g_com.try_write_async(
-        get_absolute_address(local_address),
-        local_address.region.local_id,
-        get_absolute_address(remote_address),
-        remote_address.region.remote_id,
+        reinterpret_cast<mgbase::uint64_t>(local_mr->addr) + local_address.offset,
+        local_mr->lkey,
+        remote_region->addr + remote_address.offset,
+        remote_region->rkey,
         size_in_bytes,
         dest_proc,
         on_complete
     );
+}
+
+local_region_t register_region(
+    void*                          local_pointer
+,   index_t                        size_in_bytes
+) {
+    ibv_mr* mr = g_com.register_memory(local_pointer, size_in_bytes);
+    
+    local_region_t region;
+    region.local = reinterpret_cast<mgbase::uint64_t>(mr);
+    region_key_ibv* region_key = reinterpret_cast<region_key_ibv*>(&region.key);
+    region_key->rkey = mr->rkey;
+    region_key->addr = reinterpret_cast<mgbase::uint64_t>(mr->addr);
+    return region;
+}
+
+remote_region_t use_remote_region(
+    process_id_t                   /*proc_id*/
+,   region_key_t                   key
+,   index_t                        /*size_in_bytes*/
+) {
+    const region_key_ibv* key_ibv = reinterpret_cast<const region_key_ibv*>(&key);
+    remote_region_t region;
+    remote_region_ibv* region_ibv = reinterpret_cast<remote_region_ibv*>(&region);
+    region_ibv->addr = key_ibv->addr;
+    region_ibv->rkey = key_ibv->rkey;
+    return region;
 }
 
 }
