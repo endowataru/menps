@@ -23,6 +23,127 @@ class com_ibv
     static const mgbase::uint32_t max_recv_sge = 1;
     static const mgbase::uint32_t num_cqe = 1;
     
+    class connection {
+    public:
+        mgbase::uint32_t get_qp_num() {
+            return qp_->qp_num;
+        }
+        
+        void create(::ibv_cq* cq, ::ibv_pd* pd) {
+            ::ibv_qp_init_attr attr = ::ibv_qp_init_attr();
+            attr.qp_context          = MGBASE_NULLPTR;
+            attr.qp_type             = IBV_QPT_RC; // Reliable Connection (RC)
+            attr.send_cq             = cq;
+            attr.recv_cq             = cq;
+            attr.srq                 = MGBASE_NULLPTR;
+            attr.cap.max_send_wr     = max_send_wr;
+            attr.cap.max_recv_wr     = max_recv_wr;
+            attr.cap.max_send_sge    = max_send_sge;
+            attr.cap.max_recv_sge    = max_recv_sge;
+            attr.cap.max_inline_data = 1; // TODO
+            attr.sq_sig_all          = 1;
+            
+            qp_ = ::ibv_create_qp(pd, &attr);
+            if (qp_ == MGBASE_NULLPTR)
+                throw ibv_error();
+        }
+        
+        void start(mgbase::uint32_t qp_num, mgbase::uint16_t lid, const ::ibv_device_attr& device_attr) {
+            modify_qp_reset_to_init();
+            modify_qp_init_to_rtr(qp_num, lid, device_attr);
+            modify_qp_rtr_to_rts();
+        }
+        
+    private:
+        void modify_qp_reset_to_init() {
+            ::ibv_qp_attr qp_attr = ::ibv_qp_attr();
+            qp_attr.qp_state        = IBV_QPS_INIT;
+            qp_attr.pkey_index      = 0;
+            qp_attr.port_num        = 1; // 1 or 2
+            qp_attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE;
+            
+            // Reset -> Init
+            int ret = ::ibv_modify_qp(qp_, &qp_attr,
+                IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS);
+            if (ret != 0)
+                throw ibv_error();
+        }
+        
+        void modify_qp_init_to_rtr(mgbase::uint32_t qp_num, mgbase::uint16_t lid, const ::ibv_device_attr& device_attr) {
+            ::ibv_qp_attr attr = ::ibv_qp_attr();
+            attr.qp_state              = IBV_QPS_RTR;
+            attr.path_mtu              = IBV_MTU_4096;
+            attr.dest_qp_num           = qp_num;
+            attr.rq_psn                = 0; // PSN starts from 0
+            attr.max_dest_rd_atomic    = device_attr.max_qp_rd_atom;
+            attr.max_rd_atomic         = 0;
+            attr.min_rnr_timer         = 0; // Arbitary from 0 to 31 (TODO: Is it true?)
+            attr.ah_attr.is_global     = 0; // Doesn't use Global Routing Header (GRH)
+            attr.ah_attr.dlid          = lid;
+            attr.ah_attr.sl            = 0;
+            attr.ah_attr.src_path_bits = 0;
+            attr.ah_attr.port_num      = 1; // 1 or 2
+            attr.ah_attr.static_rate   = 0;
+            
+            // Init -> RTR
+            int ret = ::ibv_modify_qp(qp_, &attr,
+                IBV_QP_STATE | IBV_QP_AV | IBV_QP_PATH_MTU |
+                IBV_QP_DEST_QPN | IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER);
+            
+            if (ret != 0)
+                throw ibv_error();
+        }
+        
+        void modify_qp_rtr_to_rts() {
+            ::ibv_qp_attr attr = ::ibv_qp_attr();
+            attr.qp_state      = IBV_QPS_RTS;
+            attr.timeout       = 0; // Arbitary from 0 to 31 (TODO: Is it true?)
+            attr.retry_cnt     = 7; // Arbitary from 0 to 7
+            attr.rnr_retry     = 7; // TODO
+            attr.sq_psn        = 0; // Arbitary
+            attr.max_rd_atomic = 0; // TODO : Usually 0 ?
+            
+            // RTR to RTS
+            int ret = ibv_modify_qp(qp_, &attr,
+                IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT |
+                IBV_QP_RNR_RETRY | IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC);
+            
+            if (ret != 0)
+                throw ibv_error();
+        }
+        
+        
+    public:
+        bool try_write_async(mgbase::uint64_t wr_id, mgbase::uint64_t laddr, mgbase::uint32_t lkey, mgbase::uint64_t raddr, mgbase::uint32_t rkey, std::size_t size_in_bytes) {
+            ::ibv_sge sge = ::ibv_sge();
+            sge.addr   = laddr;
+            sge.length = size_in_bytes;
+            sge.lkey   = lkey;
+            
+            ::ibv_send_wr wr = ::ibv_send_wr();
+            wr.wr_id               = wr_id;
+            wr.next                = MGBASE_NULLPTR;
+            wr.sg_list             = &sge;
+            wr.num_sge             = 1;
+            wr.opcode              = IBV_WR_RDMA_WRITE;
+            wr.send_flags          = 0; // TODO
+            wr.wr.rdma.remote_addr = raddr;
+            wr.wr.rdma.rkey        = rkey;
+            
+            ::ibv_send_wr* bad_wr;
+            int err = ::ibv_post_send(qp_, &wr, &bad_wr);
+            if (err == 0)
+                return true;
+            else if (err == ENOMEM)
+                return false;
+            else
+                throw ibv_error();
+        }
+    
+    private:
+        ::ibv_qp* qp_;
+    };
+    
 public:
     void initialize(int* argc, char*** argv) {
         int provided;
@@ -35,6 +156,7 @@ public:
         current_process_id_ = static_cast<process_id_t>(rank);
         number_of_processes_ = static_cast<index_t>(size);
         
+        conns_          = new connection[number_of_processes_];
         local_qp_nums_  = new mgbase::uint32_t[number_of_processes_];
         remote_qp_nums_ = new mgbase::uint32_t[number_of_processes_];
         lids_           = new mgbase::uint16_t[number_of_processes_];
@@ -43,46 +165,36 @@ public:
     }
     
     bool try_write_async(
-        local_address_t                local_address
-    ,   remote_address_t               remote_address
-    ,   index_t                        size_in_bytes
-    ,   process_id_t                   dest_proc
-    ,   notifier_t                     on_complete
-    ) {
-        
+        mgbase::uint64_t laddr
+    ,   mgbase::uint32_t lkey
+    ,   mgbase::uint64_t raddr
+    ,   mgbase::uint32_t rkey
+    ,   std::size_t      size_in_bytes
+    ,   process_id_t     dest_proc
+    ,   notifier_t       on_complete
+    )
+    {
         request* req = alloc_request();
         
-        ::ibv_sge sge;
-        sge.addr   = get_absolute_address(local_address);
-        sge.length = size_in_bytes;
-        sge.lkey   = local_address.region.local_id;
-        
-        ::ibv_send_wr wr;
-        wr.wr_id               = new_id();
-        wr.next                = MGBASE_NULLPTR;
-        wr.sg_list             = &sge;
-        wr.num_sge             = 1;
-        wr.opcode              = IBV_WR_RDMA_WRITE;
-        wr.send_flags          = 0; // TODO
-        wr.wr.rdma.remote_addr = get_absolute_address(remote_address);
-        wr.wr.rdma.rkey        = remote_address.region.remote_id;
-        
-        ::ibv_send_wr* bad_wr;
-        int err = ::ibv_post_send(qp_[dest_proc], &wr, &bad_wr);
-        if (err == 0)
+        if (conns_[dest_proc].try_write_async(req->wr_id(), laddr, lkey, raddr, rkey, size_in_bytes)) {
             return true;
-        else if (err == ENOMEM)
+        }
+        else {
+            free_request(req);
             return false;
-        else
-            throw ibv_error();
+        }
     }
     
 private:
-    class request;
+    class request {
+    public:
+        mgbase::uint32_t wr_id();
+    };
     
-    uint64_t new_id();
+    mgbase::uint64_t new_id();
     
     request* alloc_request();
+    void free_request(request*);
     
     void init_ibv() {
         open_device();
@@ -125,38 +237,14 @@ private:
     }
     
     void create_qp() {
-        ::ibv_qp_init_attr attr;
-        attr.qp_context          = MGBASE_NULLPTR;
-        attr.qp_type             = IBV_QPT_RC; // Reliable Connection (RC)
-        attr.send_cq             = cq_;
-        attr.recv_cq             = cq_;
-        attr.srq                 = MGBASE_NULLPTR;
-        attr.cap.max_send_wr     = max_send_wr;
-        attr.cap.max_recv_wr     = max_recv_wr;
-        attr.cap.max_send_sge    = max_send_sge;
-        attr.cap.max_recv_sge    = max_recv_sge;
-        attr.cap.max_inline_data = 1; // TODO
-        attr.sq_sig_all          = 1;
-        
-        for (process_id_t proc = 0; proc < number_of_processes_; ++proc) {
-            ::ibv_qp* qp = ::ibv_create_qp(pd_, &attr);
-            if (qp_[proc] == MGBASE_NULLPTR)
-                throw ibv_error();
-            
-            ::ibv_qp_attr qp_attr;
-            qp_attr.qp_state        = IBV_QPS_INIT;
-            qp_attr.pkey_index      = 0;
-            qp_attr.port_num        = 1; // 1 or 2
-            qp_attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE;
-            
-            // Reset -> Init
-            int ret = ::ibv_modify_qp(qp_[proc], &qp_attr,
-                IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS);
-            if (ret != 0)
-                throw ibv_error();
-            
-            qp_[proc] = qp;
-        }
+        for (process_id_t proc = 0; proc < number_of_processes_; ++proc)
+            conns_[proc].create(cq_, pd_);
+    }
+    
+    void query_device() {
+        int ret = ibv_query_device(context_, &device_attr_);
+        if (ret != 0)
+            throw ibv_error();
     }
     
     void query_port() {
@@ -168,11 +256,11 @@ private:
     
     void exchange_qp_nums() {
         for (process_id_t proc = 0; proc < number_of_processes_; ++proc)
-            local_qp_nums_[proc] = qp_[proc]->qp_num;
+            local_qp_nums_[proc] = conns_[proc].get_qp_num();
         
         int ret = MPI_Alltoall(
-            local_qp_nums_, sizeof(local_qp_nums_[0]), MPI_BYTE,
-            remote_qp_nums_, sizeof(remote_qp_nums_[0]), MPI_BYTE,
+            local_qp_nums_ , sizeof(mgbase::uint32_t), MPI_BYTE,
+            remote_qp_nums_, sizeof(mgbase::uint32_t), MPI_BYTE,
             MPI_COMM_WORLD
         );
         if (ret != MPI_SUCCESS)
@@ -181,8 +269,8 @@ private:
     
     void exchange_lids() {
         int ret = MPI_Allgather(
-            &port_attr_.lid, sizeof(port_attr_.lid), MPI_BYTE,
-            lids_, sizeof(lids_[0]), MPI_BYTE,
+            &port_attr_.lid, sizeof(mgbase::uint16_t), MPI_BYTE,
+            lids_          , sizeof(mgbase::uint16_t), MPI_BYTE,
             MPI_COMM_WORLD
         );
         if (ret != MPI_SUCCESS)
@@ -190,26 +278,19 @@ private:
     }
     
     void modify_qp() {
-        for (index_t proc = 0; proc < number_of_processes_; proc++) {
-            
-        }
+        for (process_id_t proc = 0; proc < number_of_processes_; ++proc)
+            conns_[proc].start(remote_qp_nums_[proc], lids_[proc], device_attr_);
     }
-    
-    void modify_qp_init_to_rtr(::ibv_qp* qp, process_id_t proc) {
-        ::ibv_qp_attr qp_attr;
-        qp_attr.qp_state = IBV_QPS_RTR;
-        qp_attr.path_mtu = IBV_MTU_4096;
-        qp_attr.dest_qp_num = remote_qp_nums_[proc];
-    }
-    
     
     ::ibv_context*    context_;
     ::ibv_pd*         pd_;
     ::ibv_cq*         cq_;
-    ::ibv_qp**        qp_;
+    connection*       conns_;
+    
+    ::ibv_device_attr device_attr_;
+    ::ibv_port_attr   port_attr_;
     mgbase::uint32_t* local_qp_nums_;
     mgbase::uint32_t* remote_qp_nums_;
-    ::ibv_port_attr   port_attr_;
     mgbase::uint16_t* lids_;
     
     process_id_t current_process_id_;
@@ -233,7 +314,15 @@ bool try_write_async(
 ,   notifier_t                     on_complete
 )
 {
-    return g_com.try_write_async(local_address, remote_address, size_in_bytes, dest_proc, on_complete);
+    return g_com.try_write_async(
+        get_absolute_address(local_address),
+        local_address.region.local_id,
+        get_absolute_address(remote_address),
+        remote_address.region.remote_id,
+        size_in_bytes,
+        dest_proc,
+        on_complete
+    );
 }
 
 }
