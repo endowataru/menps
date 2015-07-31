@@ -19,6 +19,8 @@
 #else
     // For C++
     #if (__cplusplus >= 201103L)
+        #define MGBASE_CPP11_SUPPORTED
+        
         // For C++11 or later
         #define MGBASE_EXPLICIT_OPERATOR         explicit
         #define MGBASE_NOEXCEPT                  noexcept
