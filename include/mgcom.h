@@ -212,6 +212,16 @@ mgcom_error_t mgcom_try_rmw_async(
 ) MGBASE_NOEXCEPT;
 
 
+
+typedef void (*mgcom_handler_function_t)(void*, mgcom_index_t);
+
+mgcom_error_t mgcom_register_handler(mgcom_handler_function_t);
+
+mgcom_error_t mgcom_send_message(
+    void* value
+);
+
+
 /**
  * Polling.
  */

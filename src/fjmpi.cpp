@@ -253,6 +253,14 @@ private:
 
 com_fjmpi g_com;
 
+struct region_key_fjmpi {
+    mgbase::uint64_t memid;
+};
+
+struct remote_region_fjmpi {
+    mgbase::uint64_t raddr;
+};
+
 }
 
 void initialize(int* argc, char*** argv) {
@@ -271,22 +279,24 @@ local_region_t register_region(
     int memid = g_com.register_memory(local_pointer, size_in_bytes, &address);
     
     local_region_t region;
-    region.local_id = static_cast<local_region_id_t>(memid);
-    region.local_address = address;
+    region_key_fjmpi& key = *reinterpret_cast<region_key_fjmpi*>(&region.key);
+    key.memid   = memid;
+    region.local = address;
     return region;
 }
 
 remote_region_t use_remote_region(
     process_id_t                   proc_id
-,   local_region_t                 local_region
+,   region_key_t                   key
 ,   index_t                        /*size_in_bytes*/
 ) {
+    region_key_fjmpi& key_fjmpi = *reinterpret_cast<region_key_fjmpi*>(&key);
     mgbase::uint64_t raddr =
-        g_com.get_remote_addr(static_cast<int>(proc_id), static_cast<int>(local_region.local_id));
+        g_com.get_remote_addr(static_cast<int>(proc_id), key_fjmpi.memid);
     
     remote_region_t region;
-    region.remote_id      = local_region.local_id;
-    region.remote_address = raddr;
+    remote_region_fjmpi& region_fjmpi = *reinterpret_cast<remote_region_fjmpi*>(&region);
+    region_fjmpi.raddr = raddr;
     return region;
 }
 
@@ -295,7 +305,22 @@ void deregister_region(
 ,   void*                          /*local_pointer*/
 ,   index_t                        /*size_in_bytes*/
 ) {
-    g_com.deregister_memory(static_cast<int>(local_region.local_id));
+    region_key_fjmpi& key = reinterpret_cast<region_key_fjmpi&>(local_region.key);
+    g_com.deregister_memory(key.memid);
+}
+
+namespace {
+
+inline mgbase::uint64_t get_absolute_address(const local_address_t& local_address) MGBASE_NOEXCEPT {
+    const mgbase::uint64_t laddr = local_address.region.local;
+    return laddr + local_address.offset;
+}
+
+inline mgbase::uint64_t get_absolute_address(const remote_address_t& remote_address) MGBASE_NOEXCEPT {
+    const remote_region_fjmpi& region = reinterpret_cast<const remote_region_fjmpi&>(remote_address.region);
+    return region.raddr + remote_address.offset;
+}
+
 }
 
 bool try_write_async(

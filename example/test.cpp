@@ -12,18 +12,18 @@ int main(int argc, char* argv[])
     int x = 0;
     local_region_t local_region = register_region(&x, sizeof(x));
     
-    local_region_t remote_region;
+    region_key_t remote_key;
     
     process_id_t current = current_process_id();
     process_id_t other = 1 - current_process_id();
-    MPI_Sendrecv(&local_region, sizeof(local_region), MPI_BYTE,
+    MPI_Sendrecv(&local_region.key, sizeof(region_key_t), MPI_BYTE,
                  other, 0,
-                 &remote_region, sizeof(remote_region), MPI_BYTE,
+                 &remote_key, sizeof(region_key_t), MPI_BYTE,
                  other, 0,
                  MPI_COMM_WORLD, MGBASE_NULLPTR);
     
     local_address_t local_addr = { local_region, 0 };
-    remote_address_t remote_addr = { use_remote_region(other, remote_region, sizeof(x)), 0 };
+    remote_address_t remote_addr = { use_remote_region(other, remote_key, sizeof(x)), 0 };
     
     if (current == 0) {
         x = 123;
