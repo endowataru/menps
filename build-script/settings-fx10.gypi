@@ -5,5 +5,6 @@
     ],
     'target_defaults': {
         'cflags': ['-Xg'],
+        'standalone_static_library': 1,
     }
 }
