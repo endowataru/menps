@@ -4,6 +4,8 @@
 // Language Compatibility
 
 #ifndef __cplusplus
+    #include <stdint.h>
+    
     // For C
     #if __STDC_VERSION__ < 199901L
         #error "C99 or later is only supported"
@@ -17,6 +19,8 @@
     #define MGBASE_EMPTY_DECL           { }
     #define MGBASE_CONSTEXPR_CPP14
 #else
+    #include <stdint.h> // #include <cstdint>
+    
     // For C++
     #if (__cplusplus >= 201103L)
         #define MGBASE_CPP11_SUPPORTED
@@ -68,6 +72,21 @@
         #define MGBASE_CONSTEXPR_CPP14
     #endif
 
+    namespace mgbase {
+        using ::uint8_t;
+        using ::int8_t;
+        using ::uint16_t;
+        using ::int16_t;
+        using ::uint32_t;
+        using ::int32_t;
+        using ::uint64_t;
+        using ::int64_t;
+        
+        using ::size_t;
+        //using ::ssize_t;
+        typedef int64_t  ssize_t;
+    }
+
 #endif
 
 // Processor Compatibility
@@ -78,9 +97,5 @@
 
 #if (defined(__i386__) || defined(__x86_64__))
     #define MGBASE_ARCH_INTEL
-#endif
-
-#if __cplusplus
-    #include "stdint.hpp"
 #endif
 

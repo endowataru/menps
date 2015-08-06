@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgbase/stdint.hpp>
+#include <mgbase/lang.hpp>
 
 namespace mgbase {
 
