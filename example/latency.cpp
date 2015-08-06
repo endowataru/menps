@@ -1,6 +1,5 @@
 
 #include <mgcom.hpp>
-#include <mgbase/stdint.hpp>
 #include <mpi.h>
 #include <mgbase/profiling/stopwatch.hpp>
 

@@ -12,8 +12,6 @@
 
 #include "impl.hpp"
 
-#include <mgbase/stdint.hpp>
-
 namespace mgcom {
 
 namespace {

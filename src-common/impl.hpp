@@ -2,7 +2,6 @@
 #pragma once
 
 #include <mgcom.hpp>
-#include <mgbase/stdint.hpp>
 
 namespace mgcom {
 
