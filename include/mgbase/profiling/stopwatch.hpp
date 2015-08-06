@@ -9,7 +9,7 @@ namespace detail {
 
 typedef int64_t  cpu_clock_t;
 
-inline cpu_clock_t rdtsc() noexcept
+inline cpu_clock_t rdtsc() MGBASE_NOEXCEPT
 {
 #if (defined __i386__) || (defined __x86_64__)
     uint32_t high, low;
@@ -33,17 +33,17 @@ class stopwatch {
 public:
     stopwatch() MGBASE_NOEXCEPT { start(); }
     
-    #if MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CPP11_SUPPORTED
     stopwatch(const stopwatch&) = default;
     stopwatch& operator = (const stopwatch&) noexcept = default;
     #endif
     
-    void start() noexcept { began_ = current(); }
+    void start() MGBASE_NOEXCEPT { began_ = current(); }
     
-    detail::cpu_clock_t elapsed() const noexcept { return current() - began_; }
+    detail::cpu_clock_t elapsed() const MGBASE_NOEXCEPT { return current() - began_; }
     
 private:
-    static detail::cpu_clock_t current() noexcept { return detail::rdtsc(); }
+    static detail::cpu_clock_t current() MGBASE_NOEXCEPT { return detail::rdtsc(); }
     
     detail::cpu_clock_t began_;
 };

@@ -80,3 +80,7 @@
     #define MGBASE_ARCH_INTEL
 #endif
 
+#if __cplusplus
+    #include "stdint.hpp"
+#endif
+
