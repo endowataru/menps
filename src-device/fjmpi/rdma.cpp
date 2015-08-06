@@ -280,7 +280,7 @@ local_region_t register_region(
     
     local_region_t region;
     region_key_fjmpi& key = *reinterpret_cast<region_key_fjmpi*>(&region.key);
-    key.memid   = memid;
+    key.memid    = static_cast<mgbase::uint64_t>(memid);
     region.local = address;
     return region;
 }

@@ -47,9 +47,11 @@ mgcom_remote_address_t;
 
 
 typedef enum mgcom_local_operation_tag {
-    MGCOM_LOCAL_ASSIGN_INT8
+    MGCOM_LOCAL_NO_OPERATION
+,   MGCOM_LOCAL_ASSIGN_INT8
 ,   MGCOM_LOCAL_ASSIGN_INT64
-,   MGCOM_LOCAL_FAA_INT64
+,   MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32
+,   MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64
 }
 mgcom_local_operation_t;
 
@@ -62,8 +64,8 @@ mgcom_notifier_t;
 
 
 typedef enum mgcom_remote_operation_tag {
-    MGCOM_REMOTE_CAS_INT64,
-    MGCOM_REMOTE_FAA_INT64
+    MGCOM_REMOTE_CAS_INT64
+,   MGCOM_REMOTE_FAA_INT64
 }
 mgcom_remote_operation_t;
 
@@ -211,21 +213,45 @@ mgcom_error_t mgcom_try_rmw_async(
 ,   bool*                          succeeded
 ) MGBASE_NOEXCEPT;
 
+/**
+ * Type of Unique IDs of Active Messages' handler.
+ */
+typedef mgcom_index_t  mgcom_am_handler_id_t;
 
+/**
+ * Callback function of Active Messages' handler.
+ */
+typedef void (*mgcom_am_handler_callback_t)(const void*, mgcom_index_t);
 
-typedef void (*mgcom_handler_function_t)(void*, mgcom_index_t);
+/**
+ * Register a callback function as a Active Messages' handler.
+ */
+mgcom_error_t mgcom_register_am_handler(
+    mgcom_am_handler_id_t
+,   mgcom_am_handler_callback_t
+);
 
-mgcom_error_t mgcom_register_handler(mgcom_handler_function_t);
-
-mgcom_error_t mgcom_send_message(
-    void* value
+/**
+ * Invoke the callback function on the specified remote node.
+ */
+mgcom_error_t mgcom_try_send_am_request_to(
+    mgcom_am_handler_id_t          id
+,   const void*                    value
+,   mgcom_index_t                  size
+,   mgcom_process_id_t             dest_proc
+,   bool*                          succeeded
 );
 
 
 /**
  * Polling.
  */
-mgcom_error_t mgcom_poll(void) MGBASE_NOEXCEPT;
+mgcom_error_t mgcom_poll_rma(void) MGBASE_NOEXCEPT;
+
+/**
+ * Polling.
+ */
+mgcom_error_t mgcom_poll_am(void) MGBASE_NOEXCEPT;
 
 /**
  * Barrier (Collective)

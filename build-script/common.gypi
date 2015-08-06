@@ -8,19 +8,28 @@
     #},
     'configurations': {
       'Debug': {
-        'defines':[],
+        'defines':['MGBASE_DEBUG'],
         'cflags': ['-g3', '-O0', '-Wall'],
         'ldflags': ['-g3'],
         'xcode_settings': {
-            'OTHER_CPLUSPLUSFLAGS': ['-g3', '-O0', '-Wall'],
+            'OTHER_CPLUSPLUSFLAGS': ['-g3', '-O0', '-Wall',
+            ],
             'OTHER_LDFLAGS': ['-g3'],
         },
       }, # Debug
       'Release': {
         'defines':[],
-        'cflags': ['-O3', '-Wall'],
+        'cflags': ['-O3', '-Wall',
+            '-pedantic',
+        ],
         'xcode_settings': {
-            'OTHER_CPLUSPLUSFLAGS': ['-O3', '-Wall'],
+            'OTHER_CPLUSPLUSFLAGS': [
+                '-O3', '-Wall', '-Werror',
+                '-pedantic', '-Wextra', '-Wcast-align', '-Wcast-qual', '-Wctor-dtor-privacy',
+                '-Wdisabled-optimization', '-Wformat=2', '-Winit-self', '-Wmissing-declarations',
+                '-Wmissing-include-dirs', '-Wold-style-cast', '-Woverloaded-virtual', '-Wredundant-decls',
+                '-Wshadow', '-Wsign-conversion', '-Wsign-promo', '-Wstrict-overflow=5', '-Wswitch-default', '-Wundef', '-Wno-unused',
+            ],
         },
       }, # Release
     }, # configurations

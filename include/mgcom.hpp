@@ -3,6 +3,8 @@
 
 #include "mgcom.h"
 
+#include <mgbase/threading/atomic.hpp>
+
 namespace mgcom {
 
 typedef ::mgcom_index_t                  index_t;
@@ -143,6 +145,21 @@ bool try_rmw_async(
 ,   notifier_t                     on_complete
 );
 
+typedef ::mgcom_am_handler_id_t       am_handler_id_t;
+
+typedef ::mgcom_am_handler_callback_t am_handler_callback_t;
+
+void register_am_handler(am_handler_callback_t);
+
+bool try_send_am_request_to(
+    am_handler_id_t                id
+,   const void*                    value
+,   index_t                        size
+,   process_id_t                   dest_proc
+);
+
+void poll_am();
+
 /**
  * Polling.
  */
@@ -159,10 +176,31 @@ process_id_t current_process_id() MGBASE_NOEXCEPT;
 index_t number_of_processes() MGBASE_NOEXCEPT;
 
 
+inline notifier_t make_notifier_no_operation() {
+    notifier_t result = { MGCOM_LOCAL_NO_OPERATION, MGBASE_NULLPTR, 0 };
+    return result;
+}
 
-
-inline notifier_t make_notifier(bool* ptr, bool value) {
+inline notifier_t make_notifier_assign(bool* ptr, bool value) {
     notifier_t result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
+    return result;
+}
+
+inline notifier_t make_notifier_fetch_add(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) {
+    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, diff };
+    return result;
+}
+inline notifier_t make_notifier_fetch_sub(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) {
+    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, -diff };
+    return result;
+}
+
+inline notifier_t make_notifier_fetch_add(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) {
+    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, diff };
+    return result;
+}
+inline notifier_t make_notifier_fetch_sub(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) {
+    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, -diff };
     return result;
 }
 
