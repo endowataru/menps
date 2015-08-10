@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
         x = 123;
         
         sw.start();
-        bool finished = false;
+        /*bool finished = false;
         while (!try_write_async(local_addr, remote_addr, sizeof(x), other, make_notifier_assign(&finished, true))) {
             std::cout << "write failed" << std::endl;
             poll();
@@ -40,7 +40,13 @@ int main(int argc, char* argv[])
         while (!finished) {
             std::cout << "poll" << std::endl;
             poll();
-        }
+        }*/
+        
+        MGBASE_SCOPED_ASYNC(r, write_async, local_addr, remote_addr, sizeof(x), other)
+        while (!mgbase::test(r)) { }
+        
+        
+        
     }
     
     barrier();

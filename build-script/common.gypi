@@ -21,10 +21,12 @@
         'defines':[],
         'cflags': ['-O3', '-Wall',
             '-pedantic',
+                '-Wno-variadic-macros'
         ],
         'xcode_settings': {
             'OTHER_CPLUSPLUSFLAGS': [
                 '-O3', '-Wall', '-Werror',
+                '-Wno-variadic-macros',
                 '-pedantic', '-Wextra', '-Wcast-align', '-Wcast-qual', '-Wctor-dtor-privacy',
                 '-Wdisabled-optimization', '-Wformat=2', '-Winit-self', '-Wmissing-declarations',
                 '-Wmissing-include-dirs', '-Wold-style-cast', '-Woverloaded-virtual', '-Wredundant-decls',

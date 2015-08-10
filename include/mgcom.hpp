@@ -3,6 +3,7 @@
 
 #include "mgcom.h"
 
+#include <mgbase/event/async_request.hpp>
 #include <mgbase/threading/atomic.hpp>
 
 namespace mgcom {
@@ -66,78 +67,79 @@ void deregister_region(
 /**
  * Non-blocking contiguous write.
  */
-bool try_write_async(
-    local_address_t                local_address
+void write_async(
+    mgbase::async_request*         request
+,   local_address_t                local_address
 ,   remote_address_t               remote_address
 ,   index_t                        size_in_bytes
 ,   process_id_t                   dest_proc
-,   notifier_t                     on_complete
 );
 
 /**
  * Non-blocking contiguous read.
  */
-bool try_read_async(
-    local_address_t                local_address
+void read_async(
+    mgbase::async_request*         request
+,   local_address_t                local_address
 ,   remote_address_t               remote_address
 ,   index_t                        size_in_bytes
 ,   process_id_t                   dest_proc
-,   notifier_t                     on_complete
 );
 
 /**
  * Non-blocking vector write.
  */
-bool try_write_vector_async(
-    vector_access_t*               accesses
+void write_vector_async(
+    mgbase::async_request*         request
+,   vector_access_t*               accesses
 ,   index_t                        num_accesses
 ,   process_id_t                   dest_proc
-,   notifier_t                     on_complete
 );
 
 /**
  * Non-blocking vector read.
  */
-bool try_read_vector_async(
-    vector_access_t*               accesses
+void read_vector_async(
+    mgbase::async_request*         request
+,   vector_access_t*               accesses
 ,   index_t                        num_accesses
 ,   process_id_t                   src_proc
-,   notifier_t                     on_complete
 );
 
 /**
  * Non-blockng strided write.
  */
-bool try_write_strided_async(
-    local_address_t                local_address
+void write_strided_async(
+    mgbase::async_request*         request
+,   local_address_t                local_address
 ,   index_t*                       local_stride
 ,   remote_address_t               remote_address
 ,   index_t*                       remote_stride
 ,   index_t*                       count
 ,   index_t                        stride_level
 ,   process_id_t                   dest_proc
-,   notifier_t                     on_complete
 );
 
 /**
  * Non-blockng strided read.
  */
-bool try_read_strided_async(
-    local_address_t                local_address
+void read_strided_async(
+    mgbase::async_request*         request
+,   local_address_t                local_address
 ,   index_t*                       local_stride
 ,   remote_address_t               remote_address
 ,   index_t*                       remote_stride
 ,   index_t*                       count
 ,   index_t                        stride_level
 ,   process_id_t                   dest_proc
-,   notifier_t                     on_complete
 );
 
 /**
  * Non-blocking remote atomic operation.
  */
-bool try_rmw_async(
-    remote_operation_t             operation
+void try_rmw_async(
+    mgbase::async_request*         request
+,   remote_operation_t             operation
 ,   void*                          local_expected
 ,   local_address_t                local_address
 ,   remote_address_t               remote_address
@@ -151,19 +153,13 @@ typedef ::mgcom_am_handler_callback_t am_handler_callback_t;
 
 void register_am_handler(am_handler_callback_t);
 
-bool try_send_am_request_to(
-    am_handler_id_t                id
+void send_am_request_to(
+    mgbase::async_request*         request
+,   am_handler_id_t                id
 ,   const void*                    value
 ,   index_t                        size
 ,   process_id_t                   dest_proc
 );
-
-void poll_am();
-
-/**
- * Polling.
- */
-void poll();
 
 /**
  * Barrier (Collective)
@@ -176,33 +172,6 @@ process_id_t current_process_id() MGBASE_NOEXCEPT;
 index_t number_of_processes() MGBASE_NOEXCEPT;
 
 
-inline notifier_t make_notifier_no_operation() {
-    notifier_t result = { MGCOM_LOCAL_NO_OPERATION, MGBASE_NULLPTR, 0 };
-    return result;
-}
-
-inline notifier_t make_notifier_assign(bool* ptr, bool value) {
-    notifier_t result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
-    return result;
-}
-
-inline notifier_t make_notifier_fetch_add(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) {
-    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, diff };
-    return result;
-}
-inline notifier_t make_notifier_fetch_sub(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) {
-    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, -diff };
-    return result;
-}
-
-inline notifier_t make_notifier_fetch_add(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) {
-    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, diff };
-    return result;
-}
-inline notifier_t make_notifier_fetch_sub(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) {
-    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, -diff };
-    return result;
-}
 
 }
 

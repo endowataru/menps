@@ -39,5 +39,33 @@ inline void notify(const notifier_t& notif) MGBASE_NOEXCEPT {
     }
 }
 
+inline notifier_t make_notifier_no_operation() {
+    notifier_t result = { MGCOM_LOCAL_NO_OPERATION, MGBASE_NULLPTR, 0 };
+    return result;
+}
+
+inline notifier_t make_notifier_assign(bool* ptr, bool value) {
+    notifier_t result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
+    return result;
+}
+
+inline notifier_t make_notifier_fetch_add(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) {
+    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, diff };
+    return result;
+}
+inline notifier_t make_notifier_fetch_sub(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) {
+    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, -diff };
+    return result;
+}
+
+inline notifier_t make_notifier_fetch_add(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) {
+    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, diff };
+    return result;
+}
+inline notifier_t make_notifier_fetch_sub(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) {
+    notifier_t result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, -diff };
+    return result;
+}
+
 }
 

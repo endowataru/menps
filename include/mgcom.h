@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include <mgbase/lang.h>
+#include <mgbase/event/async_request.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,13 +118,12 @@ mgcom_error_t mgcom_deregister_region(
 /**
  * Non-blocking contiguous write.
  */
-mgcom_error_t mgcom_try_write_async(
-    mgcom_local_address_t          local_address
+mgcom_error_t mgcom_write_async(
+    mgbase_async_request*          request
+,   mgcom_local_address_t          local_address
 ,   mgcom_remote_address_t         remote_address
 ,   mgcom_index_t                  size_in_bytes
 ,   mgcom_process_id_t             dest_proc
-,   mgcom_notifier_t               on_complete
-,   bool*                          succeeded
 ) MGBASE_NOEXCEPT;
 
 /**
