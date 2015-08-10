@@ -5,6 +5,7 @@
 
 #ifndef __cplusplus
     #include <stdint.h>
+    #include <stdlib.h>
     
     // For C
     #if __STDC_VERSION__ < 199901L
@@ -24,6 +25,7 @@
     
 #else
     #include <stdint.h> // #include <cstdint>
+    #include <cstdlib>
     
     #define MGBASE_EXTERN_C_BEGIN   extern "C" {
     #define MGBASE_EXTERN_C_END     }
