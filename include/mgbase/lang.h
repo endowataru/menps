@@ -18,8 +18,15 @@
     #define MGBASE_STATIC_ASSERT(expr, msg)
     #define MGBASE_EMPTY_DECL           { }
     #define MGBASE_CONSTEXPR_CPP14
+    
+    #define MGBASE_EXTERN_C_BEGIN
+    #define MGBASE_EXTERN_C_END
+    
 #else
     #include <stdint.h> // #include <cstdint>
+    
+    #define MGBASE_EXTERN_C_BEGIN   extern "C" {
+    #define MGBASE_EXTERN_C_END     }
     
     // For C++
     #if (__cplusplus >= 201103L)
