@@ -91,7 +91,7 @@ public:
         memid_queue_.enqueue(memid);
     }
     
-    bool try_put_async(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const notifier_t& on_complete) {
+    bool try_put_async(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const local_notifier& on_complete) {
         const int nic = select_nic(dest);
         
         int tag;
@@ -113,7 +113,7 @@ public:
         return false;
     }
     
-    bool try_get_async(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const notifier_t& on_complete) {
+    bool try_get_async(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const local_notifier& on_complete) {
         const int nic = select_nic(dest);
         
         int tag;
@@ -157,7 +157,7 @@ private:
         return true;
     }
     
-    void set_notifier(int proc, int nic, int tag, const notifier_t& on_complete) MGBASE_NOEXCEPT {
+    void set_notifier(int proc, int nic, int tag, const local_notifier& on_complete) MGBASE_NOEXCEPT {
         info_by_procs_[proc].by_nics[nic].by_tags[tag].on_complete = on_complete;
         number_of_outstandings_[nic].fetch_add(1, mgbase::memory_order_relaxed);
         
@@ -217,13 +217,13 @@ private:
     }
     
     struct tag_info {
-        notifier_t on_complete;
+        local_notifier on_complete;
     };
     
     struct nic_info {
         tag_info by_tags[max_tag_count];
         
-        // Use a 32-bit integer because of the support of atomic operations on SPARC
+        // Use a 32-bit integer because only 32-bit or 64-bit atomic operations are supported on SPARC
         mgbase::static_bounded_index_queue<mgbase::int32_t, 16> free_tags;
         
         nic_info() {
@@ -269,85 +269,85 @@ void finalize() {
     g_com.finalize();
 }
 
-local_region_t register_region(
-    void*                          local_pointer
-,   index_t                        size_in_bytes
+local_region register_region(
+    void*   local_pointer
+,   index_t size_in_bytes
 ) {
     mgbase::uint64_t address;
     int memid = g_com.register_memory(local_pointer, size_in_bytes, &address);
     
-    local_region_t region;
+    local_region region;
     region_key_fjmpi& key = *reinterpret_cast<region_key_fjmpi*>(&region.key);
     key.memid    = static_cast<mgbase::uint64_t>(memid);
     region.local = address;
     return region;
 }
 
-remote_region_t use_remote_region(
-    process_id_t                   proc_id
-,   region_key_t                   key
-,   index_t                        /*size_in_bytes*/
+remote_region use_remote_region(
+    process_id_t proc_id
+,   region_key   key
+,   index_t      /*size_in_bytes*/
 ) {
     region_key_fjmpi& key_fjmpi = *reinterpret_cast<region_key_fjmpi*>(&key);
     mgbase::uint64_t raddr =
         g_com.get_remote_addr(static_cast<int>(proc_id), key_fjmpi.memid);
     
-    remote_region_t region;
+    remote_region region;
     remote_region_fjmpi& region_fjmpi = *reinterpret_cast<remote_region_fjmpi*>(&region);
     region_fjmpi.raddr = raddr;
     return region;
 }
 
 void deregister_region(
-    local_region_t                 local_region
-,   void*                          /*local_pointer*/
-,   index_t                        /*size_in_bytes*/
+    local_region region
+,   void*        /*local_pointer*/
+,   index_t      /*size_in_bytes*/
 ) {
-    region_key_fjmpi& key = reinterpret_cast<region_key_fjmpi&>(local_region.key);
+    region_key_fjmpi& key = reinterpret_cast<region_key_fjmpi&>(region.key);
     g_com.deregister_memory(key.memid);
 }
 
 namespace {
 
-inline mgbase::uint64_t get_absolute_address(const local_address_t& local_address) MGBASE_NOEXCEPT {
-    const mgbase::uint64_t laddr = local_address.region.local;
-    return laddr + local_address.offset;
+inline mgbase::uint64_t get_absolute_address(const local_address& addr) MGBASE_NOEXCEPT {
+    const mgbase::uint64_t laddr = addr.region.local;
+    return laddr + addr.offset;
 }
 
-inline mgbase::uint64_t get_absolute_address(const remote_address_t& remote_address) MGBASE_NOEXCEPT {
-    const remote_region_fjmpi& region = reinterpret_cast<const remote_region_fjmpi&>(remote_address.region);
-    return region.raddr + remote_address.offset;
+inline mgbase::uint64_t get_absolute_address(const remote_address& addr) MGBASE_NOEXCEPT {
+    const remote_region_fjmpi& region = reinterpret_cast<const remote_region_fjmpi&>(addr.region);
+    return region.raddr + addr.offset;
 }
 
 }
 
 bool try_write_async(
-    local_address_t                local_address
-,   remote_address_t               remote_address
-,   index_t                        size_in_bytes
-,   process_id_t                   dest_proc
-,   notifier_t                     on_complete
+    local_address  local_addr
+,   remote_address remote_addr
+,   index_t        size_in_bytes
+,   process_id_t   dest_proc
+,   local_notifier on_complete
 ) {
     return g_com.try_put_async(
         static_cast<int>(dest_proc),
-        get_absolute_address(local_address),
-        get_absolute_address(remote_address),
+        get_absolute_address(local_addr),
+        get_absolute_address(remote_addr),
         size_in_bytes,
         on_complete
     );
 }
 
 bool try_read_async(
-    local_address_t                local_address
-,   remote_address_t               remote_address
-,   index_t                        size_in_bytes
-,   process_id_t                   dest_proc
-,   notifier_t                     on_complete
+    local_address  local_addr
+,   remote_address remote_addr
+,   index_t        size_in_bytes
+,   process_id_t   dest_proc
+,   local_notifier on_complete
 ) {
     return g_com.try_get_async(
         static_cast<int>(dest_proc),
-        get_absolute_address(local_address),
-        get_absolute_address(remote_address),
+        get_absolute_address(local_addr),
+        get_absolute_address(remote_addr),
         size_in_bytes,
         on_complete
     );
