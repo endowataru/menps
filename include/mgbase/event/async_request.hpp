@@ -6,21 +6,32 @@
 
 namespace mgbase {
 
-struct async_request_header {
-    bool (*func_test)(mgbase_async_request*);
-    size_t state;
-    size_t required_size;
-};
-
 typedef ::mgbase_async_request  async_request;
 
-inline bool test(async_request& request) {
-    if (request.state == MGBASE_STATE_FINISHED)
+namespace {
+
+
+template <typename CB>
+inline bool test(CB& cb) {
+    if (cb.request.state == MGBASE_STATE_FINISHED)
         return true;
     else {
-        request.func_test(&request);
+        cb.request.func_test(&cb.request);
         return false;
     }
+}
+
+template <typename T>
+inline void enter(T* self, void (*func)(void*)) {
+    self->request.func_test = func;
+    func(self);
+}
+
+template <typename T>
+inline void finished(T* self) {
+    self->request.state = MGBASE_STATE_FINISHED;
+}
+
 }
 
 }
