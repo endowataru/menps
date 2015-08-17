@@ -6,6 +6,8 @@
 #include <mgbase/event/async_request.hpp>
 #include <mgbase/threading/atomic.hpp>
 
+#include <cstddef>
+
 namespace mgcom {
 
 typedef ::mgcom_index_t                  index_t;
@@ -88,79 +90,79 @@ bool try_read_async(
 
 
 
-typedef ::mgcom_write_async_buffer  write_async_buffer;
+typedef ::mgcom_write_cb  write_cb;
 
 /**
  * Non-blocking contiguous write.
  */
 void write_async(
-    write_async_buffer* buffer
-,   local_address       local_addr
-,   remote_address      remote_addr
-,   index_t             size_in_bytes
-,   process_id_t        dest_proc
+    write_cb*      cb
+,   local_address  local_addr
+,   remote_address remote_addr
+,   index_t        size_in_bytes
+,   process_id_t   dest_proc
 );
 
-typedef ::mgcom_read_async_buffer  read_async_buffer;
+typedef ::mgcom_read_cb  read_cb;
 
 /**
  * Non-blocking contiguous read.
  */
 void read_async(
-    read_async_buffer* buffer
-,   local_address      local_addr
-,   remote_address     remote_addr
-,   index_t            size_in_bytes
-,   process_id_t       dest_proc
+    read_cb*       cb
+,   local_address  local_addr
+,   remote_address remote_addr
+,   index_t        size_in_bytes
+,   process_id_t   dest_proc
 );
 
 
-typedef ::mgcom_write_strided_async_buffer  write_strided_async_buffer;
+typedef ::mgcom_write_strided_cb  write_strided_cb;
 
 /**
  * Non-blockng strided write.
  */
 void write_strided_async(
-    write_strided_async_buffer* buffer
-,   local_address               local_addr
-,   index_t*                    local_stride
-,   remote_address              remote_addr
-,   index_t*                    remote_stride
-,   index_t*                    count
-,   index_t                     stride_level
-,   process_id_t                dest_proc
+    write_strided_cb* cb
+,   local_address     local_addr
+,   index_t*          local_stride
+,   remote_address    remote_addr
+,   index_t*          remote_stride
+,   index_t*          count
+,   index_t           stride_level
+,   process_id_t      dest_proc
 );
 
 
-typedef ::mgcom_read_strided_async_buffer  read_strided_async_buffer;
+typedef ::mgcom_read_strided_cb  read_strided_cb;
 
 /**
  * Non-blockng strided read.
  */
 void read_strided_async(
-    read_strided_async_buffer* buffer
-,   local_address              local_addr
-,   index_t*                   local_stride
-,   remote_address             remote_addr
-,   index_t*                   remote_stride
-,   index_t*                   count
-,   index_t                    stride_level
-,   process_id_t               dest_proc
+    read_strided_cb* cb
+,   local_address    local_addr
+,   index_t*         local_stride
+,   remote_address   remote_addr
+,   index_t*         remote_stride
+,   index_t*         count
+,   index_t          stride_level
+,   process_id_t     dest_proc
 );
 
 
-typedef ::mgcom_rmw_async_buffer  rmw_async_buffer;
+typedef ::mgcom_rmw_cb  rmw_cb;
 
 /**
  * Non-blocking remote atomic operation.
  */
 void rmw_async(
-    rmw_async_buffer* buffer
-,   remote_operation  operation
-,   void*             local_expected
-,   local_address     local_addr
-,   remote_address    remote_addr
-,   process_id_t      dest_proc
+    rmw_cb*          cb
+,   remote_operation operation
+,   void*            local_expected
+,   local_address    local_addr
+,   remote_address   remote_addr
+,   process_id_t     dest_proc
 );
 
 typedef ::mgcom_am_handler_id_t       am_handler_id_t;
@@ -169,12 +171,14 @@ typedef ::mgcom_am_handler_callback_t am_handler_callback_t;
 
 void register_am_handler(am_handler_callback_t);
 
-void send_am_request_to(
-    mgbase::async_request*         request
-,   am_handler_id_t                id
-,   const void*                    value
-,   index_t                        size
-,   process_id_t                   dest_proc
+typedef ::mgcom_send_am_cb  send_am_cb;
+
+void send_am(
+    send_am_cb*     cb
+,   am_handler_id_t id
+,   const void*     value
+,   index_t         size
+,   process_id_t    dest_proc
 );
 
 
@@ -192,6 +196,12 @@ process_id_t current_process_id() MGBASE_NOEXCEPT;
 index_t number_of_processes() MGBASE_NOEXCEPT;
 
 namespace {
+
+inline remote_address advance(const remote_address& addr, index_t diff) {
+    remote_address result = { addr.region, addr.offset + diff };
+    return result;
+}
+
 
 inline local_notifier make_notifier_no_operation() {
     local_notifier result = { MGCOM_LOCAL_NO_OPERATION, MGBASE_NULLPTR, 0 };

@@ -16,14 +16,14 @@ mgcom_error_t mgcom_initialize(int* argc, char*** argv) MGBASE_NOEXCEPT {
 }
 
 mgcom_error_t mgcom_write_async(
-    mgcom_write_async_buffer* buffer
-,   mgcom_local_address       local_addr
-,   mgcom_remote_address      remote_addr
-,   mgcom_index_t             size_in_bytes
-,   mgcom_process_id_t        dest_proc
+    mgcom_write_cb*      cb
+,   mgcom_local_address  local_addr
+,   mgcom_remote_address remote_addr
+,   mgcom_index_t        size_in_bytes
+,   mgcom_process_id_t   dest_proc
 ) MGBASE_NOEXCEPT
 {
-    CATCH_ERROR(mgcom::write_async(buffer, local_addr, remote_addr, size_in_bytes, dest_proc))
+    CATCH_ERROR(mgcom::write_async(cb, local_addr, remote_addr, size_in_bytes, dest_proc))
 }
 
 }

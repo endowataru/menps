@@ -142,17 +142,17 @@ mgcom_error_t mgcom_try_read_async(
 ) MGBASE_NOEXCEPT;
 
 
-/// Buffer for non-blocking contiguous write.
-typedef struct mgcom_write_async_buffer_tag {
+/// Control block for non-blocking contiguous write.
+typedef struct mgcom_write_cb_tag {
     mgbase_async_request request;
 }
-mgcom_write_async_buffer;
+mgcom_write_cb;
 
 /**
  * Non-blocking contiguous write.
  */
 mgcom_error_t mgcom_write_async(
-    mgcom_write_async_buffer* buffer
+    mgcom_write_cb*           cb
 ,   mgcom_local_address       local_addr
 ,   mgcom_remote_address      remote_addr
 ,   mgcom_index_t             size_in_bytes
@@ -160,17 +160,17 @@ mgcom_error_t mgcom_write_async(
 ) MGBASE_NOEXCEPT;
 
 
-/// Buffer for non-blocking contiguous read.
-typedef struct mgcom_read_async_buffer_tag {
+/// Control block for non-blocking contiguous read.
+typedef struct mgcom_read_cb_tag {
     mgbase_async_request request;
 }
-mgcom_read_async_buffer;
+mgcom_read_cb;
 
 /**
  * Non-blocking contiguous read.
  */
 mgcom_error_t mgcom_read_async(
-    mgcom_read_async_buffer* buffer
+    mgcom_read_cb*           cb
 ,   mgcom_local_address      local_addr
 ,   mgcom_remote_address     remote_addr
 ,   mgcom_index_t            size_in_bytes
@@ -179,59 +179,59 @@ mgcom_error_t mgcom_read_async(
 
 
 
-/// Buffer for asynchronous strided write.
-typedef struct mgcom_write_strided_async_buffer_tag {
+/// Control block for asynchronous strided write.
+typedef struct mgcom_write_strided_cb_tag {
     mgbase_async_request request;
 }
-mgcom_write_strided_async_buffer;
+mgcom_write_strided_cb;
 
 /**
  * Non-blockng strided write.
  */
 mgcom_error_t mgcom_write_strided_async(
-    mgcom_write_strided_async_buffer* buffer
-,   mgcom_local_address               local_addr
-,   mgcom_index_t*                    local_stride
-,   mgcom_remote_address              remote_addr
-,   mgcom_index_t*                    remote_stride
-,   mgcom_index_t*                    count
-,   mgcom_index_t                     stride_level
-,   mgcom_process_id_t                dest_proc
+    mgcom_write_strided_cb* cb
+,   mgcom_local_address     local_addr
+,   mgcom_index_t*          local_stride
+,   mgcom_remote_address    remote_addr
+,   mgcom_index_t*          remote_stride
+,   mgcom_index_t*          count
+,   mgcom_index_t           stride_level
+,   mgcom_process_id_t      dest_proc
 ) MGBASE_NOEXCEPT;
 
 
-/// Buffer for asynchronous strided read.
-typedef struct mgcom_read_strided_async_buffer_tag {
+/// Control block for asynchronous strided read.
+typedef struct mgcom_read_strided_cb_tag {
     mgbase_async_request request;
 }
-mgcom_read_strided_async_buffer;
+mgcom_read_strided_cb;
 
 /**
  * Non-blockng strided read.
  */
 mgcom_error_t mgcom_read_strided_async(
-    mgcom_read_strided_async_buffer* buffer
-,   mgcom_local_address              local_addr
-,   mgcom_index_t*                   local_stride
-,   mgcom_remote_address             remote_addr
-,   mgcom_index_t*                   remote_stride
-,   mgcom_index_t*                   count
-,   mgcom_index_t                    stride_level
-,   mgcom_process_id_t               dest_proc
+    mgcom_read_strided_cb* cb
+,   mgcom_local_address    local_addr
+,   mgcom_index_t*         local_stride
+,   mgcom_remote_address   remote_addr
+,   mgcom_index_t*         remote_stride
+,   mgcom_index_t*         count
+,   mgcom_index_t          stride_level
+,   mgcom_process_id_t     dest_proc
 ) MGBASE_NOEXCEPT;
 
 
-/// Buffer for non-blocking remote atomic operation.
-typedef struct mgcom_rmw_async_buffer_tag {
+/// Control block for non-blocking remote atomic operation.
+typedef struct mgcom_rmw_cb_tag {
     mgbase_async_request request;
 }
-mgcom_rmw_async_buffer;
+mgcom_rmw_cb;
 
 /**
  * Non-blocking remote atomic operation.
  */
 mgcom_error_t mgcom_rmw_async(
-    mgcom_rmw_async_buffer* buffer
+    mgcom_rmw_cb*           cb
 ,   mgcom_remote_operation  operation
 ,   void*                   local_expected
 ,   mgcom_local_address     local_addr
@@ -258,15 +258,21 @@ mgcom_error_t mgcom_register_am_handler(
 ,   mgcom_am_handler_callback_t
 );
 
+/// Control block for sending Active Messages.
+typedef struct mgcom_send_am_cb_tag {
+    mgbase_async_request request;
+}
+mgcom_send_am_cb;
+
 /**
  * Invoke the callback function on the specified remote node.
  */
-mgcom_error_t mgcom_try_send_am_request_to(
-    mgcom_am_handler_id_t          id
-,   const void*                    value
-,   mgcom_index_t                  size
-,   mgcom_process_id_t             dest_proc
-,   bool*                          succeeded
+mgcom_error_t mgcom_send_am(
+    mgcom_send_am_cb*     cb
+,   mgcom_am_handler_id_t id
+,   const void*           value
+,   mgcom_index_t         size
+,   mgcom_process_id_t    dest_proc
 );
 
 
