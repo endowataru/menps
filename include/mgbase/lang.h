@@ -41,6 +41,7 @@
         #define MGBASE_NULLPTR                   nullptr
         #define MGBASE_STATIC_ASSERT(expr, msg)  static_assert(expr, msg);
         #define MGBASE_EMPTY_DEFINITION          = default;
+        #define MGBASE_ALIGNAS(a)                alignas(a)
         
         namespace mgbase {
             class noncopyable {
@@ -60,6 +61,7 @@
         #define MGBASE_NULLPTR                   0
         #define MGBASE_STATIC_ASSERT(expr, msg)
         #define MGBASE_EMPTY_DEFINITION          { }
+        #define MGBASE_ALIGNAS(a)                __attribute__((aligned(a)))
         
         namespace mgbase {
             class noncopyable {

@@ -12,7 +12,7 @@ namespace {
 
 
 template <typename CB>
-inline bool test(CB& cb) {
+inline bool async_test(CB& cb) {
     if (cb.request.state == MGBASE_STATE_FINISHED)
         return true;
     else {
@@ -22,13 +22,13 @@ inline bool test(CB& cb) {
 }
 
 template <typename T>
-inline void enter(T* self, void (*func)(void*)) {
+inline void async_enter(T* self, void (*func)(void*)) {
     self->request.func_test = func;
     func(self);
 }
 
 template <typename T>
-inline void finished(T* self) {
+inline void async_finished(T* self) {
     self->request.state = MGBASE_STATE_FINISHED;
 }
 
