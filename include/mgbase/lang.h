@@ -18,6 +18,7 @@
     #define MGBASE_NULLPTR              0
     #define MGBASE_STATIC_ASSERT(expr, msg)
     #define MGBASE_EMPTY_DECL           { }
+    #define MGBASE_CONSTEXPR            const
     #define MGBASE_CONSTEXPR_CPP14
     
     #define MGBASE_EXTERN_C_BEGIN
@@ -42,6 +43,8 @@
         #define MGBASE_STATIC_ASSERT(expr, msg)  static_assert(expr, msg);
         #define MGBASE_EMPTY_DEFINITION          = default;
         #define MGBASE_ALIGNAS(a)                alignas(a)
+        #define MGBASE_DECLTYPE(x)               decltype(x)
+        #define MGBASE_CONSTEXPR                 constexpr
         
         namespace mgbase {
             class noncopyable {
@@ -62,6 +65,8 @@
         #define MGBASE_STATIC_ASSERT(expr, msg)
         #define MGBASE_EMPTY_DEFINITION          { }
         #define MGBASE_ALIGNAS(a)                __attribute__((aligned(a)))
+        #define MGBASE_DECLTYPE(x)               __typeof__(x)
+        #define MGBASE_CONSTEXPR                 const
         
         namespace mgbase {
             class noncopyable {
