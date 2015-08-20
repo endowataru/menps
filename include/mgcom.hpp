@@ -76,7 +76,11 @@ inline remote_address to_address(const remote_region& region) MGBASE_NOEXCEPT {
     return addr;
 }
 
-inline remote_address advance(const remote_address& addr, index_t diff) {
+inline local_address advanced(const local_address& addr, index_t diff) {
+    local_address result = { addr.region, addr.offset + diff };
+    return result;
+}
+inline remote_address advanced(const remote_address& addr, index_t diff) {
     remote_address result = { addr.region, addr.offset + diff };
     return result;
 }
