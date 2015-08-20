@@ -7,6 +7,7 @@
 #include <mgbase/threading/atomic.hpp>
 
 #include <cstddef>
+#include <cstring>
 
 namespace mgcom {
 
@@ -64,6 +65,18 @@ void deregister_region(
 ,   index_t        size_in_bytes
 );
 
+namespace {
+
+inline region_key to_region_key(const local_region& region) MGBASE_NOEXCEPT {
+    return region.key;
+}
+
+inline local_address to_local_address(const local_region& region) MGBASE_NOEXCEPT {
+    local_address addr = { region, 0 };
+    return addr;
+}
+
+}
 
 
 /**
@@ -197,11 +210,14 @@ index_t number_of_processes() MGBASE_NOEXCEPT;
 
 namespace {
 
+MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
+
+MGBASE_CONSTEXPR index_t buffer_alignment       = MGCOM_BUFFER_ALIGNMENT;
+
 inline remote_address advance(const remote_address& addr, index_t diff) {
     remote_address result = { addr.region, addr.offset + diff };
     return result;
 }
-
 
 inline local_notifier make_notifier_no_operation() {
     local_notifier result = { MGCOM_LOCAL_NO_OPERATION, MGBASE_NULLPTR, 0 };

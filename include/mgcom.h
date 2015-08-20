@@ -34,14 +34,30 @@ typedef struct mgcom_remote_region_tag {
 }
 mgcom_remote_region;
 
+/**
+ * Address of registered memory region located on the local process.
+ */
 typedef struct mgcom_local_address_tag {
     mgcom_local_region            region;
+    
+    /**
+     * Offset from the base position.
+     * Must be aligned by MGCOM_REGISTRATION_ALIGNMENT.
+     */
     mgcom_address_offset_t        offset;
 }
 mgcom_local_address;
 
+/**
+ * Address of registered memory region located on a remote process.
+ */
 typedef struct mgcom_remote_region_address_tag {
     mgcom_remote_region           region;
+    
+    /**
+     * Offset from the base position.
+     * Must be aligned by MGCOM_REGISTRATION_ALIGNMENT.
+     */
     mgcom_address_offset_t        offset;
 }
 mgcom_remote_address;
@@ -286,6 +302,10 @@ mgcom_process_id_t mgcom_current_process_id(void) MGBASE_NOEXCEPT;
 
 mgcom_index_t mgcom_number_of_processes(void) MGBASE_NOEXCEPT;
 
+// TODO
+
+#define MGCOM_REGISTRATION_ALIGNMENT  4
+#define MGCOM_BUFFER_ALIGNMENT        4
 
 #ifdef __cplusplus
 }
