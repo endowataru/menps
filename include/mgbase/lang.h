@@ -101,6 +101,9 @@
         using ::size_t;
         //using ::ssize_t;
         typedef int64_t  ssize_t;
+        
+        using ::intptr_t;
+        using ::uintptr_t;
     }
 
 #endif
