@@ -21,8 +21,8 @@ int main(int argc, char* argv[])
                  static_cast<int>(other), 0,
                  MPI_COMM_WORLD, MGBASE_NULLPTR);
     
-    local_address local_addr = { local_region, 0 };
-    remote_address remote_addr = { use_remote_region(other, remote_key, sizeof(x)), 0 };
+    local_address  local_addr  = to_address(local_region);
+    remote_address remote_addr = to_address(use_remote_region(other, remote_key));
     
     if (current == 0) {
         x = 123;

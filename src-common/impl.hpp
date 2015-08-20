@@ -5,13 +5,22 @@
 
 namespace mgcom {
 
-/*inline local_region_address_t get_absolute_address(const local_address_t& addr) {
-    return addr.region.local_address  + addr.offset;
+namespace {
+
+inline region_key make_region_key(void* pointer, mgbase::uint64_t info) MGBASE_NOEXCEPT {
+    region_key key = { pointer, info };
+    return key;
 }
 
-inline local_region_address_t get_absolute_address(const remote_address_t& addr) {
-    return addr.region.remote_address + addr.offset;
-}*/
+inline local_region make_local_region(const region_key& key, mgbase::uint64_t info) MGBASE_NOEXCEPT {
+    local_region region = { key, info };
+    return region;
+}
+
+inline remote_region make_remote_region(const region_key& key, mgbase::uint64_t info) MGBASE_NOEXCEPT {
+    remote_region region = { key, info };
+    return region;
+}
 
 inline void notify(const local_notifier& notif) MGBASE_NOEXCEPT {
     switch (notif.operation) {
@@ -39,32 +48,6 @@ inline void notify(const local_notifier& notif) MGBASE_NOEXCEPT {
     }
 }
 
-inline local_notifier make_notifier_no_operation() {
-    local_notifier result = { MGCOM_LOCAL_NO_OPERATION, MGBASE_NULLPTR, 0 };
-    return result;
-}
-
-inline local_notifier make_notifier_assign(bool* ptr, bool value) {
-    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
-    return result;
-}
-
-inline local_notifier make_notifier_fetch_add(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) {
-    local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, diff };
-    return result;
-}
-inline local_notifier make_notifier_fetch_sub(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) {
-    local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, -diff };
-    return result;
-}
-
-inline local_notifier make_notifier_fetch_add(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) {
-    local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, diff };
-    return result;
-}
-inline local_notifier make_notifier_fetch_sub(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) {
-    local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, -diff };
-    return result;
 }
 
 }

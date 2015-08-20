@@ -18,19 +18,45 @@ typedef uint32_t  mgcom_process_id_t;
 
 typedef uint64_t  mgcom_address_offset_t;
 
+/**
+ * Region key.
+ * Guaranteed to be POD.
+ * DO NOT access the members directly.
+ */
 typedef struct mgcom_region_key_tag {
-    uint64_t info[2];
+    void*    pointer;
+    
+    // (ibv)   info = rkey
+    // (fjmpi) info = memid
+    uint64_t info;
 }
 mgcom_region_key;
 
+/**
+ * Local registered region.
+ * NOT guaranteed to be POD.
+ * DO NOT access the members directly.
+ */
 typedef struct mgcom_local_region_tag {
-    uint64_t local;
     mgcom_region_key key;
+    
+    // (ibv)   info = lkey
+    // (fjmpi) info = laddr
+    uint64_t info;
 }
 mgcom_local_region;
 
+/**
+ * Remote registered region.
+ * NOT guaranteed to be POD.
+ * DO NOT access the members directly.
+ */
 typedef struct mgcom_remote_region_tag {
-    uint64_t info[2];
+    mgcom_region_key key;
+    
+    // (ibv)   info = (unused)
+    // (fjmpi) info = raddr
+    uint64_t info;
 }
 mgcom_remote_region;
 
@@ -51,7 +77,7 @@ mgcom_local_address;
 /**
  * Address of registered memory region located on a remote process.
  */
-typedef struct mgcom_remote_region_address_tag {
+typedef struct mgcom_remote_address_tag {
     mgcom_remote_region           region;
     
     /**
