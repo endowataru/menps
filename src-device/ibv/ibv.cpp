@@ -363,7 +363,7 @@ local_region_t register_region(
     void*                          local_pointer
 ,   index_t                        size_in_bytes
 ) {
-    ibv_mr* mr = g_com.register_memory(local_pointer, size_in_bytes);
+    ::ibv_mr* mr = g_com.register_memory(local_pointer, size_in_bytes);
     
     local_region_t region;
     region.local = reinterpret_cast<mgbase::uint64_t>(mr);
