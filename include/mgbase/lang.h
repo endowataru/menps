@@ -3,6 +3,10 @@
 
 // Language Compatibility
 
+#define MGBASE_CONCAT(x, y)  MGBASE_CONCAT1(x, y)
+#define MGBASE_CONCAT1(x, y) MGBASE_CONCAT2(x, y)
+#define MGBASE_CONCAT2(x, y) x##y
+
 #ifndef __cplusplus
     #include <stdint.h>
     #include <stdlib.h>
@@ -16,10 +20,12 @@
     #define MGBASE_NOEXCEPT
     #define MGBASE_OVERRIDE
     #define MGBASE_NULLPTR              0
-    #define MGBASE_STATIC_ASSERT(expr, msg)
     #define MGBASE_EMPTY_DECL           { }
     #define MGBASE_CONSTEXPR            const
     #define MGBASE_CONSTEXPR_CPP14
+    
+    #define MGBASE_STATIC_ASSERT(expr, msg) \
+        typedef char MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)[((expr)) ? 1 : -1]
     
     #define MGBASE_EXTERN_C_BEGIN
     #define MGBASE_EXTERN_C_END
@@ -62,11 +68,20 @@
         #define MGBASE_NOEXCEPT                  throw()
         #define MGBASE_OVERRIDE
         #define MGBASE_NULLPTR                   0
-        #define MGBASE_STATIC_ASSERT(expr, msg)
         #define MGBASE_EMPTY_DEFINITION          { }
         #define MGBASE_ALIGNAS(a)                __attribute__((aligned(a)))
         #define MGBASE_DECLTYPE(x)               __typeof__(x)
         #define MGBASE_CONSTEXPR                 const
+        
+        namespace mgbase {
+            template <bool> struct static_assertion;
+            template <> struct static_assertion<true> { };
+            template <unsigned int> struct static_assert_check { };
+        }
+        
+        #define MGBASE_STATIC_ASSERT(expr, msg) \
+            typedef ::mgbase::static_assert_check<sizeof(::mgbase::static_assertion<((expr))>)> \
+                MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)
         
         namespace mgbase {
             class noncopyable {
