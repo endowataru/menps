@@ -10,20 +10,23 @@ int main(int argc, char* argv[])
     initialize(&argc, &argv);
     
     int x = 0;
-    local_region_t local_region = register_region(&x, sizeof(x));
+    local_region local_reg = register_region(&x, sizeof(x));
     
-    region_key_t remote_key;
+    const region_key local_key = to_region_key(local_reg);
+    region_key remote_key;
     
     process_id_t current = current_process_id();
     process_id_t other = 1 - current_process_id();
-    MPI_Sendrecv(&local_region.key, sizeof(region_key_t), MPI_BYTE,
+    MPI_Sendrecv(&local_key, sizeof(region_key), MPI_BYTE,
                  static_cast<int>(other), 0,
-                 &remote_key, sizeof(region_key_t), MPI_BYTE,
+                 &remote_key, sizeof(region_key), MPI_BYTE,
                  static_cast<int>(other), 0,
                  MPI_COMM_WORLD, MGBASE_NULLPTR);
     
-    local_address_t local_addr = { local_region, 0 };
-    remote_address_t remote_addr = { use_remote_region(other, remote_key, sizeof(x)), 0 };
+    remote_region remote_reg = use_remote_region(other, remote_key);
+    
+    local_address  local_addr  = to_address(local_reg);
+    remote_address remote_addr = to_address(remote_reg);
     
     mgbase::stopwatch sw;
     
@@ -42,8 +45,9 @@ int main(int argc, char* argv[])
             poll();
         }*/
         
-        MGBASE_SCOPED_ASYNC(r, write_async, local_addr, remote_addr, sizeof(x), other)
-        while (!mgbase::test(r)) { }
+        write_cb cb;
+        write_async(&cb, local_addr, remote_addr, sizeof(x), other);
+        while (!mgbase::async_test(cb)) { }
         
         
         
