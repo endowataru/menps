@@ -27,33 +27,51 @@ public:
     {
         mpi_base::initialize(argc, argv);
         
-        if (::MPI_Win_create_dynamic(MPI_INFO_NULL, MPI_COMM_WORLD, &win_) != MPI_SUCCESS)
-            throw mpi3_error();
-        
-        if (::MPI_Win_lock_all(0, win_) != MPI_SUCCESS) // TODO : Assertion
-            throw mpi3_error();
+        throw_if_error(
+            ::MPI_Win_create_dynamic(MPI_INFO_NULL, MPI_COMM_WORLD, &win_)
+        );
+        throw_if_error( 
+            ::MPI_Win_lock_all(0, win_) // TODO : Assertion
+        );
         
         num_requests_ = 0;
     }
     
     void finalize()
     {
-        if (::MPI_Win_unlock_all(win_) != MPI_SUCCESS)
-            throw mpi3_error();
+        throw_if_error(
+            ::MPI_Win_unlock_all(win_)
+        );
         
-        if (::MPI_Win_free(&win_) != MPI_SUCCESS)
-            throw mpi3_error();
+        throw_if_error(
+            ::MPI_Win_free(&win_)
+        );
         
         mpi_base::finalize();
     }
     
     MPI_Aint attach(void* ptr, ::MPI_Aint size)
     {
-        throw_if_error(::MPI_Win_attach(win_, ptr, size));
+        mgbase::lock_guard<lock_type> lc(lock_);
+        
+        throw_if_error(
+            ::MPI_Win_attach(win_, ptr, size)
+        );
         
         MPI_Aint addr;
-        throw_if_error(::MPI_Get_address(ptr, &addr));
+        throw_if_error(
+            ::MPI_Get_address(ptr, &addr)
+        );
         return addr;
+    }
+    
+    void detach(void* ptr)
+    {
+        mgbase::lock_guard<lock_type> lc(lock_);
+        
+        throw_if_error(
+            ::MPI_Win_detach(win_, ptr)
+        );
     }
     
     bool try_put(
@@ -72,12 +90,13 @@ public:
         if (num_requests_ >= max_num_requests)
             return false;
         
-        if (MPI_Put(
-            src_ptr, size, MPI_BYTE,
-            dest_rank, dest_index, size, MPI_BYTE,
-            win_
-        ) != MPI_SUCCESS)
-            throw mpi3_error();
+        throw_if_error(
+            MPI_Put(
+                src_ptr, size, MPI_BYTE,
+                dest_rank, dest_index, size, MPI_BYTE,
+                win_
+            )
+        );
         
         on_complete_[num_requests_++] = on_complete;
         
@@ -92,8 +111,9 @@ public:
         
         mgbase::lock_guard<lock_type> lc(lock_, mgbase::adopt_lock);
         
-        if (::MPI_Win_flush_all(win_) != MPI_SUCCESS)
-            throw mpi3_error();
+        throw_if_error(
+            ::MPI_Win_flush_all(win_)
+        );
         
         for (index_t i = 0; i < num_requests_; ++i)
             notify(on_complete_[i]);
@@ -133,6 +153,11 @@ local_region register_region(
 ) {
     const ::MPI_Aint addr = g_com.attach(local_pointer, static_cast< ::MPI_Aint>(size_in_bytes));
     return make_local_region(make_region_key(reinterpret_cast<void*>(addr), 0), 0);
+}
+
+void deregister_region(const local_region& region)
+{
+    g_com.detach(to_pointer(region));
 }
 
 remote_region use_remote_region(
