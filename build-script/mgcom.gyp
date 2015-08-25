@@ -28,7 +28,8 @@
             'target_name': 'mgcom-mpi3',
             'type': 'static_library',
             'sources': [
-                '../src-device/mpi3/mpi3.cpp'
+                '../src-common/contiguous.cpp',
+                '../src-device/mpi3/rma.cpp',
             ]
         }
     ],

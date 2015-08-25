@@ -27,11 +27,13 @@
             'OTHER_CPLUSPLUSFLAGS': [
                 '-O3', '-Wall', '-Werror',
                 '-Wno-variadic-macros',
-                '-pedantic', '-Wextra', '-Wcast-align', '-Wcast-qual', '-Wctor-dtor-privacy',
+                '-pedantic', '-Wextra', '-Wcast-qual', '-Wctor-dtor-privacy',
                 '-Wdisabled-optimization', '-Wformat=2', '-Winit-self', '-Wmissing-declarations',
-                '-Wmissing-include-dirs', '-Wold-style-cast', '-Woverloaded-virtual', '-Wredundant-decls',
+                '-Wmissing-include-dirs', '-Woverloaded-virtual', '-Wredundant-decls',
                 '-Wshadow', '-Wsign-conversion', '-Wsign-promo', '-Wstrict-overflow=5', '-Wswitch-default', '-Wundef', '-Wno-unused',
+                '-Wno-c++11-long-long',
             ],
+            # '-Wold-style-cast', '-Wcast-align', # mpi.h
         },
       }, # Release
     }, # configurations

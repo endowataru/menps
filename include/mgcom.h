@@ -28,6 +28,7 @@ typedef struct mgcom_region_key_tag {
     
     // (ibv)   info = rkey
     // (fjmpi) info = memid
+    // (mpi3)  info = win_id
     uint64_t info;
 }
 mgcom_region_key;
@@ -92,6 +93,8 @@ mgcom_remote_address;
 typedef enum mgcom_local_operation_tag {
     MGCOM_LOCAL_NO_OPERATION
 ,   MGCOM_LOCAL_ASSIGN_INT8
+,   MGCOM_LOCAL_ASSIGN_INT16
+,   MGCOM_LOCAL_ASSIGN_INT32
 ,   MGCOM_LOCAL_ASSIGN_INT64
 ,   MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32
 ,   MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64
@@ -186,7 +189,11 @@ mgcom_error_t mgcom_try_read_async(
 
 /// Control block for non-blocking contiguous write.
 typedef struct mgcom_write_cb_tag {
-    mgbase_async_request request;
+    mgbase_async_request  request;
+    mgcom_local_address   local_addr;
+    mgcom_remote_address  remote_addr;
+    mgcom_index_t         size_in_bytes;
+    mgcom_process_id_t    dest_proc;
 }
 mgcom_write_cb;
 

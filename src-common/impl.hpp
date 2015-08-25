@@ -7,6 +7,15 @@ namespace mgcom {
 
 namespace {
 
+inline void* to_pointer(const remote_region& region) MGBASE_NOEXCEPT {
+    return region.key.pointer;
+}
+
+inline void* to_pointer(const remote_address& addr) MGBASE_NOEXCEPT {
+    return static_cast<mgbase::uint8_t*>(to_pointer(addr.region)) + addr.offset;
+}
+
+
 inline region_key make_region_key(void* pointer, mgbase::uint64_t info) MGBASE_NOEXCEPT {
     region_key key = { pointer, info };
     return key;
@@ -30,6 +39,14 @@ inline void notify(const local_notifier& notif) MGBASE_NOEXCEPT {
         
         case MGCOM_LOCAL_ASSIGN_INT8:
             *static_cast<mgbase::uint8_t*>(notif.pointer) = static_cast<mgbase::uint8_t>(notif.value);
+            break;
+        
+        case MGCOM_LOCAL_ASSIGN_INT16:
+            *static_cast<mgbase::int16_t*>(notif.pointer) = static_cast<mgbase::int16_t>(notif.value);
+            break;
+        
+        case MGCOM_LOCAL_ASSIGN_INT32:
+            *static_cast<mgbase::int32_t*>(notif.pointer) = static_cast<mgbase::int32_t>(notif.value);
             break;
         
         case MGCOM_LOCAL_ASSIGN_INT64:

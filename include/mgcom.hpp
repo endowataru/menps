@@ -241,6 +241,22 @@ inline local_notifier make_notifier_assign(bool* ptr, bool value) MGBASE_NOEXCEP
     local_notifier result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
     return result;
 }
+inline local_notifier make_notifier_assign(mgbase::uint8_t* ptr, mgbase::uint8_t value) MGBASE_NOEXCEPT {
+    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
+    return result;
+}
+inline local_notifier make_notifier_assign(mgbase::uint16_t* ptr, mgbase::uint16_t value) MGBASE_NOEXCEPT {
+    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT16, ptr, value };
+    return result;
+}
+inline local_notifier make_notifier_assign(mgbase::uint32_t* ptr, mgbase::uint32_t value) MGBASE_NOEXCEPT {
+    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT32, ptr, value };
+    return result;
+}
+inline local_notifier make_notifier_assign(mgbase::uint64_t* ptr, mgbase::uint64_t value) MGBASE_NOEXCEPT {
+    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT64, ptr, value };
+    return result;
+}
 
 inline local_notifier make_notifier_fetch_add(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) MGBASE_NOEXCEPT {
     local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, diff };
