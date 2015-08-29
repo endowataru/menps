@@ -6,7 +6,7 @@ namespace mgcom {
 namespace {
 
 void test_write(void* /*cb_*/) {
-    poll();
+    poll_rma();
 }
 
 void start_write(void* cb_) {

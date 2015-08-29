@@ -12,6 +12,16 @@
             ],
         },
         {
+            'target_name' : 'latency-am',
+            'type' : 'executable',
+            'sources' : [
+                '../example/latency-am.cpp',
+            ],
+            'dependencies' : [
+                './mgcom.gyp:mgcom-mpi3',
+            ],
+        },
+        {
             'target_name' : 'test',
             'type' : 'executable',
             'sources' : [

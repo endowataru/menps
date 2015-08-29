@@ -199,7 +199,12 @@ typedef ::mgcom_am_handler_id_t       am_handler_id_t;
 
 typedef ::mgcom_am_handler_callback_t am_handler_callback_t;
 
-void register_am_handler(am_handler_callback_t);
+typedef ::mgcom_am_callback_parameter am_callback_parameter;
+
+void register_am_handler(
+    am_handler_id_t       id
+,   am_handler_callback_t callback
+);
 
 typedef ::mgcom_send_am_cb  send_am_cb;
 
@@ -212,7 +217,9 @@ void send_am(
 );
 
 
-void poll();
+void poll_rma();
+
+void poll_am();
 
 
 /**

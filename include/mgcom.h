@@ -294,10 +294,17 @@ mgcom_error_t mgcom_rmw_async(
  */
 typedef mgcom_index_t  mgcom_am_handler_id_t;
 
+typedef struct mgcom_callback_argument_tag {
+    mgcom_process_id_t source;
+    const void*        data;
+    mgcom_index_t      size;
+}
+mgcom_am_callback_parameter;
+
 /**
  * Callback function of Active Messages' handler.
  */
-typedef void (*mgcom_am_handler_callback_t)(const void*, mgcom_index_t);
+typedef void (*mgcom_am_handler_callback_t)(const mgcom_am_callback_parameter*);
 
 /**
  * Register a callback function as a Active Messages' handler.
