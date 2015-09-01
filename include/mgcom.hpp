@@ -15,15 +15,6 @@ typedef ::mgcom_index_t                  index_t;
 
 typedef ::mgcom_process_id_t             process_id_t;
 
-typedef ::mgcom_address_offset_t         address_offset_t;
-
-typedef ::mgcom_region_key               region_key;
-typedef ::mgcom_local_region             local_region;
-typedef ::mgcom_remote_region            remote_region;
-
-typedef ::mgcom_local_address            local_address;
-typedef ::mgcom_remote_address           remote_address;
-
 typedef ::mgcom_local_operation          local_operation;
 typedef ::mgcom_local_notifier           local_notifier;
 
@@ -38,6 +29,17 @@ void initialize(int* argc, char*** argv);
  * Finalize the communication.
  */
 void finalize();
+
+namespace rma {
+
+typedef ::mgcom_rma_address_offset_t         address_offset_t;
+
+typedef ::mgcom_rma_region_key               region_key;
+typedef ::mgcom_rma_local_region             local_region;
+typedef ::mgcom_rma_remote_region            remote_region;
+
+typedef ::mgcom_rma_local_address            local_address;
+typedef ::mgcom_rma_remote_address           remote_address;
 
 /**
  * Register a region located on the current process.
@@ -120,7 +122,7 @@ bool try_read_async(
 
 
 
-typedef ::mgcom_write_cb  write_cb;
+typedef ::mgcom_rma_write_cb  write_cb;
 
 /**
  * Non-blocking contiguous write.
@@ -133,7 +135,7 @@ void write_async(
 ,   process_id_t          dest_proc
 );
 
-typedef ::mgcom_read_cb  read_cb;
+typedef ::mgcom_rma_read_cb  read_cb;
 
 /**
  * Non-blocking contiguous read.
@@ -147,7 +149,7 @@ void read_async(
 );
 
 
-typedef ::mgcom_write_strided_cb  write_strided_cb;
+typedef ::mgcom_rma_write_strided_cb  write_strided_cb;
 
 /**
  * Non-blockng strided write.
@@ -164,7 +166,7 @@ void write_strided_async(
 );
 
 
-typedef ::mgcom_read_strided_cb  read_strided_cb;
+typedef ::mgcom_rma_read_strided_cb  read_strided_cb;
 
 /**
  * Non-blockng strided read.
@@ -181,7 +183,7 @@ void read_strided_async(
 );
 
 
-typedef ::mgcom_rmw_cb  rmw_cb;
+typedef ::mgcom_rma_rmw_cb  rmw_cb;
 
 /**
  * Non-blocking remote atomic operation.
@@ -195,14 +197,15 @@ void rmw_async(
 ,   process_id_t            dest_proc
 );
 
+}
 
 namespace am {
 
-typedef ::mgcom_am_handler_id_t       handler_id_t;
+typedef ::mgcom_am_handler_id_t        handler_id_t;
 
-typedef ::mgcom_am_handler_callback_t handler_callback_t;
+typedef ::mgcom_am_handler_callback_t  handler_callback_t;
 
-typedef ::mgcom_am_callback_parameter callback_parameters;
+typedef ::mgcom_am_callback_parameters callback_parameters;
 
 void register_handler(
     handler_id_t       id

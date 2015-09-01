@@ -14,6 +14,8 @@
 
 namespace mgcom {
 
+namespace rma {
+
 namespace {
 
 class fjmpi_error { };
@@ -253,13 +255,6 @@ com_fjmpi g_com;
 
 }
 
-void initialize(int* argc, char*** argv) {
-    g_com.initialize(argc, argv);
-}
-
-void finalize() {
-    g_com.finalize();
-}
 
 local_region register_region(
     void*   local_pointer
@@ -288,6 +283,7 @@ void deregister_region(const local_region& region)
 {
     g_com.deregister_memory(static_cast<int>(region.key.info));
 }
+
 
 namespace {
 
@@ -335,16 +331,27 @@ bool try_read_async(
     );
 }
 
+
+}
+
+void initialize(int* argc, char*** argv) {
+    rma::g_com.initialize(argc, argv);
+}
+
+void finalize() {
+    rma::g_com.finalize();
+}
+
 process_id_t current_process_id() MGBASE_NOEXCEPT {
-    return g_com.current_process_id();
+    return rma::g_com.current_process_id();
 }
 
 index_t number_of_processes() MGBASE_NOEXCEPT {
-    return g_com.number_of_processes();
+    return rma::g_com.number_of_processes();
 }
 
 void poll() {
-    g_com.poll();
+    rma::g_com.poll();
 }
 
 void barrier() {

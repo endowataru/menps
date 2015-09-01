@@ -3,6 +3,8 @@
 
 namespace mgcom {
 
+namespace rma {
+
 namespace {
 
 void test_write(void* /*cb_*/) {
@@ -34,6 +36,8 @@ void write_async(
     cb->size_in_bytes = size_in_bytes;
     cb->dest_proc     = dest_proc;
     mgbase::async_enter(cb, start_write);
+}
+
 }
 
 }

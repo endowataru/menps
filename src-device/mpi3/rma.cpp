@@ -19,7 +19,6 @@ void finalize() {
     g_impl.finalize();
 }
 
-}
 
 local_region register_region(
     void*   local_pointer
@@ -61,6 +60,8 @@ bool try_write_async(
 
 void poll_rma() {
     rma::g_impl.flush();
+}
+
 }
 
 void barrier() {

@@ -16,14 +16,14 @@ typedef uint64_t  mgcom_index_t;
 
 typedef uint32_t  mgcom_process_id_t;
 
-typedef uint64_t  mgcom_address_offset_t;
+typedef uint64_t  mgcom_rma_address_offset_t;
 
 /**
  * Region key.
  * Guaranteed to be POD.
  * DO NOT access the members directly.
  */
-typedef struct mgcom_region_key_tag {
+typedef struct mgcom_rma_region_key_tag {
     void*    pointer;
     
     // (ibv)   info = rkey
@@ -31,63 +31,63 @@ typedef struct mgcom_region_key_tag {
     // (mpi3)  info = win_id
     uint64_t info;
 }
-mgcom_region_key;
+mgcom_rma_region_key;
 
 /**
  * Local registered region.
  * NOT guaranteed to be POD.
  * DO NOT access the members directly.
  */
-typedef struct mgcom_local_region_tag {
-    mgcom_region_key key;
+typedef struct mgcom_rma_local_region_tag {
+    mgcom_rma_region_key key;
     
     // (ibv)   info = lkey
     // (fjmpi) info = laddr
     uint64_t info;
 }
-mgcom_local_region;
+mgcom_rma_local_region;
 
 /**
  * Remote registered region.
  * NOT guaranteed to be POD.
  * DO NOT access the members directly.
  */
-typedef struct mgcom_remote_region_tag {
-    mgcom_region_key key;
+typedef struct mgcom_rma_remote_region_tag {
+    mgcom_rma_region_key key;
     
     // (ibv)   info = (unused)
     // (fjmpi) info = raddr
     uint64_t info;
 }
-mgcom_remote_region;
+mgcom_rma_remote_region;
 
 /**
  * Address of registered memory region located on the local process.
  */
-typedef struct mgcom_local_address_tag {
-    mgcom_local_region            region;
+typedef struct mgcom_rma_local_address_tag {
+    mgcom_rma_local_region            region;
     
     /**
      * Offset from the base position.
      * Must be aligned by MGCOM_REGISTRATION_ALIGNMENT.
      */
-    mgcom_address_offset_t        offset;
+    mgcom_rma_address_offset_t        offset;
 }
-mgcom_local_address;
+mgcom_rma_local_address;
 
 /**
  * Address of registered memory region located on a remote process.
  */
-typedef struct mgcom_remote_address_tag {
-    mgcom_remote_region           region;
+typedef struct mgcom_rma_remote_address_tag {
+    mgcom_rma_remote_region           region;
     
     /**
      * Offset from the base position.
      * Must be aligned by MGCOM_REGISTRATION_ALIGNMENT.
      */
-    mgcom_address_offset_t        offset;
+    mgcom_rma_address_offset_t        offset;
 }
-mgcom_remote_address;
+mgcom_rma_remote_address;
 
 
 typedef enum mgcom_local_operation_tag {
@@ -135,157 +135,157 @@ mgcom_error_t mgcom_finalize(void) MGBASE_NOEXCEPT;
 /**
  * Register a region located on the current process.
  */
-mgcom_error_t mgcom_register_region(
-    void*                          local_pointer
-,   mgcom_index_t                  size_in_bytes
-,   mgcom_local_region*            result
+mgcom_error_t mgcom_rma_register_region(
+    void*                        local_pointer
+,   mgcom_index_t                size_in_bytes
+,   mgcom_rma_local_region*      result
 ) MGBASE_NOEXCEPT;
 
 
 /**
  * Prepare a region located on a remote process.
  */
-mgcom_error_t mgcom_use_remote_region(
-    mgcom_process_id_t             proc_id
-,   mgcom_region_key               key
-,   mgcom_index_t                  size_in_bytes
-,   mgcom_remote_region*           result
+mgcom_error_t mgcom_rma_use_remote_region(
+    mgcom_process_id_t           proc_id
+,   mgcom_rma_region_key         key
+,   mgcom_index_t                size_in_bytes
+,   mgcom_rma_remote_region*     result
 ) MGBASE_NOEXCEPT;
 
 /**
  * De-register the region located on the current process.
  */
-mgcom_error_t mgcom_deregister_region(
-    mgcom_local_region             region
-,   void*                          local_pointer
-,   mgcom_index_t                  size_in_bytes
+mgcom_error_t mgcom_rma_deregister_region(
+    mgcom_rma_local_region       region
+,   void*                        local_pointer
+,   mgcom_index_t                size_in_bytes
 ) MGBASE_NOEXCEPT;
 
 
 /**
  * Low-level function of contiguous write.
  */
-mgcom_error_t mgcom_try_write_async(
-    mgcom_local_address            local_addr
-,   mgcom_remote_address           remote_addr
-,   mgcom_index_t                  size_in_bytes
-,   mgcom_process_id_t             dest_proc
-,   mgcom_local_notifier           on_complete
-,   bool*                          succeeded
+mgcom_error_t mgcom_rma_try_write_async(
+    mgcom_rma_local_address      local_addr
+,   mgcom_rma_remote_address     remote_addr
+,   mgcom_index_t                size_in_bytes
+,   mgcom_process_id_t           dest_proc
+,   mgcom_local_notifier         on_complete
+,   bool*                        succeeded
 ) MGBASE_NOEXCEPT;
 
 /**
  * Low-level function of contiguous read.
  */
-mgcom_error_t mgcom_try_read_async(
-    mgcom_local_address            local_addr
-,   mgcom_remote_address           remote_addr
-,   mgcom_index_t                  size_in_bytes
-,   mgcom_process_id_t             dest_proc
-,   mgcom_local_notifier           on_complete
-,   bool*                          succeeded
+mgcom_error_t mgcom_rma_try_read_async(
+    mgcom_rma_local_address     local_addr
+,   mgcom_rma_remote_address    remote_addr
+,   mgcom_index_t               size_in_bytes
+,   mgcom_process_id_t          dest_proc
+,   mgcom_local_notifier        on_complete
+,   bool*                       succeeded
 ) MGBASE_NOEXCEPT;
 
 
 /// Control block for non-blocking contiguous write.
-typedef struct mgcom_write_cb_tag {
-    mgbase_async_request  request;
-    mgcom_local_address   local_addr;
-    mgcom_remote_address  remote_addr;
-    mgcom_index_t         size_in_bytes;
-    mgcom_process_id_t    dest_proc;
+typedef struct mgcom_rma_write_cb_tag {
+    mgbase_async_request        request;
+    mgcom_rma_local_address     local_addr;
+    mgcom_rma_remote_address    remote_addr;
+    mgcom_index_t               size_in_bytes;
+    mgcom_process_id_t          dest_proc;
 }
-mgcom_write_cb;
+mgcom_rma_write_cb;
 
 /**
  * Non-blocking contiguous write.
  */
-mgcom_error_t mgcom_write_async(
-    mgcom_write_cb*           cb
-,   mgcom_local_address       local_addr
-,   mgcom_remote_address      remote_addr
-,   mgcom_index_t             size_in_bytes
-,   mgcom_process_id_t        dest_proc
+mgcom_error_t mgcom_rma_write_async(
+    mgcom_rma_write_cb*         cb
+,   mgcom_rma_local_address     local_addr
+,   mgcom_rma_remote_address    remote_addr
+,   mgcom_index_t               size_in_bytes
+,   mgcom_process_id_t          dest_proc
 ) MGBASE_NOEXCEPT;
 
 
 /// Control block for non-blocking contiguous read.
-typedef struct mgcom_read_cb_tag {
+typedef struct mgcom_rma_read_cb_tag {
     mgbase_async_request request;
 }
-mgcom_read_cb;
+mgcom_rma_read_cb;
 
 /**
  * Non-blocking contiguous read.
  */
-mgcom_error_t mgcom_read_async(
-    mgcom_read_cb*           cb
-,   mgcom_local_address      local_addr
-,   mgcom_remote_address     remote_addr
-,   mgcom_index_t            size_in_bytes
-,   mgcom_process_id_t       dest_proc
+mgcom_error_t mgcom_rma_read_async(
+    mgcom_rma_read_cb*          cb
+,   mgcom_rma_local_address     local_addr
+,   mgcom_rma_remote_address    remote_addr
+,   mgcom_index_t               size_in_bytes
+,   mgcom_process_id_t          dest_proc
 ) MGBASE_NOEXCEPT;
 
 
 
 /// Control block for asynchronous strided write.
-typedef struct mgcom_write_strided_cb_tag {
+typedef struct mgcom_rma_write_strided_cb_tag {
     mgbase_async_request request;
 }
-mgcom_write_strided_cb;
+mgcom_rma_write_strided_cb;
 
 /**
  * Non-blockng strided write.
  */
-mgcom_error_t mgcom_write_strided_async(
-    mgcom_write_strided_cb* cb
-,   mgcom_local_address     local_addr
-,   mgcom_index_t*          local_stride
-,   mgcom_remote_address    remote_addr
-,   mgcom_index_t*          remote_stride
-,   mgcom_index_t*          count
-,   mgcom_index_t           stride_level
-,   mgcom_process_id_t      dest_proc
+mgcom_error_t mgcom_rma_write_strided_async(
+    mgcom_rma_write_strided_cb* cb
+,   mgcom_rma_local_address     local_addr
+,   mgcom_index_t*              local_stride
+,   mgcom_rma_remote_address    remote_addr
+,   mgcom_index_t*              remote_stride
+,   mgcom_index_t*              count
+,   mgcom_index_t               stride_level
+,   mgcom_process_id_t          dest_proc
 ) MGBASE_NOEXCEPT;
 
 
 /// Control block for asynchronous strided read.
-typedef struct mgcom_read_strided_cb_tag {
+typedef struct mgcom_rma_read_strided_cb_tag {
     mgbase_async_request request;
 }
-mgcom_read_strided_cb;
+mgcom_rma_read_strided_cb;
 
 /**
  * Non-blockng strided read.
  */
-mgcom_error_t mgcom_read_strided_async(
-    mgcom_read_strided_cb* cb
-,   mgcom_local_address    local_addr
-,   mgcom_index_t*         local_stride
-,   mgcom_remote_address   remote_addr
-,   mgcom_index_t*         remote_stride
-,   mgcom_index_t*         count
-,   mgcom_index_t          stride_level
-,   mgcom_process_id_t     dest_proc
+mgcom_error_t mgcom_rma_read_strided_async(
+    mgcom_rma_read_strided_cb*  cb
+,   mgcom_rma_local_address     local_addr
+,   mgcom_index_t*              local_stride
+,   mgcom_rma_remote_address    remote_addr
+,   mgcom_index_t*              remote_stride
+,   mgcom_index_t*              count
+,   mgcom_index_t               stride_level
+,   mgcom_process_id_t          dest_proc
 ) MGBASE_NOEXCEPT;
 
 
 /// Control block for non-blocking remote atomic operation.
-typedef struct mgcom_rmw_cb_tag {
+typedef struct mgcom_rma_rmw_cb_tag {
     mgbase_async_request request;
 }
-mgcom_rmw_cb;
+mgcom_rma_rmw_cb;
 
 /**
  * Non-blocking remote atomic operation.
  */
-mgcom_error_t mgcom_rmw_async(
-    mgcom_rmw_cb*           cb
-,   mgcom_remote_operation  operation
-,   void*                   local_expected
-,   mgcom_local_address     local_addr
-,   mgcom_remote_address    remote_addr
-,   mgcom_process_id_t      dest_proc
+mgcom_error_t mgcom_rma_rmw_async(
+    mgcom_rma_rmw_cb*           cb
+,   mgcom_remote_operation      operation
+,   void*                       local_expected
+,   mgcom_rma_local_address     local_addr
+,   mgcom_rma_remote_address    remote_addr
+,   mgcom_process_id_t          dest_proc
 ) MGBASE_NOEXCEPT;
 
 
@@ -299,12 +299,12 @@ typedef struct mgcom_callback_argument_tag {
     const void*        data;
     mgcom_index_t      size;
 }
-mgcom_am_callback_parameter;
+mgcom_am_callback_parameters;
 
 /**
  * Callback function of Active Messages' handler.
  */
-typedef void (*mgcom_am_handler_callback_t)(const mgcom_am_callback_parameter*);
+typedef void (*mgcom_am_handler_callback_t)(const mgcom_am_callback_parameters*);
 
 /**
  * Register a callback function as a Active Messages' handler.
