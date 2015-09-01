@@ -309,22 +309,35 @@ typedef void (*mgcom_am_handler_callback_t)(const mgcom_am_callback_parameter*);
 /**
  * Register a callback function as a Active Messages' handler.
  */
-mgcom_error_t mgcom_register_am_handler(
+mgcom_error_t mgcom_am_register_handler(
     mgcom_am_handler_id_t
 ,   mgcom_am_handler_callback_t
 );
 
-/// Control block for sending Active Messages.
-typedef struct mgcom_send_am_cb_tag {
-    mgbase_async_request request;
+#define MGCOM_AM_MAX_DATA_SIZE 1024
+#define MGCOM_AM_HANDLE_SIZE   1024
+
+typedef struct mgcom_am_message_tag {
+    mgcom_am_handler_id_t id;
+    mgcom_index_t         size;
+    mgbase::uint8_t       data[MGCOM_AM_MAX_DATA_SIZE]; // TODO
 }
-mgcom_send_am_cb;
+mgcom_am_message;
+
+/// Control block for sending Active Messages.
+typedef struct mgcom_am_send_cb_tag {
+    mgbase_async_request  request;
+    mgcom_process_id_t    dest_proc;
+    mgcom_am_message      msg;
+    mgbase::uint8_t       handle[MGCOM_AM_HANDLE_SIZE];
+}
+mgcom_am_send_cb;
 
 /**
  * Invoke the callback function on the specified remote node.
  */
-mgcom_error_t mgcom_send_am(
-    mgcom_send_am_cb*     cb
+mgcom_error_t mgcom_am_send(
+    mgcom_am_send_cb*     cb
 ,   mgcom_am_handler_id_t id
 ,   const void*           value
 ,   mgcom_index_t         size

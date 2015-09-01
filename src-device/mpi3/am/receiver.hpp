@@ -6,7 +6,6 @@
 namespace mgcom {
 
 namespace am {
-
 namespace receiver {
 
 void initialize();
@@ -14,7 +13,6 @@ void initialize();
 void finalize();
 
 }
-
 }
 
 }

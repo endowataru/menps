@@ -2,7 +2,6 @@
 #include <mgcom.hpp>
 #include <mpi.h>
 #include "mpi_error.hpp"
-#include "am_message.hpp"
 
 namespace mgcom {
 
@@ -19,7 +18,7 @@ public:
     
     void initialize()
     {
-        callbacks_ = new am_handler_callback_t[max_num_callbacks];
+        callbacks_ = new handler_callback_t[max_num_callbacks];
         
         for (index_t i = 0; i < max_num_requests; ++i) {
             irecv(i);
@@ -31,7 +30,7 @@ public:
         delete[] callbacks_;
     }
     
-    void register_handler(am_handler_id_t id, am_handler_callback_t callback) {
+    void register_handler(handler_id_t id, handler_callback_t callback) {
         callbacks_[id] = callback;
     }
     
@@ -61,25 +60,25 @@ public:
     }
     
 private:
-    void call(process_id_t src, am_message& msg) {
-        am_callback_parameter param;
-        param.source = src;
-        param.data   = msg.data;
-        param.size   = msg.size;
+    void call(process_id_t src, message& msg) {
+        callback_parameters params;
+        params.source = src;
+        params.data   = msg.data;
+        params.size   = msg.size;
         
-        callbacks_[msg.id](&param);
+        callbacks_[msg.id](&params);
     }
     
     void irecv(int index) {
         mpi_error::check(
-            MPI_Irecv(&buffers_[index], sizeof(am_message), MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &requests_[index])
+            MPI_Irecv(&buffers_[index], sizeof(message), MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &requests_[index])
         );
     }
     
-    am_handler_callback_t* callbacks_;
-    MPI_Request requests_[max_num_requests];
+    handler_callback_t* callbacks_;
     
-    am_message buffers_[max_num_requests];
+    MPI_Request requests_[max_num_requests];
+    message buffers_[max_num_requests];
 };
 
 impl g_impl;
@@ -97,22 +96,22 @@ void finalize()
 }
 
 }
-}
 
 
-void register_am_handler(
-    am_handler_id_t       id
-,   am_handler_callback_t callback
+void register_handler(
+    handler_id_t       id
+,   handler_callback_t callback
 )
 {
-    am::receiver::g_impl.register_handler(id, callback);
+    receiver::g_impl.register_handler(id, callback);
 }
 
-void poll_am()
+void poll_am_receiver()
 {
-    am::receiver::g_impl.poll_am();
+    receiver::g_impl.poll_am();
 }
 
+}
 
 }
 

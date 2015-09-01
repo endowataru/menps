@@ -4,9 +4,13 @@
 
 namespace {
 
-void f(const mgcom::am_callback_parameter* param) {
-    int val = *static_cast<const int*>(param->data);
+void f(const mgcom::am::callback_parameters* params) {
+    int val = *static_cast<const int*>(params->data);
     std::cout << "f: " << val << " @ " << mgcom::current_process_id() << std::endl;
+    
+    int result = val + 1;
+    
+    mgcom::am::reply(params, &result, sizeof(int));
 }
 
 }
@@ -17,12 +21,12 @@ int main(int argc, char* argv[])
     
     initialize(&argc, &argv);
     
-    register_am_handler(0, f);
+    am::register_handler(0, f);
     
     if (current_process_id() == 0) {
-        send_am_cb cb;
+        am::send_cb cb;
         int val = 123;
-        send_am(&cb, 0, &val, sizeof(val), 1);
+        am::send(&cb, 0, &val, sizeof(val), 1);
         while (mgbase::async_test(cb)) { }
     }
     

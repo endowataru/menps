@@ -195,32 +195,43 @@ void rmw_async(
 ,   process_id_t            dest_proc
 );
 
-typedef ::mgcom_am_handler_id_t       am_handler_id_t;
 
-typedef ::mgcom_am_handler_callback_t am_handler_callback_t;
+namespace am {
 
-typedef ::mgcom_am_callback_parameter am_callback_parameter;
+typedef ::mgcom_am_handler_id_t       handler_id_t;
 
-void register_am_handler(
-    am_handler_id_t       id
-,   am_handler_callback_t callback
+typedef ::mgcom_am_handler_callback_t handler_callback_t;
+
+typedef ::mgcom_am_callback_parameter callback_parameters;
+
+void register_handler(
+    handler_id_t       id
+,   handler_callback_t callback
 );
 
-typedef ::mgcom_send_am_cb  send_am_cb;
+typedef ::mgcom_am_message  message;
 
-void send_am(
-    send_am_cb*     cb
-,   am_handler_id_t id
+typedef ::mgcom_am_send_cb  send_cb;
+
+void send(
+    send_cb*        cb
+,   handler_id_t    id
 ,   const void*     value
 ,   index_t         size
 ,   process_id_t    dest_proc
 );
 
+void poll();
+
+void reply(
+    const callback_parameters* params
+,   const void*                value
+,   index_t                    size
+);
+
+}
 
 void poll_rma();
-
-void poll_am();
-
 
 /**
  * Barrier (Collective)
