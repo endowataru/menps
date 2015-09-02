@@ -1,8 +1,6 @@
 
 #pragma once
 
-#pragma GCC diagnostic ignored "-Wundef"
-
 #include <cstdio>
 #include <functional>
 #include <iostream>
@@ -44,11 +42,21 @@ private:
 
 #define MGBASE_LOG_LEVEL_DEBUG 0
 
+#ifndef MGBASE_LOG_LEVEL
+    #define MGBASE_LOG_LEVEL  MGBASE_LOG_LEVEL_DEBUG
+#endif
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvariadic-macros"
+#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+
 #if MGBASE_LOG_LEVEL <= MGBASE_LOG_LEVEL_DEBUG
     #define MGBASE_LOG_DEBUG(format, ...)  fmt::print("{}" format, ::mgbase::logger::get_state(), ## __VA_ARGS__), std::cout << std::endl
 #else
     #define MGBASE_LOG_DEBUG(format, ...)
 #endif
+
+#pragma GCC diagnostic pop
 
 }
 
