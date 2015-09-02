@@ -2,9 +2,13 @@
 #include <mgcom.hpp>
 #include <mpi.h>
 #include "mpi_error.hpp"
+#include "mpi_base.hpp"
 #include "../am.hpp"
 #include "receiver.hpp"
 #include "sender.hpp"
+
+#include <mgbase/threading/lock_guard.hpp>
+#include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 
@@ -49,10 +53,10 @@ public:
         int flag;
         MPI_Status status;
         
-        /*
-         * TODO : Thread safety of MPI_Tesyany.
-         *        It's confirmed to be guaranteed on OpenMPI.
-         */
+        if (!mpi_base::get_lock().try_lock())
+            return;
+        
+        mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
         
         mpi_error::check(
             MPI_Testany(static_cast<int>(constants::max_num_tickets), requests_, &index, &flag, &status)
@@ -79,9 +83,11 @@ private:
         params.data   = msg.data;
         params.size   = msg.size;
         
-        std::cout << current_process_id() << " call" << std::endl;
+        MGBASE_LOG_DEBUG("Invoking callback: src={}, id={}", src, msg.id);
         
         callbacks_[msg.id](&params);
+        
+        MGBASE_LOG_DEBUG("Finished callback");
     }
     
     void irecv(int index) {

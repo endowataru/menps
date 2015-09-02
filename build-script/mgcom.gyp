@@ -37,7 +37,10 @@
                 '../src-device/mpi3/am/receiver.cpp',
                 '../src-device/mpi3/am/sender.cpp',
                 '../src-device/mpi3/am/sender_queue.cpp',
-            ]
+            ],
+            'dependencies' : [
+                '../mgbase/build-script/cppformat.gyp:cppformat',
+            ],
         }
     ],
 }

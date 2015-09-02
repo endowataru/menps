@@ -4,6 +4,7 @@
 #include "../am.hpp"
 #include "mpi_base.hpp"
 #include <mgbase/threading/lock_guard.hpp>
+#include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 
@@ -30,8 +31,10 @@ public:
     ,   process_id_t    dest_proc
     ,   MPI_Request*    request
     ) {
-        if (!get_resource_at(dest_proc))
+        if (!get_resource_at(dest_proc)) {
+            MGBASE_LOG_DEBUG("Failed to get a ticket");
             return false;
+        }
         
         if (!mpi_base::get_lock().try_lock()) {
             add_ticket(dest_proc, 1);
@@ -53,6 +56,8 @@ public:
             ,   request
             )
         );
+        
+        MGBASE_LOG_DEBUG("MPI_Irsend succeeded");
         
         return true;
     }
@@ -90,10 +95,7 @@ void test_send(void* cb_) {
     
     if (flag) {
         mgbase::async_finished(&cb);
-        std::cout << "finished" << std::endl;
     }
-    
-    //std::cout << "flag=" << flag << std::endl;
 }
 
 void start_send(void* cb_) {
@@ -101,10 +103,7 @@ void start_send(void* cb_) {
     
     MPI_Request* request = reinterpret_cast<MPI_Request*>(cb.handle);
     
-    std::cout << current_process_id() << " try_send" << std::endl;
-    
     if (g_impl.try_send(cb.msg, cb.dest_proc, request)) {
-    std::cout << current_process_id() << "enter" << std::endl;
         mgbase::async_enter(&cb, test_send);
     }
 }

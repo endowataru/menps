@@ -18,7 +18,6 @@ void initialize() {
     receiver::initialize();
     sender::initialize();
     
-    MPI_Barrier(get_comm());
 }
 
 void finalize() {
