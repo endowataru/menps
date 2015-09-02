@@ -14,7 +14,7 @@ void finalize();
 
 void poll();
 
-index_t get_tickets(process_id_t src_proc);
+index_t pull_tickets_from(process_id_t src_proc);
 
 struct constants {
     static const index_t max_num_tickets = 32;

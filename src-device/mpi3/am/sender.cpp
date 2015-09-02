@@ -31,8 +31,8 @@ public:
     ,   process_id_t    dest_proc
     ,   MPI_Request*    request
     ) {
-        if (!get_resource_at(dest_proc)) {
-            MGBASE_LOG_DEBUG("msg:Failed to get a ticket");
+        if (!get_ticket_to(dest_proc)) {
+            MGBASE_LOG_DEBUG("msg:Failed to get a ticket.");
             return false;
         }
         
@@ -51,24 +51,27 @@ public:
             ,   size                        // count
             ,   MPI_BYTE                    // datatype
             ,   static_cast<int>(dest_proc) // dest
-            ,   0                           // tag  : TODO
+            ,   get_tag()                   // tag
             ,   get_comm()                  // comm
             ,   request
             )
         );
         
-        MGBASE_LOG_DEBUG("msg:MPI_Irsend succeeded");
+        MGBASE_LOG_DEBUG("msg:MPI_Irsend succeeded.\tdest:{}\tsize:{}", dest_proc, size);
         
         return true;
     }
     
     void add_ticket(process_id_t dest_proc, index_t ticket) {
+        MGBASE_LOG_DEBUG("msg:Added ticket.\tdest:{}\tbefore:{}\tdiff:{}", dest_proc, tickets_[dest_proc], ticket);
         tickets_[dest_proc] += ticket;
     }
     
 private:
-    bool get_resource_at(process_id_t dest_proc)
+    bool get_ticket_to(process_id_t dest_proc)
     {
+        // FIXME: atomic operations
+        
         index_t& ticket = tickets_[dest_proc];
         if (ticket <= 0)
             return false;
@@ -117,9 +120,8 @@ void finalize() {
     g_impl.finalize();
 }
 
-void add_ticket(process_id_t src_proc, index_t ticket)
-{
-    g_impl.add_ticket(src_proc, ticket);
+void add_ticket_to(process_id_t dest_proc, index_t ticket) {
+    g_impl.add_ticket(dest_proc, ticket);
 }
 
 }
@@ -132,9 +134,10 @@ void send(
 ,   process_id_t dest_proc
 )
 {
-    cb->dest_proc = dest_proc;
-    cb->msg.id    = id;
-    cb->msg.size  = size;
+    cb->dest_proc  = dest_proc;
+    cb->msg.id     = id;
+    cb->msg.size   = size;
+    cb->msg.ticket = receiver::pull_tickets_from(dest_proc);
     std::memcpy(cb->msg.data, value, size);
     
     mgbase::async_enter(cb, am::sender::start_send);

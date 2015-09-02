@@ -12,7 +12,7 @@ void initialize();
 
 void finalize();
 
-void add_ticket(process_id_t src_proc, index_t ticket);
+void add_ticket_to(process_id_t dest_proc, index_t ticket);
 
 }
 }
