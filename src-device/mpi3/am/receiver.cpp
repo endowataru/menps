@@ -83,11 +83,11 @@ private:
         params.data   = msg.data;
         params.size   = msg.size;
         
-        MGBASE_LOG_DEBUG("Invoking callback: src={}, id={}", src, msg.id);
+        MGBASE_LOG_DEBUG("msg:Invoking callback.\tsrc:{}\tid={}", src, msg.id);
         
         callbacks_[msg.id](&params);
         
-        MGBASE_LOG_DEBUG("Finished callback");
+        MGBASE_LOG_DEBUG("msg:Finished callback.");
     }
     
     void irecv(int index) {

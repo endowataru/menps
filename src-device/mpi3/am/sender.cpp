@@ -32,7 +32,7 @@ public:
     ,   MPI_Request*    request
     ) {
         if (!get_resource_at(dest_proc)) {
-            MGBASE_LOG_DEBUG("Failed to get a ticket");
+            MGBASE_LOG_DEBUG("msg:Failed to get a ticket");
             return false;
         }
         
@@ -57,7 +57,7 @@ public:
             )
         );
         
-        MGBASE_LOG_DEBUG("MPI_Irsend succeeded");
+        MGBASE_LOG_DEBUG("msg:MPI_Irsend succeeded");
         
         return true;
     }

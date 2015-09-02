@@ -12,7 +12,7 @@ namespace {
 
 std::string get_state() {
     fmt::MemoryWriter w;
-    w.write("[proc={}] ", current_process_id());
+    w.write("proc:{}\t ", current_process_id());
     return w.str();
 }
 
@@ -26,7 +26,7 @@ void initialize(int* argc, char*** argv)
     
     mgbase::logger::set_state_callback(get_state);
     
-    MGBASE_LOG_DEBUG("Initialized.");
+    MGBASE_LOG_DEBUG("msg:Initialized.");
 }
 
 void finalize()
@@ -38,7 +38,7 @@ void finalize()
     
     mpi_base::finalize();
     
-    MGBASE_LOG_DEBUG("Finalized.");
+    MGBASE_LOG_DEBUG("msg:Finalized.");
 }
 
 }
