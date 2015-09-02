@@ -64,6 +64,10 @@ void deregister_region(const local_region& region);
 
 namespace {
 
+MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
+
+MGBASE_CONSTEXPR index_t buffer_alignment       = MGCOM_BUFFER_ALIGNMENT;
+
 inline region_key to_region_key(const local_region& region) MGBASE_NOEXCEPT {
     return region.key;
 }
@@ -248,10 +252,6 @@ process_id_t current_process_id() MGBASE_NOEXCEPT;
 index_t number_of_processes() MGBASE_NOEXCEPT;
 
 namespace {
-
-MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
-
-MGBASE_CONSTEXPR index_t buffer_alignment       = MGCOM_BUFFER_ALIGNMENT;
 
 
 inline local_notifier make_notifier_no_operation() MGBASE_NOEXCEPT {

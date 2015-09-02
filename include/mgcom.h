@@ -211,7 +211,11 @@ mgcom_error_t mgcom_rma_write_async(
 
 /// Control block for non-blocking contiguous read.
 typedef struct mgcom_rma_read_cb_tag {
-    mgbase_async_request request;
+    mgbase_async_request        request;
+    mgcom_rma_local_address     local_addr;
+    mgcom_rma_remote_address    remote_addr;
+    mgcom_index_t               size_in_bytes;
+    mgcom_process_id_t          dest_proc;
 }
 mgcom_rma_read_cb;
 

@@ -13,7 +13,7 @@ namespace {
 std::string get_state() {
     static index_t number = 0;
     fmt::MemoryWriter w;
-    w.write("proc:{}\tid:{}\t", current_process_id(), number++);
+    w.write("proc:{}\tlog_id:{}\t", current_process_id(), number++);
     return w.str();
 }
 

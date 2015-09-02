@@ -41,6 +41,23 @@ remote_region use_remote_region(
     return make_remote_region(key, 0 /* unused */);
 }
 
+bool try_read_async(
+    const local_address&  local_addr
+,   const remote_address& remote_addr
+,   index_t               size_in_bytes
+,   process_id_t          dest_proc
+,   local_notifier        on_complete
+)
+{
+    return g_impl.try_get(
+        to_pointer(local_addr)
+    ,   static_cast<int>(dest_proc)
+    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   static_cast<int>(size_in_bytes)
+    ,   on_complete
+    );
+}
+
 bool try_write_async(
     const local_address&  local_addr
 ,   const remote_address& remote_addr

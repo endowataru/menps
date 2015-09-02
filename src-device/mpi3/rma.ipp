@@ -78,6 +78,36 @@ public:
         );
     }
     
+    bool try_get(
+        void* dest_ptr
+    ,   int src_rank
+    ,   ::MPI_Aint src_index
+    ,   int size
+    ,   local_notifier on_complete
+    )
+    {
+        if (!mpi_base::get_lock().try_lock())
+            return false;
+        
+        mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
+        
+        if (num_requests_ >= max_num_requests)
+            return false;
+        
+        mpi3_error::check(
+            MPI_Get(
+                dest_ptr, size, MPI_BYTE,
+                src_rank, src_index, size, MPI_BYTE,
+                win_
+            )
+        );
+        
+        on_complete_[num_requests_++] = on_complete;
+        
+        return true;
+    }
+    
+    
     bool try_put(
         const void* src_ptr
     ,   int dest_rank
