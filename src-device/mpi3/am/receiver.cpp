@@ -2,11 +2,16 @@
 #include <mgcom.hpp>
 #include <mpi.h>
 #include "mpi_error.hpp"
+#include "../am.hpp"
+#include "receiver.hpp"
+#include "sender.hpp"
 
 namespace mgcom {
 
 namespace am {
 namespace receiver {
+
+const index_t constants::max_num_tickets;
 
 namespace {
 
@@ -14,15 +19,19 @@ class impl
 {
 public:
     static const index_t max_num_callbacks = 1024;
-    static const index_t max_num_requests = 32;
     
     void initialize()
     {
         callbacks_ = new handler_callback_t[max_num_callbacks];
         
-        for (index_t i = 0; i < max_num_requests; ++i) {
+        for (index_t i = 0; i < constants::max_num_tickets; ++i) {
             irecv(i);
         }
+        
+        // We need to issue a barrier to assure that
+        // all processes have already issued MPI_Irecv()
+        // before allowing the user to send messages
+        MPI_Barrier(get_comm());
     }
     
     void finalize()
@@ -34,7 +43,7 @@ public:
         callbacks_[id] = callback;
     }
     
-    void poll_am()
+    void poll()
     {
         int index;
         int flag;
@@ -46,7 +55,7 @@ public:
          */
         
         mpi_error::check(
-            MPI_Testany(static_cast<int>(max_num_requests), requests_, &index, &flag, &status)
+            MPI_Testany(static_cast<int>(constants::max_num_tickets), requests_, &index, &flag, &status)
         );
         
         if (index == MPI_UNDEFINED)
@@ -54,9 +63,13 @@ public:
         
         const process_id_t src = static_cast<process_id_t>(status.MPI_SOURCE);
         
-        call(src, buffers_[index]);
+        message& msg = buffers_[index];
+        
+        call(src, msg);
         
         irecv(index);
+        
+        sender::add_ticket(src, msg.ticket);
     }
     
 private:
@@ -66,37 +79,40 @@ private:
         params.data   = msg.data;
         params.size   = msg.size;
         
+        std::cout << current_process_id() << " call" << std::endl;
+        
         callbacks_[msg.id](&params);
     }
     
     void irecv(int index) {
         mpi_error::check(
-            MPI_Irecv(&buffers_[index], sizeof(message), MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &requests_[index])
+            MPI_Irecv(&buffers_[index], sizeof(message), MPI_BYTE, MPI_ANY_SOURCE, 0, get_comm(), &requests_[index])
         );
     }
     
     handler_callback_t* callbacks_;
     
-    MPI_Request requests_[max_num_requests];
-    message buffers_[max_num_requests];
+    MPI_Request requests_[constants::max_num_tickets];
+    message buffers_[constants::max_num_tickets];
 };
 
 impl g_impl;
 
 }
 
-void initialize()
-{
+void initialize() {
     g_impl.initialize();
 }
 
-void finalize()
-{
+void finalize() {
     g_impl.finalize();
 }
 
+void poll() {
+    g_impl.poll();
 }
 
+}
 
 void register_handler(
     handler_id_t       id
@@ -104,11 +120,6 @@ void register_handler(
 )
 {
     receiver::g_impl.register_handler(id, callback);
-}
-
-void poll_am_receiver()
-{
-    receiver::g_impl.poll_am();
 }
 
 }

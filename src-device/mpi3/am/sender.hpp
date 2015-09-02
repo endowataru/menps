@@ -12,7 +12,7 @@ void initialize();
 
 void finalize();
 
-void release_resource_at(process_id_t proc);
+void add_ticket(process_id_t src_proc, index_t ticket);
 
 }
 }

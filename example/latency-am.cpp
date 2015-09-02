@@ -4,13 +4,29 @@
 
 namespace {
 
+struct argument {
+    bool* ptr;
+    int   value;
+};
+
+void g(const mgcom::am::callback_parameters* params) {
+    const argument& arg = *static_cast<const argument*>(params->data);
+    
+    std::cout << "g: " << arg.value << " @ " << mgcom::current_process_id() << std::endl;
+    
+    *arg.ptr = true;
+}
+
 void f(const mgcom::am::callback_parameters* params) {
-    int val = *static_cast<const int*>(params->data);
-    std::cout << "f: " << val << " @ " << mgcom::current_process_id() << std::endl;
+    const argument& arg = *static_cast<const argument*>(params->data);
     
-    int result = val + 1;
+    std::cout << "f: " << arg.value << " @ " << mgcom::current_process_id() << std::endl;
     
-    mgcom::am::reply(params, &result, sizeof(int));
+    argument sent_arg;
+    sent_arg.ptr = arg.ptr;
+    sent_arg.value = arg.value + 100;
+    
+    mgcom::am::reply(params, 1, &sent_arg, sizeof(argument));
 }
 
 }
@@ -22,12 +38,26 @@ int main(int argc, char* argv[])
     initialize(&argc, &argv);
     
     am::register_handler(0, f);
+    am::register_handler(1, g);
     
     if (current_process_id() == 0) {
         am::send_cb cb;
-        int val = 123;
-        am::send(&cb, 0, &val, sizeof(val), 1);
-        while (mgbase::async_test(cb)) { }
+        
+        bool flag = false;
+        
+        argument arg;
+        arg.ptr = &flag;
+        arg.value = 123;
+        
+        std::cout << "A" << std::endl;
+        am::send(&cb, 0, &arg, sizeof(argument), 1);
+        std::cout << "B" << std::endl;
+        while (!mgbase::async_test(cb)) { }
+        std::cout << "C" << std::endl;
+        
+        while (!flag)
+            am::poll();
+        
     }
     
     barrier();

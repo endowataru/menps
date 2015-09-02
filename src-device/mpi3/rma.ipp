@@ -52,8 +52,6 @@ public:
         mpi3_error::check(
             MPI_Win_free(&win_)
         );
-        
-        mpi_base::finalize();
     }
     
     MPI_Aint attach(void* ptr, ::MPI_Aint size)

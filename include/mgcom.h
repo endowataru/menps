@@ -320,6 +320,7 @@ mgcom_error_t mgcom_am_register_handler(
 typedef struct mgcom_am_message_tag {
     mgcom_am_handler_id_t id;
     mgcom_index_t         size;
+    mgcom_index_t         ticket;
     mgbase::uint8_t       data[MGCOM_AM_MAX_DATA_SIZE]; // TODO
 }
 mgcom_am_message;

@@ -17,3 +17,10 @@ The platforms to be supported are:
     - GCC
 - Infiniband Verbs
 
+Build
+-----
+
+    ./build
+    make -j
+
+

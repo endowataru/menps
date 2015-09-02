@@ -32,9 +32,11 @@
                 '../src-common/contiguous.cpp',
                 '../src-device/mpi3/mpi3.cpp',
                 '../src-device/mpi3/rma.cpp',
+                '../src-device/mpi3/barrier.cpp',
                 '../src-device/mpi3/am.cpp',
                 '../src-device/mpi3/am/receiver.cpp',
                 '../src-device/mpi3/am/sender.cpp',
+                '../src-device/mpi3/am/sender_queue.cpp',
             ]
         }
     ],

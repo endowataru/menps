@@ -197,6 +197,8 @@ void rmw_async(
 ,   process_id_t            dest_proc
 );
 
+void poll();
+
 }
 
 namespace am {
@@ -228,13 +230,12 @@ void poll();
 
 void reply(
     const callback_parameters* params
+,   handler_id_t               id
 ,   const void*                value
 ,   index_t                    size
 );
 
 }
-
-void poll_rma();
 
 /**
  * Barrier (Collective)

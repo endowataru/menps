@@ -8,7 +8,7 @@ namespace rma {
 namespace {
 
 void test_write(void* /*cb_*/) {
-    poll_rma();
+    poll();
 }
 
 void start_write(void* cb_) {

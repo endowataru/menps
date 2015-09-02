@@ -24,13 +24,13 @@ local_region register_region(
     void*   local_pointer
 ,   index_t size_in_bytes
 ) {
-    const MPI_Aint addr = rma::g_impl.attach(local_pointer, static_cast<MPI_Aint>(size_in_bytes));
+    const MPI_Aint addr = g_impl.attach(local_pointer, static_cast<MPI_Aint>(size_in_bytes));
     return make_local_region(make_region_key(reinterpret_cast<void*>(addr), 0), 0);
 }
 
 void deregister_region(const local_region& region)
 {
-    rma::g_impl.detach(to_pointer(region));
+    g_impl.detach(to_pointer(region));
 }
 
 remote_region use_remote_region(
@@ -49,7 +49,7 @@ bool try_write_async(
 ,   local_notifier        on_complete
 )
 {
-    return rma::g_impl.try_put(
+    return g_impl.try_put(
         to_pointer(local_addr)
     ,   static_cast<int>(dest_proc)
     ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
@@ -58,16 +58,11 @@ bool try_write_async(
     );
 }
 
-void poll_rma() {
-    rma::g_impl.flush();
+void poll() {
+    g_impl.flush();
 }
 
 }
-
-void barrier() {
-    MPI_Barrier(MPI_COMM_WORLD);
-}
-
 
 }
 
