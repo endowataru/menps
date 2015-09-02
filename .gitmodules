@@ -1,3 +1,6 @@
 [submodule "external/gyp"]
 	path = external/gyp
 	url = https://chromium.googlesource.com/external/gyp
+[submodule "external/cppformat"]
+	path = external/cppformat
+	url = https://github.com/cppformat/cppformat.git
