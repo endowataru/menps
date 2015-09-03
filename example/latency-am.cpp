@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
         arg.value = 123;
         
         std::cout << "A" << std::endl;
-        am::send(&cb, 0, &arg, sizeof(argument), 1);
+        am::send_nb(&cb, 0, &arg, sizeof(argument), 1);
         std::cout << "B" << std::endl;
         while (!mgbase::async_test(cb)) { }
         std::cout << "C" << std::endl;

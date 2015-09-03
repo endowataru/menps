@@ -11,7 +11,7 @@ void initialize();
 
 void finalize();
 
-bool try_compare_and_swap_64_async(
+bool try_compare_and_swap_64(
     const remote_address&   remote_addr
 ,   const mgbase::uint64_t* expected
 ,   const mgbase::uint64_t* desired

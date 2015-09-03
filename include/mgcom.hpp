@@ -112,11 +112,10 @@ inline void deallocate_region(const local_region& region) {
 
 }
 
-
 /**
  * Low-level function of contiguous write.
  */
-bool try_write_async(
+bool try_write(
     const local_address&  local_addr
 ,   const remote_address& remote_addr
 ,   index_t               size_in_bytes
@@ -127,7 +126,7 @@ bool try_write_async(
 /**
  * Low-level function of contiguous read.
  */
-bool try_read_async(
+bool try_read(
     const local_address&  local_addr
 ,   const remote_address& remote_addr
 ,   index_t               size_in_bytes
@@ -136,32 +135,57 @@ bool try_read_async(
 );
 
 
+typedef ::mgcom_rma_write_cb    write_cb;
 
-typedef ::mgcom_rma_write_cb  write_cb;
+typedef ::mgcom_rma_read_cb     read_cb;
+
+namespace detail {
+
+void write_nb(write_cb* cb);
+
+void read_nb(read_cb* cb);
+
+}
+
+namespace {
 
 /**
  * Non-blocking contiguous write.
  */
-void write_async(
+inline void write_nb(
     write_cb*             cb
 ,   const local_address&  local_addr
 ,   const remote_address& remote_addr
 ,   index_t               size_in_bytes
 ,   process_id_t          dest_proc
-);
-
-typedef ::mgcom_rma_read_cb  read_cb;
+) {
+    cb->local_addr    = local_addr;
+    cb->remote_addr   = remote_addr;
+    cb->size_in_bytes = size_in_bytes;
+    cb->dest_proc     = dest_proc;
+    
+    detail::write_nb(cb);
+}
 
 /**
  * Non-blocking contiguous read.
  */
-void read_async(
+inline void read_nb(
     read_cb*              cb
 ,   const local_address&  local_addr
 ,   const remote_address& remote_addr
 ,   index_t               size_in_bytes
 ,   process_id_t          dest_proc
-);
+) {
+    cb->local_addr    = local_addr;
+    cb->remote_addr   = remote_addr;
+    cb->size_in_bytes = size_in_bytes;
+    cb->dest_proc     = dest_proc;
+    
+    detail::read_nb(cb);
+}
+
+}
 
 
 typedef ::mgcom_rma_write_strided_cb  write_strided_cb;
@@ -169,7 +193,7 @@ typedef ::mgcom_rma_write_strided_cb  write_strided_cb;
 /**
  * Non-blockng strided write.
  */
-void write_strided_async(
+void write_strided_nb(
     write_strided_cb* cb
 ,   const local_address&     local_addr
 ,   index_t*                 local_stride
@@ -186,7 +210,7 @@ typedef ::mgcom_rma_read_strided_cb  read_strided_cb;
 /**
  * Non-blockng strided read.
  */
-void read_strided_async(
+void read_strided_nb(
     read_strided_cb* cb
 ,   const local_address&    local_addr
 ,   index_t*                local_stride
@@ -201,19 +225,35 @@ void read_strided_async(
 
 typedef ::mgcom_rma_compare_and_swap_64_cb  compare_and_swap_64_cb;
 
+namespace detail {
+
+void compare_and_swap_64_nb(compare_and_swap_64_cb* cb);
+
+}
+
+namespace {
+
 /**
  * Non-blocking compare-and-swap.
  */
-void compare_and_swap_64_async(
+inline void compare_and_swap_64_nb(
     compare_and_swap_64_cb* cb
 ,   remote_address          remote_addr
 ,   mgbase::uint64_t        expected
 ,   mgbase::uint64_t        desired
 ,   mgbase::uint64_t*       result
 ,   process_id_t            dest_proc
-);
+) {
+    cb->remote_addr = remote_addr;
+    cb->expected    = expected;
+    cb->desired     = desired;
+    cb->result      = result;
+    cb->dest_proc   = dest_proc;
+    
+    detail::compare_and_swap_64_nb(cb);
+}
 
-
+}
 
 void poll();
 
@@ -236,13 +276,30 @@ typedef ::mgcom_am_message  message;
 
 typedef ::mgcom_am_send_cb  send_cb;
 
-void send(
+namespace detail {
+
+void send_nb(send_cb* cb);
+
+}
+
+namespace {
+
+inline void send_nb(
     send_cb*        cb
 ,   handler_id_t    id
 ,   const void*     value
 ,   index_t         size
 ,   process_id_t    dest_proc
-);
+) {
+    cb->dest_proc  = dest_proc;
+    cb->msg.id     = id;
+    cb->msg.size   = size;
+    std::memcpy(cb->msg.data, value, size);
+    
+    detail::send_nb(cb);
+}
+
+}
 
 void poll();
 

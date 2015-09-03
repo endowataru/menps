@@ -126,21 +126,14 @@ void add_ticket_to(process_id_t dest_proc, index_t ticket) {
 
 }
 
-void send(
-    send_cb*     cb
-,   handler_id_t id
-,   const void*  value
-,   index_t      size
-,   process_id_t dest_proc
-)
+namespace detail {
+
+void send_nb(send_cb* cb)
 {
-    cb->dest_proc  = dest_proc;
-    cb->msg.id     = id;
-    cb->msg.size   = size;
-    cb->msg.ticket = receiver::pull_tickets_from(dest_proc);
-    std::memcpy(cb->msg.data, value, size);
-    
+    cb->msg.ticket = receiver::pull_tickets_from(cb->dest_proc);
     mgbase::async_enter(cb, am::sender::start_send);
+}
+
 }
 
 }

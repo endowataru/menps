@@ -41,7 +41,7 @@ remote_region use_remote_region(
     return make_remote_region(key, 0 /* unused */);
 }
 
-bool try_read_async(
+bool try_read(
     const local_address&  local_addr
 ,   const remote_address& remote_addr
 ,   index_t               size_in_bytes
@@ -58,7 +58,7 @@ bool try_read_async(
     );
 }
 
-bool try_write_async(
+bool try_write(
     const local_address&  local_addr
 ,   const remote_address& remote_addr
 ,   index_t               size_in_bytes
@@ -75,7 +75,7 @@ bool try_write_async(
     );
 }
 
-bool try_compare_and_swap_64_async(
+bool try_compare_and_swap_64(
     const remote_address&   remote_addr
 ,   const mgbase::uint64_t* expected
 ,   const mgbase::uint64_t* desired
