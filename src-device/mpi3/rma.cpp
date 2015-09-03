@@ -75,6 +75,26 @@ bool try_write_async(
     );
 }
 
+bool try_compare_and_swap_64_async(
+    const remote_address&   remote_addr
+,   const mgbase::uint64_t* expected
+,   const mgbase::uint64_t* desired
+,   mgbase::uint64_t*       result
+,   process_id_t            dest_proc
+,   local_notifier          on_complete
+)
+{
+    return g_impl.try_compare_and_swap(
+        expected
+    ,   desired
+    ,   result
+    ,   MPI_UINT64_T
+    ,   static_cast<int>(dest_proc)
+    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   on_complete
+    );
+}
+
 void poll() {
     g_impl.flush();
 }

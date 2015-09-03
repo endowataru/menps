@@ -22,6 +22,16 @@
             ],
         },
         {
+            'target_name' : 'latency-cas',
+            'type' : 'executable',
+            'sources' : [
+                '../example/latency-cas.cpp',
+            ],
+            'dependencies' : [
+                './mgcom.gyp:mgcom-mpi3',
+            ],
+        },
+        {
             'target_name' : 'test',
             'type' : 'executable',
             'sources' : [

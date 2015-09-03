@@ -79,11 +79,11 @@ public:
     }
     
     bool try_get(
-        void* dest_ptr
-    ,   int src_rank
-    ,   ::MPI_Aint src_index
-    ,   int size
-    ,   local_notifier on_complete
+        void*                   dest_ptr
+    ,   int                     src_rank
+    ,   MPI_Aint                src_index
+    ,   int                     size
+    ,   const local_notifier&   on_complete
     )
     {
         if (!mpi_base::get_lock().try_lock())
@@ -91,7 +91,7 @@ public:
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
         
-        if (num_requests_ >= max_num_requests)
+        if (requests_saturated())
             return false;
         
         mpi3_error::check(
@@ -102,18 +102,18 @@ public:
             )
         );
         
-        on_complete_[num_requests_++] = on_complete;
+        add_notifier(on_complete);
         
         return true;
     }
     
     
     bool try_put(
-        const void* src_ptr
-    ,   int dest_rank
-    ,   ::MPI_Aint dest_index
-    ,   int size
-    ,   local_notifier on_complete
+        const void*             src_ptr
+    ,   int                     dest_rank
+    ,   MPI_Aint                dest_index
+    ,   int                     size
+    ,   const local_notifier&   on_complete
     )
     {
         if (!mpi_base::get_lock().try_lock())
@@ -121,7 +121,7 @@ public:
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
         
-        if (num_requests_ >= max_num_requests)
+        if (requests_saturated())
             return false;
         
         mpi3_error::check(
@@ -132,11 +132,49 @@ public:
             )
         );
         
-        on_complete_[num_requests_++] = on_complete;
+        add_notifier(on_complete);
         
         return true;
     }
     
+    bool try_compare_and_swap(
+        const void*             expected_ptr
+    ,   const void*             desired_ptr
+    ,   void*                   result_ptr
+    ,   MPI_Datatype            datatype
+    ,   int                     dest_rank
+    ,   MPI_Aint                dest_index
+    ,   const local_notifier&   on_complete
+    )
+    {
+        if (!mpi_base::get_lock().try_lock())
+            return false;
+        
+        mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
+        
+        if (requests_saturated())
+            return false;
+        
+        /*
+            TODO: const_cast is needed for OpenMPI 1.8.4.
+        */
+        
+        mpi3_error::check(
+            MPI_Compare_and_swap(
+                const_cast<void*>(desired_ptr)  // origin_addr
+            ,   const_cast<void*>(expected_ptr) // compare_addr
+            ,   result_ptr                      // result_addr
+            ,   datatype                        // datatype
+            ,   dest_rank                       // target_rank
+            ,   dest_index                      // target_disp
+            ,   win_                            // win
+            )
+        );
+        
+        add_notifier(on_complete);
+        
+        return true;
+    }
     
     void flush()
     {
@@ -146,7 +184,7 @@ public:
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
         
         mpi3_error::check(
-            ::MPI_Win_flush_all(win_)
+            MPI_Win_flush_all(win_)
         );
         
         for (index_t i = 0; i < num_requests_; ++i)
@@ -156,6 +194,14 @@ public:
     }
     
 private:
+    bool requests_saturated() const MGBASE_NOEXCEPT {
+        return num_requests_ >= max_num_requests;
+    }
+    
+    void add_notifier(const local_notifier& on_complete) MGBASE_NOEXCEPT {
+        on_complete_[num_requests_++] = on_complete;
+    }
+    
     MPI_Win win_;
     local_notifier on_complete_[max_num_requests];
     index_t num_requests_;

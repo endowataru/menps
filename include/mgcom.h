@@ -274,22 +274,26 @@ mgcom_error_t mgcom_rma_read_strided_async(
 ) MGBASE_NOEXCEPT;
 
 
-/// Control block for non-blocking remote atomic operation.
-typedef struct mgcom_rma_rmw_cb_tag {
-    mgbase_async_request request;
+/// Control block for non-blocking compare-and-swap.
+typedef struct mgcom_rma_compare_and_swap_64_cb_tag {
+    mgbase_async_request        request;
+    mgcom_rma_remote_address    remote_addr;
+    uint64_t                    expected;
+    uint64_t                    desired;
+    uint64_t*                   result;
+    mgcom_process_id_t          dest_proc;
 }
-mgcom_rma_rmw_cb;
+mgcom_rma_compare_and_swap_64_cb;
 
 /**
- * Non-blocking remote atomic operation.
+ * Non-blocking compare-and-swap.
  */
-mgcom_error_t mgcom_rma_rmw_async(
-    mgcom_rma_rmw_cb*           cb
-,   mgcom_remote_operation      operation
-,   void*                       local_expected
-,   mgcom_rma_local_address     local_addr
-,   mgcom_rma_remote_address    remote_addr
-,   mgcom_process_id_t          dest_proc
+mgcom_error_t mgcom_rma_compare_and_swap_64_async(
+    mgcom_rma_compare_and_swap_64_cb*       cb
+,   mgcom_rma_remote_address                remote_addr
+,   uint64_t                                expected
+,   uint64_t                                desired
+,   uint64_t*                               result
 ) MGBASE_NOEXCEPT;
 
 
@@ -322,19 +326,19 @@ mgcom_error_t mgcom_am_register_handler(
 #define MGCOM_AM_HANDLE_SIZE   1024
 
 typedef struct mgcom_am_message_tag {
-    mgcom_am_handler_id_t id;
-    mgcom_index_t         size;
-    mgcom_index_t         ticket;
-    mgbase::uint8_t       data[MGCOM_AM_MAX_DATA_SIZE]; // TODO
+    mgcom_am_handler_id_t   id;
+    mgcom_index_t           size;
+    mgcom_index_t           ticket;
+    uint8_t                 data[MGCOM_AM_MAX_DATA_SIZE]; // TODO
 }
 mgcom_am_message;
 
 /// Control block for sending Active Messages.
 typedef struct mgcom_am_send_cb_tag {
-    mgbase_async_request  request;
-    mgcom_process_id_t    dest_proc;
-    mgcom_am_message      msg;
-    mgbase::uint8_t       handle[MGCOM_AM_HANDLE_SIZE];
+    mgbase_async_request    request;
+    mgcom_process_id_t      dest_proc;
+    mgcom_am_message        msg;
+    uint8_t                 handle[MGCOM_AM_HANDLE_SIZE];
 }
 mgcom_am_send_cb;
 

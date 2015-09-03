@@ -49,6 +49,7 @@ local_region register_region(
 ,   index_t size_in_bytes
 );
 
+
 /**
  * Prepare a region located on a remote process.
  */
@@ -97,6 +98,16 @@ inline void* to_pointer(const local_region& region) MGBASE_NOEXCEPT {
 
 inline void* to_pointer(const local_address& addr) MGBASE_NOEXCEPT {
     return static_cast<mgbase::uint8_t*>(to_pointer(addr.region)) + addr.offset;
+}
+
+
+inline local_region allocate_region(index_t size_in_bytes) {
+    void* const ptr = new mgbase::uint8_t[size_in_bytes];
+    return register_region(ptr, size_in_bytes);
+}
+inline void deallocate_region(const local_region& region) {
+    deregister_region(region);
+    delete[] static_cast<mgbase::uint8_t*>(to_pointer(region));
 }
 
 }
@@ -187,19 +198,22 @@ void read_strided_async(
 );
 
 
-typedef ::mgcom_rma_rmw_cb  rmw_cb;
+
+typedef ::mgcom_rma_compare_and_swap_64_cb  compare_and_swap_64_cb;
 
 /**
- * Non-blocking remote atomic operation.
+ * Non-blocking compare-and-swap.
  */
-void rmw_async(
-    rmw_cb*                 cb
-,   remote_operation        operation
-,   void*                   local_expected
-,   const local_address&    local_addr
-,   const remote_address&   remote_addr
+void compare_and_swap_64_async(
+    compare_and_swap_64_cb* cb
+,   remote_address          remote_addr
+,   mgbase::uint64_t        expected
+,   mgbase::uint64_t        desired
+,   mgbase::uint64_t*       result
 ,   process_id_t            dest_proc
 );
+
+
 
 void poll();
 
