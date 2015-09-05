@@ -17,10 +17,12 @@ The platforms to be supported are:
     - GCC
 - Infiniband Verbs
 
-Build
------
+How to Build & Run
+------------------
 
+    git clone --recursive git@gitlab.eidos.ic.i.u-tokyo.ac.jp:wendo/mgcom.git
+    cd mgcom
     ./build
-    make -j
-
+    make latency
+    mpirun -n 2 ./out/Release/latency
 
