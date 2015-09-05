@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
         std::cout << "A" << std::endl;
         am::send_nb(&cb, 0, &arg, sizeof(argument), 1);
         std::cout << "B" << std::endl;
-        while (!mgbase::async_test(cb)) { }
+        mgbase::control::wait(cb);
         std::cout << "C" << std::endl;
         
         while (!flag)

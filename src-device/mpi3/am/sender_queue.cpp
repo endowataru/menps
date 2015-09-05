@@ -37,8 +37,10 @@ public:
             return;
         
         send_cb& cb = cbs_.front();
-        if (mgbase::async_test(cb))
+        if (mgbase::control::test(cb))
             cbs_.pop();
+        else
+            mgbase::control::dispatch(cb);
     }
     
 private:

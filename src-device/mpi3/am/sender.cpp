@@ -85,10 +85,8 @@ private:
 
 impl g_impl;
 
-void test_send(void* cb_) {
-    send_cb& cb = *static_cast<send_cb*>(cb_);
-    
-    MPI_Request* request = reinterpret_cast<MPI_Request*>(cb.handle);
+void test_send(send_cb& cb) {
+    MPI_Request* const request = reinterpret_cast<MPI_Request*>(cb.handle);
     
     int flag;
     MPI_Status status;
@@ -97,17 +95,15 @@ void test_send(void* cb_) {
     );
     
     if (flag) {
-        mgbase::async_finished(&cb);
+        mgbase::control::finished(cb);
     }
 }
 
-void start_send(void* cb_) {
-    send_cb& cb = *static_cast<send_cb*>(cb_);
-    
-    MPI_Request* request = reinterpret_cast<MPI_Request*>(cb.handle);
+void start_send(send_cb& cb) {
+    MPI_Request* const request = reinterpret_cast<MPI_Request*>(cb.handle);
     
     if (g_impl.try_send(cb.msg, cb.dest_proc, request)) {
-        mgbase::async_enter(&cb, test_send);
+        mgbase::control::enter<send_cb, test_send>(cb);
     }
 }
 
@@ -131,7 +127,7 @@ namespace detail {
 void send_nb(send_cb* cb)
 {
     cb->msg.ticket = receiver::pull_tickets_from(cb->dest_proc);
-    mgbase::async_enter(cb, am::sender::start_send);
+    mgbase::control::start<send_cb, sender::start_send>(*cb);
 }
 
 }

@@ -80,8 +80,8 @@ public:
         
         call(src, msg);
         
+        //mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
         irecv(index);
-        
     }
     
     index_t pull_tickets_from(process_id_t src_proc) {

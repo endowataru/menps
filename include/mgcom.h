@@ -6,11 +6,9 @@
 #include <stdbool.h>
 
 #include <mgbase/lang.h>
-#include <mgbase/event/async_request.h>
+#include <mgbase/control.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+MGBASE_EXTERN_C_BEGIN
 
 typedef uint64_t  mgcom_index_t;
 
@@ -189,7 +187,7 @@ mgcom_error_t mgcom_rma_try_read_async(
 
 /// Control block for non-blocking contiguous write.
 typedef struct mgcom_rma_write_cb_tag {
-    mgbase_async_request        request;
+    mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
     mgcom_index_t               size_in_bytes;
@@ -211,7 +209,7 @@ mgcom_error_t mgcom_rma_write_async(
 
 /// Control block for non-blocking contiguous read.
 typedef struct mgcom_rma_read_cb_tag {
-    mgbase_async_request        request;
+    mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
     mgcom_index_t               size_in_bytes;
@@ -234,7 +232,7 @@ mgcom_error_t mgcom_rma_read_async(
 
 /// Control block for asynchronous strided write.
 typedef struct mgcom_rma_write_strided_cb_tag {
-    mgbase_async_request request;
+    mgbase_control_cb_common    common;
 }
 mgcom_rma_write_strided_cb;
 
@@ -255,7 +253,7 @@ mgcom_error_t mgcom_rma_write_strided_async(
 
 /// Control block for asynchronous strided read.
 typedef struct mgcom_rma_read_strided_cb_tag {
-    mgbase_async_request request;
+    mgbase_control_cb_common    common;
 }
 mgcom_rma_read_strided_cb;
 
@@ -276,7 +274,7 @@ mgcom_error_t mgcom_rma_read_strided_async(
 
 /// Control block for non-blocking compare-and-swap.
 typedef struct mgcom_rma_compare_and_swap_64_cb_tag {
-    mgbase_async_request        request;
+    mgbase_control_cb_common    common;
     mgcom_rma_remote_address    remote_addr;
     uint64_t                    expected;
     uint64_t                    desired;
@@ -335,10 +333,10 @@ mgcom_am_message;
 
 /// Control block for sending Active Messages.
 typedef struct mgcom_am_send_cb_tag {
-    mgbase_async_request    request;
-    mgcom_process_id_t      dest_proc;
-    mgcom_am_message        msg;
-    uint8_t                 handle[MGCOM_AM_HANDLE_SIZE];
+    mgbase_control_cb_common    common;
+    mgcom_process_id_t          dest_proc;
+    mgcom_am_message            msg;
+    uint8_t                     handle[MGCOM_AM_HANDLE_SIZE];
 }
 mgcom_am_send_cb;
 
@@ -369,7 +367,5 @@ mgcom_index_t mgcom_number_of_processes(void) MGBASE_NOEXCEPT;
 #define MGCOM_REGISTRATION_ALIGNMENT  4
 #define MGCOM_BUFFER_ALIGNMENT        4
 
-#ifdef __cplusplus
-}
-#endif
+MGBASE_EXTERN_C_END
 

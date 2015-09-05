@@ -38,6 +38,11 @@ inline remote_region make_remote_region(const region_key& key, mgbase::uint64_t 
 
 namespace {
 
+template <typename CB>
+inline local_notifier make_notifier_finished(CB& cb) {
+    return make_notifier_assign(&cb.common.finished, true);
+}
+
 inline void notify(const local_notifier& notif) MGBASE_NOEXCEPT {
     switch (notif.operation) {
         case MGCOM_LOCAL_NO_OPERATION:

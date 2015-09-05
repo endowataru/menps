@@ -3,7 +3,7 @@
 
 #include "mgcom.h"
 
-#include <mgbase/event/async_request.hpp>
+#include <mgbase/control.hpp>
 #include <mgbase/threading/atomic.hpp>
 
 #include <cstddef>

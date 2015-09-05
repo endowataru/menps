@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
         
         write_cb cb;
         write_nb(&cb, local_addr, remote_addr, sizeof(x), other);
-        while (!mgbase::async_test(cb)) { }
+        mgbase::control::wait(cb);
         
         
         
