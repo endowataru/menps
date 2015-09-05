@@ -30,6 +30,7 @@ inline void finished(CB& cb){
 template <typename CB>
 inline void enter(CB& cb, handler_t handler) {
     cb.common.handler = handler;
+    handler(&cb);
 }
 
 template <typename CB, void (*func)(CB&)>
@@ -50,8 +51,18 @@ inline void dispatch(CB& cb) {
 }
 
 template <typename T>
-inline bool test(T& cb) {
+inline bool test(T& cb) MGBASE_NOEXCEPT {
     return cb.common.finished;
+}
+
+template <typename T>
+inline bool proceed(T& cb) {
+    if (test(cb))
+        return true;
+    else {
+        dispatch(cb);
+        return false;
+    }
 }
 
 template <typename CB>
