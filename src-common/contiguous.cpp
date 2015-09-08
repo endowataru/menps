@@ -27,9 +27,9 @@ void start_read(read_cb& cb) {
 
 }
 
-void read_nb(read_cb* cb)
+void read_nb(read_cb& cb)
 {
-    mgbase::control::start<read_cb, start_read>(*cb);
+    mgbase::control::start<read_cb, start_read>(cb);
 }
 
 namespace {
@@ -48,9 +48,9 @@ void start_write(write_cb& cb) {
 
 }
 
-void write_nb(write_cb* cb)
+void write_nb(write_cb& cb)
 {
-    mgbase::control::enter<write_cb, start_write>(*cb);
+    mgbase::control::start<write_cb, start_write>(cb);
 }
 
 namespace {
@@ -69,9 +69,9 @@ void start_compare_and_swap_64(compare_and_swap_64_cb& cb) {
 
 }
 
-void compare_and_swap_64_nb(compare_and_swap_64_cb* cb)
+void compare_and_swap_64_nb(compare_and_swap_64_cb& cb)
 {
-    mgbase::control::start<compare_and_swap_64_cb, start_compare_and_swap_64>(*cb);
+    mgbase::control::start<compare_and_swap_64_cb, start_compare_and_swap_64>(cb);
 }
 
 }

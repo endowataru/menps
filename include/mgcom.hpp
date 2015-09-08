@@ -141,9 +141,9 @@ typedef ::mgcom_rma_read_cb     read_cb;
 
 namespace detail {
 
-void write_nb(write_cb* cb);
+void write_nb(write_cb& cb);
 
-void read_nb(read_cb* cb);
+void read_nb(read_cb& cb);
 
 }
 
@@ -153,16 +153,16 @@ namespace {
  * Non-blocking contiguous write.
  */
 inline void write_nb(
-    write_cb*             cb
+    write_cb&             cb
 ,   const local_address&  local_addr
 ,   const remote_address& remote_addr
 ,   index_t               size_in_bytes
 ,   process_id_t          dest_proc
 ) {
-    cb->local_addr    = local_addr;
-    cb->remote_addr   = remote_addr;
-    cb->size_in_bytes = size_in_bytes;
-    cb->dest_proc     = dest_proc;
+    cb.local_addr    = local_addr;
+    cb.remote_addr   = remote_addr;
+    cb.size_in_bytes = size_in_bytes;
+    cb.dest_proc     = dest_proc;
     
     detail::write_nb(cb);
 }
@@ -171,16 +171,16 @@ inline void write_nb(
  * Non-blocking contiguous read.
  */
 inline void read_nb(
-    read_cb*              cb
+    read_cb&              cb
 ,   const local_address&  local_addr
 ,   const remote_address& remote_addr
 ,   index_t               size_in_bytes
 ,   process_id_t          dest_proc
 ) {
-    cb->local_addr    = local_addr;
-    cb->remote_addr   = remote_addr;
-    cb->size_in_bytes = size_in_bytes;
-    cb->dest_proc     = dest_proc;
+    cb.local_addr    = local_addr;
+    cb.remote_addr   = remote_addr;
+    cb.size_in_bytes = size_in_bytes;
+    cb.dest_proc     = dest_proc;
     
     detail::read_nb(cb);
 }
@@ -194,7 +194,7 @@ typedef ::mgcom_rma_write_strided_cb  write_strided_cb;
  * Non-blockng strided write.
  */
 void write_strided_nb(
-    write_strided_cb* cb
+    write_strided_cb&        cb
 ,   const local_address&     local_addr
 ,   index_t*                 local_stride
 ,   const remote_address&    remote_addr
@@ -211,7 +211,7 @@ typedef ::mgcom_rma_read_strided_cb  read_strided_cb;
  * Non-blockng strided read.
  */
 void read_strided_nb(
-    read_strided_cb* cb
+    read_strided_cb&        cb
 ,   const local_address&    local_addr
 ,   index_t*                local_stride
 ,   const remote_address&   remote_addr
@@ -227,7 +227,7 @@ typedef ::mgcom_rma_compare_and_swap_64_cb  compare_and_swap_64_cb;
 
 namespace detail {
 
-void compare_and_swap_64_nb(compare_and_swap_64_cb* cb);
+void compare_and_swap_64_nb(compare_and_swap_64_cb& cb);
 
 }
 
@@ -237,18 +237,18 @@ namespace {
  * Non-blocking compare-and-swap.
  */
 inline void compare_and_swap_64_nb(
-    compare_and_swap_64_cb* cb
+    compare_and_swap_64_cb& cb
 ,   remote_address          remote_addr
 ,   mgbase::uint64_t        expected
 ,   mgbase::uint64_t        desired
 ,   mgbase::uint64_t*       result
 ,   process_id_t            dest_proc
 ) {
-    cb->remote_addr = remote_addr;
-    cb->expected    = expected;
-    cb->desired     = desired;
-    cb->result      = result;
-    cb->dest_proc   = dest_proc;
+    cb.remote_addr = remote_addr;
+    cb.expected    = expected;
+    cb.desired     = desired;
+    cb.result      = result;
+    cb.dest_proc   = dest_proc;
     
     detail::compare_and_swap_64_nb(cb);
 }
@@ -278,23 +278,24 @@ typedef ::mgcom_am_send_cb  send_cb;
 
 namespace detail {
 
-void send_nb(send_cb* cb);
+void send_nb(send_cb& cb);
 
 }
 
 namespace {
 
 inline void send_nb(
-    send_cb*        cb
+    send_cb&        cb
 ,   handler_id_t    id
 ,   const void*     value
 ,   index_t         size
 ,   process_id_t    dest_proc
 ) {
-    cb->dest_proc  = dest_proc;
-    cb->msg.id     = id;
-    cb->msg.size   = size;
-    std::memcpy(cb->msg.data, value, size);
+    cb.dest_proc = dest_proc;
+    cb.msg.id    = id;
+    cb.msg.size  = size;
+    
+    std::memcpy(cb.msg.data, value, size);
     
     detail::send_nb(cb);
 }

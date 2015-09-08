@@ -23,7 +23,7 @@ mgcom_error_t mgcom_rma_write_async(
 ,   mgcom_process_id_t          dest_proc
 ) MGBASE_NOEXCEPT
 {
-    CATCH_ERROR(mgcom::rma::write_nb(cb, local_addr, remote_addr, size_in_bytes, dest_proc))
+    CATCH_ERROR(mgcom::rma::write_nb(*cb, local_addr, remote_addr, size_in_bytes, dest_proc))
 }
 
 }

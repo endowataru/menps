@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
         sw.start();
         
         compare_and_swap_64_cb cb;
-        compare_and_swap_64_nb(&cb, remote_addr, 0, 123, &y, 1);
+        compare_and_swap_64_nb(cb, remote_addr, 0, 123, &y, 1);
         mgbase::control::wait(cb);
         
     }
