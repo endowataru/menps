@@ -3,4 +3,6 @@
 /build-script/*.mk
 /out
 gyp-mac-tool
+/doc/html
+.DS_Store
 
