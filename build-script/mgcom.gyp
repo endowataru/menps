@@ -30,6 +30,7 @@
             'sources': [
                 '../src-common/mpi_base.cpp',
                 '../src-common/contiguous.cpp',
+                '../src-common/buffer_pool.cpp',
                 '../src-device/mpi3/mpi3.cpp',
                 '../src-device/mpi3/rma.cpp',
                 '../src-device/mpi3/barrier.cpp',

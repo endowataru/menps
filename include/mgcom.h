@@ -161,6 +161,30 @@ mgcom_error_t mgcom_rma_deregister_region(
 
 
 /**
+ * Registered buffer.
+ */
+typedef struct mgcom_rma_registered_buffer_tag {
+    mgcom_rma_local_address addr;
+}
+mgcom_rma_registered_buffer;
+
+/**
+ * Allocate a buffer from registered buffer pool.
+ */
+mgcom_error_t mgcom_rma_allocate(
+    mgcom_index_t                   size_in_bytes
+,   mgcom_rma_registered_buffer*    result
+) MGBASE_NOEXCEPT;
+
+/**
+ * De-allocate a buffer allocated from registered buffer pool.
+ */
+mgcom_error_t mgcom_rma_deallocate(
+    mgcom_rma_registered_buffer     buffer
+) MGBASE_NOEXCEPT;
+
+
+/**
  * Low-level function of contiguous write.
  */
 mgcom_error_t mgcom_rma_try_write_async(

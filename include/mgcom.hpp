@@ -41,6 +41,7 @@ typedef ::mgcom_rma_remote_region            remote_region;
 typedef ::mgcom_rma_local_address            local_address;
 typedef ::mgcom_rma_remote_address           remote_address;
 
+
 /**
  * Register a region located on the current process.
  */
@@ -63,6 +64,19 @@ remote_region use_remote_region(
  */
 void deregister_region(const local_region& region);
 
+
+typedef ::mgcom_rma_registered_buffer   registered_buffer;
+
+/**
+ * Allocate a registered buffer from the buffer pool.
+ */
+registered_buffer allocate(index_t size_in_bytes);
+
+/**
+ * De-allocate a registered buffer allocated from the buffer pool.
+ */
+void deallocate(const registered_buffer& buffer);
+
 namespace {
 
 MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
@@ -83,6 +97,10 @@ inline remote_address to_address(const remote_region& region) MGBASE_NOEXCEPT {
     return addr;
 }
 
+inline local_address to_address(const registered_buffer& buffer) MGBASE_NOEXCEPT {
+    return buffer.addr;
+}
+
 inline local_address advanced(const local_address& addr, index_t diff) {
     local_address result = { addr.region, addr.offset + diff };
     return result;
@@ -100,17 +118,12 @@ inline void* to_pointer(const local_address& addr) MGBASE_NOEXCEPT {
     return static_cast<mgbase::uint8_t*>(to_pointer(addr.region)) + addr.offset;
 }
 
-
-inline local_region allocate_region(index_t size_in_bytes) {
-    void* const ptr = new mgbase::uint8_t[size_in_bytes];
-    return register_region(ptr, size_in_bytes);
-}
-inline void deallocate_region(const local_region& region) {
-    deregister_region(region);
-    delete[] static_cast<mgbase::uint8_t*>(to_pointer(region));
+inline void* to_pointer(const registered_buffer& buffer) MGBASE_NOEXCEPT {
+    return to_pointer(to_address(buffer));
 }
 
 }
+
 
 /**
  * Low-level function of contiguous write.
