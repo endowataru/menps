@@ -20,6 +20,14 @@ bool try_compare_and_swap_64(
 ,   local_notifier          on_complete
 );
 
+bool try_fetch_and_add_64(
+    const remote_address&   remote_addr
+,   const mgbase::uint64_t* value
+,   mgbase::uint64_t*       result
+,   process_id_t            dest_proc
+,   local_notifier          on_complete
+);
+
 }
 
 }

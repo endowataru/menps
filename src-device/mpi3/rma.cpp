@@ -95,6 +95,25 @@ bool try_compare_and_swap_64(
     );
 }
 
+bool try_fetch_and_add_64(
+    const remote_address&   remote_addr
+,   const mgbase::uint64_t* value
+,   mgbase::uint64_t*       result
+,   process_id_t            dest_proc
+,   local_notifier          on_complete
+)
+{
+    return g_impl.try_fetch_and_op(
+        value
+    ,   result
+    ,   MPI_UINT64_T
+    ,   static_cast<int>(dest_proc)
+    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   MPI_SUM
+    ,   on_complete
+    );
+}
+
 void poll() {
     g_impl.flush();
 }

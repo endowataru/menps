@@ -3,7 +3,7 @@
 
 #include "impl.hpp"
 
-#include "../src-device/mpi3/rma.hpp"
+#include "rma.hpp"
 
 namespace mgcom {
 
@@ -13,65 +13,110 @@ namespace detail {
 
 namespace {
 
-void test_read(read_cb& /*cb*/) {
-    poll();
-}
-
-void start_read(read_cb& cb) {
-    if (try_read(cb.local_addr, cb.remote_addr, cb.size_in_bytes, cb.dest_proc,
-        make_notifier_finished(cb)))
-    {
-        mgbase::control::enter<read_cb, test_read>(cb);
+class read_handlers {
+public:
+    static void start(read_cb& cb) {
+        mgbase::control::start<read_cb, try_>(cb);
     }
-}
 
-}
-
-void read_nb(read_cb& cb)
-{
-    mgbase::control::start<read_cb, start_read>(cb);
-}
-
-namespace {
-
-void test_write(write_cb& /*cb*/) {
-    poll();
-}
-
-void start_write(write_cb& cb) {
-    if (try_write(cb.local_addr, cb.remote_addr, cb.size_in_bytes,
-        cb.dest_proc, make_notifier_finished(cb)))
+private:
+    static void try_(read_cb& cb)
     {
-        mgbase::control::enter<write_cb, test_write>(cb);
+        if (try_read(cb.local_addr, cb.remote_addr, cb.size_in_bytes, cb.dest_proc,
+            make_notifier_finished(cb)))
+        {
+            mgbase::control::enter<read_cb, test>(cb);
+        }
     }
-}
+    
+    static void test(read_cb& /*cb*/) {
+        poll();
+    }
+};
 
-}
-
-void write_nb(write_cb& cb)
-{
-    mgbase::control::start<write_cb, start_write>(cb);
-}
-
-namespace {
-
-void test_compare_and_swap_64(compare_and_swap_64_cb& /*cb*/) {
-    poll();
-}
-
-void start_compare_and_swap_64(compare_and_swap_64_cb& cb) {
-    if (try_compare_and_swap_64(cb.remote_addr, &cb.expected, &cb.desired,
-        cb.result, cb.dest_proc, make_notifier_finished(cb)))
+class write_handlers {
+public:
+    static void start(write_cb& cb)
     {
-        mgbase::control::enter<compare_and_swap_64_cb, test_compare_and_swap_64>(cb);
+        mgbase::control::start<write_cb, try_>(cb);
     }
-}
+
+private:
+    static void try_(write_cb& cb)
+    {
+        if (try_write(cb.local_addr, cb.remote_addr, cb.size_in_bytes,
+            cb.dest_proc, make_notifier_finished(cb)))
+        {
+            mgbase::control::enter<write_cb, test>(cb);
+        }
+    }
+    
+    static void test(write_cb& /*cb*/) {
+        poll();
+    }
+};
+
+class compare_and_swap_64_handlers {
+public:
+    static void start(compare_and_swap_64_cb& cb)
+    {
+        mgbase::control::start<compare_and_swap_64_cb, try_>(cb);
+    }
+    
+private:
+    static void try_(compare_and_swap_64_cb& cb)
+    {
+        if (try_compare_and_swap_64(cb.remote_addr, &cb.expected, &cb.desired,
+            cb.result, cb.dest_proc, make_notifier_finished(cb)))
+        {
+            mgbase::control::enter<compare_and_swap_64_cb, test>(cb);
+        }
+    }
+    
+    static void test(compare_and_swap_64_cb& /*cb*/) {
+        poll();
+    }
+};
+
+class fetch_and_add_64_handlers {
+public:
+    static void start(fetch_and_op_64_cb& cb)
+    {
+        mgbase::control::start<fetch_and_op_64_cb, try_>(cb);
+    }
+    
+private:
+    static void try_(fetch_and_op_64_cb& cb)
+    {
+        if (try_fetch_and_add_64(cb.remote_addr, &cb.value, cb.result,
+            cb.dest_proc, make_notifier_finished(cb)))
+        {
+            mgbase::control::enter<fetch_and_op_64_cb, test>(cb);
+        }
+    }
+    
+    static void test(fetch_and_op_64_cb& /*cb*/)
+    {
+        poll();
+    }
+};
 
 }
 
-void compare_and_swap_64_nb(compare_and_swap_64_cb& cb)
-{
-    mgbase::control::start<compare_and_swap_64_cb, start_compare_and_swap_64>(cb);
+void read_nb(read_cb& cb) {
+    read_handlers::start(cb);
+}
+
+void write_nb(write_cb& cb) {
+    write_handlers::start(cb);
+}
+
+void compare_and_swap_64_nb(compare_and_swap_64_cb& cb) {
+    compare_and_swap_64_handlers::start(cb);
+}
+
+void fetch_and_add_64_nb(fetch_and_op_64_cb& cb) {
+    fetch_and_add_64_handlers::start(cb);
 }
 
 }

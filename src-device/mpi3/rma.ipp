@@ -176,6 +176,45 @@ public:
         return true;
     }
     
+    bool try_fetch_and_op(
+        const void*             value_ptr
+    ,   void*                   result_ptr
+    ,   MPI_Datatype            datatype
+    ,   int                     dest_rank
+    ,   MPI_Aint                dest_index
+    ,   MPI_Op                  operation
+    ,   const local_notifier&   on_complete
+    )
+    {
+        if (!mpi_base::get_lock().try_lock())
+            return false;
+        
+        mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
+        
+        if (requests_saturated())
+            return false;
+        
+        /*
+            TODO: const_cast is needed for OpenMPI 1.8.4.
+        */
+        
+        mpi3_error::check(
+            MPI_Fetch_and_op(
+                const_cast<void*>(value_ptr)    // origin_addr
+            ,   const_cast<void*>(result_ptr)   // result_addr
+            ,   datatype                        // datatype
+            ,   dest_rank                       // target_rank
+            ,   dest_index                      // target_disp
+            ,   operation                       // op
+            ,   win_                            // win
+            )
+        );
+        
+        add_notifier(on_complete);
+        
+        return true;
+    }
+    
     void flush()
     {
         if (!mpi_base::get_lock().try_lock())

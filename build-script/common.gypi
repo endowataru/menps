@@ -28,7 +28,7 @@
                 'cflags': ['-O3', '-Wall','-pedantic',],
                 'xcode_settings': {
                     'OTHER_CPLUSPLUSFLAGS': [
-                        '-O3', '-Wall', '-Werror',
+                        '-O3', '-Wall', '-Werror', '-ferror-limit=3',
                         
                         # warnings
                         '-pedantic', '-Wextra', '-Wcast-qual', '-Wctor-dtor-privacy',

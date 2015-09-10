@@ -73,7 +73,7 @@ typedef ::mgcom_rma_registered_buffer   registered_buffer;
 registered_buffer allocate(index_t size_in_bytes);
 
 /**
- * De-allocate a registered buffer allocated from the buffer pool.
+ * Deallocate a registered buffer allocated from the buffer pool.
  */
 void deallocate(const registered_buffer& buffer);
 
@@ -120,6 +120,15 @@ inline void* to_pointer(const local_address& addr) MGBASE_NOEXCEPT {
 
 inline void* to_pointer(const registered_buffer& buffer) MGBASE_NOEXCEPT {
     return to_pointer(to_address(buffer));
+}
+
+inline local_region allocate_region(index_t size_in_bytes) {
+    void* const ptr = new mgbase::uint8_t[size_in_bytes];
+    return register_region(ptr, size_in_bytes);
+}
+inline void deallocate_region(const local_region& region) {
+    deregister_region(region);
+    delete[] static_cast<mgbase::uint8_t*>(to_pointer(region));
 }
 
 }
@@ -267,6 +276,34 @@ inline void compare_and_swap_64_nb(
 }
 
 }
+
+typedef ::mgcom_rma_fetch_and_op_64_cb  fetch_and_op_64_cb;
+
+namespace detail {
+
+void fetch_and_add_64_nb(fetch_and_op_64_cb& cb);
+
+}
+
+namespace {
+
+inline void fetch_and_add_64_nb(
+    fetch_and_op_64_cb&     cb
+,   const remote_address&   remote_addr
+,   mgbase::uint64_t        value
+,   mgbase::uint64_t*       result
+,   process_id_t            dest_proc
+) {
+    cb.remote_addr = remote_addr;
+    cb.value       = value;
+    cb.result      = result;
+    cb.dest_proc   = dest_proc;
+    
+    detail::fetch_and_add_64_nb(cb);
+}
+
+}
+
 
 void poll();
 

@@ -42,6 +42,10 @@ int main(int argc, char* argv[])
         compare_and_swap_64_nb(cb, remote_addr, 0, 123, &y, 1);
         mgbase::control::wait(cb);
         
+        fetch_and_op_64_cb cb2;
+        fetch_and_add_64_nb(cb2, remote_addr, 100, &y, 1);
+        mgbase::control::wait(cb2);
+        
     }
     
     barrier();

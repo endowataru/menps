@@ -177,7 +177,7 @@ mgcom_error_t mgcom_rma_allocate(
 ) MGBASE_NOEXCEPT;
 
 /**
- * De-allocate a buffer allocated from registered buffer pool.
+ * Deallocate a buffer allocated from registered buffer pool.
  */
 mgcom_error_t mgcom_rma_deallocate(
     mgcom_rma_registered_buffer     buffer
@@ -315,6 +315,25 @@ mgcom_error_t mgcom_rma_compare_and_swap_64_async(
 ,   mgcom_rma_remote_address                remote_addr
 ,   uint64_t                                expected
 ,   uint64_t                                desired
+,   uint64_t*                               result
+) MGBASE_NOEXCEPT;
+
+
+/// Control block for non-blocking fetch-and-op.
+typedef struct mgcom_rma_fetch_and_op_64_cb_tag {
+    mgbase_control_cb_common    common;
+    mgcom_rma_remote_address    remote_addr;
+    uint64_t                    value;
+    uint64_t*                   result;
+    mgcom_process_id_t          dest_proc;
+}
+mgcom_rma_fetch_and_op_64_cb;
+
+
+mgcom_error_t mgcom_rma_fetch_and_add_64_async(
+    mgcom_rma_fetch_and_op_64_cb*           cb
+,   mgcom_rma_remote_address                remote_addr
+,   uint64_t                                value
 ,   uint64_t*                               result
 ) MGBASE_NOEXCEPT;
 
