@@ -127,7 +127,7 @@ namespace detail {
 void send_nb(send_cb& cb)
 {
     cb.msg.ticket = receiver::pull_tickets_from(cb.dest_proc);
-    mgbase::control::start<send_cb, sender::start_send>(cb);
+    mgbase::control::enter<send_cb, sender::start_send>(cb);
 }
 
 }

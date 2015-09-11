@@ -18,7 +18,7 @@ namespace {
 class read_handlers {
 public:
     static void start(read_cb& cb) {
-        mgbase::control::start<read_cb, try_>(cb);
+        mgbase::control::enter<read_cb, try_>(cb);
     }
 
 private:
@@ -40,7 +40,7 @@ class write_handlers {
 public:
     static void start(write_cb& cb)
     {
-        mgbase::control::start<write_cb, try_>(cb);
+        mgbase::control::enter<write_cb, try_>(cb);
     }
 
 private:
@@ -62,7 +62,7 @@ class compare_and_swap_64_handlers {
 public:
     static void start(compare_and_swap_64_cb& cb)
     {
-        mgbase::control::start<compare_and_swap_64_cb, try_>(cb);
+        mgbase::control::enter<compare_and_swap_64_cb, try_>(cb);
     }
     
 private:
@@ -84,7 +84,7 @@ class fetch_and_add_64_handlers {
 public:
     static void start(fetch_and_op_64_cb& cb)
     {
-        mgbase::control::start<fetch_and_op_64_cb, try_>(cb);
+        mgbase::control::enter<fetch_and_op_64_cb, try_>(cb);
     }
     
 private:

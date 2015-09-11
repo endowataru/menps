@@ -181,6 +181,7 @@ inline void write_nb(
 ,   index_t               size_in_bytes
 ,   process_id_t          dest_proc
 ) {
+    mgbase::control::initialize(cb);
     cb.local_addr    = local_addr;
     cb.remote_addr   = remote_addr;
     cb.size_in_bytes = size_in_bytes;
@@ -199,6 +200,7 @@ inline void read_nb(
 ,   index_t               size_in_bytes
 ,   process_id_t          dest_proc
 ) {
+    mgbase::control::initialize(cb);
     cb.local_addr    = local_addr;
     cb.remote_addr   = remote_addr;
     cb.size_in_bytes = size_in_bytes;
@@ -247,9 +249,13 @@ void read_strided_nb(
 
 typedef ::mgcom_rma_compare_and_swap_64_cb  compare_and_swap_64_cb;
 
+typedef ::mgcom_rma_fetch_and_op_64_cb  fetch_and_op_64_cb;
+
 namespace detail {
 
 void compare_and_swap_64_nb(compare_and_swap_64_cb& cb);
+
+void fetch_and_add_64_nb(fetch_and_op_64_cb& cb);
 
 }
 
@@ -266,6 +272,7 @@ inline void compare_and_swap_64_nb(
 ,   mgbase::uint64_t*       result
 ,   process_id_t            dest_proc
 ) {
+    mgbase::control::initialize(cb);
     cb.remote_addr = remote_addr;
     cb.expected    = expected;
     cb.desired     = desired;
@@ -275,18 +282,6 @@ inline void compare_and_swap_64_nb(
     detail::compare_and_swap_64_nb(cb);
 }
 
-}
-
-typedef ::mgcom_rma_fetch_and_op_64_cb  fetch_and_op_64_cb;
-
-namespace detail {
-
-void fetch_and_add_64_nb(fetch_and_op_64_cb& cb);
-
-}
-
-namespace {
-
 inline void fetch_and_add_64_nb(
     fetch_and_op_64_cb&     cb
 ,   const remote_address&   remote_addr
@@ -294,6 +289,7 @@ inline void fetch_and_add_64_nb(
 ,   mgbase::uint64_t*       result
 ,   process_id_t            dest_proc
 ) {
+    mgbase::control::initialize(cb);
     cb.remote_addr = remote_addr;
     cb.value       = value;
     cb.result      = result;
@@ -341,6 +337,7 @@ inline void send_nb(
 ,   index_t         size
 ,   process_id_t    dest_proc
 ) {
+    mgbase::control::initialize(cb);
     cb.dest_proc = dest_proc;
     cb.msg.id    = id;
     cb.msg.size  = size;
