@@ -8,6 +8,7 @@
 #include <mgbase/assert.hpp>
 #include "impl.hpp"
 #include <mpi_base.hpp>
+#include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 
@@ -56,6 +57,9 @@ public:
     
     MPI_Aint attach(void* ptr, ::MPI_Aint size)
     {
+        MGBASE_ASSERT(ptr != MGBASE_NULLPTR);
+        MGBASE_ASSERT(size > 0);
+        
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
         
         mpi3_error::check(
@@ -71,6 +75,8 @@ public:
     
     void detach(void* ptr)
     {
+        MGBASE_ASSERT(ptr != MGBASE_NULLPTR);
+        
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
         
         mpi3_error::check(
@@ -86,6 +92,10 @@ public:
     ,   const local_notifier&   on_complete
     )
     {
+        MGBASE_ASSERT(dest_ptr != MGBASE_NULLPTR);
+        MGBASE_ASSERT(is_valid_rank(src_rank));
+        MGBASE_ASSERT(size > 0);
+        
         if (!mpi_base::get_lock().try_lock())
             return false;
         
@@ -93,6 +103,8 @@ public:
         
         if (requests_saturated())
             return false;
+        
+        MGBASE_LOG_DEBUG("msg:RDMA Get.\tdest_ptr:{}\tsrc_rank:{}\tsrc_index:{:x}", dest_ptr, src_rank, src_index);
         
         mpi3_error::check(
             MPI_Get(
@@ -116,6 +128,10 @@ public:
     ,   const local_notifier&   on_complete
     )
     {
+        MGBASE_ASSERT(src_ptr != MGBASE_NULLPTR);
+        MGBASE_ASSERT(is_valid_rank(dest_rank));
+        MGBASE_ASSERT(size > 0);
+        
         if (!mpi_base::get_lock().try_lock())
             return false;
         
@@ -123,6 +139,8 @@ public:
         
         if (requests_saturated())
             return false;
+        
+        MGBASE_LOG_DEBUG("msg:RDMA Put.\tsrc_ptr:{}\tdest_rank:{}\tdest_index:{:x}", src_ptr, dest_rank, dest_index);
         
         mpi3_error::check(
             MPI_Put(
@@ -159,6 +177,8 @@ public:
             TODO: const_cast is needed for OpenMPI 1.8.4.
         */
         
+        MGBASE_LOG_DEBUG("msg:RDMA CAS.\tdest_rank:{}\tdest_index:{:x}", dest_rank, dest_index);
+        
         mpi3_error::check(
             MPI_Compare_and_swap(
                 const_cast<void*>(desired_ptr)  // origin_addr
@@ -186,10 +206,16 @@ public:
     ,   const local_notifier&   on_complete
     )
     {
+        MGBASE_ASSERT(value_ptr  != MGBASE_NULLPTR);
+        MGBASE_ASSERT(result_ptr != MGBASE_NULLPTR);
+        MGBASE_ASSERT(is_valid_rank(dest_rank));
+        
         if (!mpi_base::get_lock().try_lock())
             return false;
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
+        
+        MGBASE_LOG_DEBUG("msg:RDMA Fetch and add.\tdest_rank:{}\tdest_index:{:x}", dest_rank, dest_index);
         
         if (requests_saturated())
             return false;
@@ -233,6 +259,10 @@ public:
     }
     
 private:
+    static bool is_valid_rank(int rank) MGBASE_NOEXCEPT {
+        return 0 <= rank && rank < static_cast<int>(number_of_processes());
+    }
+    
     bool requests_saturated() const MGBASE_NOEXCEPT {
         return num_requests_ >= max_num_requests;
     }
