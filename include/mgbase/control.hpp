@@ -22,12 +22,18 @@ struct handling {
 namespace {
 
 template <typename CB>
+inline void initialize(CB& cb) {
+    cb.common.finished = false;
+}
+
+template <typename CB>
 inline void finished(CB& cb){
     cb.common.finished = true;
 }
 
 template <typename CB>
 inline void set_next(CB& cb, handler_t handler) MGBASE_NOEXCEPT {
+    MGBASE_ASSERT(!cb.common.finished);
     cb.common.handler = handler;
 }
 
@@ -48,14 +54,9 @@ inline void enter(CB& cb) {
     func(cb);
 }
 
-template <typename CB, void (*func)(CB&)>
-inline void start(CB& cb) {
-    cb.common.finished = false;
-    enter<CB, func>(cb);
-}
-
 template <typename CB>
 inline void dispatch(CB& cb) {
+    MGBASE_ASSERT(!cb.common.finished);
     MGBASE_ASSERT(cb.common.handler != MGBASE_NULLPTR);
     cb.common.handler(&cb);
 }
