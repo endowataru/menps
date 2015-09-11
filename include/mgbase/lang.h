@@ -42,7 +42,7 @@
         #define MGBASE_CPP11_SUPPORTED
         
         // For C++11 or later
-        #define MGBASE_EXPLICIT_OPERATOR         explicit
+        #define MGBASE_EXPLICIT_OPERATOR         explicit operator
         #define MGBASE_NOEXCEPT                  noexcept
         #define MGBASE_OVERRIDE                  override
         #define MGBASE_NULLPTR                   nullptr
@@ -64,7 +64,7 @@
         }
     #else
         // For C++03
-        #define MGBASE_EXPLICIT_OPERATOR
+        #define MGBASE_EXPLICIT_OPERATOR            operator
         #define MGBASE_NOEXCEPT                  throw()
         #define MGBASE_OVERRIDE
         #define MGBASE_NULLPTR                   0

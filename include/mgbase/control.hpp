@@ -26,16 +26,26 @@ inline void finished(CB& cb){
     cb.common.finished = true;
 }
 
+template <typename CB>
+inline void set_next(CB& cb, handler_t handler) MGBASE_NOEXCEPT {
+    cb.common.handler = handler;
+}
+
+template <typename CB, void (*func)(CB&)>
+inline void set_next(CB& cb) MGBASE_NOEXCEPT {
+    set_next(cb, &handling<CB, func>::f);
+}
 
 template <typename CB>
 inline void enter(CB& cb, handler_t handler) {
-    cb.common.handler = handler;
+    set_next(cb, handler);
     handler(&cb);
 }
 
 template <typename CB, void (*func)(CB&)>
 inline void enter(CB& cb) {
-    enter(cb, &handling<CB, func>::f);
+    set_next<CB, func>(cb);
+    func(cb);
 }
 
 template <typename CB, void (*func)(CB&)>
