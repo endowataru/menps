@@ -95,7 +95,7 @@ void test_send(send_cb& cb) {
     );
     
     if (flag) {
-        mgbase::control::finished(cb);
+        mgbase::control::set_finished(cb);
     }
 }
 
