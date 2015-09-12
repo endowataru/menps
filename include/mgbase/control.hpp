@@ -27,7 +27,7 @@ inline void initialize(CB& cb) {
 }
 
 template <typename CB>
-inline void finished(CB& cb){
+inline void set_finished(CB& cb){
     cb.common.finished = true;
 }
 
