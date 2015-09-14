@@ -134,28 +134,6 @@ inline void deallocate_region(const local_region& region) {
 }
 
 
-/**
- * Low-level function of contiguous write.
- */
-bool try_write(
-    const local_address&  local_addr
-,   const remote_address& remote_addr
-,   index_t               size_in_bytes
-,   process_id_t          dest_proc
-,   local_notifier        on_complete
-);
-
-/**
- * Low-level function of contiguous read.
- */
-bool try_read(
-    const local_address&  local_addr
-,   const remote_address& remote_addr
-,   index_t               size_in_bytes
-,   process_id_t          dest_proc
-,   local_notifier        on_complete
-);
-
 
 typedef ::mgcom_rma_write_cb    write_cb;
 
@@ -246,20 +224,61 @@ void read_strided_nb(
 );
 
 
+typedef ::mgcom_rma_atomic_write_64_cb  atomic_write_64_cb;
+typedef ::mgcom_rma_atomic_read_64_cb   atomic_read_64_cb;
 
 typedef ::mgcom_rma_compare_and_swap_64_cb  compare_and_swap_64_cb;
-
-typedef ::mgcom_rma_fetch_and_op_64_cb  fetch_and_op_64_cb;
+typedef ::mgcom_rma_fetch_and_op_64_cb      fetch_and_op_64_cb;
 
 namespace detail {
 
-void compare_and_swap_64_nb(compare_and_swap_64_cb& cb);
+void atomic_write_64_nb(atomic_write_64_cb& cb);
+void atomic_read_64_nb(atomic_read_64_cb& cb);
 
+void compare_and_swap_64_nb(compare_and_swap_64_cb& cb);
 void fetch_and_add_64_nb(fetch_and_op_64_cb& cb);
 
 }
 
 namespace {
+
+/**
+ * Non-blocking 64-bit atomic write.
+ */
+inline void atomic_write_64_nb(
+    atomic_write_64_cb&     cb
+,   const local_address&    local_addr
+,   const local_address&    buf_addr
+,   const remote_address&   remote_addr
+,   process_id_t            dest_proc
+) {
+    mgbase::control::initialize(cb);
+    cb.local_addr  = local_addr;
+    cb.buf_addr    = buf_addr;
+    cb.remote_addr = remote_addr;
+    cb.dest_proc   = dest_proc;
+    
+    detail::atomic_write_64_nb(cb);
+}
+
+/**
+ * Non-blocking 64-bit atomic read.
+ */
+inline void atomic_read_64_nb(
+    atomic_read_64_cb&      cb
+,   const local_address&    local_addr
+,   const local_address&    buf_addr
+,   const remote_address&   remote_addr
+,   process_id_t            src_proc
+) {
+    mgbase::control::initialize(cb);
+    cb.local_addr  = local_addr;
+    cb.buf_addr    = buf_addr;
+    cb.remote_addr = remote_addr;
+    cb.src_proc    = src_proc;
+    
+    detail::atomic_read_64_nb(cb);
+}
 
 /**
  * Non-blocking compare-and-swap.

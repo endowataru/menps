@@ -75,6 +75,44 @@ bool try_write(
     );
 }
 
+bool try_atomic_write_64(
+    const local_address&    local_addr
+,   const local_address&    buf_addr
+,   const remote_address&   remote_addr
+,   process_id_t            dest_proc
+,   local_notifier          on_complete
+)
+{
+    return g_impl.try_fetch_and_op(
+        to_pointer(local_addr)
+    ,   to_pointer(buf_addr)
+    ,   MPI_UINT64_T
+    ,   static_cast<int>(dest_proc)
+    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   MPI_REPLACE
+    ,   on_complete
+    );
+}
+
+bool try_atomic_read_64(
+    const local_address&    local_addr
+,   const local_address&    buf_addr
+,   const remote_address&   remote_addr
+,   process_id_t            dest_proc
+,   local_notifier          on_complete
+)
+{
+    return g_impl.try_fetch_and_op(
+        to_pointer(buf_addr)
+    ,   to_pointer(local_addr)
+    ,   MPI_UINT64_T
+    ,   static_cast<int>(dest_proc)
+    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   MPI_NO_OP
+    ,   on_complete
+    );
+}
+
 bool try_compare_and_swap_64(
     const remote_address&   remote_addr
 ,   const mgbase::uint64_t* expected

@@ -58,6 +58,54 @@ private:
     }
 };
 
+class atomic_write_64_handlers {
+public:
+    typedef atomic_write_64_cb  cb_type;
+    
+    static void start(cb_type& cb)
+    {
+        mgbase::control::enter<cb_type, try_>(cb);
+    }
+    
+private:
+    static void try_(cb_type& cb)
+    {
+        if (try_atomic_write_64(cb.local_addr, cb.buf_addr, cb.remote_addr, cb.dest_proc,
+            make_notifier_finished(cb)))
+        {
+            mgbase::control::enter<cb_type, test>(cb);
+        }
+    }
+    
+    static void test(cb_type& /*cb*/) {
+        poll();
+    }
+};
+
+class atomic_read_64_handlers {
+public:
+    typedef atomic_read_64_cb  cb_type;
+    
+    static void start(cb_type& cb)
+    {
+        mgbase::control::enter<cb_type, try_>(cb);
+    }
+    
+private:
+    static void try_(cb_type& cb)
+    {
+        if (try_atomic_read_64(cb.local_addr, cb.buf_addr, cb.remote_addr, cb.src_proc,
+            make_notifier_finished(cb)))
+        {
+            mgbase::control::enter<cb_type, test>(cb);
+        }
+    }
+    
+    static void test(cb_type& /*cb*/) {
+        poll();
+    }
+};
+
 class compare_and_swap_64_handlers {
 public:
     static void start(compare_and_swap_64_cb& cb)
