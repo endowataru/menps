@@ -248,15 +248,15 @@ namespace {
 inline void atomic_write_64_nb(
     atomic_write_64_cb&     cb
 ,   const local_address&    local_addr
-,   const local_address&    buf_addr
 ,   const remote_address&   remote_addr
 ,   process_id_t            dest_proc
+,   const local_address&    buf_addr
 ) {
     mgbase::control::initialize(cb);
     cb.local_addr  = local_addr;
-    cb.buf_addr    = buf_addr;
     cb.remote_addr = remote_addr;
     cb.dest_proc   = dest_proc;
+    cb.buf_addr    = buf_addr;
     
     detail::atomic_write_64_nb(cb);
 }
@@ -267,52 +267,55 @@ inline void atomic_write_64_nb(
 inline void atomic_read_64_nb(
     atomic_read_64_cb&      cb
 ,   const local_address&    local_addr
-,   const local_address&    buf_addr
 ,   const remote_address&   remote_addr
 ,   process_id_t            src_proc
+,   const local_address&    buf_addr
 ) {
     mgbase::control::initialize(cb);
     cb.local_addr  = local_addr;
-    cb.buf_addr    = buf_addr;
     cb.remote_addr = remote_addr;
     cb.src_proc    = src_proc;
+    cb.buf_addr    = buf_addr;
     
     detail::atomic_read_64_nb(cb);
 }
 
 /**
- * Non-blocking compare-and-swap.
+ * Non-blocking 64-bit compare-and-swap.
  */
 inline void compare_and_swap_64_nb(
     compare_and_swap_64_cb& cb
-,   remote_address          remote_addr
-,   mgbase::uint64_t        expected
-,   mgbase::uint64_t        desired
-,   mgbase::uint64_t*       result
-,   process_id_t            dest_proc
+,   const local_address&    expected_addr
+,   const local_address&    desired_addr
+,   const remote_address&   remote_addr
+,   process_id_t            proc
+,   const local_address&    result_addr
 ) {
     mgbase::control::initialize(cb);
-    cb.remote_addr = remote_addr;
-    cb.expected    = expected;
-    cb.desired     = desired;
-    cb.result      = result;
-    cb.dest_proc   = dest_proc;
+    cb.expected_addr = expected_addr;
+    cb.desired_addr  = desired_addr;
+    cb.remote_addr   = remote_addr;
+    cb.proc          = proc;
+    cb.result_addr   = result_addr;
     
     detail::compare_and_swap_64_nb(cb);
 }
 
+/**
+ * Non-blocking 64-bit fetch-and-add.
+ */
 inline void fetch_and_add_64_nb(
     fetch_and_op_64_cb&     cb
+,   const local_address&    value_addr
 ,   const remote_address&   remote_addr
-,   mgbase::uint64_t        value
-,   mgbase::uint64_t*       result
-,   process_id_t            dest_proc
+,   process_id_t            proc
+,   const local_address&    result_addr
 ) {
     mgbase::control::initialize(cb);
+    cb.value_addr  = value_addr;
     cb.remote_addr = remote_addr;
-    cb.value       = value;
-    cb.result      = result;
-    cb.dest_proc   = dest_proc;
+    cb.proc        = proc;
+    cb.result_addr = result_addr;
     
     detail::fetch_and_add_64_nb(cb);
 }

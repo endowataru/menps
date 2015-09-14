@@ -31,27 +31,43 @@ int main(int argc, char* argv[])
     
     mgbase::stopwatch sw;
     
-    uint64_t y = 1000;
+    //uint64_t y = 1000;
     
     if (current == 0) {
         //x = 123;
         
         sw.start();
         
+        registered_buffer buf   = allocate(3 * sizeof(mgbase::uint64_t));
+        local_address     laddr = to_address(buf);
+        mgbase::uint64_t* ptr = static_cast<mgbase::uint64_t*>(to_pointer(laddr));
+        
+        ptr[0] = 0;
+        ptr[1] = 123;
+        
         compare_and_swap_64_cb cb;
-        compare_and_swap_64_nb(cb, remote_addr, 0, 123, &y, 1);
+        compare_and_swap_64_nb(cb,
+            laddr, advanced(laddr, sizeof(mgbase::uint64_t)),
+            remote_addr, 1, advanced(laddr, 2 * sizeof(mgbase::uint64_t)));
         mgbase::control::wait(cb);
         
+        std::cout << mgcom::current_process_id() << " " << ptr[0] << " " << ptr[1] << " " << ptr[2] << std::endl;
+        
+        ptr[0] = 1;
+        ptr[1] = 0;
+        
         fetch_and_op_64_cb cb2;
-        fetch_and_add_64_nb(cb2, remote_addr, 100, &y, 1);
+        fetch_and_add_64_nb(cb2, laddr, remote_addr, 1, mgcom::rma::advanced(laddr, sizeof(mgbase::uint64_t)));
         mgbase::control::wait(cb2);
         
+        deallocate(buf);
+        
+        std::cout << current_process_id() << " " << ptr[0] << " " << ptr[1] << " " << ptr[2] << std::endl;
     }
     
     barrier();
     
-    std::cout << mgcom::current_process_id() << " " << x << " " << y << std::endl;
-    std::cout << sw.elapsed() << std::endl;
+    std::cout << current_process_id() << " " << x << " " << sw.elapsed() << std::endl;
     
     
     finalize();

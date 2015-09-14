@@ -116,8 +116,8 @@ public:
 private:
     static void try_(compare_and_swap_64_cb& cb)
     {
-        if (try_compare_and_swap_64(cb.remote_addr, &cb.expected, &cb.desired,
-            cb.result, cb.dest_proc, make_notifier_finished(cb)))
+        if (try_compare_and_swap_64(cb.expected_addr, cb.desired_addr, cb.remote_addr, cb.proc, cb.result_addr,
+            make_notifier_finished(cb)))
         {
             mgbase::control::enter<compare_and_swap_64_cb, test>(cb);
         }
@@ -138,8 +138,8 @@ public:
 private:
     static void try_(fetch_and_op_64_cb& cb)
     {
-        if (try_fetch_and_add_64(cb.remote_addr, &cb.value, cb.result,
-            cb.dest_proc, make_notifier_finished(cb)))
+        if (try_fetch_and_add_64(cb.value_addr, cb.remote_addr, cb.proc, cb.result_addr,
+            make_notifier_finished(cb)))
         {
             mgbase::control::enter<fetch_and_op_64_cb, test>(cb);
         }

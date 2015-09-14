@@ -296,14 +296,14 @@ mgcom_error_t mgcom_rma_read_strided_nb(
 ) MGBASE_NOEXCEPT;
 
 
+
 /// Control block for non-blocking 64-bit atomic write.
 typedef struct mgcom_rma_atomic_write_64_cb_tag {
     mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
-    mgcom_rma_local_address     buf_addr;
     mgcom_rma_remote_address    remote_addr;
-    mgcom_index_t               size_in_bytes;
     mgcom_process_id_t          dest_proc;
+    mgcom_rma_local_address     buf_addr;
 }
 mgcom_rma_atomic_write_64_cb;
 
@@ -311,9 +311,9 @@ mgcom_rma_atomic_write_64_cb;
 mgcom_error_t mgcom_rma_atomic_write_64_nb(
     mgcom_rma_atomic_write_64_cb*   cb
 ,   mgcom_rma_local_address         local_addr
-,   mgcom_rma_local_address         buf_addr
 ,   mgcom_rma_remote_address        remote_addr
 ,   mgcom_process_id_t              dest_proc
+,   mgcom_rma_local_address         buf_addr
 ) MGBASE_NOEXCEPT;
 
 
@@ -321,10 +321,9 @@ mgcom_error_t mgcom_rma_atomic_write_64_nb(
 typedef struct mgcom_rma_atomic_read_64_cb_tag {
     mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
-    mgcom_rma_local_address     buf_addr;
     mgcom_rma_remote_address    remote_addr;
-    mgcom_index_t               size_in_bytes;
     mgcom_process_id_t          src_proc;
+    mgcom_rma_local_address     buf_addr;
 }
 mgcom_rma_atomic_read_64_cb;
 
@@ -332,9 +331,9 @@ mgcom_rma_atomic_read_64_cb;
 mgcom_error_t mgcom_rma_atomic_read_64_nb(
     mgcom_rma_atomic_read_64_cb*    cb
 ,   mgcom_rma_local_address         local_addr
-,   mgcom_rma_local_address         buf_addr
 ,   mgcom_rma_remote_address        remote_addr
 ,   mgcom_process_id_t              src_proc
+,   mgcom_rma_local_address         buf_addr
 ) MGBASE_NOEXCEPT;
 
 
@@ -342,11 +341,11 @@ mgcom_error_t mgcom_rma_atomic_read_64_nb(
 /// Control block for non-blocking 64-bit compare-and-swap.
 typedef struct mgcom_rma_compare_and_swap_64_cb_tag {
     mgbase_control_cb_common    common;
+    mgcom_rma_local_address     expected_addr;
+    mgcom_rma_local_address     desired_addr;
     mgcom_rma_remote_address    remote_addr;
-    uint64_t                    expected;
-    uint64_t                    desired;
-    uint64_t*                   result;
-    mgcom_process_id_t          dest_proc;
+    mgcom_process_id_t          proc;
+    mgcom_rma_local_address     result_addr;
 }
 mgcom_rma_compare_and_swap_64_cb;
 
@@ -354,21 +353,22 @@ mgcom_rma_compare_and_swap_64_cb;
  * Non-blocking 64-bit compare-and-swap.
  */
 mgcom_error_t mgcom_rma_compare_and_swap_64_nb(
-    mgcom_rma_compare_and_swap_64_cb*       cb
-,   mgcom_rma_remote_address                remote_addr
-,   uint64_t                                expected
-,   uint64_t                                desired
-,   uint64_t*                               result
+    mgcom_rma_compare_and_swap_64_cb*   cb
+,   mgcom_rma_local_address             expected_addr
+,   mgcom_rma_local_address             desired_addr
+,   mgcom_rma_remote_address            remote_addr
+,   mgcom_process_id_t                  proc
+,   mgcom_rma_local_address             result_addr
 ) MGBASE_NOEXCEPT;
 
 
 /// Control block for non-blocking 64-bit fetch-and-op.
 typedef struct mgcom_rma_fetch_and_op_64_cb_tag {
     mgbase_control_cb_common    common;
+    mgcom_rma_local_address     value_addr;
     mgcom_rma_remote_address    remote_addr;
-    uint64_t                    value;
-    uint64_t*                   result;
-    mgcom_process_id_t          dest_proc;
+    mgcom_process_id_t          proc;
+    mgcom_rma_local_address     result_addr;
 }
 mgcom_rma_fetch_and_op_64_cb;
 
@@ -376,10 +376,11 @@ mgcom_rma_fetch_and_op_64_cb;
  * Non-blocking 64-bit fetch-and-add.
  */
 mgcom_error_t mgcom_rma_fetch_and_add_64_nb(
-    mgcom_rma_fetch_and_op_64_cb*           cb
-,   mgcom_rma_remote_address                remote_addr
-,   uint64_t                                value
-,   uint64_t*                               result
+    mgcom_rma_fetch_and_op_64_cb*       cb
+,   mgcom_rma_local_address             value_addr
+,   mgcom_rma_remote_address            remote_addr
+,   mgcom_process_id_t                  proc
+,   mgcom_rma_remote_address            result_addr
 ) MGBASE_NOEXCEPT;
 
 
