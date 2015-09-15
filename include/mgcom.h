@@ -25,7 +25,7 @@ typedef uint64_t  mgcom_rma_address_offset_t;
  * Guaranteed to be POD.
  * DO NOT access the members directly.
  */
-typedef struct mgcom_rma_region_key_ {
+typedef struct mgcom_rma_region_key {
     void*    pointer;
     
     // (ibv)   info = rkey
@@ -40,7 +40,7 @@ mgcom_rma_region_key;
  * NOT guaranteed to be POD.
  * DO NOT access the members directly.
  */
-typedef struct mgcom_rma_local_region_ {
+typedef struct mgcom_rma_local_region {
     mgcom_rma_region_key key;
     
     // (ibv)   info = lkey
@@ -54,7 +54,7 @@ mgcom_rma_local_region;
  * NOT guaranteed to be POD.
  * DO NOT access the members directly.
  */
-typedef struct mgcom_rma_remote_region_ {
+typedef struct mgcom_rma_remote_region {
     mgcom_rma_region_key key;
     
     // (ibv)   info = (unused)
@@ -66,7 +66,7 @@ mgcom_rma_remote_region;
 /**
  * Address of registered memory region located on the local process.
  */
-typedef struct mgcom_rma_local_address_ {
+typedef struct mgcom_rma_local_address {
     mgcom_rma_local_region            region;
     
     /**
@@ -80,7 +80,7 @@ mgcom_rma_local_address;
 /**
  * Address of registered memory region located on a remote process.
  */
-typedef struct mgcom_rma_remote_address_ {
+typedef struct mgcom_rma_remote_address {
     mgcom_rma_remote_region           region;
     
     /**
@@ -92,7 +92,7 @@ typedef struct mgcom_rma_remote_address_ {
 mgcom_rma_remote_address;
 
 
-typedef enum mgcom_local_operation_ {
+typedef enum mgcom_local_operation {
     MGCOM_LOCAL_NO_OPERATION
 ,   MGCOM_LOCAL_ASSIGN_INT8
 ,   MGCOM_LOCAL_ASSIGN_INT16
@@ -103,7 +103,7 @@ typedef enum mgcom_local_operation_ {
 }
 mgcom_local_operation;
 
-typedef struct mgcom_notifier_ {
+typedef struct mgcom_notifier {
     mgcom_local_operation   operation;
     void*                   pointer;
     uint64_t                value;
@@ -111,14 +111,14 @@ typedef struct mgcom_notifier_ {
 mgcom_local_notifier;
 
 
-typedef enum mgcom_remote_operation_ {
+typedef enum mgcom_remote_operation {
     MGCOM_REMOTE_CAS_INT64
 ,   MGCOM_REMOTE_FAA_INT64
 }
 mgcom_remote_operation;
 
 
-typedef enum mgcom_error_code_ {
+typedef enum mgcom_error_code {
     MGCOM_SUCCESS
 ,   MGCOM_FAILURE
 }
@@ -167,7 +167,7 @@ mgcom_error_code_t mgcom_rma_deregister_region(
 /**
  * Registered buffer.
  */
-typedef struct mgcom_rma_registered_buffer_ {
+typedef struct mgcom_rma_registered_buffer {
     mgcom_rma_local_address addr;
 }
 mgcom_rma_registered_buffer;
@@ -214,7 +214,7 @@ mgcom_error_code_t mgcom_rma_try_read_nb(
 
 
 /// Control block for non-blocking contiguous write.
-typedef struct mgcom_rma_write_cb_ {
+typedef struct mgcom_rma_write_cb {
     mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
@@ -236,7 +236,7 @@ mgcom_error_code_t mgcom_rma_write_nb(
 
 
 /// Control block for non-blocking contiguous read.
-typedef struct mgcom_rma_read_cb_ {
+typedef struct mgcom_rma_read_cb {
     mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
@@ -259,7 +259,7 @@ mgcom_error_code_t mgcom_rma_read_nb(
 
 
 /// Control block for non-blocking strided write.
-typedef struct mgcom_rma_write_strided_cb_ {
+typedef struct mgcom_rma_write_strided_cb {
     mgbase_control_cb_common    common;
 }
 mgcom_rma_write_strided_cb;
@@ -280,7 +280,7 @@ mgcom_error_code_t mgcom_rma_write_strided_nb(
 
 
 /// Control block for non-blocking strided read.
-typedef struct mgcom_rma_read_strided_cb_ {
+typedef struct mgcom_rma_read_strided_cb {
     mgbase_control_cb_common    common;
 }
 mgcom_rma_read_strided_cb;
@@ -302,7 +302,7 @@ mgcom_error_code_t mgcom_rma_read_strided_nb(
 
 
 /// Control block for non-blocking 64-bit atomic write.
-typedef struct mgcom_rma_atomic_write_64_cb_ {
+typedef struct mgcom_rma_atomic_write_64_cb {
     mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
@@ -322,7 +322,7 @@ mgcom_error_code_t mgcom_rma_atomic_write_64_nb(
 
 
 /// Control block for non-blocking 64-bit atomic read.
-typedef struct mgcom_rma_atomic_read_64_cb_ {
+typedef struct mgcom_rma_atomic_read_64_cb {
     mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
@@ -343,7 +343,7 @@ mgcom_error_code_t mgcom_rma_atomic_read_64_nb(
 
 
 /// Control block for non-blocking 64-bit compare-and-swap.
-typedef struct mgcom_rma_compare_and_swap_64_cb_ {
+typedef struct mgcom_rma_compare_and_swap_64_cb {
     mgbase_control_cb_common    common;
     mgcom_rma_local_address     expected_addr;
     mgcom_rma_local_address     desired_addr;
@@ -367,7 +367,7 @@ mgcom_error_code_t mgcom_rma_compare_and_swap_64_nb(
 
 
 /// Control block for non-blocking 64-bit fetch-and-op.
-typedef struct mgcom_rma_fetch_and_op_64_cb_ {
+typedef struct mgcom_rma_fetch_and_op_64_cb {
     mgbase_control_cb_common    common;
     mgcom_rma_local_address     value_addr;
     mgcom_rma_remote_address    remote_addr;
@@ -393,7 +393,7 @@ mgcom_error_code_t mgcom_rma_fetch_and_add_64_nb(
  */
 typedef mgcom_index_t  mgcom_am_handler_id_t;
 
-typedef struct mgcom_callback_argument_ {
+typedef struct mgcom_callback_argument {
     mgcom_process_id_t source;
     const void*        data;
     mgcom_index_t      size;
@@ -416,7 +416,7 @@ mgcom_error_code_t mgcom_am_register_handler(
 #define MGCOM_AM_MAX_DATA_SIZE 1024
 #define MGCOM_AM_HANDLE_SIZE   1024
 
-typedef struct mgcom_am_message_ {
+typedef struct mgcom_am_message {
     mgcom_am_handler_id_t   id;
     mgcom_index_t           size;
     mgcom_index_t           ticket;
@@ -425,7 +425,7 @@ typedef struct mgcom_am_message_ {
 mgcom_am_message;
 
 /// Control block for sending Active Messages.
-typedef struct mgcom_am_send_cb_ {
+typedef struct mgcom_am_send_cb {
     mgbase_control_cb_common    common;
     mgcom_process_id_t          dest_proc;
     mgcom_am_message            msg;
