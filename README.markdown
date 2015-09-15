@@ -9,7 +9,7 @@ Requires C++03 or later.
 Goals
 -----
 
-## General
+### General
 
 - Cross-platform.
 - Type safety.
@@ -17,7 +17,7 @@ Goals
     - Easy to read the implementation.
     - Avoid too mush abstraction.
 
-## Communication
+### Communication
 
 - Remote Memory Access (RMA) and Active Messages (AM).
 - Non-blocking communication.

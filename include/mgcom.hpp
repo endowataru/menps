@@ -11,14 +11,14 @@
 
 namespace mgcom {
 
-typedef ::mgcom_index_t                  index_t;
+typedef mgcom_index_t                  index_t;
 
-typedef ::mgcom_process_id_t             process_id_t;
+typedef mgcom_process_id_t             process_id_t;
 
-typedef ::mgcom_local_operation          local_operation;
-typedef ::mgcom_local_notifier           local_notifier;
+typedef mgcom_local_operation          local_operation;
+typedef mgcom_local_notifier           local_notifier;
 
-typedef ::mgcom_remote_operation         remote_operation;
+typedef mgcom_remote_operation         remote_operation;
 
 /**
  * Initialize and start the communication.
@@ -32,14 +32,14 @@ void finalize();
 
 namespace rma {
 
-typedef ::mgcom_rma_address_offset_t         address_offset_t;
+typedef mgcom_rma_address_offset_t         address_offset_t;
 
-typedef ::mgcom_rma_region_key               region_key;
-typedef ::mgcom_rma_local_region             local_region;
-typedef ::mgcom_rma_remote_region            remote_region;
+typedef mgcom_rma_region_key               region_key;
+typedef mgcom_rma_local_region             local_region;
+typedef mgcom_rma_remote_region            remote_region;
 
-typedef ::mgcom_rma_local_address            local_address;
-typedef ::mgcom_rma_remote_address           remote_address;
+typedef mgcom_rma_local_address            local_address;
+typedef mgcom_rma_remote_address           remote_address;
 
 
 /**
@@ -65,7 +65,7 @@ remote_region use_remote_region(
 void deregister_region(const local_region& region);
 
 
-typedef ::mgcom_rma_registered_buffer   registered_buffer;
+typedef mgcom_rma_registered_buffer   registered_buffer;
 
 /**
  * Allocate a registered buffer from the buffer pool.
@@ -135,9 +135,9 @@ inline void deallocate_region(const local_region& region) {
 
 
 
-typedef ::mgcom_rma_write_cb    write_cb;
+typedef mgcom_rma_write_cb    write_cb;
 
-typedef ::mgcom_rma_read_cb     read_cb;
+typedef mgcom_rma_read_cb     read_cb;
 
 namespace detail {
 
@@ -190,7 +190,7 @@ inline void read_nb(
 }
 
 
-typedef ::mgcom_rma_write_strided_cb  write_strided_cb;
+typedef mgcom_rma_write_strided_cb  write_strided_cb;
 
 /**
  * Non-blockng strided write.
@@ -207,7 +207,7 @@ void write_strided_nb(
 );
 
 
-typedef ::mgcom_rma_read_strided_cb  read_strided_cb;
+typedef mgcom_rma_read_strided_cb  read_strided_cb;
 
 /**
  * Non-blockng strided read.
@@ -224,11 +224,11 @@ void read_strided_nb(
 );
 
 
-typedef ::mgcom_rma_atomic_write_64_cb  atomic_write_64_cb;
-typedef ::mgcom_rma_atomic_read_64_cb   atomic_read_64_cb;
+typedef mgcom_rma_atomic_write_64_cb  atomic_write_64_cb;
+typedef mgcom_rma_atomic_read_64_cb   atomic_read_64_cb;
 
-typedef ::mgcom_rma_compare_and_swap_64_cb  compare_and_swap_64_cb;
-typedef ::mgcom_rma_fetch_and_op_64_cb      fetch_and_op_64_cb;
+typedef mgcom_rma_compare_and_swap_64_cb  compare_and_swap_64_cb;
+typedef mgcom_rma_fetch_and_op_64_cb      fetch_and_op_64_cb;
 
 namespace detail {
 
@@ -329,20 +329,20 @@ void poll();
 
 namespace am {
 
-typedef ::mgcom_am_handler_id_t        handler_id_t;
+typedef mgcom_am_handler_id_t        handler_id_t;
 
-typedef ::mgcom_am_handler_callback_t  handler_callback_t;
+typedef mgcom_am_handler_callback_t  handler_callback_t;
 
-typedef ::mgcom_am_callback_parameters callback_parameters;
+typedef mgcom_am_callback_parameters callback_parameters;
 
 void register_handler(
     handler_id_t       id
 ,   handler_callback_t callback
 );
 
-typedef ::mgcom_am_message  message;
+typedef mgcom_am_message  message;
 
-typedef ::mgcom_am_send_cb  send_cb;
+typedef mgcom_am_send_cb  send_cb;
 
 namespace detail {
 

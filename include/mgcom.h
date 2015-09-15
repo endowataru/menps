@@ -8,6 +8,10 @@
 #include <mgbase/lang.h>
 #include <mgbase/control.h>
 
+#ifdef __cplusplus
+namespace mgcom {
+#endif
+
 MGBASE_EXTERN_C_BEGIN
 
 typedef uint64_t  mgcom_index_t;
@@ -114,26 +118,26 @@ typedef enum mgcom_remote_operation_tag {
 mgcom_remote_operation;
 
 
-typedef enum mgcom_error_tag {
+typedef enum mgcom_error_code_tag {
     MGCOM_SUCCESS
 ,   MGCOM_FAILURE
 }
-mgcom_error_t;
+mgcom_error_code_t;
 
 /**
  * Initialize and start the communication.
  */
-mgcom_error_t mgcom_initialize(int* argc, char*** argv) MGBASE_NOEXCEPT;
+mgcom_error_code_t mgcom_initialize(int* argc, char*** argv) MGBASE_NOEXCEPT;
 
 /**
  * Finalize the communication.
  */
-mgcom_error_t mgcom_finalize(void) MGBASE_NOEXCEPT;
+mgcom_error_code_t mgcom_finalize(void) MGBASE_NOEXCEPT;
 
 /**
  * Register a region located on the current process.
  */
-mgcom_error_t mgcom_rma_register_region(
+mgcom_error_code_t mgcom_rma_register_region(
     void*                        local_pointer
 ,   mgcom_index_t                size_in_bytes
 ,   mgcom_rma_local_region*      result
@@ -143,7 +147,7 @@ mgcom_error_t mgcom_rma_register_region(
 /**
  * Prepare a region located on a remote process.
  */
-mgcom_error_t mgcom_rma_use_remote_region(
+mgcom_error_code_t mgcom_rma_use_remote_region(
     mgcom_process_id_t           proc_id
 ,   mgcom_rma_region_key         key
 ,   mgcom_index_t                size_in_bytes
@@ -153,7 +157,7 @@ mgcom_error_t mgcom_rma_use_remote_region(
 /**
  * De-register the region located on the current process.
  */
-mgcom_error_t mgcom_rma_deregister_region(
+mgcom_error_code_t mgcom_rma_deregister_region(
     mgcom_rma_local_region       region
 ,   void*                        local_pointer
 ,   mgcom_index_t                size_in_bytes
@@ -171,7 +175,7 @@ mgcom_rma_registered_buffer;
 /**
  * Allocate a buffer from registered buffer pool.
  */
-mgcom_error_t mgcom_rma_allocate(
+mgcom_error_code_t mgcom_rma_allocate(
     mgcom_index_t                   size_in_bytes
 ,   mgcom_rma_registered_buffer*    result
 ) MGBASE_NOEXCEPT;
@@ -179,7 +183,7 @@ mgcom_error_t mgcom_rma_allocate(
 /**
  * Deallocate a buffer allocated from registered buffer pool.
  */
-mgcom_error_t mgcom_rma_deallocate(
+mgcom_error_code_t mgcom_rma_deallocate(
     mgcom_rma_registered_buffer     buffer
 ) MGBASE_NOEXCEPT;
 
@@ -187,7 +191,7 @@ mgcom_error_t mgcom_rma_deallocate(
 /**
  * Low-level function of contiguous write.
  */
-mgcom_error_t mgcom_rma_try_write_nb(
+mgcom_error_code_t mgcom_rma_try_write_nb(
     mgcom_rma_local_address      local_addr
 ,   mgcom_rma_remote_address     remote_addr
 ,   mgcom_index_t                size_in_bytes
@@ -199,7 +203,7 @@ mgcom_error_t mgcom_rma_try_write_nb(
 /**
  * Low-level function of contiguous read.
  */
-mgcom_error_t mgcom_rma_try_read_nb(
+mgcom_error_code_t mgcom_rma_try_read_nb(
     mgcom_rma_local_address     local_addr
 ,   mgcom_rma_remote_address    remote_addr
 ,   mgcom_index_t               size_in_bytes
@@ -222,7 +226,7 @@ mgcom_rma_write_cb;
 /**
  * Non-blocking contiguous write.
  */
-mgcom_error_t mgcom_rma_write_nb(
+mgcom_error_code_t mgcom_rma_write_nb(
     mgcom_rma_write_cb*         cb
 ,   mgcom_rma_local_address     local_addr
 ,   mgcom_rma_remote_address    remote_addr
@@ -244,7 +248,7 @@ mgcom_rma_read_cb;
 /**
  * Non-blocking contiguous read.
  */
-mgcom_error_t mgcom_rma_read_nb(
+mgcom_error_code_t mgcom_rma_read_nb(
     mgcom_rma_read_cb*          cb
 ,   mgcom_rma_local_address     local_addr
 ,   mgcom_rma_remote_address    remote_addr
@@ -263,7 +267,7 @@ mgcom_rma_write_strided_cb;
 /**
  * Non-blockng strided write.
  */
-mgcom_error_t mgcom_rma_write_strided_nb(
+mgcom_error_code_t mgcom_rma_write_strided_nb(
     mgcom_rma_write_strided_cb* cb
 ,   mgcom_rma_local_address     local_addr
 ,   mgcom_index_t*              local_stride
@@ -284,7 +288,7 @@ mgcom_rma_read_strided_cb;
 /**
  * Non-blockng strided read.
  */
-mgcom_error_t mgcom_rma_read_strided_nb(
+mgcom_error_code_t mgcom_rma_read_strided_nb(
     mgcom_rma_read_strided_cb*  cb
 ,   mgcom_rma_local_address     local_addr
 ,   mgcom_index_t*              local_stride
@@ -308,7 +312,7 @@ typedef struct mgcom_rma_atomic_write_64_cb_tag {
 mgcom_rma_atomic_write_64_cb;
 
 // Non-blocking 64-bit atomic write.
-mgcom_error_t mgcom_rma_atomic_write_64_nb(
+mgcom_error_code_t mgcom_rma_atomic_write_64_nb(
     mgcom_rma_atomic_write_64_cb*   cb
 ,   mgcom_rma_local_address         local_addr
 ,   mgcom_rma_remote_address        remote_addr
@@ -328,7 +332,7 @@ typedef struct mgcom_rma_atomic_read_64_cb_tag {
 mgcom_rma_atomic_read_64_cb;
 
 // Non-blocking 64-bit atomic read.
-mgcom_error_t mgcom_rma_atomic_read_64_nb(
+mgcom_error_code_t mgcom_rma_atomic_read_64_nb(
     mgcom_rma_atomic_read_64_cb*    cb
 ,   mgcom_rma_local_address         local_addr
 ,   mgcom_rma_remote_address        remote_addr
@@ -352,7 +356,7 @@ mgcom_rma_compare_and_swap_64_cb;
 /**
  * Non-blocking 64-bit compare-and-swap.
  */
-mgcom_error_t mgcom_rma_compare_and_swap_64_nb(
+mgcom_error_code_t mgcom_rma_compare_and_swap_64_nb(
     mgcom_rma_compare_and_swap_64_cb*   cb
 ,   mgcom_rma_local_address             expected_addr
 ,   mgcom_rma_local_address             desired_addr
@@ -375,7 +379,7 @@ mgcom_rma_fetch_and_op_64_cb;
 /**
  * Non-blocking 64-bit fetch-and-add.
  */
-mgcom_error_t mgcom_rma_fetch_and_add_64_nb(
+mgcom_error_code_t mgcom_rma_fetch_and_add_64_nb(
     mgcom_rma_fetch_and_op_64_cb*       cb
 ,   mgcom_rma_local_address             value_addr
 ,   mgcom_rma_remote_address            remote_addr
@@ -404,7 +408,7 @@ typedef void (*mgcom_am_handler_callback_t)(const mgcom_am_callback_parameters*)
 /**
  * Register a callback function as a Active Messages' handler.
  */
-mgcom_error_t mgcom_am_register_handler(
+mgcom_error_code_t mgcom_am_register_handler(
     mgcom_am_handler_id_t
 ,   mgcom_am_handler_callback_t
 );
@@ -432,7 +436,7 @@ mgcom_am_send_cb;
 /**
  * Invoke the callback function on the specified remote node.
  */
-mgcom_error_t mgcom_am_send(
+mgcom_error_code_t mgcom_am_send(
     mgcom_am_send_cb*     cb
 ,   mgcom_am_handler_id_t id
 ,   const void*           value
@@ -444,7 +448,7 @@ mgcom_error_t mgcom_am_send(
 /**
  * Barrier (Collective)
  */
-mgcom_error_t mgcom_barrier(void) MGBASE_NOEXCEPT;
+mgcom_error_code_t mgcom_barrier(void) MGBASE_NOEXCEPT;
 
 
 mgcom_process_id_t mgcom_current_process_id(void) MGBASE_NOEXCEPT;
@@ -457,4 +461,8 @@ mgcom_index_t mgcom_number_of_processes(void) MGBASE_NOEXCEPT;
 #define MGCOM_BUFFER_ALIGNMENT        4
 
 MGBASE_EXTERN_C_END
+
+#ifdef __cplusplus
+} // namespace mgcom
+#endif
 
