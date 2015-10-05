@@ -184,6 +184,64 @@ private:
     }
 };
 
+
+class local_compare_and_swap_default_handlers {
+public:
+    typedef local_compare_and_swap_default_cb  cb_type;
+    
+    static void start(cb_type& cb)
+    {
+        mgbase::control::enter<cb_type, try_>(cb);
+    }
+    
+private:
+    static void try_(cb_type& cb)
+    {
+        if (try_local_compare_and_swap_default(
+            cb.target_addr
+        ,   cb.expected_addr
+        ,   cb.desired_addr
+        ,   cb.result_addr
+        ,   make_notifier_finished(cb)
+        )) {
+            mgbase::control::enter<cb_type, test>(cb);
+        }
+    }
+    
+    static void test(cb_type& /*cb*/) {
+        poll();
+    }
+};
+
+class local_fetch_and_add_default_handlers {
+public:
+    typedef local_fetch_and_add_default_cb     cb_type;
+    
+    static void start(cb_type& cb)
+    {
+        mgbase::control::enter<cb_type, try_>(cb);
+    }
+    
+private:
+    static void try_(cb_type& cb)
+    {
+        if (try_local_fetch_and_add_default(
+            cb.target_addr
+        ,   cb.diff_addr
+        ,   cb.result_addr
+        ,   make_notifier_finished(cb)
+        )) {
+            mgbase::control::enter<cb_type, test>(cb);
+        }
+    }
+    
+    static void test(cb_type& /*cb*/)
+    {
+        poll();
+    }
+};
+
+
 }
 
 }

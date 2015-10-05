@@ -31,6 +31,14 @@ void remote_fetch_and_add_default_nb(remote_fetch_and_add_default_cb& cb) {
     remote_fetch_and_add_default_handlers::start(cb);
 }
 
+void local_compare_and_swap_default_nb(local_compare_and_swap_default_cb& cb) {
+    local_compare_and_swap_default_handlers::start(cb);
+}
+
+void local_fetch_and_add_default_nb(local_fetch_and_add_default_cb& cb) {
+    local_fetch_and_add_default_handlers::start(cb);
+}
+
 }
 
 }
