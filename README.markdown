@@ -28,6 +28,24 @@ Goals
     - Atomic read/write.
     - Atomic compare-and-swap/fetch-and-op.
 
+Features
+--------
+
+### Remote Memory Access (RMA)
+
+RMA (a.k.a. one-sided communication)
+enables users to read/write the memory on the remote nodes over interconnects.
+Some interconnect hardwares have the feature called Remote Direct Memory Access (RDMA).
+mgcom provides a thin RMA layer that is specialized for
+exploiting the performance of RDMA.
+
+### Active Messages (AM)
+
+mgcom also provides Active Messages (AM),
+which is one representation of Remote Procedure Call (RPC).
+Currently, only the fixed-size AM is supported
+(sending variable-length message is a future work.)
+
 Platforms
 ---------
 

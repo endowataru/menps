@@ -157,10 +157,10 @@ inline void remote_read_nb(
 ,   index_t               size_in_bytes
 ) {
     mgbase::control::initialize(cb);
-    cb.local_addr    = local_addr;
-    cb.remote_addr   = remote_addr;
-    cb.size_in_bytes = size_in_bytes;
     cb.proc          = proc;
+    cb.remote_addr   = remote_addr;
+    cb.local_addr    = local_addr;
+    cb.size_in_bytes = size_in_bytes;
     
     detail::remote_read_nb(cb);
 }
@@ -176,10 +176,10 @@ inline void remote_write_nb(
 ,   index_t               size_in_bytes
 ) {
     mgbase::control::initialize(cb);
-    cb.local_addr    = local_addr;
-    cb.remote_addr   = remote_addr;
-    cb.size_in_bytes = size_in_bytes;
     cb.proc          = proc;
+    cb.remote_addr   = remote_addr;
+    cb.local_addr    = local_addr;
+    cb.size_in_bytes = size_in_bytes;
     
     detail::remote_write_nb(cb);
 }
