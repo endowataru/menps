@@ -45,10 +45,11 @@ int main(int argc, char* argv[])
         ptr[0] = 0;
         ptr[1] = 123;
         
-        compare_and_swap_64_cb cb;
-        compare_and_swap_64_nb(cb,
+        remote_compare_and_swap_default_cb cb;
+        remote_compare_and_swap_default_nb(cb,
+            1, remote_addr,
             laddr, advanced(laddr, sizeof(mgbase::uint64_t)),
-            remote_addr, 1, advanced(laddr, 2 * sizeof(mgbase::uint64_t)));
+            advanced(laddr, 2 * sizeof(mgbase::uint64_t)));
         mgbase::control::wait(cb);
         
         std::cout << mgcom::current_process_id() << " " << ptr[0] << " " << ptr[1] << " " << ptr[2] << std::endl;
@@ -56,8 +57,8 @@ int main(int argc, char* argv[])
         ptr[0] = 1;
         ptr[1] = 0;
         
-        fetch_and_op_64_cb cb2;
-        fetch_and_add_64_nb(cb2, laddr, remote_addr, 1, mgcom::rma::advanced(laddr, sizeof(mgbase::uint64_t)));
+        remote_fetch_and_add_default_cb cb2;
+        remote_fetch_and_add_default_nb(cb2, 1, remote_addr, laddr, mgcom::rma::advanced(laddr, sizeof(mgbase::uint64_t)));
         mgbase::control::wait(cb2);
         
         deallocate(buf);

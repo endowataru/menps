@@ -8,9 +8,6 @@
 #include <mgbase/lang.h>
 #include <mgbase/control.h>
 
-#ifdef __cplusplus
-namespace mgcom {
-#endif
 
 MGBASE_EXTERN_C_BEGIN
 
@@ -188,73 +185,25 @@ mgcom_error_code_t mgcom_rma_deallocate(
 ) MGBASE_NOEXCEPT;
 
 
-/**
- * Low-level function of contiguous write.
- */
-mgcom_error_code_t mgcom_rma_try_write_nb(
-    mgcom_rma_local_address      local_addr
-,   mgcom_rma_remote_address     remote_addr
-,   mgcom_index_t                size_in_bytes
-,   mgcom_process_id_t           dest_proc
-,   mgcom_local_notifier         on_complete
-,   bool*                        succeeded
-) MGBASE_NOEXCEPT;
-
-/**
- * Low-level function of contiguous read.
- */
-mgcom_error_code_t mgcom_rma_try_read_nb(
-    mgcom_rma_local_address     local_addr
-,   mgcom_rma_remote_address    remote_addr
-,   mgcom_index_t               size_in_bytes
-,   mgcom_process_id_t          dest_proc
-,   mgcom_local_notifier        on_complete
-,   bool*                       succeeded
-) MGBASE_NOEXCEPT;
-
+/// Control block for non-blocking contiguous read.
+typedef struct mgcom_rma_remote_read_cb {
+    mgbase_control_cb_common    common;
+    mgcom_process_id_t          proc;
+    mgcom_rma_remote_address    remote_addr;
+    mgcom_rma_local_address     local_addr;
+    mgcom_index_t               size_in_bytes;
+}
+mgcom_rma_remote_read_cb;
 
 /// Control block for non-blocking contiguous write.
-typedef struct mgcom_rma_write_cb {
+typedef struct mgcom_rma_remote_write_cb {
     mgbase_control_cb_common    common;
-    mgcom_rma_local_address     local_addr;
+    mgcom_process_id_t          proc;
     mgcom_rma_remote_address    remote_addr;
-    mgcom_index_t               size_in_bytes;
-    mgcom_process_id_t          dest_proc;
-}
-mgcom_rma_write_cb;
-
-/**
- * Non-blocking contiguous write.
- */
-mgcom_error_code_t mgcom_rma_write_nb(
-    mgcom_rma_write_cb*         cb
-,   mgcom_rma_local_address     local_addr
-,   mgcom_rma_remote_address    remote_addr
-,   mgcom_index_t               size_in_bytes
-,   mgcom_process_id_t          dest_proc
-) MGBASE_NOEXCEPT;
-
-
-/// Control block for non-blocking contiguous read.
-typedef struct mgcom_rma_read_cb {
-    mgbase_control_cb_common    common;
     mgcom_rma_local_address     local_addr;
-    mgcom_rma_remote_address    remote_addr;
     mgcom_index_t               size_in_bytes;
-    mgcom_process_id_t          dest_proc;
 }
-mgcom_rma_read_cb;
-
-/**
- * Non-blocking contiguous read.
- */
-mgcom_error_code_t mgcom_rma_read_nb(
-    mgcom_rma_read_cb*          cb
-,   mgcom_rma_local_address     local_addr
-,   mgcom_rma_remote_address    remote_addr
-,   mgcom_index_t               size_in_bytes
-,   mgcom_process_id_t          dest_proc
-) MGBASE_NOEXCEPT;
+mgcom_rma_remote_write_cb;
 
 
 
@@ -300,92 +249,73 @@ mgcom_error_code_t mgcom_rma_read_strided_nb(
 ) MGBASE_NOEXCEPT;
 
 
+/**
+ * Default integer type for atomic operations.
+ */
+typedef mgbase_uint64_t     mgcom_rma_atomic_default_t;
 
-/// Control block for non-blocking 64-bit atomic write.
-typedef struct mgcom_rma_atomic_write_64_cb {
+
+/// Control block for non-blocking remote atomic read.
+typedef struct mgcom_rma_atomic_read_default_cb {
     mgbase_control_cb_common    common;
+    mgcom_process_id_t          proc;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
-    mgcom_process_id_t          dest_proc;
     mgcom_rma_local_address     buf_addr;
 }
-mgcom_rma_atomic_write_64_cb;
+mgcom_rma_atomic_read_default_cb;
 
-// Non-blocking 64-bit atomic write.
-mgcom_error_code_t mgcom_rma_atomic_write_64_nb(
-    mgcom_rma_atomic_write_64_cb*   cb
-,   mgcom_rma_local_address         local_addr
-,   mgcom_rma_remote_address        remote_addr
-,   mgcom_process_id_t              dest_proc
-,   mgcom_rma_local_address         buf_addr
-) MGBASE_NOEXCEPT;
-
-
-/// Control block for non-blocking 64-bit atomic read.
-typedef struct mgcom_rma_atomic_read_64_cb {
+/// Control block for non-blocking remote atomic write.
+typedef struct mgcom_rma_atomic_write_default_cb {
     mgbase_control_cb_common    common;
+    mgcom_process_id_t          proc;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
-    mgcom_process_id_t          src_proc;
     mgcom_rma_local_address     buf_addr;
 }
-mgcom_rma_atomic_read_64_cb;
-
-// Non-blocking 64-bit atomic read.
-mgcom_error_code_t mgcom_rma_atomic_read_64_nb(
-    mgcom_rma_atomic_read_64_cb*    cb
-,   mgcom_rma_local_address         local_addr
-,   mgcom_rma_remote_address        remote_addr
-,   mgcom_process_id_t              src_proc
-,   mgcom_rma_local_address         buf_addr
-) MGBASE_NOEXCEPT;
+mgcom_rma_atomic_write_default_cb;
 
 
-
-/// Control block for non-blocking 64-bit compare-and-swap.
-typedef struct mgcom_rma_compare_and_swap_64_cb {
+/// Control block for non-blocking local compare-and-swap.
+typedef struct mgcom_rma_local_compare_and_swap_default_cb {
     mgbase_control_cb_common    common;
+    mgcom_rma_local_address     target_addr;
     mgcom_rma_local_address     expected_addr;
     mgcom_rma_local_address     desired_addr;
-    mgcom_rma_remote_address    remote_addr;
-    mgcom_process_id_t          proc;
     mgcom_rma_local_address     result_addr;
 }
-mgcom_rma_compare_and_swap_64_cb;
+mgcom_rma_local_compare_and_swap_default_cb;
 
-/**
- * Non-blocking 64-bit compare-and-swap.
- */
-mgcom_error_code_t mgcom_rma_compare_and_swap_64_nb(
-    mgcom_rma_compare_and_swap_64_cb*   cb
-,   mgcom_rma_local_address             expected_addr
-,   mgcom_rma_local_address             desired_addr
-,   mgcom_rma_remote_address            remote_addr
-,   mgcom_process_id_t                  proc
-,   mgcom_rma_local_address             result_addr
-) MGBASE_NOEXCEPT;
-
-
-/// Control block for non-blocking 64-bit fetch-and-op.
-typedef struct mgcom_rma_fetch_and_op_64_cb {
+/// Control block for non-blocking local fetch-and-add.
+typedef struct mgcom_rma_local_fetch_and_add_default_cb {
     mgbase_control_cb_common    common;
-    mgcom_rma_local_address     value_addr;
-    mgcom_rma_remote_address    remote_addr;
-    mgcom_process_id_t          proc;
+    mgcom_rma_local_address     target_addr;
+    mgcom_rma_local_address     diff_addr;
     mgcom_rma_local_address     result_addr;
 }
-mgcom_rma_fetch_and_op_64_cb;
+mgcom_rma_local_fetch_and_add_default_cb;
 
-/**
- * Non-blocking 64-bit fetch-and-add.
- */
-mgcom_error_code_t mgcom_rma_fetch_and_add_64_nb(
-    mgcom_rma_fetch_and_op_64_cb*       cb
-,   mgcom_rma_local_address             value_addr
-,   mgcom_rma_remote_address            remote_addr
-,   mgcom_process_id_t                  proc
-,   mgcom_rma_remote_address            result_addr
-) MGBASE_NOEXCEPT;
+
+/// Control block for non-blocking remote compare-and-swap.
+typedef struct mgcom_rma_remote_compare_and_swap_default_cb {
+    mgbase_control_cb_common    common;
+    mgcom_rma_remote_address    target_addr;
+    mgcom_process_id_t          target_proc;
+    mgcom_rma_local_address     expected_addr;
+    mgcom_rma_local_address     desired_addr;
+    mgcom_rma_local_address     result_addr;
+}
+mgcom_rma_remote_compare_and_swap_default_cb;
+
+/// Control block for non-blocking fetch-and-add.
+typedef struct mgcom_rma_remote_fetch_and_add_default_cb {
+    mgbase_control_cb_common    common;
+    mgcom_rma_remote_address    target_addr;
+    mgcom_process_id_t          target_proc;
+    mgcom_rma_local_address     value_addr;
+    mgcom_rma_local_address     result_addr;
+}
+mgcom_rma_remote_fetch_and__default_cb;
 
 
 /**
@@ -461,8 +391,4 @@ mgcom_index_t mgcom_number_of_processes(void) MGBASE_NOEXCEPT;
 #define MGCOM_BUFFER_ALIGNMENT        4
 
 MGBASE_EXTERN_C_END
-
-#ifdef __cplusplus
-} // namespace mgcom
-#endif
 

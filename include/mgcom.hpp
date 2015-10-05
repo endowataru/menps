@@ -30,6 +30,7 @@ void initialize(int* argc, char*** argv);
  */
 void finalize();
 
+/// Remote Memory Access (RMA)
 namespace rma {
 
 typedef mgcom_rma_address_offset_t         address_offset_t;
@@ -133,58 +134,54 @@ inline void deallocate_region(const local_region& region) {
 
 }
 
-
-
-typedef mgcom_rma_write_cb    write_cb;
-
-typedef mgcom_rma_read_cb     read_cb;
+typedef mgcom_rma_remote_read_cb    remote_read_cb;
+typedef mgcom_rma_remote_write_cb   remote_write_cb;
 
 namespace detail {
 
-void write_nb(write_cb& cb);
-
-void read_nb(read_cb& cb);
+void remote_read_nb(remote_read_cb& cb);
+void remote_write_nb(remote_write_cb& cb);
 
 }
 
 namespace {
 
 /**
- * Non-blocking contiguous write.
+ * Non-blocking contiguous read.
  */
-inline void write_nb(
-    write_cb&             cb
-,   const local_address&  local_addr
+inline void remote_read_nb(
+    remote_read_cb&       cb
+,   process_id_t          proc
 ,   const remote_address& remote_addr
+,   const local_address&  local_addr
 ,   index_t               size_in_bytes
-,   process_id_t          dest_proc
 ) {
     mgbase::control::initialize(cb);
     cb.local_addr    = local_addr;
     cb.remote_addr   = remote_addr;
     cb.size_in_bytes = size_in_bytes;
-    cb.dest_proc     = dest_proc;
+    cb.proc          = proc;
     
-    detail::write_nb(cb);
+    detail::remote_read_nb(cb);
 }
 
 /**
- * Non-blocking contiguous read.
+ * Non-blocking contiguous write.
  */
-inline void read_nb(
-    read_cb&              cb
-,   const local_address&  local_addr
+inline void remote_write_nb(
+    remote_write_cb&      cb
+,   process_id_t          proc
 ,   const remote_address& remote_addr
+,   const local_address&  local_addr
 ,   index_t               size_in_bytes
-,   process_id_t          dest_proc
 ) {
     mgbase::control::initialize(cb);
     cb.local_addr    = local_addr;
     cb.remote_addr   = remote_addr;
     cb.size_in_bytes = size_in_bytes;
-    cb.dest_proc     = dest_proc;
+    cb.proc          = proc;
     
-    detail::read_nb(cb);
+    detail::remote_write_nb(cb);
 }
 
 }
@@ -224,109 +221,165 @@ void read_strided_nb(
 );
 
 
-typedef mgcom_rma_atomic_write_64_cb  atomic_write_64_cb;
-typedef mgcom_rma_atomic_read_64_cb   atomic_read_64_cb;
+// Atomic operations.
 
-typedef mgcom_rma_compare_and_swap_64_cb  compare_and_swap_64_cb;
-typedef mgcom_rma_fetch_and_op_64_cb      fetch_and_op_64_cb;
+typedef mgcom_rma_atomic_default_t              atomic_default_t;
+
+typedef mgcom_rma_atomic_read_default_cb        remote_atomic_read_default_cb;
+typedef mgcom_rma_atomic_write_default_cb       remote_atomic_write_default_cb;
+
+typedef mgcom_rma_local_compare_and_swap_default_cb     local_compare_and_swap_default_cb;
+typedef mgcom_rma_local_fetch_and_add_default_cb        local_fetch_and_add_default_cb;
+
+typedef mgcom_rma_remote_compare_and_swap_default_cb    remote_compare_and_swap_default_cb;
+typedef mgcom_rma_remote_fetch_and_add_default_cb       remote_fetch_and_add_default_cb;
 
 namespace detail {
 
-void atomic_write_64_nb(atomic_write_64_cb& cb);
-void atomic_read_64_nb(atomic_read_64_cb& cb);
+void remote_atomic_read_default_nb(remote_atomic_read_default_cb& cb);
+void remote_atomic_write_default_nb(remote_atomic_write_default_cb& cb);
 
-void compare_and_swap_64_nb(compare_and_swap_64_cb& cb);
-void fetch_and_add_64_nb(fetch_and_op_64_cb& cb);
+void local_compare_and_swap_default_nb(local_compare_and_swap_default_cb& cb);
+void local_fetch_and_add_default_nb(local_fetch_and_add_default_cb& cb);
+
+void remote_compare_and_swap_default_nb(remote_compare_and_swap_default_cb& cb);
+void remote_fetch_and_add_default_nb(remote_fetch_and_add_default_cb& cb);
 
 }
 
 namespace {
 
 /**
- * Non-blocking 64-bit atomic write.
+ * Non-blocking remote atomic read.
  */
-inline void atomic_write_64_nb(
-    atomic_write_64_cb&     cb
-,   const local_address&    local_addr
-,   const remote_address&   remote_addr
-,   process_id_t            dest_proc
-,   const local_address&    buf_addr
+inline void remote_atomic_read_default_nb(
+    remote_atomic_read_default_cb&      cb
+,   process_id_t                        proc
+,   const remote_address&               remote_addr
+,   const local_address&                local_addr
+,   const local_address&                buf_addr
 ) {
     mgbase::control::initialize(cb);
-    cb.local_addr  = local_addr;
+    cb.proc        = proc;
     cb.remote_addr = remote_addr;
-    cb.dest_proc   = dest_proc;
+    cb.local_addr  = local_addr;
     cb.buf_addr    = buf_addr;
     
-    detail::atomic_write_64_nb(cb);
+    detail::remote_atomic_read_default_nb(cb);
 }
 
 /**
- * Non-blocking 64-bit atomic read.
+ * Non-blocking remote atomic write.
  */
-inline void atomic_read_64_nb(
-    atomic_read_64_cb&      cb
-,   const local_address&    local_addr
-,   const remote_address&   remote_addr
-,   process_id_t            src_proc
-,   const local_address&    buf_addr
+inline void remote_atomic_write_default_nb(
+    remote_atomic_write_default_cb&     cb
+,   process_id_t                        proc
+,   const remote_address&               remote_addr
+,   const local_address&                local_addr
+,   const local_address&                buf_addr
 ) {
     mgbase::control::initialize(cb);
-    cb.local_addr  = local_addr;
+    cb.proc        = proc;
     cb.remote_addr = remote_addr;
-    cb.src_proc    = src_proc;
+    cb.local_addr  = local_addr;
     cb.buf_addr    = buf_addr;
     
-    detail::atomic_read_64_nb(cb);
+    detail::remote_atomic_write_default_nb(cb);
 }
 
+
 /**
- * Non-blocking 64-bit compare-and-swap.
+ * Non-blocking local compare-and-swap.
  */
-inline void compare_and_swap_64_nb(
-    compare_and_swap_64_cb& cb
-,   const local_address&    expected_addr
-,   const local_address&    desired_addr
-,   const remote_address&   remote_addr
-,   process_id_t            proc
-,   const local_address&    result_addr
+inline void local_compare_and_swap_default_nb(
+    local_compare_and_swap_default_cb&  cb
+,   const local_address&                target_addr
+,   const local_address&                expected_addr
+,   const local_address&                desired_addr
+,   const local_address&                result_addr
 ) {
     mgbase::control::initialize(cb);
+    cb.target_addr   = target_addr;
     cb.expected_addr = expected_addr;
     cb.desired_addr  = desired_addr;
-    cb.remote_addr   = remote_addr;
-    cb.proc          = proc;
     cb.result_addr   = result_addr;
     
-    detail::compare_and_swap_64_nb(cb);
+    detail::local_compare_and_swap_default_nb(cb);
 }
 
 /**
- * Non-blocking 64-bit fetch-and-add.
+ * Non-blocking local fetch-and-add.
  */
-inline void fetch_and_add_64_nb(
-    fetch_and_op_64_cb&     cb
-,   const local_address&    value_addr
-,   const remote_address&   remote_addr
-,   process_id_t            proc
-,   const local_address&    result_addr
+inline void local_fetch_and_add_default_nb(
+    local_fetch_and_add_default_cb&     cb
+,   const local_address&                target_addr
+,   const local_address&                diff_addr
+,   const local_address&                result_addr
 ) {
     mgbase::control::initialize(cb);
-    cb.value_addr  = value_addr;
-    cb.remote_addr = remote_addr;
-    cb.proc        = proc;
+    cb.target_addr = target_addr;
+    cb.diff_addr   = diff_addr;
     cb.result_addr = result_addr;
     
-    detail::fetch_and_add_64_nb(cb);
+    detail::local_fetch_and_add_default_nb(cb);
+}
+
+/**
+ * Non-blocking remote compare-and-swap.
+ */
+inline void remote_compare_and_swap_default_nb(
+    remote_compare_and_swap_default_cb& cb
+,   process_id_t                        target_proc
+,   const remote_address&               target_addr
+,   const local_address&                expected_addr
+,   const local_address&                desired_addr
+,   const local_address&                result_addr
+) {
+    mgbase::control::initialize(cb);
+    cb.target_addr   = target_addr;
+    cb.target_proc   = target_proc;
+    cb.expected_addr = expected_addr;
+    cb.desired_addr  = desired_addr;
+    cb.result_addr   = result_addr;
+    
+    detail::remote_compare_and_swap_default_nb(cb);
+}
+
+/**
+ * Non-blocking remote fetch-and-add.
+ */
+inline void remote_fetch_and_add_default_nb(
+    remote_fetch_and_add_default_cb&    cb
+,   process_id_t                        target_proc
+,   const remote_address&               target_addr
+,   const local_address&                value_addr
+,   const local_address&                result_addr
+) {
+    mgbase::control::initialize(cb);
+    cb.target_addr = target_addr;
+    cb.target_proc = target_proc;
+    cb.value_addr  = value_addr;
+    cb.result_addr = result_addr;
+    
+    detail::remote_fetch_and_add_default_nb(cb);
 }
 
 }
 
-
+/**
+ * Polling for RDMA.
+ *
+ * This function is required to watch the hardware queue of the RDMA engine.
+ * This function is usually called by the low-level layer,
+ * but is not automatically called by mgcom.
+ *
+ * The queue for AM is not related to this function.
+ */
 void poll();
 
 }
 
+// Active Messages (AM)
 namespace am {
 
 typedef mgcom_am_handler_id_t        handler_id_t;

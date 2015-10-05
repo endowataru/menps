@@ -12,68 +12,70 @@ void initialize();
 void finalize();
 
 /**
- * Low-level function of contiguous write.
- */
-bool try_write(
-    const local_address&    local_addr
-,   const remote_address&   remote_addr
-,   index_t                 size_in_bytes
-,   process_id_t            dest_proc
-,   local_notifier          on_complete
-);
-
-/**
  * Low-level function of contiguous read.
  */
-bool try_read(
-    const local_address&    local_addr
+bool try_remote_read(
+    process_id_t            proc
 ,   const remote_address&   remote_addr
+,   const local_address&    local_addr
 ,   index_t                 size_in_bytes
-,   process_id_t            dest_proc
 ,   local_notifier          on_complete
 );
 
 /**
- * Low level function of 64-bit atomic write.
+ * Low-level function of contiguous write.
  */
-bool try_atomic_write_64(
-    const local_address&    local_addr
-,   const local_address&    buf_addr
+bool try_remote_write(
+    process_id_t            proc
 ,   const remote_address&   remote_addr
-,   process_id_t            dest_proc
+,   const local_address&    local_addr
+,   index_t                 size_in_bytes
 ,   local_notifier          on_complete
 );
 
+
 /**
- * Low level function of 64-bit atomic read.
+ * Low-level function of atomic read.
  */
-bool try_atomic_read_64(
-    const local_address&    local_addr
-,   const local_address&    buf_addr
+bool try_remote_atomic_read_default(
+    process_id_t            proc
 ,   const remote_address&   remote_addr
-,   process_id_t            dest_proc
+,   const local_address&    local_addr
+,   const local_address&    buf_addr
 ,   local_notifier          on_complete
 );
 
 /**
- * Low-level function of 64-bit compare-and-swap.
+ * Low-level function of atomic write.
  */
-bool try_compare_and_swap_64(
-    const local_address&    expected_addr
+bool try_remote_atomic_write_default(
+    process_id_t            proc
+,   const remote_address&   remote_addr
+,   const local_address&    local_addr
+,   const local_address&    buf_addr
+,   local_notifier          on_complete
+);
+
+
+/**
+ * Low-level function of compare-and-swap.
+ */
+bool try_remote_compare_and_swap_default(
+    process_id_t            proc
+,   const remote_address&   remote_addr
+,   const local_address&    expected_addr
 ,   const local_address&    desired_addr
-,   const remote_address&   remote_addr
-,   process_id_t            proc
 ,   const local_address&    result_addr
 ,   local_notifier          on_complete
 );
 
 /**
- * Low-level function of 64-bit compare-and-swap.
+ * Low-level function of compare-and-swap.
  */
-bool try_fetch_and_add_64(
-    const local_address&    value_addr
+bool try_remote_fetch_and_add_default(
+    process_id_t            proc
 ,   const remote_address&   remote_addr
-,   process_id_t            proc
+,   const local_address&    value_addr
 ,   const local_address&    result_addr
 ,   local_notifier          on_complete
 );

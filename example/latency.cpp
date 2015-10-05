@@ -46,8 +46,8 @@ int main(int argc, char* argv[])
             poll();
         }*/
         
-        write_cb cb;
-        write_nb(cb, local_addr, remote_addr, sizeof(x), other);
+        remote_write_cb cb;
+        remote_write_nb(cb, other, remote_addr, local_addr, sizeof(x));
         mgbase::control::wait(cb);
         
         

@@ -7,28 +7,28 @@ namespace rma {
 
 namespace detail {
 
-void read_nb(read_cb& cb) {
-    read_handlers::start(cb);
+void remote_read_nb(remote_read_cb& cb) {
+    remote_read_handlers::start(cb);
 }
 
-void write_nb(write_cb& cb) {
-    write_handlers::start(cb);
+void remote_write_nb(remote_write_cb& cb) {
+    remote_write_handlers::start(cb);
 }
 
-void atomic_write_64_nb(atomic_write_64_cb& cb) {
-    atomic_write_64_handlers::start(cb);
+void remote_atomic_write_default_nb(remote_atomic_write_default_cb& cb) {
+    remote_atomic_write_default_handlers::start(cb);
 }
 
-void atomic_read_64_nb(atomic_read_64_cb& cb) {
-    atomic_read_64_handlers::start(cb);
+void remote_atomic_read_default_nb(remote_atomic_read_default_cb& cb) {
+    remote_atomic_read_default_handlers::start(cb);
 }
 
-void compare_and_swap_64_nb(compare_and_swap_64_cb& cb) {
-    compare_and_swap_64_handlers::start(cb);
+void remote_compare_and_swap_default_nb(remote_compare_and_swap_default_cb& cb) {
+    remote_compare_and_swap_default_handlers::start(cb);
 }
 
-void fetch_and_add_64_nb(fetch_and_op_64_cb& cb) {
-    fetch_and_add_64_handlers::start(cb);
+void remote_fetch_and_add_default_nb(remote_fetch_and_add_default_cb& cb) {
+    remote_fetch_and_add_default_handlers::start(cb);
 }
 
 }
