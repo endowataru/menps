@@ -51,6 +51,7 @@
         #define MGBASE_ALIGNAS(a)                alignas(a)
         #define MGBASE_DECLTYPE(x)               decltype(x)
         #define MGBASE_CONSTEXPR                 constexpr
+        #define MGBASE_CONSTEXPR_FUNCTION        constexpr
         
         namespace mgbase {
             class noncopyable {
@@ -65,13 +66,14 @@
     #else
         // For C++03
         #define MGBASE_EXPLICIT_OPERATOR            operator
-        #define MGBASE_NOEXCEPT                  throw()
+        #define MGBASE_NOEXCEPT                     throw()
         #define MGBASE_OVERRIDE
-        #define MGBASE_NULLPTR                   0
-        #define MGBASE_EMPTY_DEFINITION          { }
-        #define MGBASE_ALIGNAS(a)                __attribute__((aligned(a)))
-        #define MGBASE_DECLTYPE(x)               __typeof__(x)
-        #define MGBASE_CONSTEXPR                 const
+        #define MGBASE_NULLPTR                      0
+        #define MGBASE_EMPTY_DEFINITION             { }
+        #define MGBASE_ALIGNAS(a)                   __attribute__((aligned(a)))
+        #define MGBASE_DECLTYPE(x)                  __typeof__(x)
+        #define MGBASE_CONSTEXPR                    const
+        #define MGBASE_CONSTEXPR_FUNCTION           
         
         namespace mgbase {
             template <bool> struct static_assertion;
