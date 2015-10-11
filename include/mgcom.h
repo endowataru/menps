@@ -390,5 +390,13 @@ mgcom_index_t mgcom_number_of_processes(void) MGBASE_NOEXCEPT;
 #define MGCOM_REGISTRATION_ALIGNMENT  4
 #define MGCOM_BUFFER_ALIGNMENT        4
 
+#ifdef __cplusplus
+    #define MGCOM_RMA_LOCAL_POINTER(type)   mgcom::typed_rma::local_pointer<type>
+    #define MGCOM_RMA_REMOTE_POINTER(type)  mgcom::typed_rma::remote_pointer<type>
+#else
+    #define MGCOM_RMA_LOCAL_POINTER(type)   mgcom_rma_local_address
+    #define MGCOM_RMA_REMOTE_POINTER(type)  mgcom_rma_remote_address
+#endif
+
 MGBASE_EXTERN_C_END
 

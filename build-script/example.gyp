@@ -40,6 +40,16 @@
             'dependencies' : [
                 './mgcom.gyp:mgcom-fjmpi',
             ],
+        },
+        {
+            'target_name' : 'typed',
+            'type' : 'executable',
+            'sources' : [
+                '../example/typed.cpp',
+            ],
+            'dependencies' : [
+                './mgcom.gyp:mgcom-fjmpi',
+            ],
         }
     ],
 }
