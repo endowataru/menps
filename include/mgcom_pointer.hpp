@@ -217,11 +217,6 @@ public:
         return *this;
     }
     
-    // removed
-    /*operator rma::remote_address() const MGBASE_NOEXCEPT {
-        return to_address();
-    }*/
-    
     rma::remote_address to_address() const MGBASE_NOEXCEPT {
         return addr_;
     }
@@ -243,10 +238,11 @@ class local_pointer
     typedef detail::pointer_base<typed_rma::local_pointer, T>   base;
  
 public:
+    local_pointer() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
+    
     template <typename U>
     /*implicit*/ local_pointer(const local_pointer<U>&) MGBASE_NOEXCEPT;
     
-    //operator local_pointer<const T>();
     local_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
         addr_ = mgcom::rma::advanced(addr_, index * value_traits<T>::size());
         return *this;
@@ -330,6 +326,23 @@ inline void remote_write_nb(
     mgcom::rma::remote_write_nb(cb, proc, remote_ptr, local_pointer<const T>(local_ptr), number_of_elements);
 }
 
+
+inline void remote_atomic_read_default_nb(
+    rma::remote_atomic_read_default_cb&                     cb
+,   process_id_t                                            proc
+,   const remote_pointer<const rma::atomic_default_t>&      remote_ptr
+,   const local_pointer<rma::atomic_default_t>&             local_ptr
+,   const local_pointer<rma::atomic_default_t>&             buf_ptr
+) {
+    mgcom::rma::remote_atomic_read_default_nb(
+        cb
+    ,   proc
+    ,   remote_ptr.to_address()
+    ,   local_ptr.to_address()
+    ,   buf_ptr.to_address()
+    );
+}
+
 /**
  * Non-blocking local compare-and-swap.
  */
@@ -345,6 +358,46 @@ inline void local_compare_and_swap_default_nb(
     ,   target_ptr.to_address()
     ,   expected_ptr.to_address()
     ,   desired_ptr.to_address()
+    ,   result_ptr.to_address()
+    );
+}
+
+/**
+ * Non-blocking remote compare-and-swap.
+ */
+inline void remote_compare_and_swap_default_nb(
+    rma::remote_compare_and_swap_default_cb&                cb
+,   process_id_t                                            target_proc
+,   const remote_pointer<rma::atomic_default_t>&            target_ptr
+,   const local_pointer<const rma::atomic_default_t>&       expected_ptr
+,   const local_pointer<const rma::atomic_default_t>&       desired_ptr
+,   const local_pointer<rma::atomic_default_t>&             result_ptr
+) {
+    mgcom::rma::remote_compare_and_swap_default_nb(
+        cb
+    ,   target_proc
+    ,   target_ptr.to_address()
+    ,   expected_ptr.to_address()
+    ,   desired_ptr.to_address()
+    ,   result_ptr.to_address()
+    );
+}
+
+/**
+ * Non-blocking remote fetch-and-add.
+ */
+inline void remote_fetch_and_add_default_nb(
+    rma::remote_fetch_and_add_default_cb&               cb
+,   process_id_t                                        target_proc
+,   const remote_pointer<rma::atomic_default_t>&        target_ptr
+,   const local_pointer<const rma::atomic_default_t>&   value_ptr
+,   const local_pointer<rma::atomic_default_t>&         result_ptr
+) {
+    mgcom::rma::remote_fetch_and_add_default_nb(
+        cb
+    ,   target_proc
+    ,   target_ptr.to_address()
+    ,   value_ptr.to_address()
     ,   result_ptr.to_address()
     );
 }

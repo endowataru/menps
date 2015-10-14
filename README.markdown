@@ -23,10 +23,6 @@ Goals
 - Non-blocking communication.
 - Multithreading support.
     - It can be disabled for single-threaded environments.
-- Alignment issues.
-- Support for atomic operations.
-    - Atomic read/write.
-    - Atomic compare-and-swap/fetch-and-op.
 
 Features
 --------
@@ -39,12 +35,18 @@ Some interconnect hardwares have the feature called Remote Direct Memory Access 
 mgcom provides a thin RMA layer that is specialized for
 exploiting the performance of RDMA.
 
+- Support for atomic operations.
+    - Atomic read/write.
+    - Atomic local compare-and-swap/fetch-and-op.
+    - Atomic remote compare-and-swap/fetch-and-op.
+- Description of alignment requirements.
+
 ### Active Messages (AM)
 
 mgcom also provides Active Messages (AM),
 which is one representation of Remote Procedure Call (RPC).
 Currently, only the fixed-size AM is supported
-(sending variable-length message is a future work.)
+(sending variable-length messages is a future work.)
 
 Platforms
 ---------
