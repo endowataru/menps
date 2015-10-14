@@ -137,7 +137,8 @@ private:
     #endif
 };
 
-template <template <typename> class Derived, typename T, bool IsCompound = mgbase::is_compound<T>::value>
+template <template <typename> class Derived, typename T,
+    bool IsCompound = mgbase::is_compound<typename mgbase::remove_cv<T>::type>::value>
 class pointer_base_member { };
 
 template <template <typename> class Derived, typename T>
@@ -252,10 +253,10 @@ public:
     }
     
     operator T* () const MGBASE_NOEXCEPT {
-        return to_pointer();
+        return raw();
     }
     
-    T* to_pointer() const MGBASE_NOEXCEPT { return static_cast<T*>(rma::to_pointer(addr_)); }
+    T* raw() const MGBASE_NOEXCEPT { return static_cast<T*>(rma::to_pointer(addr_)); }
     
     rma::local_address to_address() const MGBASE_NOEXCEPT {
         return addr_;
@@ -329,7 +330,24 @@ inline void remote_write_nb(
     mgcom::rma::remote_write_nb(cb, proc, remote_ptr, local_pointer<const T>(local_ptr), number_of_elements);
 }
 
-
+/**
+ * Non-blocking local compare-and-swap.
+ */
+inline void local_compare_and_swap_default_nb(
+    rma::local_compare_and_swap_default_cb&                 cb
+,   const local_pointer<rma::atomic_default_t>&             target_ptr
+,   const local_pointer<const rma::atomic_default_t>&       expected_ptr
+,   const local_pointer<const rma::atomic_default_t>&       desired_ptr
+,   const local_pointer<rma::atomic_default_t>&             result_ptr
+) {
+    mgcom::rma::local_compare_and_swap_default_nb(
+        cb
+    ,   target_ptr.to_address()
+    ,   expected_ptr.to_address()
+    ,   desired_ptr.to_address()
+    ,   result_ptr.to_address()
+    );
+}
 
 }
 
