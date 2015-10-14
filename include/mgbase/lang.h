@@ -135,6 +135,9 @@ typedef int16_t     mgbase_int16_t;
 typedef int32_t     mgbase_int32_t;
 typedef int64_t     mgbase_int64_t;
 
+#define MGBASE_LIKELY(x)        __builtin_expect(!!(x), 1)
+#define MGBASE_UNLIKELY(x)      __builtin_expect(!!(x), 0)
+
 // Processor Compatibility
 
 #if (defined(__sparc))
