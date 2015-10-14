@@ -246,6 +246,16 @@ public:
     /*implicit*/ local_pointer(const local_pointer<U>&) MGBASE_NOEXCEPT;
     
     //operator local_pointer<const T>();
+    local_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
+        addr_ = mgcom::rma::advanced(addr_, index * value_traits<T>::size());
+        return *this;
+    }
+    
+    operator T* () const MGBASE_NOEXCEPT {
+        return to_pointer();
+    }
+    
+    T* to_pointer() const MGBASE_NOEXCEPT { return static_cast<T*>(rma::to_pointer(addr_)); }
     
     rma::local_address to_address() const MGBASE_NOEXCEPT {
         return addr_;
