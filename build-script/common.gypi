@@ -48,7 +48,7 @@
         },
         'include_dirs': [
             '../include',
-            '../mgbase/include',
+            '../../mgbase/include',
         ],
     },
 }

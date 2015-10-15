@@ -8,5 +8,5 @@ fi
 
 script_dir=$(cd $(dirname ${BASH_SOURCE:-$0}); pwd)
 
-./mgbase/external/gyp/gyp --depth . ./build-script/*.gyp --format=make -D library=static_library -I ${settings_file}
+../mgbase/external/gyp/gyp --depth . ./build-script/*.gyp --format=make -D library=static_library -I ${settings_file}
 
