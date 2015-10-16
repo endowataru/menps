@@ -12,10 +12,10 @@ namespace control {
 typedef ::mgbase_control_handler_t  handler_t;
 typedef ::mgbase_control_cb_common  cb_common;
 
-template <typename T, void (*func)(T&)>
-struct handling {
-    static void f(void* ptr) {
-        func(*static_cast<T*>(ptr));
+template <typename T, void (*callback)(T&)>
+struct handler {
+    static void cast(void* ptr) {
+        callback(*static_cast<T*>(ptr));
     }
 };
 
@@ -39,7 +39,7 @@ inline void set_next(CB& cb, handler_t handler) MGBASE_NOEXCEPT {
 
 template <typename CB, void (*func)(CB&)>
 inline void set_next(CB& cb) MGBASE_NOEXCEPT {
-    set_next(cb, &handling<CB, func>::f);
+    set_next(cb, &handler<CB, func>::cast);
 }
 
 template <typename CB>

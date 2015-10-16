@@ -15,14 +15,12 @@ enum memory_order {
     memory_order_seq_cst
 };
 
-namespace detail {
-
 #if (defined(MGBASE_ARCH_INTEL) || defined(MGBASE_ARCH_SPARC))
 
 // Atomic integers for the architectures that guarantee Total Store Order (TSO).
 
 template <typename T>
-inline T atomic_load(const volatile T& obj, memory_order order) MGBASE_NOEXCEPT
+inline T atomic_load_explicit(const volatile T& obj, memory_order order) MGBASE_NOEXCEPT
 {
     switch (order) {
         case memory_order_relaxed:
@@ -52,7 +50,7 @@ inline T atomic_load(const volatile T& obj, memory_order order) MGBASE_NOEXCEPT
 }
 
 template <typename T>
-inline void atomic_store(volatile T& obj, T desired, memory_order order) MGBASE_NOEXCEPT
+inline void atomic_store_explicit(volatile T& obj, T desired, memory_order order) MGBASE_NOEXCEPT
 {
     switch (order) {
         case memory_order_relaxed: {
@@ -85,7 +83,7 @@ inline void atomic_store(volatile T& obj, T desired, memory_order order) MGBASE_
 }
 
 template <typename T>
-inline bool atomic_compare_exchange_weak(volatile T& obj, T& expected, T desired, memory_order success, memory_order /*failure*/) MGBASE_NOEXCEPT
+inline bool atomic_compare_exchange_weak_explicit(volatile T& obj, T& expected, T desired, memory_order success, memory_order /*failure*/) MGBASE_NOEXCEPT
 {
     // TODO: Use the ordering "failure", which is the same or weaker than "success".
     
@@ -140,7 +138,7 @@ inline bool atomic_compare_exchange_weak(volatile T& obj, T& expected, T desired
 }
 
 template <typename T>
-inline T atomic_fetch_add(volatile T& obj, T arg, memory_order order) MGBASE_NOEXCEPT
+inline T atomic_fetch_add_explicit(volatile T& obj, T arg, memory_order order) MGBASE_NOEXCEPT
 {
     switch (order) {
         case memory_order_relaxed: {
@@ -181,7 +179,7 @@ inline T atomic_fetch_add(volatile T& obj, T arg, memory_order order) MGBASE_NOE
 }
 
 template <typename T>
-inline T atomic_fetch_sub(volatile T& obj, T arg, memory_order order) MGBASE_NOEXCEPT
+inline T atomic_fetch_sub_explicit(volatile T& obj, T arg, memory_order order) MGBASE_NOEXCEPT
 {
     switch (order) {
         case memory_order_relaxed: {
@@ -227,6 +225,26 @@ inline T atomic_fetch_sub(volatile T& obj, T arg, memory_order order) MGBASE_NOE
 
 #endif
 
+
+template <typename T>
+inline T atomic_load(const volatile T& obj) MGBASE_NOEXCEPT {
+    return atomic_load_explicit(obj, memory_order_seq_cst);
+}
+template <typename T>
+inline void atomic_store_explicit(volatile T& obj, T desired) MGBASE_NOEXCEPT {
+    atomic_store_explicit(obj, desired, memory_order_seq_cst);
+}
+template <typename T>
+inline bool atomic_compare_exchange_weak(volatile T& obj, T& expected, T desired) MGBASE_NOEXCEPT {
+    return atomic_compare_exchange_weak_explicit(obj, expected, desired, memory_order_seq_cst, memory_order_seq_cst);
+}
+template <typename T>
+inline T atomic_fetch_add_explicit(volatile T& obj, T arg) MGBASE_NOEXCEPT {
+    return atomic_fetch_add_explicit(obj, arg. memory_order_seq_cst);
+}
+template <typename T>
+inline T atomic_fetch_sub_explicit(volatile T& obj, T arg) MGBASE_NOEXCEPT {
+    return atomic_fetch_sub_explicit(obj, arg, memory_order_seq_cst);
 }
 
 template <typename T>
@@ -238,31 +256,31 @@ public:
     explicit atomic(T val) MGBASE_NOEXCEPT
         : value_(val) { }
     
-    atomic& operator = (T val) volatile MGBASE_NOEXCEPT {
+    volatile atomic& operator = (T val) volatile MGBASE_NOEXCEPT {
         store(val);
         return *this;
     }
     
     T load(memory_order order = memory_order_seq_cst) const volatile MGBASE_NOEXCEPT {
-        return detail::atomic_load(value_, order);
+        return atomic_load_explicit(value_, order);
     }
     
     void store(T desired, memory_order order = memory_order_seq_cst) volatile MGBASE_NOEXCEPT {
-        detail::atomic_store(value_, desired, order);
+        atomic_store_explicit(value_, desired, order);
     }
     
     T compare_exchange_weak(T& expected, T desired, memory_order success, memory_order failure) volatile MGBASE_NOEXCEPT {
-        return detail::atomic_compare_exchange_weak(value_, expected, desired, success, failure);
+        return atomic_compare_exchange_weak_explicit(value_, expected, desired, success, failure);
     }
     T compare_exchange_weak(T& expected, T desired, memory_order order = memory_order_seq_cst) volatile MGBASE_NOEXCEPT {
         return compare_exchange_weak(expected, desired, order, order);
     }
     
     T fetch_add(T arg, memory_order order = memory_order_seq_cst) volatile MGBASE_NOEXCEPT {
-        return detail::atomic_fetch_add(value_, arg, order);
+        return atomic_fetch_add_explicit(value_, arg, order);
     }
     T fetch_sub(T arg, memory_order order = memory_order_seq_cst) volatile MGBASE_NOEXCEPT {
-        return detail::atomic_fetch_sub(value_, arg, order);
+        return atomic_fetch_sub_explicit(value_, arg, order);
     }
     
 private:

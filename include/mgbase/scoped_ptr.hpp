@@ -38,7 +38,7 @@ public:
         return *this;
     }
     
-    T& operator[] (std::ptrdiff_t index) MGBASE_NOEXCEPT {
+    T& operator[] (std::ptrdiff_t index) const MGBASE_NOEXCEPT {
         return ptr_[index];
     }
     

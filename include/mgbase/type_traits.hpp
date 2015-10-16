@@ -97,6 +97,20 @@ struct is_compound
         !is_fundamental<T>::value
     > { };
 
+
+template <typename T>
+struct is_array
+    : false_type { };
+
+template <typename T>
+struct is_array<T []>
+    : true_type { };
+
+template <typename T, std::size_t S>
+struct is_array<T [S]>
+    : true_type { };
+
+
 // is_convertible
 // From Boost.TypeTraits
 
