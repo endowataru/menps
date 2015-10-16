@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include "mpi_error.hpp"
+#include <mgcom.hpp>
+#include <mpi.h>
 #include <mgbase/threading/spinlock.hpp>
 
 namespace mgcom {
-
 namespace mpi_base {
 
 void initialize(int* argc, char*** argv);
@@ -21,7 +21,5 @@ inline lock_type& get_lock() MGBASE_NOEXCEPT
 }
 
 }
-
 }
-
 

@@ -4,6 +4,8 @@ MGCOM
 
 Communication Library for MassiveThreads/GAS 2.
 
+This project is experimental. Its API might be changed.
+
 Requires C++03 or later.
 
 Goals

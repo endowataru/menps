@@ -3,12 +3,9 @@
 
 #include <mgcom.hpp>
 
-#include "impl.hpp"
-
-#include "rma.hpp"
+#include "common/rma_try.hpp"
 
 namespace mgcom {
-
 namespace rma {
 
 namespace detail {
@@ -247,6 +244,5 @@ private:
 }
 
 }
-
 }
 

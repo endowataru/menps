@@ -2,9 +2,9 @@
 #pragma once
 
 #include <mgcom.hpp>
+#include "common/notifier.hpp"
 
 namespace mgcom {
-
 namespace rma {
 
 void initialize();
@@ -103,7 +103,5 @@ bool try_local_fetch_and_add_default(
 );
 
 }
-
 }
-
 

@@ -3,7 +3,6 @@
 #include <mgbase/memory/aligned_alloc.hpp>
 
 namespace mgcom {
-
 namespace rma {
 
 // TODO: replace naive implementation
@@ -23,6 +22,5 @@ void deallocate(const registered_buffer& buf) {
 }
 
 }
-
 }
 

@@ -2,7 +2,8 @@
 #include "sender.hpp"
 #include "receiver.hpp"
 #include "../am.hpp"
-#include "mpi_base.hpp"
+#include "common/mpi_base.hpp"
+#include "common/mpi_error.hpp"
 #include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/logging/logger.hpp>
 

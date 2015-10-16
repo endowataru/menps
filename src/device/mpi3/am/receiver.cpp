@@ -1,8 +1,8 @@
 
 #include <mgcom.hpp>
 #include <mpi.h>
-#include "mpi_error.hpp"
-#include "mpi_base.hpp"
+#include "common/mpi_error.hpp"
+#include "common/mpi_base.hpp"
 #include "../am.hpp"
 #include "receiver.hpp"
 #include "sender.hpp"

@@ -202,7 +202,6 @@ static_pointer_cast(const detail::pointer_base<Derived, U>& ptr) {
 template <typename T>
 class remote_pointer
     : public detail::pointer_base<typed_rma::remote_pointer, T>
-    //: public detail::remote_pointer_base<T>
 {
     typedef detail::pointer_base<typed_rma::remote_pointer, T>  base;
     

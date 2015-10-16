@@ -2,7 +2,6 @@
 #include "contiguous.ipp"
 
 namespace mgcom {
-
 namespace rma {
 
 namespace detail {
@@ -42,6 +41,5 @@ void local_fetch_and_add_default_nb(local_fetch_and_add_default_cb& cb) {
 }
 
 }
-
 }
 

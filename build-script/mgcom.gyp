@@ -2,10 +2,10 @@
     'includes': [ 'common.gypi' ],
     'target_defaults': {
         'include_dirs': [
-            '../src-common'
+            '../src'
         ],
         'sources': [
-            '../src-common/c_interface.cpp'
+            '../src/common/c_interface.cpp'
         ]
     },
     'targets' : [
@@ -14,30 +14,34 @@
             'type' : 'static_library',
             'standalone_static_library': 1,
             'sources' : [
-                '../src-device/fjmpi/rdma.cpp',
+                '../src/common/mpi_base.cpp',
+                '../src/common/rma/contiguous.cpp',
+                '../src/common/rma/buffer_pool.cpp',
+                '../src/device/fjmpi/rma.cpp',
+                '../src/device/fjmpi/am/sender.cpp',
             ],
         },
         {
             'target_name' : 'mgcom-ibv',
             'type' : 'static_library',
             'sources' : [
-                '../src-device/ibv/rdma.cpp',
+                '../src/device/ibv/rdma.cpp',
             ],
         },
         {
             'target_name': 'mgcom-mpi3',
             'type': 'static_library',
             'sources': [
-                '../src-common/mpi_base.cpp',
-                '../src-common/contiguous.cpp',
-                '../src-common/buffer_pool.cpp',
-                '../src-device/mpi3/mpi3.cpp',
-                '../src-device/mpi3/rma.cpp',
-                '../src-device/mpi3/barrier.cpp',
-                '../src-device/mpi3/am.cpp',
-                '../src-device/mpi3/am/receiver.cpp',
-                '../src-device/mpi3/am/sender.cpp',
-                '../src-device/mpi3/am/sender_queue.cpp',
+                '../src/common/mpi_base.cpp',
+                '../src/common/contiguous.cpp',
+                '../src/common/buffer_pool.cpp',
+                '../src/device/mpi3/mpi3.cpp',
+                '../src/device/mpi3/rma.cpp',
+                '../src/device/mpi3/barrier.cpp',
+                '../src/device/mpi3/am.cpp',
+                '../src/device/mpi3/am/receiver.cpp',
+                '../src/device/mpi3/am/sender.cpp',
+                '../src/device/mpi3/am/sender_queue.cpp',
             ],
             'dependencies' : [
                 '../../mgbase/build-script/cppformat.gyp:cppformat',

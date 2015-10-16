@@ -15,10 +15,6 @@ typedef mgcom_index_t                  index_t;
 
 typedef mgcom_process_id_t             process_id_t;
 
-typedef mgcom_local_operation          local_operation;
-typedef mgcom_local_notifier           local_notifier;
-
-typedef mgcom_remote_operation         remote_operation;
 
 /**
  * Initialize and start the communication.
@@ -247,7 +243,7 @@ void remote_fetch_and_add_default_nb(remote_fetch_and_add_default_cb& cb);
 
 }
 
-namespace {
+namespace /*unnamed*/ {
 
 /**
  * Non-blocking remote atomic read.
@@ -403,7 +399,7 @@ void send_nb(send_cb& cb);
 
 }
 
-namespace {
+namespace /*unnamed*/ {
 
 inline void send_nb(
     send_cb&        cb
@@ -444,55 +440,6 @@ void barrier();
 process_id_t current_process_id() MGBASE_NOEXCEPT;
 
 index_t number_of_processes() MGBASE_NOEXCEPT;
-
-namespace {
-
-
-inline local_notifier make_notifier_no_operation() MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_NO_OPERATION, MGBASE_NULLPTR, 0 };
-    return result;
-}
-
-inline local_notifier make_notifier_assign(bool* ptr, bool value) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
-    return result;
-}
-inline local_notifier make_notifier_assign(mgbase::uint8_t* ptr, mgbase::uint8_t value) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT8, ptr, value };
-    return result;
-}
-inline local_notifier make_notifier_assign(mgbase::uint16_t* ptr, mgbase::uint16_t value) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT16, ptr, value };
-    return result;
-}
-inline local_notifier make_notifier_assign(mgbase::uint32_t* ptr, mgbase::uint32_t value) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT32, ptr, value };
-    return result;
-}
-inline local_notifier make_notifier_assign(mgbase::uint64_t* ptr, mgbase::uint64_t value) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ASSIGN_INT64, ptr, value };
-    return result;
-}
-
-inline local_notifier make_notifier_fetch_add(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, diff };
-    return result;
-}
-inline local_notifier make_notifier_fetch_sub(mgbase::atomic<mgbase::uint32_t>* ptr, mgbase::uint32_t diff) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT32, ptr, -diff };
-    return result;
-}
-
-inline local_notifier make_notifier_fetch_add(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, diff };
-    return result;
-}
-inline local_notifier make_notifier_fetch_sub(mgbase::atomic<mgbase::uint64_t>* ptr, mgbase::uint64_t diff) MGBASE_NOEXCEPT {
-    local_notifier result = { MGCOM_LOCAL_ATOMIC_FETCH_ADD_INT64, ptr, -diff };
-    return result;
-}
-
-}
 
 }
 

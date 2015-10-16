@@ -1,11 +1,12 @@
 
 #include "mpi_base.hpp"
+#include "common/mpi_error.hpp"
 
 namespace mgcom {
 
 namespace mpi_base {
 
-namespace {
+namespace /*unnamed*/ {
 
 class impl
     : mgbase::noncopyable

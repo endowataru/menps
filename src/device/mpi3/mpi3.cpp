@@ -1,14 +1,13 @@
 
-#include "mpi_base.hpp"
+#include "common/mpi_base.hpp"
 #include "rma.hpp"
 #include "am.hpp"
-#include <mpi.h>
 
 #include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 
-namespace {
+namespace /*unnamed*/ {
 
 std::string get_state() {
     static index_t number = 0;

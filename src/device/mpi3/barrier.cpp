@@ -1,7 +1,6 @@
 
 #include <mgcom.hpp>
-#include "mpi_error.hpp"
-#include <mpi.h>
+#include "common/mpi_error.hpp"
 
 namespace mgcom {
 

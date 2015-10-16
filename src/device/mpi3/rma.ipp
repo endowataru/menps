@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include <mgcom.hpp>
-#include <mpi.h>
+#include "rma.hpp"
+#include "common/rma/rma.hpp"
+#include "common/notifier.hpp"
+#include "common/mpi_base.hpp"
 
 #include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/assert.hpp>
-#include "impl.hpp"
-#include <mpi_base.hpp>
 #include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
