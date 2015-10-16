@@ -62,7 +62,7 @@ public:
         mgbase::uint64_t address;
         {
             // TODO: Blocking
-            mgbase::lock_guard<lock_type> lc(mpi_lock_);
+            mgbase::lock_guard<lock_type> lc(get_lock());
             address = ::FJMPI_Rdma_reg_mem(memid, buf, length);
         }
         if (address == FJMPI_RDMA_ERROR)
@@ -77,7 +77,7 @@ public:
         mgbase::uint64_t raddr;
         {
             // TODO: Blocking
-            mgbase::lock_guard<lock_type> lc(mpi_lock_);
+            mgbase::lock_guard<lock_type> lc(get_lock());
             raddr = ::FJMPI_Rdma_get_remote_addr(pid, memid);
         }
         if (raddr == FJMPI_RDMA_ERROR)
@@ -91,7 +91,7 @@ public:
         int ret;
         {
             // TODO: Blocking
-            mgbase::lock_guard<lock_type> lc(mpi_lock_);
+            mgbase::lock_guard<lock_type> lc(get_lock());
             ret = ::FJMPI_Rdma_dereg_mem(memid);
         }
         if (ret != 0)
@@ -108,11 +108,11 @@ public:
         if (!try_new_tag(dest, nic, &tag))
             return false;
         
-        if (mpi_lock_.try_lock()) {
+        if (get_lock().try_lock()) {
             const int flags = nic | extra_flags;
             
             const int ret = ::FJMPI_Rdma_put(dest, tag, raddr, laddr, size_in_bytes, flags);
-            mpi_lock_.unlock();
+            get_lock().unlock();
             
             if (ret != 0)
                 throw fjmpi_error();
@@ -132,11 +132,11 @@ public:
         if (!try_new_tag(dest, nic, &tag))
             return false;
         
-        if (mpi_lock_.try_lock()) {
+        if (get_lock().try_lock()) {
             const int flags = nic | extra_flags;
             
             const int ret = ::FJMPI_Rdma_get(dest, tag, raddr, laddr, size_in_bytes, flags);
-            mpi_lock_.unlock();
+            get_lock().unlock();
             
             if (ret != 0)
                 throw fjmpi_error();
@@ -193,13 +193,13 @@ public:
     
 private:
     bool poll_nic(int nic) {
-        if (!mpi_lock_.try_lock())
+        if (!get_lock().try_lock())
             return false;
         
         ::FJMPI_Rdma_cq cq;
         int ret = ::FJMPI_Rdma_poll_cq(nic, &cq);
         
-        mpi_lock_.unlock();
+        get_lock().unlock();
         
         if (ret == FJMPI_RDMA_NOTICE)
             notify(nic, cq.pid, cq.tag);
@@ -208,6 +208,10 @@ private:
     }
     
 private:
+    static lock_type& get_lock() MGBASE_NOEXCEPT {
+        return mpi_base::get_lock();
+    }
+    
     static const int max_memid_count = 510;
     static const int max_tag_count = 15;
     static const int max_nic_count = 4;
@@ -243,8 +247,6 @@ private:
         nic_info by_nics[max_nic_count];
         int prev_nic;
     };
-    
-    lock_type mpi_lock_;
     
     int next_nic_;
     mgbase::atomic<mgbase::uint32_t> number_of_outstandings_[max_nic_count];
