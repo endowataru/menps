@@ -11,6 +11,8 @@
 
 #include "rma/rma.hpp"
 
+#include "mpi-ext.h"
+
 namespace mgcom {
 namespace am {
 namespace sender {
@@ -34,7 +36,7 @@ public:
     }
     
     bool try_send(
-        message&                msg
+        message&                //msg
     ,   process_id_t            dest_proc
     ,   const local_notifier&   notifier
     ) {
@@ -50,10 +52,13 @@ public:
         
         rma::registered_buffer buf = rma::allocate(sizeof(message));
         
+        const typed_rma::remote_pointer<message> remote_ptr =
+            buffers_.at_process(dest_proc).member(&message_buffer::msgs);
+        
         mgcom::rma::try_remote_write_extra(
             dest_proc
-        ,   buffers_.at_process(dest_proc).member(&message_buffer::msgs)
-        ,   rma::to_pointer(buf)
+        ,   remote_ptr.to_address()
+        ,   rma::to_address(buf)
         ,   sizeof(message)
         ,   notifier
         ,   FJMPI_RDMA_REMOTE_NOTICE

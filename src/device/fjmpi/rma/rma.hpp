@@ -8,6 +8,9 @@
 namespace mgcom {
 namespace rma {
 
+void initialize();
+void finalize();
+
 bool try_remote_read_extra(
     process_id_t            proc
 ,   const remote_address&   remote_addr

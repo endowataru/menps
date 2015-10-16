@@ -31,7 +31,7 @@ void initialize(int* argc, char*** argv)
 
 void finalize()
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+    barrier();
     
     am::finalize();
     rma::finalize();

@@ -121,7 +121,7 @@ private:
     template <typename U>
     static derived_type create(const U& value) { return derived_type(value); }
     
-    template <template <typename> class Derived2, typename T2, bool IsCompound>
+    template <template <typename> class Derived2, typename T2, bool HasMembers>
     friend class pointer_base_member;
     
     template <template <typename> class Derived2, typename T2>
@@ -139,12 +139,16 @@ private:
 };
 
 template <template <typename> class Derived, typename T,
-    bool IsCompound = mgbase::is_compound<typename mgbase::remove_cv<T>::type>::value>
+    bool HasMembers =
+        mgbase::is_compound<typename mgbase::remove_cv<T>::type>::value
+        && !mgbase::is_array<typename mgbase::remove_cv<T>::type>::value
+>
 class pointer_base_member { };
 
 template <template <typename> class Derived, typename T>
 class pointer_base_member<Derived, T, true>
 {
+    typedef Derived<T>                      derived_type;
     typedef pointer_base_access<Derived, T> access;
     
 public:
@@ -158,31 +162,52 @@ public:
     }
     
 private:
-          Derived<T>& derived()       { return static_cast<      Derived<T>&>(*this); }
-    const Derived<T>& derived() const { return static_cast<const Derived<T>&>(*this); }
+          derived_type& derived()       { return static_cast<      derived_type&>(*this); }
+    const derived_type& derived() const { return static_cast<const derived_type&>(*this); }
 };
 
 template <template <typename> class Derived, typename T>
-class pointer_base
-    : public pointer_base_member<Derived, T>
+class pointer_base_operators
 {
     typedef Derived<T>                      derived_type;
     typedef pointer_base_access<Derived, T> access;
     
 public:
-    
     derived_type operator + (index_diff_t diff) const MGBASE_NOEXCEPT {
         derived_type result = derived();
         result += diff;
         return result;
     }
-    
-    
-    
+
 private:
-          Derived<T>& derived()       MGBASE_NOEXCEPT { return static_cast<      Derived<T>&>(*this); }
-    const Derived<T>& derived() const MGBASE_NOEXCEPT { return static_cast<const Derived<T>&>(*this); }
+          derived_type& derived()       MGBASE_NOEXCEPT { return static_cast<      derived_type&>(*this); }
+    const derived_type& derived() const MGBASE_NOEXCEPT { return static_cast<const derived_type&>(*this); }
 };
+
+template <template <typename> class Derived, typename T, std::size_t Size>
+class pointer_base_operators<Derived, T [Size]>
+{
+    typedef Derived<T[]>                    derived_type;
+    typedef Derived<T>                      normal_pointer_type;
+    typedef pointer_base_access<Derived, T> access;
+    
+public:
+    normal_pointer_type operator + (index_diff_t diff) const MGBASE_NOEXCEPT {
+        normal_pointer_type result = derived();
+        result += diff;
+        return result;
+    }
+
+private:
+          derived_type& derived()       MGBASE_NOEXCEPT { return static_cast<      derived_type&>(*this); }
+    const derived_type& derived() const MGBASE_NOEXCEPT { return static_cast<const derived_type&>(*this); }
+};
+
+template <template <typename> class Derived, typename T>
+class pointer_base
+    : public pointer_base_member<Derived, T>
+    , public pointer_base_operators<Derived, T>
+    { };
 
 }
 #if 0
@@ -306,8 +331,8 @@ template <typename T>
 inline void remote_write_nb(
     rma::remote_write_cb&           cb
 ,   process_id_t                    proc
-,   remote_pointer<T>               remote_ptr
-,   local_pointer<const T>          local_ptr
+,   const remote_pointer<T>&        remote_ptr
+,   const local_pointer<const T>&   local_ptr
 ,   index_t                         number_of_elements
 ) {
     mgcom::rma::remote_write_nb(
@@ -323,8 +348,8 @@ template <typename T>
 inline void remote_write_nb(
     rma::remote_write_cb&           cb
 ,   process_id_t                    proc
-,   remote_pointer<T>               remote_ptr
-,   local_pointer<T>                local_ptr
+,   const remote_pointer<T>&        remote_ptr
+,   const local_pointer<T>&         local_ptr
 ,   index_t                         number_of_elements
 ) {
     mgcom::rma::remote_write_nb(cb, proc, remote_ptr, local_pointer<const T>(local_ptr), number_of_elements);

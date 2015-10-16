@@ -6,7 +6,10 @@
         ],
         'sources': [
             '../src/common/c_interface.cpp',
-        ]
+        ],
+        'dependencies' : [
+            '../../mgbase/build-script/cppformat.gyp:cppformat',
+        ],
     },
     'targets' : [
         {
@@ -17,6 +20,7 @@
                 '../src/common/mpi_base.cpp',
                 '../src/common/rma/contiguous.cpp',
                 '../src/common/rma/buffer_pool.cpp',
+                '../src/device/fjmpi/fjmpi.cpp',
                 '../src/device/fjmpi/rma/rma.cpp',
                 '../src/device/fjmpi/am/sender.cpp',
             ],
@@ -45,9 +49,6 @@
                 '../src/device/mpi3/am/receiver.cpp',
                 '../src/device/mpi3/am/sender.cpp',
                 '../src/device/mpi3/am/sender_queue.cpp',
-            ],
-            'dependencies' : [
-                '../../mgbase/build-script/cppformat.gyp:cppformat',
             ],
             'include_dirs': [
                 '../src/device/mpi3',

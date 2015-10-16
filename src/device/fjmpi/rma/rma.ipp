@@ -11,6 +11,7 @@
 #include <mgbase/lockfree/static_bounded_index_queue.hpp>
 #include <mgbase/lockfree/mpmc_bounded_queue.hpp>
 #include <mgbase/threading/spinlock.hpp>
+#include <mgbase/threading/lock_guard.hpp>
 
 #include "fjmpi_error.hpp"
 
@@ -52,12 +53,18 @@ public:
         delete[] info_by_procs_;
     }
     
-    int register_memory(void* buf, std::size_t length, mgbase::uint64_t* address_result) {
+    int register_memory(void* buf, std::size_t length, mgbase::uint64_t* address_result)
+    {
         int memid;
         if (!memid_queue_.dequeue(memid))
-            throw fjmpi_error();
+            throw fjmpi_error(); // exceeded the capacity of memid
         
-        mgbase::uint64_t address = ::FJMPI_Rdma_reg_mem(memid, buf, length);
+        mgbase::uint64_t address;
+        {
+            // TODO: Blocking
+            mgbase::lock_guard<lock_type> lc(mpi_lock_);
+            address = ::FJMPI_Rdma_reg_mem(memid, buf, length);
+        }
         if (address == FJMPI_RDMA_ERROR)
             throw fjmpi_error();
         
@@ -65,23 +72,36 @@ public:
         return memid;
     }
     
-    mgbase::uint64_t get_remote_addr(int pid, int memid) {
-        mgbase::uint64_t raddr = ::FJMPI_Rdma_get_remote_addr(pid, memid);
+    mgbase::uint64_t get_remote_addr(int pid, int memid)
+    {
+        mgbase::uint64_t raddr;
+        {
+            // TODO: Blocking
+            mgbase::lock_guard<lock_type> lc(mpi_lock_);
+            raddr = ::FJMPI_Rdma_get_remote_addr(pid, memid);
+        }
         if (raddr == FJMPI_RDMA_ERROR)
             throw fjmpi_error();
         
         return raddr;
     }
     
-    void deregister_memory(int memid) {
-        int ret = ::FJMPI_Rdma_dereg_mem(memid);
+    void deregister_memory(int memid)
+    {
+        int ret;
+        {
+            // TODO: Blocking
+            mgbase::lock_guard<lock_type> lc(mpi_lock_);
+            ret = ::FJMPI_Rdma_dereg_mem(memid);
+        }
         if (ret != 0)
             throw fjmpi_error();
         
         memid_queue_.enqueue(memid);
     }
     
-    bool try_put(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const local_notifier& on_complete, int extra_flags) {
+    bool try_put(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const local_notifier& on_complete, int extra_flags)
+    {
         const int nic = select_nic(dest);
         
         int tag;
