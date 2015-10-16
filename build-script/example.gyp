@@ -8,7 +8,7 @@
                 '../example/latency.cpp',
             ],
             'dependencies' : [
-                './mgcom.gyp:mgcom-mpi3',
+                './mgcom.gyp:mgcom-fjmpi',
             ],
         },
         {

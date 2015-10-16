@@ -3,9 +3,9 @@
 #include "common/mpi_base.hpp"
 #include "common/mpi_error.hpp"
 #include "am.hpp"
-#include "am/receiver.hpp"
-#include "am/sender.hpp"
-#include "am/sender_queue.hpp"
+#include "receiver.hpp"
+#include "sender.hpp"
+#include "sender_queue.hpp"
 
 namespace mgcom {
 namespace am {
