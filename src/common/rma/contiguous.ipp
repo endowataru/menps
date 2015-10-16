@@ -3,7 +3,9 @@
 
 #include <mgcom.hpp>
 
-#include "common/rma_try.hpp"
+#include "try_contiguous.hpp"
+#include "common/rma/rma.hpp"
+#include "common/notifier.hpp"
 
 namespace mgcom {
 namespace rma {

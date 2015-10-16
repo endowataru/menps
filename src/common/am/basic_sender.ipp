@@ -11,7 +11,7 @@ namespace mgcom {
 namespace am {
 namespace sender {
 
-namespace {
+namespace /*unnamed*/ {
 
 class basic_impl
 {
@@ -49,25 +49,6 @@ protected:
     
 private:
     mgbase::atomic<index_t>* tickets_;
-};
-
-class basic_impl_buffer
-{
-protected:
-    void initialize()
-    {
-        dest_addrs_ = new mgcom::typed_rma::remote_pointer<mgcom::am::message>[number_of_processes()];
-        
-        
-    }
-    
-    void finalize()
-    {
-        delete[] dest_addrs_;
-    }
-
-private:
-    mgcom::typed_rma::remote_pointer<mgcom::am::message>* dest_addrs_;
 };
 
 }

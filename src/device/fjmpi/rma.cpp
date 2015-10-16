@@ -60,6 +60,24 @@ inline mgbase::uint64_t get_absolute_address(const remote_address& addr) MGBASE_
 
 }
 
+bool try_remote_read_extra(
+    process_id_t            proc
+,   const remote_address&   remote_addr
+,   const local_address&    local_addr
+,   index_t                 size_in_bytes
+,   local_notifier          on_complete
+,   int                     flags
+) {
+    return g_impl.try_get(
+        static_cast<int>(proc)
+    ,   get_absolute_address(local_addr)
+    ,   get_absolute_address(remote_addr)
+    ,   size_in_bytes
+    ,   on_complete
+    ,   flags
+    );
+}
+
 bool try_remote_read(
     process_id_t            proc
 ,   const remote_address&   remote_addr
@@ -67,12 +85,24 @@ bool try_remote_read(
 ,   index_t                 size_in_bytes
 ,   local_notifier          on_complete
 ) {
+    return try_remote_read_extra(proc, remote_addr, local_addr, size_in_bytes, on_complete, 0);
+}
+
+bool try_remote_write_extra(
+    process_id_t            proc
+,   const remote_address&   remote_addr
+,   const local_address&    local_addr
+,   index_t                 size_in_bytes
+,   local_notifier          on_complete
+,   int                     flags
+) {
     return g_impl.try_put(
-        static_cast<int>(proc),
-        get_absolute_address(local_addr),
-        get_absolute_address(remote_addr),
-        size_in_bytes,
-        on_complete
+        static_cast<int>(proc)
+    ,   get_absolute_address(local_addr)
+    ,   get_absolute_address(remote_addr)
+    ,   size_in_bytes
+    ,   on_complete
+    ,   flags
     );
 }
 
@@ -83,13 +113,7 @@ bool try_remote_write(
 ,   index_t                 size_in_bytes
 ,   local_notifier          on_complete
 ) {
-    return g_impl.try_get(
-        static_cast<int>(proc),
-        get_absolute_address(local_addr),
-        get_absolute_address(remote_addr),
-        size_in_bytes,
-        on_complete
-    );
+    return try_remote_write_extra(proc, remote_addr, local_addr, size_in_bytes, on_complete, 0);
 }
 
 void poll() {
@@ -97,10 +121,5 @@ void poll() {
 }
 
 }
-
-void barrier() {
-    ::MPI_Barrier(MPI_COMM_WORLD);
-}
-
 }
 

@@ -74,7 +74,7 @@ registered_buffer allocate(index_t size_in_bytes);
  */
 void deallocate(const registered_buffer& buffer);
 
-namespace {
+namespace /*unnamed*/ {
 
 MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
 
@@ -128,6 +128,11 @@ inline void deallocate_region(const local_region& region) {
     delete[] static_cast<mgbase::uint8_t*>(to_pointer(region));
 }
 
+inline remote_address use_remote_address(process_id_t proc_id, const local_address& addr) {
+    remote_address result = { use_remote_region(proc_id, addr.region.key), addr.offset };
+    return result;
+}
+
 }
 
 typedef mgcom_rma_remote_read_cb    remote_read_cb;
@@ -140,7 +145,7 @@ void remote_write_nb(remote_write_cb& cb);
 
 }
 
-namespace {
+namespace /*unnamed*/ {
 
 /**
  * Non-blocking contiguous read.

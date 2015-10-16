@@ -127,6 +127,7 @@ private:
     template <template <typename> class Derived2, typename T2>
     friend class pointer_base;
     
+    
     #if 0
     template <typename T2, template <typename> class Derived2, typename U>
     friend mgbase::enable_if<
@@ -218,6 +219,10 @@ public:
     
     rma::remote_address to_address() const MGBASE_NOEXCEPT {
         return addr_;
+    }
+    
+    static remote_pointer cast_from(const rma::remote_address& addr) {
+        return remote_pointer(addr);
     }
     
 private:
@@ -399,6 +404,12 @@ inline void remote_fetch_and_add_default_nb(
     ,   value_ptr.to_address()
     ,   result_ptr.to_address()
     );
+}
+
+
+template <typename T>
+inline remote_pointer<T> use_remote_pointer(process_id_t proc_id, const local_pointer<T>& ptr) {
+    return remote_pointer<T>::cast_from(mgcom::rma::use_remote_address(proc_id, ptr.to_address()));
 }
 
 }
