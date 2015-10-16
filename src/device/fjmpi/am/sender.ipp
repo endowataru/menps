@@ -9,6 +9,8 @@
 
 #include <mgcom/alltoall_buffer.hpp>
 
+#include "rma/rma.hpp"
+
 namespace mgcom {
 namespace am {
 namespace sender {
@@ -32,9 +34,9 @@ public:
     }
     
     bool try_send(
-        message&                //msg
+        message&                msg
     ,   process_id_t            dest_proc
-    ,   const local_notifier&   //notifier
+    ,   const local_notifier&   notifier
     ) {
         if (!base::get_ticket_to(dest_proc))
             return false;
@@ -46,7 +48,16 @@ public:
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
         
+        rma::registered_buffer buf = rma::allocate(sizeof(message));
         
+        mgcom::rma::try_remote_write_extra(
+            dest_proc
+        ,   buffers_.at_process(dest_proc).member(&message_buffer::msgs)
+        ,   rma::to_pointer(buf)
+        ,   sizeof(message)
+        ,   notifier
+        ,   FJMPI_RDMA_REMOTE_NOTICE
+        );
         
         //const int size = static_cast<int>(sizeof(message));
         

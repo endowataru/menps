@@ -28,6 +28,9 @@ public:
         remote_ptrs_.reset();
     }
     
+    mgcom::typed_rma::remote_pointer<T> at_process(process_id_t proc_id) const MGBASE_NOEXCEPT {
+        return remote_ptrs_[proc_id];
+    }
 
 private:
     mgcom::typed_rma::local_pointer<T> local_ptr;
