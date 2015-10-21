@@ -12,10 +12,10 @@
             ],
         },
         {
-            'target_name' : 'bench-latency-cas',
+            'target_name' : 'bench-latency-faa',
             'type' : 'executable',
             'sources' : [
-                '../example/bench/bench-latency-cas.cpp',
+                '../example/bench/bench-latency-faa.cpp',
             ],
             'dependencies' : [
                 './mgcom.gyp:mgcom-mpi3',

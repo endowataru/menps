@@ -23,11 +23,16 @@ int main(int argc, char* argv[])
     double clocks = 0;
     const int number_of_trials = atoi(argv[1]);
     
+    if (current_process_id() == root_proc)
+        x = 123;
+    
     barrier();
     
     if (current_process_id() != root_proc)
     {
         for (int i = 0; i < number_of_trials; i++) {
+            x = 0;
+            
             mgbase::stopwatch sw;
             sw.start();
             
@@ -36,12 +41,15 @@ int main(int argc, char* argv[])
             mgbase::control::wait(cb);
             
             clocks += sw.elapsed();
+            
+            if (x != 123)
+                std::cout << "error!" << std::endl;
         }
     }
     
     barrier();
     
-    std::cout << current_process_id() << " " << (clocks / number_of_trials) << std::endl;
+    std::cout << current_process_id() << "\t" << (clocks / number_of_trials) << std::endl;
     
     finalize();
     
