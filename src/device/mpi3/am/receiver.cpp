@@ -106,7 +106,9 @@ private:
         
         MGBASE_LOG_DEBUG("msg:Invoking callback.\tsrc:{}\tid:{}", src, msg.id);
         
-        callbacks_[msg.id](&params);
+        const handler_callback_t callback = callbacks_[msg.id];
+        MGBASE_ASSERT(callback != MGBASE_NULLPTR);
+        callback(&params);
         
         MGBASE_LOG_DEBUG("msg:Finished callback.");
     }

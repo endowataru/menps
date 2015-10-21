@@ -24,7 +24,7 @@
                 },
             },
             'Release': {
-                'defines':[],
+                'defines':['MGBASE_DISABLE_ASSERT'],
                 'cflags': ['-O3', '-Wall','-pedantic',],
                 'xcode_settings': {
                     'OTHER_CPLUSPLUSFLAGS': [

@@ -2,6 +2,36 @@
     'includes': [ 'common.gypi' ],
     'targets' : [
         {
+            'target_name' : 'bench-latency-read',
+            'type' : 'executable',
+            'sources' : [
+                '../example/bench/bench-latency-read.cpp',
+            ],
+            'dependencies' : [
+                './mgcom.gyp:mgcom-mpi3',
+            ],
+        },
+        {
+            'target_name' : 'bench-latency-cas',
+            'type' : 'executable',
+            'sources' : [
+                '../example/bench/bench-latency-cas.cpp',
+            ],
+            'dependencies' : [
+                './mgcom.gyp:mgcom-mpi3',
+            ],
+        },
+        {
+            'target_name' : 'bench-latency-am',
+            'type' : 'executable',
+            'sources' : [
+                '../example/bench/bench-latency-am.cpp',
+            ],
+            'dependencies' : [
+                './mgcom.gyp:mgcom-mpi3',
+            ],
+        },
+        {
             'target_name' : 'latency',
             'type' : 'executable',
             'sources' : [
