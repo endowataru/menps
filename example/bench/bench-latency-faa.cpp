@@ -2,6 +2,7 @@
 #include <mgcom.hpp>
 #include <mgcom_collective.hpp>
 #include <mgbase/profiling/stopwatch.hpp>
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
@@ -49,7 +50,12 @@ int main(int argc, char* argv[])
         if (x != (number_of_trials * (number_of_processes() - 1)))
             std::cout << "error! " << x << std::endl;
     
-    std::cout << current_process_id() << " " << (clocks / number_of_trials) << std::endl;
+    for (process_id_t proc = 0; proc < number_of_processes(); ++proc) {
+        if (proc == current_process_id())
+            std::cout << current_process_id() << "\t" << (clocks / number_of_trials) << std::endl;
+        
+        barrier();
+    }
     
     finalize();
     

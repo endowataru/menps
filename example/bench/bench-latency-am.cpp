@@ -82,7 +82,12 @@ int main(int argc, char* argv[])
     
     barrier();
     
-    std::cout << current_process_id() << " " << (clocks / number_of_trials) << std::endl;
+    for (process_id_t proc = 0; proc < number_of_processes(); ++proc) {
+        if (proc == current_process_id())
+            std::cout << current_process_id() << "\t" << (clocks / number_of_trials) << std::endl;
+        
+        barrier();
+    }
     
     finalize();
     

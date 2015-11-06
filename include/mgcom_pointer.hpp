@@ -57,6 +57,36 @@ struct value_traits< static_extended_buffer<Header, ExtendedSize> > {
     }
 };
 
+/**
+ * If the type From is convertible to the type T, "value" is true.
+ */
+template <typename From, typename To>
+struct pointer_convertible
+    : mgbase::is_convertible<From*, To*> { };
+
+template <typename FromHeader, index_t (*FromExtendedSize)(), typename To>
+struct pointer_convertible<static_extended_buffer<FromHeader, FromExtendedSize>, To>
+    : mgbase::integral_constant<bool,
+        pointer_convertible<FromHeader, To>::value
+        || mgbase::is_convertible<static_extended_buffer<FromHeader, FromExtendedSize>*, To*>::value
+    > { };
+
+template <typename FromHeader, index_t (*FromExtendedSize)(), typename To>
+struct pointer_convertible<const static_extended_buffer<FromHeader, FromExtendedSize>, To>  
+    : mgbase::integral_constant<bool,
+        pointer_convertible<const FromHeader, To>::value
+        || mgbase::is_convertible<const static_extended_buffer<FromHeader, FromExtendedSize>*, To*>::value
+    > { };
+
+
+template <typename From, typename To>
+struct assignable_to
+    : mgbase::integral_constant<bool,
+        // From* is convertible to To*
+        pointer_convertible<typename mgbase::remove_const<From>::type, To>::value
+        // To is not const
+        && !mgbase::is_const<To>::value
+    > { };
 
 #if 0
 
@@ -111,15 +141,36 @@ static_pointer_cast(const detail::pointer_base<Derived, U>& ptr);
 
 namespace detail {
 
+template <template <typename> class Derived, typename T>
+class pointer_base;
+
+}
+
+template <typename To, template <typename> class Derived, typename From>
+inline
+typename mgbase::enable_if<
+    pointer_convertible<From, To>::value
+,   Derived<To>
+>::type
+implicit_pointer_cast(const detail::pointer_base<Derived, From>&);
+
+namespace detail {
 
 template <template <typename> class Derived, typename T>
 class pointer_base_access
 {
 private:
-    typedef Derived<T>  derived_type;
+    typedef Derived<T>                              derived_type;
+    typedef typename derived_type::address_type     address_type;
+    
+    static derived_type create(const address_type& addr) {
+        return derived_type::create(addr);
+    }
     
     template <typename U>
-    static derived_type create(const U& value) { return derived_type(value); }
+    static derived_type cast_from(const detail::pointer_base<Derived, U>& ptr) {
+        return create(static_cast<const Derived<U>&>(ptr).to_address());
+    }
     
     template <template <typename> class Derived2, typename T2, bool HasMembers>
     friend class pointer_base_member;
@@ -127,15 +178,12 @@ private:
     template <template <typename> class Derived2, typename T2>
     friend class pointer_base;
     
-    
-    #if 0
-    template <typename T2, template <typename> class Derived2, typename U>
-    friend mgbase::enable_if<
-        mgbase::is_convertible<U*, T2*>::value
-    ,   Derived<T2>
-    >
-    static_pointer_cast(const detail::pointer_base<Derived2, U>& ptr);
-    #endif
+    template <typename To, template <typename> class Derived2, typename From>
+    friend typename mgbase::enable_if<
+        pointer_convertible<From, To>::value
+    ,   Derived2<To>
+    >::type
+    typed_rma::implicit_pointer_cast(const detail::pointer_base<Derived2, From>&);
 };
 
 template <template <typename> class Derived, typename T,
@@ -210,19 +258,18 @@ class pointer_base
     { };
 
 }
-#if 0
 
-template <typename T, template <typename> class Derived, typename U>
-inline mgbase::enable_if<
-    mgbase::is_convertible<U*, T*>::value
-,   Derived<T>
->
-static_pointer_cast(const detail::pointer_base<Derived, U>& ptr) {
-    
-    return detail::pointer_base_access<Derived, T>::create(ptr.to_address());
+template <typename To, template <typename> class Derived, typename From>
+inline
+typename mgbase::enable_if<
+    pointer_convertible<From, To>::value
+,   Derived<To>
+>::type
+implicit_pointer_cast(const detail::pointer_base<Derived, From>& ptr)
+{
+    return detail::pointer_base_access<Derived, To>::cast_from(ptr);
 }
 
-#endif
 
 
 template <typename T>
@@ -232,17 +279,21 @@ class remote_pointer
     typedef detail::pointer_base<typed_rma::remote_pointer, T>  base;
     
 public:
+    typedef rma::remote_address     address_type;
+    
+#if MGBASE_CPP11_SUPPORTED
     remote_pointer() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
     template <typename U>
     /*implicit*/ remote_pointer(const remote_pointer<U>&) MGBASE_NOEXCEPT;
+#endif
     
     remote_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
         addr_ = mgcom::rma::advanced(addr_, index * value_traits<T>::size());
         return *this;
     }
     
-    rma::remote_address to_address() const MGBASE_NOEXCEPT {
+    address_type to_address() const MGBASE_NOEXCEPT {
         return addr_;
     }
     
@@ -251,10 +302,18 @@ public:
     }
     
 private:
+#if MGBASE_CPP11_SUPPORTED
     explicit remote_pointer(rma::remote_address addr)
         : addr_(addr) { }
+#endif
     
-    rma::remote_address addr_;
+    static remote_pointer create(const address_type& addr) {
+        remote_pointer result;
+        result.addr_ = addr;
+        return result;
+    }
+    
+    address_type addr_;
     
     template <template <typename> class Derived, typename U>
     friend class detail::pointer_base_access;
@@ -265,12 +324,16 @@ class local_pointer
     : public detail::pointer_base<typed_rma::local_pointer, T>
 {
     typedef detail::pointer_base<typed_rma::local_pointer, T>   base;
- 
+
 public:
+    typedef rma::local_address      address_type;
+    
+#if MGBASE_CPP11_SUPPORTED
     local_pointer() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
     template <typename U>
     /*implicit*/ local_pointer(const local_pointer<U>&) MGBASE_NOEXCEPT;
+#endif
     
     local_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
         addr_ = mgcom::rma::advanced(addr_, index * value_traits<T>::size());
@@ -283,21 +346,69 @@ public:
     
     T* raw() const MGBASE_NOEXCEPT { return static_cast<T*>(rma::to_pointer(addr_)); }
     
-    rma::local_address to_address() const MGBASE_NOEXCEPT {
+    address_type to_address() const MGBASE_NOEXCEPT {
         return addr_;
     }
 
 private:
+#if MGBASE_CPP11_SUPPORTED
     explicit local_pointer(rma::local_address addr)
         : addr_(addr) { }
+#endif
     
-    rma::local_address addr_;
+    static local_pointer create(const address_type& addr) {
+        local_pointer result;
+        result.addr_ = addr;
+        return result;
+    }
+    
+    address_type addr_;
     
     template <template <typename> class Derived, typename U>
     friend class detail::pointer_base_access;
 };
 
 namespace {
+
+/// Simple remote read.
+template <typename Remote, typename Local>
+inline typename mgbase::enable_if<
+    assignable_to<Remote, Local>::value
+>::type
+remote_read_nb(
+    rma::remote_read_cb&            cb
+,   process_id_t                    proc
+,   const remote_pointer<Remote>&   remote_ptr
+,   const local_pointer<Local>&     local_ptr
+) {
+    mgcom::rma::remote_read_nb(
+        cb
+    ,   proc
+    ,   remote_ptr.to_address()
+    ,   local_ptr.to_address()
+    ,   value_traits<Remote>::size()
+    );
+}
+
+/// Simple remote write.
+template <typename Remote, typename Local>
+inline typename mgbase::enable_if<
+    assignable_to<Local, Remote>::value
+>::type
+remote_write_nb(
+    rma::remote_write_cb&           cb
+,   process_id_t                    proc
+,   const remote_pointer<Remote>&   remote_ptr
+,   const local_pointer<Local>&     local_ptr
+) {
+    mgcom::rma::remote_write_nb(
+        cb
+    ,   proc
+    ,   remote_ptr.to_address()
+    ,   local_ptr.to_address()
+    ,   value_traits<Local>::size()
+    );
+}
 
 template <typename T>
 inline void remote_read_nb(
@@ -324,7 +435,13 @@ inline void remote_read_nb(
 ,   const local_pointer<T>&         local_ptr
 ,   index_t                         number_of_elements
 ) {
-    remote_read_nb(cb, proc, remote_pointer<const T>(remote_ptr), local_ptr, number_of_elements);
+    remote_read_nb(
+        cb
+    ,   proc
+    ,   implicit_pointer_cast<const T>(remote_ptr)
+    ,   local_ptr
+    ,   number_of_elements
+    );
 }
 
 template <typename T>
@@ -352,7 +469,13 @@ inline void remote_write_nb(
 ,   const local_pointer<T>&         local_ptr
 ,   index_t                         number_of_elements
 ) {
-    mgcom::rma::remote_write_nb(cb, proc, remote_ptr, local_pointer<const T>(local_ptr), number_of_elements);
+    mgcom::rma::remote_write_nb(
+        cb
+    ,   proc
+    ,   remote_ptr
+    ,   implicit_pointer_cast<const T>(local_ptr)
+    ,   number_of_elements
+    );
 }
 
 
