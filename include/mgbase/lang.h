@@ -34,6 +34,8 @@
     #include <stdint.h> // #include <cstdint>
     #include <cstdlib>
     
+    #define MGBASE_CPLUSPLUS
+    
     #define MGBASE_EXTERN_C_BEGIN   extern "C" {
     #define MGBASE_EXTERN_C_END     }
     

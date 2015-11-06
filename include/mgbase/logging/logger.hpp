@@ -41,10 +41,22 @@ private:
 };
 
 #define MGBASE_LOG_LEVEL_DEBUG 0
+#define MGBASE_LOG_LEVEL_FATAL 1000
+
 
 #ifndef MGBASE_LOG_LEVEL
-    #define MGBASE_LOG_LEVEL  MGBASE_LOG_LEVEL_DEBUG
+    #if MGBASE_DEBUG
+        #define MGBASE_LOG_LEVEL    MGBASE_LOG_LEVEL_DEBUG
+    #else
+        #define MGBASE_LOG_LEVEL    MGBASE_LOG_LEVEL_FATAL
+    #endif
 #endif
+
+namespace detail {
+
+void logger_not_defined(...);
+
+}
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wvariadic-macros"
@@ -53,7 +65,7 @@ private:
 #if MGBASE_LOG_LEVEL <= MGBASE_LOG_LEVEL_DEBUG
     #define MGBASE_LOG_DEBUG(format, ...)  fmt::print("{}" format, ::mgbase::logger::get_state(), ## __VA_ARGS__), std::cout << std::endl
 #else
-    #define MGBASE_LOG_DEBUG(format, ...)
+    #define MGBASE_LOG_DEBUG(format, ...)  if (false) { mgbase::detail::logger_not_defined(format, ## __VA_ARGS__); }
 #endif
 
 #pragma GCC diagnostic pop

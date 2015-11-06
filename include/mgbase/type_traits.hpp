@@ -56,6 +56,10 @@ struct remove_cv {
     typedef typename remove_volatile<typename remove_const<T>::type>::type type;
 };
 
+template <typename T> struct is_const          : false_type {};
+template <typename T> struct is_const<const T> : true_type  {};
+
+
 template <typename T >
 struct is_void : is_same<void, typename remove_cv<T>::type> { };
 
@@ -133,16 +137,17 @@ struct is_convertible_impl
     static no_type  check(any_conversion, ...);
     static yes_type check(To, int);
     
-    static const bool value = sizeof(check(declval<From>())) == sizeof(yes_type);
+    static const bool value = sizeof(check(declval<From>(), 0)) == sizeof(yes_type);
 };
 
 }
 
 template <typename From, typename To>
 struct is_convertible
-{
-    static const bool value = detail::is_convertible_impl<From, To>::value;
-};
+    : integral_constant<bool, detail::is_convertible_impl<From, To>::value> { };
+
+// TODO : move to the unit test
+MGBASE_STATIC_ASSERT((mgbase::is_convertible<int*, const int*>::value), "convertible");
 
 }
 
