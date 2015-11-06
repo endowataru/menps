@@ -251,7 +251,7 @@ inline bool atomic_compare_exchange_strong(volatile T& obj, T& expected, T desir
 }
 template <typename T>
 inline T atomic_fetch_add(volatile T& obj, T arg) MGBASE_NOEXCEPT {
-    return atomic_fetch_add_explicit(obj, arg. memory_order_seq_cst);
+    return atomic_fetch_add_explicit(obj, arg, memory_order_seq_cst);
 }
 template <typename T>
 inline T atomic_fetch_sub(volatile T& obj, T arg) MGBASE_NOEXCEPT {
