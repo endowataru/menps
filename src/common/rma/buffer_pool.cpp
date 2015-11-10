@@ -4,6 +4,7 @@
 
 namespace mgcom {
 namespace rma {
+namespace untyped {
 
 // TODO: replace naive implementation
 
@@ -21,6 +22,7 @@ void deallocate(const registered_buffer& buf) {
     std::free(to_pointer(buf.addr)); // TODO : Is this correct?
 }
 
-}
-}
+} // namespace untyped
+} // namespace rma
+} // namespace mgcom
 

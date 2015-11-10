@@ -29,6 +29,34 @@ void finalize();
 /// Remote Memory Access (RMA)
 namespace rma {
 
+// Contiguous RMA operations.
+
+typedef mgcom_rma_remote_read_cb    remote_read_cb;
+typedef mgcom_rma_remote_write_cb   remote_write_cb;
+
+// Atomic operations.
+
+typedef mgcom_rma_atomic_default_t              atomic_default_t;
+
+typedef mgcom_rma_atomic_read_default_cb        remote_atomic_read_default_cb;
+typedef mgcom_rma_atomic_write_default_cb       remote_atomic_write_default_cb;
+
+typedef mgcom_rma_local_compare_and_swap_default_cb     local_compare_and_swap_default_cb;
+typedef mgcom_rma_local_fetch_and_add_default_cb        local_fetch_and_add_default_cb;
+
+typedef mgcom_rma_remote_compare_and_swap_default_cb    remote_compare_and_swap_default_cb;
+typedef mgcom_rma_remote_fetch_and_add_default_cb       remote_fetch_and_add_default_cb;
+
+namespace /*unnamed*/ {
+
+MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
+
+MGBASE_CONSTEXPR index_t buffer_alignment       = MGCOM_BUFFER_ALIGNMENT;
+
+} // unnamed namespace
+
+namespace untyped {
+
 typedef mgcom_rma_address_offset_t         address_offset_t;
 
 typedef mgcom_rma_region_key               region_key;
@@ -76,9 +104,6 @@ void deallocate(const registered_buffer& buffer);
 
 namespace /*unnamed*/ {
 
-MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
-
-MGBASE_CONSTEXPR index_t buffer_alignment       = MGCOM_BUFFER_ALIGNMENT;
 
 inline region_key to_region_key(const local_region& region) MGBASE_NOEXCEPT {
     return region.key;
@@ -133,17 +158,14 @@ inline remote_address use_remote_address(process_id_t proc_id, const local_addre
     return result;
 }
 
-}
-
-typedef mgcom_rma_remote_read_cb    remote_read_cb;
-typedef mgcom_rma_remote_write_cb   remote_write_cb;
+} // unnamed namespace
 
 namespace detail {
 
 void remote_read_nb(remote_read_cb& cb);
 void remote_write_nb(remote_write_cb& cb);
 
-}
+} // namespace detail
 
 namespace /*unnamed*/ {
 
@@ -185,7 +207,7 @@ inline void remote_write_nb(
     detail::remote_write_nb(cb);
 }
 
-}
+} // unnamed namespace
 
 
 typedef mgcom_rma_write_strided_cb  write_strided_cb;
@@ -204,7 +226,6 @@ void write_strided_nb(
 ,   process_id_t             dest_proc
 );
 
-
 typedef mgcom_rma_read_strided_cb  read_strided_cb;
 
 /**
@@ -222,18 +243,7 @@ void read_strided_nb(
 );
 
 
-// Atomic operations.
-
-typedef mgcom_rma_atomic_default_t              atomic_default_t;
-
-typedef mgcom_rma_atomic_read_default_cb        remote_atomic_read_default_cb;
-typedef mgcom_rma_atomic_write_default_cb       remote_atomic_write_default_cb;
-
-typedef mgcom_rma_local_compare_and_swap_default_cb     local_compare_and_swap_default_cb;
-typedef mgcom_rma_local_fetch_and_add_default_cb        local_fetch_and_add_default_cb;
-
-typedef mgcom_rma_remote_compare_and_swap_default_cb    remote_compare_and_swap_default_cb;
-typedef mgcom_rma_remote_fetch_and_add_default_cb       remote_fetch_and_add_default_cb;
+// Atomic operations
 
 namespace detail {
 
@@ -365,7 +375,9 @@ inline void remote_fetch_and_add_default_nb(
     detail::remote_fetch_and_add_default_nb(cb);
 }
 
-}
+} // unnamed namespace
+
+} // namespace untyped
 
 /**
  * Polling for RDMA.

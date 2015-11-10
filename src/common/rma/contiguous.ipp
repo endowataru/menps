@@ -9,10 +9,11 @@
 
 namespace mgcom {
 namespace rma {
+namespace untyped {
 
 namespace detail {
 
-namespace {
+namespace /*unnamed*/ {
 
 class remote_read_handlers {
 public:
@@ -241,10 +242,11 @@ private:
 };
 
 
-}
+} // unnamed namespace
 
-}
+} // namespace detail
 
-}
-}
+} // namespace untyped
+} // namespace rma
+} // namespace mgcom
 

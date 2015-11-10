@@ -11,6 +11,8 @@ void initialize();
 
 void finalize();
 
+namespace untyped {
+
 /**
  * Low-level function of contiguous read.
  */
@@ -102,6 +104,8 @@ bool try_local_fetch_and_add_default(
 ,   local_notifier          on_complete
 );
 
-}
-}
+} // namespace untyped
+
+} // namespace rma
+} // namespace mgcom
 

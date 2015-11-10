@@ -8,7 +8,7 @@
 
 namespace mgcom {
 
-namespace typed_rma {
+namespace rma {
 
 #if 0
 
@@ -281,12 +281,12 @@ implicit_pointer_cast(const detail::pointer_facade<Derived, From>& ptr)
 
 template <typename T>
 class remote_pointer
-    : public mgbase::pointer_facade<typed_rma::remote_pointer, T>
+    : public mgbase::pointer_facade<rma::remote_pointer, T>
 {
-    typedef mgbase::pointer_facade<typed_rma::remote_pointer, T>  base;
+    typedef mgbase::pointer_facade<rma::remote_pointer, T>  base;
     
 public:
-    typedef rma::remote_address     address_type;
+    typedef untyped::remote_address     address_type;
     
 #if MGBASE_CPP11_SUPPORTED
     remote_pointer() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
@@ -295,16 +295,11 @@ public:
     /*implicit*/ remote_pointer(const remote_pointer<U>&) MGBASE_NOEXCEPT;
 #endif
     
-    /*remote_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
-        addr_ = mgcom::rma::advanced(addr_, index * value_traits<T>::size());
-        return *this;
-    }*/
-    
     address_type to_address() const MGBASE_NOEXCEPT {
         return addr_;
     }
     
-    static remote_pointer cast_from(const rma::remote_address& addr) {
+    static remote_pointer cast_from(const address_type& addr) {
         remote_pointer result;
         result.addr_ = addr;
         return result;
@@ -312,7 +307,7 @@ public:
     
 private:
 #if MGBASE_CPP11_SUPPORTED
-    explicit remote_pointer(rma::remote_address addr)
+    explicit remote_pointer(address_type addr)
         : addr_(addr) { }
 #endif
     
@@ -330,7 +325,7 @@ private:
     }
     
     void advance(index_t index) MGBASE_NOEXCEPT {
-        addr_ = mgcom::rma::advanced(addr_, index * mgbase::runtime_size_of<T>());
+        addr_ = mgcom::rma::untyped::advanced(addr_, index * mgbase::runtime_size_of<T>());
     }
     
     address_type addr_;
@@ -338,12 +333,12 @@ private:
 
 template <typename T>
 class local_pointer
-    : public mgbase::pointer_facade<typed_rma::local_pointer, T>
+    : public mgbase::pointer_facade<rma::local_pointer, T>
 {
-    typedef mgbase::pointer_facade<typed_rma::local_pointer, T>   base;
+    typedef mgbase::pointer_facade<rma::local_pointer, T>   base;
 
 public:
-    typedef rma::local_address      address_type;
+    typedef untyped::local_address      address_type;
     
 #if MGBASE_CPP11_SUPPORTED
     local_pointer() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
@@ -351,17 +346,11 @@ public:
     template <typename U>
     /*implicit*/ local_pointer(const local_pointer<U>&) MGBASE_NOEXCEPT;
 #endif
-    
-    /*local_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
-        addr_ = mgcom::rma::advanced(addr_, index * value_traits<T>::size());
-        return *this;
-    }*/
-    
     operator T* () const MGBASE_NOEXCEPT {
         return raw();
     }
     
-    T* raw() const MGBASE_NOEXCEPT { return static_cast<T*>(rma::to_pointer(addr_)); }
+    T* raw() const MGBASE_NOEXCEPT { return static_cast<T*>(untyped::to_pointer(addr_)); }
     
     address_type to_address() const MGBASE_NOEXCEPT {
         return addr_;
@@ -369,7 +358,7 @@ public:
 
 private:
 #if MGBASE_CPP11_SUPPORTED
-    explicit local_pointer(rma::local_address addr)
+    explicit local_pointer(address_type addr)
         : addr_(addr) { }
 #endif
     
@@ -380,6 +369,10 @@ private:
         result.addr_ = addr;
         return result;
     }*/
+    
+    void advance(index_t index) MGBASE_NOEXCEPT {
+        addr_ = mgcom::rma::untyped::advanced(addr_, index * mgbase::runtime_size_of<T>());
+    }
     
     address_type addr_;
 };
@@ -407,7 +400,7 @@ remote_read_nb(
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
 ) {
-    mgcom::rma::remote_read_nb(
+    mgcom::rma::untyped::remote_read_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -427,7 +420,7 @@ remote_write_nb(
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
 ) {
-    mgcom::rma::remote_write_nb(
+    mgcom::rma::untyped::remote_write_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -444,7 +437,7 @@ inline void remote_read_nb(
 ,   const local_pointer<T>&         local_ptr
 ,   index_t                         number_of_elements
 ) {
-    mgcom::rma::remote_read_nb(
+    mgcom::rma::untyped::remote_read_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -478,7 +471,7 @@ inline void remote_write_nb(
 ,   const local_pointer<const T>&   local_ptr
 ,   index_t                         number_of_elements
 ) {
-    mgcom::rma::remote_write_nb(
+    mgcom::rma::untyped::remote_write_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -495,7 +488,7 @@ inline void remote_write_nb(
 ,   const local_pointer<T>&         local_ptr
 ,   index_t                         number_of_elements
 ) {
-    mgcom::rma::remote_write_nb(
+    mgcom::rma::untyped::remote_write_nb(
         cb
     ,   proc
     ,   remote_ptr
@@ -512,7 +505,7 @@ inline void remote_atomic_read_default_nb(
 ,   const local_pointer<rma::atomic_default_t>&             local_ptr
 ,   const local_pointer<rma::atomic_default_t>&             buf_ptr
 ) {
-    mgcom::rma::remote_atomic_read_default_nb(
+    mgcom::rma::untyped::remote_atomic_read_default_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -531,7 +524,7 @@ inline void local_compare_and_swap_default_nb(
 ,   const local_pointer<const rma::atomic_default_t>&       desired_ptr
 ,   const local_pointer<rma::atomic_default_t>&             result_ptr
 ) {
-    mgcom::rma::local_compare_and_swap_default_nb(
+    mgcom::rma::untyped::local_compare_and_swap_default_nb(
         cb
     ,   target_ptr.to_address()
     ,   expected_ptr.to_address()
@@ -551,7 +544,7 @@ inline void remote_compare_and_swap_default_nb(
 ,   const local_pointer<const rma::atomic_default_t>&       desired_ptr
 ,   const local_pointer<rma::atomic_default_t>&             result_ptr
 ) {
-    mgcom::rma::remote_compare_and_swap_default_nb(
+    mgcom::rma::untyped::remote_compare_and_swap_default_nb(
         cb
     ,   target_proc
     ,   target_ptr.to_address()
@@ -571,7 +564,7 @@ inline void remote_fetch_and_add_default_nb(
 ,   const local_pointer<const rma::atomic_default_t>&   value_ptr
 ,   const local_pointer<rma::atomic_default_t>&         result_ptr
 ) {
-    mgcom::rma::remote_fetch_and_add_default_nb(
+    mgcom::rma::untyped::remote_fetch_and_add_default_nb(
         cb
     ,   target_proc
     ,   target_ptr.to_address()
@@ -583,7 +576,7 @@ inline void remote_fetch_and_add_default_nb(
 
 template <typename T>
 inline remote_pointer<T> use_remote_pointer(process_id_t proc_id, const local_pointer<T>& ptr) {
-    return remote_pointer<T>::cast_from(mgcom::rma::use_remote_address(proc_id, ptr.to_address()));
+    return remote_pointer<T>::cast_from(mgcom::rma::untyped::use_remote_address(proc_id, ptr.to_address()));
 }
 
 }

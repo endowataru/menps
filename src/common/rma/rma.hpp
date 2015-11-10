@@ -6,6 +6,8 @@
 namespace mgcom {
 namespace rma {
 
+namespace untyped {
+
 namespace /*unnamed*/ {
 
 inline void* to_pointer(const remote_region& region) MGBASE_NOEXCEPT {
@@ -31,8 +33,10 @@ inline remote_region make_remote_region(const region_key& key, mgbase::uint64_t 
     return region;
 }
 
-}
+} // unnamed namespace
 
-}
-}
+} // namespace untyped
+
+} // namespace rma
+} // namespace mgcom
 

@@ -3,6 +3,7 @@
 
 namespace mgcom {
 namespace rma {
+namespace untyped {
 
 namespace detail {
 
@@ -38,8 +39,9 @@ void local_fetch_and_add_default_nb(local_fetch_and_add_default_cb& cb) {
     local_fetch_and_add_default_handlers::start(cb);
 }
 
-}
+} // namespace detail
 
-}
-}
+} // namespace untyped
+} // namespace rma
+} // namespace mgcom
 

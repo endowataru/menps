@@ -2,14 +2,13 @@
 #include "rma.ipp"
 
 namespace mgcom {
-
 namespace rma {
 
-namespace {
+namespace /*unnamed*/ {
 
 impl g_impl;
 
-}
+} // unnamed namespace
 
 void initialize() {
     g_impl.initialize();
@@ -19,6 +18,7 @@ void finalize() {
     g_impl.finalize();
 }
 
+namespace untyped {
 
 local_region register_region(
     void*   local_pointer
@@ -187,11 +187,12 @@ bool try_local_fetch_and_add_default(
     );
 }
 
+} // namespace untyped
+
 void poll() {
     g_impl.flush();
 }
 
-}
-
-}
+} // namespace rma
+} // namespace mgcom
 
