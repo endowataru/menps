@@ -178,7 +178,15 @@ template <template <typename> class Derived, typename T>
 class pointer_facade
     : public detail::pointer_facade_member<Derived, T>
     , public detail::pointer_facade_operators<Derived, T>
-    { };
+{
+public:
+    operator Derived<const T>() const MGBASE_NOEXCEPT {
+        return implicit_pointer_cast<const T>(*this);
+    }
+
+private:
+    
+};
 
 
 /*template <typename T>

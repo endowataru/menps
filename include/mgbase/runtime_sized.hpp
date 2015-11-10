@@ -63,6 +63,10 @@ inline Derived<T1> get_first(const Derived< runtime_sized_pair<T1, T2> >& ptr) {
     return mgbase::reinterpret_pointer_cast<T1>(ptr);
 }
 
+template <template <typename> class Derived, typename T1, typename T2>
+inline Derived<T2> get_second(const Derived< runtime_sized_pair<T1, T2> >& ptr) {
+    return mgbase::reinterpret_pointer_cast<T2>(get_first(ptr) + 1);
+}
 
 template <typename T>
 inline void runtime_sized_copy_to(const T* src, T* dest) {

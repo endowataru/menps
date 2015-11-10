@@ -16,6 +16,8 @@
         #error "C99 or later is only supported"
     #endif
     
+    #define MGBASE_CPLUSPLUS_ONLY(x)
+    
     #define MGBASE_EXPLICIT_OPERATOR
     #define MGBASE_NOEXCEPT
     #define MGBASE_OVERRIDE
@@ -35,6 +37,7 @@
     #include <cstdlib>
     
     #define MGBASE_CPLUSPLUS
+    #define MGBASE_CPLUSPLUS_ONLY(x)    x
     
     #define MGBASE_EXTERN_C_BEGIN   extern "C" {
     #define MGBASE_EXTERN_C_END     }
