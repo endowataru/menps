@@ -59,13 +59,19 @@ struct runtime_sized_traits< runtime_sized_pair<T1, T2> > {
 // get functions for runtime_sized_pair
 
 template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<T1> get_first(const Derived< runtime_sized_pair<T1, T2> >& ptr) {
+inline Derived<T1> get_first(const Derived< runtime_sized_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
     return mgbase::reinterpret_pointer_cast<T1>(ptr);
 }
 
 template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<T2> get_second(const Derived< runtime_sized_pair<T1, T2> >& ptr) {
+inline Derived<T2> get_second(const Derived< runtime_sized_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
     return mgbase::reinterpret_pointer_cast<T2>(get_first(ptr) + 1);
+}
+
+template <template <typename> class Derived, typename T, runtime_size_t (*Size)()>
+inline Derived<T> get_element_at(const Derived< runtime_sized_array<T, Size> >& ptr, std::size_t index) MGBASE_NOEXCEPT {
+    MGBASE_ASSERT(index < Size());
+    return mgbase::reinterpret_pointer_cast<T>(ptr) + index;
 }
 
 template <typename T>
