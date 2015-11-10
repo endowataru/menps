@@ -3,10 +3,14 @@
 
 #include "mgcom.hpp"
 #include <mgbase/type_traits.hpp>
+#include <mgbase/pointer_facade.hpp>
+#include <mgbase/runtime_sized.hpp>
 
 namespace mgcom {
 
 namespace typed_rma {
+
+#if 0
 
 typedef std::ptrdiff_t  index_diff_t;
 
@@ -88,6 +92,8 @@ struct assignable_to
         && !mgbase::is_const<To>::value
     > { };
 
+#endif
+
 #if 0
 
 template <typename From, typename To>
@@ -124,7 +130,7 @@ struct conversion_traits
 
 namespace detail {
 
-template <template <typename> class Derived, typename T> class pointer_base;
+template <template <typename> class Derived, typename T> class pointer_facade;
 
 }
 
@@ -133,16 +139,17 @@ inline mgbase::enable_if<
     conversion_traits<U, T>::may_convertible
 ,   Derived<T>
 >
-static_pointer_cast(const detail::pointer_base<Derived, U>& ptr);
+static_pointer_cast(const detail::pointer_facade<Derived, U>& ptr);
 
 #endif
 
 // definitions
+#if 0
 
 namespace detail {
 
 template <template <typename> class Derived, typename T>
-class pointer_base;
+class pointer_facade;
 
 }
 
@@ -152,12 +159,12 @@ typename mgbase::enable_if<
     pointer_convertible<From, To>::value
 ,   Derived<To>
 >::type
-implicit_pointer_cast(const detail::pointer_base<Derived, From>&);
+implicit_pointer_cast(const detail::pointer_facade<Derived, From>&);
 
 namespace detail {
 
 template <template <typename> class Derived, typename T>
-class pointer_base_access
+class pointer_facade_access
 {
 private:
     typedef Derived<T>                              derived_type;
@@ -168,22 +175,22 @@ private:
     }
     
     template <typename U>
-    static derived_type cast_from(const detail::pointer_base<Derived, U>& ptr) {
+    static derived_type cast_from(const detail::pointer_facade<Derived, U>& ptr) {
         return create(static_cast<const Derived<U>&>(ptr).to_address());
     }
     
     template <template <typename> class Derived2, typename T2, bool HasMembers>
-    friend class pointer_base_member;
+    friend class pointer_facade_member;
     
     template <template <typename> class Derived2, typename T2>
-    friend class pointer_base;
+    friend class pointer_facade;
     
     template <typename To, template <typename> class Derived2, typename From>
     friend typename mgbase::enable_if<
         pointer_convertible<From, To>::value
     ,   Derived2<To>
     >::type
-    typed_rma::implicit_pointer_cast(const detail::pointer_base<Derived2, From>&);
+    typed_rma::implicit_pointer_cast(const detail::pointer_facade<Derived2, From>&);
 };
 
 template <template <typename> class Derived, typename T,
@@ -191,13 +198,13 @@ template <template <typename> class Derived, typename T,
         mgbase::is_compound<typename mgbase::remove_cv<T>::type>::value
         && !mgbase::is_array<typename mgbase::remove_cv<T>::type>::value
 >
-class pointer_base_member { };
+class pointer_facade_member { };
 
 template <template <typename> class Derived, typename T>
-class pointer_base_member<Derived, T, true>
+class pointer_facade_member<Derived, T, true>
 {
     typedef Derived<T>                      derived_type;
-    typedef pointer_base_access<Derived, T> access;
+    typedef pointer_facade_access<Derived, T> access;
     
 public:
     template <typename U>
@@ -215,10 +222,10 @@ private:
 };
 
 template <template <typename> class Derived, typename T>
-class pointer_base_operators
+class pointer_facade_operators
 {
     typedef Derived<T>                      derived_type;
-    typedef pointer_base_access<Derived, T> access;
+    typedef pointer_facade_access<Derived, T> access;
     
 public:
     derived_type operator + (index_diff_t diff) const MGBASE_NOEXCEPT {
@@ -233,11 +240,11 @@ private:
 };
 
 template <template <typename> class Derived, typename T, std::size_t Size>
-class pointer_base_operators<Derived, T [Size]>
+class pointer_facade_operators<Derived, T [Size]>
 {
     typedef Derived<T[]>                    derived_type;
     typedef Derived<T>                      normal_pointer_type;
-    typedef pointer_base_access<Derived, T> access;
+    typedef pointer_facade_access<Derived, T> access;
     
 public:
     normal_pointer_type operator + (index_diff_t diff) const MGBASE_NOEXCEPT {
@@ -252,9 +259,9 @@ private:
 };
 
 template <template <typename> class Derived, typename T>
-class pointer_base
-    : public pointer_base_member<Derived, T>
-    , public pointer_base_operators<Derived, T>
+class pointer_facade
+    : public pointer_facade_member<Derived, T>
+    , public pointer_facade_operators<Derived, T>
     { };
 
 }
@@ -265,18 +272,18 @@ typename mgbase::enable_if<
     pointer_convertible<From, To>::value
 ,   Derived<To>
 >::type
-implicit_pointer_cast(const detail::pointer_base<Derived, From>& ptr)
+implicit_pointer_cast(const detail::pointer_facade<Derived, From>& ptr)
 {
-    return detail::pointer_base_access<Derived, To>::cast_from(ptr);
+    return detail::pointer_facade_access<Derived, To>::cast_from(ptr);
 }
 
-
+#endif
 
 template <typename T>
 class remote_pointer
-    : public detail::pointer_base<typed_rma::remote_pointer, T>
+    : public mgbase::pointer_facade<typed_rma::remote_pointer, T>
 {
-    typedef detail::pointer_base<typed_rma::remote_pointer, T>  base;
+    typedef mgbase::pointer_facade<typed_rma::remote_pointer, T>  base;
     
 public:
     typedef rma::remote_address     address_type;
@@ -288,17 +295,19 @@ public:
     /*implicit*/ remote_pointer(const remote_pointer<U>&) MGBASE_NOEXCEPT;
 #endif
     
-    remote_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
+    /*remote_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
         addr_ = mgcom::rma::advanced(addr_, index * value_traits<T>::size());
         return *this;
-    }
+    }*/
     
     address_type to_address() const MGBASE_NOEXCEPT {
         return addr_;
     }
     
     static remote_pointer cast_from(const rma::remote_address& addr) {
-        return remote_pointer(addr);
+        remote_pointer result;
+        result.addr_ = addr;
+        return result;
     }
     
 private:
@@ -307,23 +316,31 @@ private:
         : addr_(addr) { }
 #endif
     
-    static remote_pointer create(const address_type& addr) {
+    friend class mgbase::pointer_core_access;
+    
+    /*static remote_pointer create(const address_type& addr) {
         remote_pointer result;
         result.addr_ = addr;
         return result;
+    }*/
+    
+    template <typename U>
+    remote_pointer<U> cast_to() const MGBASE_NOEXCEPT {
+        return remote_pointer<U>::cast_from(to_address());
+    }
+    
+    void advance(index_t index) MGBASE_NOEXCEPT {
+        addr_ = mgcom::rma::advanced(addr_, index * mgbase::runtime_size_of<T>());
     }
     
     address_type addr_;
-    
-    template <template <typename> class Derived, typename U>
-    friend class detail::pointer_base_access;
 };
 
 template <typename T>
 class local_pointer
-    : public detail::pointer_base<typed_rma::local_pointer, T>
+    : public mgbase::pointer_facade<typed_rma::local_pointer, T>
 {
-    typedef detail::pointer_base<typed_rma::local_pointer, T>   base;
+    typedef mgbase::pointer_facade<typed_rma::local_pointer, T>   base;
 
 public:
     typedef rma::local_address      address_type;
@@ -335,10 +352,10 @@ public:
     /*implicit*/ local_pointer(const local_pointer<U>&) MGBASE_NOEXCEPT;
 #endif
     
-    local_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
+    /*local_pointer& operator += (index_t index) MGBASE_NOEXCEPT {
         addr_ = mgcom::rma::advanced(addr_, index * value_traits<T>::size());
         return *this;
-    }
+    }*/
     
     operator T* () const MGBASE_NOEXCEPT {
         return raw();
@@ -356,17 +373,26 @@ private:
         : addr_(addr) { }
 #endif
     
-    static local_pointer create(const address_type& addr) {
+    friend class mgbase::pointer_core_access;
+    
+    /*static local_pointer create(const address_type& addr) {
         local_pointer result;
         result.addr_ = addr;
         return result;
-    }
+    }*/
     
     address_type addr_;
-    
-    template <template <typename> class Derived, typename U>
-    friend class detail::pointer_base_access;
 };
+
+
+template <typename From, typename To>
+struct assignable_to
+    : mgbase::integral_constant<bool,
+        // From* is convertible to To*
+        mgbase::pointer_convertible<typename mgbase::remove_const<From>::type, To>::value
+        // To is not const
+        && !mgbase::is_const<To>::value
+    > { };
 
 namespace {
 
@@ -386,7 +412,7 @@ remote_read_nb(
     ,   proc
     ,   remote_ptr.to_address()
     ,   local_ptr.to_address()
-    ,   value_traits<Remote>::size()
+    ,   mgbase::runtime_size_of<Remote>()
     );
 }
 
@@ -406,7 +432,7 @@ remote_write_nb(
     ,   proc
     ,   remote_ptr.to_address()
     ,   local_ptr.to_address()
-    ,   value_traits<Local>::size()
+    ,   mgbase::runtime_size_of<Local>()
     );
 }
 
@@ -423,7 +449,7 @@ inline void remote_read_nb(
     ,   proc
     ,   remote_ptr.to_address()
     ,   local_ptr.to_address()
-    ,   number_of_elements * value_traits<T>::size()
+    ,   number_of_elements * mgbase::runtime_size_of<T>()
     );
 }
 
@@ -438,7 +464,7 @@ inline void remote_read_nb(
     remote_read_nb(
         cb
     ,   proc
-    ,   implicit_pointer_cast<const T>(remote_ptr)
+    ,   mgbase::implicit_pointer_cast<const T>(remote_ptr)
     ,   local_ptr
     ,   number_of_elements
     );
@@ -457,7 +483,7 @@ inline void remote_write_nb(
     ,   proc
     ,   remote_ptr.to_address()
     ,   local_ptr.to_address()
-    ,   number_of_elements * value_traits<T>::size()
+    ,   number_of_elements * mgbase::runtime_size_of<T>()
     );
 }
 
@@ -473,7 +499,7 @@ inline void remote_write_nb(
         cb
     ,   proc
     ,   remote_ptr
-    ,   implicit_pointer_cast<const T>(local_ptr)
+    ,   mgbase::implicit_pointer_cast<const T>(local_ptr)
     ,   number_of_elements
     );
 }
@@ -561,21 +587,6 @@ inline remote_pointer<T> use_remote_pointer(process_id_t proc_id, const local_po
 }
 
 }
-
-template <typename T>
-class remote_dynamic_array
-{
-public:
-    
-    
-    inline void append_nb(index_t index, const local_pointer<const T>&);
-    
-private:
-    remote_pointer<mgcom::rma::atomic_default_t> pointer_size() const MGBASE_NOEXCEPT { return addr_; }
-    remote_pointer<T> pointer_at() const MGBASE_NOEXCEPT { return mgcom::rma::advanced(addr_, sizeof(mgcom::rma::atomic_default_t)); }
-    
-    rma::remote_address addr_;
-};
 
 }
 
