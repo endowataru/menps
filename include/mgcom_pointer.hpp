@@ -301,6 +301,18 @@ inline remote_pointer<T> use_remote_pointer(process_id_t proc_id, const local_po
     return remote_pointer<T>::cast_from(mgcom::rma::untyped::use_remote_address(proc_id, ptr.to_address()));
 }
 
+template <typename T>
+inline local_pointer<T> allocate() {
+    untyped::registered_buffer buf = untyped::allocate(mgbase::runtime_size_of<T>());
+    return local_pointer<T>::cast_from(untyped::to_address(buf));
+}
+
+template <typename T>
+inline void deallocate(const local_pointer<T>& ptr) {
+    untyped::registered_buffer buf = { ptr.to_address() }; // TODO
+    untyped::deallocate(buf);
+}
+
 } // unnamed namespace
 
 } // namespace rma
