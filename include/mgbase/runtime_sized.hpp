@@ -18,10 +18,18 @@ struct runtime_sized_traits {
     }
 };
 
+// helper function to calculate the size
 template <typename T>
 inline MGBASE_CONSTEXPR_FUNCTION runtime_size_t runtime_size_of() MGBASE_NOEXCEPT {
     return runtime_sized_traits<T>::size();
 }
+
+template <typename T, std::size_t S>
+struct runtime_sized_traits<T [S]> {
+    static runtime_size_t size() MGBASE_NOEXCEPT {
+        return runtime_size_of<T>() * S;
+    }
+};
 
 // Runtime-sized classes
 // These classes are incomplete types.
