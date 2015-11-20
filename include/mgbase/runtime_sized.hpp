@@ -125,6 +125,17 @@ inline Derived<const T> get_element_at(const Derived< const runtime_sized_array<
     return mgbase::reinterpret_pointer_cast<const T>(ptr) + index;
 }
 
+template <template <typename> class Derived, typename T, std::size_t Size>
+inline Derived<T> get_element_at(const Derived< T [Size] >& ptr, std::size_t index) MGBASE_NOEXCEPT {
+    MGBASE_ASSERT(index < Size());
+    return mgbase::reinterpret_pointer_cast<T>(ptr) + index;
+}
+template <template <typename> class Derived, typename T, std::size_t Size>
+inline Derived<const T> get_element_at(const Derived< const T [Size] >& ptr, std::size_t index) MGBASE_NOEXCEPT {
+    MGBASE_ASSERT(index < Size());
+    return mgbase::reinterpret_pointer_cast<const T>(ptr) + index;
+}
+
 // runtime_sized_*
 
 template <typename T>
