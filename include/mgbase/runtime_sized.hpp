@@ -74,6 +74,19 @@ struct runtime_sized_traits< runtime_sized_union_pair<T1, T2> > {
     }
 };
 
+
+// runtime_sized meta functions
+
+template <typename To, typename From>
+struct is_runtime_sized_assignable
+    : mgbase::integral_constant<bool,
+        // To is not const
+        !mgbase::is_const<To>::value
+        // To is the same type as From
+        // TODO: This is too restrictive
+        && mgbase::is_same<To, typename mgbase::remove_const<From>::type>::value
+    > { };
+
 // get functions for runtime_sized_pair
 
 template <template <typename> class Derived, typename T1, typename T2>

@@ -8,12 +8,25 @@
 
 namespace mgbase {
 
+namespace detail {
+
 /**
  * If the type From is convertible to the type T, "value" is true.
  */
 template <typename From, typename To>
-struct pointer_convertible
+struct implicit_pointer_castable
     : mgbase::is_convertible<From*, To*> { };
+
+/*
+ * If the type From is convertible to the type T, "value" is true.
+ */
+template <typename From, typename To>
+struct reinterpret_pointer_castable
+    : mgbase::integral_constant<bool,
+        !(mgbase::is_const<From>::value && !mgbase::is_const<To>::value)
+    > { };
+
+}
 
 // declarations
 
@@ -21,15 +34,17 @@ template <template <typename> class Derived, typename T>
 class pointer_facade;
 
 template <typename To, template <typename> class Derived, typename From>
-inline
-typename mgbase::enable_if<
-    pointer_convertible<From, To>::value
+inline typename mgbase::enable_if<
+    detail::implicit_pointer_castable<From, To>::value
 ,   Derived<To>
 >::type
 implicit_pointer_cast(const pointer_facade<Derived, From>&);
 
 template <typename To, template <typename> class Derived, typename From>
-inline Derived<To>
+inline typename mgbase::enable_if<
+    detail::reinterpret_pointer_castable<From, To>::value
+,   Derived<To>
+>::type
 reinterpret_pointer_cast(const pointer_facade<Derived, From>& ptr);
 
 namespace detail
@@ -72,20 +87,22 @@ private:
     
     template <typename To, template <typename> class Derived, typename From>
     friend typename mgbase::enable_if<
-        pointer_convertible<From, To>::value
+        detail::implicit_pointer_castable<From, To>::value
     ,   Derived<To>
     >::type
     implicit_pointer_cast(const pointer_facade<Derived, From>& ptr);
     
     template <typename To, template <typename> class Derived, typename From>
-    friend Derived<To>
+    friend typename mgbase::enable_if<
+        detail::reinterpret_pointer_castable<From, To>::value
+    ,   Derived<To>
+    >::type
     reinterpret_pointer_cast(const pointer_facade<Derived, From>& ptr);
 };
 
 template <typename To, template <typename> class Derived, typename From>
-inline
-typename mgbase::enable_if<
-    pointer_convertible<From, To>::value
+inline typename mgbase::enable_if<
+    detail::implicit_pointer_castable<From, To>::value
 ,   Derived<To>
 >::type
 implicit_pointer_cast(const pointer_facade<Derived, From>& ptr) {
@@ -93,7 +110,10 @@ implicit_pointer_cast(const pointer_facade<Derived, From>& ptr) {
 }
 
 template <typename To, template <typename> class Derived, typename From>
-inline Derived<To>
+inline typename mgbase::enable_if<
+    detail::reinterpret_pointer_castable<From, To>::value
+,   Derived<To>
+>::type
 reinterpret_pointer_cast(const pointer_facade<Derived, From>& ptr) {
     return pointer_core_access::cast_to<To>(ptr);
 }
@@ -187,27 +207,6 @@ public:
 private:
     
 };
-
-
-/*template <typename T>
-class pointer
-    : public pointer_facade<pointer, T>
-{
-private:
-    friend class pointer_core_access;
-    
-    template <typename U>
-    pointer<U> cast_to() {
-        pointer<U> result = { ptr_ };
-        return result;
-    }
-    
-    void advance(std::ptrdiff_t diff) {
-        ptr_ += diff;
-    }
-    
-    T* ptr_;
-};*/
 
 }
 
