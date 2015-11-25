@@ -390,6 +390,17 @@ inline void remote_fetch_and_add_default_nb(
  */
 void poll();
 
+namespace /*unnamed*/ {
+
+inline mgbase::uint64_t to_integer(const untyped::remote_address& addr) MGBASE_NOEXCEPT {
+    return reinterpret_cast<mgbase::uint64_t>(static_cast<mgbase::uint8_t*>(addr.region.key.pointer) + addr.offset);
+}
+inline mgbase::uint64_t to_integer(const untyped::local_address& addr) MGBASE_NOEXCEPT {
+    return reinterpret_cast<mgbase::uint64_t>(static_cast<mgbase::uint8_t*>(untyped::to_pointer(addr.region)) + addr.offset);
+}
+
+}
+
 }
 
 // Active Messages (AM)

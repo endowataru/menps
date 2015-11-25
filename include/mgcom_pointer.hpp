@@ -297,12 +297,22 @@ inline local_pointer<T> allocate(std::size_t number_of_elements = 1) {
     return local_pointer<T>::cast_from(untyped::to_address(buf));
 }
 
-
 template <typename T>
 inline void deallocate(const local_pointer<T>& ptr) {
     untyped::registered_buffer buf = { ptr.to_address() }; // TODO
     untyped::deallocate(buf);
 }
+
+
+template <typename T>
+inline mgbase::uint64_t to_integer(const local_pointer<T>& ptr) MGBASE_NOEXCEPT {
+    return mgcom::rma::to_integer(ptr.to_address());
+}
+template <typename T>
+inline mgbase::uint64_t to_integer(const remote_pointer<T>& ptr) MGBASE_NOEXCEPT {
+    return mgcom::rma::to_integer(ptr.to_address());
+}
+
 
 } // unnamed namespace
 
