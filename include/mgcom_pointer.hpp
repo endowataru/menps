@@ -118,22 +118,12 @@ private:
     address_type addr_;
 };
 
-
-template <typename From, typename To>
-struct assignable_to
-    : mgbase::integral_constant<bool,
-        // From* is convertible to To*
-        mgbase::pointer_convertible<typename mgbase::remove_const<From>::type, To>::value
-        // To is not const
-        && !mgbase::is_const<To>::value
-    > { };
-
 namespace /*unnamed*/ {
 
 /// Simple remote read.
 template <typename Remote, typename Local>
 inline typename mgbase::enable_if<
-    assignable_to<Remote, Local>::value
+    mgbase::is_runtime_sized_assignable<Local, Remote>::value
 >::type
 remote_read_nb(
     rma::remote_read_cb&            cb
@@ -153,7 +143,7 @@ remote_read_nb(
 /// Simple remote write.
 template <typename Remote, typename Local>
 inline typename mgbase::enable_if<
-    assignable_to<Local, Remote>::value
+    mgbase::is_runtime_sized_assignable<Remote, Local>::value
 >::type
 remote_write_nb(
     rma::remote_write_cb&           cb
@@ -302,10 +292,11 @@ inline remote_pointer<T> use_remote_pointer(process_id_t proc_id, const local_po
 }
 
 template <typename T>
-inline local_pointer<T> allocate() {
-    untyped::registered_buffer buf = untyped::allocate(mgbase::runtime_size_of<T>());
+inline local_pointer<T> allocate(std::size_t number_of_elements = 1) {
+    untyped::registered_buffer buf = untyped::allocate(mgbase::runtime_size_of<T>() * number_of_elements);
     return local_pointer<T>::cast_from(untyped::to_address(buf));
 }
+
 
 template <typename T>
 inline void deallocate(const local_pointer<T>& ptr) {
