@@ -31,7 +31,7 @@ void initialize(int* argc, char*** argv)
 
 void finalize()
 {
-    barrier();
+    collective::barrier();
     
     am::finalize();
     rma::finalize();

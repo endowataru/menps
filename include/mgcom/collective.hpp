@@ -5,7 +5,6 @@
 #include <mpi.h>
 
 namespace mgcom {
-
 namespace collective {
 
 template <typename T>
@@ -38,11 +37,8 @@ inline void allgather(const T* src, T* dest, index_t number_of_elements)
     );
 }
 
-inline void barrier() {
-    mgcom::barrier();
-}
+void barrier();
 
-}
-
-}
+} // namespace collective
+} // namespace mgcom
 

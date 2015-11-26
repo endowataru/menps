@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgcom.hpp>
+#include <mgbase/threading/atomic.hpp>
 #include "notifier.h"
 
 namespace mgcom {

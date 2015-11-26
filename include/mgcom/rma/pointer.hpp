@@ -1,7 +1,9 @@
 
 #pragma once
 
-#include "mgcom.hpp"
+#include <mgcom/rma/untyped.hpp>
+#include <mgcom/rma/pointer.h>
+
 #include <mgbase/type_traits.hpp>
 #include <mgbase/pointer_facade.hpp>
 #include <mgbase/runtime_sized.hpp>
@@ -320,6 +322,7 @@ template <typename T>
 inline mgbase::uint64_t to_integer(const remote_pointer<T>& ptr) MGBASE_NOEXCEPT {
     return mgcom::rma::to_integer(ptr.to_address());
 }
+
 
 } // unnamed namespace
 

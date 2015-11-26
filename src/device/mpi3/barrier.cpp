@@ -3,6 +3,7 @@
 #include "common/mpi_error.hpp"
 
 namespace mgcom {
+namespace collective {
 
 void barrier()
 {
@@ -27,5 +28,6 @@ void barrier()
     }
 }
 
-}
+} // namespace collective
+} // namespace mgcom
 
