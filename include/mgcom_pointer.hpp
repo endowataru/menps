@@ -58,6 +58,10 @@ private:
         addr_ = mgcom::rma::untyped::advanced(addr_, index * mgbase::runtime_size_of<T>());
     }
     
+    bool is_null() const MGBASE_NOEXCEPT {
+        return mgcom::rma::to_integer(addr_) == 0;
+    }
+    
     address_type addr_;
 };
 
@@ -113,6 +117,10 @@ private:
     
     void advance(index_t index) MGBASE_NOEXCEPT {
         addr_ = mgcom::rma::untyped::advanced(addr_, index * mgbase::runtime_size_of<T>());
+    }
+    
+    bool is_null() const MGBASE_NOEXCEPT {
+        return mgcom::rma::to_integer(addr_) == 0;
     }
     
     address_type addr_;
@@ -312,7 +320,6 @@ template <typename T>
 inline mgbase::uint64_t to_integer(const remote_pointer<T>& ptr) MGBASE_NOEXCEPT {
     return mgcom::rma::to_integer(ptr.to_address());
 }
-
 
 } // unnamed namespace
 

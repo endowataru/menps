@@ -165,6 +165,13 @@ public:
     ,   const local_notifier&   on_complete
     )
     {
+        MGBASE_ASSERT(expected_ptr != MGBASE_NULLPTR);
+        MGBASE_ASSERT(desired_ptr != MGBASE_NULLPTR);
+        MGBASE_ASSERT(is_valid_rank(dest_rank));
+        // TODO: This assertion might not be compliant to the MPI standard,
+        //       but it's helpful to check whether the pointer is not null
+        MGBASE_ASSERT(dest_index != 0);
+        
         if (!mpi_base::get_lock().try_lock())
             return false;
         
@@ -206,9 +213,12 @@ public:
     ,   const local_notifier&   on_complete
     )
     {
-        MGBASE_ASSERT(value_ptr  != MGBASE_NULLPTR);
+        MGBASE_ASSERT(value_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(result_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(is_valid_rank(dest_rank));
+        // TODO: This assertion might not be compliant to the MPI standard,
+        //       but it's helpful to check whether the pointer is not null
+        MGBASE_ASSERT(dest_index != 0);
         
         if (!mpi_base::get_lock().try_lock())
             return false;
