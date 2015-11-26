@@ -73,7 +73,30 @@
         #define MGBASE_EXPLICIT_OPERATOR            operator
         #define MGBASE_NOEXCEPT                     throw()
         #define MGBASE_OVERRIDE
-        #define MGBASE_NULLPTR                      0
+        
+        namespace mgbase
+        {
+            class nullptr_t
+            {
+            public:
+                template <class T>
+                operator T*() const {
+                    return 0;
+                }
+
+                template<class C, class T>
+                operator T C::*() const
+                {
+                    return 0;
+                }
+
+            private:
+                void operator&() const;
+            };
+        }
+        
+        #define MGBASE_NULLPTR                      (::mgbase::nullptr_t())
+        
         #define MGBASE_EMPTY_DEFINITION             { }
         #define MGBASE_ALIGNAS(a)                   __attribute__((aligned(a)))
         #define MGBASE_DECLTYPE(x)                  __typeof__(x)

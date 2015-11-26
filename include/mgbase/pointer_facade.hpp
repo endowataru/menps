@@ -62,6 +62,11 @@ class pointer_core_access
 {
 private:
     template <template <typename> class Derived, typename T>
+    static Derived<T>& derived(pointer_facade<Derived, T>& ptr) {
+        return static_cast<Derived<T>&>(ptr);
+    }
+    
+    template <template <typename> class Derived, typename T>
     static const Derived<T>& derived(const pointer_facade<Derived, T>& ptr) {
         return static_cast<const Derived<T>&>(ptr);
     }
@@ -71,9 +76,14 @@ private:
         return derived(ptr).template cast_to<U>();
     }
     
-    template <typename Derived>
-    static void advance(Derived& ptr, std::ptrdiff_t diff) {
-        ptr.advance(diff);
+    template <template <typename> class Derived, typename T>
+    static void advance(pointer_facade<Derived, T>& ptr, std::ptrdiff_t diff) {
+        derived(ptr).advance(diff);
+    }
+    
+    template <template <typename> class Derived, typename T>
+    static bool is_null(const pointer_facade<Derived, T>& ptr) {
+        return derived(ptr).is_null();
     }
     
     template <template <typename> class Derived, typename T, bool HasMembers>
@@ -156,12 +166,12 @@ class pointer_facade_operators
     typedef Derived<T>                      derived_type;
     
 public:
-    derived_type operator += (std::ptrdiff_t diff) MGBASE_NOEXCEPT {
+    derived_type operator += (std::ptrdiff_t diff) {
         pointer_core_access::advance(derived(), diff);
         return derived();
     }
     
-    derived_type operator + (std::ptrdiff_t diff) const MGBASE_NOEXCEPT {
+    derived_type operator + (std::ptrdiff_t diff) const {
         derived_type result = derived();
         result += diff;
         return result;
@@ -172,26 +182,6 @@ private:
     const derived_type& derived() const MGBASE_NOEXCEPT { return static_cast<const derived_type&>(*this); }
 };
 
-#if 0
-template <template <typename> class Derived, typename T, std::size_t Size>
-class pointer_facade_operators<Derived, T [Size]>
-{
-    typedef Derived<T[]>                    derived_type;
-    typedef Derived<T>                      normal_pointer_type;
-    
-public:
-    normal_pointer_type operator + (std::ptrdiff_t diff) const MGBASE_NOEXCEPT {
-        normal_pointer_type result = derived();
-        result += diff;
-        return result;
-    }
-
-private:
-          derived_type& derived()       MGBASE_NOEXCEPT { return static_cast<      derived_type&>(*this); }
-    const derived_type& derived() const MGBASE_NOEXCEPT { return static_cast<const derived_type&>(*this); }
-};
-#endif
-
 }
 
 template <template <typename> class Derived, typename T>
@@ -200,13 +190,19 @@ class pointer_facade
     , public detail::pointer_facade_operators<Derived, T>
 {
 public:
-    operator Derived<const T>() const MGBASE_NOEXCEPT {
+    operator Derived<const T>() const {
         return implicit_pointer_cast<const T>(*this);
     }
-
-private:
     
+    bool operator == (mgbase::nullptr_t) const {
+        return pointer_core_access::is_null(*this);
+    }
 };
+
+template <template <typename> class Derived, typename T>
+inline bool operator != (const pointer_facade<Derived, T>& ptr, mgbase::nullptr_t) {
+    return !(ptr == MGBASE_NULLPTR);
+}
 
 }
 
