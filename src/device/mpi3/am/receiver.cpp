@@ -157,6 +157,8 @@ index_t pull_tickets_from(process_id_t src_proc) {
 
 }
 
+namespace untyped {
+
 void register_handler(
     handler_id_t       id
 ,   handler_callback_t callback
@@ -164,6 +166,8 @@ void register_handler(
 {
     receiver::g_impl.register_handler(id, callback);
 }
+
+} // namespace untyped
 
 }
 

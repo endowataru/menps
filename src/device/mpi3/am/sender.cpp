@@ -122,6 +122,8 @@ void add_ticket_to(process_id_t dest_proc, index_t ticket) {
 
 }
 
+namespace untyped {
+
 namespace detail {
 
 void send_nb(send_cb& cb)
@@ -130,7 +132,9 @@ void send_nb(send_cb& cb)
     mgbase::control::enter<send_cb, sender::start_send>(cb);
 }
 
-}
+} // namespace detail
+
+} // namespace untyped
 
 }
 }

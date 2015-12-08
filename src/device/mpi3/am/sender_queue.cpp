@@ -29,7 +29,7 @@ public:
     ) {
         cbs_.push(send_cb());
         send_cb& cb = cbs_.back();
-        send_nb(cb, id, value, size, dest_proc);
+        untyped::send_nb(cb, id, value, size, dest_proc);
     }
     
     void poll() {
