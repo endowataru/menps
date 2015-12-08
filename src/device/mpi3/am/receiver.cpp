@@ -49,6 +49,7 @@ public:
     
     void register_handler(handler_id_t id, handler_callback_t callback) {
         callbacks_[id] = callback;
+        MGBASE_LOG_DEBUG("msg:Registered a handler.\tsrc:{}\tcallback:{:x}", id, reinterpret_cast<mgbase::uint64_t>(callback));
     }
     
     void poll()

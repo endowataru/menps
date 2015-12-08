@@ -74,6 +74,8 @@ void poll()
 
 }
 
+namespace untyped {
+
 void reply(
     const callback_parameters* params
 ,   handler_id_t               id
@@ -82,6 +84,8 @@ void reply(
 )
 {
     sender_queue::enqueue(id, value, size, params->source);
+}
+
 }
 
 }

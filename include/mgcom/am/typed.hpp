@@ -52,7 +52,7 @@ inline void register_roundtrip_handler()
 {
     struct transfer
     {
-        static void request(callback_parameters* params)
+        static void request(const callback_parameters* params)
         {
             const typename Handler::request_argument& arg
                 = *static_cast<const typename Handler::request_argument*>(
@@ -63,14 +63,14 @@ inline void register_roundtrip_handler()
                 = Handler::on_request(*params, arg);
             
             untyped::reply(
-                *params
+                params
             ,   Handler::reply_id
             ,   &result
-            ,   sizeof(Handler::reply_argument)
+            ,   sizeof(typename Handler::reply_argument)
             );
         }
         
-        static void reply(callback_parameters* params)
+        static void reply(const callback_parameters* params)
         {
             const typename Handler::reply_argument& arg
                 = *static_cast<const typename Handler::reply_argument*>(
