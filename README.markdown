@@ -26,7 +26,7 @@ Because "mgcom" is a low-layer communication library,
 any intrinsic overheads caused by hardware issues
 are exposed to the mgcom's users to gain the performance.
 Some burdensome operations such as registration of memory regions
-and allocating temporary buffers are not automatically done by the users.
+and allocating temporary buffers are required to be manually done by the users.
 
 "mgcom" provides a statically-typed interface in C++
 to improve the productivity of middleware.
