@@ -4,9 +4,36 @@ MGCOM
 
 Communication Library for MassiveThreads/GAS 2.
 
-This project is experimental. Its API might be changed.
+This project is experimental and the API is still unstable.
 
 Requires C++03 or later.
+
+Description
+-----------
+
+"mgcom" is designed to develop middleware
+running on distributed memory enviroments
+with tightly-coupled interconnect hardware.
+Althought the initial motivation was
+to develop a Partitioned Global Address Space (PGAS) 
+and a distributed task scheduler,
+you can utilize it
+as a general communication library
+instead of current existing communication libraries
+(e.g, MPI, GASNet.)
+
+Because "mgcom" is a low-layer communication library,
+any intrinsic overheads caused by hardware issues
+are exposed to the mgcom's users to gain the performance.
+Some burdensome operations such as registration of memory regions
+and allocating temporary buffers are not automatically done by the users.
+
+"mgcom" provides a statically-typed interface in C++
+to improve the productivity of middleware.
+It is useful to create and operate
+a complex data structure in distributed memory systems.
+It doesn't incur any additional overheads
+because it's just an thin wrapper of pointer arithmetics in C.
 
 Goals
 -----
