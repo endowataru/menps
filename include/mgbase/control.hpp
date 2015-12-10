@@ -6,7 +6,6 @@
 #include <mgbase/assert.hpp>
 
 namespace mgbase {
-
 namespace control {
 
 typedef ::mgbase_control_handler_t  handler_t;
@@ -19,7 +18,9 @@ struct handler {
     }
 };
 
-namespace {
+void yield();
+
+namespace /*unnamed*/ {
 
 template <typename CB>
 inline void initialize(CB& cb) {
@@ -76,15 +77,18 @@ inline bool proceed(T& cb) {
     }
 }
 
+
 template <typename CB>
-inline void wait(CB& cb) {
-    while (!test(cb))
+inline void wait(CB& cb)
+{
+    while (!test(cb)) {
         dispatch(cb);
+        yield();
+    }
 }
 
-}
+} // unnamed namespace
 
-}
-
-}
+} // namespace control
+} // namespace mgbase
 
