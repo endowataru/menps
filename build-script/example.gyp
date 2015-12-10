@@ -59,6 +59,7 @@
             ],
             'dependencies' : [
                 './mgcom.gyp:mgcom-mpi3',
+                './mgcom.gyp:mgcom-polling',
             ],
         },
         {

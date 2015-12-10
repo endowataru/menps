@@ -2,7 +2,7 @@
     'includes': [ 'common.gypi' ],
     'target_defaults': {
         'include_dirs': [
-            '../src',
+            '../include',
         ],
         'sources': [
             '../src/common/c_interface.cpp',
@@ -12,6 +12,22 @@
         ],
     },
     'targets' : [
+        {
+            'target_name' : 'mgcom-header',
+            'type': 'none',
+            'direct_dependent_settings': {
+                'include_dirs': [
+                    '../include'
+                ],
+            },
+        },
+        {
+            'target_name': 'mgcom-polling',
+            'type': 'static_library',
+            'sources': [
+                '../src/common/polling.cpp'
+            ],
+        },
         {
             'target_name' : 'mgcom-fjmpi',
             'type' : 'static_library',
@@ -25,13 +41,20 @@
                 '../src/device/fjmpi/am/sender.cpp',
             ],
             'include_dirs': [
+                '../src',
                 '../src/device/fjmpi',
+            ],
+            'dependencies': [
+                'mgcom-header',
             ],
         },
         {
             'target_name' : 'mgcom-ibv',
             'type' : 'static_library',
             'sources' : [
+                '../src/common/mpi_base.cpp',
+                '../src/common/rma/contiguous.cpp',
+                '../src/common/rma/buffer_pool.cpp',
                 '../src/device/ibv/rdma.cpp',
             ],
         },
@@ -51,8 +74,15 @@
                 '../src/device/mpi3/am/sender_queue.cpp',
             ],
             'include_dirs': [
+                '../src',
                 '../src/device/mpi3',
             ],
-        }
+            'dependencies': [
+                'mgcom-header',
+            ],
+            'export_dependent_settings': [
+                'mgcom-header',
+            ],
+        },
     ],
 }

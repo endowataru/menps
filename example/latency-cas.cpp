@@ -7,6 +7,7 @@ int main(int argc, char* argv[])
 {
     using namespace mgcom;
     using namespace mgcom::rma;
+    using namespace mgcom::rma::untyped;
     
     initialize(&argc, &argv);
     
@@ -58,7 +59,7 @@ int main(int argc, char* argv[])
         ptr[1] = 0;
         
         remote_fetch_and_add_default_cb cb2;
-        remote_fetch_and_add_default_nb(cb2, 1, remote_addr, laddr, mgcom::rma::advanced(laddr, sizeof(mgbase::uint64_t)));
+        remote_fetch_and_add_default_nb(cb2, 1, remote_addr, laddr, advanced(laddr, sizeof(mgbase::uint64_t)));
         mgbase::control::wait(cb2);
         
         deallocate(buf);
@@ -66,7 +67,7 @@ int main(int argc, char* argv[])
         std::cout << current_process_id() << " " << ptr[0] << " " << ptr[1] << " " << ptr[2] << std::endl;
     }
     
-    barrier();
+    mgcom::collective::barrier();
     
     std::cout << current_process_id() << " " << x << " " << sw.elapsed() << std::endl;
     

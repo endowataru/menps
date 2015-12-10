@@ -7,6 +7,7 @@ int main(int argc, char* argv[])
 {
     using namespace mgcom;
     using namespace mgcom::rma;
+    using namespace mgcom::rma::untyped;
     
     initialize(&argc, &argv);
     
