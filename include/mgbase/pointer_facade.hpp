@@ -147,8 +147,8 @@ public:
     Derived<U> member(U (T::*q)) const {
         // Calculate the offset of the member q in the struct T.
         const std::size_t offset =
-            reinterpret_cast<mgbase::uint8_t*>(&(static_cast<T*>(MGBASE_NULLPTR)->*q))
-            - static_cast<mgbase::uint8_t*>(MGBASE_NULLPTR);
+            reinterpret_cast<const mgbase::uint8_t*>(&(static_cast<T*>(MGBASE_NULLPTR)->*q))
+            - static_cast<const mgbase::uint8_t*>(MGBASE_NULLPTR);
         
         Derived<mgbase::uint8_t> byte_ptr = pointer_core_access::cast_to<mgbase::uint8_t>(derived());
         pointer_core_access::advance(byte_ptr, offset);
