@@ -1,4 +1,5 @@
 {
+    'include' : [ '../mgbase/build-script/common.gypi', ],
     'target_defaults': {
         'default_configuration': 'Release',
         'configurations': {
@@ -43,12 +44,5 @@
                 },
             },
         },
-        'variables': {
-            'component%': 'static_library',
-        },
-        'include_dirs': [
-            '../include',
-            '../../mgbase/include',
-        ],
     },
 }

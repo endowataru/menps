@@ -7,17 +7,21 @@
 namespace mgcom {
 namespace collective {
 
+namespace untyped {
+
+void broadcast(process_id_t root, void* ptr, index_t number_of_bytes);
+
+void allgather(const void* src, void* dest, index_t number_of_bytes);
+
+} // namespace untyped
+
 template <typename T>
 inline void broadcast(process_id_t root, T* ptr, index_t number_of_elements)
 {
-    // TODO: Polling of Active Messages
-    
-    MPI_Bcast(
-        ptr
+    untyped::broadcast(
+        root
+    ,   ptr
     ,   sizeof(T) * number_of_elements
-    ,   MPI_BYTE
-    ,   static_cast<int>(root)
-    ,   MPI_COMM_WORLD // TODO
     );
 }
 
@@ -25,15 +29,10 @@ template <typename T>
 inline void allgather(const T* src, T* dest, index_t number_of_elements)
 {
     // TODO: Polling of Active Messages
-    
-    MPI_Allgather(
+    untyped::allgather(
         src
-    ,   sizeof(T) * number_of_elements
-    ,   MPI_BYTE
     ,   dest
     ,   sizeof(T) * number_of_elements
-    ,   MPI_BYTE
-    ,   MPI_COMM_WORLD // TODO
     );
 }
 

@@ -1,31 +1,31 @@
 {
     'includes': [ 'common.gypi' ],
     'target_defaults': {
-        'include_dirs': [
-            '../include',
-        ],
-        'sources': [
-            '../src/common/c_interface.cpp',
-        ],
         'dependencies' : [
-            '../../mgbase/build-script/cppformat.gyp:cppformat',
+            '../../mgbase/build-script/mgbase.gyp:mgbase',
         ],
     },
     'targets' : [
         {
             'target_name' : 'mgcom-header',
             'type': 'none',
-            'direct_dependent_settings': {
+            'all_dependent_settings': {
                 'include_dirs': [
-                    '../include'
+                    '../include',
                 ],
             },
+            'dependencies': [
+                '../../mgbase/build-script/mgbase.gyp:mgbase',
+            ],
         },
         {
             'target_name': 'mgcom-polling',
             'type': 'static_library',
             'sources': [
                 '../src/common/polling.cpp'
+            ],
+            'dependencies': [
+                'mgcom-header',
             ],
         },
         {
@@ -66,7 +66,7 @@
                 '../src/common/rma/contiguous.cpp',
                 '../src/common/rma/buffer_pool.cpp',
                 '../src/device/mpi3/mpi3.cpp',
-                '../src/device/mpi3/barrier.cpp',
+                '../src/device/mpi3/collective.cpp',
                 '../src/device/mpi3/rma/rma.cpp',
                 '../src/device/mpi3/am/am.cpp',
                 '../src/device/mpi3/am/receiver.cpp',
@@ -78,9 +78,6 @@
                 '../src/device/mpi3',
             ],
             'dependencies': [
-                'mgcom-header',
-            ],
-            'export_dependent_settings': [
                 'mgcom-header',
             ],
         },
