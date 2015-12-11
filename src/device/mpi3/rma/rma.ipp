@@ -10,6 +10,8 @@
 #include <mgbase/assert.hpp>
 #include <mgbase/logging/logger.hpp>
 
+#include <string>
+
 namespace mgcom {
 
 struct mpi3_error
@@ -246,7 +248,7 @@ public:
         ,   reinterpret_cast<mgbase::uint64_t>(result_ptr)
         ,   dest_rank
         ,   dest_index
-        ,   reinterpret_cast<mgbase::uint64_t>(datatype)
+        ,   to_string(datatype)
         ,   reinterpret_cast<mgbase::uint64_t>(operation)
         );
         
@@ -291,6 +293,13 @@ public:
 private:
     static bool is_valid_rank(int rank) MGBASE_NOEXCEPT {
         return 0 <= rank && rank < static_cast<int>(number_of_processes());
+    }
+    
+    static std::string to_string(MPI_Datatype datatype) {
+        char buf[MPI_MAX_OBJECT_NAME];
+        int len;
+        MPI_Type_get_name(datatype, buf, &len);
+        return buf;
     }
     
     bool requests_saturated() const MGBASE_NOEXCEPT {
