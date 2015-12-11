@@ -1,4 +1,5 @@
 {
+    'includes' : [ 'external.gypi' ],
     'targets' : [
         {
             'target_name' : 'cppformat',
