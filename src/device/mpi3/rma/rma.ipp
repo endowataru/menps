@@ -55,12 +55,18 @@ public:
         );
     }
     
-    MPI_Aint attach(void* ptr, ::MPI_Aint size)
+    MPI_Aint attach(void* ptr, MPI_Aint size)
     {
         MGBASE_ASSERT(ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(size > 0);
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Attach a memory region.\tptr:{:x}\tsize:{}"
+        ,   reinterpret_cast<mgbase::uint64_t>(ptr)
+        ,   size
+        );
         
         mpi3_error::check(
             MPI_Win_attach(win_, ptr, size)
@@ -104,7 +110,12 @@ public:
         if (requests_saturated())
             return false;
         
-        MGBASE_LOG_DEBUG("msg:RDMA Get.\tdest_ptr:{}\tsrc_rank:{}\tsrc_index:{:x}", dest_ptr, src_rank, src_index);
+        MGBASE_LOG_DEBUG(
+            "msg:RDMA Get.\tsrc_rank:{}\tsrc_index:{:x}\tdest_ptr:{}"
+        ,   src_rank
+        ,   src_index
+        ,   reinterpret_cast<mgbase::uint64_t>(dest_ptr)
+        );
         
         mpi3_error::check(
             MPI_Get(
@@ -225,10 +236,19 @@ public:
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
         
-        MGBASE_LOG_DEBUG("msg:RDMA Fetch and add.\tdest_rank:{}\tdest_index:{:x}", dest_rank, dest_index);
-        
         if (requests_saturated())
             return false;
+        
+        MGBASE_LOG_DEBUG(
+            "msg:RDMA Fetch and op.\t"
+            "value_ptr:{:x}\tresult_ptr:{:x}\tdest_rank:{}\tdest_index:{:x}\tdatatype:{}\toperation:{}"
+        ,   reinterpret_cast<mgbase::uint64_t>(value_ptr)
+        ,   reinterpret_cast<mgbase::uint64_t>(result_ptr)
+        ,   dest_rank
+        ,   dest_index
+        ,   reinterpret_cast<mgbase::uint64_t>(datatype)
+        ,   reinterpret_cast<mgbase::uint64_t>(operation)
+        );
         
         /*
             TODO: const_cast is needed for OpenMPI 1.8.4.
@@ -237,7 +257,7 @@ public:
         mpi3_error::check(
             MPI_Fetch_and_op(
                 const_cast<void*>(value_ptr)    // origin_addr
-            ,   const_cast<void*>(result_ptr)   // result_addr
+            ,   result_ptr                      // result_addr
             ,   datatype                        // datatype
             ,   dest_rank                       // target_rank
             ,   dest_index                      // target_disp
