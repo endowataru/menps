@@ -113,7 +113,7 @@ public:
             return false;
         
         MGBASE_LOG_DEBUG(
-            "msg:RDMA Get.\tsrc_rank:{}\tsrc_index:{:x}\tdest_ptr:{}"
+            "msg:RDMA Get.\tsrc_rank:{}\tsrc_index:{:x}\tdest_ptr:{:x}"
         ,   src_rank
         ,   src_index
         ,   reinterpret_cast<mgbase::uint64_t>(dest_ptr)
@@ -153,7 +153,12 @@ public:
         if (requests_saturated())
             return false;
         
-        MGBASE_LOG_DEBUG("msg:RDMA Put.\tsrc_ptr:{}\tdest_rank:{}\tdest_index:{:x}", src_ptr, dest_rank, dest_index);
+        MGBASE_LOG_DEBUG(
+            "msg:RDMA Put.\tsrc_ptr:{:x}\tdest_rank:{}\tdest_index:{:x}"
+        ,   reinterpret_cast<mgbase::uint64_t>(src_ptr)
+        ,   dest_rank
+        ,   dest_index
+        );
         
         mpi3_error::check(
             MPI_Put(

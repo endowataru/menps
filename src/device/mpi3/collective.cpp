@@ -1,6 +1,7 @@
 
 #include <mgcom.hpp>
 #include "common/mpi_error.hpp"
+#include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 namespace collective {
@@ -9,6 +10,8 @@ namespace untyped {
 
 void broadcast(process_id_t root, void* ptr, index_t number_of_bytes)
 {
+    MGBASE_LOG_DEBUG("msg:Started broadcast.");
+    
     MPI_Request request;
     mpi_error::check(
         MPI_Ibcast(
@@ -33,10 +36,14 @@ void broadcast(process_id_t root, void* ptr, index_t number_of_bytes)
         
         mgbase::control::yield();
     }
+    
+    MGBASE_LOG_DEBUG("msg:Finished broadcast.");
 }
 
 void allgather(const void* src, void* dest, index_t number_of_bytes)
 {
+    MGBASE_LOG_DEBUG("msg:Started allgather.");
+    
     MPI_Request request;
     mpi_error::check(
         MPI_Iallgather(
@@ -63,12 +70,16 @@ void allgather(const void* src, void* dest, index_t number_of_bytes)
         
         mgbase::control::yield();
     }
+    
+    MGBASE_LOG_DEBUG("msg:Finished allgather.");
 }
 
 } // namespace untyped
 
 void barrier()
 {
+    MGBASE_LOG_DEBUG("msg:Started barrier.");
+    
     MPI_Request request;
     mpi_error::check(
         MPI_Ibarrier(
@@ -89,6 +100,8 @@ void barrier()
         
         mgbase::control::yield();
     }
+    
+    MGBASE_LOG_DEBUG("msg:Finished barrier.");
 }
 
 } // namespace collective
