@@ -107,11 +107,6 @@ struct is_runtime_sized_assignable
 
 // get functions for runtime_sized_pair & runtime_sized_union_pair
 
-template <typename T>
-struct runtime_sized_pair_like_traits
-    : runtime_sized_pair_like_traits<typename mgbase::get_actual_type<T>::type>
-    { };
-
 namespace detail {
 
 template <typename T1, typename T2>
@@ -147,6 +142,11 @@ struct runtime_sized_union_pair_traits
 };
 
 }
+
+template <typename T>
+struct runtime_sized_pair_like_traits
+    : runtime_sized_pair_like_traits<typename mgbase::get_actual_type<T>::type>
+    { };
 
 template <typename T1, typename T2>
 struct runtime_sized_pair_like_traits< runtime_sized_pair<T1, T2> >
@@ -185,27 +185,63 @@ get_second(const pointer_facade<Derived, T>& ptr)
 
 // get_element_at
 
-template <template <typename> class Derived, typename T, runtime_size_t (*Size)()>
-inline Derived<T> get_element_at(const Derived< runtime_sized_array<T, Size> >& ptr, std::size_t index) MGBASE_NOEXCEPT {
-    MGBASE_ASSERT(index < Size());
-    return mgbase::reinterpret_pointer_cast<T>(ptr) + index;
-}
-template <template <typename> class Derived, typename T, runtime_size_t (*Size)()>
-inline Derived<const T> get_element_at(const Derived< const runtime_sized_array<T, Size> >& ptr, std::size_t index) MGBASE_NOEXCEPT {
-    MGBASE_ASSERT(index < Size());
-    return mgbase::reinterpret_pointer_cast<const T>(ptr) + index;
+namespace detail {
+
+template <typename T, runtime_size_t (*Size)()>
+struct runtime_sized_array_traits {
+    typedef T   element_type;
+    
+    template <template <typename> class Derived, typename U>
+    static Derived<element_type> get_element_at(const pointer_facade<Derived, U>& ptr, std::size_t index) {
+        MGBASE_ASSERT(index < Size());
+        return mgbase::reinterpret_pointer_cast<element_type>(ptr) + index;
+    }
+};
+
+template <typename T, std::size_t Size>
+struct statically_sized_array_traits {
+    typedef T   element_type;
+    
+    template <template <typename> class Derived, typename U>
+    static Derived<element_type> get_element_at(const pointer_facade<Derived, U>& ptr, std::size_t index) {
+        MGBASE_ASSERT(index < Size);
+        return mgbase::reinterpret_pointer_cast<element_type>(ptr) + index;
+    }
+};
+
 }
 
-template <template <typename> class Derived, typename T, std::size_t Size>
-inline Derived<T> get_element_at(const Derived< T [Size] >& ptr, std::size_t index) MGBASE_NOEXCEPT {
-    MGBASE_ASSERT(index < Size);
-    return mgbase::reinterpret_pointer_cast<T>(ptr) + index;
+template <typename T>
+struct runtime_sized_array_like_traits
+    : runtime_sized_array_like_traits<
+        typename mgbase::get_actual_type<T>::type
+    > { };
+
+template <typename T, runtime_size_t (*Size)()>
+struct runtime_sized_array_like_traits< runtime_sized_array<T, Size> >
+    : detail::runtime_sized_array_traits<T, Size> { };
+
+template <typename T, runtime_size_t (*Size)()>
+struct runtime_sized_array_like_traits< const runtime_sized_array<T, Size> >
+    : detail::runtime_sized_array_traits<const T, Size> { };
+
+template <typename T, std::size_t Size>
+struct runtime_sized_array_like_traits< T [Size] >
+    : detail::statically_sized_array_traits<T, Size> { };
+
+template <typename T, std::size_t Size>
+struct runtime_sized_array_like_traits< const T[Size] >
+    : detail::statically_sized_array_traits<const T, Size> { };
+
+template <template <typename> class Derived, typename T>
+inline Derived<
+    typename runtime_sized_array_like_traits<T>::element_type
+>
+get_element_at(const pointer_facade<Derived, T>& ptr, std::size_t index) {
+    return runtime_sized_array_like_traits<T>::get_element_at(ptr, index);
 }
-template <template <typename> class Derived, typename T, std::size_t Size>
-inline Derived<const T> get_element_at(const Derived< const T [Size] >& ptr, std::size_t index) MGBASE_NOEXCEPT {
-    MGBASE_ASSERT(index < Size);
-    return mgbase::reinterpret_pointer_cast<const T>(ptr) + index;
-}
+
+
 
 // runtime_sized_*
 
