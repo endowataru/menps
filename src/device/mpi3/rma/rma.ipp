@@ -253,7 +253,7 @@ public:
         ,   reinterpret_cast<mgbase::uint64_t>(result_ptr)
         ,   dest_rank
         ,   dest_index
-        ,   to_string(datatype)
+        ,   to_string(datatype).c_str()
         ,   reinterpret_cast<mgbase::uint64_t>(operation)
         );
         
