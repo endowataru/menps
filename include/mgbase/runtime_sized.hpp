@@ -11,6 +11,8 @@ namespace mgbase {
 
 typedef std::size_t runtime_size_t;
 
+namespace detail {
+
 template <typename T>
 struct runtime_sized_traits {
     static MGBASE_CONSTEXPR_FUNCTION runtime_size_t size() MGBASE_NOEXCEPT {
@@ -18,11 +20,22 @@ struct runtime_sized_traits {
     }
 };
 
+}
+
+template <typename T>
+struct runtime_sized_traits
+    : detail::runtime_sized_traits<
+        // Examine the alias first.
+        typename mgbase::get_actual_type<T>::type
+    > { };
+
 // helper function to calculate the size
 template <typename T>
 inline MGBASE_CONSTEXPR_FUNCTION runtime_size_t runtime_size_of() MGBASE_NOEXCEPT {
     return runtime_sized_traits<T>::size();
 }
+
+namespace detail {
 
 template <typename T, std::size_t S>
 struct runtime_sized_traits<T [S]> {
@@ -30,6 +43,8 @@ struct runtime_sized_traits<T [S]> {
         return runtime_size_of<T>() * S;
     }
 };
+
+}
 
 // Runtime-sized classes
 // These classes are incomplete types.
@@ -45,6 +60,8 @@ struct runtime_sized_pair;
 
 template <typename T1, typename T2>
 struct runtime_sized_union_pair;
+
+namespace detail {
 
 template <runtime_size_t (*Size)()>
 struct runtime_sized_traits< runtime_sized_struct<Size> > {
@@ -74,6 +91,7 @@ struct runtime_sized_traits< runtime_sized_union_pair<T1, T2> > {
     }
 };
 
+}
 
 // runtime_sized meta functions
 
@@ -87,43 +105,83 @@ struct is_runtime_sized_assignable
         && mgbase::is_same<To, typename mgbase::remove_const<From>::type>::value
     > { };
 
-// get functions for runtime_sized_pair
+// get functions for runtime_sized_pair & runtime_sized_union_pair
 
-template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<T1> get_first(const Derived< runtime_sized_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
-    return mgbase::reinterpret_pointer_cast<T1>(ptr);
-}
-template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<const T1> get_first(const Derived< const runtime_sized_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
-    return mgbase::reinterpret_pointer_cast<const T1>(ptr);
-}
-template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<T2> get_second(const Derived< runtime_sized_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
-    return mgbase::reinterpret_pointer_cast<T2>(get_first(ptr) + 1);
-}
-template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<const T2> get_second(const Derived< const runtime_sized_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
-    return mgbase::reinterpret_pointer_cast<const T2>(get_first(ptr) + 1);
+template <typename T>
+struct runtime_sized_pair_like_traits
+    : runtime_sized_pair_like_traits<typename mgbase::get_actual_type<T>::type>
+    { };
+
+namespace detail {
+
+template <typename T1, typename T2>
+struct runtime_sized_pair_traits
+{
+    typedef T1  first_type;
+    typedef T2  second_type;
+    
+    template <template <typename> class Derived, typename T>
+    static Derived<first_type> get_first(const pointer_facade<Derived, T>& ptr) {
+        return mgbase::reinterpret_pointer_cast<first_type>(ptr);
+    }
+    template <template <typename> class Derived, typename T>
+    static Derived<second_type> get_second(const pointer_facade<Derived, T>& ptr) {
+        return mgbase::reinterpret_pointer_cast<second_type>(get_first(ptr) + 1);
+    }
+};
+
+template <typename T1, typename T2>
+struct runtime_sized_union_pair_traits
+{
+    typedef T1  first_type;
+    typedef T2  second_type;
+    
+    template <template <typename> class Derived, typename T>
+    static Derived<first_type> get_first(const pointer_facade<Derived, T>& ptr) {
+        return mgbase::reinterpret_pointer_cast<first_type>(ptr);
+    }
+    template <template <typename> class Derived, typename T>
+    static Derived<second_type> get_second(const pointer_facade<Derived, T>& ptr) {
+        return mgbase::reinterpret_pointer_cast<second_type>(ptr);
+    }
+};
+
 }
 
-// get functions for runtime_sized_union_pair
+template <typename T1, typename T2>
+struct runtime_sized_pair_like_traits< runtime_sized_pair<T1, T2> >
+    : detail::runtime_sized_pair_traits<T1, T2> { };
 
-template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<T1> get_first(const Derived< runtime_sized_union_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
-    return mgbase::reinterpret_pointer_cast<T1>(ptr);
+template <typename T1, typename T2>
+struct runtime_sized_pair_like_traits< const runtime_sized_pair<T1, T2> >
+    : detail::runtime_sized_pair_traits<const T1, const T2> { };
+
+template <typename T1, typename T2>
+struct runtime_sized_pair_like_traits< runtime_sized_union_pair<T1, T2> >
+    : detail::runtime_sized_union_pair_traits<T1, T2> { };
+
+template <typename T1, typename T2>
+struct runtime_sized_pair_like_traits< const runtime_sized_union_pair<T1, T2> >
+    : detail::runtime_sized_union_pair_traits<const T1, const T2> { };
+
+
+template <template <typename> class Derived, typename T>
+inline Derived<
+    typename runtime_sized_pair_like_traits<T>::first_type
+>
+get_first(const pointer_facade<Derived, T>& ptr)
+{
+    return runtime_sized_pair_like_traits<T>::get_first(ptr);
 }
-template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<const T1> get_first(const Derived< const runtime_sized_union_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
-    return mgbase::reinterpret_pointer_cast<const T1>(ptr);
+template <template <typename> class Derived, typename T>
+inline Derived<
+    typename runtime_sized_pair_like_traits<T>::second_type
+>
+get_second(const pointer_facade<Derived, T>& ptr)
+{
+    return runtime_sized_pair_like_traits<T>::get_second(ptr);
 }
-template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<T2> get_second(const Derived< runtime_sized_union_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
-    return mgbase::reinterpret_pointer_cast<T2>(ptr);
-}
-template <template <typename> class Derived, typename T1, typename T2>
-inline Derived<const T2> get_second(const Derived< const runtime_sized_union_pair<T1, T2> >& ptr) MGBASE_NOEXCEPT {
-    return mgbase::reinterpret_pointer_cast<const T2>(ptr);
-}
+
 
 // get_element_at
 

@@ -4,6 +4,8 @@
 #include <mgbase/lang.hpp>
 #include <mgbase/type_traits.hpp>
 
+#include <mgbase/renamed_type.hpp>
+
 #include <cstring>
 
 namespace mgbase {
@@ -15,7 +17,10 @@ namespace detail {
  */
 template <typename From, typename To>
 struct implicit_pointer_castable
-    : mgbase::is_convertible<From*, To*> { };
+    : mgbase::is_convertible<
+        typename get_actual_type<From>::type*
+    ,   typename get_actual_type<To>::type*
+    > { };
 
 /*
  * If the type From is convertible to the type T, "value" is true.

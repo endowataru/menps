@@ -149,6 +149,13 @@ struct is_convertible
 // TODO : move to the unit test
 MGBASE_STATIC_ASSERT((mgbase::is_convertible<int*, const int*>::value), "convertible");
 
+
+template <bool Condition, typename True, typename False>
+struct conditional { typedef True type; };
+
+template <typename True, typename False>
+struct conditional<false, True, False> { typedef False type; };
+
 }
 
 #else
