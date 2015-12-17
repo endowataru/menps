@@ -104,6 +104,10 @@ public:
         MGBASE_ASSERT(is_valid_rank(src_rank));
         MGBASE_ASSERT(size > 0);
         
+        // TODO: This assertion might not be compliant to the MPI standard,
+        //       but it's helpful to check whether the pointer is not null
+        MGBASE_ASSERT(src_index != 0);
+        
         if (!mpi_base::get_lock().try_lock())
             return false;
         
@@ -144,6 +148,10 @@ public:
         MGBASE_ASSERT(src_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(is_valid_rank(dest_rank));
         MGBASE_ASSERT(size > 0);
+        
+        // TODO: This assertion might not be compliant to the MPI standard,
+        //       but it's helpful to check whether the pointer is not null
+        MGBASE_ASSERT(dest_index != 0);
         
         if (!mpi_base::get_lock().try_lock())
             return false;
