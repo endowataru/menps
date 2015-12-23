@@ -12,7 +12,7 @@ typedef mgcom_am_handler_callback_t  handler_callback_t;
 
 typedef mgcom_am_callback_parameters callback_parameters;
 
-typedef mgcom_am_message  message;
+typedef mgcom_am_am_message am_message;
 
 typedef mgcom_am_send_cb  send_cb;
 
@@ -60,7 +60,6 @@ void register_handler(
 );
 
 } // namespace untyped
-
 
 } // namespace am
 } // namespace mgcom

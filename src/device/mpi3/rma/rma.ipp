@@ -2,6 +2,7 @@
 #pragma once
 
 #include "rma.hpp"
+#include "device/mpi3/mpi3_error.hpp"
 #include "common/rma/rma.hpp"
 #include "common/notifier.hpp"
 #include "common/mpi_base.hpp"
@@ -13,18 +14,9 @@
 #include <string>
 
 namespace mgcom {
-
-struct mpi3_error
-{
-    static void check(int err) {
-        if (err != MPI_SUCCESS)
-            throw mpi3_error();
-    }
-};
-
 namespace rma {
 
-namespace {
+namespace /*unnamed*/  {
 
 class impl
 {
@@ -328,9 +320,8 @@ private:
     index_t num_requests_;
 };
 
-}
+} // unnamed namespace
 
-}
-
-}
+} // namespace rma
+} // namespace mgcom
 

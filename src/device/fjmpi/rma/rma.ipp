@@ -18,7 +18,7 @@
 namespace mgcom {
 namespace rma {
 
-namespace {
+namespace /*unnamed*/ {
 
 class impl
 {
@@ -254,8 +254,8 @@ private:
     mgbase::mpmc_bounded_queue<int> memid_queue_;
 };
 
-}
+} // unnamed namespace
 
-}
-}
+} // namespace rma
+} // namespace mgcom
 

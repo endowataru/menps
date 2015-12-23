@@ -5,11 +5,11 @@ namespace mgcom {
 namespace rma {
 namespace untyped {
 
-namespace {
+namespace /*unnamed*/ {
 
 impl g_impl;
 
-}
+} // unnamed namespace
 
 void initialize() {
     g_impl.initialize();
@@ -23,11 +23,14 @@ local_region register_region(
 ,   index_t size_in_bytes
 ) {
     mgbase::uint64_t address;
-    int memid = g_impl.register_memory(local_pointer, size_in_bytes, &address);
+    const int memid = g_impl.register_memory(local_pointer, size_in_bytes, &address);
     
     return make_local_region(
-        make_region_key(local_pointer, static_cast<mgbase::uint64_t>(memid)),
-        address
+        make_region_key(
+            local_pointer
+        ,   static_cast<mgbase::uint64_t>(memid)
+        )
+    ,   address
     );
 }
 
@@ -35,7 +38,7 @@ remote_region use_remote_region(
     process_id_t      proc_id
 ,   const region_key& key
 ) {
-    mgbase::uint64_t raddr =
+    const mgbase::uint64_t raddr =
         g_impl.get_remote_addr(static_cast<int>(proc_id), static_cast<mgbase::uint64_t>(key.info));
     
     return make_remote_region(key, raddr);

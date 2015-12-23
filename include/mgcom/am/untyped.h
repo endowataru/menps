@@ -33,19 +33,19 @@ mgcom_error_code_t mgcom_am_register_handler(
 #define MGCOM_AM_MAX_DATA_SIZE 1024
 #define MGCOM_AM_HANDLE_SIZE   1024
 
-typedef struct mgcom_am_message {
+typedef struct mgcom_am_am_message {
     mgcom_am_handler_id_t   id;
     mgcom_index_t           size;
     mgcom_index_t           ticket;
     uint8_t                 data[MGCOM_AM_MAX_DATA_SIZE]; // TODO
 }
-mgcom_am_message;
+mgcom_am_am_message;
 
 /// Control block for sending Active Messages.
 typedef struct mgcom_am_send_cb {
     mgbase_control_cb_common    common;
     mgcom_process_id_t          dest_proc;
-    mgcom_am_message            msg;
+    mgcom_am_am_message         msg;
     uint8_t                     handle[MGCOM_AM_HANDLE_SIZE];
 }
 mgcom_am_send_cb;

@@ -73,6 +73,7 @@ public:
     
 private:
     mgcom::structure::alltoall_buffer<message_buffer> buffers_;
+    mgbase::static_bounded_index_queue<buffer_index_t, > indices_;
 };
 
 }

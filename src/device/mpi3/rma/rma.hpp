@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgcom.hpp>
+#include <mgcom/rma/untyped.hpp>
 
 namespace mgcom {
 namespace rma {
@@ -9,6 +9,6 @@ namespace rma {
 void initialize();
 void finalize();
 
-}
-}
+} // namespace rma
+} // namespace mgcom
 
