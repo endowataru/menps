@@ -7,7 +7,7 @@
 
 #include "common/am/basic_sender.ipp"
 
-#include <mgcom/alltoall_buffer.hpp>
+#include <mgcom/structure/alltoall_buffer.hpp>
 
 #include "rma/rma.hpp"
 
@@ -50,10 +50,12 @@ public:
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
         
-        rma::registered_buffer buf = rma::allocate(sizeof(message));
+        mgcom::rma::untyped::registered_buffer buf
+            = rma::untyped::allocate(sizeof(message));
         
-        const typed_rma::remote_pointer<message> remote_ptr =
-            buffers_.at_process(dest_proc).member(&message_buffer::msgs);
+        const mgcom::rma::remote_pointer<message> remote_ptr =
+            buffers_.at_process(dest_proc)
+                .member(&message_buffer::msgs);
         
         mgcom::rma::try_remote_write_extra(
             dest_proc
@@ -70,7 +72,7 @@ public:
     }
     
 private:
-    mgcom::typed_rma::alltoall_buffer<message_buffer> buffers_;
+    mgcom::structure::alltoall_buffer<message_buffer> buffers_;
 };
 
 }

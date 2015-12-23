@@ -11,6 +11,8 @@ namespace rma {
 void initialize();
 void finalize();
 
+namespace untyped {
+
 bool try_remote_read_extra(
     process_id_t            proc
 ,   const remote_address&   remote_addr
@@ -29,6 +31,8 @@ bool try_remote_write_extra(
 ,   int                     flags
 );
 
-}
-}
+} // namespace untyped
+
+} // namespace rma
+} // namespace mgcom
 

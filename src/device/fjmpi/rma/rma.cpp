@@ -3,6 +3,7 @@
 
 namespace mgcom {
 namespace rma {
+namespace untyped {
 
 namespace {
 
@@ -117,9 +118,10 @@ bool try_remote_write(
 }
 
 void poll() {
-    rma::g_impl.poll();
+    g_impl.poll();
 }
 
-}
-}
+} // namespace untyped
+} // namespace rma
+} // namespace mgcom
 

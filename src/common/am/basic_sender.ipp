@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include <mgcom.hpp>
-#include <mgcom_pointer.hpp>
+#include <mgcom/rma.hpp>
 #include <mgbase/threading/atomic.hpp>
 #include <algorithm>
 #include "basic_am.hpp"
@@ -51,9 +50,9 @@ private:
     mgbase::atomic<index_t>* tickets_;
 };
 
-}
+} // unnamed namespace
 
-}
-}
-}
+} // namespace sender
+} // namespace am
+} // namespace mgcom
 
