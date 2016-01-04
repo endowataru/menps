@@ -31,9 +31,9 @@ public:
     }
     
     bool try_send(
-        const am_message&       msg
-    ,   process_id_t            dest_proc
-    ,   MPI_Request*            request
+        const am_message_buffer&    msg
+    ,   process_id_t                dest_proc
+    ,   MPI_Request*                request
     ) {
         if (!get_ticket_to(dest_proc)) {
             MGBASE_LOG_DEBUG("msg:Failed to get a ticket.");
@@ -47,7 +47,7 @@ public:
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
         
-        const int size = static_cast<int>(sizeof(am_message));
+        const int size = static_cast<int>(sizeof(am_message_buffer));
         
         mpi_error::check(
             MPI_Irsend(

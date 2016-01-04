@@ -16,11 +16,13 @@ private:
     typedef mgcom::rma::remote_pointer<T>   remote_ptr_type;
     
 public:
-    void initialize()
+    void collective_initialize(const local_ptr_type& local_ptr)
     {
         mgbase::scoped_ptr<local_ptr_type []> local_ptrs(
             new local_ptr_type[number_of_processes()]
         );
+        
+        mgcom::collective::allgather(&local_ptr, local_ptrs, 1);
         
         remote_ptrs_ = new remote_ptr_type[number_of_processes()];
         
@@ -39,7 +41,6 @@ public:
     }
 
 private:
-    local_ptr_type local_ptr;
     mgbase::scoped_ptr<remote_ptr_type []> remote_ptrs_;
 };
 

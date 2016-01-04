@@ -75,7 +75,7 @@ public:
         
         remove_ticket_from(src);
         
-        am_message& msg = buffers_[index];
+        am_message_buffer& msg = buffers_[index];
         sender::add_ticket_to(src, msg.ticket);
         
         call(src, msg);
@@ -98,7 +98,7 @@ private:
         ++tickets_[src_proc];
     }
     
-    void call(process_id_t src, am_message& msg) {
+    void call(process_id_t src, am_message_buffer& msg) {
         callback_parameters params;
         params.source = src;
         params.data   = msg.data;
@@ -116,13 +116,13 @@ private:
     void irecv(int index) {
         mpi_error::check(
             MPI_Irecv(
-                &buffers_[index]    // buf
-            ,   sizeof(am_message)  // count
-            ,   MPI_BYTE            // datatype
-            ,   MPI_ANY_SOURCE      // source
-            ,   get_tag()           // tag
-            ,   get_comm()          // comm
-            ,   &requests_[index]   // request
+                &buffers_[index]            // buf
+            ,   sizeof(am_message_buffer)   // count
+            ,   MPI_BYTE                    // datatype
+            ,   MPI_ANY_SOURCE              // source
+            ,   get_tag()                   // tag
+            ,   get_comm()                  // comm
+            ,   &requests_[index]           // request
             )
         );
     }
@@ -130,7 +130,7 @@ private:
     handler_callback_t* callbacks_;
     
     MPI_Request requests_[constants::max_num_tickets];
-    am_message buffers_[constants::max_num_tickets];
+    am_message_buffer buffers_[constants::max_num_tickets];
     
     index_t* tickets_;
 };
