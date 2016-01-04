@@ -12,9 +12,9 @@ Description
 -----------
 
 "mgcom" is designed to develop middleware
-running on distributed memory enviroments
+running on distributed memory environments
 with tightly-coupled interconnect hardware.
-Althought the initial motivation was
+Although the initial motivation was
 to develop a Partitioned Global Address Space (PGAS) 
 and a distributed task scheduler,
 you can utilize it
