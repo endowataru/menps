@@ -21,7 +21,7 @@
     #define MGBASE_EXPLICIT_OPERATOR
     #define MGBASE_NOEXCEPT
     #define MGBASE_OVERRIDE
-    #define MGBASE_NULLPTR              0
+    #define MGBASE_NULLPTR              ((void*)0)
     #define MGBASE_EMPTY_DECL           { }
     #define MGBASE_CONSTEXPR            const
     #define MGBASE_CONSTEXPR_CPP14
@@ -31,6 +31,9 @@
     
     #define MGBASE_EXTERN_C_BEGIN
     #define MGBASE_EXTERN_C_END
+    
+    #define MGBASE_ALIGNAS(a)                   __attribute__((aligned(a)))
+    #define MGBASE_DECLTYPE(x)                  __typeof__(x)
     
 #else
     #include <stdint.h> // #include <cstdint>
@@ -45,6 +48,7 @@
     // For C++
     #if (__cplusplus >= 201103L)
         #define MGBASE_CPP11_SUPPORTED
+        #define MGBASE_IF_CPP11_SUPPORTED(t, f)     t
         
         // For C++11 or later
         #define MGBASE_EXPLICIT_OPERATOR         explicit operator
@@ -70,6 +74,8 @@
         }
     #else
         // For C++03
+        #define MGBASE_IF_CPP11_SUPPORTED(t, f)     f
+        
         #define MGBASE_EXPLICIT_OPERATOR            operator
         #define MGBASE_NOEXCEPT                     throw()
         #define MGBASE_OVERRIDE
@@ -162,6 +168,8 @@ typedef int8_t      mgbase_int8_t;
 typedef int16_t     mgbase_int16_t;
 typedef int32_t     mgbase_int32_t;
 typedef int64_t     mgbase_int64_t;
+
+#define MGBASE_ALWAYS_INLINE    __attribute__((always_inline))
 
 #define MGBASE_LIKELY(x)        __builtin_expect(!!(x), 1)
 #define MGBASE_UNLIKELY(x)      __builtin_expect(!!(x), 0)
