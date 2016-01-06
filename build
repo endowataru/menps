@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ "$1" = "" ]; then
+    settings_file=./build-script/settings-default.gypi
+else
+    settings_file=./build-script/settings-$1.gypi
+fi
+
+script_dir=$(cd $(dirname ${BASH_SOURCE:-$0}); pwd)
+
+./external/gyp/gyp --depth . ./build-script/*.gyp --format=make -D library=static_library -I ${settings_file}
+
