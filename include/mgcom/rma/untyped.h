@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgcom/common.h>
+#include <mgbase/deferred.h>
 
 MGBASE_EXTERN_C_BEGIN
 
@@ -138,7 +139,8 @@ mgcom_error_code_t mgcom_rma_deallocate(
 
 /// Control block for non-blocking contiguous read.
 typedef struct mgcom_rma_remote_read_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
+    bool                        finished;
     mgcom_process_id_t          proc;
     mgcom_rma_remote_address    remote_addr;
     mgcom_rma_local_address     local_addr;
@@ -148,7 +150,8 @@ mgcom_rma_remote_read_cb;
 
 /// Control block for non-blocking contiguous write.
 typedef struct mgcom_rma_remote_write_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
+    bool                        finished;
     mgcom_process_id_t          proc;
     mgcom_rma_remote_address    remote_addr;
     mgcom_rma_local_address     local_addr;
@@ -160,7 +163,7 @@ mgcom_rma_remote_write_cb;
 
 /// Control block for non-blocking strided write.
 typedef struct mgcom_rma_write_strided_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
 }
 mgcom_rma_write_strided_cb;
 
@@ -181,7 +184,7 @@ mgcom_error_code_t mgcom_rma_write_strided_nb(
 
 /// Control block for non-blocking strided read.
 typedef struct mgcom_rma_read_strided_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
 }
 mgcom_rma_read_strided_cb;
 
@@ -208,7 +211,8 @@ typedef mgbase_uint64_t     mgcom_rma_atomic_default_t;
 
 /// Control block for non-blocking remote atomic read.
 typedef struct mgcom_rma_atomic_read_default_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
+    bool                        finished;
     mgcom_process_id_t          proc;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
@@ -218,7 +222,8 @@ mgcom_rma_atomic_read_default_cb;
 
 /// Control block for non-blocking remote atomic write.
 typedef struct mgcom_rma_atomic_write_default_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
+    bool                        finished;
     mgcom_process_id_t          proc;
     mgcom_rma_local_address     local_addr;
     mgcom_rma_remote_address    remote_addr;
@@ -229,7 +234,8 @@ mgcom_rma_atomic_write_default_cb;
 
 /// Control block for non-blocking local compare-and-swap.
 typedef struct mgcom_rma_local_compare_and_swap_default_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
+    bool                        finished;
     mgcom_rma_local_address     target_addr;
     mgcom_rma_local_address     expected_addr;
     mgcom_rma_local_address     desired_addr;
@@ -239,7 +245,8 @@ mgcom_rma_local_compare_and_swap_default_cb;
 
 /// Control block for non-blocking local fetch-and-add.
 typedef struct mgcom_rma_local_fetch_and_add_default_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
+    bool                        finished;
     mgcom_rma_local_address     target_addr;
     mgcom_rma_local_address     diff_addr;
     mgcom_rma_local_address     result_addr;
@@ -249,7 +256,8 @@ mgcom_rma_local_fetch_and_add_default_cb;
 
 /// Control block for non-blocking remote compare-and-swap.
 typedef struct mgcom_rma_remote_compare_and_swap_default_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
+    bool                        finished;
     mgcom_rma_remote_address    target_addr;
     mgcom_process_id_t          target_proc;
     mgcom_rma_local_address     expected_addr;
@@ -260,7 +268,8 @@ mgcom_rma_remote_compare_and_swap_default_cb;
 
 /// Control block for non-blocking fetch-and-add.
 typedef struct mgcom_rma_remote_fetch_and_add_default_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
+    bool                        finished;
     mgcom_rma_remote_address    target_addr;
     mgcom_process_id_t          target_proc;
     mgcom_rma_local_address     value_addr;

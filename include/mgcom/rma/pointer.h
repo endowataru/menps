@@ -3,7 +3,7 @@
 
 #include <mgcom/rma/untyped.h>
 
-#ifdef __cplusplus
+#ifdef MGBASE_CPLUSPLUS
     #define MGCOM_RMA_LOCAL_POINTER(type)   mgcom::rma::local_pointer<type>
     #define MGCOM_RMA_REMOTE_POINTER(type)  mgcom::rma::remote_pointer<type>
 #else

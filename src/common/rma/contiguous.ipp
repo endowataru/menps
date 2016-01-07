@@ -15,139 +15,125 @@ namespace detail {
 
 namespace /*unnamed*/ {
 
-class remote_read_handlers {
+template <typename Derived, typename CB>
+class try_handlers
+{
+    typedef CB  cb_type;
+    
+public:
+    static mgbase::deferred<void> start(cb_type& cb) {
+        if (Derived::try_(cb, make_notifier_assign(&cb.finished, true))) {
+            return test(cb);
+        }
+        else {
+            mgcom::rma::poll(); // TODO
+            
+            return mgbase::make_deferred<void, cb_type, &cb_type::cont, start>(cb);
+        }
+    }
+    
+private:
+    static mgbase::deferred<void> test(cb_type& cb)
+    {
+        if (cb.finished) {
+            return mgbase::make_ready_deferred();
+        }
+        else {
+            mgcom::rma::poll(); // TODO
+            
+            return mgbase::make_deferred<void, cb_type, &cb_type::cont, test>(cb);
+        }
+    }
+};
+
+class remote_read_handlers
+    : public try_handlers<remote_read_handlers, remote_read_cb>
+{
 public:
     typedef remote_read_cb      cb_type;
     
-    static void start(cb_type& cb) {
-        mgbase::control::enter<cb_type, try_>(cb);
-    }
-
-private:
-    static void try_(cb_type& cb)
+    static bool try_(cb_type& cb, const local_notifier& on_complete)
     {
-        if (try_remote_read(
+        return try_remote_read(
             cb.proc
         ,   cb.remote_addr
         ,   cb.local_addr
         ,   cb.size_in_bytes
-        ,   make_notifier_finished(cb)
-        )) {
-            mgbase::control::enter<cb_type, test>(cb);
-        }
-    }
-    
-    static void test(cb_type& /*cb*/) {
-        poll();
+        ,   on_complete
+        );
     }
 };
 
-class remote_write_handlers {
+class remote_write_handlers
+    : public try_handlers<remote_write_handlers, remote_write_cb>
+{
 public:
     typedef remote_write_cb     cb_type;
     
-    static void start(cb_type& cb)
+    static bool try_(cb_type& cb, const local_notifier& on_complete)
     {
-        mgbase::control::enter<cb_type, try_>(cb);
-    }
-
-private:
-    static void try_(cb_type& cb)
-    {
-        if (try_remote_write(
+        return try_remote_write(
             cb.proc
         ,   cb.remote_addr
         ,   cb.local_addr
         ,   cb.size_in_bytes
-        ,   make_notifier_finished(cb)
-        )) {
-            mgbase::control::enter<cb_type, test>(cb);
-        }
-    }
-    
-    static void test(cb_type& /*cb*/) {
-        poll();
+        ,   on_complete
+        );
     }
 };
 
-class remote_atomic_write_default_handlers {
+class remote_atomic_write_default_handlers
+    : public try_handlers<remote_atomic_write_default_handlers, remote_atomic_write_default_cb>
+{
 public:
     typedef remote_atomic_write_default_cb  cb_type;
     
-    static void start(cb_type& cb)
+    static bool try_(cb_type& cb, const local_notifier& on_complete)
     {
-        mgbase::control::enter<cb_type, try_>(cb);
-    }
-    
-private:
-    static void try_(cb_type& cb)
-    {
-        if (try_remote_atomic_write_default(
+        return try_remote_atomic_write_default(
             cb.proc
         ,   cb.remote_addr
         ,   cb.local_addr
         ,   cb.buf_addr
-        ,   make_notifier_finished(cb)
-        )) {
-            mgbase::control::enter<cb_type, test>(cb);
-        }
-    }
-    
-    static void test(cb_type& /*cb*/) {
-        poll();
+        ,   on_complete
+        );
     }
 };
 
-class remote_atomic_read_default_handlers {
+class remote_atomic_read_default_handlers
+    : public try_handlers<remote_atomic_read_default_handlers, remote_atomic_read_default_cb>
+{
 public:
     typedef remote_atomic_read_default_cb   cb_type;
     
-    static void start(cb_type& cb)
+    static bool try_(cb_type& cb, const local_notifier& on_complete)
     {
-        mgbase::control::enter<cb_type, try_>(cb);
-    }
-    
-private:
-    static void try_(cb_type& cb)
-    {
-        if (try_remote_atomic_read_default(
+        return try_remote_atomic_read_default(
             cb.proc
         ,   cb.remote_addr
         ,   cb.local_addr
         ,   cb.buf_addr
-        ,   make_notifier_finished(cb)
-        )) {
-            mgbase::control::enter<cb_type, test>(cb);
-        }
-    }
-    
-    static void test(cb_type& /*cb*/) {
-        poll();
+        ,   on_complete
+        );
     }
 };
 
-class remote_compare_and_swap_default_handlers {
+class remote_compare_and_swap_default_handlers
+    : public try_handlers<remote_compare_and_swap_default_handlers, remote_compare_and_swap_default_cb>
+{
 public:
     typedef remote_compare_and_swap_default_cb  cb_type;
     
-    static void start(cb_type& cb)
+    static bool try_(cb_type& cb, const local_notifier& on_complete)
     {
-        mgbase::control::enter<cb_type, try_>(cb);
-    }
-    
-private:
-    static void try_(cb_type& cb)
-    {
-        if (try_remote_compare_and_swap_default(
+        return try_remote_compare_and_swap_default(
             cb.target_proc
         ,   cb.target_addr
         ,   cb.expected_addr
         ,   cb.desired_addr
         ,   cb.result_addr
-        ,   make_notifier_finished(cb)
-        )) {
-            mgbase::control::enter<cb_type, test>(cb);
-        }
+        ,   on_complete
+        );
     }
     
     static void test(cb_type& /*cb*/) {
@@ -155,92 +141,58 @@ private:
     }
 };
 
-class remote_fetch_and_add_default_handlers {
+class remote_fetch_and_add_default_handlers
+    : public try_handlers<remote_fetch_and_add_default_handlers, remote_fetch_and_add_default_cb>
+{
 public:
     typedef remote_fetch_and_add_default_cb     cb_type;
     
-    static void start(cb_type& cb)
+    static bool try_(cb_type& cb, const local_notifier& on_complete)
     {
-        mgbase::control::enter<cb_type, try_>(cb);
-    }
-    
-private:
-    static void try_(cb_type& cb)
-    {
-        if (try_remote_fetch_and_add_default(
+        return try_remote_fetch_and_add_default(
             cb.target_proc
         ,   cb.target_addr
         ,   cb.value_addr
         ,   cb.result_addr
-        ,   make_notifier_finished(cb)
-        )) {
-            mgbase::control::enter<cb_type, test>(cb);
-        }
-    }
-    
-    static void test(cb_type& /*cb*/)
-    {
-        poll();
+        ,   on_complete
+        );
     }
 };
 
-
-class local_compare_and_swap_default_handlers {
+class local_compare_and_swap_default_handlers
+    : public try_handlers<local_compare_and_swap_default_handlers, local_compare_and_swap_default_cb>
+{
 public:
     typedef local_compare_and_swap_default_cb  cb_type;
     
-    static void start(cb_type& cb)
+    static bool try_(cb_type& cb, const local_notifier& on_complete)
     {
-        mgbase::control::enter<cb_type, try_>(cb);
-    }
-    
-private:
-    static void try_(cb_type& cb)
-    {
-        if (try_local_compare_and_swap_default(
+        return try_local_compare_and_swap_default(
             cb.target_addr
         ,   cb.expected_addr
         ,   cb.desired_addr
         ,   cb.result_addr
-        ,   make_notifier_finished(cb)
-        )) {
-            mgbase::control::enter<cb_type, test>(cb);
-        }
-    }
-    
-    static void test(cb_type& /*cb*/) {
-        poll();
+        ,   on_complete
+        );
     }
 };
 
-class local_fetch_and_add_default_handlers {
+class local_fetch_and_add_default_handlers
+    : public try_handlers<local_fetch_and_add_default_handlers, local_fetch_and_add_default_cb>
+{
 public:
     typedef local_fetch_and_add_default_cb     cb_type;
     
-    static void start(cb_type& cb)
+    static bool try_(cb_type& cb, const local_notifier& on_complete)
     {
-        mgbase::control::enter<cb_type, try_>(cb);
-    }
-    
-private:
-    static void try_(cb_type& cb)
-    {
-        if (try_local_fetch_and_add_default(
+        return try_local_fetch_and_add_default(
             cb.target_addr
         ,   cb.diff_addr
         ,   cb.result_addr
-        ,   make_notifier_finished(cb)
-        )) {
-            mgbase::control::enter<cb_type, test>(cb);
-        }
-    }
-    
-    static void test(cb_type& /*cb*/)
-    {
-        poll();
+        ,   on_complete
+        );
     }
 };
-
 
 } // unnamed namespace
 

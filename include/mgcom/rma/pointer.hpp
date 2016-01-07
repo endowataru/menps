@@ -170,37 +170,51 @@ remote_write_nb(
     );
 }
 
-template <typename T>
-inline void remote_read_nb(
+template <typename Remote, typename Local>
+inline typename mgbase::enable_if<
+    mgbase::is_same<
+        typename mgbase::remove_const<Remote>::type
+    ,   Local
+    >::value
+,   mgbase::deferred<void>
+>::type
+remote_read_nb(
     rma::remote_read_cb&            cb
 ,   process_id_t                    proc
-,   const remote_pointer<const T>&  remote_ptr
-,   const local_pointer<T>&         local_ptr
+,   const remote_pointer<Remote>&   remote_ptr
+,   const local_pointer<Local>&     local_ptr
 ,   index_t                         number_of_elements
 ) {
-    mgcom::rma::untyped::remote_read_nb(
+    return mgcom::rma::untyped::remote_read_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
     ,   local_ptr.to_address()
-    ,   number_of_elements * mgbase::runtime_size_of<T>()
+    ,   number_of_elements * mgbase::runtime_size_of<Remote>()
     );
 }
 
-template <typename T>
-inline void remote_write_nb(
+template <typename Remote, typename Local>
+inline typename mgbase::enable_if<
+    mgbase::is_same<
+        Remote
+    ,   typename mgbase::remove_const<Local>::type
+    >::value
+,   mgbase::deferred<void>
+>::type
+remote_write_nb(
     rma::remote_write_cb&           cb
 ,   process_id_t                    proc
-,   const remote_pointer<T>&        remote_ptr
-,   const local_pointer<const T>&   local_ptr
+,   const remote_pointer<Remote>&   remote_ptr
+,   const local_pointer<Local>&     local_ptr
 ,   index_t                         number_of_elements
 ) {
-    mgcom::rma::untyped::remote_write_nb(
+    return mgcom::rma::untyped::remote_write_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
     ,   local_ptr.to_address()
-    ,   number_of_elements * mgbase::runtime_size_of<T>()
+    ,   number_of_elements * mgbase::runtime_size_of<Remote>()
     );
 }
 
