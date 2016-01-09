@@ -134,6 +134,7 @@ namespace /*unnamed*/ {
 template <typename Remote, typename Local>
 inline typename mgbase::enable_if<
     mgbase::is_runtime_sized_assignable<Local, Remote>::value
+,   mgbase::deferred<void>
 >::type
 remote_read_nb(
     rma::remote_read_cb&            cb
@@ -141,7 +142,7 @@ remote_read_nb(
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
 ) {
-    mgcom::rma::untyped::remote_read_nb(
+    return mgcom::rma::untyped::remote_read_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -154,6 +155,7 @@ remote_read_nb(
 template <typename Remote, typename Local>
 inline typename mgbase::enable_if<
     mgbase::is_runtime_sized_assignable<Remote, Local>::value
+,   mgbase::deferred<void>
 >::type
 remote_write_nb(
     rma::remote_write_cb&           cb
@@ -161,7 +163,7 @@ remote_write_nb(
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
 ) {
-    mgcom::rma::untyped::remote_write_nb(
+    return mgcom::rma::untyped::remote_write_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -179,7 +181,7 @@ inline typename mgbase::enable_if<
 ,   mgbase::deferred<void>
 >::type
 remote_read_nb(
-    rma::remote_read_cb&            cb
+    remote_read_cb&                 cb
 ,   process_id_t                    proc
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
@@ -203,7 +205,7 @@ inline typename mgbase::enable_if<
 ,   mgbase::deferred<void>
 >::type
 remote_write_nb(
-    rma::remote_write_cb&           cb
+    remote_write_cb&                cb
 ,   process_id_t                    proc
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
@@ -218,14 +220,14 @@ remote_write_nb(
     );
 }
 
-inline void remote_atomic_read_default_nb(
-    remote_atomic_read_default_cb&                          cb
-,   process_id_t                                            proc
-,   const remote_pointer<const rma::atomic_default_t>&      remote_ptr
-,   const local_pointer<rma::atomic_default_t>&             local_ptr
-,   const local_pointer<rma::atomic_default_t>&             buf_ptr
+inline mgbase::deferred<void> remote_atomic_read_default_nb(
+    remote_atomic_read_default_cb&                      cb
+,   process_id_t                                        proc
+,   const remote_pointer<const rma::atomic_default_t>&  remote_ptr
+,   const local_pointer<rma::atomic_default_t>&         local_ptr
+,   const local_pointer<rma::atomic_default_t>&         buf_ptr
 ) {
-    mgcom::rma::untyped::remote_atomic_read_default_nb(
+    return mgcom::rma::untyped::remote_atomic_read_default_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -234,14 +236,14 @@ inline void remote_atomic_read_default_nb(
     );
 }
 
-inline void remote_atomic_write_default_nb(
-    remote_atomic_write_default_cb&                         cb
-,   process_id_t                                            proc
-,   const remote_pointer<rma::atomic_default_t>&            remote_ptr
-,   const local_pointer<const rma::atomic_default_t>&       local_ptr
-,   const local_pointer<rma::atomic_default_t>&             buf_ptr
+inline mgbase::deferred<void> remote_atomic_write_default_nb(
+    remote_atomic_write_default_cb&                     cb
+,   process_id_t                                        proc
+,   const remote_pointer<rma::atomic_default_t>&        remote_ptr
+,   const local_pointer<const rma::atomic_default_t>&   local_ptr
+,   const local_pointer<rma::atomic_default_t>&         buf_ptr
 ) {
-    mgcom::rma::untyped::remote_atomic_write_default_nb(
+    return mgcom::rma::untyped::remote_atomic_write_default_nb(
         cb
     ,   proc
     ,   remote_ptr.to_address()
@@ -253,14 +255,14 @@ inline void remote_atomic_write_default_nb(
 /**
  * Non-blocking local compare-and-swap.
  */
-inline void local_compare_and_swap_default_nb(
-    rma::local_compare_and_swap_default_cb&                 cb
-,   const local_pointer<rma::atomic_default_t>&             target_ptr
-,   const local_pointer<const rma::atomic_default_t>&       expected_ptr
-,   const local_pointer<const rma::atomic_default_t>&       desired_ptr
-,   const local_pointer<rma::atomic_default_t>&             result_ptr
+inline mgbase::deferred<void> local_compare_and_swap_default_nb(
+    local_compare_and_swap_default_cb&                  cb
+,   const local_pointer<rma::atomic_default_t>&         target_ptr
+,   const local_pointer<const rma::atomic_default_t>&   expected_ptr
+,   const local_pointer<const rma::atomic_default_t>&   desired_ptr
+,   const local_pointer<rma::atomic_default_t>&         result_ptr
 ) {
-    mgcom::rma::untyped::local_compare_and_swap_default_nb(
+    return mgcom::rma::untyped::local_compare_and_swap_default_nb(
         cb
     ,   target_ptr.to_address()
     ,   expected_ptr.to_address()
@@ -272,15 +274,15 @@ inline void local_compare_and_swap_default_nb(
 /**
  * Non-blocking remote compare-and-swap.
  */
-inline void remote_compare_and_swap_default_nb(
-    rma::remote_compare_and_swap_default_cb&                cb
-,   process_id_t                                            target_proc
-,   const remote_pointer<rma::atomic_default_t>&            target_ptr
-,   const local_pointer<const rma::atomic_default_t>&       expected_ptr
-,   const local_pointer<const rma::atomic_default_t>&       desired_ptr
-,   const local_pointer<rma::atomic_default_t>&             result_ptr
+inline mgbase::deferred<void> remote_compare_and_swap_default_nb(
+    remote_compare_and_swap_default_cb&                 cb
+,   process_id_t                                        target_proc
+,   const remote_pointer<rma::atomic_default_t>&        target_ptr
+,   const local_pointer<const rma::atomic_default_t>&   expected_ptr
+,   const local_pointer<const rma::atomic_default_t>&   desired_ptr
+,   const local_pointer<rma::atomic_default_t>&         result_ptr
 ) {
-    mgcom::rma::untyped::remote_compare_and_swap_default_nb(
+    return mgcom::rma::untyped::remote_compare_and_swap_default_nb(
         cb
     ,   target_proc
     ,   target_ptr.to_address()
@@ -293,14 +295,14 @@ inline void remote_compare_and_swap_default_nb(
 /**
  * Non-blocking remote fetch-and-add.
  */
-inline void remote_fetch_and_add_default_nb(
-    rma::remote_fetch_and_add_default_cb&               cb
+inline mgbase::deferred<void> remote_fetch_and_add_default_nb(
+    remote_fetch_and_add_default_cb&                    cb
 ,   process_id_t                                        target_proc
 ,   const remote_pointer<rma::atomic_default_t>&        target_ptr
 ,   const local_pointer<const rma::atomic_default_t>&   value_ptr
 ,   const local_pointer<rma::atomic_default_t>&         result_ptr
 ) {
-    mgcom::rma::untyped::remote_fetch_and_add_default_nb(
+    return mgcom::rma::untyped::remote_fetch_and_add_default_nb(
         cb
     ,   target_proc
     ,   target_ptr.to_address()

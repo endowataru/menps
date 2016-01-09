@@ -22,13 +22,15 @@ class try_handlers
     
 public:
     static mgbase::deferred<void> start(cb_type& cb) {
+        cb.finished = false;
+        
         if (Derived::try_(cb, make_notifier_assign(&cb.finished, true))) {
             return test(cb);
         }
         else {
             mgcom::rma::poll(); // TODO
             
-            return mgbase::make_deferred<void, cb_type, &cb_type::cont, start>(cb);
+            return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), start>(cb);
         }
     }
     
@@ -41,7 +43,7 @@ private:
         else {
             mgcom::rma::poll(); // TODO
             
-            return mgbase::make_deferred<void, cb_type, &cb_type::cont, test>(cb);
+            return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), test>(cb);
         }
     }
 };
