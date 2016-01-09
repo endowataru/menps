@@ -3,12 +3,13 @@
 
 #include "continuation.hpp"
 #include <mgbase/assert.hpp>
+#include <mgbase/function_traits.hpp>
 
 namespace mgbase {
 
 template <typename T>
 class deferred
-    :  private ready_deferred<T>
+    : private ready_deferred<T>
 {
     /*
      * The value is defined as a base class (not a member)
@@ -19,13 +20,13 @@ class deferred
     
 public:
     /*implicit*/ deferred(const ready_deferred<T>& val)
-        : cont_(MGBASE_NULLPTR)
-        , base_value(val)
+        : base_value(val)
+        , cont_(MGBASE_NULLPTR)
         { }
     
     explicit deferred(continuation<T>& cont, const resumable& res) MGBASE_NOEXCEPT
-        : cont_(&cont)
-        , res_(res)
+        : res_(res)
+        , cont_(&cont)
         { }
     
     #ifdef MGBASE_CPP11_SUPPORTED
@@ -36,6 +37,12 @@ public:
     
     continuation<T>* get_continuation() const MGBASE_NOEXCEPT {
         return cont_;
+    }
+    
+    void set_continuation(const typename continuation<T>::function_type& func)
+    {
+        MGBASE_ASSERT(cont_ != MGBASE_NULLPTR);
+        cont_->set(func);
     }
     
     resumable& get_resumable() MGBASE_NOEXCEPT {
@@ -55,104 +62,101 @@ public:
         return *this;
     }
     
+    inline T wait();
 
 private:
     resumable        res_;
     continuation<T>* cont_;
 };
 
+
 namespace detail {
 
-MGBASE_IF_CPP11_SUPPORTED(namespace /*unnamed*/ {, )
+#ifdef MGBASE_IF_CPP11_SUPPORTED
+namespace /*unnamed*/ {
+#endif
 
-template <typename Signature, Signature* Func, typename T, typename U>
-struct add_continuation_handler
+template <typename T>
+struct deferred_wait_handler
 {
-    static MGBASE_ALWAYS_INLINE resumable transfer(continuation<U>& next_cont, const ready_deferred<T>& val)
-    {
-        return next_cont.call(
-            call_and_make_ready<U>(Func, val)
-        );
+    struct argument {
+        bool finished;
+        ready_deferred<T> result;
+    };
+    
+    static resumable func(argument& arg, const ready_deferred<T>& df) MGBASE_NOEXCEPT {
+        arg.result = df;
+        arg.finished = true;
+        return make_empty_resumable();
     }
 };
 
-MGBASE_IF_CPP11_SUPPORTED(} /* unnamed namespace */,)
+#ifdef MGBASE_IF_CPP11_SUPPORTED
+} // unnamed namespace
+#endif
 
 } // namespace detail
 
-namespace /*unnamed*/ {
-
-template <typename Signature, Signature* Func, typename T, typename U>
-inline MGBASE_ALWAYS_INLINE deferred<U> add_continuation(continuation<U>& next_cont, deferred<T> df)
+template <typename T>
+T deferred<T>::wait()
 {
-    continuation<T>* const current_cont = df.get_continuation();
+    continuation<T>* const current_cont = this->get_continuation();
     
     if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
     {
-        return call_and_make_ready<U>(Func, df.to_ready());
+        return this->to_ready().get();
     }
     else
     {
-        current_cont->set(
+        typedef detail::deferred_wait_handler<T>    handler;
+        typedef typename handler::argument          argument;
+        
+        argument arg;
+        arg.finished = false;
+        
+        this->set_continuation(
             make_binded_function<
-                resumable (continuation<U>&, const ready_deferred<T>&)
-            ,   &detail::add_continuation_handler<Signature, Func, T, U>::transfer
+                resumable (argument&, const ready_deferred<T>&)
+            ,   &handler::func
             >
-            (&next_cont)
+            (&arg)
         );
         
-        return deferred<U>(next_cont, df.get_resumable());
+        while (!arg.finished)
+        {
+            this->resume();
+        }
+        
+        return arg.result.get();
     }
 }
 
-} // unnamed namespace
+
+template <typename T>
+struct remove_deferred {
+    typedef T   type;
+};
+
+template <typename T>
+struct remove_deferred< deferred<T> > {
+    typedef T   type;
+};
+template <typename T>
+struct remove_deferred< ready_deferred<T> > {
+    typedef T   type;
+};
 
 namespace detail {
 
-MGBASE_IF_CPP11_SUPPORTED(namespace /*unnamed*/ {, )
-
-template <typename T, typename CB, continuation<T> CB::*Cont, deferred<T> (*Resumed)(CB&)>
-struct make_deferred_handler
-{
-    static MGBASE_ALWAYS_INLINE resumable transfer(CB& cb)
-    {
-        deferred<T> df = Resumed(cb);
-        
-        continuation<T>* const current_cont = df.get_continuation();
-        
-        if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
-        {
-            continuation<T>& next_cont = cb.*Cont;
-            return next_cont.call(df.to_ready());
-        }
-        else {
-            MGBASE_ASSERT(current_cont == &(cb.*Cont));
-            return df.get_resumable();
-        }
-    }
+template <typename Signature>
+struct deferred_result {
+    typedef typename remove_deferred<
+        typename mgbase::function_traits<Signature>::result_type
+    >::type
+    type;
 };
 
-MGBASE_IF_CPP11_SUPPORTED(} /* unnamed namespace */,)
-
 } // namespace detail
-
-namespace /*unnamed*/ {
-
-template <typename T, typename CB, continuation<T> CB::*Cont, deferred<T> (*Resumed)(CB&)>
-inline deferred<T> make_deferred(CB& cb)
-{
-    return deferred<T>(
-        cb.*Cont
-    ,   make_binded_function<
-            resumable (CB&)
-        ,   detail::make_deferred_handler<T, CB, Cont, Resumed>::transfer
-        >
-        (&cb)
-    );
-}
-
-} // unnamed namespace
-
 
 } // namespace mgbase
 

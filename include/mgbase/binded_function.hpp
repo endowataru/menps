@@ -2,9 +2,20 @@
 #pragma once
 
 #include "binded_function.h"
-#include <mgbase/lang.hpp>
+#include <mgbase/assert.hpp>
 
 namespace mgbase {
+
+typedef mgbase_untyped_binded_function  untyped_binded_function;
+
+namespace detail {
+
+inline bool equal(const untyped_binded_function& f0, const untyped_binded_function& f1)
+{
+    return f0.func == f1.func && f0.arg1 == f1.arg1;
+}
+
+} // namespace detail
 
 template <typename Signature>
 class binded_function;
@@ -15,13 +26,13 @@ class binded_function<Result ()>
     typedef Result  result_type;
     
 public:
-    /*static binded_function create_empty()
+    static binded_function create_empty()
     {
         binded_function f;
         f.untyped_.func = MGBASE_NULLPTR;
         f.untyped_.arg1 = MGBASE_NULLPTR;
         return f;
-    }*/
+    }
     
     template <typename Signature, Signature* Func>
     static binded_function create()
@@ -43,8 +54,8 @@ public:
     static binded_function create(Arg1* arg1)
     {
         struct handler {
-            static result_type transfer(void* arg1) {
-                return Func(*static_cast<Arg1*>(arg1));
+            static result_type transfer(void* a1) {
+                return Func(*static_cast<Arg1*>(a1));
             }
         };
         
@@ -56,7 +67,12 @@ public:
     }
     
     result_type operator() () {
+        MGBASE_ASSERT(untyped_.func != MGBASE_NULLPTR);
         return reinterpret_cast<result_type (*)(void*)>(untyped_.func)(untyped_.arg1);
+    }
+    
+    bool operator == (const binded_function& func) const MGBASE_NOEXCEPT {
+        return detail::equal(untyped_, func.untyped_);
     }
     
 private:
@@ -73,8 +89,8 @@ public:
     static binded_function create(Arg1* arg1)
     {
         struct handler {
-            static result_type transfer(void* arg1, Arg2 arg2) {
-                return Func(*static_cast<Arg1*>(arg1), arg2);
+            static result_type transfer(void* a1, Arg2 arg2) {
+                return Func(*static_cast<Arg1*>(a1), arg2);
             }
         };
         
@@ -86,11 +102,16 @@ public:
     }
     
     result_type operator() (Arg2 arg2) {
+        MGBASE_ASSERT(untyped_.func != MGBASE_NULLPTR);
         return reinterpret_cast<result_type (*)(void*, Arg2)>(untyped_.func)(untyped_.arg1, arg2);
     }
     
+    bool operator == (const binded_function& func) const MGBASE_NOEXCEPT {
+        return detail::equal(untyped_, func.untyped_);
+    }
+    
 private:
-    mgbase_untyped_binded_function untyped_;
+    untyped_binded_function untyped_;
 };
 
 namespace detail {

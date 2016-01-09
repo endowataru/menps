@@ -24,5 +24,15 @@ private:
     binded_function<resumable ()> func_;
 };
 
+namespace /*unnamed*/ {
+
+inline resumable make_empty_resumable() {
+    return resumable(
+        binded_function<resumable ()>::create_empty()
+    );
+}
+
+} // unnamed namespace
+
 } // namespace mgbase
 

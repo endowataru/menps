@@ -11,11 +11,19 @@ template <typename T>
 class continuation
 {
 public:
-    continuation() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
+    typedef binded_function<resumable (const ready_deferred<T>&)>   function_type;
     
-    void set(const binded_function<resumable (const ready_deferred<T>&)>& func)
+    #if MGBASE_CPP11_SUPPORTED
+    continuation() noexcept = default;
+    #endif
+    
+    void set(const function_type& func)
     {
         func_ = func;
+    }
+    
+    const function_type& get() const MGBASE_NOEXCEPT {
+        return func_;
     }
     
     resumable call(const ready_deferred<T>& value)
@@ -24,7 +32,7 @@ public:
     }
     
 private:
-    binded_function<resumable (const ready_deferred<T>&)> func_;
+    function_type func_;
 };
 
 } // namespace mgbase
