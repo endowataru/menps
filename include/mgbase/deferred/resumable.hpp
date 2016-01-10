@@ -8,11 +8,21 @@ namespace mgbase {
 class resumable
 {
 public:
+    typedef bound_function<resumable ()>    function_type;
+    
+    #if 0
     resumable() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
     /*implicit*/ resumable(const bound_function<resumable ()>& func) MGBASE_NOEXCEPT
         : func_(func)
         { }
+    #endif
+    
+    static resumable create(const function_type& func) {
+        resumable r;
+        r.func_ = func;
+        return r;
+    }
     
     bool resume()
     {
@@ -36,13 +46,17 @@ public:
     }
 
 private:
-    bound_function<resumable ()> func_;
+    function_type func_;
 };
 
 namespace /*unnamed*/ {
 
-inline resumable make_empty_resumable() {
-    return resumable(
+inline resumable make_resumable(resumable::function_type func) MGBASE_NOEXCEPT {
+    return resumable::create(func);
+}
+
+inline resumable make_empty_resumable() MGBASE_NOEXCEPT {
+    return resumable::create(
         bound_function<resumable ()>::create_empty()
     );
 }

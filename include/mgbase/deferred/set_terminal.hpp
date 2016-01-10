@@ -43,6 +43,9 @@ resumable deferred_base<Derived, T>::set_terminal(T* dest)
             >
             (dest)
         );
+        
+        MGBASE_ASSERT(!derived().get_resumable().empty());
+        
         return derived().get_resumable();
     }
 }
@@ -64,6 +67,9 @@ resumable deferred_base<Derived, void>::set_terminal()
             ,   &set_terminal_handler<void>::assign
             >()
         );
+        
+        MGBASE_ASSERT(!derived().get_resumable().empty());
+        
         return derived().get_resumable();
     }
 }

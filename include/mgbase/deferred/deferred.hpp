@@ -18,7 +18,7 @@ public:
     T wait() {
         T result;
         resumable res = this->set_terminal(&result);
-        while (!res.resume()) { }
+        while (!res.checked_resume()) { }
         return result;
     }
     
@@ -35,7 +35,7 @@ public:
     
     void wait() {
         resumable res = this->set_terminal();
-        while (!res.resume()) { }
+        while (!res.checked_resume()) { }
     }
     
 private:
