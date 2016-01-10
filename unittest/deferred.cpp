@@ -74,27 +74,21 @@ TEST(Deferred, Cont)
     ASSERT_EQ(1, a.x);
     ASSERT_EQ(1, a.b.x);
     
-    bool flag = false;
-    d.set_continuation(
-        mgbase::make_binded_function<mgbase::resumable (bool&, const mgbase::ready_deferred<void>&), set_true>(&flag)
-    );
-    ASSERT_FALSE(flag);
+    mgbase::resumable res = d.set_terminal();
+    ASSERT_FALSE(res.empty());
     
     ASSERT_EQ(1, a.x);
     ASSERT_EQ(1, a.b.x);
-    ASSERT_FALSE(flag);
     
-    d.resume();
+    ASSERT_FALSE(d.resume());
     
     ASSERT_EQ(11, a.x);
     ASSERT_EQ(12, a.b.x);
-    ASSERT_FALSE(flag);
     
-    d.resume();
+    ASSERT_TRUE(d.resume());
     
     ASSERT_EQ(111, a.x);
     ASSERT_EQ(22, a.b.x);
-    ASSERT_TRUE(flag);
 }
 
 
@@ -108,7 +102,7 @@ TEST(Deferred, Lazy)
         c2
     ,   mgbase::make_deferred(
             c
-        ,   mgbase::make_binded_function<mgbase::resumable (), infinite>()
+        ,   mgbase::make_bound_function<mgbase::resumable (), infinite>()
         )
     );
     

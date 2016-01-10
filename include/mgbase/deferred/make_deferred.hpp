@@ -59,7 +59,7 @@ deferred<typename detail::deferred_result<Signature>::type> make_deferred(CB& cb
     
     return deferred<T>(
         get_next_continuation<T>(cb)
-    ,   make_binded_function<
+    ,   make_bound_function<
             resumable (CB&)
         ,   detail::make_deferred_handler<Signature, Func, CB>::transfer
         >

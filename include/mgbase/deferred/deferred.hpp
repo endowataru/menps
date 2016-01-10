@@ -7,9 +7,48 @@
 
 namespace mgbase {
 
+namespace detail {
+
+template <typename Derived, typename T>
+class deferred_base
+{
+public:
+    inline MGBASE_ALWAYS_INLINE resumable set_terminal(T* dest);
+    
+    T wait() {
+        T result;
+        resumable res = this->set_terminal(&result);
+        while (!res.resume()) { }
+        return result;
+    }
+    
+private:
+    Derived& derived() MGBASE_NOEXCEPT { return *static_cast<Derived*>(this); }
+    const Derived& derived() const MGBASE_NOEXCEPT { return *static_cast<const Derived*>(this); }
+};
+
+template <typename Derived>
+class deferred_base<Derived, void>
+{
+public:
+    inline MGBASE_ALWAYS_INLINE resumable set_terminal();
+    
+    void wait() {
+        resumable res = this->set_terminal();
+        while (!res.resume()) { }
+    }
+    
+private:
+    Derived& derived() MGBASE_NOEXCEPT { return *static_cast<Derived*>(this); }
+    const Derived& derived() const MGBASE_NOEXCEPT { return *static_cast<const Derived*>(this); }
+};
+
+} // namespace detail
+
 template <typename T>
 class deferred
-    : private ready_deferred<T>
+    : public detail::deferred_base<deferred<T>, T>
+    , private ready_deferred<T>
 {
     /*
      * The value is defined as a base class (not a member)
@@ -49,8 +88,8 @@ public:
         return res_;
     }
     
-    void resume() {
-        res_.resume();
+    bool resume() {
+        return res_.resume();
     }
     
     ready_deferred<T>& to_ready() MGBASE_NOEXCEPT {
@@ -61,76 +100,13 @@ public:
         MGBASE_ASSERT(cont_ == MGBASE_NULLPTR);
         return *this;
     }
-    
-    inline T wait();
 
 private:
     resumable        res_;
     continuation<T>* cont_;
 };
 
-
 namespace detail {
-
-#ifdef MGBASE_IF_CPP11_SUPPORTED
-namespace /*unnamed*/ {
-#endif
-
-template <typename T>
-struct deferred_wait_handler
-{
-    struct argument {
-        bool finished;
-        ready_deferred<T> result;
-    };
-    
-    static resumable func(argument& arg, const ready_deferred<T>& df) MGBASE_NOEXCEPT {
-        arg.result = df;
-        arg.finished = true;
-        return make_empty_resumable();
-    }
-};
-
-#ifdef MGBASE_IF_CPP11_SUPPORTED
-} // unnamed namespace
-#endif
-
-} // namespace detail
-
-template <typename T>
-T deferred<T>::wait()
-{
-    continuation<T>* const current_cont = this->get_continuation();
-    
-    if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
-    {
-        return this->to_ready().get();
-    }
-    else
-    {
-        typedef detail::deferred_wait_handler<T>    handler;
-        typedef typename handler::argument          argument;
-        
-        argument arg;
-        arg.finished = false;
-        
-        this->set_continuation(
-            make_binded_function<
-                resumable (argument&, const ready_deferred<T>&)
-            ,   &handler::func
-            >
-            (&arg)
-        );
-        
-        while (!arg.finished)
-        {
-            this->resume();
-        }
-        
-        return arg.result.get();
-    }
-}
-
 
 template <typename T>
 struct remove_deferred {
@@ -145,8 +121,6 @@ template <typename T>
 struct remove_deferred< ready_deferred<T> > {
     typedef T   type;
 };
-
-namespace detail {
 
 template <typename Signature>
 struct deferred_result {

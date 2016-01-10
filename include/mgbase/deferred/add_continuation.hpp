@@ -25,7 +25,7 @@ struct add_continuation_handler
     static MGBASE_ALWAYS_INLINE resumable transfer(CB& cb, const ready_deferred<T>& val)
     {
         deferred<U> df = call_and_defer<U>(
-            mgbase::make_binded_function<Signature, Func>(&cb)
+            mgbase::make_bound_function<Signature, Func>(&cb)
         ,   val
         );
         
@@ -68,14 +68,14 @@ deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB&
     if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
     {
         return call_and_defer<U>(
-            mgbase::make_binded_function<Signature, Func>(&cb)
+            mgbase::make_bound_function<Signature, Func>(&cb)
         ,   df.to_ready()
         );
     }
     else
     {
         current_cont->set(
-            make_binded_function<
+            make_bound_function<
                 resumable (CB&, const ready_deferred<T>&)
             ,   &detail::add_continuation_handler<Signature, Func, CB, T>::transfer
             >

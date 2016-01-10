@@ -11,7 +11,7 @@ template <typename T>
 class continuation
 {
 public:
-    typedef binded_function<resumable (const ready_deferred<T>&)>   function_type;
+    typedef bound_function<resumable (const ready_deferred<T>&)>   function_type;
     
     #if MGBASE_CPP11_SUPPORTED
     continuation() noexcept = default;

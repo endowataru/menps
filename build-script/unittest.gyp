@@ -10,7 +10,7 @@
             'target_name' : 'unittest',
             'type': 'executable',
             'sources' : [
-                '../unittest/binded_function.cpp',
+                '../unittest/bound_function.cpp',
                 '../unittest/deferred.cpp',
             ],
             'dependencies' : [
