@@ -30,14 +30,20 @@ struct add_continuation_handler
         );
         
         continuation<U>* const current_cont = df.get_continuation();
+        continuation<U>& next_cont = get_next_continuation<U>(cb);
         
-        if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR)) {
-            continuation<U>& next_cont = get_next_continuation<U>(cb);
+        if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
+        {
             return next_cont.call(df.to_ready());
         }
         else {
-            // The continuation must be already set within Func.
-            MGBASE_ASSERT(current_cont == &get_next_continuation<U>(cb));
+            if (current_cont != &next_cont) {
+                // Move the continuation.
+                *current_cont = next_cont;
+            }
+            else {
+                // The continuation has already been set within Func.
+            }
             
             return df.get_resumable();
         }

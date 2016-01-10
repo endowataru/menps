@@ -26,14 +26,22 @@ struct make_deferred_handler
         deferred<T> df = Func(cb);
         
         continuation<T>* const current_cont = df.get_continuation();
+        continuation<T>& next_cont = get_next_continuation<T>(cb);
         
         if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
         {
-            continuation<T>& next_cont = get_next_continuation<T>(cb);
             return next_cont.call(df.to_ready());
         }
-        else {
-            MGBASE_ASSERT(current_cont == &(get_next_continuation<T>(cb)));
+        else
+        {
+            if (current_cont != &next_cont) {
+                // Move the continuation.
+                *current_cont = next_cont;
+            }
+            else {
+                // The continuation has already been set within Func.
+            }
+            
             return df.get_resumable();
         }
     }
