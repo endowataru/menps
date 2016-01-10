@@ -12,6 +12,11 @@ namespace {
 // TODO: naive implementation
 
 class impl {
+    struct entry {
+        send_cb cb;
+        mgbase::resumable res;
+    };
+    
 public:
     void initialize() {
     
@@ -27,27 +32,29 @@ public:
     ,   index_t         size
     ,   process_id_t    dest_proc
     ) {
-        cbs_.push(send_cb());
-        send_cb& cb = cbs_.back();
-        untyped::send_nb(cb, id, value, size, dest_proc);
+        entries_.push(entry());
+        entry& e = entries_.back();
+        
+        e.res = untyped::send_nb(e.cb, id, value, size, dest_proc)
+            .set_terminal();
     }
     
     void poll() {
-        if (cbs_.empty())
+        if (entries_.empty())
             return;
         
-        send_cb& cb = cbs_.front();
-        if (mgbase::control::proceed(cb))
-            cbs_.pop();
+        entry& e = entries_.front();
+        if (e.res.checked_resume())
+            entries_.pop();
     }
     
 private:
-    std::queue<send_cb> cbs_;
+    std::queue<entry> entries_;
 };
 
 impl g_impl;
 
-}
+} // namespace 
 
 void initialize() {
     g_impl.initialize();
@@ -86,9 +93,9 @@ void reply(
     sender_queue::enqueue(id, value, size, params->source);
 }
 
-}
+} // namespace untyped
 
-}
+} // namespace am
 
 }
 

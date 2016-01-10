@@ -22,27 +22,26 @@ namespace untyped {
 
 namespace detail {
 
-void send_nb(send_cb& cb);
+mgbase::deferred<void> send_nb(send_cb& cb);
 
 } // namespace detail
 
 namespace /*unnamed*/ {
 
-inline void send_nb(
+inline mgbase::deferred<void> send_nb(
     send_cb&        cb
 ,   handler_id_t    id
 ,   const void*     value
 ,   index_t         size
 ,   process_id_t    dest_proc
 ) {
-    mgbase::control::initialize(cb);
     cb.dest_proc = dest_proc;
     cb.msg.id    = id;
     cb.msg.size  = size;
     
     std::memcpy(cb.msg.data, value, size);
     
-    detail::send_nb(cb);
+    return detail::send_nb(cb);
 }
 
 } // unnamed namespace

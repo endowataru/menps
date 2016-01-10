@@ -3,6 +3,10 @@ import sys
 import subprocess
 
 program_name = sys.argv[1]
+try:
+    process_count = sys.argv[2]
+except IndexError:
+    process_count = 1
 
 def extract_testcases(gtest_output):
     result = []
@@ -28,7 +32,7 @@ out, _ = process.communicate()
 #print(extract_testcases(out))
 
 for testcase in extract_testcases(out):
-    subprocess.check_call(["mpirun", "-n", "2", program_name, "--gtest_filter="+testcase])
-    #print(["mpirun", "-n", "2", program_name, "--gtest_filter="+testcase])
+    print(["mpirun", "-n", str(process_count), program_name, "--gtest_filter="+testcase])
+    subprocess.check_call(["mpirun", "-n", str(process_count), program_name, "--gtest_filter="+testcase])
 
 

@@ -43,7 +43,7 @@ mgcom_am_am_message_buffer;
 
 /// Control block for sending Active Messages.
 typedef struct mgcom_am_send_cb {
-    mgbase_control_cb_common    common;
+    MGBASE_CONTINUATION(void)   cont;
     mgcom_process_id_t          dest_proc;
     
     // The message body is copied to the local buffer.

@@ -29,9 +29,9 @@ namespace untyped {
 
 namespace detail {
 
-void send_nb(send_cb& cb)
+mgbase::deferred<void> send_nb(send_cb& cb)
 {
-    sender::impl::send_handlers<sender::g_impl>::start(cb);
+    return sender::impl::send_handlers<sender::g_impl>::start(cb);
 }
 
 } // namespace detail

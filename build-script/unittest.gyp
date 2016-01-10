@@ -11,6 +11,7 @@
             'type': 'executable',
             'sources' : [
                 '../unittest/rma.cpp',
+                '../unittest/am.cpp',
             ],
             'dependencies': [
                 './mgcom.gyp:mgcom-mpi3',

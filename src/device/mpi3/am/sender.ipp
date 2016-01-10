@@ -69,18 +69,22 @@ public:
     template <impl& self>
     class send_handlers
     {
+        typedef send_cb                 cb_type;
+        typedef mgbase::deferred<void>  result_type;
+        typedef result_type (func_type)(cb_type&);
+        
     public:
-        static void start(send_cb& cb) {
+        static result_type start(cb_type& cb) {
             MPI_Request* const request = reinterpret_cast<MPI_Request*>(cb.handle);
             
             if (self.try_send(cb.msg, cb.dest_proc, request))
-            {
-                mgbase::control::enter<send_cb, test>(cb);
-            }
+                return test(cb);
+            else
+                return mgbase::make_deferred<func_type, start>(cb);
         }
         
     private:
-        static void test(send_cb& cb) {
+        static result_type test(cb_type& cb) {
             MPI_Request* const request = reinterpret_cast<MPI_Request*>(cb.handle);
             
             int flag;
@@ -89,9 +93,10 @@ public:
                 MPI_Test(request, &flag, &status)
             );
             
-            if (flag) {
-                mgbase::control::set_finished(cb);
-            }
+            if (flag)
+                return mgbase::make_ready_deferred();
+            else
+                return mgbase::make_deferred<func_type, test>(cb);
         }
     };
     
