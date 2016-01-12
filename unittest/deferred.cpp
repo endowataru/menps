@@ -2,11 +2,6 @@
 #include "unittest.hpp"
 #include <mgbase/deferred.hpp>
 
-int f(int* x) {
-    *x = 123;
-    return 0;
-}
-
 struct B {
     MGBASE_CONTINUATION(void) cont;
     int x;
