@@ -7,16 +7,6 @@ int f(int* x) {
     return 0;
 }
 
-/*TEST(Deferred, Cont)
-{
-    int val = 0;
-    mgbase::deferred<int*> d = mgbase::make_ready_deferred(&val);
-    mgbase::continuation<void> c;
-    mgbase::deferred<void> d2 = mgbase::add_continuation<int (int*), f>(c, d);
-    
-    ASSERT_EQ(123, val);
-}*/
-
 struct B {
     MGBASE_CONTINUATION(void) cont;
     int x;
@@ -30,21 +20,25 @@ struct A {
 
 mgbase::deferred<void> g1(B& b) {
     b.x += 10;
+    // This function immediately finishes.
     return mgbase::make_ready_deferred();
 }
 
 mgbase::deferred<void> g0(B& b) {
     b.x += 1;
-    return mgbase::make_deferred<mgbase::deferred<void> (B&), g1>(b);
+    // Call g1 when the function is resumed.
+    return mgbase::make_deferred<mgbase::deferred<void> (B&), &g1>(b);
 }
 
 mgbase::deferred<void> f2(A& a) {
     a.x += 100;
+    // This function immediately finishes.
     return mgbase::make_ready_deferred();
 }
 
 mgbase::deferred<void> f1(A& a) {
     a.x += 10;
+    // Call f2 when g0 finishes.
     return mgbase::add_continuation<mgbase::deferred<void> (A&), &f2>(
         a
     ,   g0(a.b)
@@ -53,15 +47,11 @@ mgbase::deferred<void> f1(A& a) {
 
 mgbase::deferred<void> f0(A& a) {
     a.x += 1;
+    // Call f1 when g0 finishes.
     return mgbase::add_continuation<mgbase::deferred<void> (A&), &f1>(
         a
     ,   g0(a.b)
     );
-}
-
-mgbase::resumable set_true(bool& b, const mgbase::ready_deferred<void>&) {
-    b = true;
-    return mgbase::make_empty_resumable();
 }
 
 TEST(Deferred, Cont)
@@ -74,55 +64,36 @@ TEST(Deferred, Cont)
     ASSERT_EQ(1, a.x);
     ASSERT_EQ(1, a.b.x);
     
+    // No continuation is added to "d".
     mgbase::resumable res = d.set_terminal();
-    ASSERT_FALSE(res.empty());
+    ASSERT_FALSE(res.empty()); // Not finished yet
     
     ASSERT_EQ(1, a.x);
     ASSERT_EQ(1, a.b.x);
     
-    ASSERT_FALSE(d.resume());
+    ASSERT_FALSE(d.resume()); // Not finished yet
     
     ASSERT_EQ(11, a.x);
     ASSERT_EQ(12, a.b.x);
     
-    ASSERT_TRUE(d.resume());
+    ASSERT_TRUE(d.resume()); // Finished
     
     ASSERT_EQ(111, a.x);
     ASSERT_EQ(22, a.b.x);
 }
 
 
-/*
-TEST(Deferred, Lazy)
-{
-    int x = 0;
-    mgbase::continuation<int*> c;
-    mgbase::continuation<void> c2;
-    mgbase::add_continuation<int (int*), f>(
-        c2
-    ,   mgbase::make_deferred(
-            c
-        ,   mgbase::make_bound_function<mgbase::resumable (), infinite>()
-        )
-    );
-    
-    ASSERT_EQ(0, x);
-    
-    c.call(mgbase::make_ready_deferred(&x));
-    
-    ASSERT_EQ(123, x);
-}
-*/
-
-
 mgbase::deferred<void> func(A& a)
 {
     if (a.x < 10) {
         ++a.x;
-        return mgbase::make_deferred<mgbase::deferred<void> (A&), func>(a);
+        // Call func when the function is resumed.
+        return mgbase::make_deferred<mgbase::deferred<void> (A&), &func>(a);
     }
-    else
+    else {
+        // Immediately finish.
         return mgbase::make_ready_deferred();
+    }
 }
 
 TEST(Deferred, Resume)
@@ -134,11 +105,9 @@ TEST(Deferred, Resume)
     for (int i = 1; i < 10; i++) {
         ASSERT_EQ(i, a.x);
         d.resume();
-        //ASSERT_FALSE(r.is_ready());
     }
     
     ASSERT_EQ(10, a.x);
-    //ASSERT_TRUE(r.is_ready());
 }
 
 TEST(Deferred, Wait)
