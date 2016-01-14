@@ -6,9 +6,6 @@
 namespace mgbase {
 
 template <typename T>
-class deferred;
-
-template <typename T>
 class ready_deferred
 {
 public:
