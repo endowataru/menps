@@ -34,6 +34,6 @@ void poll() {
     sender_queue::poll();
 }
 
-}
-}
+} // namespace am
+} // namespace mgcom
 
