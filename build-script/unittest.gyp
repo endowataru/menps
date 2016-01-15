@@ -3,21 +3,29 @@
     'target_defaults': {
         'sources': [
             "../unittest/unittest.cpp",
+            '../unittest/rma.cpp',
+            '../unittest/am.cpp',
         ]
     },
     'targets' : [
+        #{
+        #    'target_name' : 'unittest',
+        #    'type': 'static_library',
+        #    'sources' : [
+        #    ],
+        #    'dependencies': [
+        #        './mgcom.gyp:mgcom-header',
+        #        '../../mgbase/build-script/googletest.gyp:googletest',
+        #    ],
+        #},
         {
-            'target_name' : 'unittest',
+            'target_name' : 'unittest-mpi3',
             'type': 'executable',
-            'sources' : [
-                '../unittest/rma.cpp',
-                '../unittest/am.cpp',
-            ],
             'dependencies': [
+                #'unittest',
                 './mgcom.gyp:mgcom-mpi3',
                 './mgcom.gyp:mgcom-polling',
-                '../../mgbase/build-script/googletest.gyp:googletest',
             ],
-        }
+        },
     ]
 }

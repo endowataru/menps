@@ -6,6 +6,7 @@
             'Debug': {
                 'defines':['MGBASE_DEBUG'],
                 'cflags': ['-g3', '-O0', '-Wall'],
+                'cxxflags': ['-std=c++03'],
                 'ldflags': ['-g3'],
                 'xcode_settings': {
                     'OTHER_CPLUSPLUSFLAGS': [
@@ -26,7 +27,8 @@
             },
             'Release': {
                 'defines':['MGBASE_DISABLE_ASSERT'],
-                'cflags': ['-O3', '-Wall','-pedantic',],
+                'cflags': ['-O3', '-Wall',],
+                'cxxflags': ['-std=c++03'],
                 'xcode_settings': {
                     'OTHER_CPLUSPLUSFLAGS': [
                         '-O3', '-Wall', '-Werror', '-ferror-limit=3',

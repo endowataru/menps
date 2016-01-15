@@ -30,7 +30,7 @@ public:
         else {
             mgcom::rma::poll(); // TODO
             
-            return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), start>(cb);
+            return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), &try_handlers::start>(cb);
         }
     }
     
@@ -43,7 +43,7 @@ private:
         else {
             mgcom::rma::poll(); // TODO
             
-            return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), test>(cb);
+            return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), &try_handlers::test>(cb);
         }
     }
 };
