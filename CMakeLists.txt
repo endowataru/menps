@@ -11,7 +11,6 @@ target_include_directories(mgbase-header
 add_library(mgbase
     ./external/cppformat/format.cc
 )
-
 target_link_libraries(mgbase mgbase-header)
 
 add_library(googletest
