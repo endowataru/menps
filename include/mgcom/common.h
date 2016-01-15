@@ -5,8 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <mgbase/lang.h>
-#include <mgbase/control.h>
+#include <mgbase/deferred.h>
 
 MGBASE_EXTERN_C_BEGIN
 

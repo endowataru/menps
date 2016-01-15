@@ -3,7 +3,6 @@
 
 #include <mgcom/common.h>
 #include <mgbase/deferred.hpp>
-#include <mgbase/control.hpp>
 
 #include <cstddef>
 #include <cstring>
