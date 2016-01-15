@@ -4,6 +4,7 @@
 namespace mgbase {
 namespace control {
 
+// TODO: workaround
 void yield()
 {
     mgcom::rma::poll();
