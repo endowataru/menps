@@ -7,6 +7,9 @@ target_include_directories(mgbase-header
     INTERFACE ./include
     INTERFACE ./external
 )
+target_compile_definitions(mgbase-header
+    INTERFACE "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
+)
 
 add_library(mgbase
     ./external/cppformat/format.cc
