@@ -1,10 +1,29 @@
 
-#include <mgcom.hpp>
-#include "common/mpi_error.hpp"
-#include <mgbase/logging/logger.hpp>
+#include "collective.ipp"
 
 namespace mgcom {
 namespace collective {
+
+mgbase::deferred<void> barrier_nb(barrier_cb& cb)
+{
+    return detail::barrier_handlers::start(cb);
+}
+
+namespace untyped {
+
+mgbase::deferred<void> broadcast(broadcast_cb& cb)
+{
+    return detail::broadcast_handlers::start(cb);
+}
+
+mgbase::deferred<void> allgather(allgather_cb& cb)
+{
+    return detail::allgather_handlers::start(cb);
+}
+
+} // namespace untyped
+
+#if 0
 
 namespace untyped {
 
@@ -103,6 +122,8 @@ void barrier()
     
     MGBASE_LOG_DEBUG("msg:Finished barrier.");
 }
+
+#endif
 
 } // namespace collective
 } // namespace mgcom

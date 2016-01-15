@@ -23,6 +23,8 @@ class impl
 public:
     static const index_t max_num_callbacks = 1024;
     
+    impl() : initialized_(false) { }
+    
     void initialize()
     {
         tickets_ = new index_t[number_of_processes()];
@@ -38,6 +40,8 @@ public:
         // all processes have already issued MPI_Irecv()
         // before allowing the user to send messages
         MPI_Barrier(get_comm());
+        
+        initialized_ = true;
     }
     
     void finalize()
@@ -53,6 +57,8 @@ public:
     
     void poll()
     {
+        MGBASE_ASSERT(initialized_);
+        
         int index;
         int flag;
         MPI_Status status;
@@ -126,6 +132,8 @@ private:
             )
         );
     }
+    
+    bool initialized_;
     
     handler_callback_t* callbacks_;
     
