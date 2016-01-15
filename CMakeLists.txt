@@ -11,6 +11,31 @@ target_compile_definitions(mgbase-header
     INTERFACE "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
 )
 
+add_library(mgbase-options INTERFACE)
+target_compile_options(mgbase-options INTERFACE
+    "-Wall"
+    "-std=c++03"
+    "-pedantic"
+    "-Wextra"
+    "-Wcast-qual"
+    "-Wctor-dtor-privacy"
+    "-Wdisabled-optimization"
+    "-Wformat=2"
+    "-Winit-self"
+    "-Wmissing-declarations"
+    "-Wmissing-include-dirs"
+    "-Woverloaded-virtual"
+    "-Wredundant-decls"
+    "-Wshadow"
+    "-Wsign-promo"
+    "-Wstrict-overflow=5"
+    "-Wswitch-default"
+    "-Wno-variadic-macros"
+    "-Wno-unused-local-typedef" # for MGBASE_STATIC_ASSERT
+    "$<$<CXX_COMPILER_ID:Clang>:-Wno-c++11-long-long>" # for mpi.h
+    "$<$<CXX_COMPILER_ID:Gcc>:-Wno-c++11-long-long>" # for mpi.h
+)
+
 add_library(mgbase
     ./external/cppformat/format.cc
 )
