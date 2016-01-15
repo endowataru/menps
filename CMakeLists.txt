@@ -31,9 +31,8 @@ target_compile_options(mgbase-options INTERFACE
     "-Wstrict-overflow=5"
     "-Wswitch-default"
     "-Wno-variadic-macros"
-    "-Wno-unused-local-typedef" # for MGBASE_STATIC_ASSERT
     "$<$<CXX_COMPILER_ID:Clang>:-Wno-c++11-long-long>" # for mpi.h
-    "$<$<CXX_COMPILER_ID:Gcc>:-Wno-c++11-long-long>" # for mpi.h
+    "$<$<CXX_COMPILER_ID:GNU>:-Wno-long-long>" # for mpi.h
 )
 
 add_library(mgbase

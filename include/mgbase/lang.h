@@ -7,6 +7,12 @@
 #define MGBASE_CONCAT1(x, y) MGBASE_CONCAT2(x, y)
 #define MGBASE_CONCAT2(x, y) x##y
 
+#define MGBASE_ALWAYS_INLINE    __attribute__((always_inline))
+#define MGBASE_UNUSED           __attribute__((unused))
+
+#define MGBASE_LIKELY(x)        __builtin_expect(!!(x), 1)
+#define MGBASE_UNLIKELY(x)      __builtin_expect(!!(x), 0)
+
 #ifndef __cplusplus
     #include <stdint.h>
     #include <stdlib.h>
@@ -27,7 +33,7 @@
     #define MGBASE_CONSTEXPR_CPP14
     
     #define MGBASE_STATIC_ASSERT(expr, msg) \
-        typedef char MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)[((expr)) ? 1 : -1]
+        MGBASE_UNUSED typedef char MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)[((expr)) ? 1 : -1]
     
     #define MGBASE_EXTERN_C_BEGIN
     #define MGBASE_EXTERN_C_END
@@ -116,7 +122,7 @@
         }
         
         #define MGBASE_STATIC_ASSERT(expr, msg) \
-            typedef ::mgbase::static_assert_check<sizeof(::mgbase::static_assertion<((expr))>)> \
+            MGBASE_UNUSED typedef ::mgbase::static_assert_check<sizeof(::mgbase::static_assertion<((expr))>)> \
                 MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)
         
         namespace mgbase {
@@ -168,11 +174,6 @@ typedef int8_t      mgbase_int8_t;
 typedef int16_t     mgbase_int16_t;
 typedef int32_t     mgbase_int32_t;
 typedef int64_t     mgbase_int64_t;
-
-#define MGBASE_ALWAYS_INLINE    __attribute__((always_inline))
-
-#define MGBASE_LIKELY(x)        __builtin_expect(!!(x), 1)
-#define MGBASE_UNLIKELY(x)      __builtin_expect(!!(x), 0)
 
 // Processor Compatibility
 
