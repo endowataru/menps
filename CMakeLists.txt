@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mgcom)
 
-INCLUDE (CheckIncludeFiles)
+INCLUDE (CheckIncludeFileCXX)
 INCLUDE (CheckCXXSourceCompiles)
 
 add_library(mgcom-header INTERFACE)
@@ -18,7 +18,7 @@ target_link_libraries(mgcom-base INTERFACE mgcom-header mgbase-options)
 
 # Platform Checks
 
-CHECK_INCLUDE_FILES("mpi.h" is_mpi_available)
+CHECK_INCLUDE_FILE_CXX("mpi.h" is_mpi_available)
 
 CHECK_CXX_SOURCE_COMPILES("
 #include <mpi.h>
