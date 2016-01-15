@@ -59,6 +59,7 @@ public:
     template <barrier_impl& impl>
     class handlers
     {
+        typedef handlers                handlers_type;
         typedef barrier_cb              cb_type;
         typedef mgbase::deferred<void>  result_type;
     
@@ -93,7 +94,7 @@ public:
             
             *impl.buf_ = impl.sense_;
             
-            return mgbase::add_continuation<result_type (cb_type&), check>(
+            return mgbase::add_continuation<result_type (cb_type&), &handlers_type::check>(
                 cb
             ,   mgcom::rma::remote_write_nb(
                     impl.cb_write_
@@ -130,7 +131,7 @@ public:
             
             mgcom::am::poll();
             
-            return mgbase::make_deferred<result_type (cb_type&), check>(cb);
+            return mgbase::make_deferred<result_type (cb_type&), &handlers_type::check>(cb);
         }
     };
 

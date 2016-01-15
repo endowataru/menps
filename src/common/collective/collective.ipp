@@ -12,13 +12,14 @@ namespace detail {
 
 class broadcast_handlers
 {
+    typedef broadcast_handlers      handlers_type;
     typedef broadcast_cb            cb_type;
     typedef mgbase::deferred<void>  result_type;
     
 public:
     static result_type start(cb_type& cb)
     {
-        return mgbase::add_continuation<result_type (cb_type&), transfer>(
+        return mgbase::add_continuation<result_type (cb_type&), &handlers_type::transfer>(
             cb
         ,   mgcom::collective::barrier_nb(cb.sync.cb_barrier)
         );
@@ -46,13 +47,14 @@ private:
 
 class allgather_handlers
 {
+    typedef allgather_handlers      handlers_type;
     typedef allgather_cb            cb_type;
     typedef mgbase::deferred<void>  result_type;
     
 public:
     static result_type start(cb_type& cb)
     {
-        return mgbase::add_continuation<result_type (cb_type&), transfer>(
+        return mgbase::add_continuation<result_type (cb_type&), &handlers_type::transfer>(
             cb
         ,   mgcom::collective::barrier_nb(cb.sync.cb_barrier)
         );
@@ -66,7 +68,7 @@ private:
         
         mpi_error::check(
             MPI_Allgather(
-                cb.src
+                const_cast<void*>(cb.src) // TODO: Only old versions of OpenMPI require
             ,   cb.number_of_bytes
             ,   MPI_BYTE
             ,   cb.dest
