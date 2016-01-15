@@ -14,29 +14,7 @@ target_link_libraries(mgcom-header
 )
 
 add_library(mgcom-base INTERFACE)
-target_link_libraries(mgcom-base INTERFACE mgcom-header)
-target_compile_options(mgcom-base INTERFACE
-    "-Wall"
-    "-std=c++03"
-    "-pedantic"
-    "-Wextra"
-    "-Wcast-qual"
-    "-Wctor-dtor-privacy"
-    "-Wdisabled-optimization"
-    "-Wformat=2"
-    "-Winit-self"
-    "-Wmissing-declarations"
-    "-Wmissing-include-dirs"
-    "-Woverloaded-virtual"
-    "-Wredundant-decls"
-    "-Wshadow"
-    "-Wsign-promo"
-    "-Wstrict-overflow=5"
-    "-Wswitch-default"
-    "-Wno-c++11-long-long" # for mpi.h
-    "-Wno-variadic-macros"
-    "-Wno-unused-local-typedef" # for MGBASE_STATIC_ASSERT
-)
+target_link_libraries(mgcom-base INTERFACE mgcom-header mgbase-options)
 
 # Platform Checks
 
