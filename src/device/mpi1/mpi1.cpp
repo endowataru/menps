@@ -1,7 +1,7 @@
 
 #include "common/mpi_base.hpp"
-#include "../mpi3/rma/rma.hpp"
-#include "../mpi3/am/am.hpp"
+#include "device/mpi3/rma/rma.hpp"
+#include "device/mpi/am/am.hpp"
 
 #include <mgbase/logging/logger.hpp>
 

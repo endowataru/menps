@@ -4,7 +4,6 @@
 #include <mgcom.hpp>
 
 namespace mgcom {
-
 namespace am {
 namespace receiver {
 
@@ -20,8 +19,7 @@ struct constants {
     static const index_t max_num_tickets = 32;
 };
 
-}
-}
-
-}
+} // namespace receiver
+} // namespace am
+} // namespace mgcom
 

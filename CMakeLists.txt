@@ -43,10 +43,10 @@ add_library(mgcom-mpi3
     src/device/mpi3/mpi3.cpp
     src/device/mpi3/collective.cpp
     src/device/mpi3/rma/rma.cpp
-    src/device/mpi3/am/am.cpp
-    src/device/mpi3/am/receiver.cpp
-    src/device/mpi3/am/sender.cpp
-    src/device/mpi3/am/sender_queue.cpp
+    src/device/mpi/am/am.cpp
+    src/device/mpi/am/receiver.cpp
+    src/device/mpi/am/sender.cpp
+    src/device/mpi/am/sender_queue.cpp
 )
 target_include_directories(mgcom-mpi3
     PRIVATE ./src
@@ -63,10 +63,10 @@ add_library(mgcom-mpi1
     src/common/rma/contiguous.cpp
     src/common/rma/buffer_pool.cpp
     src/device/mpi3/rma/rma.cpp
-    src/device/mpi3/am/am.cpp
-    src/device/mpi3/am/receiver.cpp
-    src/device/mpi3/am/sender.cpp
-    src/device/mpi3/am/sender_queue.cpp
+    src/device/mpi/am/am.cpp
+    src/device/mpi/am/receiver.cpp
+    src/device/mpi/am/sender.cpp
+    src/device/mpi/am/sender_queue.cpp
 )
 target_include_directories(mgcom-mpi1
     PRIVATE ./src

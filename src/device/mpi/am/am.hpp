@@ -5,7 +5,6 @@
 #include <mpi.h>
 
 namespace mgcom {
-
 namespace am {
 
 void initialize();
@@ -21,7 +20,6 @@ inline MPI_Comm& get_comm() {
     return comm;
 }
 
-}
-
-}
+} // namespace am
+} // namespace mgcom
 
