@@ -176,11 +176,22 @@ typedef int64_t     mgbase_int64_t;
 
 // Processor Compatibility
 
+#if (defined(__i386__) || defined(__x86_64__))
+    #define MGBASE_ARCH_INTEL
+#endif
+
 #if (defined(__sparc))
     #define MGBASE_ARCH_SPARC
 #endif
 
-#if (defined(__i386__) || defined(__x86_64__))
-    #define MGBASE_ARCH_INTEL
+// Compiler Compatibility
+
+#ifdef __GNUC__
+    #define MGBASE_COMPILER_GCC
 #endif
+
+#ifdef __clang__
+    #define MGBASE_COMPILER_CLANG
+#endif
+
 

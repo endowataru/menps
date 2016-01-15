@@ -7,6 +7,7 @@
                 'include_dirs' : [
                     '../include',
                 ],
+                'libraries': ['-lpthread', ],
             },
             'dependencies' : [
                 './cppformat.gyp:cppformat'

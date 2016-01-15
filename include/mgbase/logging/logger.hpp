@@ -74,9 +74,11 @@ void logger_not_defined(...);
 
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvariadic-macros"
-#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#ifdef MGBASE_COMPILER_CLANG
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvariadic-macros"
+    #pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
 
 #ifdef MGBASE_ENABLE_LOG
     #define MGBASE_LOG_DEBUG(format, ...)  \
@@ -90,7 +92,9 @@ void logger_not_defined(...);
         if (false) { mgbase::detail::logger_not_defined(format, ## __VA_ARGS__); }
 #endif
 
-#pragma GCC diagnostic pop
+#ifdef MGBASE_COMPILER_CLANG
+    #pragma GCC diagnostic pop
+#endif
 
 }
 

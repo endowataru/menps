@@ -4,7 +4,7 @@
         'configurations': {
             'Debug': {
                 'cflags': ['-g3', '-O0', '-Wall'],
-                'ldflags': ['-g3', '-lpthread'],
+                'ldflags': ['-g3',],
                 'xcode_settings': {
                     'OTHER_CPLUSPLUSFLAGS': [
                         '-g3', '-O0', '-Wall',
@@ -14,7 +14,6 @@
             },
             'Release': {
                 'cflags': ['-O3',],
-                'ldflags': ['-lpthread'],
                 'xcode_settings': {
                     'OTHER_CPLUSPLUSFLAGS': [
                         '-O3',
