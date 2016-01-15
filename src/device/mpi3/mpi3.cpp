@@ -16,7 +16,7 @@ std::string get_state() {
     return w.str();
 }
 
-}
+} // unnamed namespace
 
 void initialize(int* argc, char*** argv)
 {
@@ -41,5 +41,5 @@ void finalize()
     MGBASE_LOG_DEBUG("msg:Finalized.");
 }
 
-}
+} // namespace mgcom
 

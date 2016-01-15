@@ -30,8 +30,9 @@ target_compile_options(mgcom-base INTERFACE
     "-Wsign-promo"
     "-Wstrict-overflow=5"
     "-Wswitch-default"
-    "-Wno-c++11-long-long"
+    "-Wno-c++11-long-long" # for mpi.h
     "-Wno-variadic-macros"
+    "-Wno-unused-local-typedef" # for MGBASE_STATIC_ASSERT
 )
 
 add_library(mgcom-mpi3
@@ -47,14 +48,32 @@ add_library(mgcom-mpi3
     src/device/mpi3/am/sender.cpp
     src/device/mpi3/am/sender_queue.cpp
 )
-
 target_include_directories(mgcom-mpi3
     PRIVATE ./src
 )
-
 target_link_libraries(mgcom-mpi3 mgcom-base mgbase)
 
-set(mgcom-devices mpi3)
+
+add_library(mgcom-mpi1
+    src/common/collective/barrier.cpp
+    src/common/collective/collective.cpp
+    src/device/mpi1/mpi1.cpp
+    src/common/polling.cpp
+    src/common/mpi_base.cpp
+    src/common/rma/contiguous.cpp
+    src/common/rma/buffer_pool.cpp
+    src/device/mpi3/rma/rma.cpp
+    src/device/mpi3/am/am.cpp
+    src/device/mpi3/am/receiver.cpp
+    src/device/mpi3/am/sender.cpp
+    src/device/mpi3/am/sender_queue.cpp
+)
+target_include_directories(mgcom-mpi1
+    PRIVATE ./src
+)
+target_link_libraries(mgcom-mpi1 mgcom-base mgbase)
+
+set(mgcom-devices mpi3;mpi1)
 set(mgcom-devices ${mgcom-devices} PARENT_SCOPE)
 
 foreach (device IN LISTS mgcom-devices)
