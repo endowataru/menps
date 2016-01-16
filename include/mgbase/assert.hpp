@@ -5,9 +5,13 @@
 
 #include <cassert>
 
-#ifdef MGBASE_DISABLE_ASSERT
-    #define MGBASE_ASSERT(x)
-#else
+#if (!defined(MGBASE_ENABLE_ASSERT) && defined(MGBASE_DEBUG))
+    #define MGBASE_ENABLE_ASSERT
+#endif
+
+#ifdef MGBASE_ENABLE_ASSERT
     #define MGBASE_ASSERT(x)    assert(x);
+#else
+    #define MGBASE_ASSERT(x)
 #endif
 
