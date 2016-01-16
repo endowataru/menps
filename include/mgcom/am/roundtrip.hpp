@@ -38,7 +38,7 @@ struct call_roundtrip_types
     struct argument_info
         : mgbase::value_wrapper<argument_type>
     {
-        argument_info(call_roundtrip_cb* cb_ptr, const argument_type& val)
+        argument_info(call_roundtrip_cb* cb_ptr, const mgbase::value_wrapper<argument_type>& val)
             : mgbase::value_wrapper<argument_type>(val)
             , cb(cb_ptr)
             { }
@@ -49,7 +49,7 @@ struct call_roundtrip_types
     struct return_info
         : mgbase::value_wrapper<return_type>
     {
-        return_info(call_roundtrip_cb* cb_ptr, const return_type& val)
+        return_info(call_roundtrip_cb* cb_ptr, const mgbase::value_wrapper<return_type>& val)
             : mgbase::value_wrapper<return_type>(val)
             , cb(cb_ptr)
             { }
@@ -155,6 +155,7 @@ inline void roundtrip_request(const callback_parameters* params)
     typedef call_roundtrip_types<Handler>       types;
     
     typedef typename types::argument_info       argument_info;
+    typedef typename types::argument_type       argument_type;
     
     typedef typename types::return_type         return_type;
     typedef typename types::return_info         return_info;
@@ -162,7 +163,14 @@ inline void roundtrip_request(const callback_parameters* params)
     const argument_info& arg_info =
         *static_cast<const argument_info*>(params->data);
     
-    const return_type res = Handler::on_request(*params, arg_info.get());
+    const mgbase::value_wrapper<return_type> res = 
+        mgbase::call_by_value_wrapper<return_type>(
+            mgbase::make_bound_function<
+                return_type (const mgcom::am::callback_parameters&, const argument_type&)
+            ,   &Handler::on_request
+            >(params)
+        ,   arg_info
+        );
     
     return_info ret_info(arg_info.cb, res);
     
@@ -188,7 +196,7 @@ inline void roundtrip_reply(const callback_parameters* params)
     return_type* dest = static_cast<return_type*>(ret_info.cb->result);
     
     // Copy the result to the specified destination.
-    *dest = ret_info.get();
+    ret_info.assign_to(dest);
     
     // Set the flag to finalize.
     mgbase::atomic_store_explicit(&ret_info.cb->got_reply, true, mgbase::memory_order_release);

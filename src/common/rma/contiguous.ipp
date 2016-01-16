@@ -189,7 +189,7 @@ public:
     {
         return try_local_fetch_and_add_default(
             cb.target_addr
-        ,   cb.diff_addr
+        ,   cb.value_addr
         ,   cb.result_addr
         ,   on_complete
         );

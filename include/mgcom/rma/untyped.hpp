@@ -80,7 +80,6 @@ void deallocate(const registered_buffer& buffer);
 
 namespace /*unnamed*/ {
 
-
 inline region_key to_region_key(const local_region& region) MGBASE_NOEXCEPT {
     return region.key;
 }
@@ -138,8 +137,8 @@ inline remote_address use_remote_address(process_id_t proc_id, const local_addre
 
 namespace detail {
 
-mgbase::deferred<void> remote_read_nb(remote_read_cb& cb);
-mgbase::deferred<void> remote_write_nb(remote_write_cb& cb);
+mgbase::deferred<void> remote_read(remote_read_cb& cb);
+mgbase::deferred<void> remote_write(remote_write_cb& cb);
 
 } // namespace detail
 
@@ -160,7 +159,7 @@ inline mgbase::deferred<void> remote_read_nb(
     cb.local_addr    = local_addr;
     cb.size_in_bytes = size_in_bytes;
     
-    return detail::remote_read_nb(cb);
+    return detail::remote_read(cb);
 }
 
 /**
@@ -178,7 +177,7 @@ inline mgbase::deferred<void> remote_write_nb(
     cb.local_addr    = local_addr;
     cb.size_in_bytes = size_in_bytes;
     
-    return detail::remote_write_nb(cb);
+    return detail::remote_write(cb);
 }
 
 } // unnamed namespace
@@ -221,14 +220,14 @@ mgbase::deferred<void> read_strided_nb(
 
 namespace detail {
 
-mgbase::deferred<void> remote_atomic_read_default_nb(remote_atomic_read_default_cb& cb);
-mgbase::deferred<void> remote_atomic_write_default_nb(remote_atomic_write_default_cb& cb);
+mgbase::deferred<void> remote_atomic_read_default(remote_atomic_read_default_cb& cb);
+mgbase::deferred<void> remote_atomic_write_default(remote_atomic_write_default_cb& cb);
 
-mgbase::deferred<void> local_compare_and_swap_default_nb(local_compare_and_swap_default_cb& cb);
-mgbase::deferred<void> local_fetch_and_add_default_nb(local_fetch_and_add_default_cb& cb);
+mgbase::deferred<void> local_compare_and_swap_default(local_compare_and_swap_default_cb& cb);
+mgbase::deferred<void> local_fetch_and_add_default(local_fetch_and_add_default_cb& cb);
 
-mgbase::deferred<void> remote_compare_and_swap_default_nb(remote_compare_and_swap_default_cb& cb);
-mgbase::deferred<void> remote_fetch_and_add_default_nb(remote_fetch_and_add_default_cb& cb);
+mgbase::deferred<void> remote_compare_and_swap_default(remote_compare_and_swap_default_cb& cb);
+mgbase::deferred<void> remote_fetch_and_add_default(remote_fetch_and_add_default_cb& cb);
 
 } // namespace detail
 
@@ -249,7 +248,7 @@ inline mgbase::deferred<void> remote_atomic_read_default_nb(
     cb.local_addr  = local_addr;
     cb.buf_addr    = buf_addr;
     
-    return detail::remote_atomic_read_default_nb(cb);
+    return detail::remote_atomic_read_default(cb);
 }
 
 /**
@@ -267,7 +266,7 @@ inline mgbase::deferred<void> remote_atomic_write_default_nb(
     cb.local_addr  = local_addr;
     cb.buf_addr    = buf_addr;
     
-    return detail::remote_atomic_write_default_nb(cb);
+    return detail::remote_atomic_write_default(cb);
 }
 
 
@@ -286,7 +285,7 @@ inline mgbase::deferred<void> local_compare_and_swap_default_nb(
     cb.desired_addr  = desired_addr;
     cb.result_addr   = result_addr;
     
-    return detail::local_compare_and_swap_default_nb(cb);
+    return detail::local_compare_and_swap_default(cb);
 }
 
 /**
@@ -295,14 +294,14 @@ inline mgbase::deferred<void> local_compare_and_swap_default_nb(
 inline mgbase::deferred<void> local_fetch_and_add_default_nb(
     local_fetch_and_add_default_cb&     cb
 ,   const local_address&                target_addr
-,   const local_address&                diff_addr
+,   const local_address&                value_addr
 ,   const local_address&                result_addr
 ) {
     cb.target_addr = target_addr;
-    cb.diff_addr   = diff_addr;
+    cb.value_addr  = value_addr;
     cb.result_addr = result_addr;
     
-    return detail::local_fetch_and_add_default_nb(cb);
+    return detail::local_fetch_and_add_default(cb);
 }
 
 /**
@@ -322,7 +321,7 @@ inline mgbase::deferred<void> remote_compare_and_swap_default_nb(
     cb.desired_addr  = desired_addr;
     cb.result_addr   = result_addr;
     
-    return detail::remote_compare_and_swap_default_nb(cb);
+    return detail::remote_compare_and_swap_default(cb);
 }
 
 /**
@@ -340,7 +339,7 @@ inline mgbase::deferred<void> remote_fetch_and_add_default_nb(
     cb.value_addr  = value_addr;
     cb.result_addr = result_addr;
     
-    return detail::remote_fetch_and_add_default_nb(cb);
+    return detail::remote_fetch_and_add_default(cb);
 }
 
 } // unnamed namespace

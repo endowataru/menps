@@ -37,11 +37,14 @@ if(${is_mpi_available})
         src/common/collective/barrier.cpp
         src/common/collective/collective.cpp
         src/device/mpi1/mpi1.cpp
+        src/device/mpi/rma/atomic.cpp
+        src/device/mpi/rma/contiguous.cpp
+        src/device/mpi/rma/rma.cpp
         src/common/polling.cpp
         src/common/mpi_base.cpp
-        src/common/rma/contiguous.cpp
+        #src/common/rma/contiguous.cpp
         src/common/rma/buffer_pool.cpp
-        src/device/mpi3/rma/rma.cpp
+        #src/device/mpi3/rma/rma.cpp
         src/device/mpi/am/am.cpp
         src/device/mpi/am/receiver.cpp
         src/device/mpi/am/sender.cpp
