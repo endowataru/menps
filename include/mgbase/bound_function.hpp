@@ -65,7 +65,7 @@ public:
     {
         bound_function f;
         f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&pass_bound<Arg1, Func>);
-        f.untyped_.arg1 = arg1;
+        f.untyped_.arg1 = const_cast<void*>(static_cast<const void*>(arg1));
         
         return f;
     }
@@ -104,7 +104,7 @@ public:
         
         bound_function f;
         f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(handler::transfer);
-        f.untyped_.arg1 = arg1;
+        f.untyped_.arg1 = const_cast<void*>(static_cast<const void*>(arg1));
         
         return f;
     }

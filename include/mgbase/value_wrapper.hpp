@@ -21,6 +21,10 @@ public:
     const T& get() const MGBASE_NOEXCEPT {
         return val_;
     }
+    
+    void assign_to(T* dest) const {
+        *dest = val_;
+    }
 
 private:
     T val_;
@@ -38,6 +42,7 @@ public:
     T& get() const MGBASE_NOEXCEPT {
         return *val_;
     }
+    
 
 private:
     T* val_;
@@ -47,7 +52,11 @@ template <>
 class value_wrapper<void>
 {
 public:
-    void get() MGBASE_NOEXCEPT { }
+    void get() const MGBASE_NOEXCEPT { }
+    
+    void assign_to(void* /*dest*/) const {
+        // do nothing
+    }
 };
 
 namespace /*unnamed*/ {
