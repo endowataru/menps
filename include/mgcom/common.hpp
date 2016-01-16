@@ -29,5 +29,13 @@ process_id_t current_process_id() MGBASE_NOEXCEPT;
 
 index_t number_of_processes() MGBASE_NOEXCEPT;
 
+namespace /*unnamed*/ {
+
+inline bool valid_process_id(process_id_t proc) MGBASE_NOEXCEPT {
+    return proc < number_of_processes();
+}
+
+} // unnamed namespace
+
 } // namespace mgcom
 

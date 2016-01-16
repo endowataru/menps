@@ -31,9 +31,9 @@ public:
     }
     
     bool try_send(
-        const am_message_buffer&    msg
-    ,   process_id_t                dest_proc
-    ,   MPI_Request*                request
+        am_message_buffer&  msg
+    ,   process_id_t        dest_proc
+    ,   MPI_Request*        request
     ) {
         if (!get_ticket_to(dest_proc)) {
             MGBASE_LOG_DEBUG("msg:Failed to get a ticket.");
@@ -46,6 +46,8 @@ public:
         }
         
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
+        
+        msg.ticket = receiver::pull_tickets_from(dest_proc);
         
         const int size = static_cast<int>(sizeof(am_message_buffer));
         
@@ -104,7 +106,11 @@ public:
     };
     
     
-    void add_ticket(process_id_t dest_proc, index_t ticket) {
+    void add_ticket(process_id_t dest_proc, index_t ticket)
+    {
+        MGBASE_ASSERT(valid_process_id(dest_proc));
+        MGBASE_ASSERT(ticket <= receiver::constants::max_num_tickets);
+        
         MGBASE_LOG_DEBUG("msg:Added ticket.\tdest:{}\tbefore:{}\tdiff:{}", dest_proc, tickets_[dest_proc], ticket);
         tickets_[dest_proc] += ticket;
     }
