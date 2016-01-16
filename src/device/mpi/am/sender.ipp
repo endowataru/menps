@@ -49,9 +49,11 @@ public:
         
         const int size = static_cast<int>(sizeof(am_message_buffer));
         
+        const void* const buffer = &msg;
+        
         mpi_error::check(
             MPI_Irsend(
-                &msg                        // buffer
+                const_cast<void*>(buffer)   // buffer (const_cast is required for old MPI implementations)
             ,   size                        // count
             ,   MPI_BYTE                    // datatype
             ,   static_cast<int>(dest_proc) // dest
@@ -69,6 +71,7 @@ public:
     template <impl& self>
     class send_handlers
     {
+        typedef send_handlers           handlers_type;
         typedef send_cb                 cb_type;
         typedef mgbase::deferred<void>  result_type;
         typedef result_type (func_type)(cb_type&);
@@ -80,7 +83,7 @@ public:
             if (self.try_send(cb.msg, cb.dest_proc, request))
                 return test(cb);
             else
-                return mgbase::make_deferred<func_type, start>(cb);
+                return mgbase::make_deferred<func_type, &handlers_type::start>(cb);
         }
         
     private:
@@ -96,7 +99,7 @@ public:
             if (flag)
                 return mgbase::make_ready_deferred();
             else
-                return mgbase::make_deferred<func_type, test>(cb);
+                return mgbase::make_deferred<func_type, &handlers_type::test>(cb);
         }
     };
     

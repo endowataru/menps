@@ -1,6 +1,11 @@
 
 #include "unittest.hpp"
 
+TEST(Base, Startup)
+{
+
+}
+
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);

@@ -42,9 +42,7 @@ if(${is_mpi_available})
         src/device/mpi/rma/rma.cpp
         src/common/polling.cpp
         src/common/mpi_base.cpp
-        #src/common/rma/contiguous.cpp
         src/common/rma/buffer_pool.cpp
-        #src/device/mpi3/rma/rma.cpp
         src/device/mpi/am/am.cpp
         src/device/mpi/am/receiver.cpp
         src/device/mpi/am/sender.cpp

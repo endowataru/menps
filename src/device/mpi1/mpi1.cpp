@@ -27,12 +27,20 @@ std::string get_state() {
 void initialize(int* argc, char*** argv)
 {
     mpi_base::initialize(argc, argv);
-    rma::initialize();
+    
+    mgbase::logger::set_state_callback(get_state);
+    
     am::initialize();
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    rma::initialize();
+    
+    MPI_Barrier(MPI_COMM_WORLD);
     
     collective::initialize();
     
-    mgbase::logger::set_state_callback(get_state);
+    MPI_Barrier(MPI_COMM_WORLD);
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
 }
@@ -41,8 +49,13 @@ void finalize()
 {
     collective::barrier();
     
-    am::finalize();
+    MPI_Barrier(MPI_COMM_WORLD);
+    
     rma::finalize();
+    
+    am::finalize();
+    
+    MGBASE_LOG_DEBUG("msg:Finalized.");
     
     mpi_base::finalize();
     

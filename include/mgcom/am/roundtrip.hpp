@@ -63,6 +63,7 @@ struct call_roundtrip_types
 template <typename Handler>
 class call_roundtrip_handlers
 {
+    typedef call_roundtrip_handlers             handlers_type;
     typedef call_roundtrip_types<Handler>       types;
     
     typedef call_roundtrip_cb                   cb_type;
@@ -86,7 +87,7 @@ public:
         
         argument_info info(&cb, arg);
         
-        return mgbase::add_continuation<result_type (cb_type&), check>(
+        return mgbase::add_continuation<result_type (cb_type&), &handlers_type::check>(
             cb
         ,   untyped::send_nb(
                 cb.cb_send
@@ -108,7 +109,7 @@ private:
             // TODO: Selective polling
             mgcom::am::poll();
             
-            return mgbase::make_deferred<result_type (cb_type&), check>(cb);
+            return mgbase::make_deferred<result_type (cb_type&), &handlers_type::check>(cb);
         }
     }
 };

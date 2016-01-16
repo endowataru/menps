@@ -46,6 +46,10 @@ public:
     
     void finalize()
     {
+        for (index_t i = 0; i < constants::max_num_tickets; ++i) {
+            MPI_Cancel(&requests_[i]);
+        }
+        
         delete[] tickets_;
         delete[] callbacks_;
     }

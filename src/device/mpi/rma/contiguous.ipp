@@ -65,6 +65,7 @@ public:
     template <emulated_contiguous& self>
     class read_handlers
     {
+        typedef read_handlers           handlers_type;
         typedef remote_read_cb          cb_type;
         typedef mgbase::deferred<void>  result_type;
         typedef result_type (func_type)(cb_type&);
@@ -80,7 +81,7 @@ public:
         static result_type try_recv(cb_type& cb)
         {
             if (!mpi_base::get_lock().try_lock())
-                return mgbase::make_deferred<func_type, &try_recv>(cb);
+                return mgbase::make_deferred<func_type, &read_handlers::try_recv>(cb);
             
             {
                 mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
@@ -106,7 +107,7 @@ public:
             
             const am_read::argument_type arg = { cb.tag, src_ptr, cb.size_in_bytes };
             
-            return mgbase::add_continuation<func_type, test>(
+            return mgbase::add_continuation<func_type, &handlers_type::test>(
                 cb
             ,   mgcom::am::call_roundtrip_nb<am_read>(
                     cb.cb_roundtrip
@@ -129,7 +130,7 @@ public:
             if (flag)
                 return mgbase::make_ready_deferred();
             else
-                return mgbase::make_deferred<func_type, test>(cb);
+                return mgbase::make_deferred<func_type, &handlers_type::test>(cb);
         }
     };
     
@@ -170,6 +171,7 @@ public:
     template <emulated_contiguous& self>
     class write_handlers
     {
+        typedef write_handlers          handlers_type;
         typedef remote_write_cb         cb_type;
         typedef mgbase::deferred<void>  result_type;
         typedef result_type (func_type)(cb_type&);
@@ -185,7 +187,7 @@ public:
         static result_type try_send(cb_type& cb)
         {
             if (!mpi_base::get_lock().try_lock())
-                return mgbase::make_deferred<func_type, &try_send>(cb);
+                return mgbase::make_deferred<func_type, &write_handlers::try_send>(cb);
             
             {
                 mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
@@ -211,7 +213,7 @@ public:
             
             const am_write::argument_type arg = { cb.tag, dest_ptr, cb.size_in_bytes };
             
-            return mgbase::add_continuation<func_type, test>(
+            return mgbase::add_continuation<func_type, &handlers_type::test>(
                 cb
             ,   mgcom::am::call_roundtrip_nb<am_write>(
                     cb.cb_roundtrip
@@ -234,7 +236,7 @@ public:
             if (flag)
                 return mgbase::make_ready_deferred();
             else
-                return mgbase::make_deferred<func_type, test>(cb);
+                return mgbase::make_deferred<func_type, &handlers_type::test>(cb);
         }
     };
     
