@@ -21,7 +21,7 @@ namespace /*unnamed*/ {
 class impl
 {
 public:
-    static const index_t max_num_callbacks = 1024;
+    static const index_t max_num_callbacks = 10000;
     
     impl() : initialized_(false) { }
     
@@ -54,7 +54,11 @@ public:
         delete[] callbacks_;
     }
     
-    void register_handler(handler_id_t id, handler_callback_t callback) {
+    void register_handler(handler_id_t id, handler_callback_t callback)
+    {
+        MGBASE_ASSERT(id < max_num_callbacks);
+        MGBASE_ASSERT(callback != MGBASE_NULLPTR);
+        
         callbacks_[id] = callback;
         MGBASE_LOG_DEBUG("msg:Registered a handler.\tsrc:{}\tcallback:{:x}", id, reinterpret_cast<mgbase::uint64_t>(callback));
     }
