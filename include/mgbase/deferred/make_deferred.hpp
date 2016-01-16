@@ -17,35 +17,32 @@ template <
 ,   Signature* Func
 ,   typename CB
 >
-struct make_deferred_handler
+inline MGBASE_ALWAYS_INLINE resumable make_deferred_pass(CB& cb)
 {
     typedef typename detail::deferred_result<Signature>::type T;
+
+    deferred<T> df = Func(cb);
     
-    static MGBASE_ALWAYS_INLINE resumable transfer(CB& cb)
+    continuation<T>* const current_cont = df.get_continuation();
+    continuation<T>& next_cont = get_next_continuation<T>(cb);
+    
+    if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
     {
-        deferred<T> df = Func(cb);
-        
-        continuation<T>* const current_cont = df.get_continuation();
-        continuation<T>& next_cont = get_next_continuation<T>(cb);
-        
-        if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
-        {
-            return next_cont.call(df.to_ready());
-        }
-        else
-        {
-            if (current_cont != &next_cont) {
-                // Move the continuation.
-                *current_cont = next_cont;
-            }
-            else {
-                // The continuation has already been set within Func.
-            }
-            
-            return df.get_resumable();
-        }
+        return next_cont.call(df.to_ready());
     }
-};
+    else
+    {
+        if (current_cont != &next_cont) {
+            // Move the continuation.
+            *current_cont = next_cont;
+        }
+        else {
+            // The continuation has already been set within Func.
+        }
+        
+        return df.get_resumable();
+    }
+}
 
 #ifdef MGBASE_IF_CPP11_SUPPORTED
 } /* unnamed namespace */
@@ -70,7 +67,7 @@ deferred<typename detail::deferred_result<Signature>::type> make_deferred(CB& cb
     ,   make_resumable(
             make_bound_function<
                 resumable (CB&)
-            ,   detail::make_deferred_handler<Signature, Func, CB>::transfer
+            ,   &detail::make_deferred_pass<Signature, Func, CB>
             >
             (&cb)
         )

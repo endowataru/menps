@@ -3,6 +3,7 @@
 
 #include "bound_function.h"
 #include <mgbase/assert.hpp>
+#include <mgbase/function_traits.hpp>
 
 namespace mgbase {
 
@@ -34,33 +35,36 @@ public:
         return f;
     }
     
-    template <typename Signature, Signature* Func>
+private:
+    // Note: Avoid too much nesting for readable linker & runtime messages.
+    template <Result (*Func)()>
+    static result_type pass_empty(void* /*arg1*/) {
+        return Func();
+    }
+    
+private:
+    template <Result (*Func)()>
     static bound_function create()
     {
-        struct handler {
-            static result_type transfer(void* /*arg1*/) {
-                return Func();
-            }
-        };
-        
         bound_function f;
-        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(handler::transfer);
+        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&pass_empty<Func>);
         f.untyped_.arg1 = MGBASE_NULLPTR;
         
         return f;
     }
     
+private:
+    template <typename Arg1, Result (*Func)(Arg1&)>
+    static result_type pass_bound(void* a1) {
+        return Func(*static_cast<Arg1*>(a1));
+    }
+    
+public:
     template <typename Signature, Signature* Func, typename Arg1>
     static bound_function create(Arg1* arg1)
     {
-        struct handler {
-            static result_type transfer(void* a1) {
-                return Func(*static_cast<Arg1*>(a1));
-            }
-        };
-        
         bound_function f;
-        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(handler::transfer);
+        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&pass_bound<Arg1, Func>);
         f.untyped_.arg1 = arg1;
         
         return f;
