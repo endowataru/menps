@@ -5,10 +5,10 @@ struct test_handler {
     static const mgcom::am::handler_id_t request_id = 1;
     static const mgcom::am::handler_id_t reply_id   = 2;
     
-    typedef int*    request_argument;
-    typedef int     reply_argument;
+    typedef int*    argument_type;
+    typedef int     return_type;
     
-    static reply_argument on_request(const mgcom::am::callback_parameters& params, const request_argument& arg) {
+    static return_type on_request(const mgcom::am::callback_parameters& params, const argument_type& arg) {
         *arg += 10;
         return static_cast<int>(params.source);
     }
