@@ -62,10 +62,10 @@ class call_roundtrip_handlers
     
 public:
     static result_type start(
-        cb_type&            cb
-    ,   process_id_t        proc_id
-    ,   request_argument&   arg
-    ,   reply_argument*     result
+        cb_type&                    cb
+    ,   process_id_t                proc_id
+    ,   const request_argument&     arg
+    ,   reply_argument*             result
     )
     {
         // This flag is important to tell the finalization.
@@ -107,10 +107,10 @@ private:
 template <typename Handler>
 inline typename detail::call_roundtrip_types<Handler>::result_type
 call_roundtrip_nb(
-    call_roundtrip_cb&                                                  cb
-,   process_id_t                                                        proc_id
-,   typename detail::call_roundtrip_types<Handler>::request_argument&   arg
-,   typename detail::call_roundtrip_types<Handler>::reply_argument*     result
+    call_roundtrip_cb&                                                      cb
+,   process_id_t                                                            proc_id
+,   const typename detail::call_roundtrip_types<Handler>::request_argument& arg
+,   typename detail::call_roundtrip_types<Handler>::reply_argument*         result
 )
 {
     return detail::call_roundtrip_handlers<Handler>::start(cb, proc_id, arg, result);
