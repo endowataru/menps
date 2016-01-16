@@ -66,7 +66,7 @@ public:
     
     // For unwrapping
     /*implicit*/ deferred(const value_wrapper< deferred<T> >& df) {
-        *this = df;
+        *this = df.get();
     }
     
     explicit deferred(continuation<T>& cont, const resumable& res) MGBASE_NOEXCEPT
