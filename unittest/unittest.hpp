@@ -1,5 +1,5 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
+#include <mgbase/external/googletest.hpp>
 
