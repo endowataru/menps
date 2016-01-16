@@ -10,7 +10,7 @@ namespace detail {
 template <typename T>
 struct set_terminal_handler
 {
-    static MGBASE_ALWAYS_INLINE resumable assign(T& dest, const ready_deferred<T>& df) MGBASE_NOEXCEPT {
+    static MGBASE_ALWAYS_INLINE resumable assign(T& dest, const value_wrapper<T>& df) MGBASE_NOEXCEPT {
         dest = df.get();
         return make_empty_resumable();
     }
@@ -19,7 +19,7 @@ struct set_terminal_handler
 template <>
 struct set_terminal_handler<void>
 {
-    static MGBASE_ALWAYS_INLINE resumable assign(const ready_deferred<void>& /*df*/) MGBASE_NOEXCEPT {
+    static MGBASE_ALWAYS_INLINE resumable assign(const value_wrapper<void>& /*df*/) MGBASE_NOEXCEPT {
         return make_empty_resumable();
     }
 };
@@ -38,7 +38,7 @@ resumable deferred_base<Derived, T>::set_terminal(T* dest)
     {
         derived().set_continuation(
             make_bound_function<
-                resumable (T&, const ready_deferred<T>&)
+                resumable (T&, const value_wrapper<T>&)
             ,   &set_terminal_handler<T>::assign
             >
             (dest)
@@ -63,7 +63,7 @@ resumable deferred_base<Derived, void>::set_terminal()
     {
         derived().set_continuation(
             make_unbound_function<
-                resumable (const ready_deferred<void>&)
+                resumable (const value_wrapper<void>&)
             ,   &set_terminal_handler<void>::assign
             >()
         );

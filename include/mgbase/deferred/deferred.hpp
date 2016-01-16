@@ -2,6 +2,7 @@
 #pragma once
 
 #include "continuation.hpp"
+#include "ready_deferred.hpp"
 #include <mgbase/assert.hpp>
 #include <mgbase/function_traits.hpp>
 
@@ -48,20 +49,25 @@ private:
 template <typename T>
 class deferred
     : public detail::deferred_base<deferred<T>, T>
-    , private ready_deferred<T>
+    , private value_wrapper<T>
 {
     /*
      * The value is defined as a base class (not a member)
      * in order to utilize the empty base optimization
      * when T is void.
      */
-    typedef ready_deferred<T>   base_value;
+    typedef value_wrapper<T>   base_value;
     
 public:
-    /*implicit*/ deferred(const ready_deferred<T>& val)
+    /*implicit*/ deferred(const value_wrapper<T>& val)
         : base_value(val)
         , cont_(MGBASE_NULLPTR)
         { }
+    
+    // For unwrapping
+    /*implicit*/ deferred(const value_wrapper< deferred<T> >& df) {
+        *this = df;
+    }
     
     explicit deferred(continuation<T>& cont, const resumable& res) MGBASE_NOEXCEPT
         : res_(res)
@@ -92,11 +98,11 @@ public:
         return res_.resume();
     }
     
-    ready_deferred<T>& to_ready() MGBASE_NOEXCEPT {
+    value_wrapper<T>& to_ready() MGBASE_NOEXCEPT {
         MGBASE_ASSERT(cont_ == MGBASE_NULLPTR);
         return *this;
     }
-    const ready_deferred<T>& to_ready() const MGBASE_NOEXCEPT {
+    const value_wrapper<T>& to_ready() const MGBASE_NOEXCEPT {
         MGBASE_ASSERT(cont_ == MGBASE_NULLPTR);
         return *this;
     }
@@ -118,7 +124,7 @@ struct remove_deferred< deferred<T> > {
     typedef T   type;
 };
 template <typename T>
-struct remove_deferred< ready_deferred<T> > {
+struct remove_deferred< value_wrapper<T> > {
     typedef T   type;
 };
 
@@ -131,6 +137,7 @@ struct deferred_result {
 };
 
 } // namespace detail
+
 
 } // namespace mgbase
 

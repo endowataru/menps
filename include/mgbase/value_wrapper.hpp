@@ -1,0 +1,153 @@
+
+#pragma once
+
+#include <mgbase/lang.hpp>
+
+namespace mgbase {
+
+template <typename T>
+class value_wrapper
+{
+public:
+    value_wrapper() MGBASE_EMPTY_DEFINITION
+    
+    /*implicit*/ value_wrapper(const T& val)
+        : val_(val) { }
+    
+    T get() {
+        return val_;
+    }
+    
+    const T& get() const MGBASE_NOEXCEPT {
+        return val_;
+    }
+
+private:
+    T val_;
+};
+
+template <typename T>
+class value_wrapper<T&>
+{
+public:
+    value_wrapper() MGBASE_EMPTY_DEFINITION
+    
+    /*implicit*/ value_wrapper(T& val)
+        : val_(&val) { }
+    
+    T& get() const MGBASE_NOEXCEPT {
+        return *val_;
+    }
+
+private:
+    T* val_;
+};
+
+template <>
+class value_wrapper<void>
+{
+public:
+    void get() MGBASE_NOEXCEPT { }
+};
+
+namespace /*unnamed*/ {
+
+inline value_wrapper<void> wrap_void() MGBASE_NOEXCEPT {
+    return value_wrapper<void>();
+}
+template <typename T>
+inline value_wrapper<T> wrap_value(T& value) {
+    return value_wrapper<T>(value);
+}
+template <typename T>
+inline value_wrapper<T> wrap_value(const T& value) {
+    return value_wrapper<T>(value);
+}
+
+template <typename T>
+inline value_wrapper<T&> wrap_reference(T& value) MGBASE_NOEXCEPT {
+    return value_wrapper<T&>(value);
+}
+template <typename T>
+inline value_wrapper<const T&> wrap_reference(const T& value) MGBASE_NOEXCEPT {
+    return value_wrapper<const T&>(value);
+}
+
+} // unnamed namespace
+
+namespace detail {
+
+template <typename R>
+struct call_by_value_wrapper_helper
+{
+    template <typename Func, typename T>
+    static value_wrapper<R> call(Func func, value_wrapper<T>& val)
+    {
+        return func(val.get());
+    }
+    template <typename Func, typename T>
+    static value_wrapper<R> call(Func func, const value_wrapper<T>& val)
+    {
+        return func(val.get());
+    }
+    template <typename Func>
+    static value_wrapper<R> call(Func func, value_wrapper<void>& /*val*/)
+    {
+        return func();
+    }
+    template <typename Func>
+    static value_wrapper<R> call(Func func, const value_wrapper<void>& /*val*/)
+    {
+        return func();
+    }
+};
+
+template <>
+struct call_by_value_wrapper_helper<void>
+{
+    template <typename Func, typename T>
+    static value_wrapper<void> call(Func func, value_wrapper<T>& val)
+    {
+        func(val.get());
+        return wrap_void();
+    }
+    template <typename Func, typename T>
+    static value_wrapper<void> call(Func func, const value_wrapper<T>& val)
+    {
+        func(val.get());
+        return wrap_void();
+    }
+    template <typename Func>
+    static value_wrapper<void> call(Func func, value_wrapper<void>& /*val*/)
+    {
+        func();
+        return wrap_void();
+    }
+    template <typename Func>
+    static value_wrapper<void> call(Func func, const value_wrapper<void>& /*val*/)
+    {
+        func();
+        return wrap_void();
+    }
+};
+
+} // namespace detail
+
+namespace /*unnamed*/ {
+
+// R must be specified due to the lack of decltype in C++03
+template <typename R, typename Func, typename T>
+inline value_wrapper<R> call_by_value_wrapper(Func func, value_wrapper<T>& val)
+{
+    return detail::call_by_value_wrapper_helper<R>::call(func, val);
+}
+template <typename R, typename Func, typename T>
+inline value_wrapper<R> call_by_value_wrapper(Func func, const value_wrapper<T>& val)
+{
+    return detail::call_by_value_wrapper_helper<R>::call(func, val);
+}
+
+} // unnamed namespace
+
+} // namespace mgbase
+

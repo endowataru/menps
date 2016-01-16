@@ -3,7 +3,7 @@
 
 #include "continuation.h"
 #include "resumable.hpp"
-#include "ready_deferred.hpp"
+#include <mgbase/value_wrapper.hpp>
 
 namespace mgbase {
 
@@ -11,7 +11,7 @@ template <typename T>
 class continuation
 {
 public:
-    typedef bound_function<resumable (const ready_deferred<T>&)>   function_type;
+    typedef bound_function<resumable (const value_wrapper<T>&)>   function_type;
     
     #if MGBASE_CPP11_SUPPORTED
     continuation() noexcept = default;
@@ -26,7 +26,7 @@ public:
         return func_;
     }
     
-    resumable call(const ready_deferred<T>& value)
+    resumable call(const value_wrapper<T>& value)
     {
         return func_(value);
     }
