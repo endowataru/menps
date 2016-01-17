@@ -1,13 +1,14 @@
 
 #include <mgcom.hpp>
 #include <queue>
+#include "sender_queue.hpp"
 
 namespace mgcom {
-
 namespace am {
+
 namespace sender_queue {
 
-namespace {
+namespace /*unnamed*/ {
 
 // TODO: naive implementation
 
@@ -54,7 +55,7 @@ private:
 
 impl g_impl;
 
-} // namespace 
+} // unnamed namespace
 
 void initialize() {
     g_impl.initialize();
@@ -64,7 +65,7 @@ void finalize() {
     g_impl.finalize();
 }
 
-void enqueue(
+inline void enqueue(
     handler_id_t    id
 ,   const void*     value
 ,   index_t         size
@@ -79,7 +80,7 @@ void poll()
     g_impl.poll();
 }
 
-}
+} // namespace sender_queue
 
 namespace untyped {
 
@@ -96,6 +97,5 @@ void reply(
 } // namespace untyped
 
 } // namespace am
-
-}
+} // namespace mgcom
 

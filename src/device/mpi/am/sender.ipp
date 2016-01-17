@@ -1,11 +1,11 @@
 
 #pragma once
 
+#include "device/mpi/mpi_base.hpp"
 #include "sender.hpp"
 #include "receiver.hpp"
 #include "am.hpp"
-#include "common/mpi_base.hpp"
-#include "common/mpi_error.hpp"
+
 #include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/logging/logger.hpp>
 

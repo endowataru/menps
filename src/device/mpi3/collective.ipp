@@ -2,8 +2,7 @@
 #pragma once
 
 #include <mgcom.hpp>
-#include "common/mpi_error.hpp"
-#include "common/mpi_base.hpp"
+#include "device/mpi/mpi_base.hpp"
 #include <mgbase/logging/logger.hpp>
 #include <mgbase/threading/lock_guard.hpp>
 

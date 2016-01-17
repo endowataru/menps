@@ -2,8 +2,9 @@
 #pragma once
 
 #include <mgcom/collective.hpp>
-#include "common/mpi_error.hpp"
 #include <mgbase/logging/logger.hpp>
+
+#include "device/mpi/mpi_error.hpp"
 
 namespace mgcom {
 namespace collective {

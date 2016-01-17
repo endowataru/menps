@@ -2,9 +2,11 @@
 #pragma once
 
 #include <mgcom/collective.hpp>
+#include "collective.hpp"
 #include <mgbase/arithmetic.hpp>
-#include "common/mpi_base.hpp"
 #include <mgbase/logging/logger.hpp>
+
+#include "device/mpi/mpi_base.hpp"
 
 namespace mgcom {
 namespace collective {
@@ -18,6 +20,8 @@ class barrier_impl
 public:
     /*
      * Implements "Butterfly Buffer".
+     * The algorithm itself is not depending on MPI,
+     * but MPI is still required to exchange the addresses with MPI_Allgather.
      *
      * Reference: https://6xq.net/barrier-intro/
      */

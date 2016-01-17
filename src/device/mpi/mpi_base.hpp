@@ -5,6 +5,8 @@
 #include <mpi.h>
 #include <mgbase/threading/spinlock.hpp>
 
+#include "mpi_error.hpp"
+
 namespace mgcom {
 namespace mpi_base {
 

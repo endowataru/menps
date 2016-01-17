@@ -4,6 +4,7 @@
 #include <mgcom/am.hpp>
 #include <mgcom/rma.hpp>
 #include <common/rma/rma.hpp>
+#include "atomic.hpp"
 
 namespace mgcom {
 namespace rma {

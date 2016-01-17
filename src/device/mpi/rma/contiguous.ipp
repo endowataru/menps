@@ -3,12 +3,15 @@
 
 #include <mgcom/am.hpp>
 #include <mgcom/rma.hpp>
-#include <common/rma/rma.hpp>
-#include <common/mpi_base.hpp>
-#include <common/mpi_error.hpp>
-#include <device/mpi/am/am.hpp>
+
+#include "common/rma/rma.hpp"
+#include "device/mpi/mpi_base.hpp"
+#include "device/mpi/mpi_error.hpp"
+#include "device/mpi/am/am.hpp"
 
 #include <mgbase/threading/lock_guard.hpp>
+
+#include "contiguous.hpp"
 
 namespace mgcom {
 namespace rma {

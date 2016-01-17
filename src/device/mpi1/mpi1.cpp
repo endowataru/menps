@@ -1,34 +1,16 @@
 
-#include "common/mpi_base.hpp"
-#include "device/mpi3/rma/rma.hpp"
+#include "device/mpi/mpi_base.hpp"
 #include "device/mpi/am/am.hpp"
+#include "device/mpi/rma/rma.hpp"
+#include "device/mpi/collective/collective.hpp"
 
 #include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 
-namespace collective {
-
-void initialize();
-
-} // namespace collective
-
-namespace /*unnamed*/ {
-
-std::string get_state() {
-    static index_t number = 0;
-    fmt::MemoryWriter w;
-    w.write("proc:{}\tlog_id:{}\t", current_process_id(), number++);
-    return w.str();
-}
-
-} // unnamed namespace
-
 void initialize(int* argc, char*** argv)
 {
     mpi_base::initialize(argc, argv);
-    
-    mgbase::logger::set_state_callback(get_state);
     
     am::initialize();
     

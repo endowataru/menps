@@ -2,10 +2,10 @@
 #pragma once
 
 #include "rma.hpp"
+#include "device/mpi/mpi_base.hpp"
 #include "device/mpi3/mpi3_error.hpp"
 #include "common/rma/rma.hpp"
 #include "common/notifier.hpp"
-#include "common/mpi_base.hpp"
 
 #include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/assert.hpp>

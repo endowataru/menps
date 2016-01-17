@@ -1,12 +1,22 @@
 
 #include "mpi_base.hpp"
-#include "common/mpi_error.hpp"
+#include "mpi_error.hpp"
+
+#include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 
 namespace mpi_base {
 
 namespace /*unnamed*/ {
+
+std::string get_state()
+{
+    static index_t number = 0;
+    fmt::MemoryWriter w;
+    w.write("proc:{}\tlog_id:{}\t", current_process_id(), number++);
+    return w.str();
+}
 
 class impl
     : mgbase::noncopyable
@@ -25,6 +35,8 @@ public:
         
         current_process_id_ = static_cast<process_id_t>(rank);
         number_of_processes_ = static_cast<index_t>(size);
+        
+        mgbase::logger::set_state_callback(get_state);
     }
     
     void finalize()

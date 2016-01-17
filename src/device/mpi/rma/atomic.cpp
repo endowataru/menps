@@ -1,5 +1,6 @@
 
 #include "atomic.ipp"
+#include "rma.hpp"
 
 namespace mgcom {
 namespace rma {

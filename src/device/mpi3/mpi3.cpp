@@ -1,5 +1,5 @@
 
-#include "common/mpi_base.hpp"
+#include "device/mpi/mpi_base.hpp"
 #include "rma/rma.hpp"
 #include "device/mpi/am/am.hpp"
 
@@ -7,24 +7,11 @@
 
 namespace mgcom {
 
-namespace /*unnamed*/ {
-
-std::string get_state() {
-    static index_t number = 0;
-    fmt::MemoryWriter w;
-    w.write("proc:{}\tlog_id:{}\t", current_process_id(), number++);
-    return w.str();
-}
-
-} // unnamed namespace
-
 void initialize(int* argc, char*** argv)
 {
     mpi_base::initialize(argc, argv);
     rma::initialize();
     am::initialize();
-    
-    mgbase::logger::set_state_callback(get_state);
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
 }

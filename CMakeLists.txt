@@ -34,15 +34,14 @@ is_mpi3_available)
 
 if(${is_mpi_available})
     add_library(mgcom-mpi1
-        src/common/collective/barrier.cpp
-        src/common/collective/collective.cpp
+        src/common/rma/buffer_pool.cpp
         src/device/mpi1/mpi1.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/rma/contiguous.cpp
         src/device/mpi/rma/rma.cpp
-        src/common/polling.cpp
-        src/common/mpi_base.cpp
-        src/common/rma/buffer_pool.cpp
+        src/device/mpi/mpi_base.cpp
+        src/device/mpi/collective/barrier.cpp
+        src/device/mpi/collective/collective.cpp
         src/device/mpi/am/am.cpp
         src/device/mpi/am/receiver.cpp
         src/device/mpi/am/sender.cpp
@@ -58,13 +57,12 @@ endif()
 
 if(${is_mpi3_available})
     add_library(mgcom-mpi3
-        src/common/polling.cpp
-        src/common/mpi_base.cpp
         src/common/rma/contiguous.cpp
         src/common/rma/buffer_pool.cpp
         src/device/mpi3/mpi3.cpp
         src/device/mpi3/collective.cpp
         src/device/mpi3/rma/rma.cpp
+        src/device/mpi/mpi_base.cpp
         src/device/mpi/am/am.cpp
         src/device/mpi/am/receiver.cpp
         src/device/mpi/am/sender.cpp

@@ -1,11 +1,11 @@
 
 #include "common/rma/rma.hpp"
+#include "rma.hpp"
+#include "atomic.hpp"
+#include "contiguous.hpp"
 
 namespace mgcom {
 namespace rma {
-
-void initialize_contiguous();
-void initialize_atomic();
 
 void initialize() {
     initialize_contiguous();
