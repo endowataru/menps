@@ -82,7 +82,7 @@ set(mgcom-devices ${mgcom-devices} PARENT_SCOPE)
 
 # Unit test for each device
 
-foreach (device IN LISTS mgcom-devices)
+foreach(device IN LISTS mgcom-devices)
     add_executable(mgcom-unittest-${device}
         ./unittest/unittest.cpp
         ./unittest/am.cpp
@@ -92,5 +92,21 @@ foreach (device IN LISTS mgcom-devices)
         mgcom-${device}
         googletest
     )
+endforeach()
+
+# Benchmark programs
+
+foreach(device IN LISTS mgcom-devices)
+    file(GLOB benchmark_files example/bench/*.cpp)
+    foreach(benchmark_path IN LISTS benchmark_files)
+        get_filename_component(benchmark_name ${benchmark_path} NAME_WE)
+        message(${benchmark_name})
+        add_executable(${benchmark_name}-${device}
+            ${benchmark_path}
+        )
+        target_link_libraries(${benchmark_name}-${device}
+            mgcom-${device}
+        )
+    endforeach()
 endforeach()
 

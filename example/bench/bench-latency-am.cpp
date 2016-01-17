@@ -3,39 +3,18 @@
 #include <mgbase/profiling/stopwatch.hpp>
 #include <iostream>
 
-namespace {
-
-struct argument {
-    bool* ptr;
-    //int   value;
+struct am_test {
+    static const mgcom::am::handler_id_t request_id = 0;
+    static const mgcom::am::handler_id_t reply_id   = 1;
+    
+    struct argument_type { };
+    typedef void return_type;
+    
+    static return_type on_request(const mgcom::am::callback_parameters& /*params*/, const argument_type& /*arg*/)
+    {
+        return;
+    }
 };
-
-struct constants {
-    static const mgcom::am::handler_id_t id_f = 0;
-    static const mgcom::am::handler_id_t id_g = 1;
-};
-
-void g(const mgcom::am::callback_parameters* params) {
-    const argument& arg = *static_cast<const argument*>(params->data);
-    
-    //std::cout << "g: " << arg.value << " @ " << mgcom::current_process_id() << std::endl;
-    
-    *arg.ptr = true;
-}
-
-void f(const mgcom::am::callback_parameters* params) {
-    const argument& arg = *static_cast<const argument*>(params->data);
-    
-    //std::cout << "f: " << arg.value << " @ " << mgcom::current_process_id() << std::endl;
-    
-    argument sent_arg;
-    sent_arg.ptr = arg.ptr;
-    //sent_arg.value = arg.value + 100;
-    
-    mgcom::am::reply(params, constants::id_g, &sent_arg, sizeof(argument));
-}
-
-}
 
 int main(int argc, char* argv[])
 {
@@ -44,12 +23,11 @@ int main(int argc, char* argv[])
     const process_id_t root_proc = 0;
     const int number_of_trials = atoi(argv[1]);
     
-    initialize(&argc, &argv);
+    mgcom::initialize(&argc, &argv);
     
-    am::register_handler(constants::id_f, f);
-    am::register_handler(constants::id_g, g);
+    mgcom::am::register_roundtrip_handler<am_test>();
     
-    barrier();
+    mgcom::collective::barrier();
     
     double clocks = 0;
     
@@ -59,37 +37,23 @@ int main(int argc, char* argv[])
             mgbase::stopwatch sw;
             sw.start();
             
-            am::send_cb cb;
-            
-            bool flag = false;
-            
-            argument arg;
-            arg.ptr = &flag;
-            //arg.value = 123;
-            
-            //std::cout << "A" << std::endl;
-            am::send_nb(cb, constants::id_f, &arg, sizeof(argument), root_proc);
-            //std::cout << "B" << std::endl;
-            mgbase::control::wait(cb);
-            //std::cout << "C" << std::endl;
-            
-            while (!flag)
-                am::poll();
+            mgcom::am::call_roundtrip_cb cb;
+            mgcom::am::call_roundtrip_nb<am_test>(cb, root_proc, am_test::argument_type()).wait();
             
             clocks += sw.elapsed();
         }
     }
     
-    barrier();
+    mgcom::collective::barrier();
     
-    for (process_id_t proc = 0; proc < number_of_processes(); ++proc) {
-        if (proc == current_process_id())
-            std::cout << current_process_id() << "\t" << (clocks / number_of_trials) << std::endl;
+    for (mgcom::process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc) {
+        if (proc == mgcom::current_process_id())
+            std::cout << mgcom::current_process_id() << "\t" << (clocks / number_of_trials) << std::endl;
         
-        barrier();
+        mgcom::collective::barrier();
     }
     
-    finalize();
+    mgcom::finalize();
     
     return 0;
 }

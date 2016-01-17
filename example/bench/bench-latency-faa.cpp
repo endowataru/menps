@@ -1,63 +1,72 @@
 
 #include <mgcom.hpp>
-#include <mgcom_collective.hpp>
 #include <mgbase/profiling/stopwatch.hpp>
 #include <iostream>
 
 int main(int argc, char* argv[])
 {
-    using namespace mgcom;
-    using namespace mgcom::rma;
+    mgcom::initialize(&argc, &argv);
     
-    initialize(&argc, &argv);
+    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>
+        local_ptr = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
     
-    atomic_default_t x = 0;
-    const local_region local_reg = register_region(&x, sizeof(x));
-    const local_address local_addr = to_address(local_reg);
+    *local_ptr = 0;
     
-    const process_id_t root_proc = 0;
-    local_address root_local_addr = local_addr;
-    mgcom::collective::broadcast(root_proc, &root_local_addr, 1);
+    const mgcom::process_id_t root_proc = 0;
+    mgcom::collective::broadcast(root_proc, &local_ptr, 1);
     
-    const remote_address root_remote_addr = use_remote_address(root_proc, root_local_addr);
+    mgcom::rma::remote_pointer<mgcom::rma::atomic_default_t>
+        remote_ptr = mgcom::rma::use_remote_pointer(root_proc, local_ptr);
     
     double clocks = 0;
     const int number_of_trials = atoi(argv[1]);
     
-    registered_buffer value_buf = allocate(sizeof(atomic_default_t));
-    registered_buffer result_buf = allocate(sizeof(atomic_default_t));
-    *static_cast<atomic_default_t*>(to_pointer(value_buf)) = 1;
+    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>
+        value_ptr = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
     
-    barrier();
+    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>
+        result_ptr = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
     
-    if (current_process_id() != root_proc)
+    *value_ptr = 1;
+    
+    mgcom::collective::barrier();
+    
+    if (mgcom::current_process_id() != root_proc)
     {
         for (int i = 0; i < number_of_trials; i++) {
             mgbase::stopwatch sw;
             sw.start();
             
-            remote_fetch_and_add_default_cb cb;
-            remote_fetch_and_add_default_nb(cb, root_proc, root_remote_addr, to_address(value_buf), to_address(result_buf));
-            mgbase::control::wait(cb);
+            mgcom::rma::remote_fetch_and_add_default_cb cb;
+            mgcom::rma::remote_fetch_and_add_default_nb(
+                cb
+            ,   root_proc
+            ,   remote_ptr
+            ,   value_ptr
+            ,   result_ptr
+            )
+            .wait();
             
             clocks += sw.elapsed();
         }
     }
     
-    barrier();
-
-    if (current_process_id() == root_proc)
-        if (x != (number_of_trials * (number_of_processes() - 1)))
-            std::cout << "error! " << x << std::endl;
+    mgcom::collective::barrier();
     
-    for (process_id_t proc = 0; proc < number_of_processes(); ++proc) {
-        if (proc == current_process_id())
-            std::cout << current_process_id() << "\t" << (clocks / number_of_trials) << std::endl;
-        
-        barrier();
+    if (mgcom::current_process_id() == root_proc) {
+        const mgcom::rma::atomic_default_t val = *local_ptr;
+        if (val != (number_of_trials * (mgcom::number_of_processes() - 1)))
+            std::cout << "error! " << val << std::endl;
     }
     
-    finalize();
+    for (mgcom::process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc) {
+        if (proc == mgcom::current_process_id())
+            std::cout << mgcom::current_process_id() << "\t" << (clocks / number_of_trials) << std::endl;
+        
+        mgcom::collective::barrier();
+    }
+    
+    mgcom::finalize();
     
     return 0;
 }
