@@ -18,12 +18,10 @@ struct am_test {
 
 int main(int argc, char* argv[])
 {
-    using namespace mgcom;
-    
-    const process_id_t root_proc = 0;
-    const int number_of_trials = atoi(argv[1]);
-    
     mgcom::initialize(&argc, &argv);
+    
+    const mgcom::process_id_t root_proc = 0;
+    const int number_of_trials = atoi(argv[1]);
     
     mgcom::am::register_roundtrip_handler<am_test>();
     
@@ -31,7 +29,7 @@ int main(int argc, char* argv[])
     
     double clocks = 0;
     
-    if (current_process_id() != root_proc)
+    if (mgcom::current_process_id() != root_proc)
     {
         for (int i = 0; i < number_of_trials; i++) {
             mgbase::stopwatch sw;
