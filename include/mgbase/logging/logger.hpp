@@ -74,26 +74,17 @@ void logger_not_defined(...);
 
 }
 
-#ifdef MGBASE_COMPILER_CLANG
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wvariadic-macros"
-    #pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
 #ifdef MGBASE_ENABLE_LOG
-    #define MGBASE_LOG_DEBUG(format, ...)  \
+    #define MGBASE_LOG_DEBUG(...)  \
         if (::mgbase::logger::get_log_level() <= MGBASE_LOG_LEVEL_DEBUG) { \
-            fmt::print("{}" format, ::mgbase::logger::get_state(), ## __VA_ARGS__); \
+            std::cout << ::mgbase::logger::get_state(); \
+            fmt::print(__VA_ARGS__); \
             std::cout << std::endl; \
         }
 #else
     // Do a static type check (but do nothing in run-time)
-    #define MGBASE_LOG_DEBUG(format, ...)   \
-        if (false) { mgbase::detail::logger_not_defined(format, ## __VA_ARGS__); }
-#endif
-
-#ifdef MGBASE_COMPILER_CLANG
-    #pragma GCC diagnostic pop
+    #define MGBASE_LOG_DEBUG(...)   \
+        if (false) { mgbase::detail::logger_not_defined(__VA_ARGS__); }
 #endif
 
 }
