@@ -87,7 +87,7 @@ inline value_wrapper<const T&> wrap_reference(const T& value) MGBASE_NOEXCEPT {
 namespace detail {
 
 template <typename R>
-struct call_by_value_wrapper_helper
+struct call_with_value_wrapper_helper
 {
     template <typename Func, typename T>
     static value_wrapper<R> call(Func func, value_wrapper<T>& val)
@@ -112,7 +112,7 @@ struct call_by_value_wrapper_helper
 };
 
 template <>
-struct call_by_value_wrapper_helper<void>
+struct call_with_value_wrapper_helper<void>
 {
     template <typename Func, typename T>
     static value_wrapper<void> call(Func func, value_wrapper<T>& val)
@@ -146,14 +146,14 @@ namespace /*unnamed*/ {
 
 // R must be specified due to the lack of decltype in C++03
 template <typename R, typename Func, typename T>
-inline value_wrapper<R> call_by_value_wrapper(Func func, value_wrapper<T>& val)
+inline value_wrapper<R> call_with_value_wrapper(Func func, value_wrapper<T>& val)
 {
-    return detail::call_by_value_wrapper_helper<R>::call(func, val);
+    return detail::call_with_value_wrapper_helper<R>::call(func, val);
 }
 template <typename R, typename Func, typename T>
-inline value_wrapper<R> call_by_value_wrapper(Func func, const value_wrapper<T>& val)
+inline value_wrapper<R> call_with_value_wrapper(Func func, const value_wrapper<T>& val)
 {
-    return detail::call_by_value_wrapper_helper<R>::call(func, val);
+    return detail::call_with_value_wrapper_helper<R>::call(func, val);
 }
 
 } // unnamed namespace
