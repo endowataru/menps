@@ -175,6 +175,8 @@ typedef int16_t     mgbase_int16_t;
 typedef int32_t     mgbase_int32_t;
 typedef int64_t     mgbase_int64_t;
 
+typedef intptr_t    mgbase_intptr_t;
+
 // Processor Compatibility
 
 #if (defined(__i386__) || defined(__x86_64__))

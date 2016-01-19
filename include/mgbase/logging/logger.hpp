@@ -10,6 +10,7 @@
 namespace mgbase {
 
 #define MGBASE_LOG_LEVEL_DEBUG 0
+#define MGBASE_LOG_LEVEL_INFO  10
 #define MGBASE_LOG_LEVEL_FATAL 1000
 
 class logger {
@@ -75,17 +76,21 @@ void logger_not_defined(...);
 }
 
 #ifdef MGBASE_ENABLE_LOG
-    #define MGBASE_LOG_DEBUG(...)  \
-        if (::mgbase::logger::get_log_level() <= MGBASE_LOG_LEVEL_DEBUG) { \
+    #define MGBASE_LOGGER_OUTPUT(level, ...) \
+        if (::mgbase::logger::get_log_level() <= level) { \
             std::cout << ::mgbase::logger::get_state(); \
             fmt::print(__VA_ARGS__); \
             std::cout << std::endl; \
         }
+    
 #else
     // Do a static type check (but do nothing in run-time)
-    #define MGBASE_LOG_DEBUG(...)   \
+    #define MGBASE_LOGGER_OUTPUT(level, ...) \
         if (false) { mgbase::detail::logger_not_defined(__VA_ARGS__); }
 #endif
+
+#define MGBASE_LOG_DEBUG(...)   MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define MGBASE_LOG_INFO(...)    MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_INFO , __VA_ARGS__)
 
 }
 
