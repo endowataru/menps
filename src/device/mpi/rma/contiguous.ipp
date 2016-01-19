@@ -10,6 +10,7 @@
 #include "device/mpi/am/am.hpp"
 
 #include <mgbase/threading/lock_guard.hpp>
+#include <mgbase/logging/logger.hpp>
 
 #include "contiguous.hpp"
 
@@ -51,6 +52,14 @@ private:
             const mgcom::am::callback_parameters& params
         ,   const argument_type& arg
         ) {
+            MGBASE_LOG_DEBUG("msg:Start to data for emulated get."
+                "\tsource:{}\taddr:{:x}\tsize_in_bytes:{}\ttag:{}"
+            ,   params.source
+            ,   reinterpret_cast<mgbase::uintptr_t>(arg.src_ptr)
+            ,   arg.size_in_bytes
+            ,   arg.tag
+            );
+            
             mpi_error::check(
                 MPI_Send(
                     const_cast<void*>(arg.src_ptr) // For old MPI implementations
@@ -86,10 +95,21 @@ public:
             if (!mpi_base::get_lock().try_lock())
                 return mgbase::make_deferred<func_type, &read_handlers::try_recv>(cb);
             
+            void* const src_ptr = mgcom::rma::untyped::to_pointer(cb.remote_addr);
+            void* const dest_ptr = mgcom::rma::untyped::to_pointer(cb.local_addr);
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Start to receive data for emulated get."
+                "\tproc:{}\tsrc_addr:{:x}\tdest_addr:{:x}\tsize_in_bytes:{}\ttag:{}"
+            ,   cb.proc
+            ,   reinterpret_cast<mgbase::uintptr_t>(src_ptr)
+            ,   reinterpret_cast<mgbase::uintptr_t>(dest_ptr)
+            ,   cb.size_in_bytes
+            ,   cb.tag
+            );
+            
             {
                 mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
-                
-                void* const dest_ptr = mgcom::rma::untyped::to_pointer(cb.local_addr);
                 
                 MPI_Request* const request = reinterpret_cast<MPI_Request*>(&cb.request);
                 
@@ -105,8 +125,6 @@ public:
                     )
                 );
             }
-            
-            void* const src_ptr = mgcom::rma::untyped::to_pointer(cb.remote_addr);
             
             const am_read::argument_type arg = { cb.tag, src_ptr, cb.size_in_bytes };
             
@@ -155,6 +173,14 @@ private:
             const mgcom::am::callback_parameters& params
         ,   const argument_type& arg
         ) {
+            MGBASE_LOG_DEBUG("msg:Start to receive data for emulated put."
+                "\tsource:{}\taddr:{:x}\tsize_in_bytes:{}\ttag:{}"
+            ,   params.source
+            ,   reinterpret_cast<mgbase::uint64_t>(arg.dest_ptr)
+            ,   arg.size_in_bytes
+            ,   arg.tag
+            );
+            
             MPI_Status status;
             mpi_error::check(
                 MPI_Recv(
@@ -192,10 +218,22 @@ public:
             if (!mpi_base::get_lock().try_lock())
                 return mgbase::make_deferred<func_type, &write_handlers::try_send>(cb);
             
+            const void* const src_ptr = mgcom::rma::untyped::to_pointer(cb.local_addr);
+            
+            void* const dest_ptr = mgcom::rma::untyped::to_pointer(cb.remote_addr);
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Start to send data for emulated put."
+                "\tproc:{}\tsrc_addr:{:x}\tdest_addr:{:x}\tsize_in_bytes:{}\ttag:{}"
+            ,   cb.proc
+            ,   reinterpret_cast<mgbase::uintptr_t>(src_ptr)
+            ,   reinterpret_cast<mgbase::uintptr_t>(dest_ptr)
+            ,   cb.size_in_bytes
+            ,   cb.tag
+            );
+            
             {
                 mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
-                
-                const void* const src_ptr = mgcom::rma::untyped::to_pointer(cb.local_addr);
                 
                 MPI_Request* const request = reinterpret_cast<MPI_Request*>(&cb.request);
                 
@@ -211,8 +249,6 @@ public:
                     )
                 );
             }
-            
-            void* const dest_ptr = mgcom::rma::untyped::to_pointer(cb.remote_addr);
             
             const am_write::argument_type arg = { cb.tag, dest_ptr, cb.size_in_bytes };
             

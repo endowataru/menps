@@ -4,6 +4,8 @@
 #include "atomic.hpp"
 #include "contiguous.hpp"
 
+#include <mgbase/logging/logger.hpp>
+
 namespace mgcom {
 namespace rma {
 
@@ -21,9 +23,15 @@ namespace untyped {
 
 local_region register_region(
     void*   local_pointer
-,   index_t //size_in_bytes
+,   index_t size_in_bytes
 ) {
     // do nothing
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Registered region (but doing nothing.)\tptr:{:x}\tsize_in_bytes:{}"
+    ,   reinterpret_cast<mgbase::uint64_t>(local_pointer)
+    ,   size_in_bytes
+    );
     
     return make_local_region(make_region_key(local_pointer, 0 /*unused*/), 0);
 }

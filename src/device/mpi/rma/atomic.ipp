@@ -5,6 +5,7 @@
 #include <mgcom/rma.hpp>
 #include <common/rma/rma.hpp>
 #include "atomic.hpp"
+#include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 namespace rma {
@@ -38,7 +39,16 @@ private:
             const mgcom::am::callback_parameters& /*params*/
         ,   const argument_type& arg
         ) {
-            return mgbase::atomic_load(arg.ptr);
+            const T result = mgbase::atomic_load(arg.ptr);
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Emulated remote write.\t"
+                "src_ptr:{:x}\tresult:{}"
+            ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+            ,   result
+            );
+            
+            return result;
         }
     };
     
@@ -53,6 +63,13 @@ public:
         
         T* const dest_ptr
             = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.remote_addr));
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Send message of emulated remote read.\t"
+            "proc:{}\tsrc_ptr:{:x}"
+        ,   cb.proc
+        ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+        );
         
         return mgcom::am::call_roundtrip_nb<am_read>(
             cb.cb_roundtrip
@@ -79,6 +96,13 @@ private:
             const mgcom::am::callback_parameters& /*params*/
         ,   const argument_type& arg
         ) {
+            MGBASE_LOG_DEBUG(
+                "msg:Emulated remote write.\t"
+                "value:{}\tdest_ptr:{:x}"
+            ,   arg.value
+            ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+            );
+            
             mgbase::atomic_store(arg.ptr, arg.value);
         }
     };
@@ -94,6 +118,14 @@ public:
             = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.remote_addr));
         
         const typename am_write::argument_type arg = { dest_ptr, *src_ptr };
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Send message of emulated remote write.\t"
+            "proc:{}\tvalue:{}\tdest_ptr:{:x}"
+        ,   cb.proc
+        ,   arg.value
+        ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+        );
         
         return mgcom::am::call_roundtrip_nb<am_write>(
             cb.cb_roundtrip
@@ -123,6 +155,15 @@ private:
             T expected = arg.expected;
             mgbase::atomic_compare_exchange_strong(arg.target, &expected, arg.desired);
             
+            MGBASE_LOG_DEBUG(
+                "msg:Emulated remote compare and swap.\t"
+                "target_addr:{:x}\texpected:{}\tdesired:{}\tresult:{}"
+            ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
+            ,   arg.expected
+            ,   arg.desired
+            ,   expected
+            );
+            
             // Return the old value.
             return expected;
         }
@@ -145,7 +186,17 @@ public:
         
         T* const result_ptr
             = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.result_addr));
-        
+         
+        MGBASE_LOG_DEBUG(
+            "msg:Send message of emulated remote compare and swap.\t"
+            "proc:{:x}\ttarget_addr:{:x}\texpected:{}\tdesired:{}\tresult_ptr:{:x}"
+        ,   target_proc
+        ,   reinterpret_cast<mgbase::uintptr_t>(target_ptr)
+        ,   arg.expected
+        ,   arg.desired
+        ,   reinterpret_cast<mgbase::uintptr_t>(result_ptr)
+        );
+
         return mgcom::am::call_roundtrip_nb<am_compare_and_swap>(
             cb.cb_roundtrip
         ,   target_proc
@@ -173,6 +224,15 @@ private:
         ) {
             // Returns the old value.
             const T result = mgbase::atomic_fetch_add(arg.ptr, arg.diff);
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Emulated remote fetch and add.\t"
+                "target_addr:{:x}\tdiff:{}\tresult:{}"
+            ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+            ,   arg.diff
+            ,   result
+            );
+            
             return result;
         }
     };
@@ -191,6 +251,15 @@ public:
         
         T* const result_ptr
             = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.result_addr));
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Send message of emulated remote fetch and add.\t"
+            "proc:{:x}\ttarget_addr:{:x}\tdiff:{}\tresult_ptr:{:x}"
+        ,   target_proc
+        ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+        ,   arg.diff
+        ,   reinterpret_cast<mgbase::uintptr_t>(result_ptr)
+        );
         
         return mgcom::am::call_roundtrip_nb<am_fetch_and_add>(
             cb.cb_roundtrip

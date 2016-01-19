@@ -100,7 +100,6 @@ foreach(device IN LISTS mgcom-devices)
     file(GLOB benchmark_files example/bench/*.cpp)
     foreach(benchmark_path IN LISTS benchmark_files)
         get_filename_component(benchmark_name ${benchmark_path} NAME_WE)
-        message(${benchmark_name})
         add_executable(${benchmark_name}-${device}
             ${benchmark_path}
         )
