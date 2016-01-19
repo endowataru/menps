@@ -19,9 +19,13 @@ template <
 >
 inline MGBASE_ALWAYS_INLINE resumable make_deferred_pass(CB& cb)
 {
+    typedef typename mgbase::function_traits<Signature>::result_type    return_type;
     typedef typename detail::deferred_result<Signature>::type T;
-
-    deferred<T> df = Func(cb);
+    
+    deferred<T> df = call_with_value_wrapper<return_type>(
+        Func
+    ,   wrap_reference(cb) // value_wrapper<CB&>
+    );
     
     continuation<T>* const current_cont = df.get_continuation();
     continuation<T>& next_cont = get_next_continuation<T>(cb);
