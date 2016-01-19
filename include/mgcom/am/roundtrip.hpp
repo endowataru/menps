@@ -165,7 +165,7 @@ inline void roundtrip_request(const callback_parameters* params)
         *static_cast<const argument_info*>(params->data);
     
     const mgbase::value_wrapper<return_type> res = 
-        mgbase::call_by_value_wrapper<return_type>(
+        mgbase::call_with_value_wrapper<return_type>(
             mgbase::make_bound_function<
                 return_type (const mgcom::am::callback_parameters&, const argument_type&)
             ,   &Handler::on_request
