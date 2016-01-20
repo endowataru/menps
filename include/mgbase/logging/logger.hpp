@@ -11,6 +11,7 @@ namespace mgbase {
 
 #define MGBASE_LOG_LEVEL_DEBUG 0
 #define MGBASE_LOG_LEVEL_INFO  10
+#define MGBASE_LOG_LEVEL_WARN  100
 #define MGBASE_LOG_LEVEL_FATAL 1000
 
 class logger {
@@ -95,6 +96,8 @@ void logger_not_defined(...);
 
 #define MGBASE_LOG_DEBUG(...)   MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_DEBUG, __VA_ARGS__)
 #define MGBASE_LOG_INFO(...)    MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_INFO , __VA_ARGS__)
+#define MGBASE_LOG_WARN(...)    MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_WARN , __VA_ARGS__)
+#define MGBASE_LOG_FATAL(...)   MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_FATAL, __VA_ARGS__)
 
 } // namespace mgbase
 

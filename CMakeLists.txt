@@ -17,7 +17,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
         -Xg
         -D GTEST_HAS_TR1_TUPLE=0
         "$<$<CONFIG:Debug>:-g>"
-        "$<$<CONFIG:Release>:-O3>"
+        "$<$<CONFIG:Release>:-Kfast>"
     )
 else()
     target_compile_options(mgbase-options INTERFACE
