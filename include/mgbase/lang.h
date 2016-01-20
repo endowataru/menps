@@ -197,4 +197,7 @@ typedef intptr_t    mgbase_intptr_t;
     #define MGBASE_COMPILER_CLANG
 #endif
 
+#ifdef __FUJITSU
+    #define MGBASE_COMPILER_FUJITSU
+#endif
 

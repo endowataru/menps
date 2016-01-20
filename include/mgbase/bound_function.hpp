@@ -37,17 +37,21 @@ public:
     
 private:
     // Note: Avoid too much nesting for readable linker & runtime messages.
+    // Note: Fujitsu compiler cannot get the address of instantiated member template function correctly.
     template <Result (*Func)()>
-    static result_type pass_empty(void* /*arg1*/) {
-        return Func();
-    }
+    struct bind_zero
+    {
+        static result_type pass(void* /*arg1*/) {
+            return Func();
+        }
+    };
     
 private:
     template <Result (*Func)()>
     static bound_function create()
     {
         bound_function f;
-        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&pass_empty<Func>);
+        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&bind_zero<Func>::pass);
         f.untyped_.arg1 = MGBASE_NULLPTR;
         
         return f;
@@ -55,16 +59,19 @@ private:
     
 private:
     template <typename Arg1, Result (*Func)(Arg1&)>
-    static result_type pass_bound(void* a1) {
-        return Func(*static_cast<Arg1*>(a1));
-    }
+    struct bind_one
+    {
+        static result_type pass(void* a1) {
+            return Func(*static_cast<Arg1*>(a1));
+        }
+    };
     
 public:
     template <typename Signature, Signature* Func, typename Arg1>
     static bound_function create(Arg1* arg1)
     {
         bound_function f;
-        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&pass_bound<Arg1, Func>);
+        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&bind_one<Arg1, Func>::pass);
         f.untyped_.arg1 = const_cast<void*>(static_cast<const void*>(arg1));
         
         return f;
@@ -92,35 +99,41 @@ class bound_function<Result (Arg2)>
 {
     typedef Result  result_type;
     
+private:
+    template <typename Signature, Signature* Func>
+    struct unbound
+    {
+        static result_type pass(void* /*ignored*/, Arg2 arg2) {
+            return Func(arg2);
+        }
+    };
+    
+public:
+    template <typename Signature, Signature* Func>
+    static bound_function create_unbound()
+    {
+        bound_function f;
+        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&unbound<Signature, Func>::pass);
+        //f.untyped_.arg1 = MGBASE_NULLPTR; // ignored
+        
+        return f;
+    }
+private:
+    template <typename Signature, Signature* Func, typename Arg1>
+    struct bind_one
+    {
+        static result_type pass(void* a1, Arg2 arg2) {
+            return Func(*static_cast<Arg1*>(a1), arg2);
+        }
+    };
+    
 public:
     template <typename Signature, Signature* Func, typename Arg1>
     static bound_function create(Arg1* arg1)
     {
-        struct handler {
-            static result_type transfer(void* a1, Arg2 arg2) {
-                return Func(*static_cast<Arg1*>(a1), arg2);
-            }
-        };
-        
         bound_function f;
-        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(handler::transfer);
+        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&bind_one<Signature, Func, Arg1>::pass);
         f.untyped_.arg1 = const_cast<void*>(static_cast<const void*>(arg1));
-        
-        return f;
-    }
-    
-    template <typename Signature, Signature* Func>
-    static bound_function create_unbound()
-    {
-        struct handler {
-            static result_type transfer(void* /*ignored*/, Arg2 arg2) {
-                return Func(arg2);
-            }
-        };
-        
-        bound_function f;
-        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(handler::transfer);
-        //f.untyped_.arg1 = MGBASE_NULLPTR; // ignored
         
         return f;
     }

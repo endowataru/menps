@@ -5,7 +5,7 @@
 #include <functional>
 #include <iostream>
 
-#include <cppformat/format.h>
+#include <mgbase/external/cppformat.hpp>
 
 namespace mgbase {
 
@@ -73,7 +73,7 @@ namespace detail {
 // This function is never defined.
 void logger_not_defined(...);
 
-}
+} // namespace detail
 
 #ifdef MGBASE_ENABLE_LOG
     #define MGBASE_LOGGER_OUTPUT(level, ...) \
@@ -82,15 +82,19 @@ void logger_not_defined(...);
             fmt::print(__VA_ARGS__); \
             std::cout << std::endl; \
         }
-    
 #else
-    // Do a static type check (but do nothing in run-time)
-    #define MGBASE_LOGGER_OUTPUT(level, ...) \
-        if (false) { mgbase::detail::logger_not_defined(__VA_ARGS__); }
+    #ifdef MGBASE_COMPILER_FUJITSU
+        // Fujitsu compiler tries to link unused functions in if(false)
+        #define MGBASE_LOGGER_OUTPUT(level, ...)
+    #else
+        // Do a static type check (but do nothing in run-time)
+        #define MGBASE_LOGGER_OUTPUT(level, ...) \
+            if (false) { mgbase::detail::logger_not_defined(__VA_ARGS__); }
+    #endif
 #endif
 
 #define MGBASE_LOG_DEBUG(...)   MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_DEBUG, __VA_ARGS__)
 #define MGBASE_LOG_INFO(...)    MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_INFO , __VA_ARGS__)
 
-}
+} // namespace mgbase
 
