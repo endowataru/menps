@@ -72,6 +72,13 @@ public:
         if (address == FJMPI_RDMA_ERROR)
             throw fjmpi_error();
         
+        MGBASE_LOG_DEBUG(
+            "msg:Registered region.\tptr:{:x}\tsize:{}\tladdr:{:x}"
+        ,   reinterpret_cast<mgbase::uintptr_t>(buf)
+        ,   length
+        ,   address
+        );
+        
         *address_result = address;
         return memid;
     }
@@ -86,6 +93,13 @@ public:
         }
         if (raddr == FJMPI_RDMA_ERROR)
             throw fjmpi_error();
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Got remote address.\tproc:{}\tmemid:{}\traddr:{:x}"
+        ,   pid
+        ,   memid
+        ,   raddr
+        );
         
         return raddr;
     }
@@ -115,6 +129,15 @@ public:
         if (get_lock().try_lock()) {
             const int flags = nic | extra_flags;
             
+            MGBASE_LOG_DEBUG(
+                "msg:RDMA Put.\tdest:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
+            ,   dest
+            ,   laddr
+            ,   raddr
+            ,   size_in_bytes
+            ,   flags
+            );
+            
             const int ret = ::FJMPI_Rdma_put(dest, tag, raddr, laddr, size_in_bytes, flags);
             get_lock().unlock();
             
@@ -129,27 +152,36 @@ public:
         return false;
     }
     
-    bool try_get(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const local_notifier& on_complete, int extra_flags) {
-        const int nic = select_nic(dest);
+    bool try_get(int src, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const local_notifier& on_complete, int extra_flags) {
+        const int nic = select_nic(src);
         
         int tag;
-        if (!try_new_tag(dest, nic, &tag))
+        if (!try_new_tag(src, nic, &tag))
             return false;
         
         if (get_lock().try_lock()) {
             const int flags = nic | extra_flags;
             
-            const int ret = ::FJMPI_Rdma_get(dest, tag, raddr, laddr, size_in_bytes, flags);
+            MGBASE_LOG_DEBUG(
+                "msg:RDMA Get.\tsrc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
+            ,   src
+            ,   laddr
+            ,   raddr
+            ,   size_in_bytes
+            ,   flags
+            );
+            
+            const int ret = ::FJMPI_Rdma_get(src, tag, raddr, laddr, size_in_bytes, flags);
             get_lock().unlock();
             
             if (ret != 0)
                 throw fjmpi_error();
             
-            set_notifier(dest, nic, tag, on_complete);
+            set_notifier(src, nic, tag, on_complete);
             return true;
         }
         
-        free_tag(dest, nic, tag);
+        free_tag(src, nic, tag);
         return false;
     }
     

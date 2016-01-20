@@ -44,7 +44,7 @@ remote_region use_remote_region(
 ,   const region_key& key
 ) {
     const mgbase::uint64_t raddr =
-        g_impl.get_remote_addr(static_cast<int>(proc_id), static_cast<mgbase::uint64_t>(key.info));
+        g_impl.get_remote_addr(static_cast<int>(proc_id), static_cast<int>(key.info));
     
     return make_remote_region(key, raddr);
 }

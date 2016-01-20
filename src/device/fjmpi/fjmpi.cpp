@@ -4,6 +4,7 @@
 #include "am/am.hpp"
 #include "device/mpi/collective/collective.hpp"
 #include "device/mpi/rma/atomic.hpp"
+#include "common/rma/region_allocator.hpp"
 
 #include <mgbase/logging/logger.hpp>
 
@@ -15,6 +16,7 @@ void initialize(int* argc, char*** argv)
     rma::initialize_contiguous();
     am::initialize();
     rma::initialize_atomic();
+    rma::initialize_allocator();
     collective::initialize();
     
     MPI_Barrier(MPI_COMM_WORLD);
@@ -29,6 +31,7 @@ void finalize()
     MPI_Barrier(MPI_COMM_WORLD);
     
     collective::finalize();
+    rma::finalize_allocator();
     rma::finalize_atomic();
     am::finalize();
     rma::finalize_contiguous();

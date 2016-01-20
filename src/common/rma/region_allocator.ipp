@@ -5,6 +5,7 @@
 #include <mgcom/rma/untyped.hpp>
 #include "./malloc.h"
 #include <mgbase/memory/aligned_alloc.hpp>
+#include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 namespace rma {
@@ -15,7 +16,7 @@ namespace /*untyped*/ {
 class region_allocator
 {
     // FIXME: adjustable buffer size
-    static const index_t total_region_size = 256 << 6;
+    static const index_t total_region_size = 256 << 20;
     
 public:
     void initialize()
@@ -52,6 +53,19 @@ public:
         
         const local_address addr = advanced(base, diff);
         const registered_buffer result = { addr };
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Allocated from buffer.\t"
+            "ptr:{:x}\tpointer:{:x}\tkey_info:{:x}\tregion_info:{:x}\t"
+            "offset:{:x}\tsize_in_bytes:{}"
+        ,   reinterpret_cast<mgbase::uintptr_t>(ptr)
+        ,   reinterpret_cast<mgbase::uintptr_t>(addr.region.key.pointer)
+        ,   addr.region.key.info
+        ,   addr.region.info
+        ,   addr.offset
+        ,   size_in_bytes
+        );
+        
         return result;
     }
     
