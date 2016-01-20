@@ -189,15 +189,15 @@ typedef intptr_t    mgbase_intptr_t;
 
 // Compiler Compatibility
 
-#ifdef __GNUC__
-    #define MGBASE_COMPILER_GCC
+#ifdef __FUJITSU
+    #define MGBASE_COMPILER_FUJITSU
+#else
+    #ifdef __GNUC__
+        #define MGBASE_COMPILER_GCC
+    #endif
 #endif
 
 #ifdef __clang__
     #define MGBASE_COMPILER_CLANG
-#endif
-
-#ifdef __FUJITSU
-    #define MGBASE_COMPILER_FUJITSU
 #endif
 
