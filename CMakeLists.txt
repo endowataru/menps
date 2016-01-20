@@ -43,8 +43,6 @@ if(${is_mpi_available})
         src/device/mpi/collective/barrier.cpp
         src/device/mpi/collective/collective.cpp
         src/device/mpi/am/am.cpp
-        src/device/mpi/am/receiver.cpp
-        src/device/mpi/am/sender.cpp
         src/device/mpi/am/sender_queue.cpp
     )
     target_include_directories(mgcom-mpi1
@@ -64,8 +62,6 @@ if(${is_mpi3_available})
         src/device/mpi3/rma/rma.cpp
         src/device/mpi/mpi_base.cpp
         src/device/mpi/am/am.cpp
-        src/device/mpi/am/receiver.cpp
-        src/device/mpi/am/sender.cpp
         src/device/mpi/am/sender_queue.cpp
     )
     target_include_directories(mgcom-mpi3

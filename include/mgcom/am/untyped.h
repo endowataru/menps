@@ -32,6 +32,7 @@ mgcom_error_code_t mgcom_am_register_handler(
 
 #define MGCOM_AM_MAX_DATA_SIZE 1024
 #define MGCOM_AM_HANDLE_SIZE   1024
+#define MGCOM_AM_MAX_NUM_CALLBACKS  10000
 
 typedef struct mgcom_am_am_message_buffer {
     mgcom_am_handler_id_t   id;

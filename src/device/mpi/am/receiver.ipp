@@ -4,35 +4,36 @@
 #include <mgcom.hpp>
 #include <mpi.h>
 
+#include "common/am/basic_receiver.hpp"
 #include "device/mpi/mpi_base.hpp"
 #include "am.hpp"
-#include "receiver.hpp"
-#include "sender.hpp"
+#include "resource_manager.ipp"
 
 #include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 namespace am {
-namespace receiver {
 
 namespace /*unnamed*/ {
 
-class impl
+class receiver_impl
+    : public basic_receiver
+    , public virtual resource_manager
 {
-public:
-    static const index_t max_num_callbacks = 10000;
+    typedef basic_receiver      base_receiver;
+    typedef resource_manager    base_manager;
     
-    impl() : initialized_(false) { }
+protected:
+    receiver_impl() : initialized_(false) { }
     
     void initialize()
     {
-        tickets_ = new index_t[number_of_processes()];
-        std::fill(tickets_, tickets_ + number_of_processes(), 0);
+        base_receiver::initialize(base_manager::max_num_tickets);
         
-        callbacks_ = new handler_callback_t[max_num_callbacks];
+        requests_ = new MPI_Request[base_manager::max_num_tickets];
         
-        for (index_t i = 0; i < constants::max_num_tickets; ++i) {
+        for (index_t i = 0; i < base_manager::max_num_tickets; ++i) {
             irecv(i);
         }
         
@@ -46,23 +47,16 @@ public:
     
     void finalize()
     {
-        for (index_t i = 0; i < constants::max_num_tickets; ++i) {
+        for (index_t i = 0; i < base_manager::max_num_tickets; ++i) {
             MPI_Cancel(&requests_[i]);
         }
         
-        delete[] tickets_;
-        delete[] callbacks_;
-    }
-    
-    void register_handler(handler_id_t id, handler_callback_t callback)
-    {
-        MGBASE_ASSERT(id < max_num_callbacks);
-        MGBASE_ASSERT(callback != MGBASE_NULLPTR);
+        requests_.reset();
         
-        callbacks_[id] = callback;
-        MGBASE_LOG_DEBUG("msg:Registered a handler.\tsrc:{}\tcallback:{:x}", id, reinterpret_cast<mgbase::uint64_t>(callback));
+        base_receiver::finalize();
     }
     
+public:
     void poll()
     {
         MGBASE_ASSERT(initialized_);
@@ -78,7 +72,7 @@ public:
             mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
             
             mpi_error::check(
-                MPI_Testany(static_cast<int>(constants::max_num_tickets), requests_, &index, &flag, &status)
+                MPI_Testany(static_cast<int>(base_manager::max_num_tickets), requests_.get(), &index, &flag, &status)
             );
             
             if (index == MPI_UNDEFINED)
@@ -87,73 +81,43 @@ public:
         
         const process_id_t src = static_cast<process_id_t>(status.MPI_SOURCE);
         
-        remove_ticket_from(src);
+        am_message_buffer& msg = base_receiver::get_buffer_at(index);
+        base_manager::restore_remote_tickets_to(src, msg.ticket);
+        base_manager::push_local_ticket_from(src);
         
-        am_message_buffer& msg = buffers_[index];
-        sender::add_ticket_to(src, msg.ticket);
-        
-        call(src, msg);
+        base_receiver::call(src, msg);
         
         // TODO : Remove blocking
         mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
         irecv(index);
     }
     
-    index_t pull_tickets_from(process_id_t src_proc) {
-        MGBASE_LOG_DEBUG("msg:Pulled ticket.\tsrc:{}\tdiff:{}", src_proc, tickets_[src_proc]);
-        index_t result = tickets_[src_proc];
-        tickets_[src_proc] = 0;
-        return result;
-    }
-    
 private:
-    void remove_ticket_from(process_id_t src_proc) {
-        MGBASE_LOG_DEBUG("msg:Removed ticket.\tsrc:{}\tbefore:{}", src_proc, tickets_[src_proc]);
-        ++tickets_[src_proc];
-    }
-    
-    void call(process_id_t src, am_message_buffer& msg) {
-        callback_parameters params;
-        params.source = src;
-        params.data   = msg.data;
-        params.size   = msg.size;
+    void irecv(index_t index)
+    {
+        am_message_buffer& buf = base_receiver::get_buffer_at(index);
+        MPI_Request& request = requests_[index];
         
-        MGBASE_LOG_DEBUG("msg:Invoking callback.\tsrc:{}\tid:{}", src, msg.id);
-        
-        const handler_callback_t callback = callbacks_[msg.id];
-        MGBASE_ASSERT(callback != MGBASE_NULLPTR);
-        callback(&params);
-        
-        MGBASE_LOG_DEBUG("msg:Finished callback.");
-    }
-    
-    void irecv(int index) {
         mpi_error::check(
             MPI_Irecv(
-                &buffers_[index]            // buf
+                &buf                        // buf
             ,   sizeof(am_message_buffer)   // count
             ,   MPI_BYTE                    // datatype
             ,   MPI_ANY_SOURCE              // source
             ,   get_tag()                   // tag
             ,   get_comm()                  // comm
-            ,   &requests_[index]           // request
+            ,   &request                    // request
             )
         );
     }
     
     bool initialized_;
     
-    handler_callback_t* callbacks_;
-    
-    MPI_Request requests_[constants::max_num_tickets];
-    am_message_buffer buffers_[constants::max_num_tickets];
-    
-    index_t* tickets_;
+    mgbase::scoped_ptr<MPI_Request []>  requests_;
 };
 
 } // unnamed namespace
 
-} // namespace receiver
 } // namespace am
 } // namespace mgcom
 

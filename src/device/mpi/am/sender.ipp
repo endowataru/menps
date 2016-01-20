@@ -2,8 +2,6 @@
 #pragma once
 
 #include "device/mpi/mpi_base.hpp"
-#include "sender.hpp"
-#include "receiver.hpp"
 #include "am.hpp"
 
 #include <mgbase/threading/lock_guard.hpp>
@@ -11,66 +9,18 @@
 
 namespace mgcom {
 namespace am {
-namespace sender {
 
 namespace /*unnamed*/ {
 
 MGBASE_STATIC_ASSERT(sizeof(MPI_Request) < MGCOM_AM_HANDLE_SIZE, "MPI_Request must be smaller than MGCOM_AM_HANDLE_SIZE");
 
-class impl {
+class sender_impl
+    : public virtual resource_manager
+{
+    typedef resource_manager    base_manager;
+    
 public:
-    void initialize()
-    {
-        tickets_ = new index_t[number_of_processes()];
-        std::fill(tickets_, tickets_ + number_of_processes(), receiver::constants::max_num_tickets);
-    }
-    
-    void finalize()
-    {
-        delete[] tickets_;
-    }
-    
-    bool try_send(
-        am_message_buffer&  msg
-    ,   process_id_t        dest_proc
-    ,   MPI_Request*        request
-    ) {
-        if (!get_ticket_to(dest_proc)) {
-            MGBASE_LOG_DEBUG("msg:Failed to get a ticket.");
-            return false;
-        }
-        
-        if (!mpi_base::get_lock().try_lock()) {
-            add_ticket(dest_proc, 1);
-            return false;
-        }
-        
-        mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
-        
-        msg.ticket = receiver::pull_tickets_from(dest_proc);
-        
-        const int size = static_cast<int>(sizeof(am_message_buffer));
-        
-        const void* const buffer = &msg;
-        
-        mpi_error::check(
-            MPI_Irsend(
-                const_cast<void*>(buffer)   // buffer (const_cast is required for old MPI implementations)
-            ,   size                        // count
-            ,   MPI_BYTE                    // datatype
-            ,   static_cast<int>(dest_proc) // dest
-            ,   get_tag()                   // tag
-            ,   get_comm()                  // comm
-            ,   request
-            )
-        );
-        
-        MGBASE_LOG_DEBUG("msg:MPI_Irsend succeeded.\tdest:{}\tsize:{}", dest_proc, size);
-        
-        return true;
-    }
-    
-    template <impl& self>
+    template <typename T, T& Self>
     class send_handlers
     {
         typedef send_handlers           handlers_type;
@@ -82,7 +32,7 @@ public:
         static result_type start(cb_type& cb) {
             MPI_Request* const request = reinterpret_cast<MPI_Request*>(cb.handle);
             
-            if (self.try_send(cb.msg, cb.dest_proc, request))
+            if (Self.try_send(cb.msg, cb.dest_proc, request))
                 return test(cb);
             else
                 return mgbase::make_deferred<func_type, &handlers_type::start>(cb);
@@ -105,36 +55,51 @@ public:
         }
     };
     
-    
-    void add_ticket(process_id_t dest_proc, index_t ticket)
-    {
-        MGBASE_ASSERT(valid_process_id(dest_proc));
-        MGBASE_ASSERT(ticket <= receiver::constants::max_num_tickets);
-        
-        MGBASE_LOG_DEBUG("msg:Added ticket.\tdest:{}\tbefore:{}\tdiff:{}", dest_proc, tickets_[dest_proc], ticket);
-        tickets_[dest_proc] += ticket;
-    }
-    
 private:
-    bool get_ticket_to(process_id_t dest_proc)
-    {
-        // FIXME: atomic operations
-        
-        index_t& ticket = tickets_[dest_proc];
-        if (ticket <= 0)
+    bool try_send(
+        am_message_buffer&  msg
+    ,   process_id_t        dest_proc
+    ,   MPI_Request*        request
+    ) {
+        if (!base_manager::try_use_remote_ticket_to(dest_proc)) {
+            MGBASE_LOG_DEBUG("msg:Failed to get a ticket.");
             return false;
+        }
         
-        --ticket;
+        if (!mpi_base::get_lock().try_lock()) {
+            base_manager::restore_remote_tickets_to(dest_proc, 1);
+            return false;
+        }
+        
+        mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
+        
+        msg.ticket = base_manager::pull_local_tickets_from(dest_proc);
+        
+        const int size = static_cast<int>(sizeof(am_message_buffer));
+        
+        const void* const buffer = &msg;
+        
+        mpi_error::check(
+            MPI_Irsend(
+                const_cast<void*>(buffer)   // buffer (const_cast is required for old MPI implementations)
+            ,   size                        // count
+            ,   MPI_BYTE                    // datatype
+            ,   static_cast<int>(dest_proc) // dest
+            ,   get_tag()                   // tag
+            ,   get_comm()                  // comm
+            ,   request
+            )
+        );
+        
+        MGBASE_LOG_DEBUG("msg:MPI_Irsend succeeded.\tdest:{}\tsize:{}", dest_proc, size);
+        
         return true;
     }
-    
-    index_t* tickets_;
 };
 
 
 } // namespace unnamed
 
-} // namespace sender
 } // namespace am
 } // namespace mgcom
 

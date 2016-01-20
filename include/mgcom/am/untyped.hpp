@@ -7,6 +7,12 @@
 namespace mgcom {
 namespace am {
 
+struct constants {
+    static const index_t max_data_size = MGCOM_AM_MAX_DATA_SIZE;
+    static const index_t handle_size = MGCOM_AM_HANDLE_SIZE;
+    static const index_t max_num_callbacks = MGCOM_AM_MAX_NUM_CALLBACKS;
+};
+
 typedef mgcom_am_handler_id_t           handler_id_t;
 
 typedef mgcom_am_handler_callback_t     handler_callback_t;
