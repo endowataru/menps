@@ -4,6 +4,7 @@ project(mgcom)
 
 INCLUDE (CheckIncludeFileCXX)
 INCLUDE (CheckCXXSourceCompiles)
+INCLUDE (CheckSymbolExists)
 
 add_library(mgcom-header INTERFACE)
 target_include_directories(mgcom-header
@@ -14,6 +15,9 @@ target_link_libraries(mgcom-header
 )
 
 add_library(mgcom-base INTERFACE)
+target_include_directories(mgcom-base
+    INTERFACE ./src
+)
 target_link_libraries(mgcom-base INTERFACE mgcom-header mgbase-options)
 
 # Platform Checks
@@ -30,6 +34,8 @@ int main() { }
 "
 is_mpi3_available)
 
+CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
+
 # Library for each device
 
 if(${is_mpi_available})
@@ -45,9 +51,6 @@ if(${is_mpi_available})
         src/device/mpi/am/am.cpp
         src/device/mpi/am/sender_queue.cpp
     )
-    target_include_directories(mgcom-mpi1
-        PRIVATE ./src
-    )
     target_link_libraries(mgcom-mpi1 mgcom-base mgbase)
     
     list(APPEND mgcom-devices mpi1)
@@ -55,7 +58,8 @@ endif()
 
 if(${is_mpi3_available})
     add_library(mgcom-mpi3
-        src/common/rma/contiguous.cpp
+        src/common/rma/try_contiguous.cpp
+        src/common/rma/try_atomic.cpp
         src/common/rma/buffer_pool.cpp
         src/device/mpi3/mpi3.cpp
         src/device/mpi3/collective.cpp
@@ -64,12 +68,27 @@ if(${is_mpi3_available})
         src/device/mpi/am/am.cpp
         src/device/mpi/am/sender_queue.cpp
     )
-    target_include_directories(mgcom-mpi3
-        PRIVATE ./src
-    )
     target_link_libraries(mgcom-mpi3 mgcom-base mgbase)
     
     list(APPEND mgcom-devices mpi3)
+endif()
+
+if (${is_fjmpi_available})
+    add_library(mgcom-fjmpi
+        src/common/rma/buffer_pool.cpp
+        src/common/rma/try_contiguous.cpp
+        src/device/mpi/rma/atomic.cpp
+        src/device/mpi/mpi_base.cpp
+        src/device/mpi/collective/barrier.cpp
+        src/device/mpi/collective/collective.cpp
+        src/device/mpi/am/am.cpp
+        src/device/mpi/am/sender_queue.cpp
+        src/device/fjmpi/rma/rma.cpp
+        src/device/fjmpi/fjmpi.cpp
+    )
+    target_link_libraries(mgcom-fjmpi mgcom-base mgbase)
+    
+    list(APPEND mgcom-devices fjmpi)
 endif()
 
 # Publish the device list

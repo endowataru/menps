@@ -3,7 +3,6 @@
 
 namespace mgcom {
 namespace rma {
-namespace untyped {
 
 namespace /*unnamed*/ {
 
@@ -17,6 +16,12 @@ void initialize() {
 void finalize() {
     g_impl.finalize();
 }
+
+void poll() {
+    g_impl.poll();
+}
+
+namespace untyped {
 
 local_region register_region(
     void*   local_pointer
@@ -49,8 +54,7 @@ void deregister_region(const local_region& region)
     g_impl.deregister_memory(static_cast<int>(region.key.info));
 }
 
-
-namespace {
+namespace /*unnamed*/ {
 
 inline mgbase::uint64_t get_absolute_address(const local_address& addr) MGBASE_NOEXCEPT {
     const mgbase::uint64_t laddr = addr.region.info;
@@ -62,7 +66,7 @@ inline mgbase::uint64_t get_absolute_address(const remote_address& addr) MGBASE_
     return raddr + addr.offset;
 }
 
-}
+} // unnamed namespace
 
 bool try_remote_read_extra(
     process_id_t            proc
@@ -120,11 +124,8 @@ bool try_remote_write(
     return try_remote_write_extra(proc, remote_addr, local_addr, size_in_bytes, on_complete, 0);
 }
 
-void poll() {
-    g_impl.poll();
-}
-
 } // namespace untyped
+
 } // namespace rma
 } // namespace mgcom
 

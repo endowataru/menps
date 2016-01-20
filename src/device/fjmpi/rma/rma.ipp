@@ -2,7 +2,7 @@
 #pragma once
 
 #include "rma.hpp"
-#include "common/mpi_base.hpp"
+#include "device/mpi/mpi_base.hpp"
 
 #include "mpi-ext.h"
 
@@ -13,7 +13,7 @@
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/lock_guard.hpp>
 
-#include "fjmpi_error.hpp"
+#include "device/fjmpi/fjmpi_error.hpp"
 
 namespace mgcom {
 namespace rma {
