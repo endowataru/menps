@@ -16,31 +16,31 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     target_compile_options(mgbase-options INTERFACE
         -Xg
         -D GTEST_HAS_TR1_TUPLE=0
-        "$<$<CONFIG:Debug>:-g>"
-        "$<$<CONFIG:Release>:-Kfast>"
+        $<$<CONFIG:Debug>:-g>
+        $<$<CONFIG:Release>:-Kfast>
     )
 else()
     target_compile_options(mgbase-options INTERFACE
-        "-Wall"
-        "-std=c++03"
-        "-pedantic"
-        "-Wextra"
-        "-Wcast-qual"
-        "-Wctor-dtor-privacy"
-        "-Wdisabled-optimization"
-        "-Wformat=2"
-        "-Winit-self"
-        "-Wmissing-declarations"
-        "-Wmissing-include-dirs"
-        "-Woverloaded-virtual"
-        "-Wredundant-decls"
-        "-Wshadow"
-        "-Wsign-promo"
-        "-Wstrict-overflow=5"
-        "-Wswitch-default"
-        "-Wno-variadic-macros"
-        "$<$<CXX_COMPILER_ID:Clang>:-Wno-c++11-long-long>" # for mpi.h
-        "$<$<CXX_COMPILER_ID:GNU>:-Wno-long-long>" # for mpi.h
+        -Wall
+        $<$<COMPILE_LANGUAGE:CXX>:-std=c++03>
+        -pedantic
+        -Wextra
+        -Wcast-qual
+        -Wctor-dtor-privacy
+        -Wdisabled-optimization
+        -Wformat=2
+        -Winit-self
+        -Wmissing-declarations
+        -Wmissing-include-dirs
+        -Woverloaded-virtual
+        -Wredundant-decls
+        -Wshadow
+        -Wsign-promo
+        -Wstrict-overflow=5
+        -Wswitch-default
+        -Wno-variadic-macros
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-c++11-long-long> # for mpi.h
+        $<$<CXX_COMPILER_ID:GNU>:-Wno-long-long> # for mpi.h
     )
 endif()
 
