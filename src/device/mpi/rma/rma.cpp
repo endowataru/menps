@@ -6,16 +6,20 @@
 
 #include <mgbase/logging/logger.hpp>
 
+#include "common/rma/region_allocator.hpp"
+
 namespace mgcom {
 namespace rma {
 
 void initialize() {
     initialize_contiguous();
     initialize_atomic();
+    initialize_allocator();
 }
 
 void finalize()
 {
+    finalize_allocator();
     finalize_atomic();
     finalize_contiguous();
 }

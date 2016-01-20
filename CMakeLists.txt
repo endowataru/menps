@@ -40,7 +40,8 @@ CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
 
 if(${is_mpi_available})
     add_library(mgcom-mpi1
-        src/common/rma/buffer_pool.cpp
+        src/common/rma/region_allocator.cpp
+        src/common/rma/malloc.c
         src/device/mpi1/mpi1.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/rma/contiguous.cpp
@@ -60,7 +61,8 @@ if(${is_mpi3_available})
     add_library(mgcom-mpi3
         src/common/rma/try_contiguous.cpp
         src/common/rma/try_atomic.cpp
-        src/common/rma/buffer_pool.cpp
+        src/common/rma/region_allocator.cpp
+        src/common/rma/malloc.c
         src/device/mpi3/mpi3.cpp
         src/device/mpi3/collective.cpp
         src/device/mpi3/rma/rma.cpp
@@ -75,7 +77,8 @@ endif()
 
 if (${is_fjmpi_available})
     add_library(mgcom-fjmpi
-        src/common/rma/buffer_pool.cpp
+        src/common/rma/region_allocator.cpp
+        src/common/rma/malloc.c
         src/common/rma/try_contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/mpi_base.cpp

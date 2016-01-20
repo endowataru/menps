@@ -1,5 +1,6 @@
 
 #include "rma.ipp"
+#include "common/rma/region_allocator.hpp"
 
 namespace mgcom {
 namespace rma {
@@ -12,9 +13,11 @@ impl g_impl;
 
 void initialize() {
     g_impl.initialize();
+    initialize_allocator();
 }
 
 void finalize() {
+    finalize_allocator();
     g_impl.finalize();
 }
 
