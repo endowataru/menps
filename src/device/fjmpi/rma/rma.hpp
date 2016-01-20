@@ -8,8 +8,8 @@
 namespace mgcom {
 namespace rma {
 
-void initialize();
-void finalize();
+void initialize_contiguous();
+void finalize_contiguous();
 
 namespace untyped {
 

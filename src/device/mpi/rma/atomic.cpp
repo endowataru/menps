@@ -10,6 +10,11 @@ void initialize_atomic()
     emulated_atomic<atomic_default_t>::initialize();
 }
 
+void finalize_atomic()
+{
+    // do nothing
+}
+
 namespace untyped {
 namespace detail {
 

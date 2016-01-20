@@ -24,6 +24,11 @@ void initialize()
     detail::g_impl.initialize();
 }
 
+void finalize()
+{
+    // do nothing
+}
+
 } // namespace collective
 } // namespace mgcom
 

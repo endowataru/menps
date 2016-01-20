@@ -10,10 +10,10 @@ impl g_impl;
 
 } // unnamed namespace
 
-void initialize() {
+void initialize_contiguous() {
     g_impl.initialize();
 }
-void finalize() {
+void finalize_contiguous() {
     g_impl.finalize();
 }
 

@@ -33,11 +33,11 @@ void finalize()
     
     MPI_Barrier(MPI_COMM_WORLD);
     
+    collective::finalize();
+    
     rma::finalize();
     
     am::finalize();
-    
-    MGBASE_LOG_DEBUG("msg:Finalized.");
     
     mpi_base::finalize();
     

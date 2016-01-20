@@ -16,7 +16,8 @@ void initialize() {
 
 void finalize()
 {
-    // do nothing
+    finalize_atomic();
+    finalize_contiguous();
 }
 
 namespace untyped {

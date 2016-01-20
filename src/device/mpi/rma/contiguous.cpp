@@ -32,6 +32,10 @@ void initialize_contiguous()
 {
     untyped::g_emulated.initialize();
 }
+void finalize_contiguous()
+{
+    // do nothing
+}
 
 } // namespace rma
 } // namespace mgcom

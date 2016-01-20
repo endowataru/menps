@@ -20,6 +20,7 @@ void finalize()
 {
     collective::barrier();
     
+    collective::finalize();
     am::finalize();
     rma::finalize();
     

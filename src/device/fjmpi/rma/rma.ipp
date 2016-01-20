@@ -15,6 +15,8 @@
 
 #include "device/fjmpi/fjmpi_error.hpp"
 
+#include <mgbase/logging/logger.hpp>
+
 namespace mgcom {
 namespace rma {
 
@@ -56,8 +58,10 @@ public:
     int register_memory(void* buf, std::size_t length, mgbase::uint64_t* address_result)
     {
         int memid;
-        if (!memid_queue_.dequeue(memid))
+        if (!memid_queue_.dequeue(memid)) {
+            MGBASE_LOG_WARN("Exceeded the capacity of memid");
             throw fjmpi_error(); // exceeded the capacity of memid
+        }
         
         mgbase::uint64_t address;
         {
