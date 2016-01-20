@@ -12,6 +12,6 @@
 #ifdef MGBASE_ENABLE_ASSERT
     #define MGBASE_ASSERT(x)    assert(x);
 #else
-    #define MGBASE_ASSERT(x)
+    #define MGBASE_ASSERT(x)    if (false) { assert(x); }
 #endif
 
