@@ -69,12 +69,12 @@ inline mgbase::uint64_t get_absolute_address(const remote_address& addr) MGBASE_
 } // unnamed namespace
 
 bool try_remote_read_extra(
-    process_id_t            proc
-,   const remote_address&   remote_addr
-,   const local_address&    local_addr
-,   index_t                 size_in_bytes
-,   local_notifier          on_complete
-,   int                     flags
+    process_id_t                proc
+,   const remote_address&       remote_addr
+,   const local_address&        local_addr
+,   index_t                     size_in_bytes
+,   const mgbase::operation&    on_complete
+,   int                         flags
 ) {
     return g_impl.try_get(
         static_cast<int>(proc)
@@ -87,22 +87,29 @@ bool try_remote_read_extra(
 }
 
 bool try_remote_read(
-    process_id_t            proc
-,   const remote_address&   remote_addr
-,   const local_address&    local_addr
-,   index_t                 size_in_bytes
-,   local_notifier          on_complete
+    process_id_t                proc
+,   const remote_address&       remote_addr
+,   const local_address&        local_addr
+,   index_t                     size_in_bytes
+,   const mgbase::operation&    on_complete
 ) {
-    return try_remote_read_extra(proc, remote_addr, local_addr, size_in_bytes, on_complete, 0);
+    return try_remote_read_extra(
+        proc
+    ,   remote_addr
+    ,   local_addr
+    ,   size_in_bytes
+    ,   on_complete
+    ,   0
+    );
 }
 
 bool try_remote_write_extra(
-    process_id_t            proc
-,   const remote_address&   remote_addr
-,   const local_address&    local_addr
-,   index_t                 size_in_bytes
-,   local_notifier          on_complete
-,   int                     flags
+    process_id_t                proc
+,   const remote_address&       remote_addr
+,   const local_address&        local_addr
+,   index_t                     size_in_bytes
+,   const mgbase::operation&    on_complete
+,   int                         flags
 ) {
     return g_impl.try_put(
         static_cast<int>(proc)
@@ -115,13 +122,20 @@ bool try_remote_write_extra(
 }
 
 bool try_remote_write(
-    process_id_t            proc
-,   const remote_address&   remote_addr
-,   const local_address&    local_addr
-,   index_t                 size_in_bytes
-,   local_notifier          on_complete
+    process_id_t                proc
+,   const remote_address&       remote_addr
+,   const local_address&        local_addr
+,   index_t                     size_in_bytes
+,   const mgbase::operation&    on_complete
 ) {
-    return try_remote_write_extra(proc, remote_addr, local_addr, size_in_bytes, on_complete, 0);
+    return try_remote_write_extra(
+        proc
+    ,   remote_addr
+    ,   local_addr
+    ,   size_in_bytes
+    ,   on_complete
+    ,   0
+    );
 }
 
 } // namespace untyped

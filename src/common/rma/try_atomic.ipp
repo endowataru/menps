@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "try_atomic.hpp"
+#include <mgcom/rma/address.hpp>
 #include "try_handlers.ipp"
 
 namespace mgcom {
@@ -18,13 +18,13 @@ class remote_atomic_write_default_handlers
 public:
     typedef remote_atomic_write_default_cb  cb_type;
     
-    static bool try_(cb_type& cb, const local_notifier& on_complete)
+    static bool try_(cb_type& cb, const mgbase::operation& on_complete)
     {
-        return try_remote_atomic_write_default(
+        return try_remote_atomic_write(
             cb.proc
-        ,   cb.remote_addr
-        ,   cb.local_addr
-        ,   cb.buf_addr
+        ,   remote_pointer<atomic_default_t>::cast_from(cb.remote_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.local_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.buf_addr)
         ,   on_complete
         );
     }
@@ -36,13 +36,13 @@ class remote_atomic_read_default_handlers
 public:
     typedef remote_atomic_read_default_cb   cb_type;
     
-    static bool try_(cb_type& cb, const local_notifier& on_complete)
+    static bool try_(cb_type& cb, const mgbase::operation& on_complete)
     {
-        return try_remote_atomic_read_default(
+        return try_remote_atomic_read(
             cb.proc
-        ,   cb.remote_addr
-        ,   cb.local_addr
-        ,   cb.buf_addr
+        ,   remote_pointer<atomic_default_t>::cast_from(cb.remote_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.local_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.buf_addr)
         ,   on_complete
         );
     }
@@ -54,14 +54,14 @@ class remote_compare_and_swap_default_handlers
 public:
     typedef remote_compare_and_swap_default_cb  cb_type;
     
-    static bool try_(cb_type& cb, const local_notifier& on_complete)
+    static bool try_(cb_type& cb, const mgbase::operation& on_complete)
     {
-        return try_remote_compare_and_swap_default(
+        return try_remote_compare_and_swap(
             cb.target_proc
-        ,   cb.target_addr
-        ,   cb.expected_addr
-        ,   cb.desired_addr
-        ,   cb.result_addr
+        ,   remote_pointer<atomic_default_t>::cast_from(cb.target_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.expected_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.desired_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.result_addr)
         ,   on_complete
         );
     }
@@ -77,48 +77,13 @@ class remote_fetch_and_add_default_handlers
 public:
     typedef remote_fetch_and_add_default_cb     cb_type;
     
-    static bool try_(cb_type& cb, const local_notifier& on_complete)
+    static bool try_(cb_type& cb, const mgbase::operation& on_complete)
     {
-        return try_remote_fetch_and_add_default(
+        return try_remote_fetch_and_add(
             cb.target_proc
-        ,   cb.target_addr
-        ,   cb.value_addr
-        ,   cb.result_addr
-        ,   on_complete
-        );
-    }
-};
-
-class local_compare_and_swap_default_handlers
-    : public try_handlers<local_compare_and_swap_default_handlers, local_compare_and_swap_default_cb>
-{
-public:
-    typedef local_compare_and_swap_default_cb  cb_type;
-    
-    static bool try_(cb_type& cb, const local_notifier& on_complete)
-    {
-        return try_local_compare_and_swap_default(
-            cb.target_addr
-        ,   cb.expected_addr
-        ,   cb.desired_addr
-        ,   cb.result_addr
-        ,   on_complete
-        );
-    }
-};
-
-class local_fetch_and_add_default_handlers
-    : public try_handlers<local_fetch_and_add_default_handlers, local_fetch_and_add_default_cb>
-{
-public:
-    typedef local_fetch_and_add_default_cb     cb_type;
-    
-    static bool try_(cb_type& cb, const local_notifier& on_complete)
-    {
-        return try_local_fetch_and_add_default(
-            cb.target_addr
-        ,   cb.value_addr
-        ,   cb.result_addr
+        ,   remote_pointer<atomic_default_t>::cast_from(cb.target_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.value_addr)
+        ,   local_pointer<atomic_default_t>::cast_from(cb.result_addr)
         ,   on_complete
         );
     }

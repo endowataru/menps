@@ -3,7 +3,6 @@
 
 #include <mgcom/rma.hpp>
 #include "common/rma/rma.hpp"
-#include "common/notifier.hpp"
 
 namespace mgcom {
 namespace rma {
@@ -22,7 +21,7 @@ public:
     static mgbase::deferred<void> start(cb_type& cb) {
         cb.finished = false;
         
-        if (Derived::try_(cb, make_notifier_assign(&cb.finished, true))) {
+        if (Derived::try_(cb, mgbase::make_operation_assign(&cb.finished, true))) {
             return test(cb);
         }
         else {

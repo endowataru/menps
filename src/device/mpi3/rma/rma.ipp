@@ -5,7 +5,6 @@
 #include "device/mpi/mpi_base.hpp"
 #include "device/mpi3/mpi3_error.hpp"
 #include "common/rma/rma.hpp"
-#include "common/notifier.hpp"
 
 #include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/assert.hpp>
@@ -85,11 +84,11 @@ public:
     }
     
     bool try_get(
-        void*                   dest_ptr
-    ,   int                     src_rank
-    ,   MPI_Aint                src_index
-    ,   int                     size
-    ,   const local_notifier&   on_complete
+        void*                       dest_ptr
+    ,   int                         src_rank
+    ,   MPI_Aint                    src_index
+    ,   int                         size
+    ,   const mgbase::operation&    on_complete
     )
     {
         MGBASE_ASSERT(dest_ptr != MGBASE_NULLPTR);
@@ -123,18 +122,18 @@ public:
             )
         );
         
-        add_notifier(on_complete);
+        add_operation(on_complete);
         
         return true;
     }
     
     
     bool try_put(
-        const void*             src_ptr
-    ,   int                     dest_rank
-    ,   MPI_Aint                dest_index
-    ,   int                     size
-    ,   const local_notifier&   on_complete
+        const void*                 src_ptr
+    ,   int                         dest_rank
+    ,   MPI_Aint                    dest_index
+    ,   int                         size
+    ,   const mgbase::operation&    on_complete
     )
     {
         MGBASE_ASSERT(src_ptr != MGBASE_NULLPTR);
@@ -168,19 +167,19 @@ public:
             )
         );
         
-        add_notifier(on_complete);
+        add_operation(on_complete);
         
         return true;
     }
     
     bool try_compare_and_swap(
-        const void*             expected_ptr
-    ,   const void*             desired_ptr
-    ,   void*                   result_ptr
-    ,   MPI_Datatype            datatype
-    ,   int                     dest_rank
-    ,   MPI_Aint                dest_index
-    ,   const local_notifier&   on_complete
+        const void*                 expected_ptr
+    ,   const void*                 desired_ptr
+    ,   void*                       result_ptr
+    ,   MPI_Datatype                datatype
+    ,   int                         dest_rank
+    ,   MPI_Aint                    dest_index
+    ,   const mgbase::operation&    on_complete
     )
     {
         MGBASE_ASSERT(expected_ptr != MGBASE_NULLPTR);
@@ -216,19 +215,19 @@ public:
             )
         );
         
-        add_notifier(on_complete);
+        add_operation(on_complete);
         
         return true;
     }
     
     bool try_fetch_and_op(
-        const void*             value_ptr
-    ,   void*                   result_ptr
-    ,   MPI_Datatype            datatype
-    ,   int                     dest_rank
-    ,   MPI_Aint                dest_index
-    ,   MPI_Op                  operation
-    ,   const local_notifier&   on_complete
+        const void*                 value_ptr
+    ,   void*                       result_ptr
+    ,   MPI_Datatype                datatype
+    ,   int                         dest_rank
+    ,   MPI_Aint                    dest_index
+    ,   MPI_Op                      operation
+    ,   const mgbase::operation&    on_complete
     )
     {
         MGBASE_ASSERT(value_ptr != MGBASE_NULLPTR);
@@ -273,7 +272,7 @@ public:
             )
         );
         
-        add_notifier(on_complete);
+        add_operation(on_complete);
         
         return true;
     }
@@ -290,7 +289,7 @@ public:
         );
         
         for (index_t i = 0; i < num_requests_; ++i)
-            notify(on_complete_[i]);
+            mgbase::execute(on_complete_[i]);
         
         num_requests_ = 0;
     }
@@ -311,12 +310,12 @@ private:
         return num_requests_ >= max_num_requests;
     }
     
-    void add_notifier(const local_notifier& on_complete) MGBASE_NOEXCEPT {
+    void add_operation(const mgbase::operation& on_complete) MGBASE_NOEXCEPT {
         on_complete_[num_requests_++] = on_complete;
     }
     
     MPI_Win win_;
-    local_notifier on_complete_[max_num_requests];
+    mgbase::operation on_complete_[max_num_requests];
     index_t num_requests_;
 };
 

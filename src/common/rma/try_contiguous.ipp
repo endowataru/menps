@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "try_contiguous.hpp"
+#include <mgcom/rma/address.hpp>
 #include "try_handlers.ipp"
 
 namespace mgcom {
@@ -18,7 +18,7 @@ class remote_read_handlers
 public:
     typedef remote_read_cb      cb_type;
     
-    static bool try_(cb_type& cb, const local_notifier& on_complete)
+    static bool try_(cb_type& cb, const mgbase::operation& on_complete)
     {
         return try_remote_read(
             cb.proc
@@ -36,7 +36,7 @@ class remote_write_handlers
 public:
     typedef remote_write_cb     cb_type;
     
-    static bool try_(cb_type& cb, const local_notifier& on_complete)
+    static bool try_(cb_type& cb, const mgbase::operation& on_complete)
     {
         return try_remote_write(
             cb.proc

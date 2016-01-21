@@ -33,7 +33,7 @@ local_region register_region(
 
 void deregister_region(const local_region& region)
 {
-    g_impl.detach(to_pointer(region));
+    g_impl.detach(to_raw_pointer(region));
 }
 
 remote_region use_remote_region(
@@ -44,153 +44,114 @@ remote_region use_remote_region(
     return make_remote_region(key, 0 /* unused */);
 }
 
+
 bool try_remote_read(
-    process_id_t            proc
-,   const remote_address&   remote_addr
-,   const local_address&    local_addr
-,   index_t                 size_in_bytes
-,   local_notifier          on_complete
-)
-{
+    process_id_t                proc
+,   const remote_address&       remote_addr
+,   const local_address&        local_addr
+,   index_t                     size_in_bytes
+,   const mgbase::operation&    on_complete
+) {
     return g_impl.try_get(
-        to_pointer(local_addr)
+        to_raw_pointer(local_addr)
     ,   static_cast<int>(proc)
-    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(remote_addr))
     ,   static_cast<int>(size_in_bytes)
     ,   on_complete
     );
 }
 
 bool try_remote_write(
-    process_id_t            proc
-,   const remote_address&   remote_addr
-,   const local_address&    local_addr
-,   index_t                 size_in_bytes
-,   local_notifier          on_complete
-)
-{
+    process_id_t                proc
+,   const remote_address&       remote_addr
+,   const local_address&        local_addr
+,   index_t                     size_in_bytes
+,   const mgbase::operation&    on_complete
+) {
     return g_impl.try_put(
-        to_pointer(local_addr)
+        to_raw_pointer(local_addr)
     ,   static_cast<int>(proc)
-    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(remote_addr))
     ,   static_cast<int>(size_in_bytes)
     ,   on_complete
     );
 }
 
-bool try_remote_atomic_read_default(
-    process_id_t            proc
-,   const remote_address&   remote_addr
-,   const local_address&    local_addr
-,   const local_address&    buf_addr
-,   local_notifier          on_complete
-)
-{
+} // namespace untyped
+
+bool try_remote_atomic_read(
+    process_id_t                                    proc
+,   const remote_pointer<const atomic_default_t>&   remote_ptr
+,   const local_pointer<atomic_default_t>&          local_ptr
+,   const local_pointer<atomic_default_t>&          buf_ptr
+,   const mgbase::operation&                        on_complete
+) {
     return g_impl.try_fetch_and_op(
-        to_pointer(buf_addr)
-    ,   to_pointer(local_addr)
+        to_raw_pointer(buf_ptr)
+    ,   to_raw_pointer(local_ptr)
     ,   MPI_UINT64_T
     ,   static_cast<int>(proc)
-    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(remote_ptr))
     ,   MPI_NO_OP
     ,   on_complete
     );
 }
 
-bool try_remote_atomic_write_default(
-    process_id_t            proc
-,   const remote_address&   remote_addr
-,   const local_address&    local_addr
-,   const local_address&    buf_addr
-,   local_notifier          on_complete
-)
-{
+bool try_remote_atomic_write(
+    process_id_t                                    proc
+,   const remote_pointer<atomic_default_t>&         remote_ptr
+,   const local_pointer<const atomic_default_t>&    local_ptr
+,   const local_pointer<atomic_default_t>&          buf_ptr
+,   const mgbase::operation&                        on_complete
+) {
     return g_impl.try_fetch_and_op(
-        to_pointer(local_addr)
-    ,   to_pointer(buf_addr)
+        to_raw_pointer(local_ptr)
+    ,   to_raw_pointer(buf_ptr)
     ,   MPI_UINT64_T
     ,   static_cast<int>(proc)
-    ,   reinterpret_cast<MPI_Aint>(to_pointer(remote_addr))
+    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(remote_ptr))
     ,   MPI_REPLACE
     ,   on_complete
     );
 }
 
-bool try_remote_compare_and_swap_default(
-    process_id_t            target_proc
-,   const remote_address&   target_addr
-,   const local_address&    expected_addr
-,   const local_address&    desired_addr
-,   const local_address&    result_addr
-,   local_notifier          on_complete
-)
-{
+bool try_remote_compare_and_swap(
+    process_id_t                                    target_proc
+,   const remote_pointer<atomic_default_t>&         target_ptr
+,   const local_pointer<const atomic_default_t>&    expected_ptr
+,   const local_pointer<const atomic_default_t>&    desired_ptr
+,   const local_pointer<atomic_default_t>&          result_ptr
+,   const mgbase::operation&                        on_complete
+) {
     return g_impl.try_compare_and_swap(
-        to_pointer(expected_addr)
-    ,   to_pointer(desired_addr)
-    ,   to_pointer(result_addr)
+        to_raw_pointer(expected_ptr)
+    ,   to_raw_pointer(desired_ptr)
+    ,   to_raw_pointer(result_ptr)
     ,   MPI_UINT64_T
     ,   static_cast<int>(target_proc)
-    ,   reinterpret_cast<MPI_Aint>(to_pointer(target_addr))
+    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(target_ptr))
     ,   on_complete
     );
 }
 
-bool try_remote_fetch_and_add_default(
-    process_id_t            target_proc
-,   const remote_address&   target_addr
-,   const local_address&    value_addr
-,   const local_address&    result_addr
-,   local_notifier          on_complete
+bool try_remote_fetch_and_add(
+    process_id_t                                    target_proc
+,   const remote_pointer<atomic_default_t>&         target_ptr
+,   const local_pointer<const atomic_default_t>&    value_ptr
+,   const local_pointer<atomic_default_t>&          result_ptr
+,   const mgbase::operation&                        on_complete
 )
 {
     return g_impl.try_fetch_and_op(
-        to_pointer(value_addr)
-    ,   to_pointer(result_addr)
+        to_raw_pointer(value_ptr)
+    ,   to_raw_pointer(result_ptr)
     ,   MPI_UINT64_T
     ,   static_cast<int>(target_proc)
-    ,   reinterpret_cast<MPI_Aint>(to_pointer(target_addr))
+    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(target_ptr))
     ,   MPI_SUM
     ,   on_complete
     );
 }
-
-bool try_local_compare_and_swap_default(
-    const local_address&    target_addr
-,   const local_address&    expected_addr
-,   const local_address&    desired_addr
-,   const local_address&    result_addr
-,   local_notifier          on_complete
-) {
-    return g_impl.try_compare_and_swap(
-        to_pointer(expected_addr)
-    ,   to_pointer(desired_addr)
-    ,   to_pointer(result_addr)
-    ,   MPI_UINT64_T
-    ,   static_cast<int>(current_process_id())
-    ,   reinterpret_cast<MPI_Aint>(to_pointer(target_addr))
-    ,   on_complete
-    );
-}
-
-bool try_local_fetch_and_add_default(
-    const local_address&    target_addr
-,   const local_address&    value_addr
-,   const local_address&    result_addr
-,   local_notifier          on_complete
-) {
-    return g_impl.try_fetch_and_op(
-        to_pointer(value_addr)
-    ,   to_pointer(result_addr)
-    ,   MPI_UINT64_T
-    ,   static_cast<int>(current_process_id())
-    ,   reinterpret_cast<MPI_Aint>(to_pointer(target_addr))
-    ,   MPI_SUM
-    ,   on_complete
-    );
-}
-
-} // namespace untyped
 
 void poll() {
     g_impl.flush();

@@ -95,8 +95,8 @@ public:
             if (!mpi_base::get_lock().try_lock())
                 return mgbase::make_deferred<func_type, &read_handlers::try_recv>(cb);
             
-            void* const src_ptr = mgcom::rma::untyped::to_pointer(cb.remote_addr);
-            void* const dest_ptr = mgcom::rma::untyped::to_pointer(cb.local_addr);
+            void* const src_ptr = mgcom::rma::untyped::to_raw_pointer(cb.remote_addr);
+            void* const dest_ptr = mgcom::rma::untyped::to_raw_pointer(cb.local_addr);
             
             MGBASE_LOG_DEBUG(
                 "msg:Start to receive data for emulated get."
@@ -218,9 +218,9 @@ public:
             if (!mpi_base::get_lock().try_lock())
                 return mgbase::make_deferred<func_type, &write_handlers::try_send>(cb);
             
-            const void* const src_ptr = mgcom::rma::untyped::to_pointer(cb.local_addr);
+            const void* const src_ptr = mgcom::rma::untyped::to_raw_pointer(cb.local_addr);
             
-            void* const dest_ptr = mgcom::rma::untyped::to_pointer(cb.remote_addr);
+            void* const dest_ptr = mgcom::rma::untyped::to_raw_pointer(cb.remote_addr);
             
             MGBASE_LOG_DEBUG(
                 "msg:Start to send data for emulated put."

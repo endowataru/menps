@@ -33,7 +33,7 @@ public:
     
     void finalize()
     {
-        void* const ptr = to_pointer(region_);
+        void* const ptr = to_raw_pointer(region_);
         
         deregister_region(region_);
         
@@ -48,7 +48,7 @@ public:
         
         const local_address base = to_address(region_);
         const index_t diff = static_cast<index_t>(
-            reinterpret_cast<mgbase::uintptr_t>(ptr) - reinterpret_cast<mgbase::uintptr_t>(to_pointer(base))
+            reinterpret_cast<mgbase::uintptr_t>(ptr) - reinterpret_cast<mgbase::uintptr_t>(to_raw_pointer(base))
         );
         
         const local_address addr = advanced(base, diff);
@@ -71,7 +71,7 @@ public:
     
     void deallocate(const registered_buffer& buf)
     {
-        void* const ptr = to_pointer(buf);
+        void* const ptr = to_raw_pointer(buf);
         mspace_free(ms_, ptr);
     }
     

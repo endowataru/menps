@@ -57,12 +57,12 @@ public:
     static mgbase::deferred<void> read(CB& cb)
     {
         const T* const src_ptr
-            = static_cast<const T*>(mgcom::rma::untyped::to_pointer(cb.local_addr));
+            = static_cast<const T*>(mgcom::rma::untyped::to_raw_pointer(cb.local_addr));
         
         const typename am_read::argument_type arg = { src_ptr };
         
         T* const dest_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.remote_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.remote_addr));
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote read.\t"
@@ -112,10 +112,10 @@ public:
     static mgbase::deferred<void> write(CB& cb)
     {
         const T* const src_ptr
-            = static_cast<const T*>(mgcom::rma::untyped::to_pointer(cb.local_addr));
+            = static_cast<const T*>(mgcom::rma::untyped::to_raw_pointer(cb.local_addr));
         
         T* const dest_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.remote_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.remote_addr));
         
         const typename am_write::argument_type arg = { dest_ptr, *src_ptr };
         
@@ -174,18 +174,18 @@ public:
     static mgbase::deferred<void> compare_and_swap(CB& cb, process_id_t target_proc)
     {
         T* const target_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.target_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.target_addr));
         
         const T* const expected_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.expected_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.expected_addr));
         
         const T* const desired_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.desired_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.desired_addr));
         
         const typename am_compare_and_swap::argument_type arg = { target_ptr, *expected_ptr, *desired_ptr };
         
         T* const result_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.result_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.result_addr));
          
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote compare and swap.\t"
@@ -242,15 +242,15 @@ public:
     static mgbase::deferred<void> fetch_and_add(CB& cb, process_id_t target_proc)
     {
         T* const target_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.target_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.target_addr));
         
         const T* const value_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.value_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.value_addr));
         
         const typename am_fetch_and_add::argument_type arg = { target_ptr, *value_ptr };
         
         T* const result_ptr
-            = static_cast<T*>(mgcom::rma::untyped::to_pointer(cb.result_addr));
+            = static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(cb.result_addr));
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote fetch and add.\t"

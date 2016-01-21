@@ -118,70 +118,83 @@ public:
         memid_queue_.enqueue(memid);
     }
     
-    bool try_put(int dest, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const local_notifier& on_complete, int extra_flags)
-    {
-        const int nic = select_nic(dest);
+    bool try_put(
+        int                         dest_proc
+    ,   mgbase::uint64_t            laddr
+    ,   mgbase::uint64_t            raddr
+    ,   std::size_t                 size_in_bytes
+    ,   const mgbase::operation&    on_complete
+    ,   int                         extra_flags
+    ) {
+        const int nic = select_nic(dest_proc);
         
         int tag;
-        if (!try_new_tag(dest, nic, &tag))
+        if (!try_new_tag(dest_proc, nic, &tag))
             return false;
         
         if (get_lock().try_lock()) {
             const int flags = nic | extra_flags;
             
             MGBASE_LOG_DEBUG(
-                "msg:RDMA Put.\tdest:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
-            ,   dest
+                "msg:RDMA Put.\tdest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
+            ,   dest_proc
             ,   laddr
             ,   raddr
             ,   size_in_bytes
             ,   flags
             );
             
-            const int ret = ::FJMPI_Rdma_put(dest, tag, raddr, laddr, size_in_bytes, flags);
+            const int ret = ::FJMPI_Rdma_put(dest_proc, tag, raddr, laddr, size_in_bytes, flags);
             get_lock().unlock();
             
             if (ret != 0)
                 throw fjmpi_error();
             
-            set_notifier(dest, nic, tag, on_complete);
+            set_operation(dest_proc, nic, tag, on_complete);
             return true;
         }
         
-        free_tag(dest, nic, tag);
+        free_tag(dest_proc, nic, tag);
         return false;
     }
     
-    bool try_get(int src, mgbase::uint64_t laddr, mgbase::uint64_t raddr, std::size_t size_in_bytes, const local_notifier& on_complete, int extra_flags) {
-        const int nic = select_nic(src);
+    bool try_get(
+        int                         src_proc
+    ,   mgbase::uint64_t            laddr
+    ,   mgbase::uint64_t            raddr
+    ,   std::size_t                 size_in_bytes
+    ,   const mgbase::operation&    on_complete
+    ,   int                         extra_flags
+    ) {
+        const int nic = select_nic(src_proc);
         
         int tag;
-        if (!try_new_tag(src, nic, &tag))
+        if (!try_new_tag(src_proc, nic, &tag))
             return false;
         
         if (get_lock().try_lock()) {
             const int flags = nic | extra_flags;
             
             MGBASE_LOG_DEBUG(
-                "msg:RDMA Get.\tsrc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
-            ,   src
+                "msg:RDMA Get.\tsrc_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
+            ,   src_proc
             ,   laddr
             ,   raddr
             ,   size_in_bytes
             ,   flags
             );
             
-            const int ret = ::FJMPI_Rdma_get(src, tag, raddr, laddr, size_in_bytes, flags);
+            const int ret = ::FJMPI_Rdma_get(src_proc, tag, raddr, laddr, size_in_bytes, flags);
             get_lock().unlock();
             
             if (ret != 0)
                 throw fjmpi_error();
             
-            set_notifier(src, nic, tag, on_complete);
+            set_operation(src_proc, nic, tag, on_complete);
             return true;
         }
         
-        free_tag(src, nic, tag);
+        free_tag(src_proc, nic, tag);
         return false;
     }
     
@@ -200,7 +213,8 @@ private:
         return true;
     }
     
-    void set_notifier(int proc, int nic, int tag, const local_notifier& on_complete) MGBASE_NOEXCEPT {
+    void set_operation(int proc, int nic, int tag, const mgbase::operation& on_complete) MGBASE_NOEXCEPT
+    {
         info_by_procs_[proc].by_nics[nic].by_tags[tag].on_complete = on_complete;
         number_of_outstandings_[nic].fetch_add(1, mgbase::memory_order_relaxed);
         
@@ -258,13 +272,13 @@ private:
     
     void notify(int nic, int pid, int tag) MGBASE_NOEXCEPT {
         nic_info& info = info_by_procs_[pid].by_nics[nic];
-        mgcom::notify(info.by_tags[tag].on_complete);
+        mgbase::execute(info.by_tags[tag].on_complete);
         info.free_tags.enqueue(tag);
         number_of_outstandings_[nic].fetch_sub(1, mgbase::memory_order_relaxed);
     }
     
     struct tag_info {
-        local_notifier on_complete;
+        mgbase::operation on_complete;
     };
     
     struct nic_info {

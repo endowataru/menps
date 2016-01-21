@@ -89,16 +89,16 @@ inline remote_address advanced(const remote_address& addr, index_t diff) MGBASE_
     return result;
 }
 
-inline void* to_pointer(const local_region& region) MGBASE_NOEXCEPT {
+inline void* to_raw_pointer(const local_region& region) MGBASE_NOEXCEPT {
     return region.key.pointer;
 }
 
-inline void* to_pointer(const local_address& addr) MGBASE_NOEXCEPT {
-    return static_cast<mgbase::uint8_t*>(to_pointer(addr.region)) + addr.offset;
+inline void* to_raw_pointer(const local_address& addr) MGBASE_NOEXCEPT {
+    return static_cast<mgbase::uint8_t*>(to_raw_pointer(addr.region)) + addr.offset;
 }
 
-inline void* to_pointer(const registered_buffer& buffer) MGBASE_NOEXCEPT {
-    return to_pointer(to_address(buffer));
+inline void* to_raw_pointer(const registered_buffer& buffer) MGBASE_NOEXCEPT {
+    return to_raw_pointer(to_address(buffer));
 }
 
 inline local_region allocate_region(index_t size_in_bytes) {
@@ -107,7 +107,7 @@ inline local_region allocate_region(index_t size_in_bytes) {
 }
 inline void deallocate_region(const local_region& region) {
     deregister_region(region);
-    delete[] static_cast<mgbase::uint8_t*>(to_pointer(region));
+    delete[] static_cast<mgbase::uint8_t*>(to_raw_pointer(region));
 }
 
 inline remote_address use_remote_address(process_id_t proc_id, const local_address& addr) {
@@ -125,7 +125,7 @@ inline mgbase::uint64_t to_integer(const untyped::remote_address& addr) MGBASE_N
     return reinterpret_cast<mgbase::uint64_t>(static_cast<mgbase::uint8_t*>(addr.region.key.pointer) + addr.offset);
 }
 inline mgbase::uint64_t to_integer(const untyped::local_address& addr) MGBASE_NOEXCEPT {
-    return reinterpret_cast<mgbase::uint64_t>(static_cast<mgbase::uint8_t*>(untyped::to_pointer(addr.region)) + addr.offset);
+    return reinterpret_cast<mgbase::uint64_t>(static_cast<mgbase::uint8_t*>(untyped::to_raw_pointer(addr.region)) + addr.offset);
 }
 
 } // unnamed namespace

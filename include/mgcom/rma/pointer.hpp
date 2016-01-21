@@ -86,7 +86,7 @@ public:
         return raw();
     }
     
-    T* raw() const MGBASE_NOEXCEPT { return static_cast<T*>(untyped::to_pointer(addr_)); }
+    T* raw() const MGBASE_NOEXCEPT { return static_cast<T*>(untyped::to_raw_pointer(addr_)); }
     
     address_type to_address() const MGBASE_NOEXCEPT {
         return addr_;
@@ -155,6 +155,11 @@ inline mgbase::uint64_t to_integer(const local_pointer<T>& ptr) MGBASE_NOEXCEPT 
 template <typename T>
 inline mgbase::uint64_t to_integer(const remote_pointer<T>& ptr) MGBASE_NOEXCEPT {
     return mgcom::rma::to_integer(ptr.to_address());
+}
+
+template <typename T>
+inline T* to_raw_pointer(const local_pointer<T>& ptr) MGBASE_NOEXCEPT {
+    return static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(ptr.to_address()));
 }
 
 } // unnamed namespace

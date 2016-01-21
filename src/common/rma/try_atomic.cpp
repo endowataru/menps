@@ -23,14 +23,6 @@ mgbase::deferred<void> remote_fetch_and_add_default(remote_fetch_and_add_default
     return remote_fetch_and_add_default_handlers::start(cb);
 }
 
-mgbase::deferred<void> local_compare_and_swap_default(local_compare_and_swap_default_cb& cb) {
-    return local_compare_and_swap_default_handlers::start(cb);
-}
-
-mgbase::deferred<void> local_fetch_and_add_default(local_fetch_and_add_default_cb& cb) {
-    return local_fetch_and_add_default_handlers::start(cb);
-}
-
 } // namespace detail
 
 } // namespace untyped

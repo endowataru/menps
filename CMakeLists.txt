@@ -35,6 +35,7 @@ int main() { }
 is_mpi3_available)
 
 CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
+#set(is_fjmpi_available TRUE) # Just for compilation check
 
 # Library for each device
 
