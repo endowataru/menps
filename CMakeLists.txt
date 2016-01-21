@@ -22,7 +22,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
 else()
     target_compile_options(mgbase-options INTERFACE
         -Wall
-        $<$<COMPILE_LANGUAGE:CXX>:-std=c++03>
+        #$<$<COMPILE_LANGUAGE:CXX>:-std=c++03>
         -pedantic
         -Wextra
         -Wcast-qual
