@@ -1,5 +1,5 @@
 
 #pragma once
 
-#include "rma/untyped.h"
+#include <mgcom/rma/nb.h>
 

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgcom/rma/untyped.hpp>
+#include <mgcom/rma/address.hpp>
 #include <mgcom/rma/pointer.h>
 
 #include <mgbase/type_traits.hpp>
@@ -130,188 +130,6 @@ private:
 
 namespace /*unnamed*/ {
 
-/// Simple remote read.
-template <typename Remote, typename Local>
-inline typename mgbase::enable_if<
-    mgbase::is_runtime_sized_assignable<Local, Remote>::value
-,   mgbase::deferred<void>
->::type
-remote_read_nb(
-    rma::remote_read_cb&            cb
-,   process_id_t                    proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-) {
-    return mgcom::rma::untyped::remote_read_nb(
-        cb
-    ,   proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
-    ,   mgbase::runtime_size_of<Remote>()
-    );
-}
-
-/// Simple remote write.
-template <typename Remote, typename Local>
-inline typename mgbase::enable_if<
-    mgbase::is_runtime_sized_assignable<Remote, Local>::value
-,   mgbase::deferred<void>
->::type
-remote_write_nb(
-    rma::remote_write_cb&           cb
-,   process_id_t                    proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-) {
-    return mgcom::rma::untyped::remote_write_nb(
-        cb
-    ,   proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
-    ,   mgbase::runtime_size_of<Local>()
-    );
-}
-
-template <typename Remote, typename Local>
-inline typename mgbase::enable_if<
-    mgbase::is_same<
-        typename mgbase::remove_const<Remote>::type
-    ,   Local
-    >::value
-,   mgbase::deferred<void>
->::type
-remote_read_nb(
-    remote_read_cb&                 cb
-,   process_id_t                    proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-,   index_t                         number_of_elements
-) {
-    return mgcom::rma::untyped::remote_read_nb(
-        cb
-    ,   proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
-    ,   number_of_elements * mgbase::runtime_size_of<Remote>()
-    );
-}
-
-template <typename Remote, typename Local>
-inline typename mgbase::enable_if<
-    mgbase::is_same<
-        Remote
-    ,   typename mgbase::remove_const<Local>::type
-    >::value
-,   mgbase::deferred<void>
->::type
-remote_write_nb(
-    remote_write_cb&                cb
-,   process_id_t                    proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-,   index_t                         number_of_elements
-) {
-    return mgcom::rma::untyped::remote_write_nb(
-        cb
-    ,   proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
-    ,   number_of_elements * mgbase::runtime_size_of<Remote>()
-    );
-}
-
-inline mgbase::deferred<void> remote_atomic_read_default_nb(
-    remote_atomic_read_default_cb&                      cb
-,   process_id_t                                        proc
-,   const remote_pointer<const rma::atomic_default_t>&  remote_ptr
-,   const local_pointer<rma::atomic_default_t>&         local_ptr
-,   const local_pointer<rma::atomic_default_t>&         buf_ptr
-) {
-    return mgcom::rma::untyped::remote_atomic_read_default_nb(
-        cb
-    ,   proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
-    ,   buf_ptr.to_address()
-    );
-}
-
-inline mgbase::deferred<void> remote_atomic_write_default_nb(
-    remote_atomic_write_default_cb&                     cb
-,   process_id_t                                        proc
-,   const remote_pointer<rma::atomic_default_t>&        remote_ptr
-,   const local_pointer<const rma::atomic_default_t>&   local_ptr
-,   const local_pointer<rma::atomic_default_t>&         buf_ptr
-) {
-    return mgcom::rma::untyped::remote_atomic_write_default_nb(
-        cb
-    ,   proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
-    ,   buf_ptr.to_address()
-    );
-}
-
-/**
- * Non-blocking local compare-and-swap.
- */
-inline mgbase::deferred<void> local_compare_and_swap_default_nb(
-    local_compare_and_swap_default_cb&                  cb
-,   const local_pointer<rma::atomic_default_t>&         target_ptr
-,   const local_pointer<const rma::atomic_default_t>&   expected_ptr
-,   const local_pointer<const rma::atomic_default_t>&   desired_ptr
-,   const local_pointer<rma::atomic_default_t>&         result_ptr
-) {
-    return mgcom::rma::untyped::local_compare_and_swap_default_nb(
-        cb
-    ,   target_ptr.to_address()
-    ,   expected_ptr.to_address()
-    ,   desired_ptr.to_address()
-    ,   result_ptr.to_address()
-    );
-}
-
-/**
- * Non-blocking remote compare-and-swap.
- */
-inline mgbase::deferred<void> remote_compare_and_swap_default_nb(
-    remote_compare_and_swap_default_cb&                 cb
-,   process_id_t                                        target_proc
-,   const remote_pointer<rma::atomic_default_t>&        target_ptr
-,   const local_pointer<const rma::atomic_default_t>&   expected_ptr
-,   const local_pointer<const rma::atomic_default_t>&   desired_ptr
-,   const local_pointer<rma::atomic_default_t>&         result_ptr
-) {
-    return mgcom::rma::untyped::remote_compare_and_swap_default_nb(
-        cb
-    ,   target_proc
-    ,   target_ptr.to_address()
-    ,   expected_ptr.to_address()
-    ,   desired_ptr.to_address()
-    ,   result_ptr.to_address()
-    );
-}
-
-/**
- * Non-blocking remote fetch-and-add.
- */
-inline mgbase::deferred<void> remote_fetch_and_add_default_nb(
-    remote_fetch_and_add_default_cb&                    cb
-,   process_id_t                                        target_proc
-,   const remote_pointer<rma::atomic_default_t>&        target_ptr
-,   const local_pointer<const rma::atomic_default_t>&   value_ptr
-,   const local_pointer<rma::atomic_default_t>&         result_ptr
-) {
-    return mgcom::rma::untyped::remote_fetch_and_add_default_nb(
-        cb
-    ,   target_proc
-    ,   target_ptr.to_address()
-    ,   value_ptr.to_address()
-    ,   result_ptr.to_address()
-    );
-}
-
-
 template <typename T>
 inline remote_pointer<T> use_remote_pointer(process_id_t proc_id, const local_pointer<T>& ptr) {
     return remote_pointer<T>::cast_from(mgcom::rma::untyped::use_remote_address(proc_id, ptr.to_address()));
@@ -338,7 +156,6 @@ template <typename T>
 inline mgbase::uint64_t to_integer(const remote_pointer<T>& ptr) MGBASE_NOEXCEPT {
     return mgcom::rma::to_integer(ptr.to_address());
 }
-
 
 } // unnamed namespace
 

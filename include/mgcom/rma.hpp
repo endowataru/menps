@@ -1,6 +1,6 @@
 
 #pragma once
 
-#include "rma/untyped.hpp"
-#include "rma/pointer.hpp"
+#include <mgcom/rma/nb.hpp>
+#include <mgcom/rma/try_rma.hpp>
 

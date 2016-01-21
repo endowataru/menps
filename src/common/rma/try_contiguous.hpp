@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgcom/rma/untyped.hpp>
+#include <mgcom/rma/address.hpp>
 #include "common/notifier.hpp"
 
 namespace mgcom {

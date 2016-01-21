@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <mgcom/rma/untyped.hpp>
-
 namespace mgcom {
 namespace rma {
 

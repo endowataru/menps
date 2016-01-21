@@ -2,7 +2,7 @@
 #pragma once
 
 #include "region_allocator.hpp"
-#include <mgcom/rma/untyped.hpp>
+#include <mgcom/rma/address.hpp>
 #include "./malloc.h"
 #include <mgbase/memory/aligned_alloc.hpp>
 #include <mgbase/logging/logger.hpp>
