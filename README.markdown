@@ -80,21 +80,16 @@ Currently, only the fixed-size AM is supported
 Platforms
 ---------
 
-The platforms to be supported are:
+Supported interconnects:
 
+- MPI-1
 - MPI-3
-- Fujitsu RDMA
-    - Fujitsu compiler
-    - GCC
-- Infiniband Verbs
+- Tofu (FJMPI)
+- Infiniband Verbs (future work)
 
+Supported compilers:
 
-How to Build & Run
-------------------
-
-    git clone --recursive git@gitlab.eidos.ic.i.u-tokyo.ac.jp:wendo/mgcom.git
-    cd mgcom
-    ./build
-    make latency
-    mpirun -n 2 ./out/Release/latency
+- Clang
+- GCC
+- Fujitsu compiler
 
