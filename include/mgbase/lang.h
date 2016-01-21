@@ -13,6 +13,8 @@
 #define MGBASE_LIKELY(x)        __builtin_expect(!!(x), 1)
 #define MGBASE_UNLIKELY(x)      __builtin_expect(!!(x), 0)
 
+#define MGBASE_UNREACHABLE()    __builtin_unreachable()
+
 #ifndef __cplusplus
     #include <stdint.h>
     #include <stdlib.h>
