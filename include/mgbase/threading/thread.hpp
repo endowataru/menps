@@ -9,39 +9,45 @@ namespace mgbase {
 struct thread_error { };
 
 class thread
-    : noncopyable
 {
-public:
-    /*explicit thread(void (*func))
+    template <typename Func>
+    struct starter
     {
-        
-    }*/
+        static void* pass(void* ptr)
+        {
+            Func* const func_ptr = static_cast<Func*>(ptr);
+            
+            (*func_ptr)();
+            
+            delete func_ptr;
+            
+            return MGBASE_NULLPTR;
+        }
+    };
+    
+public:
     thread() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
-    /*template <typename T>
-    void run(void (T::*func)(), T* self) {
-        typedef void (T::*func_ptr)();
+    template <typename Func>
+    explicit thread(const Func& func)
+    {
+        run(func);
+    }
+    
+    template <typename Func>
+    void run(const Func& func)
+    {
+        Func* const func_ptr = new Func(func);
         
-        struct starter {
-            static void* start(void* ptr) {
-                thread* th = static_cast<thread*>(ptr);
-                T* self = static_cast<T*>(th->self_);
-                func_ptr func = reinterpret_cast<func_ptr>(th->func_);
-                
-                self->*func();
-                
-                return MGBASE_NULLPTR;
-            }
-        };
-        
-        self_ = self;
-        func_ = reinterpret_cast<uint64_t>(func);
-        
-        if (pthread_create(&th_, MGBASE_NULLPTR, &starter::start, this) != 0)
+        const int ret = pthread_create(
+            &th_
+        ,   MGBASE_NULLPTR
+        ,   &starter<Func>::pass
+        ,   func_ptr
+        );
+        if (ret != 0)
             throw thread_error();
-    }*/
-    template <typename T>
-    void run(T);
+    }
     
     void join() {
         pthread_join(th_, MGBASE_NULLPTR);
