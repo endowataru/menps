@@ -1,6 +1,8 @@
 
 #pragma once
 
+// DEPRECATED
+
 #include <mgcom/rma/address.hpp>
 #include "try_handlers.ipp"
 

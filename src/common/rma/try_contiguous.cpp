@@ -1,4 +1,6 @@
 
+// DEPRECATED
+
 #include "try_contiguous.ipp"
 
 namespace mgcom {

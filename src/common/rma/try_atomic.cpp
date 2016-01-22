@@ -1,4 +1,6 @@
 
+// DEPRECATED
+
 #include "try_atomic.ipp"
 
 namespace mgcom {

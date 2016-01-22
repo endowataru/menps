@@ -21,7 +21,7 @@ public:
     static mgbase::deferred<void> start(cb_type& cb) {
         cb.finished = false;
         
-        if (Derived::try_(cb, mgbase::make_operation_assign(&cb.finished, true))) {
+        if (Derived::try_(cb, mgbase::make_operation_store_release(&cb.finished, true))) {
             return test(cb);
         }
         else {
