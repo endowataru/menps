@@ -98,18 +98,18 @@ public:
             void* const src_ptr = mgcom::rma::untyped::to_raw_pointer(cb.remote_addr);
             void* const dest_ptr = mgcom::rma::untyped::to_raw_pointer(cb.local_addr);
             
-            MGBASE_LOG_DEBUG(
-                "msg:Start to receive data for emulated get."
-                "\tproc:{}\tsrc_addr:{:x}\tdest_addr:{:x}\tsize_in_bytes:{}\ttag:{}"
-            ,   cb.proc
-            ,   reinterpret_cast<mgbase::uintptr_t>(src_ptr)
-            ,   reinterpret_cast<mgbase::uintptr_t>(dest_ptr)
-            ,   cb.size_in_bytes
-            ,   cb.tag
-            );
-            
             {
                 mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
+                
+                MGBASE_LOG_DEBUG(
+                    "msg:Start to receive data for emulated get."
+                    "\tproc:{}\tsrc_addr:{:x}\tdest_addr:{:x}\tsize_in_bytes:{}\ttag:{}"
+                ,   cb.proc
+                ,   reinterpret_cast<mgbase::uintptr_t>(src_ptr)
+                ,   reinterpret_cast<mgbase::uintptr_t>(dest_ptr)
+                ,   cb.size_in_bytes
+                ,   cb.tag
+                );
                 
                 MPI_Request* const request = reinterpret_cast<MPI_Request*>(&cb.request);
                 
@@ -219,21 +219,20 @@ public:
                 return mgbase::make_deferred<func_type, &write_handlers::try_send>(cb);
             
             const void* const src_ptr = mgcom::rma::untyped::to_raw_pointer(cb.local_addr);
-            
             void* const dest_ptr = mgcom::rma::untyped::to_raw_pointer(cb.remote_addr);
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Start to send data for emulated put."
-                "\tproc:{}\tsrc_addr:{:x}\tdest_addr:{:x}\tsize_in_bytes:{}\ttag:{}"
-            ,   cb.proc
-            ,   reinterpret_cast<mgbase::uintptr_t>(src_ptr)
-            ,   reinterpret_cast<mgbase::uintptr_t>(dest_ptr)
-            ,   cb.size_in_bytes
-            ,   cb.tag
-            );
             
             {
                 mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock(), mgbase::adopt_lock);
+                
+                MGBASE_LOG_DEBUG(
+                    "msg:Start to send data for emulated put."
+                    "\tproc:{}\tsrc_addr:{:x}\tdest_addr:{:x}\tsize_in_bytes:{}\ttag:{}"
+                ,   cb.proc
+                ,   reinterpret_cast<mgbase::uintptr_t>(src_ptr)
+                ,   reinterpret_cast<mgbase::uintptr_t>(dest_ptr)
+                ,   cb.size_in_bytes
+                ,   cb.tag
+                );
                 
                 MPI_Request* const request = reinterpret_cast<MPI_Request*>(&cb.request);
                 

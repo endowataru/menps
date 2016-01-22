@@ -4,6 +4,9 @@
 #include <mgcom/collective.hpp>
 #include <mgbase/logging/logger.hpp>
 
+#include <mgbase/threading/lock_guard.hpp>
+
+#include "device/mpi/mpi_base.hpp"
 #include "device/mpi/mpi_error.hpp"
 
 namespace mgcom {
@@ -29,18 +32,22 @@ public:
 private:
     static result_type transfer(cb_type& cb)
     {
-        MGBASE_LOG_DEBUG("msg:Blocking broadcast.\troot:{}\tptr:{:x}\tnumber_of_bytes:{}",
-            cb.root, reinterpret_cast<mgbase::uint64_t>(cb.ptr), cb.number_of_bytes);
-        
-        mpi_error::check(
-            MPI_Bcast(
-                cb.ptr // TODO
-            ,   cb.number_of_bytes
-            ,   MPI_BYTE
-            ,   static_cast<int>(cb.root)
-            ,   MPI_COMM_WORLD // TODO
-            )
-        );
+        {
+            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            
+            MGBASE_LOG_DEBUG("msg:Blocking broadcast.\troot:{}\tptr:{:x}\tnumber_of_bytes:{}",
+                cb.root, reinterpret_cast<mgbase::uint64_t>(cb.ptr), cb.number_of_bytes);
+            
+            mpi_error::check(
+                MPI_Bcast(
+                    cb.ptr // TODO
+                ,   cb.number_of_bytes
+                ,   MPI_BYTE
+                ,   static_cast<int>(cb.root)
+                ,   MPI_COMM_WORLD // TODO
+                )
+            );
+        }
         
         return mgbase::make_ready_deferred();
     }
@@ -64,20 +71,24 @@ public:
 private:
     static result_type transfer(cb_type& cb)
     {
-        MGBASE_LOG_DEBUG("msg:Blocking allgather.\tsrc:{:x}\tdest:{:x}\tnumber_of_bytes:{}",
-            reinterpret_cast<mgbase::uint64_t>(cb.src), reinterpret_cast<mgbase::uint64_t>(cb.dest), cb.number_of_bytes);
-        
-        mpi_error::check(
-            MPI_Allgather(
-                const_cast<void*>(cb.src) // TODO: Only old versions of OpenMPI require
-            ,   cb.number_of_bytes
-            ,   MPI_BYTE
-            ,   cb.dest
-            ,   cb.number_of_bytes
-            ,   MPI_BYTE
-            ,   MPI_COMM_WORLD // TODO
-            )
-        );
+        {
+            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            
+            MGBASE_LOG_DEBUG("msg:Blocking allgather.\tsrc:{:x}\tdest:{:x}\tnumber_of_bytes:{}",
+                reinterpret_cast<mgbase::uint64_t>(cb.src), reinterpret_cast<mgbase::uint64_t>(cb.dest), cb.number_of_bytes);
+            
+            mpi_error::check(
+                MPI_Allgather(
+                    const_cast<void*>(cb.src) // TODO: Only old versions of OpenMPI require
+                ,   cb.number_of_bytes
+                ,   MPI_BYTE
+                ,   cb.dest
+                ,   cb.number_of_bytes
+                ,   MPI_BYTE
+                ,   MPI_COMM_WORLD // TODO
+                )
+            );
+        }
         
         return mgbase::make_ready_deferred();
     }

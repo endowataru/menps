@@ -48,6 +48,7 @@ if(${is_mpi_available})
         src/device/mpi/rma/contiguous.cpp
         src/device/mpi/rma/rma.cpp
         src/device/mpi/mpi_base.cpp
+        src/device/mpi/mpi_lock.cpp
         src/device/mpi/collective/barrier.cpp
         src/device/mpi/collective/collective.cpp
         src/device/mpi/am/am.cpp
@@ -68,6 +69,7 @@ if(${is_mpi3_available})
         src/device/mpi3/collective.cpp
         src/device/mpi3/rma/rma.cpp
         src/device/mpi/mpi_base.cpp
+        src/device/mpi/mpi_lock.cpp
         src/device/mpi/am/am.cpp
         src/device/mpi/am/sender_queue.cpp
     )
@@ -87,7 +89,8 @@ if (${is_fjmpi_available})
         src/device/mpi/collective/collective.cpp
         src/device/mpi/am/am.cpp
         src/device/mpi/am/sender_queue.cpp
-        src/device/fjmpi/rma/rma.cpp
+        #src/device/fjmpi/rma/rma.cpp
+        src/device/fjmpi/rma/rma_queue.cpp
         src/device/fjmpi/fjmpi.cpp
     )
     target_link_libraries(mgcom-fjmpi mgcom-base mgbase)
