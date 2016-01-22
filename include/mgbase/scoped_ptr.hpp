@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <mgbase/lang.hpp>
+
 namespace mgbase {
 
 template <typename T>
@@ -38,7 +40,7 @@ public:
         return *this;
     }
     
-    T& operator[] (std::ptrdiff_t index) const MGBASE_NOEXCEPT {
+    T& operator[] (mgbase::ptrdiff_t index) const MGBASE_NOEXCEPT {
         return ptr_[index];
     }
     
@@ -50,5 +52,5 @@ private:
     T* ptr_;
 };
 
-}
+} // namespace mgbase
 

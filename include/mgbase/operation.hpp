@@ -16,24 +16,24 @@ inline operation make_operation_no_operation() MGBASE_NOEXCEPT {
     return result;
 }
 
-inline operation make_operation_assign(bool* ptr, bool value) MGBASE_NOEXCEPT {
-    operation result = { MGBASE_OPERATION_ASSIGN_INT8, ptr, value };
+inline operation make_operation_store_release(bool* ptr, bool value) MGBASE_NOEXCEPT {
+    operation result = { MGBASE_OPERATION_STORE_RELEASE_INT8, ptr, value };
     return result;
 }
-inline operation make_operation_assign(mgbase::uint8_t* ptr, mgbase::uint8_t value) MGBASE_NOEXCEPT {
-    operation result = { MGBASE_OPERATION_ASSIGN_INT8, ptr, value };
+inline operation make_operation_store_release(mgbase::uint8_t* ptr, mgbase::uint8_t value) MGBASE_NOEXCEPT {
+    operation result = { MGBASE_OPERATION_STORE_RELEASE_INT8, ptr, value };
     return result;
 }
-inline operation make_operation_assign(mgbase::uint16_t* ptr, mgbase::uint16_t value) MGBASE_NOEXCEPT {
-    operation result = { MGBASE_OPERATION_ASSIGN_INT16, ptr, value };
+inline operation make_operation_store_release(mgbase::uint16_t* ptr, mgbase::uint16_t value) MGBASE_NOEXCEPT {
+    operation result = { MGBASE_OPERATION_STORE_RELEASE_INT16, ptr, value };
     return result;
 }
-inline operation make_operation_assign(mgbase::uint32_t* ptr, mgbase::uint32_t value) MGBASE_NOEXCEPT {
-    operation result = { MGBASE_OPERATION_ASSIGN_INT32, ptr, value };
+inline operation make_operation_store_release(mgbase::uint32_t* ptr, mgbase::uint32_t value) MGBASE_NOEXCEPT {
+    operation result = { MGBASE_OPERATION_STORE_RELEASE_INT32, ptr, value };
     return result;
 }
-inline operation make_operation_assign(mgbase::uint64_t* ptr, mgbase::uint64_t value) MGBASE_NOEXCEPT {
-    operation result = { MGBASE_OPERATION_ASSIGN_INT64, ptr, value };
+inline operation make_operation_store_release(mgbase::uint64_t* ptr, mgbase::uint64_t value) MGBASE_NOEXCEPT {
+    operation result = { MGBASE_OPERATION_STORE_RELEASE_INT64, ptr, value };
     return result;
 }
 
@@ -59,19 +59,19 @@ inline MGBASE_ALWAYS_INLINE void execute(const operation& op) MGBASE_NOEXCEPT
 {
     switch (op.code)
     {
-        case MGBASE_OPERATION_ASSIGN_INT8:
+        case MGBASE_OPERATION_STORE_RELEASE_INT8:
             *static_cast<mgbase::uint8_t*>(op.pointer) = static_cast<mgbase::uint8_t>(op.value);
             break;
         
-        case MGBASE_OPERATION_ASSIGN_INT16:
+        case MGBASE_OPERATION_STORE_RELEASE_INT16:
             *static_cast<mgbase::int16_t*>(op.pointer) = static_cast<mgbase::int16_t>(op.value);
             break;
         
-        case MGBASE_OPERATION_ASSIGN_INT32:
+        case MGBASE_OPERATION_STORE_RELEASE_INT32:
             *static_cast<mgbase::int32_t*>(op.pointer) = static_cast<mgbase::int32_t>(op.value);
             break;
         
-        case MGBASE_OPERATION_ASSIGN_INT64:
+        case MGBASE_OPERATION_STORE_RELEASE_INT64:
             *static_cast<mgbase::int64_t*>(op.pointer) = static_cast<mgbase::int64_t>(op.value);
             break;
         

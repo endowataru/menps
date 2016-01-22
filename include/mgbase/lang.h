@@ -18,6 +18,7 @@
 #ifndef __cplusplus
     #include <stdint.h>
     #include <stdlib.h>
+    #include <stddef.h>
     
     // For C
     #if __STDC_VERSION__ < 199901L
@@ -46,6 +47,7 @@
 #else
     #include <stdint.h> // #include <cstdint>
     #include <cstdlib>
+    #include <cstddef>
     
     #define MGBASE_CPLUSPLUS
     #define MGBASE_CPLUSPLUS_ONLY(x)    x
@@ -158,6 +160,8 @@
         using ::int64_t;
         
         using ::size_t;
+        using ::ptrdiff_t;
+        
         //using ::ssize_t;
         typedef int64_t  ssize_t;
         
@@ -177,17 +181,22 @@ typedef int16_t     mgbase_int16_t;
 typedef int32_t     mgbase_int32_t;
 typedef int64_t     mgbase_int64_t;
 
+typedef size_t      mgbase_size_t;
+typedef ptrdiff_t   mgbase_ptrdiff_t;
 typedef intptr_t    mgbase_intptr_t;
 
 // Processor Compatibility
 
 #if (defined(__i386__) || defined(__x86_64__))
     #define MGBASE_ARCH_INTEL
+    #define MGBASE_CACHE_LINE_SIZE  64
 #endif
 
 #if (defined(__sparc))
     #define MGBASE_ARCH_SPARC
+    #define MGBASE_CACHE_LINE_SIZE  64
 #endif
+
 
 // Compiler Compatibility
 
