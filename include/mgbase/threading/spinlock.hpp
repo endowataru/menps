@@ -2,9 +2,30 @@
 #pragma once
 
 #include <mgbase/lang.hpp>
-#include "atomic.hpp"
+#include <mgbase/atomic/atomic.hpp>
 
-#if (__cplusplus < 201103L)
+#ifdef MGBASE_DISABLE_MULTITHREADING
+
+namespace mgbase {
+
+// Replace spinlock with a dummy lock class
+
+class spinlock
+    : noncopyable
+{
+public:
+    void lock() MGBASE_NOEXCEPT { }
+    
+    bool try_lock() MGBASE_NOEXCEPT { return true; }
+    
+    void unlock() MGBASE_NOEXCEPT { }
+};
+
+}
+
+#else
+
+#ifndef MGBASE_CPP11_SUPPORTED
 
 namespace mgbase {
 
@@ -26,7 +47,8 @@ public:
             if (flag_.compare_exchange_weak(expected, true, memory_order_acquire))
                 break;
             
-            while (!flag_.load(memory_order_relaxed)) {
+            // Wait until flag_ becomes false.
+            while (flag_.load(memory_order_relaxed)) {
                 // Do nothing.
             }
         }
@@ -134,6 +156,8 @@ private:
 #endif
 
 }
+
+#endif
 
 #endif
 

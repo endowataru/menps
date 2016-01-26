@@ -9,6 +9,7 @@ target_include_directories(mgbase-header
 )
 target_compile_definitions(mgbase-header
     INTERFACE "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
+    INTERFACE "$<$<CONFIG:RelWithDebInfo>:MGBASE_DEBUG>"
 )
 
 add_library(mgbase-options INTERFACE)
@@ -18,6 +19,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
         -D GTEST_HAS_TR1_TUPLE=0
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Release>:-Kfast>
+        $<$<CONFIG:RelWithDebInfo>:-g -Kfast>
     )
 else()
     target_compile_options(mgbase-options INTERFACE
@@ -80,6 +82,10 @@ endif()
 add_executable(mgbase-unittest
     unittest/unittest.cpp
     unittest/deferred.cpp
+    unittest/thread.cpp
+    unittest/bound_function.cpp
+    unittest/spinlock.cpp
+    unittest/mpsc_circular_buffer.cpp
 )
 
 target_link_libraries(mgbase-unittest mgbase mgbase-options googletest)

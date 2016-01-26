@@ -17,7 +17,7 @@ template <
 ,   Signature* Func
 ,   typename CB
 >
-inline MGBASE_ALWAYS_INLINE resumable make_deferred_pass(CB& cb)
+MGBASE_ALWAYS_INLINE resumable make_deferred_pass(CB& cb)
 {
     typedef typename mgbase::function_traits<Signature>::result_type    return_type;
     typedef typename detail::deferred_result<Signature>::type T;
@@ -61,8 +61,8 @@ template <
 ,   Signature* Func
 ,   typename CB
 >
-inline MGBASE_ALWAYS_INLINE
-deferred<typename detail::deferred_result<Signature>::type> make_deferred(CB& cb)
+MGBASE_ALWAYS_INLINE deferred<typename detail::deferred_result<Signature>::type>
+make_deferred(CB& cb)
 {
     typedef typename detail::deferred_result<Signature>::type T;
     

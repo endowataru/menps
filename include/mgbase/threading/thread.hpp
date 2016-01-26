@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
-#include <pthread.h>
+#include <mgbase/threading/thread_id.hpp>
 
 namespace mgbase {
 
@@ -57,6 +56,5 @@ private:
     pthread_t th_;
 };
 
-
-}
+} // namespace mgbase
 

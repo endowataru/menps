@@ -6,13 +6,16 @@
 #include <iostream>
 
 #include <mgbase/external/cppformat.hpp>
+#include <mgbase/threading/spinlock.hpp>
+#include <mgbase/threading/lock_guard.hpp>
 
 namespace mgbase {
 
-#define MGBASE_LOG_LEVEL_DEBUG 0
-#define MGBASE_LOG_LEVEL_INFO  10
-#define MGBASE_LOG_LEVEL_WARN  100
-#define MGBASE_LOG_LEVEL_FATAL 1000
+#define MGBASE_LOG_LEVEL_VERBOSE    0
+#define MGBASE_LOG_LEVEL_DEBUG      1
+#define MGBASE_LOG_LEVEL_INFO       10
+#define MGBASE_LOG_LEVEL_WARN       100
+#define MGBASE_LOG_LEVEL_FATAL      1000
 
 class logger {
 public:
@@ -42,6 +45,12 @@ public:
     static log_level_t get_log_level() {
         static const log_level_t result = get_log_level_from_env();
         return result;
+    }
+    
+    // TODO: Singleton
+    static mgbase::spinlock& get_lock() {
+        static mgbase::spinlock lc;
+        return lc;
     }
 
 private:
@@ -79,7 +88,8 @@ void logger_not_defined(...);
 #ifdef MGBASE_ENABLE_LOG
     #define MGBASE_LOGGER_OUTPUT(level, ...) \
         if (::mgbase::logger::get_log_level() <= level) { \
-            std::cout << ::mgbase::logger::get_state(); \
+            ::mgbase::lock_guard< ::mgbase::spinlock> lc(::mgbase::logger::get_lock()); \
+            std::cout << mgbase::logger::get_state(); \
             fmt::print(__VA_ARGS__); \
             std::cout << std::endl; \
         }
@@ -94,10 +104,11 @@ void logger_not_defined(...);
     #endif
 #endif
 
-#define MGBASE_LOG_DEBUG(...)   MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_DEBUG, __VA_ARGS__)
-#define MGBASE_LOG_INFO(...)    MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_INFO , __VA_ARGS__)
-#define MGBASE_LOG_WARN(...)    MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_WARN , __VA_ARGS__)
-#define MGBASE_LOG_FATAL(...)   MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_FATAL, __VA_ARGS__)
+#define MGBASE_LOG_VERBOSE(...) MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_VERBOSE, __VA_ARGS__)
+#define MGBASE_LOG_DEBUG(...)   MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_DEBUG  , __VA_ARGS__)
+#define MGBASE_LOG_INFO(...)    MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_INFO   , __VA_ARGS__)
+#define MGBASE_LOG_WARN(...)    MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_WARN   , __VA_ARGS__)
+#define MGBASE_LOG_FATAL(...)   MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_FATAL  , __VA_ARGS__)
 
 } // namespace mgbase
 

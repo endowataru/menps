@@ -14,7 +14,7 @@ template <typename Derived, typename T>
 class deferred_base
 {
 public:
-    inline MGBASE_ALWAYS_INLINE resumable set_terminal(T* dest);
+    MGBASE_ALWAYS_INLINE resumable set_terminal(T* dest);
     
     T wait() {
         T result;
@@ -32,7 +32,7 @@ template <typename Derived>
 class deferred_base<Derived, void>
 {
 public:
-    inline MGBASE_ALWAYS_INLINE resumable set_terminal();
+    MGBASE_ALWAYS_INLINE resumable set_terminal();
     
     void wait() {
         resumable res = this->set_terminal();

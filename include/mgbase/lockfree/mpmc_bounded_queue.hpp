@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgbase/lang.hpp>
-#include <mgbase/threading/atomic.hpp>
+#include <mgbase/atomic.hpp>
 #include <cassert>
 
 namespace mgbase {

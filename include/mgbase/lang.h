@@ -1,19 +1,55 @@
 
 #pragma once
 
+// Processor Compatibility
+
+#if (defined(__i386__) || defined(__x86_64__))
+    #define MGBASE_ARCH_INTEL
+    #define MGBASE_CACHE_LINE_SIZE  64
+#endif
+
+#if (defined(__sparc))
+    #define MGBASE_ARCH_SPARC
+    #define MGBASE_CACHE_LINE_SIZE  64
+#endif
+
+// Compiler Compatibility
+
+#ifdef __FUJITSU
+    #define MGBASE_COMPILER_FUJITSU
+#else
+    #ifdef __GNUC__
+        #define MGBASE_COMPILER_GCC
+    #endif
+#endif
+
+#ifdef __clang__
+    #define MGBASE_COMPILER_CLANG
+#endif
+
 // Language Compatibility
 
 #define MGBASE_CONCAT(x, y)  MGBASE_CONCAT1(x, y)
 #define MGBASE_CONCAT1(x, y) MGBASE_CONCAT2(x, y)
 #define MGBASE_CONCAT2(x, y) x##y
 
-#define MGBASE_ALWAYS_INLINE    __attribute__((always_inline))
+#define MGBASE_ALWAYS_INLINE    inline __attribute__((always_inline))
 #define MGBASE_UNUSED           __attribute__((unused))
 
 #define MGBASE_LIKELY(x)        __builtin_expect(!!(x), 1)
 #define MGBASE_UNLIKELY(x)      __builtin_expect(!!(x), 0)
 
-#define MGBASE_UNREACHABLE()    __builtin_unreachable()
+#ifdef MGBASE_COMPILER_FUJITSU
+    #define MGBASE_UNREACHABLE()    abort()
+#else
+    #define MGBASE_UNREACHABLE()    __builtin_unreachable()
+#endif
+
+#ifdef MGBASE_DEBUG
+    #define MGBASE_ASM_COMMENT(msg)     __asm__ __volatile__ ("# " msg)
+#else
+    #define MGBASE_ASM_COMMENT(msg)     
+#endif
 
 #ifndef __cplusplus
     #include <stdint.h>
@@ -185,30 +221,4 @@ typedef size_t      mgbase_size_t;
 typedef ptrdiff_t   mgbase_ptrdiff_t;
 typedef intptr_t    mgbase_intptr_t;
 
-// Processor Compatibility
-
-#if (defined(__i386__) || defined(__x86_64__))
-    #define MGBASE_ARCH_INTEL
-    #define MGBASE_CACHE_LINE_SIZE  64
-#endif
-
-#if (defined(__sparc))
-    #define MGBASE_ARCH_SPARC
-    #define MGBASE_CACHE_LINE_SIZE  64
-#endif
-
-
-// Compiler Compatibility
-
-#ifdef __FUJITSU
-    #define MGBASE_COMPILER_FUJITSU
-#else
-    #ifdef __GNUC__
-        #define MGBASE_COMPILER_GCC
-    #endif
-#endif
-
-#ifdef __clang__
-    #define MGBASE_COMPILER_CLANG
-#endif
 

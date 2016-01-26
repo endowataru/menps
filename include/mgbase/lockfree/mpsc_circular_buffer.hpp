@@ -3,6 +3,7 @@
 
 #include <mgbase/lockfree/mpsc_circular_buffer_counter.hpp>
 #include <mgbase/scoped_ptr.hpp>
+#include <mgbase/assert.hpp>
 
 namespace mgbase {
 
@@ -26,6 +27,8 @@ public:
     mpsc_circular_buffer()
     {
         buf_ = new element[Size];
+        for (std::size_t i = 0; i < Size; ++i)
+            buf_[i].visible = false;
     }
     
     ~mpsc_circular_buffer() MGBASE_EMPTY_DEFINITION
@@ -37,6 +40,9 @@ public:
             return false;
         
         element& elem = buf_[tail];
+        
+        MGBASE_ASSERT(!mgbase::atomic_load(&elem.visible));
+        
         elem.value = value;
         
         mgbase::atomic_store_explicit(&elem.visible, true, mgbase::memory_order_release);
@@ -44,24 +50,39 @@ public:
         return true;
     }
     
-    bool try_pop(T* dest)
+    T* peek() const
     {
-        mgbase::size_t head;
-        if (!counter_.try_start_dequeue(&head))
-            return false;
+        if (counter_.empty()) {
+            MGBASE_LOG_VERBOSE(
+                "msg:Peeked but queue is empty."
+                /*"\thead:{:x}\ttail:{:x}"
+            ,   head
+            ,   tail*/
+            );
+            return MGBASE_NULLPTR;
+        }
         
-        element& elem = buf_[head];
-        const bool already_visible =
+        element& elem = buf_[counter_.front()];
+        const bool already_visible = 
             mgbase::atomic_load_explicit(&elem.visible, mgbase::memory_order_acquire);
         
-        if (!already_visible)
-            return false;
+        if (!already_visible) {
+            MGBASE_LOG_VERBOSE("msg:Peeked but entry is not visible yet.");
+            return MGBASE_NULLPTR;
+        }
         
-        *dest = elem.value;
+        return &elem.value;
+    }
+    
+    void pop()
+    {
+        element& elem = buf_[counter_.front()];
         
-        counter_.finish_dequeue(head);
+        MGBASE_ASSERT(mgbase::atomic_load(&elem.visible));
         
-        return true;
+        elem.visible = false; // Reset for the next use
+        
+        counter_.dequeue();
     }
     
 private:

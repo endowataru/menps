@@ -18,7 +18,7 @@ template <
 ,   typename CB
 ,   typename T
 >
-inline MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper<T>& val)
+MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper<T>& val)
 {
     typedef typename mgbase::function_traits<Signature>::result_type    return_type;
     typedef typename detail::deferred_result<Signature>::type           U;
@@ -62,7 +62,7 @@ template <
 ,   typename CB
 ,   typename T
 >
-inline MGBASE_ALWAYS_INLINE
+MGBASE_ALWAYS_INLINE
 deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB& cb, deferred<T> df)
 {
     typedef typename mgbase::function_traits<Signature>::result_type    return_type;
