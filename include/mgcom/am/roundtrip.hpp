@@ -2,7 +2,7 @@
 #pragma once
 
 #include "roundtrip.h"
-#include <mgbase/threading/atomic.hpp>
+#include <mgbase/atomic.hpp>
 #include <mgbase/type_traits.hpp>
 
 namespace mgcom {

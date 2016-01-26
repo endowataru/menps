@@ -19,7 +19,7 @@ void initialize(int* argc, char*** argv)
     rma::initialize_allocator();
     collective::initialize();
     
-    MPI_Barrier(MPI_COMM_WORLD);
+    mpi_base::native_barrier();
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
 }
@@ -27,8 +27,7 @@ void initialize(int* argc, char*** argv)
 void finalize()
 {
     collective::barrier(); 
-    
-    MPI_Barrier(MPI_COMM_WORLD);
+    mpi_base::native_barrier();
     
     collective::finalize();
     rma::finalize_allocator();

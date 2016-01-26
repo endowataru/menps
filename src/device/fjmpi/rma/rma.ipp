@@ -32,7 +32,7 @@ public:
     
     void initialize()
     {
-        int ret = ::FJMPI_Rdma_init();
+        int ret = FJMPI_Rdma_init();
         if (ret != 0)
             throw fjmpi_error();
         
@@ -45,14 +45,19 @@ public:
             memid_queue_.enqueue(memid);
         
         next_nic_ = 0;
+        
+        MGBASE_LOG_DEBUG("msg:Initialized FJMPI.");
     }
     
-    void finalize() {
-        int ret = ::FJMPI_Rdma_finalize();
+    void finalize()
+    {
+        int ret = FJMPI_Rdma_finalize();
         if (ret != 0)
             throw fjmpi_error();
         
         delete[] info_by_procs_;
+        
+        MGBASE_LOG_DEBUG("msg:Finalized FJMPI.");
     }
     
     int register_memory(void* buf, std::size_t length, mgbase::uint64_t* address_result)
@@ -67,7 +72,7 @@ public:
         {
             // TODO: Blocking
             mgbase::lock_guard<lock_type> lc(get_lock());
-            address = ::FJMPI_Rdma_reg_mem(memid, buf, length);
+            address = FJMPI_Rdma_reg_mem(memid, buf, length);
         }
         if (address == FJMPI_RDMA_ERROR)
             throw fjmpi_error();
@@ -89,7 +94,7 @@ public:
         {
             // TODO: Blocking
             mgbase::lock_guard<lock_type> lc(get_lock());
-            raddr = ::FJMPI_Rdma_get_remote_addr(pid, memid);
+            raddr = FJMPI_Rdma_get_remote_addr(pid, memid);
         }
         if (raddr == FJMPI_RDMA_ERROR)
             throw fjmpi_error();
@@ -110,7 +115,7 @@ public:
         {
             // TODO: Blocking
             mgbase::lock_guard<lock_type> lc(get_lock());
-            ret = ::FJMPI_Rdma_dereg_mem(memid);
+            ret = FJMPI_Rdma_dereg_mem(memid);
         }
         if (ret != 0)
             throw fjmpi_error();
@@ -144,7 +149,7 @@ public:
             ,   flags
             );
             
-            const int ret = ::FJMPI_Rdma_put(dest_proc, tag, raddr, laddr, size_in_bytes, flags);
+            const int ret = FJMPI_Rdma_put(dest_proc, tag, raddr, laddr, size_in_bytes, flags);
             get_lock().unlock();
             
             if (ret != 0)
@@ -184,7 +189,7 @@ public:
             ,   flags
             );
             
-            const int ret = ::FJMPI_Rdma_get(src_proc, tag, raddr, laddr, size_in_bytes, flags);
+            const int ret = FJMPI_Rdma_get(src_proc, tag, raddr, laddr, size_in_bytes, flags);
             get_lock().unlock();
             
             if (ret != 0)
@@ -246,8 +251,8 @@ private:
         if (!get_lock().try_lock())
             return false;
         
-        ::FJMPI_Rdma_cq cq;
-        int ret = ::FJMPI_Rdma_poll_cq(nic, &cq);
+        FJMPI_Rdma_cq cq;
+        int ret = FJMPI_Rdma_poll_cq(nic, &cq);
         
         get_lock().unlock();
         

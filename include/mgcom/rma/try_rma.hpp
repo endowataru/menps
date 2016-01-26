@@ -40,7 +40,7 @@ namespace /*unnamed*/ {
  * Try to do contiguous read.
  */
 template <typename Remote, typename Local>
-inline MGBASE_ALWAYS_INLINE bool try_remote_read(
+MGBASE_ALWAYS_INLINE bool try_remote_read(
     process_id_t                    proc
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
@@ -65,7 +65,7 @@ inline MGBASE_ALWAYS_INLINE bool try_remote_read(
  * Try to do contiguous write.
  */
 template <typename Remote, typename Local>
-inline MGBASE_ALWAYS_INLINE bool try_remote_write(
+MGBASE_ALWAYS_INLINE bool try_remote_write(
     process_id_t                    proc
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
@@ -87,7 +87,7 @@ inline MGBASE_ALWAYS_INLINE bool try_remote_write(
 }
 
 template <typename Remote, typename Local>
-inline MGBASE_ALWAYS_INLINE bool try_remote_read(
+MGBASE_ALWAYS_INLINE bool try_remote_read(
     process_id_t                    proc
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
@@ -113,7 +113,7 @@ inline MGBASE_ALWAYS_INLINE bool try_remote_read(
 }
 
 template <typename Remote, typename Local>
-inline MGBASE_ALWAYS_INLINE bool try_remote_write(
+MGBASE_ALWAYS_INLINE bool try_remote_write(
     process_id_t                    proc
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr

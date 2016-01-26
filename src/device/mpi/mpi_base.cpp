@@ -3,6 +3,9 @@
 #include "mpi_error.hpp"
 
 #include <mgbase/logging/logger.hpp>
+#include <mgbase/threading/this_thread.hpp>
+#include <mgbase/threading/spinlock.hpp>
+#include <mgbase/threading/lock_guard.hpp>
 
 namespace mgcom {
 
@@ -13,8 +16,14 @@ namespace /*unnamed*/ {
 std::string get_state()
 {
     static index_t number = 0;
+    
     fmt::MemoryWriter w;
-    w.write("proc:{}\tlog_id:{}\t", current_process_id(), number++);
+    w.write(
+        "proc:{}\tthread:{:x}\tlog_id:{}\t"
+    ,   current_process_id()
+    ,   mgbase::this_thread::get_id().to_integer()
+    ,   number++
+    );
     return w.str();
 }
 
@@ -68,6 +77,12 @@ void initialize(int* argc, char*** argv)
 void finalize()
 {
     g_impl.finalize();
+}
+
+void native_barrier()
+{
+    mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 }

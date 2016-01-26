@@ -23,6 +23,7 @@ target_link_libraries(mgcom-base INTERFACE mgcom-header mgbase-options)
 # Platform Checks
 
 CHECK_INCLUDE_FILE_CXX("mpi.h" is_mpi_available)
+#set(is_mpi_available FALSE) # FIXME: Temporary
 
 CHECK_CXX_SOURCE_COMPILES("
 #include <mpi.h>
@@ -43,6 +44,8 @@ if(${is_mpi_available})
     add_library(mgcom-mpi1
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
+        #src/common/rma/try_contiguous.cpp
+        #src/common/rma/try_atomic.cpp
         src/device/mpi1/mpi1.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/rma/contiguous.cpp
@@ -90,7 +93,7 @@ if (${is_fjmpi_available})
         src/device/mpi/am/am.cpp
         src/device/mpi/am/sender_queue.cpp
         #src/device/fjmpi/rma/rma.cpp
-        src/device/fjmpi/rma/rma_queue.cpp
+        src/device/fjmpi/rma/queued_rma.cpp
         src/device/fjmpi/fjmpi.cpp
     )
     target_link_libraries(mgcom-fjmpi mgcom-base mgbase)

@@ -32,7 +32,9 @@ inline lock_type& get_lock() MGBASE_NOEXCEPT {
     return lc;
 }
 
-}
+} // unnamed namespace
+
+void native_barrier();
 
 /*typedef mgbase::spinlock  lock_type;
 

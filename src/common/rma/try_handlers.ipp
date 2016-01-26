@@ -34,7 +34,7 @@ public:
 private:
     static mgbase::deferred<void> test(cb_type& cb)
     {
-        if (cb.finished) {
+        if (mgbase::atomic_load(&cb.finished)) {
             return mgbase::make_ready_deferred();
         }
         else {

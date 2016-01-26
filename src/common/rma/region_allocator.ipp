@@ -29,15 +29,17 @@ public:
         
         // Prepare dlmalloc.
         ms_ = create_mspace_with_base(ptr, total_region_size, 1);
+        
+        MGBASE_LOG_DEBUG("msg:Initialized RMA region allocator.");
     }
     
     void finalize()
     {
-        void* const ptr = to_raw_pointer(region_);
-        
         deregister_region(region_);
         
         destroy_mspace(ms_);
+        
+        MGBASE_LOG_DEBUG("msg:Finalized RMA region allocator.");
     }
     
     registered_buffer allocate(index_t size_in_bytes)
@@ -73,6 +75,11 @@ public:
     {
         void* const ptr = to_raw_pointer(buf);
         mspace_free(ms_, ptr);
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Deallocated buffer.\tptr:{:x}"
+        ,   reinterpret_cast<mgbase::uintptr_t>(ptr)
+        );
     }
     
 

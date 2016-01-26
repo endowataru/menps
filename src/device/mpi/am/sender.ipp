@@ -44,9 +44,12 @@ public:
             
             int flag;
             MPI_Status status;
-            mpi_error::check(
-                MPI_Test(request, &flag, &status)
-            );
+            {
+                mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+                mpi_error::check(
+                    MPI_Test(request, &flag, &status)
+                );
+            }
             
             if (flag)
                 return mgbase::make_ready_deferred();

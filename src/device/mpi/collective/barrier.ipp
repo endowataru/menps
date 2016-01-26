@@ -40,16 +40,20 @@ public:
         mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>* local_ptrs
             = new mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>[mgcom::number_of_processes()];
         
-        // Directly call.
-        MPI_Allgather(
-            &local_
-        ,   sizeof(local_)
-        ,   MPI_BYTE
-        ,   local_ptrs
-        ,   sizeof(local_)
-        ,   MPI_BYTE
-        ,   MPI_COMM_WORLD
-        );
+        {
+            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            
+            // Directly call.
+            MPI_Allgather(
+                &local_
+            ,   sizeof(local_)
+            ,   MPI_BYTE
+            ,   local_ptrs
+            ,   sizeof(local_)
+            ,   MPI_BYTE
+            ,   MPI_COMM_WORLD
+            );
+        }
         
         remotes_ = new mgcom::rma::remote_pointer<mgcom::rma::atomic_default_t>[mgcom::number_of_processes()];
         for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)

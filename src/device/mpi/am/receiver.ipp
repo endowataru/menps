@@ -31,24 +31,33 @@ protected:
     {
         base_receiver::initialize(base_manager::max_num_tickets);
         
-        requests_ = new MPI_Request[base_manager::max_num_tickets];
-        
-        for (index_t i = 0; i < base_manager::max_num_tickets; ++i) {
-            irecv(i);
+        {
+            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            
+            requests_ = new MPI_Request[base_manager::max_num_tickets];
+            
+            for (index_t i = 0; i < base_manager::max_num_tickets; ++i) {
+                irecv(i);
+            }
+            
+            // We need to issue a barrier to assure that
+            // all processes have already issued MPI_Irecv()
+            // before allowing the user to send messages
+            MPI_Barrier(get_comm());
         }
         
-        // We need to issue a barrier to assure that
-        // all processes have already issued MPI_Irecv()
-        // before allowing the user to send messages
-        MPI_Barrier(get_comm());
-        
         initialized_ = true;
+        
+        MGBASE_LOG_DEBUG("msg:Initialized AM receiver.");
     }
     
     void finalize()
     {
-        for (index_t i = 0; i < base_manager::max_num_tickets; ++i) {
-            MPI_Cancel(&requests_[i]);
+        {
+            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            for (index_t i = 0; i < base_manager::max_num_tickets; ++i) {
+                MPI_Cancel(&requests_[i]);
+            }
         }
         
         requests_.reset();

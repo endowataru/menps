@@ -17,10 +17,14 @@ impl g_impl;
 } // unnamed namespace
 #endif
 
-void initialize() {
-    mpi_error::check(
-        MPI_Comm_dup(MPI_COMM_WORLD, &get_comm())
-    );
+void initialize()
+{
+    {
+        mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+        mpi_error::check(
+            MPI_Comm_dup(MPI_COMM_WORLD, &get_comm())
+        );
+    }
     
     g_impl.initialize();
 }
@@ -29,9 +33,12 @@ void finalize()
 {
     g_impl.finalize();
     
-    mpi_error::check(
-        MPI_Comm_free(&get_comm())
-    );
+    {
+        mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+        mpi_error::check(
+            MPI_Comm_free(&get_comm())
+        );
+    }
 }
 
 void poll() {
