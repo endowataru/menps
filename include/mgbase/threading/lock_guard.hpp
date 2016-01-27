@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <mgbase/threading/lock_t.hpp>
 
 namespace mgbase {
 
@@ -11,10 +11,6 @@ namespace mgbase {
     using lock_guard   = std::lock_guard;
 
 #else
-
-    struct adopt_lock_t { };
-    #define adopt_lock  adopt_lock_t()
-    
 
     template <typename Mutex>
     class lock_guard
@@ -39,5 +35,5 @@ namespace mgbase {
 
 #endif
 
-}
+} // namespace mgbase
 

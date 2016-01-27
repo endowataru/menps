@@ -86,6 +86,7 @@ add_executable(mgbase-unittest
     unittest/bound_function.cpp
     unittest/spinlock.cpp
     unittest/mpsc_circular_buffer.cpp
+    unittest/condition_variable.cpp
 )
 
 target_link_libraries(mgbase-unittest mgbase mgbase-options googletest)
