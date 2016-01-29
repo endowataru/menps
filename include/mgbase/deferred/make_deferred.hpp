@@ -68,13 +68,11 @@ make_deferred(CB& cb)
     
     return deferred<T>(
         get_next_continuation<T>(cb)
-    ,   make_resumable(
-            make_bound_function<
-                resumable (CB&)
-            ,   &detail::make_deferred_pass<Signature, Func, CB>
-            >
-            (&cb)
-        )
+    ,   make_resumable<
+            resumable (CB&)
+        ,   &detail::make_deferred_pass<Signature, Func, CB>
+        >
+        (cb)
     );
 }
 

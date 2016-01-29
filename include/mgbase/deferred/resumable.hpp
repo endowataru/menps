@@ -51,8 +51,16 @@ private:
 
 namespace /*unnamed*/ {
 
-inline resumable make_resumable(resumable::function_type func) MGBASE_NOEXCEPT {
-    return resumable::create(func);
+template <
+    typename Signature
+,   Signature* Func
+,   typename CB
+>
+inline resumable make_resumable(CB& cb)
+{
+    return resumable::create(
+        make_bound_function<Signature, Func>(&cb)
+    );
 }
 
 inline resumable make_empty_resumable() MGBASE_NOEXCEPT {
