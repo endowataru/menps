@@ -71,8 +71,10 @@
     #define MGBASE_CONSTEXPR            const
     #define MGBASE_CONSTEXPR_CPP14
     
-    #define MGBASE_STATIC_ASSERT(expr, msg) \
+    #define MGBASE_STATIC_ASSERT(expr) \
         MGBASE_UNUSED typedef char MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)[((expr)) ? 1 : -1]
+    
+    #define MGBASE_STATIC_ASSERT_MSG(expr, msg) MGBASE_STATIC_ASSERT(expr)
     
     #define MGBASE_EXTERN_C_BEGIN
     #define MGBASE_EXTERN_C_END
@@ -97,16 +99,17 @@
         #define MGBASE_IF_CPP11_SUPPORTED(t, f)     t
         
         // For C++11 or later
-        #define MGBASE_EXPLICIT_OPERATOR         explicit operator
-        #define MGBASE_NOEXCEPT                  noexcept
-        #define MGBASE_OVERRIDE                  override
-        #define MGBASE_NULLPTR                   nullptr
-        #define MGBASE_STATIC_ASSERT(expr, msg)  static_assert(expr, msg);
-        #define MGBASE_EMPTY_DEFINITION          = default;
-        #define MGBASE_ALIGNAS(a)                alignas(a)
-        #define MGBASE_DECLTYPE(x)               decltype(x)
-        #define MGBASE_CONSTEXPR                 constexpr
-        #define MGBASE_CONSTEXPR_FUNCTION        constexpr
+        #define MGBASE_EXPLICIT_OPERATOR            explicit operator
+        #define MGBASE_NOEXCEPT                     noexcept
+        #define MGBASE_OVERRIDE                     override
+        #define MGBASE_NULLPTR                      nullptr
+        #define MGBASE_STATIC_ASSERT(expr)          static_assert(expr, #expr);
+        #define MGBASE_STATIC_ASSERT_MSG(expr, msg) static_assert(expr, msg);
+        #define MGBASE_EMPTY_DEFINITION             = default;
+        #define MGBASE_ALIGNAS(a)                   alignas(a)
+        #define MGBASE_DECLTYPE(x)                  decltype(x)
+        #define MGBASE_CONSTEXPR                    constexpr
+        #define MGBASE_CONSTEXPR_FUNCTION           constexpr
         
         namespace mgbase {
             class noncopyable {
@@ -161,9 +164,11 @@
             template <unsigned int> struct static_assert_check { };
         }
         
-        #define MGBASE_STATIC_ASSERT(expr, msg) \
+        #define MGBASE_STATIC_ASSERT(expr) \
             MGBASE_UNUSED typedef ::mgbase::static_assert_check<sizeof(::mgbase::static_assertion<((expr))>)> \
                 MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)
+        
+        #define MGBASE_STATIC_ASSERT_MSG(expr, msg) MGBASE_STATIC_ASSERT(expr)
         
         namespace mgbase {
             class noncopyable {

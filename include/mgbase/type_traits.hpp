@@ -140,14 +140,14 @@ struct is_convertible_impl
     static const bool value = sizeof(check(declval<From>(), 0)) == sizeof(yes_type);
 };
 
-}
+} // namespace detail
 
 template <typename From, typename To>
 struct is_convertible
     : integral_constant<bool, detail::is_convertible_impl<From, To>::value> { };
 
 // TODO : move to the unit test
-MGBASE_STATIC_ASSERT((mgbase::is_convertible<int*, const int*>::value), "convertible");
+MGBASE_STATIC_ASSERT((mgbase::is_convertible<int*, const int*>::value));
 
 
 template <bool Condition, typename True, typename False>
@@ -156,7 +156,73 @@ struct conditional { typedef True type; };
 template <typename True, typename False>
 struct conditional<false, True, False> { typedef False type; };
 
-}
+namespace detail {
+
+template <typename T, T x, T y>
+struct compile_time_min
+    : integral_constant<T, x < y ? x : y> { };
+
+template <typename T>
+struct alignment_hack
+{
+    char c;
+    T t;
+};
+
+} // namespace detail
+
+// See also:
+//  - Boost.TypeTraits
+//  - http://d.hatena.ne.jp/Cryolite/20051102#p2
+
+template <typename T>
+struct alignment_of
+    : detail::compile_time_min<
+        mgbase::size_t
+    ,   sizeof(detail::alignment_hack<T>) - sizeof(T)
+    ,   sizeof(T)
+    >
+    { };
+
+namespace detail {
+
+struct dummy_t;
+
+union max_align {
+    char c;
+    short s;
+    int i;
+    long l;
+    float f;
+    double d;
+    long double ld;
+    void* vp;
+    void (*fp)();
+    int dummy_t::*mp;
+    void (dummy_t::*mfp)();
+};
+
+} // namespace detail
+
+// See also:
+//  - http://qiita.com/okdshin/items/8afb5e3e6044798e162c
+
+template <mgbase::size_t Size, mgbase::size_t Align>
+class aligned_storage
+{
+    typedef detail::max_align   align_type;
+    
+    MGBASE_STATIC_ASSERT(alignment_of<align_type>::value >= Align);
+    MGBASE_STATIC_ASSERT(alignment_of<align_type>::value % Align == 0);
+    
+public:
+    union type {
+        char        arr[Size];
+        align_type  al;
+    };
+};
+
+} // namespace mgbase
 
 #else
 

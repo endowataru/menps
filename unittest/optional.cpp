@@ -5,10 +5,9 @@
 TEST(Optional, Basic)
 {
     mgbase::optional<int> o = mgbase::make_optional(123);
-    bool b = o;
-    ASSERT_TRUE(b);
+    ASSERT_TRUE(o);
     
     o = mgbase::nullopt;
-    ASSERT_FALSE(b);
+    ASSERT_FALSE(o);
 }
 

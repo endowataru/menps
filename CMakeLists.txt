@@ -12,6 +12,8 @@ target_compile_definitions(mgbase-header
     INTERFACE "$<$<CONFIG:RelWithDebInfo>:MGBASE_DEBUG>"
 )
 
+set(error_limit 3)
+
 add_library(mgbase-options INTERFACE)
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     target_compile_options(mgbase-options INTERFACE
@@ -43,6 +45,8 @@ else()
         -Wno-variadic-macros
         $<$<CXX_COMPILER_ID:Clang>:-Wno-c++11-long-long> # for mpi.h
         $<$<CXX_COMPILER_ID:GNU>:-Wno-long-long> # for mpi.h
+        $<$<CXX_COMPILER_ID:Clang>:-ferror-limit=${error_limit}>
+        $<$<CXX_COMPILER_ID:GNU>:-fmax-errors=${error_limit}>
     )
 endif()
 

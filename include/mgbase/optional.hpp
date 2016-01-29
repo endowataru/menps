@@ -13,8 +13,6 @@ struct nullopt_t {
 
 extern nullopt_t nullopt; // never defined
 
-// FIXME: This class works correctly only with POD types...
-
 template <typename T>
 class optional
 {
@@ -33,7 +31,26 @@ public:
             create_empty();
     }
     
+    ~optional() { destroy(); }
+    
     /*implicit*/ optional(const T& value) { create(value); }
+    
+    optional& operator = (const optional& other) {
+        if (other)
+            assign(*other);
+        else
+            destroy();
+        
+        return *this;
+    }
+    optional& operator = (nullopt_t) {
+        destroy();
+        return *this;
+    }
+    optional& operator = (const T& value) {
+        assign(value);
+        return *this;
+    }
     
     // TODO: replace with safe-bool idioms
     MGBASE_CONSTEXPR_FUNCTION MGBASE_EXPLICIT_OPERATOR bool () const MGBASE_NOEXCEPT {
@@ -42,35 +59,79 @@ public:
     
     MGBASE_CONSTEXPR_CPP14 T* operator -> () MGBASE_NOEXCEPT {
         MGBASE_ASSERT(engaged_);
-        return &value_;
+        return &value();
     }
     MGBASE_CONSTEXPR_CPP14 const T* operator -> () const MGBASE_NOEXCEPT {
         MGBASE_ASSERT(engaged_);
-        return &value_;
+        return &value();
     }
     
     MGBASE_CONSTEXPR_CPP14 T& operator * () MGBASE_NOEXCEPT {
         MGBASE_ASSERT(engaged_);
-        return value_;
+        return value();
     }
     MGBASE_CONSTEXPR_CPP14 const T& operator * () const MGBASE_NOEXCEPT {
         MGBASE_ASSERT(engaged_);
-        return value_;
+        return value();
     }
 
 private:
+    T& value() MGBASE_NOEXCEPT {
+        return *reinterpret_cast<T*>(&storage_);
+    }
+    const T& value() const MGBASE_NOEXCEPT {
+        return *reinterpret_cast<const T*>(&storage_);
+    }
+    
     template <typename Arg>
-    void create(Arg arg) {
+    void create(Arg& arg) {
         engaged_ = true;
-        value_ = arg;
+        
+        // Call the constructor.
+        new (&storage_) T(arg);
+    }
+    template <typename Arg>
+    void create(const Arg& arg) {
+        engaged_ = true;
+        
+        // Call the constructor.
+        new (&storage_) T(arg);
     }
     
     void create_empty() MGBASE_NOEXCEPT {
         engaged_ = false;
     }
     
+    void destroy()
+    {
+        if (engaged_) {
+            // Call the destructor.
+            (*this)->~T();
+            
+            engaged_ = false;
+        }
+    }
+    
+    template <typename Arg>
+    void assign(Arg& arg)
+    {
+        if (engaged_)
+            value() = arg;
+        else
+            create(arg);
+    }
+    
+    typedef typename mgbase::aligned_storage<
+        sizeof(T)
+    ,   mgbase::alignment_of<T>::value
+    >::type
+    storage_type;
+    
+    MGBASE_STATIC_ASSERT(sizeof(storage_type) >= sizeof(T));
+    MGBASE_STATIC_ASSERT(mgbase::alignment_of<storage_type>::value >= mgbase::alignment_of<T>::value);
+    
     bool engaged_;
-    T value_;
+    storage_type storage_;
 };
 
 template <typename T>
