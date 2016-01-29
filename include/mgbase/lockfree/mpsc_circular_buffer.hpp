@@ -35,17 +35,29 @@ public:
     
     bool try_push(const T& value)
     {
+        return try_push_multiple(&value, 1);
+    }
+    
+    bool try_push_multiple(const T* values, mgbase::size_t number_of_values)
+    {
         mgbase::size_t tail;
-        if (!counter_.try_enqueue(&tail))
+        if (!counter_.try_enqueue(number_of_values, &tail))
             return false;
         
-        element& elem = buf_[tail];
-        
-        MGBASE_ASSERT(!mgbase::atomic_load(&elem.visible));
-        
-        elem.value = value;
-        
-        mgbase::atomic_store_explicit(&elem.visible, true, mgbase::memory_order_release);
+        for (mgbase::size_t i = 0; i < number_of_values; ++i)
+        {
+            const mgbase::size_t index = (tail + i) % counter_.size();
+            element* const elem = &buf_[index];
+            
+            MGBASE_ASSERT(!mgbase::atomic_load(&elem->visible));
+            
+            elem->value = values[i];
+            
+            if (i == (number_of_values - 1))
+                mgbase::atomic_store_explicit(&elem->visible, true, mgbase::memory_order_release);
+            else
+                mgbase::atomic_store_explicit(&elem->visible, true, mgbase::memory_order_relaxed);
+        }
         
         return true;
     }

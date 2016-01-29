@@ -2,7 +2,8 @@
 #pragma once
 
 #include <mgbase/atomic.hpp>
-#include <mgbase/logging/logger.hpp>
+#include <mgbase/logger.hpp>
+#include <mgbase/assert.hpp>
 
 namespace mgbase {
 
@@ -20,8 +21,10 @@ class mpsc_circular_buffer_counter_base
     //       because the buffer size is assumed to be large enough
     
 public:
-    bool try_enqueue(Index* const tail_result)
+    bool try_enqueue(const Index diff, Index* const tail_result)
     {
+        MGBASE_ASSERT(diff < derived().size());
+        
         while (true)
         {
             // Load "tail" and "head" with normal load.
@@ -30,10 +33,13 @@ public:
             const Index head = head_.load(mgbase::memory_order_acquire); // barrier after load
             
             // Increment "tail".
-            const Index next_tail = tail + 1;
+            const Index next_tail = tail + diff;
+            
+            // Calculate the distance.
+            const Index dist = next_tail - head;
             
             // Check if the buffer is full.
-            if (count_to_index(head) == count_to_index(next_tail))
+            if (dist >= derived().size())
             {
                 // The buffer is full.
                 MGBASE_LOG_DEBUG(
