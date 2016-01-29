@@ -75,7 +75,7 @@ MGBASE_ALWAYS_INLINE void execute(const operation& op) MGBASE_NOEXCEPT
 }
 
 
-MGBASE_ALWAYS_INLINE operation make_operation_no_operation() MGBASE_NOEXCEPT {
+MGBASE_ALWAYS_INLINE operation make_no_operation() MGBASE_NOEXCEPT {
     operation result = { MGBASE_OPERATION_NO_OPERATION, MGBASE_NULLPTR, 0 };
     return result;
 }
