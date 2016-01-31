@@ -77,7 +77,7 @@ public:
         return f;
     }
     
-    result_type operator() () {
+    result_type operator() () const {
         MGBASE_ASSERT(untyped_.func != MGBASE_NULLPTR);
         return reinterpret_cast<result_type (*)(void*)>(untyped_.func)(untyped_.arg1);
     }
@@ -138,7 +138,7 @@ public:
         return f;
     }
     
-    result_type operator() (Arg2 arg2) {
+    result_type operator() (Arg2 arg2) const {
         MGBASE_ASSERT(untyped_.func != MGBASE_NULLPTR);
         return reinterpret_cast<result_type (*)(void*, Arg2)>(untyped_.func)(untyped_.arg1, arg2);
     }

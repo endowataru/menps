@@ -62,7 +62,7 @@ template <
 ,   typename CB
 ,   typename T
 >
-MGBASE_ALWAYS_INLINE
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
 deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB& cb, deferred<T> df)
 {
     typedef typename mgbase::function_traits<Signature>::result_type    return_type;

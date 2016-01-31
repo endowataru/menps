@@ -19,7 +19,7 @@ class mpsc_circular_buffer
 {
     struct MGBASE_ALIGNAS(MGBASE_CACHE_LINE_SIZE) element
     {
-        bool visible;
+        mgbase::atomic<bool> visible;
         T value;
     };
     
@@ -49,14 +49,14 @@ public:
             const mgbase::size_t index = (tail + i) % counter_.size();
             element* const elem = &buf_[index];
             
-            MGBASE_ASSERT(!mgbase::atomic_load(&elem->visible));
+            MGBASE_ASSERT(!elem->visible.load());
             
             elem->value = values[i];
             
             if (i == (number_of_values - 1))
-                mgbase::atomic_store_explicit(&elem->visible, true, mgbase::memory_order_release);
+                elem->visible.store(true, mgbase::memory_order_release);
             else
-                mgbase::atomic_store_explicit(&elem->visible, true, mgbase::memory_order_relaxed);
+                elem->visible.store(true, mgbase::memory_order_relaxed);
         }
         
         return true;
@@ -75,8 +75,7 @@ public:
         }
         
         element& elem = buf_[counter_.front()];
-        const bool already_visible = 
-            mgbase::atomic_load_explicit(&elem.visible, mgbase::memory_order_acquire);
+        const bool already_visible = elem.visible.load(mgbase::memory_order_acquire);
         
         if (!already_visible) {
             MGBASE_LOG_VERBOSE("msg:Peeked but entry is not visible yet.");
@@ -90,7 +89,7 @@ public:
     {
         element& elem = buf_[counter_.front()];
         
-        MGBASE_ASSERT(mgbase::atomic_load(&elem.visible));
+        MGBASE_ASSERT(elem.visible.load());
         
         elem.visible = false; // Reset for the next use
         

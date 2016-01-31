@@ -3,6 +3,7 @@
 
 #include <mgbase/mutex.hpp>
 #include <mgbase/condition_variable.hpp>
+#include <mgbase/assert.hpp>
 
 namespace mgbase {
 

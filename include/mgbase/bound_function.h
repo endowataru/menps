@@ -13,11 +13,13 @@ typedef struct mgbase_untyped_bound_function {
 }
 mgbase_untyped_bound_function;
 
+MGBASE_EXTERN_C_END
+
 #ifdef MGBASE_CPLUSPLUS
     #define MGBASE_BOUND_FUNCTION(signature) mgbase::bound_function<signature>
+    #include <mgbase/bound_function.hpp>
 #else
     #define MGBASE_BOUND_FUNCTION(signature) mgbase_untyped_bound_function
 #endif
 
-MGBASE_EXTERN_C_END
 

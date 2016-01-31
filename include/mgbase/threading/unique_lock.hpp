@@ -10,7 +10,7 @@ class condition_variable; // for friend declaration
 struct unique_lock_error { };
 
 // Because it is impossible to implement the full features of unique_lock in C++03,
-// it is defined as a restricted version with the same behavior as lock_guard.
+// it is defined as a restricted version.
 
 template <typename Mutex>
 class unique_lock

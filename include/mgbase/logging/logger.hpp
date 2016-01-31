@@ -88,7 +88,7 @@ void logger_not_defined(...);
 #ifdef MGBASE_ENABLE_LOG
     #define MGBASE_LOGGER_OUTPUT(level, ...) \
         if (::mgbase::logger::get_log_level() <= level) { \
-            ::mgbase::lock_guard< ::mgbase::spinlock> lc(::mgbase::logger::get_lock()); \
+            ::mgbase::lock_guard< ::mgbase::spinlock> logger_lc(::mgbase::logger::get_lock()); \
             std::cout << mgbase::logger::get_state(); \
             fmt::print(__VA_ARGS__); \
             std::cout << std::endl; \

@@ -10,7 +10,7 @@ template <typename T, std::size_t N>
 class static_bounded_index_queue
     : noncopyable
 {
-    MGBASE_STATIC_ASSERT((N & (N - 1)) == 0, "N must be a power of 2"); // TODO : remove the limitation
+    MGBASE_STATIC_ASSERT_MSG((N & (N - 1)) == 0, "N must be a power of 2"); // TODO : remove the limitation
     static const T tag_step   = N;
     static const T value_mask = N - 1;
     

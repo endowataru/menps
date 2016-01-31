@@ -33,11 +33,12 @@
 #define MGBASE_CONCAT1(x, y) MGBASE_CONCAT2(x, y)
 #define MGBASE_CONCAT2(x, y) x##y
 
-#define MGBASE_ALWAYS_INLINE    inline __attribute__((always_inline))
-#define MGBASE_UNUSED           __attribute__((unused))
+#define MGBASE_ALWAYS_INLINE        inline __attribute__((always_inline))
+#define MGBASE_UNUSED               __attribute__((unused))
+#define MGBASE_WARN_UNUSED_RESULT   __attribute__((warn_unused_result))
 
-#define MGBASE_LIKELY(x)        __builtin_expect(!!(x), 1)
-#define MGBASE_UNLIKELY(x)      __builtin_expect(!!(x), 0)
+#define MGBASE_LIKELY(x)            __builtin_expect(!!(x), 1)
+#define MGBASE_UNLIKELY(x)          __builtin_expect(!!(x), 0)
 
 #ifdef MGBASE_COMPILER_FUJITSU
     #define MGBASE_UNREACHABLE()    abort()
@@ -62,6 +63,7 @@
     #endif
     
     #define MGBASE_CPLUSPLUS_ONLY(x)
+    #define MGBASE_C_ONLY_PREFIX(prefix, x)     prefix##x
     
     #define MGBASE_EXPLICIT_OPERATOR
     #define MGBASE_NOEXCEPT
@@ -89,6 +91,7 @@
     
     #define MGBASE_CPLUSPLUS
     #define MGBASE_CPLUSPLUS_ONLY(x)    x
+    #define MGBASE_C_ONLY_PREFIX(prefix, x)     x
     
     #define MGBASE_EXTERN_C_BEGIN   extern "C" {
     #define MGBASE_EXTERN_C_END     }
@@ -212,18 +215,41 @@
 
 #endif
 
-typedef uint8_t     mgbase_uint8_t;
-typedef uint16_t    mgbase_uint16_t;
-typedef uint32_t    mgbase_uint32_t;
-typedef uint64_t    mgbase_uint64_t;
+typedef wchar_t         mgbase_wchar_t;
 
-typedef int8_t      mgbase_int8_t;
-typedef int16_t     mgbase_int16_t;
-typedef int32_t     mgbase_int32_t;
-typedef int64_t     mgbase_int64_t;
+typedef uint8_t         mgbase_uint8_t;
+typedef uint16_t        mgbase_uint16_t;
+typedef uint32_t        mgbase_uint32_t;
+typedef uint64_t        mgbase_uint64_t;
 
-typedef size_t      mgbase_size_t;
-typedef ptrdiff_t   mgbase_ptrdiff_t;
-typedef intptr_t    mgbase_intptr_t;
+typedef int8_t          mgbase_int8_t;
+typedef int16_t         mgbase_int16_t;
+typedef int32_t         mgbase_int32_t;
+typedef int64_t         mgbase_int64_t;
 
+typedef int_least8_t    mgbase_int_least8_t;
+typedef int_least16_t   mgbase_int_least16_t;
+typedef int_least32_t   mgbase_int_least32_t;
+typedef int_least64_t   mgbase_int_least64_t;
+typedef uint_least8_t   mgbase_uint_least8_t;
+typedef uint_least16_t  mgbase_uint_least16_t;
+typedef uint_least32_t  mgbase_uint_least32_t;
+typedef uint_least64_t  mgbase_uint_least64_t;
+
+typedef int_fast8_t     mgbase_int_fast8_t;
+typedef int_fast16_t    mgbase_int_fast16_t;
+typedef int_fast32_t    mgbase_int_fast32_t;
+typedef int_fast64_t    mgbase_int_fast64_t;
+typedef uint_fast8_t    mgbase_uint_fast8_t;
+typedef uint_fast16_t   mgbase_uint_fast16_t;
+typedef uint_fast32_t   mgbase_uint_fast32_t;
+typedef uint_fast64_t   mgbase_uint_fast64_t;
+
+typedef size_t          mgbase_size_t;
+typedef ptrdiff_t       mgbase_ptrdiff_t;
+typedef intptr_t        mgbase_intptr_t;
+typedef uintptr_t       mgbase_uintptr_t;
+
+typedef intmax_t        mgbase_intmax_t;
+typedef uintmax_t       mgbase_uintmax_t;
 
