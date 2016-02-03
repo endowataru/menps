@@ -4,6 +4,7 @@
 #include "device/mpi/command/mpi_command.hpp"
 #include "mpi3_completer.hpp"
 #include "device/mpi3/mpi3_error.hpp"
+#include "device/mpi3/rma.hpp"
 
 namespace mgcom {
 namespace mpi3 {
@@ -112,7 +113,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
                 ,   p.src_index
                 ,   p.size_in_bytes
                 ,   MPI_BYTE
-                ,   completer.get_win()
+                ,   rma::get_win()
                 )
             );
             
@@ -145,7 +146,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
                 ,   p.dest_index
                 ,   p.size_in_bytes
                 ,   MPI_BYTE
-                ,   completer.get_win()
+                ,   rma::get_win()
                 )
             );
             
@@ -174,13 +175,13 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             */
             mpi3_error::check(
                 MPI_Compare_and_swap(
-                    const_cast<void*>(p.desired_ptr)  // origin_addr
-                ,   const_cast<void*>(p.expected_ptr) // compare_addr
-                ,   p.result_ptr                      // result_addr
-                ,   p.datatype                        // datatype
-                ,   p.dest_rank                       // target_rank
-                ,   p.dest_index                      // target_disp
-                ,   completer.get_win()                            // win
+                    const_cast<void*>(p.desired_ptr)    // origin_addr
+                ,   const_cast<void*>(p.expected_ptr)   // compare_addr
+                ,   p.result_ptr                        // result_addr
+                ,   p.datatype                          // datatype
+                ,   p.dest_rank                         // target_rank
+                ,   p.dest_index                        // target_disp
+                ,   rma::get_win()                      // win
                 )
             );
             
@@ -219,7 +220,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
                 ,   p.dest_rank                     // target_rank
                 ,   p.dest_index                    // target_disp
                 ,   p.operation                     // op
-                ,   completer.get_win()             // win
+                ,   rma::get_win()                  // win
                 )
             );
             

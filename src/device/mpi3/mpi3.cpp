@@ -3,6 +3,7 @@
 #include "rma/rma.hpp"
 #include "device/mpi/rpc/rpc.hpp"
 #include "device/mpi3/command/mpi3_command_queue.hpp"
+#include "common/rma/region_allocator.hpp"
 #include <mgcom/collective.hpp>
 
 #include <mgbase/logging/logger.hpp>
@@ -17,6 +18,8 @@ void initialize(int* argc, char*** argv)
     
     rma::initialize();
     
+    rma::initialize_allocator();
+    
     rpc::initialize();
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
@@ -27,6 +30,8 @@ void finalize()
     collective::barrier();
     
     rpc::finalize();
+    
+    rma::finalize_allocator();
     
     rma::finalize();
     
