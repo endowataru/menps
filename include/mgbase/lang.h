@@ -33,7 +33,12 @@
 #define MGBASE_CONCAT1(x, y) MGBASE_CONCAT2(x, y)
 #define MGBASE_CONCAT2(x, y) x##y
 
-#define MGBASE_ALWAYS_INLINE        inline __attribute__((always_inline))
+#ifdef MGBASE_DEBUG
+    #define MGBASE_ALWAYS_INLINE        inline
+#else
+    #define MGBASE_ALWAYS_INLINE        inline __attribute__((always_inline))
+#endif
+
 #define MGBASE_UNUSED               __attribute__((unused))
 #define MGBASE_WARN_UNUSED_RESULT   __attribute__((warn_unused_result))
 

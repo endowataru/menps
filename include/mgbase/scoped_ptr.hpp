@@ -40,6 +40,11 @@ public:
         return *this;
     }
     
+    bool operator == (mgbase::nullptr_t) MGBASE_NOEXCEPT
+    {
+        return get() == MGBASE_NULLPTR;
+    }
+    
     T& operator[] (mgbase::ptrdiff_t index) const MGBASE_NOEXCEPT {
         return ptr_[index];
     }

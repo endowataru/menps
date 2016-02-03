@@ -114,7 +114,7 @@ public:
     {
         bound_function f;
         f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(&unbound<Signature, Func>::pass);
-        //f.untyped_.arg1 = MGBASE_NULLPTR; // ignored
+        f.untyped_.arg1 = MGBASE_NULLPTR; // ignored, but reset to zero for debugging
         
         return f;
     }

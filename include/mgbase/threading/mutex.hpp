@@ -2,6 +2,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <errno.h>
 
 namespace mgbase {
 

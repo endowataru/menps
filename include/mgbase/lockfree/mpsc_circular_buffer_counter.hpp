@@ -17,9 +17,6 @@ template <
 class mpsc_circular_buffer_counter_base
     : mgbase::noncopyable
 {
-    // Note: This class doesn't consider ABA problem
-    //       because the buffer size is assumed to be large enough
-    
 public:
     bool try_enqueue(const Index diff, Index* const tail_result)
     {

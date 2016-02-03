@@ -66,8 +66,10 @@ make_deferred(CB& cb)
 {
     typedef typename detail::deferred_result<Signature>::type T;
     
+    continuation<T>& cont = get_next_continuation<T>(cb);
+    
     return deferred<T>(
-        get_next_continuation<T>(cb)
+        cont
     ,   make_resumable<
             resumable (CB&)
         ,   &detail::make_deferred_pass<Signature, Func, CB>

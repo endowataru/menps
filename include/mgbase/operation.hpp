@@ -3,6 +3,7 @@
 
 #include <mgbase/operation.h>
 #include <mgbase/atomic.hpp>
+#include <mgbase/logger.hpp>
 
 namespace mgbase {
 
@@ -95,6 +96,14 @@ namespace /*unnamed*/ {
 
 MGBASE_ALWAYS_INLINE void execute(const operation& opr) MGBASE_NOEXCEPT
 {
+    MGBASE_LOG_DEBUG(
+        "msg:Executing operation.\t"
+        "code:{}\tpointer:{:x}\tvalue:{}"
+    ,   opr.code
+    ,   reinterpret_cast<mgbase::intptr_t>(opr.arg.operands.pointer)
+    ,   opr.arg.operands.value
+    );
+    
     switch (opr.code)
     {
         case MGBASE_OPERATION_NO_OPERATION:
