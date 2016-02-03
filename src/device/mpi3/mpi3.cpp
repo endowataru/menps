@@ -1,7 +1,7 @@
 
 #include "device/mpi/mpi_base.hpp"
-#include "rma/rma.hpp"
 #include "device/mpi/rpc/rpc.hpp"
+#include "device/mpi3/rma.hpp"
 #include "device/mpi3/command/mpi3_command_queue.hpp"
 #include "common/rma/region_allocator.hpp"
 #include <mgcom/collective.hpp>
