@@ -430,4 +430,3 @@ private:
 } // namespace rma
 } // namespace mgcom
 
-

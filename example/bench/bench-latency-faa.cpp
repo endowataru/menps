@@ -37,15 +37,12 @@ int main(int argc, char* argv[])
             mgbase::stopwatch sw;
             sw.start();
             
-            mgcom::rma::remote_fetch_and_add_default_cb cb;
-            mgcom::rma::remote_fetch_and_add_default_nb(
-                cb
-            ,   root_proc
+            mgcom::rma::remote_fetch_and_add(
+                root_proc
             ,   remote_ptr
             ,   value_ptr
             ,   result_ptr
-            )
-            .wait();
+            );
             
             clocks += sw.elapsed();
         }

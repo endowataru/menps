@@ -15,11 +15,14 @@ namespace /*unnamed*/ {
 template <typename Derived, typename CB>
 class try_handlers
 {
-    typedef CB  cb_type;
+    typedef try_handlers            handlers_type;
+    typedef CB                      cb_type;
+    typedef mgbase::deferred<void>  result_type;
+    typedef result_type (func_type)(cb_type&);
     
 public:
-    static mgbase::deferred<void> start(cb_type& cb) {
-        cb.finished = false;
+    static result_type start(cb_type& cb) {
+        mgbase_atomic_store_explicit(&cb.finished, false, mgbase_memory_order_seq_cst);
         
         if (Derived::try_(cb, mgbase::make_operation_store_release(&cb.finished, true))) {
             return test(cb);
@@ -32,15 +35,15 @@ public:
     }
     
 private:
-    static mgbase::deferred<void> test(cb_type& cb)
+    static result_type test(cb_type& cb)
     {
-        if (mgbase::atomic_load(&cb.finished)) {
+        if (mgbase_atomic_load_explicit(&cb.finished, mgbase_memory_order_acquire)) {
             return mgbase::make_ready_deferred();
         }
         else {
             mgcom::rma::poll(); // TODO
             
-            return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), &try_handlers::test>(cb);
+            return mgbase::make_deferred<func_type, &handlers_type::test>(cb);
         }
     }
 };

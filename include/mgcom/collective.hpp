@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgcom.hpp>
+#include <mgcom/common.hpp>
 #include "collective.h"
 
 namespace mgcom {

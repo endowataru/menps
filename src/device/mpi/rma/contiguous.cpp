@@ -1,41 +1,60 @@
 
-#include "contiguous.ipp"
-#include "rma.hpp"
+#include "contiguous.impl.hpp"
 
 namespace mgcom {
 namespace rma {
 
-namespace untyped {
-
 namespace /*unnamed*/ {
 
-emulated_contiguous g_emulated;
+untyped::emulated_contiguous g_impl;
 
 } // unnamed namespace
 
-namespace detail {
-
-mgbase::deferred<void> remote_read(remote_read_cb& cb)
-{
-    return emulated_contiguous::read_handlers<g_emulated>::start(cb);
-}
-mgbase::deferred<void> remote_write(remote_write_cb& cb)
-{
-    return emulated_contiguous::write_handlers<g_emulated>::start(cb);
-}
-
-} // namespace detail
-
-} // namespace untyped
-
 void initialize_contiguous()
 {
-    untyped::g_emulated.initialize();
+    untyped::emulated_contiguous::initialize<g_impl>();
 }
+
 void finalize_contiguous()
 {
-    // do nothing
+    g_impl.finalize();
 }
+
+namespace untyped {
+
+bool try_remote_read_async(
+    process_id_t                    proc
+,   const remote_address&           remote_addr
+,   const local_address&            local_addr
+,   index_t                         size_in_bytes
+,   const mgbase::operation&        on_complete
+) {
+    return emulated_contiguous::try_read<g_impl>(
+        proc
+    ,   remote_addr
+    ,   local_addr
+    ,   size_in_bytes
+    ,   on_complete
+    );
+}
+
+bool try_remote_write_async(
+    process_id_t                proc
+,   const remote_address&       remote_addr
+,   const local_address&        local_addr
+,   index_t                     size_in_bytes
+,   const mgbase::operation&    on_complete
+) {
+    return emulated_contiguous::try_write<g_impl>(
+        proc
+    ,   remote_addr
+    ,   local_addr
+    ,   size_in_bytes
+    ,   on_complete
+    );
+}
+
+} // namespace untyped
 
 } // namespace rma
 } // namespace mgcom

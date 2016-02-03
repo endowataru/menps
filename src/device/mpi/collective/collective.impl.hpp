@@ -7,7 +7,6 @@
 #include <mgbase/threading/lock_guard.hpp>
 
 #include "device/mpi/mpi_base.hpp"
-#include "device/mpi/mpi_error.hpp"
 
 namespace mgcom {
 namespace collective {
@@ -33,7 +32,7 @@ private:
     static result_type transfer(cb_type& cb)
     {
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             MGBASE_LOG_DEBUG("msg:Blocking broadcast.\troot:{}\tptr:{:x}\tnumber_of_bytes:{}",
                 cb.root, reinterpret_cast<mgbase::uint64_t>(cb.ptr), cb.number_of_bytes);
@@ -72,7 +71,7 @@ private:
     static result_type transfer(cb_type& cb)
     {
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             MGBASE_LOG_DEBUG("msg:Blocking allgather.\tsrc:{:x}\tdest:{:x}\tnumber_of_bytes:{}",
                 reinterpret_cast<mgbase::uint64_t>(cb.src), reinterpret_cast<mgbase::uint64_t>(cb.dest), cb.number_of_bytes);

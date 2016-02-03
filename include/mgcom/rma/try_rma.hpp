@@ -4,6 +4,7 @@
 #include <mgcom/rma/pointer.hpp>
 #include <mgbase/operation.hpp>
 #include <mgbase/type_traits.hpp>
+#include <mgbase/optional.hpp>
 
 namespace mgcom {
 namespace rma {
@@ -13,18 +14,17 @@ namespace untyped {
 /**
  * Try to do contiguous read.
  */
-bool try_remote_read(
+MGBASE_WARN_UNUSED_RESULT bool try_remote_read_async(
     process_id_t                proc
 ,   const remote_address&       remote_addr
 ,   const local_address&        local_addr
 ,   index_t                     size_in_bytes
 ,   const mgbase::operation&    on_complete
 );
-
 /**
  * Try to do contiguous write.
  */
-bool try_remote_write(
+MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
     process_id_t                proc
 ,   const remote_address&       remote_addr
 ,   const local_address&        local_addr
@@ -34,68 +34,41 @@ bool try_remote_write(
 
 } // namespace untyped
 
+namespace detail {
+
+namespace /*unnamed*/ {
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool wait_start(mgbase::optional< mgbase::deferred<void> > opt)
+{
+    if (MGBASE_LIKELY(opt)) {
+        opt->wait();
+        return true;
+    }
+    else
+        return false;
+}
+
+} // unnamed namespace
+
+} // namespace detail
+
 namespace /*unnamed*/ {
 
 /**
  * Try to do contiguous read.
  */
 template <typename Remote, typename Local>
-MGBASE_ALWAYS_INLINE bool try_remote_read(
-    process_id_t                    proc
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_remote_read_async(
+    const process_id_t              proc
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
+,   const index_t                   number_of_elements
 ,   const mgbase::operation&        on_complete
 ) {
     // Note: Important for type safety.
-    MGBASE_STATIC_ASSERT(
-        (mgbase::is_runtime_sized_assignable<Local, Remote>::value)
-    ,   "Breaking type safety"
-    );
-    
-    return untyped::try_remote_read(
-        proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
-    ,   mgbase::runtime_size_of<Remote>()
-    ,   on_complete
-    );
-}
-
-/**
- * Try to do contiguous write.
- */
-template <typename Remote, typename Local>
-MGBASE_ALWAYS_INLINE bool try_remote_write(
-    process_id_t                    proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-,   const mgbase::operation&        on_complete
-) {
-    // Note: Important for type safety.
-    MGBASE_STATIC_ASSERT(
-        (mgbase::is_runtime_sized_assignable<Remote, Local>::value)
-    ,   "Breaking type safety"
-    );
-    
-    return untyped::try_remote_write(
-        proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
-    ,   mgbase::runtime_size_of<Remote>()
-    ,   on_complete
-    );
-}
-
-template <typename Remote, typename Local>
-MGBASE_ALWAYS_INLINE bool try_remote_read(
-    process_id_t                    proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-,   index_t                         number_of_elements
-,   const mgbase::operation&        on_complete
-) {
-    // Note: Important for type safety.
-    MGBASE_STATIC_ASSERT(
+    MGBASE_STATIC_ASSERT_MSG(
         (mgbase::is_same<
             typename mgbase::remove_const<Remote>::type
         ,   Local
@@ -103,7 +76,7 @@ MGBASE_ALWAYS_INLINE bool try_remote_read(
     ,   "Breaking type safety"
     );
     
-    return untyped::try_remote_read(
+    return untyped::try_remote_read_async(
         proc
     ,   remote_ptr.to_address()
     ,   local_ptr.to_address()
@@ -111,17 +84,20 @@ MGBASE_ALWAYS_INLINE bool try_remote_read(
     ,   on_complete
     );
 }
-
+/**
+ * Try to do contiguous write.
+ */
 template <typename Remote, typename Local>
-MGBASE_ALWAYS_INLINE bool try_remote_write(
-    process_id_t                    proc
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_remote_write_async(
+    const process_id_t              proc
 ,   const remote_pointer<Remote>&   remote_ptr
 ,   const local_pointer<Local>&     local_ptr
-,   index_t                         number_of_elements
+,   const index_t                   number_of_elements
 ,   const mgbase::operation&        on_complete
 ) {
     // Note: Important for type safety.
-    MGBASE_STATIC_ASSERT(
+    MGBASE_STATIC_ASSERT_MSG(
         (mgbase::is_same<
             Remote
         ,   typename mgbase::remove_const<Local>::type
@@ -129,7 +105,7 @@ MGBASE_ALWAYS_INLINE bool try_remote_write(
     ,   "Breaking type safety"
     );
     
-    return untyped::try_remote_write(
+    return untyped::try_remote_write_async(
         proc
     ,   remote_ptr.to_address()
     ,   local_ptr.to_address()
@@ -141,9 +117,9 @@ MGBASE_ALWAYS_INLINE bool try_remote_write(
 } // unnamed namespace
 
 /**
- * Try to do atomic read.
+ * Try to start atomic read.
  */
-bool try_remote_atomic_read(
+MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_read_async(
     process_id_t                                    proc
 ,   const remote_pointer<const atomic_default_t>&   remote_ptr
 ,   const local_pointer<atomic_default_t>&          local_ptr
@@ -152,9 +128,9 @@ bool try_remote_atomic_read(
 );
 
 /**
- * Try to do atomic write.
+ * Try to start atomic write.
  */
-bool try_remote_atomic_write(
+MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_write_async(
     process_id_t                                    proc
 ,   const remote_pointer<atomic_default_t>&         remote_ptr
 ,   const local_pointer<const atomic_default_t>&    local_ptr
@@ -163,9 +139,9 @@ bool try_remote_atomic_write(
 );
 
 /**
- * Try to do remote compare-and-swap.
+ * Try to start remote compare-and-swap.
  */
-bool try_remote_compare_and_swap(
+MGBASE_WARN_UNUSED_RESULT bool try_remote_compare_and_swap_async(
     process_id_t                                    target_proc
 ,   const remote_pointer<atomic_default_t>&         target_ptr
 ,   const local_pointer<const atomic_default_t>&    expected_ptr
@@ -175,9 +151,9 @@ bool try_remote_compare_and_swap(
 );
 
 /**
- * Try to do remote fetch-and-add.
+ * Try to start remote fetch-and-add.
  */
-bool try_remote_fetch_and_add(
+MGBASE_WARN_UNUSED_RESULT bool try_remote_fetch_and_add_async(
     process_id_t                                    target_proc
 ,   const remote_pointer<atomic_default_t>&         target_ptr
 ,   const local_pointer<const atomic_default_t>&    value_ptr

@@ -8,8 +8,7 @@
 #include <mgbase/threading/lock_guard.hpp>
 
 namespace mgcom {
-
-namespace mpi_base {
+namespace mpi {
 
 namespace /*unnamed*/ {
 
@@ -46,6 +45,8 @@ public:
         number_of_processes_ = static_cast<index_t>(size);
         
         mgbase::logger::set_state_callback(get_state);
+        
+        MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN); // DEBUG
     }
     
     void finalize()
@@ -67,7 +68,7 @@ private:
 
 impl g_impl;
 
-}
+} // unnamed namespace
 
 void initialize(int* argc, char*** argv)
 {
@@ -79,21 +80,15 @@ void finalize()
     g_impl.finalize();
 }
 
-void native_barrier()
-{
-    mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
-    MPI_Barrier(MPI_COMM_WORLD);
-}
-
 }
 
 process_id_t current_process_id() MGBASE_NOEXCEPT {
-    return mpi_base::g_impl.current_process_id();
+    return mpi::g_impl.current_process_id();
 }
 
 index_t number_of_processes() MGBASE_NOEXCEPT {
-    return mpi_base::g_impl.number_of_processes();
+    return mpi::g_impl.number_of_processes();
 }
 
-}
+} // namespace mgcom
 

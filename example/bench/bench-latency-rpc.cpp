@@ -4,13 +4,12 @@
 #include <iostream>
 
 struct am_test {
-    static const mgcom::am::handler_id_t request_id = 0;
-    static const mgcom::am::handler_id_t reply_id   = 1;
+    static const mgcom::rpc::handler_id_t handler_id = 1;
     
     struct argument_type { };
     typedef void return_type;
     
-    static return_type on_request(const mgcom::am::callback_parameters& /*params*/, const argument_type& /*arg*/)
+    static return_type on_request(const mgcom::rpc::handler_parameters& /*params*/, const argument_type& /*arg*/)
     {
         return;
     }
@@ -23,7 +22,7 @@ int main(int argc, char* argv[])
     const mgcom::process_id_t root_proc = 0;
     const int number_of_trials = atoi(argv[1]);
     
-    mgcom::am::register_roundtrip_handler<am_test>();
+    mgcom::rpc::register_handler<am_test>();
     
     mgcom::collective::barrier();
     
@@ -35,8 +34,7 @@ int main(int argc, char* argv[])
             mgbase::stopwatch sw;
             sw.start();
             
-            mgcom::am::call_roundtrip_cb cb;
-            mgcom::am::call_roundtrip_nb<am_test>(cb, root_proc, am_test::argument_type()).wait();
+            mgcom::rpc::remote_call<am_test>(root_proc, am_test::argument_type());
             
             clocks += sw.elapsed();
         }

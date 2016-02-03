@@ -1,8 +1,11 @@
 
 #include "device/mpi/mpi_base.hpp"
-#include "device/mpi/am/am.hpp"
+#include "device/mpi/mpi_call.hpp"
+#include "device/mpi/command/mpi_command_queue.hpp"
+#include "device/mpi/rpc/rpc.hpp"
 #include "device/mpi/rma/rma.hpp"
 #include "device/mpi/collective/collective.hpp"
+#include <mgcom/collective.hpp>
 
 #include <mgbase/logging/logger.hpp>
 
@@ -10,19 +13,17 @@ namespace mgcom {
 
 void initialize(int* argc, char*** argv)
 {
-    mpi_base::initialize(argc, argv);
+    mgcom::mpi::initialize(argc, argv);
     
-    am::initialize();
+    mgcom::mpi::initialize_command_queue();
     
-    MPI_Barrier(MPI_COMM_WORLD);
+    rpc::initialize();
     
     rma::initialize();
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    
     collective::initialize();
     
-    MPI_Barrier(MPI_COMM_WORLD);
+    mgcom::mpi::blocking_barrier();
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
 }
@@ -31,15 +32,17 @@ void finalize()
 {
     collective::barrier();
     
-    MPI_Barrier(MPI_COMM_WORLD);
+    mgcom::mpi::blocking_barrier();
     
     collective::finalize();
     
     rma::finalize();
     
-    am::finalize();
+    rpc::finalize();
     
-    mpi_base::finalize();
+    mgcom::mpi::finalize_command_queue();
+    
+    mgcom::mpi::finalize();
     
     MGBASE_LOG_DEBUG("msg:Finalized.");
 }

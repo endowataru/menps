@@ -22,10 +22,10 @@ public:
     
     static bool try_(cb_type& cb, const mgbase::operation& on_complete)
     {
-        return try_remote_read(
+        return mgcom::rma::try_remote_read_async(
             cb.proc
-        ,   cb.remote_addr
-        ,   cb.local_addr
+        ,   remote_pointer<const mgbase::uint8_t>::cast_from(cb.remote_addr)
+        ,   local_pointer<mgbase::uint8_t>::cast_from(cb.local_addr)
         ,   cb.size_in_bytes
         ,   on_complete
         );
@@ -40,10 +40,10 @@ public:
     
     static bool try_(cb_type& cb, const mgbase::operation& on_complete)
     {
-        return try_remote_write(
+        return mgcom::rma::try_remote_write_async(
             cb.proc
-        ,   cb.remote_addr
-        ,   cb.local_addr
+        ,   remote_pointer<mgbase::uint8_t>::cast_from(cb.remote_addr)
+        ,   local_pointer<const mgbase::uint8_t>::cast_from(cb.local_addr)
         ,   cb.size_in_bytes
         ,   on_complete
         );

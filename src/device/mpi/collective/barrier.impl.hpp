@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgcom/collective.hpp>
+#include <mgcom/rma.hpp>
 #include "collective.hpp"
 #include <mgbase/arithmetic.hpp>
 #include <mgbase/logging/logger.hpp>
@@ -34,14 +35,18 @@ public:
         parity_ = 0;
         sense_ = true;
         
-        local_ = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(2 * mgcom::number_of_processes());
+        const index_t local_size = 2 * mgcom::number_of_processes();
+        local_ = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(local_size);
+        for (index_t i = 0; i < local_size; ++i)
+            local_[i] = 0;
+        
         buf_ = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
         
         mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>* local_ptrs
             = new mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>[mgcom::number_of_processes()];
         
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             // Directly call.
             MPI_Allgather(
@@ -115,7 +120,7 @@ public:
         
         static result_type check(cb_type& cb)
         {
-            mgcom::rma::atomic_default_t my_val = *(impl.local_ + (impl.parity_ * number_of_processes()) + impl.round_);
+            const mgcom::rma::atomic_default_t my_val = *(impl.local_ + (impl.parity_ * number_of_processes()) + impl.round_);
             
             if (my_val == impl.sense_) {
                 // Next round.
@@ -137,7 +142,7 @@ public:
                 }
             }
             
-            mgcom::am::poll();
+            //mgcom::am::poll();
             
             return mgbase::make_deferred<result_type (cb_type&), &handlers_type::check>(cb);
         }

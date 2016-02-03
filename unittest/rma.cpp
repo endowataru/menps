@@ -29,28 +29,30 @@ TEST_F(RmaBasic, Get)
 {
     *buf = 0;
     
-    mgcom::rma::remote_read_cb cb;
-    mgcom::rma::remote_read_nb(cb, 0, rptr, buf, 1)
-        .wait();
+    mgcom::rma::remote_read(0, rptr, buf, 1);
     
-    ASSERT_EQ(*buf, 123);
+    const int val = *buf;
+    ASSERT_EQ(123, val);
 }
 
 TEST_F(RmaBasic, Put)
 {
-    if (mgcom::current_process_id() == 1) {
+    if (mgcom::current_process_id() == 0) {
         *buf = 234;
         
-        mgcom::rma::remote_write_cb cb;
-        mgcom::rma::remote_write_nb(cb, 0, rptr, buf, 1)
-            .wait();
+        mgcom::rma::remote_write(0, rptr, buf, 1);
+        
+        const int val = *lptr;
+        ASSERT_EQ(234, val);
     }
     
     mgcom::collective::barrier();
     
-    if (mgcom::current_process_id() == 0) {
-        ASSERT_EQ(*lptr, 234);
-    }
+    *buf = 0;
+    mgcom::rma::remote_read(0, rptr, buf, 1);
+    
+    const int val = *buf;
+    ASSERT_EQ(234, val);
 }
 
 TEST_F(RmaBasic, ConcurrentGet)
@@ -64,12 +66,13 @@ TEST_F(RmaBasic, ConcurrentGet)
     }
     
     for (vec_type::iterator itr = ptrs.begin(); itr != ptrs.end(); ++itr) {
-        while (!mgcom::rma::try_remote_read(
+        mgcom::rma::remote_read_async(
             0
         ,   rptr
         ,   *itr
-        ,   mgbase::make_operation_fetch_add(&count, 1)
-        )) { }
+        ,   1
+        ,   mgbase::make_operation_fetch_add_release(&count, 1)
+        );
     }
     
     while (true) {

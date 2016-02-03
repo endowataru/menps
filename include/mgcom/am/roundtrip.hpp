@@ -135,7 +135,7 @@ call_roundtrip_nb(
 ,   process_id_t                                                            proc_id
 ,   const typename detail::call_roundtrip_types<Handler>::argument_type&    arg
 ) {
-    MGBASE_STATIC_ASSERT(
+    MGBASE_STATIC_ASSERT_MSG(
         mgbase::is_void<
             typename detail::call_roundtrip_types<Handler>::return_type
         >::value

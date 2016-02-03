@@ -46,10 +46,9 @@ private:
             while (!self_->finished_)
             {
                 // Check the queue.
-                mgbase::size_t head;
                 if (Request* req = self_->buf_.peek()) {
                     // Call operator().
-                    if ((*req)(arg_)) {
+                    if (req->execute(arg_)) {
                         MGBASE_LOG_DEBUG("msg:Request succeeded.");
                         self_->buf_.pop();
                     }
@@ -74,5 +73,4 @@ private:
 
 } // namespace rma
 } // namespace mgcom
-
 

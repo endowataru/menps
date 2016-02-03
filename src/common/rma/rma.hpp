@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgcom/rma.hpp>
 #include <mgcom/rma/pointer.hpp>
 
 namespace mgcom {

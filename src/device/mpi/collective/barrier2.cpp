@@ -1,5 +1,5 @@
 
-#include "barrier.impl.hpp"
+#include "barrier2.impl.hpp"
 
 namespace mgcom {
 namespace collective {

@@ -45,6 +45,10 @@ remote_region use_remote_region(
     process_id_t      //proc_id
 ,   const region_key& key
 ) {
+    MGBASE_LOG_DEBUG(
+        "msg:Use remote region. (but doing nothing.)"
+    );
+    
     return make_remote_region(key, 0 /* unused */);
 }
 
