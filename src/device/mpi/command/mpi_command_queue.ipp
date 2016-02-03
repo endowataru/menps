@@ -3,7 +3,7 @@
 
 #include "basic_mpi_command_queue.hpp"
 #include "common/rma/request_queue.hpp"
-#include "mpi_command_queue.hpp"
+#include "command_queue_base.hpp"
 #include "mpi_completer.hpp"
 
 namespace mgcom {
@@ -22,7 +22,7 @@ struct mpi_command
 };
 
 class mpi_command_queue
-    : public basic_mpi_command_queue<mpi_command_queue>
+    : public command_queue_base
 {
     static const index_t queue_size = 196; // TODO
     
@@ -43,12 +43,10 @@ public:
     }
     
 private:
-    friend class basic_mpi_command_queue<mpi_command_queue>;
-    
-    bool try_enqueue(
+    virtual bool try_enqueue(
         const mpi_command_code          code
     ,   const mpi_command_parameters&   params
-    )
+    ) MGBASE_OVERRIDE
     {
         const mpi_command cmd = { code, params };
         return queue_.try_enqueue(cmd);

@@ -1,25 +1,12 @@
 
-#include "mpi_command_queue.ipp"
+#include "mpi_command_queue_base.hpp"
 #include "device/mpi/mpi_call.hpp"
 
 namespace mgcom {
 namespace mpi {
 
-namespace /*unnamed*/ {
-
-mpi_command_queue g_queue;
-
-} // unnamed namespace
-
-void initialize_command_queue()
-{
-    g_queue.initialize();
-}
-
-void finalize_command_queue()
-{
-    g_queue.finalize();
-}
+// Points to a global variable defined in another compilation unit.
+extern mpi_command_queue_base& g_queue;
 
 bool try_irecv(
     void* const                 buf

@@ -34,7 +34,6 @@ int a[MPI_VERSION - 3];
 int main() { }
 "
 is_mpi3_available)
-set(is_mpi3_available FALSE) # FIXME: Temporary
 
 CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
 #set(is_fjmpi_available TRUE) # Just for compilation check
@@ -45,7 +44,7 @@ if(${is_mpi_available})
     add_library(mgcom-mpi1
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
-        src/device/mpi/command/mpi_command_queue.cpp
+        src/device/mpi/command/mpi_command_queue_base.cpp
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp
         src/device/mpi/rma/contiguous.cpp
@@ -54,6 +53,7 @@ if(${is_mpi_available})
         src/device/mpi/collective/barrier2.cpp
         src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
+        src/device/mpi1/command/mpi1_command_queue.cpp
         src/device/mpi1/mpi1.cpp
         
         src/device/mpi/rma/poll.cpp
@@ -67,17 +67,21 @@ endif()
 
 if(${is_mpi3_available})
     add_library(mgcom-mpi3
-        src/common/rma/try_contiguous.cpp
-        src/common/rma/try_atomic.cpp
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
-        src/device/mpi3/mpi3.cpp
+        src/device/mpi/command/mpi_command_queue_base.cpp
+        src/device/mpi/rpc/rpc_server.cpp
+        src/device/mpi/rpc/rpc_client.cpp
+        src/device/mpi3/command/mpi3_command_queue_base.cpp
+        src/device/mpi3/command/mpi3_command_queue.cpp
         src/device/mpi3/collective.cpp
-        src/device/mpi3/rma/rma.cpp
         src/device/mpi/mpi_base.cpp
-        src/device/mpi/mpi_lock.cpp
-        src/device/mpi/am/am.cpp
-        src/device/mpi/am/sender_queue.cpp
+        src/device/mpi3/mpi3.cpp
+        src/device/mpi3/rma.cpp
+        
+        src/device/mpi/rma/poll.cpp
+        src/common/rma/try_contiguous.cpp
+        src/common/rma/try_atomic.cpp
     )
     target_link_libraries(mgcom-mpi3 mgcom-base mgbase)
     

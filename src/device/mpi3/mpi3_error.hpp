@@ -1,15 +1,21 @@
 
 #pragma once
 
-#include <mpi.h>
+#include "device/mpi/mpi_error.hpp"
 
 namespace mgcom {
 
 struct mpi3_error
+    : public mpi_error
 {
     static void check(int err) {
         if (err != MPI_SUCCESS)
-            throw mpi3_error();
+            emit();
+    }
+    
+    static void emit()
+    {
+        throw mpi3_error();
     }
 };
 

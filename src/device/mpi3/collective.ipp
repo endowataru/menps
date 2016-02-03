@@ -25,7 +25,7 @@ public:
         cb.request = request;
         
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             mpi_error::check(
                 MPI_Ibarrier(
@@ -46,7 +46,7 @@ private:
         int flag;
         MPI_Status status;
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             mpi_error::check(
                 MPI_Test(request, &flag, &status)
@@ -63,7 +63,7 @@ private:
         }
         
         // TODO: Selective polling
-        mgcom::am::poll();
+        //mgcom::rpc::poll();
         
         return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), test>(cb);
     }
@@ -83,7 +83,7 @@ public:
         cb.sync.request = request;
         
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             mpi_error::check(
                 MPI_Ibcast(
@@ -108,7 +108,7 @@ private:
         int flag;
         MPI_Status status;
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             mpi_error::check(
                 MPI_Test(request, &flag, &status)
@@ -125,7 +125,7 @@ private:
         }
         
         // TODO: Selective polling
-        mgcom::am::poll();
+        //mgcom::am::poll();
         
         return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), test>(cb);
     }
@@ -145,7 +145,7 @@ public:
         cb.sync.request = request;
         
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             mpi_error::check(
                 MPI_Iallgather(
@@ -172,7 +172,7 @@ private:
         int flag;
         MPI_Status status;
         {
-            mgbase::lock_guard<mpi_base::lock_type> lc(mpi_base::get_lock());
+            mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
             
             mpi_error::check(
                 MPI_Test(request, &flag, &status)
@@ -189,7 +189,7 @@ private:
         }
         
         // TODO: Selective polling
-        mgcom::am::poll();
+        //mgcom::am::poll();
         
         return mgbase::make_deferred<mgbase::deferred<void> (cb_type&), test>(cb);
     }

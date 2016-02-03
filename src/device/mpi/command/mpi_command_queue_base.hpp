@@ -6,11 +6,17 @@
 namespace mgcom {
 namespace mpi {
 
-template <typename Derived>
-class basic_mpi_command_queue
+class mpi_command_queue_base
 {
 protected:
-    basic_mpi_command_queue() { }
+    mpi_command_queue_base() MGBASE_EMPTY_DEFINITION
+    
+    virtual ~mpi_command_queue_base() MGBASE_EMPTY_DEFINITION
+    
+    virtual bool try_enqueue_mpi(
+        const mpi_command_code          code
+    ,   const mpi_command_parameters&   params
+    ) = 0;
     
 public:
     bool try_lock()
@@ -18,7 +24,7 @@ public:
         mgbase::unique_lock<mgbase::mutex> lc(mtx_, mgbase::try_to_lock);
         
         if (lc.owns_lock())
-            return try_enqueue_lock(lc);
+            return try_enqueue_mpi_lock(lc);
         else
             return false;
     }
@@ -27,7 +33,7 @@ public:
     {
         mgbase::unique_lock<mgbase::mutex> lc(mtx_);
         
-        while (!try_enqueue_lock(lc)) { }
+        while (!try_enqueue_mpi_lock(lc)) { }
     }
     
     void unlock()
@@ -38,7 +44,7 @@ public:
     }
     
 private:
-    bool try_enqueue_lock(mgbase::unique_lock<mgbase::mutex>& lc)
+    bool try_enqueue_mpi_lock(mgbase::unique_lock<mgbase::mutex>& lc)
     {
         MGBASE_ASSERT(lc.owns_lock());
         
@@ -50,7 +56,7 @@ private:
         mpi_command_parameters mpi_params;
         mpi_params.lock = params;
         
-        const bool ret = derived().try_enqueue(
+        const bool ret = try_enqueue_mpi(
             MPI_COMMAND_LOCK
         ,   mpi_params
         );
@@ -68,7 +74,7 @@ private:
         else
             return false;
     }
-
+    
 public:
     bool try_irecv(
         void* const                 buf
@@ -78,8 +84,7 @@ public:
     ,   const MPI_Comm              comm
     ,   MPI_Status* const           status_result
     ,   const mgbase::operation&    on_complete
-    )
-    {
+    ) {
         const mpi_command_parameters::irecv_parameters params = {
             buf
         ,   size_in_bytes
@@ -93,7 +98,7 @@ public:
         mpi_command_parameters mpi_params;
         mpi_params.irecv = params;
         
-        const bool ret = derived().try_enqueue(
+        const bool ret = try_enqueue_mpi(
             MPI_COMMAND_IRECV
         ,   mpi_params
         );
@@ -117,8 +122,7 @@ public:
     ,   const int                   tag
     ,   const MPI_Comm              comm
     ,   const mgbase::operation&    on_complete
-    )
-    {
+    ) {
         const mpi_command_parameters::isend_parameters params = {
             buf
         ,   size_in_bytes
@@ -131,7 +135,7 @@ public:
         mpi_command_parameters mpi_params;
         mpi_params.isend = params;
         
-        const bool ret = derived().try_enqueue(
+        const bool ret = try_enqueue_mpi(
             MPI_COMMAND_ISEND
         ,   mpi_params
         );
@@ -155,8 +159,7 @@ public:
     ,   const int                   tag
     ,   const MPI_Comm              comm
     ,   const mgbase::operation&    on_complete
-    )
-    {
+    ) {
         const mpi_command_parameters::isend_parameters params = {
             buf
         ,   size_in_bytes
@@ -169,7 +172,7 @@ public:
         mpi_command_parameters mpi_params;
         mpi_params.isend = params;
         
-        const bool ret = derived().try_enqueue(
+        const bool ret = try_enqueue_mpi(
             MPI_COMMAND_IRSEND
         ,   mpi_params
         );
@@ -190,8 +193,7 @@ public:
         MPI_Request* const          request
     ,   bool* const                 success_result
     ,   const mgbase::operation&    on_complete
-    )
-    {
+    ) {
         const mpi_command_parameters::test_parameters params = {
             request
         ,   success_result
@@ -201,7 +203,7 @@ public:
         mpi_command_parameters mpi_params;
         mpi_params.test = params;
         
-        const bool ret = derived().try_enqueue(
+        const bool ret = try_enqueue_mpi(
             MPI_COMMAND_TEST
         ,   mpi_params
         );
@@ -221,8 +223,7 @@ public:
     ,   int* const                  index_result
     ,   bool* const                 success_result
     ,   const mgbase::operation&    on_complete
-    )
-    {
+    ) {
         const mpi_command_parameters::testany_parameters params = {
             count
         ,   first_request
@@ -234,7 +235,7 @@ public:
         mpi_command_parameters mpi_params;
         mpi_params.testany = params;
         
-        const bool ret = derived().try_enqueue(
+        const bool ret = try_enqueue_mpi(
             MPI_COMMAND_TESTANY
         ,   mpi_params
         );
@@ -250,10 +251,6 @@ public:
     }
     
 private:
-    Derived& derived() MGBASE_NOEXCEPT {
-        return static_cast<Derived&>(*this);
-    }
-    
     mgbase::mutex           mtx_;
     mgbase::synchronizer    sync_;
 };
