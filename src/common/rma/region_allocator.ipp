@@ -5,6 +5,8 @@
 #include <mgcom/rma/address.hpp>
 #include "./malloc.h"
 #include <mgbase/memory/aligned_alloc.hpp>
+#include <mgbase/threading/spinlock.hpp>
+#include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
@@ -44,7 +46,8 @@ public:
     
     registered_buffer allocate(index_t size_in_bytes)
     {
-        // FIXME : Multithreading problem
+        // TODO: reduce multithreading contentions
+        mgbase::lock_guard<mgbase::spinlock> lc(lock_);
         
         void* const ptr = mspace_malloc(ms_, size_in_bytes);
         
@@ -73,6 +76,8 @@ public:
     
     void deallocate(const registered_buffer& buf)
     {
+        mgbase::lock_guard<mgbase::spinlock> lc(lock_);
+        
         void* const ptr = to_raw_pointer(buf);
         mspace_free(ms_, ptr);
         
@@ -81,9 +86,9 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(ptr)
         );
     }
-    
 
 private:
+    mgbase::spinlock lock_;
     local_region region_;
     mspace ms_;
 };
