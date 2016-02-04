@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <mgbase/config.h>
+
 // Processor Compatibility
 
 #if (defined(__i386__) || defined(__x86_64__))
