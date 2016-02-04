@@ -40,7 +40,7 @@ private:
             mpi_error::check(
                 MPI_Bcast(
                     cb.ptr // TODO
-                ,   cb.number_of_bytes
+                ,   static_cast<int>(cb.number_of_bytes)
                 ,   MPI_BYTE
                 ,   static_cast<int>(cb.root)
                 ,   MPI_COMM_WORLD // TODO
@@ -79,10 +79,10 @@ private:
             mpi_error::check(
                 MPI_Allgather(
                     const_cast<void*>(cb.src) // TODO: Only old versions of OpenMPI require
-                ,   cb.number_of_bytes
+                ,   static_cast<int>(cb.number_of_bytes)
                 ,   MPI_BYTE
                 ,   cb.dest
-                ,   cb.number_of_bytes
+                ,   static_cast<int>(cb.number_of_bytes)
                 ,   MPI_BYTE
                 ,   MPI_COMM_WORLD // TODO
                 )

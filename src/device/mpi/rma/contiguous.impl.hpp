@@ -115,8 +115,8 @@ public:
             
             mpi::irecv(
                 to_raw_pointer(local_addr)
-            ,   size_in_bytes
-            ,   proc
+            ,   static_cast<int>(size_in_bytes)
+            ,   static_cast<int>(proc)
             ,   tag
             ,   self.get_comm()
             ,   MPI_STATUS_IGNORE
@@ -159,8 +159,8 @@ private:
             
             mpi::irecv(
                 arg.dest_ptr
-            ,   arg.size_in_bytes
-            ,   params.source
+            ,   static_cast<int>(arg.size_in_bytes)
+            ,   static_cast<int>(params.source)
             ,   arg.tag
             ,   self.get_comm()
             ,   MPI_STATUS_IGNORE
@@ -210,8 +210,8 @@ public:
         {
             mpi::isend(
                 to_raw_pointer(local_addr)
-            ,   size_in_bytes
-            ,   proc
+            ,   static_cast<int>(size_in_bytes)
+            ,   static_cast<int>(proc)
             ,   tag
             ,   self.get_comm()
             ,   mgbase::make_no_operation()
