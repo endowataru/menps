@@ -189,6 +189,7 @@ public:
         return ret;
     }
     
+    #if 0
     bool try_test(
         MPI_Request* const          request
     ,   bool* const                 success_result
@@ -249,6 +250,7 @@ public:
         
         return ret;
     }
+    #endif
     
 private:
     mgbase::mutex           mtx_;

@@ -64,6 +64,7 @@ bool try_irsend(
     );
 }
 
+#if 0
 bool try_test(
     MPI_Request* const          request
 ,   bool* const                 success_result
@@ -91,6 +92,7 @@ bool try_testany(
     ,   on_complete
     );
 }
+#endif
 
 MPI_Comm comm_dup(const MPI_Comm comm)
 {

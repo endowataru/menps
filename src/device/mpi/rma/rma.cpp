@@ -28,7 +28,7 @@ namespace untyped {
 
 local_region register_region(
     void*   local_pointer
-,   index_t size_in_bytes
+,   index_t size_in_bytes MGBASE_UNUSED
 ) {
     // do nothing
     

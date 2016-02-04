@@ -1,5 +1,6 @@
 
 #include "mpi1_command_queue.impl.hpp"
+#include "mpi1_command_queue.hpp"
 
 namespace mgcom {
 

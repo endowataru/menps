@@ -17,8 +17,10 @@ enum mpi_command_code
 ,   MPI_COMMAND_IRECV
 ,   MPI_COMMAND_ISEND
 ,   MPI_COMMAND_IRSEND
+#if 0
 ,   MPI_COMMAND_TEST
 ,   MPI_COMMAND_TESTANY
+#endif
 ,   MPI_COMMAND_END
 };
 
@@ -54,6 +56,7 @@ union mpi_command_parameters
     }
     isend;
     
+    #if 0
     struct test_parameters
     {
         MPI_Request*                request;
@@ -71,6 +74,7 @@ union mpi_command_parameters
         mgbase::operation           on_complete;
     }
     testany;
+    #endif
 };
 
 namespace detail {
@@ -228,6 +232,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             return true;
         }
         
+        #if 0
         case MPI_COMMAND_TEST: {
             const mpi_command_parameters::test_parameters& p = params.test;
             
@@ -271,6 +276,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             mgbase::execute(p.on_complete);
             return true;
         }
+        #endif
         
         default:
             MGBASE_UNREACHABLE();
