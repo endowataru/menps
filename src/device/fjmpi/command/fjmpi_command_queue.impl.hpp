@@ -39,7 +39,7 @@ public:
     void finalize()
     {
         queue_.finalize();
-        completer_.initialize();
+        completer_.finalize();
     }
     
     // Thread-safe
