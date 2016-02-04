@@ -13,9 +13,9 @@ struct try_to_lock_t { };
 
 namespace /*unnamed*/ {
 
-adopt_lock_t adopt_lock;
-defer_lock_t defer_lock;
-try_to_lock_t try_to_lock;
+MGBASE_UNUSED adopt_lock_t adopt_lock;
+MGBASE_UNUSED defer_lock_t defer_lock;
+MGBASE_UNUSED try_to_lock_t try_to_lock;
 
 } // unnamed namespace
 

@@ -94,15 +94,15 @@ void logger_not_defined(...);
             std::cout << std::endl; \
         }
 #else
-    #if defined(MGBASE_COMPILER_FUJITSU) | defined(MGBASE_COMPILER_CLANG) 
+    //#if defined(MGBASE_COMPILER_FUJITSU) | defined(MGBASE_COMPILER_CLANG) 
         // Fujitsu compiler tries to link unused functions in if(false)
         // Clang doesn't permit passing non-POD types to variadic function
         #define MGBASE_LOGGER_OUTPUT(level, ...)
-    #else
+    /*#else
         // Do a static type check (but do nothing in run-time)
         #define MGBASE_LOGGER_OUTPUT(level, ...) \
             if (false) { mgbase::detail::logger_not_defined(__VA_ARGS__); }
-    #endif
+    #endif*/
 #endif
 
 #define MGBASE_LOG_VERBOSE(...) MGBASE_LOGGER_OUTPUT(MGBASE_LOG_LEVEL_VERBOSE, __VA_ARGS__)

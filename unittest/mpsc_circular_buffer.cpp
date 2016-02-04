@@ -3,16 +3,20 @@
 #include <mgbase/lockfree/mpsc_circular_buffer.hpp>
 #include <mgbase/threading/thread.hpp>
 
+namespace /*unnamed*/ {
+
 mgbase::uint64_t N = 100000;
 mgbase::mpsc_circular_buffer<int, 256> buf;
 
-void f()
+inline void f()
 {
     for (mgbase::uint64_t i = 1; i <= N; ++i) {
         while (!buf.try_push(i))
         { }
     }
 }
+
+} // unnamed namespace
 
 TEST(MpscCircularBuffer, Concurrent)
 {

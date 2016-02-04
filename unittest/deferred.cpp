@@ -13,25 +13,27 @@ struct A {
     int x;
 };
 
-mgbase::deferred<void> g1(B& b) {
+namespace /*unnamed*/ {
+
+inline mgbase::deferred<void> g1(B& b) {
     b.x += 10;
     // This function immediately finishes.
     return mgbase::make_ready_deferred();
 }
 
-mgbase::deferred<void> g0(B& b) {
+inline mgbase::deferred<void> g0(B& b) {
     b.x += 1;
     // Call g1 when the function is resumed.
     return mgbase::make_deferred<mgbase::deferred<void> (B&), &g1>(b);
 }
 
-mgbase::deferred<void> f2(A& a) {
+inline mgbase::deferred<void> f2(A& a) {
     a.x += 100;
     // This function immediately finishes.
     return mgbase::make_ready_deferred();
 }
 
-mgbase::deferred<void> f1(A& a) {
+inline mgbase::deferred<void> f1(A& a) {
     a.x += 10;
     // Call f2 when g0 finishes.
     return mgbase::add_continuation<mgbase::deferred<void> (A&), &f2>(
@@ -40,7 +42,7 @@ mgbase::deferred<void> f1(A& a) {
     );
 }
 
-mgbase::deferred<void> f0(A& a) {
+inline mgbase::deferred<void> f0(A& a) {
     a.x += 1;
     // Call f1 when g0 finishes.
     return mgbase::add_continuation<mgbase::deferred<void> (A&), &f1>(
@@ -48,6 +50,8 @@ mgbase::deferred<void> f0(A& a) {
     ,   g0(a.b)
     );
 }
+
+} // unnamed namespace
 
 TEST(Deferred, Cont)
 {
@@ -77,6 +81,7 @@ TEST(Deferred, Cont)
     ASSERT_EQ(22, a.b.x);
 }
 
+namespace /*unnamed*/ {
 
 mgbase::deferred<void> func(A& a)
 {
@@ -90,6 +95,8 @@ mgbase::deferred<void> func(A& a)
         return mgbase::make_ready_deferred();
     }
 }
+
+} // unnamed namespace
 
 TEST(Deferred, Resume)
 {
