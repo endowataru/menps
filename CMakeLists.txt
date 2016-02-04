@@ -30,10 +30,20 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     target_compile_options(mgbase-options INTERFACE
         -Xg
         -D GTEST_HAS_TR1_TUPLE=0
+        --display_error_number
+        --diag_suppress 111,161,236,1406
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Release>:-Kfast>
         $<$<CONFIG:RelWithDebInfo>:-g -Kfast>
     )
+    # warning #111-D: statement is unreachable
+    #   (cppformat)
+    # warning #161-D: unrecognized #pragma
+    #   (cppformat, googletest)
+    # warning #236-D: controlling expression is constant
+    #   (googletest)
+    # warning #1406-D: support for trigraphs is disabled
+    #   (googletest)
 else()
     target_compile_options(mgbase-options INTERFACE
         $<$<CXX_COMPILER_ID:Clang>:-Weverything>
@@ -98,6 +108,9 @@ add_library(googletest
 target_include_directories(googletest
     PUBLIC ./external/googletest/googletest
     PUBLIC ./external/googletest/googletest/include
+)
+target_link_libraries(googletest
+    PRIVATE mgbase-options
 )
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     target_sources(googletest
