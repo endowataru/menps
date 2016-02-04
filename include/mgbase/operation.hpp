@@ -157,12 +157,18 @@ MGBASE_ALWAYS_INLINE operation make_operation_store_release(volatile mgbase::ato
 #define DEFINE_MAKE_OPERATION(op, OP)   \
 template <typename A, typename C> \
 MGBASE_ALWAYS_INLINE operation make_operation_fetch_##op##_release(volatile A* const obj, const C val) MGBASE_NOEXCEPT { \
-    operation result = { detail::get_fetch_##op##_code(obj), detail::make_operands(obj, val) }; \
+    operation result = { \
+        detail::get_fetch_##op##_code(obj) \
+    ,   detail::make_operands(obj, static_cast<mgbase::uint64_t>(val)) \
+    }; \
     return result; \
 } \
 template <typename T> \
 MGBASE_ALWAYS_INLINE operation make_operation_fetch_##op##_release(volatile mgbase::atomic<T>* const obj, const T val) MGBASE_NOEXCEPT { \
-    operation result = { detail::get_fetch_##op##_code(obj), detail::make_operands(obj, val) }; \
+    operation result = { \
+        detail::get_fetch_##op##_code(obj) \
+    ,   detail::make_operands(obj, static_cast<mgbase::uint64_t>(val)) \
+    }; \
     return result; \
 }
 
