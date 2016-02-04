@@ -28,7 +28,7 @@ public:
     {
         buf_ = new element[Size];
         for (std::size_t i = 0; i < Size; ++i)
-            buf_[i].visible = false;
+            buf_[i].visible.store(false, mgbase::memory_order_relaxed);
     }
     
     ~mpsc_circular_buffer() MGBASE_EMPTY_DEFINITION
@@ -91,7 +91,7 @@ public:
         
         MGBASE_ASSERT(elem.visible.load());
         
-        elem.visible = false; // Reset for the next use
+        elem.visible.store(false, mgbase::memory_order_relaxed); // Reset for the next use
         
         counter_.dequeue();
     }

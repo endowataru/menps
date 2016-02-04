@@ -1,6 +1,8 @@
 
 #pragma once
 
+#error "Deprecated"
+
 #include <mgbase/memory_order.h>
 
 MGBASE_EXTERN_C_BEGIN

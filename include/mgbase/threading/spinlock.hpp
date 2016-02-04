@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgbase/lang.hpp>
-#include <mgbase/atomic/atomic.hpp>
+#include <mgbase/atomic.hpp>
 
 #ifdef MGBASE_DISABLE_MULTITHREADING
 
@@ -39,7 +39,9 @@ class spinlock
     : noncopyable
 {
 public:
-    spinlock() MGBASE_NOEXCEPT : flag_(false) { }
+    spinlock() MGBASE_NOEXCEPT {
+        flag_.store(false, mgbase::memory_order_relaxed);
+    }
     
     void lock() MGBASE_NOEXCEPT {
         while (true) {
