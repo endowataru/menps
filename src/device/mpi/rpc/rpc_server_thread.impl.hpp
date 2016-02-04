@@ -110,7 +110,7 @@ private:
     ) {
         const index_t reply_size
             = invoker_->call(
-                client_rank
+                static_cast<process_id_t>(client_rank)
             ,   request_buf.id
             ,   request_buf.data
             ,   request_buf.size
@@ -121,7 +121,7 @@ private:
         MGBASE_ASSERT(request_buf.reply_size == reply_size);
     }
     
-    void send_reply(const int client_rank, const int reply_tag, const void* const reply_data, const index_t reply_size)
+    void send_reply(const int client_rank, const int reply_tag, const void* const reply_data, const int reply_size)
     {
         mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
         

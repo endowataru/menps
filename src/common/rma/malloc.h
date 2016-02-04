@@ -522,11 +522,15 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 */
 
 
-/*--- Custom settings for mgcom begin ---*/
+/*--- Custom settings for mgcom begins ---*/
 
 #define ONLY_MSPACES 1
 
-/*--- Custom settings for mgcom end ---*/
+#ifdef __clang__
+    #pragma clang system_header
+#endif
+
+/*--- Custom settings for mgcom ends ---*/
 
 
 /* Version identifier to allow people to support multiple versions */

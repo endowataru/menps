@@ -13,7 +13,7 @@ struct mpi3_error
             emit();
     }
     
-    static void emit()
+    MGBASE_NORETURN static void emit()
     {
         throw mpi3_error();
     }

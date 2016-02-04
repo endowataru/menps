@@ -98,6 +98,8 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
 ,   const mpi_command_parameters&   params
 ,   mpi_completer&                  completer
 ) {
+    MGBASE_ASSERT(MPI_COMMAND_LOCK <= code && code < MPI_COMMAND_END);
+    
     switch (code)
     {
         case MPI_COMMAND_LOCK: {
@@ -278,9 +280,8 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
         }
         #endif
         
-        default:
+        case MPI_COMMAND_END:
             MGBASE_UNREACHABLE();
-            mpi_error::emit();
             break;
     }
 }

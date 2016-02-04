@@ -36,7 +36,7 @@ public:
         msg_buf.size    = arg_size;
         std::memcpy(msg_buf.data, arg_ptr, arg_size);
         
-        msg_buf.reply_size  = return_size;
+        msg_buf.reply_size  = static_cast<int>(return_size);
         msg_buf.reply_tag   = recv_tag;
         
         std::memcpy(msg_buf.data, arg_ptr, arg_size);
@@ -46,20 +46,20 @@ public:
         mpi::irsend(
             &msg_buf                                    // buf
         ,   static_cast<int>(sizeof(message_buffer))    // size_in_bytes
-        ,   dest_proc                                   // dest_proc
+        ,   static_cast<int>(dest_proc)                 // dest_proc
         ,   send_tag                                    // tag
         ,   get_comm()                                  // comm
         ,   mgbase::make_operation_store_release(&send_finished, true)  // on_complete
         );
         
         mpi::irecv(
-            return_ptr          // buf
-        ,   return_size         // size_in_bytes
-        ,   dest_proc           // dest_proc
-        ,   recv_tag            // tag
-        ,   get_comm()          // comm
-        ,   MPI_STATUS_IGNORE   // status_result
-        ,   on_complete         // on_complete
+            return_ptr                      // buf
+        ,   static_cast<int>(return_size)   // size_in_bytes
+        ,   static_cast<int>(dest_proc)     // dest_proc
+        ,   recv_tag                        // tag
+        ,   get_comm()                      // comm
+        ,   MPI_STATUS_IGNORE               // status_result
+        ,   on_complete                     // on_complete
         );
         
         while (!send_finished.load(mgbase::memory_order_acquire)) { }

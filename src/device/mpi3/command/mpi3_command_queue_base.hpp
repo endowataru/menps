@@ -27,7 +27,7 @@ public:
     ,   const mgbase::operation&    on_complete
     ) {
         MGBASE_ASSERT(dest_ptr != MGBASE_NULLPTR);
-        MGBASE_ASSERT(valid_process_id(src_rank));
+        MGBASE_ASSERT(mpi::is_valid_rank(src_rank));
         MGBASE_ASSERT(size_in_bytes > 0);
         
         // TODO: This assertion might not be compliant to the MPI standard,
@@ -71,7 +71,7 @@ public:
     ,   const mgbase::operation&    on_complete
     ) {
         MGBASE_ASSERT(src_ptr != MGBASE_NULLPTR);
-        MGBASE_ASSERT(valid_process_id(dest_rank));
+        MGBASE_ASSERT(mpi::is_valid_rank(dest_rank));
         MGBASE_ASSERT(size_in_bytes > 0);
         
         // TODO: This assertion might not be compliant to the MPI standard,
@@ -118,7 +118,7 @@ public:
     ) {
         MGBASE_ASSERT(expected_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(desired_ptr != MGBASE_NULLPTR);
-        MGBASE_ASSERT(valid_process_id(dest_rank));
+        MGBASE_ASSERT(mpi::is_valid_rank(dest_rank));
         // TODO: This assertion might not be compliant to the MPI standard,
         //       but it's helpful to check whether the pointer is not null
         MGBASE_ASSERT(dest_index != 0);
@@ -168,7 +168,7 @@ public:
     ) {
         MGBASE_ASSERT(value_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(result_ptr != MGBASE_NULLPTR);
-        MGBASE_ASSERT(valid_process_id(dest_rank));
+        MGBASE_ASSERT(mpi::is_valid_rank(dest_rank));
         // TODO: This assertion might not be compliant to the MPI standard,
         //       but it's helpful to check whether the pointer is not null
         MGBASE_ASSERT(dest_index != 0);

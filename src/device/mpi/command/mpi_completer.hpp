@@ -77,7 +77,7 @@ public:
     {
         MGBASE_ASSERT(initialized_);
         
-        int index;
+        int idx;
         int flag;
         MPI_Status status;
         
@@ -85,7 +85,7 @@ public:
             MPI_Testany(
                 max_completion_count    // count
             ,   &requests_[0]           // array_of_requests
-            ,   &index
+            ,   &idx
             ,   &flag
             ,   &status
             )
@@ -95,8 +95,10 @@ public:
         // found active handles but no completion           -> flag = false , index = MPI_UNDEFINED
         // no active handles                                -> flag = true  , index = MPI_UNDEFINED
         
-        if (index != MPI_UNDEFINED)
+        if (idx != MPI_UNDEFINED)
         {
+            const index_t index = static_cast<index_t>(idx);
+            
             MPI_Status* const status_result = statuses_[index];
             if (status_result != MPI_STATUS_IGNORE)
                 *statuses_[index] = status;

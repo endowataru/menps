@@ -1,5 +1,5 @@
 
-#include "collective.ipp"
+#include "collective.impl.hpp"
 
 namespace mgcom {
 namespace collective {

@@ -3,7 +3,8 @@
 
 #include <mgcom/common.hpp>
 #include <mgbase/threading/spinlock.hpp>
-#include <mpi.h>
+
+#include "mpi.hpp"
 
 #include "mpi_error.hpp"
 
@@ -36,6 +37,11 @@ inline lock_type& get_lock() MGBASE_NOEXCEPT {
 
 void native_barrier();
 
+inline bool is_valid_rank(int rank) {
+    return valid_process_id(static_cast<process_id_t>(rank));
+}
+
 } // namespace mpi
+
 } // namespace mgcom
 

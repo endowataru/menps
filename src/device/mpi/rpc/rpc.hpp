@@ -15,7 +15,7 @@ struct message_buffer {
     handler_id_t    id;
     index_t         size;
     int             reply_tag;
-    index_t         reply_size;
+    int             reply_size;
     uint8_t         data[MGCOM_RPC_MAX_DATA_SIZE]; // TODO
 };
 

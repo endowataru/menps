@@ -30,7 +30,9 @@ public:
     
     void initialize()
     {
-        required_rounds_ = mgbase::ceil_log2(mgcom::number_of_processes());
+        required_rounds_ = static_cast<index_t>(
+            mgbase::ceil_log2(mgcom::number_of_processes())
+        );
         
         comm_ = mpi::comm_dup(MPI_COMM_WORLD);
         
@@ -64,21 +66,21 @@ public:
             impl.finished_.store(false, mgbase::memory_order_relaxed);
             
             const mgcom::process_id_t current_proc = mgcom::current_process_id();
-            const mgcom::process_id_t num_procs = mgcom::number_of_processes();
+            const index_t num_procs = mgcom::number_of_processes();
             
             const mgcom::process_id_t diff = 1 << impl.round_;
             
             // Calculate the destination process.
             const mgcom::process_id_t dest_proc
-                = (current_proc + diff) % num_procs;
+                = static_cast<process_id_t>((current_proc + diff) % num_procs);
             
             const mgcom::process_id_t src_proc
-                = (current_proc + num_procs - diff) % num_procs;
+                = static_cast<process_id_t>((current_proc + num_procs - diff) % num_procs);
             
             mpi::isend(
                 MGBASE_NULLPTR
             ,   0
-            ,   dest_proc
+            ,   static_cast<int>(dest_proc)
             ,   0
             ,   impl.comm_
             ,   mgbase::make_no_operation()
@@ -87,7 +89,7 @@ public:
             mpi::irecv(
                 MGBASE_NULLPTR
             ,   0
-            ,   src_proc
+            ,   static_cast<int>(src_proc)
             ,   0
             ,   impl.comm_
             ,   MPI_STATUS_IGNORE
@@ -111,7 +113,7 @@ public:
 private:
     bool initialized_;
     mgcom::process_id_t round_;
-    mgcom::process_id_t required_rounds_;
+    index_t required_rounds_;
     MPI_Comm comm_;
     mgbase::atomic<bool> finished_;
 };

@@ -97,6 +97,8 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
         );
     }
     
+    MGBASE_ASSERT(MPI3_COMMAND_GET <= code && code < MPI3_COMMAND_END);
+    
     switch (code) {
         case MPI3_COMMAND_GET: {
             if (completer.full())
@@ -241,9 +243,8 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             return true;
         }
         
-        default:
+        case MPI3_COMMAND_END:
             MGBASE_UNREACHABLE();
-            mpi3_error::emit();
     }
 }
 

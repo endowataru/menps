@@ -63,8 +63,8 @@ private:
             
             mpi::isend(
                 arg.src_ptr
-            ,   arg.size_in_bytes
-            ,   params.source
+            ,   static_cast<int>(arg.size_in_bytes)
+            ,   static_cast<int>(params.source)
             ,   arg.tag
             ,   self.get_comm()
             ,   mgbase::make_operation_store_release(&finished, true)

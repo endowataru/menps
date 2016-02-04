@@ -7,7 +7,7 @@ namespace mgcom {
 
 struct mpi_error
 {
-    static void emit()
+    MGBASE_NORETURN static void emit()
     {
         throw mpi_error();
     }

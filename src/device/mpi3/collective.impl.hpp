@@ -88,7 +88,7 @@ public:
             mpi_error::check(
                 MPI_Ibcast(
                     cb.ptr // TODO
-                ,   cb.number_of_bytes
+                ,   static_cast<int>(cb.number_of_bytes)
                 ,   MPI_BYTE
                 ,   static_cast<int>(cb.root)
                 ,   MPI_COMM_WORLD // TODO
@@ -150,10 +150,10 @@ public:
             mpi_error::check(
                 MPI_Iallgather(
                     cb.src
-                ,   cb.number_of_bytes
+                ,   static_cast<int>(cb.number_of_bytes)
                 ,   MPI_BYTE
                 ,   cb.dest
-                ,   cb.number_of_bytes
+                ,   static_cast<int>(cb.number_of_bytes)
                 ,   MPI_BYTE
                 ,   MPI_COMM_WORLD // TODO
                 ,   request
