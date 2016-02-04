@@ -4,24 +4,12 @@
 #include <mgbase/lang.hpp>
 
 #ifdef MGBASE_COMPILER_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wc++11-extensions"
+    #pragma clang system_header
 #endif
 
 #ifdef MGBASE_COMPILER_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wpedantic"
-    #pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+    #pragma GCC system_header
 #endif
 
 #include <gtest/gtest.h>
-
-#ifdef MGBASE_COMPILER_CLANG
-    #pragma clang diagnostic pop
-#endif
-
-#ifdef MGBASE_COMPILER_GCC
-    #pragma GCC diagnostic pop
-#endif
-
 

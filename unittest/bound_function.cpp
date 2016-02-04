@@ -2,9 +2,13 @@
 #include "unittest.hpp"
 #include <mgbase/bound_function.hpp>
 
+namespace /*unnamed*/ {
+
 void assign(int& x, const int& y) {
     x = y;
 }
+
+} // unnamed namespace
 
 TEST(BoundFunction, Basic)
 {

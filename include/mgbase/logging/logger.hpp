@@ -71,7 +71,7 @@ private:
 
 
 #ifndef MGBASE_ENABLE_LOG
-    #if MGBASE_DEBUG
+    #ifdef MGBASE_DEBUG
         #define MGBASE_ENABLE_LOG
     #else
         //#define MGBASE_ENABLE_LOG // Disabled

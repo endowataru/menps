@@ -91,6 +91,8 @@
     #define MGBASE_ALIGNAS(a)                   __attribute__((aligned(a)))
     #define MGBASE_DECLTYPE(x)                  __typeof__(x)
     
+    #define MGBASE_NORETURN                     __attribute__((noreturn))
+    
 #else
     #include <stdint.h> // #include <cstdint>
     #include <cstdlib>
@@ -131,6 +133,9 @@
                 noncopyable() noexcept = default;
             };
         }
+        
+        #define MGBASE_NORETURN                     [[noreturn]]
+        
     #else
         // For C++03
         #define MGBASE_IF_CPP11_SUPPORTED(t, f)     f
@@ -190,6 +195,8 @@
                 noncopyable() { }
             };
         }
+        
+        #define MGBASE_NORETURN                     __attribute__((noreturn))
     #endif
 
     #if (__cplusplus >= 201403L)

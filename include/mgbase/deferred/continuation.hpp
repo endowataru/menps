@@ -13,7 +13,7 @@ class continuation
 public:
     typedef bound_function<resumable (const value_wrapper<T>&)>   function_type;
     
-    #if MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CPP11_SUPPORTED
     continuation() noexcept = default;
     #endif
     

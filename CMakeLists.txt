@@ -36,6 +36,13 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     )
 else()
     target_compile_options(mgbase-options INTERFACE
+        $<$<CXX_COMPILER_ID:Clang>:-Weverything>
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-global-constructors>
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-exit-time-destructors>
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-padded> # TODO: alignment issues
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-disabled-macro-expansion> # Problem of stdbool.h
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-used-but-marked-unused> # e.g. mgbase::try_to_lock
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-weak-vtables> # couldn't find a correct way to suppress this warning
         -Wall
         #$<$<COMPILE_LANGUAGE:CXX>:-std=c++03> # TODO: COMPILE_LANGUAGE doesn't work on old CMake versions
         -pedantic

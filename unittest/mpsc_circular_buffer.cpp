@@ -6,7 +6,7 @@
 namespace /*unnamed*/ {
 
 mgbase::uint64_t N = 100000;
-mgbase::mpsc_circular_buffer<int, 256> buf;
+mgbase::mpsc_circular_buffer<mgbase::uint64_t, 256> buf;
 
 inline void f()
 {
@@ -30,7 +30,7 @@ TEST(MpscCircularBuffer, Concurrent)
     
     mgbase::uint64_t x = 0;
     for (mgbase::uint64_t i = 0; i < ths.size() * N; ++i) {
-        int* elem;
+        mgbase::uint64_t* elem;
         while ((elem = buf.peek()) == MGBASE_NULLPTR) { }
         x += *elem;
         buf.pop();

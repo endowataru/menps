@@ -96,6 +96,8 @@ namespace /*unnamed*/ {
 
 MGBASE_ALWAYS_INLINE void execute(const operation& opr) MGBASE_NOEXCEPT
 {
+    MGBASE_ASSERT(0 <= opr.code && opr.code < MGBASE_OPERATION_END);
+    
     MGBASE_LOG_DEBUG(
         "msg:Executing operation.\t"
         "code:{}\tpointer:{:x}\tvalue:{}"
@@ -129,7 +131,7 @@ MGBASE_ALWAYS_INLINE void execute(const operation& opr) MGBASE_NOEXCEPT
         
         #undef DEFINE_FETCH_OP_CASE
         
-        default:
+        case MGBASE_OPERATION_END:
             MGBASE_UNREACHABLE();
             break;
     }

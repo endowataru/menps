@@ -15,5 +15,9 @@
 
 #endif
 
+#ifdef MGBASE_COMPILER_CLANG
+    #pragma clang system_header
+#endif
+
 #include <cppformat/format.h>
 

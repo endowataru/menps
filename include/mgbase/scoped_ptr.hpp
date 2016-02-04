@@ -45,7 +45,7 @@ public:
         return get() == MGBASE_NULLPTR;
     }
     
-    T& operator[] (mgbase::ptrdiff_t index) const MGBASE_NOEXCEPT {
+    T& operator[] (mgbase::size_t index) const MGBASE_NOEXCEPT {
         return ptr_[index];
     }
     

@@ -17,7 +17,8 @@ template <
 class mpsc_circular_buffer
     : mgbase::noncopyable
 {
-    struct MGBASE_ALIGNAS(MGBASE_CACHE_LINE_SIZE) element
+    // TODO: consider cache line size
+    struct /*MGBASE_ALIGNAS(MGBASE_CACHE_LINE_SIZE)*/ element
     {
         mgbase::atomic<bool> visible;
         T value;

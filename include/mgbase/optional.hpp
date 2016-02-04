@@ -39,7 +39,7 @@ public:
     
     ~optional() { destroy(); }
     
-    /*implicit*/ optional(const T& value) { create(value); }
+    /*implicit*/ optional(const T& val) { create(val); }
     
     optional& operator = (const optional& other) {
         if (other)
@@ -53,8 +53,8 @@ public:
         destroy();
         return *this;
     }
-    optional& operator = (const T& value) {
-        assign(value);
+    optional& operator = (const T& val) {
+        assign(val);
         return *this;
     }
     

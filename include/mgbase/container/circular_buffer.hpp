@@ -145,13 +145,13 @@ public:
     
     ~circular_buffer() MGBASE_EMPTY_DEFINITION
     
-    void set_capacity(size_type capacity)
+    void set_capacity(size_type cap)
     {
         // TODO: Moving elements is not supported yet.
         MGBASE_ASSERT(ptr_ == MGBASE_NULLPTR);
         
-        ptr_ = new T[capacity];
-        capacity_ = capacity;
+        ptr_ = new T[cap];
+        capacity_ = cap;
     }
 
 private:
