@@ -11,7 +11,13 @@ struct nullopt_t {
     MGBASE_CONSTEXPR_FUNCTION nullopt_t(int) { }
 };
 
-extern nullopt_t nullopt; // never defined
+//extern nullopt_t nullopt; // never defined
+
+namespace /*unnamed*/ {
+
+    nullopt_t nullopt(0);
+
+} // unnamed namespace
 
 template <typename T>
 class optional
