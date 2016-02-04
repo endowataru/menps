@@ -130,7 +130,6 @@ MGBASE_ALWAYS_INLINE bool try_remote_call_async(
 
 namespace detail {
 
-
 template <typename Handler>
 index_t on_callback(const handler_parameters* params)
 {

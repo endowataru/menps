@@ -163,4 +163,3 @@ bool try_remote_fetch_and_add_async(
 } // namespace rma
 } // namespace mgcom
 
-

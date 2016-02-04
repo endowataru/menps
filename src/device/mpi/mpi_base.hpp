@@ -36,14 +36,6 @@ inline lock_type& get_lock() MGBASE_NOEXCEPT {
 
 void native_barrier();
 
-/*typedef mgbase::spinlock  lock_type;
-
-inline lock_type& get_lock() MGBASE_NOEXCEPT
-{
-    static lock_type lc;
-    return lc;
-}*/
-
 } // namespace mpi
 } // namespace mgcom
 

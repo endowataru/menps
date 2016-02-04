@@ -4,7 +4,7 @@
 #include <mgcom.hpp>
 
 namespace mgcom {
-namespace rma {
+namespace fjmpi {
 
 class fjmpi_error
 {
@@ -37,6 +37,6 @@ public:
     }
 };
 
-} // namespace rma
+} // namespace fjmpi
 } // namespace mgcom
 

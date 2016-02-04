@@ -165,6 +165,7 @@ inline mgbase::deferred<void> remote_atomic_write_default_nb(
 }
 
 
+#if 0
 /**
  * Non-blocking local compare-and-swap.
  */
@@ -198,6 +199,7 @@ inline mgbase::deferred<void> local_fetch_and_add_default_nb(
     
     return detail::local_fetch_and_add_default(cb);
 }
+#endif
 
 /**
  * Non-blocking remote compare-and-swap.
@@ -365,6 +367,7 @@ inline mgbase::deferred<void> remote_atomic_write_default_nb(
     );
 }
 
+#if 0
 /**
  * Non-blocking local compare-and-swap.
  */
@@ -383,6 +386,7 @@ inline mgbase::deferred<void> local_compare_and_swap_default_nb(
     ,   result_ptr.to_address()
     );
 }
+#endif
 
 /**
  * Non-blocking remote compare-and-swap.

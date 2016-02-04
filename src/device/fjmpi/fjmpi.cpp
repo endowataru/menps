@@ -1,7 +1,9 @@
 
+#include "device/fjmpi/command/fjmpi_command_queue.hpp"
 #include "device/mpi/mpi_base.hpp"
+#include "device/mpi/mpi_call.hpp"
 #include "rma/rma.hpp"
-#include "am/am.hpp"
+#include "device/mpi/rpc/rpc.hpp"
 #include "device/mpi/collective/collective.hpp"
 #include "device/mpi/rma/atomic.hpp"
 #include "common/rma/region_allocator.hpp"
@@ -12,30 +14,44 @@ namespace mgcom {
 
 void initialize(int* argc, char*** argv)
 {
-    mpi_base::initialize(argc, argv);
-    rma::initialize_contiguous();
-    am::initialize();
-    rma::initialize_atomic();
-    rma::initialize_allocator();
-    collective::initialize();
+    mgcom::mpi::initialize(argc, argv);
     
-    mpi_base::native_barrier();
+    mgcom::fjmpi::initialize_command_queue();
+    
+    mgcom::rma::initialize_contiguous();
+    
+    mgcom::rpc::initialize();
+    
+    mgcom::rma::initialize_atomic();
+    
+    mgcom::rma::initialize_allocator();
+    
+    mgcom::collective::initialize();
+    
+    mpi::blocking_barrier();
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
 }
 
 void finalize()
 {
-    collective::barrier(); 
-    mpi_base::native_barrier();
+    mgcom::collective::barrier(); 
     
-    collective::finalize();
-    rma::finalize_allocator();
-    rma::finalize_atomic();
-    am::finalize();
-    rma::finalize_contiguous();
+    mgcom::mpi::blocking_barrier();
     
-    mpi_base::finalize();
+    mgcom::collective::finalize();
+    
+    mgcom::rma::finalize_allocator();
+    
+    mgcom::rma::finalize_atomic();
+    
+    mgcom::rpc::finalize();
+    
+    mgcom::rma::finalize_contiguous();
+    
+    mgcom::fjmpi::finalize_command_queue();
+    
+    mgcom::mpi::finalize();
     
     MGBASE_LOG_DEBUG("msg:Finalized.");
 }

@@ -92,16 +92,21 @@ if (${is_fjmpi_available})
     add_library(mgcom-fjmpi
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
+        src/device/mpi/command/mpi_command_queue_base.cpp
+        src/device/mpi/rpc/rpc_server.cpp
+        src/device/mpi/rpc/rpc_client.cpp
         src/common/rma/try_contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/mpi_base.cpp
-        src/device/mpi/collective/barrier.cpp
+        src/device/mpi/collective/barrier2.cpp
         src/device/mpi/collective/collective.cpp
-        src/device/mpi/am/am.cpp
-        src/device/mpi/am/sender_queue.cpp
-        #src/device/fjmpi/rma/rma.cpp
-        src/device/fjmpi/rma/queued_rma.cpp
+        src/device/fjmpi/command/fjmpi_command_queue.cpp
         src/device/fjmpi/fjmpi.cpp
+        src/device/fjmpi/rma/rma.cpp
+        
+        src/device/mpi/rma/poll.cpp
+        src/common/rma/try_contiguous.cpp
+        src/common/rma/try_atomic.cpp
     )
     target_link_libraries(mgcom-fjmpi mgcom-base mgbase)
     

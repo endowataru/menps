@@ -67,7 +67,6 @@ public:
         return true;
     }
     
-    
 private:
     MPI_Comm get_comm() {
         return rpc::get_comm();

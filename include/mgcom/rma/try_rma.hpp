@@ -34,25 +34,6 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
 
 } // namespace untyped
 
-namespace detail {
-
-namespace /*unnamed*/ {
-
-MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
-bool wait_start(mgbase::optional< mgbase::deferred<void> > opt)
-{
-    if (MGBASE_LIKELY(opt)) {
-        opt->wait();
-        return true;
-    }
-    else
-        return false;
-}
-
-} // unnamed namespace
-
-} // namespace detail
-
 namespace /*unnamed*/ {
 
 /**

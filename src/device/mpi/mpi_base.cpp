@@ -47,11 +47,15 @@ public:
         mgbase::logger::set_state_callback(get_state);
         
         MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN); // DEBUG
+        
+        MGBASE_LOG_DEBUG("msg:Initialized MPI.");
     }
     
     void finalize()
     {
         mpi_error::check(MPI_Finalize());
+        
+        MGBASE_LOG_DEBUG("msg:Finalized MPI.");
     }
     
     process_id_t current_process_id() const MGBASE_NOEXCEPT {

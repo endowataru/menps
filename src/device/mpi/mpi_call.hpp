@@ -134,9 +134,6 @@ MGBASE_ALWAYS_INLINE void irsend(
 
 } // unnamed namespace
 
-
-
-
 } // namespace mpi
 } // namespace mgcom
 
