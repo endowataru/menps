@@ -122,7 +122,7 @@ bool try_remote_atomic_write_async(
     );
 }
 
-bool try_remote_compare_and_swap(
+bool try_remote_compare_and_swap_async(
     process_id_t                                    target_proc
 ,   const remote_pointer<atomic_default_t>&         target_ptr
 ,   const local_pointer<const atomic_default_t>&    expected_ptr

@@ -59,7 +59,7 @@ MGBASE_ALWAYS_INLINE void remote_read(
 ,   const local_pointer<Local>&     local_ptr
 ,   const index_t                   number_of_elements
 ) {
-    mgbase::atomic<bool> finished(false);
+    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_read_async(
         proc
@@ -87,7 +87,7 @@ MGBASE_ALWAYS_INLINE void remote_write(
 ,   const local_pointer<Local>&     local_ptr
 ,   const index_t                   number_of_elements
 ) {
-    mgbase::atomic<bool> finished(false);
+    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_write_async(
         proc
@@ -194,7 +194,7 @@ MGBASE_ALWAYS_INLINE void remote_atomic_read(
 ,   const local_pointer<atomic_default_t>&          local_ptr
 ,   const local_pointer<atomic_default_t>&          buf_ptr
 ) {
-    mgbase::atomic<bool> finished(false);
+    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_atomic_read_async(
         proc
@@ -215,7 +215,7 @@ MGBASE_ALWAYS_INLINE void remote_atomic_write(
 ,   const local_pointer<const atomic_default_t>&    local_ptr
 ,   const local_pointer<atomic_default_t>&          buf_ptr
 ) {
-    mgbase::atomic<bool> finished(false);
+    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_atomic_write_async(
         proc
@@ -237,7 +237,7 @@ MGBASE_ALWAYS_INLINE void remote_compare_and_swap(
 ,   const local_pointer<const atomic_default_t>&    desired_ptr
 ,   const local_pointer<atomic_default_t>&          result_ptr
 ) {
-    mgbase::atomic<bool> finished(false);
+    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_compare_and_swap_async(
         target_proc
@@ -259,7 +259,7 @@ MGBASE_ALWAYS_INLINE void remote_fetch_and_add(
 ,   const local_pointer<const atomic_default_t>&    value_ptr
 ,   const local_pointer<atomic_default_t>&          result_ptr
 ) {
-    mgbase::atomic<bool> finished(false);
+    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_fetch_and_add_async(
         target_proc

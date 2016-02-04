@@ -22,7 +22,9 @@ class emulated_contiguous
 {
 public:
     emulated_contiguous()
-        : tag_(1000) { }
+    {
+        tag_.store(1000, mgbase::memory_order_relaxed);
+    }
     
     template <emulated_contiguous& self>
     static void initialize()
@@ -57,7 +59,7 @@ private:
             const mgcom::rpc::handler_parameters&   params
         ,   const argument_type&                    arg
         ) {
-            mgbase::atomic<bool> finished(false);
+            mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
             
             mpi::isend(
                 arg.src_ptr
@@ -153,7 +155,7 @@ private:
             const mgcom::rpc::handler_parameters& params
         ,   const argument_type& arg
         ) {
-            mgbase::atomic<bool> finished(false);
+            mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
             
             mpi::irecv(
                 arg.dest_ptr

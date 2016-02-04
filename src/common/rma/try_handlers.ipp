@@ -22,7 +22,7 @@ class try_handlers
     
 public:
     static result_type start(cb_type& cb) {
-        mgbase_atomic_store_explicit(&cb.finished, false, mgbase_memory_order_seq_cst);
+        cb.finished.store(false, mgbase_memory_order_seq_cst);
         
         if (Derived::try_(cb, mgbase::make_operation_store_release(&cb.finished, true))) {
             return test(cb);
@@ -37,7 +37,7 @@ public:
 private:
     static result_type test(cb_type& cb)
     {
-        if (mgbase_atomic_load_explicit(&cb.finished, mgbase_memory_order_acquire)) {
+        if (cb.finished.load(mgbase_memory_order_acquire)) {
             return mgbase::make_ready_deferred();
         }
         else {

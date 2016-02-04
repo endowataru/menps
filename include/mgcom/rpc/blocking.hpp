@@ -43,7 +43,7 @@ MGBASE_ALWAYS_INLINE void remote_call(
 ,   const typename Handler::argument_type&  arg
 ,   typename Handler::return_type* const    return_result
 ) {
-    mgbase::atomic<bool> flag(false);
+    mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_call_async<Handler>(
         proc
@@ -61,7 +61,7 @@ MGBASE_ALWAYS_INLINE void remote_call(
     const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
 ) {
-    mgbase::atomic<bool> flag(false);
+    mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_call_async<Handler>(
         proc

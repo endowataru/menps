@@ -61,7 +61,7 @@ public:
             if (impl.round_ >= impl.required_rounds_)
                 return mgbase::make_ready_deferred();
             
-            impl.finished_ = false;
+            impl.finished_.store(false, mgbase::memory_order_relaxed);
             
             const mgcom::process_id_t current_proc = mgcom::current_process_id();
             const mgcom::process_id_t num_procs = mgcom::number_of_processes();

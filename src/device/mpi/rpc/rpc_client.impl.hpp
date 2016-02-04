@@ -41,7 +41,7 @@ public:
         
         std::memcpy(msg_buf.data, arg_ptr, arg_size);
         
-        mgbase::atomic<bool> send_finished(false);
+        mgbase::atomic<bool> send_finished = MGBASE_ATOMIC_VAR_INIT(false);
         
         mpi::irsend(
             &msg_buf                                    // buf

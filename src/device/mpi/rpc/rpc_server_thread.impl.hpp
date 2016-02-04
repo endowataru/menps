@@ -123,7 +123,7 @@ private:
     
     void send_reply(const int client_rank, const int reply_tag, const void* const reply_data, const index_t reply_size)
     {
-        mgbase::atomic<bool> flag(false);
+        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
         
         mpi::isend(
             reply_data

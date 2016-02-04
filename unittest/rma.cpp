@@ -57,7 +57,7 @@ TEST_F(RmaBasic, Put)
 
 TEST_F(RmaBasic, ConcurrentGet)
 {
-    mgbase::atomic<mgbase::uint64_t> count(0);
+    mgbase::atomic<mgbase::uint64_t> count = MGBASE_ATOMIC_VAR_INIT(0);
     typedef std::vector< mgcom::rma::local_pointer<int> > vec_type;
     vec_type ptrs;
     
