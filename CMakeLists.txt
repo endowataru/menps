@@ -46,7 +46,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     #   (googletest)
 else()
     target_compile_options(mgbase-options INTERFACE
-        $<$<CXX_COMPILER_ID:Clang>:-Weverything>
+        #$<$<CXX_COMPILER_ID:Clang>:-Weverything>
         $<$<CXX_COMPILER_ID:Clang>:-Wno-global-constructors>
         $<$<CXX_COMPILER_ID:Clang>:-Wno-exit-time-destructors>
         $<$<CXX_COMPILER_ID:Clang>:-Wno-padded> # TODO: alignment issues

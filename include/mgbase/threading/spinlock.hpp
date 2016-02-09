@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
 #include <mgbase/atomic.hpp>
+#include <mgbase/assert.hpp>
 
 #ifdef MGBASE_DISABLE_MULTITHREADING
 
@@ -62,6 +62,7 @@ public:
     }
     
     void unlock() MGBASE_NOEXCEPT {
+        MGBASE_ASSERT(flag_.load(mgbase::memory_order_relaxed));
         flag_.store(false, memory_order_release);
     }
     

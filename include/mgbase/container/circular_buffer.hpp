@@ -87,6 +87,10 @@ public:
         increment(&last_);
     }
 
+protected:
+    circular_buffer_base()
+        : first_(0), last_(0), size_(0) { }
+
 private:
     size_type front_index() const MGBASE_NOEXCEPT {
         return first_;
