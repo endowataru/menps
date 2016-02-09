@@ -13,7 +13,7 @@ barrier_impl g_impl;
 void barrier()
 {
     barrier_cb cb;
-    barrier_impl::handlers<g_impl>::start(cb);
+    barrier_impl::handlers<g_impl>::start(cb).wait();
 }
 
 void initialize()
