@@ -49,6 +49,9 @@ public:
         MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN); // DEBUG
         
         MGBASE_LOG_DEBUG("msg:Initialized MPI.");
+        
+        // Issue the first barrier.
+        mpi::native_barrier();
     }
     
     void finalize()

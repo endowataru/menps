@@ -1,19 +1,40 @@
 
-#include "collective.impl.hpp"
+#include "collective.hpp"
+#include "device/mpi/mpi_call.hpp"
 
 namespace mgcom {
 namespace collective {
 
 namespace untyped {
 
-mgbase::deferred<void> broadcast(broadcast_cb& cb)
-{
-    return detail::broadcast_handlers::start(cb);
+void broadcast(
+    const process_id_t  root
+,   void* const         ptr
+,   const index_t       number_of_bytes
+) {
+    mgcom::collective::barrier();
+    
+    mgcom::mpi::untyped::native_broadcast(root, ptr, number_of_bytes);
 }
 
-mgbase::deferred<void> allgather(allgather_cb& cb)
-{
-    return detail::allgather_handlers::start(cb);
+void allgather(
+    const void* const   src
+,   void* const         dest
+,   const index_t       number_of_bytes
+) {
+    mgcom::collective::barrier();
+    
+    mgcom::mpi::untyped::native_allgather(src, dest, number_of_bytes);
+}
+
+void alltoall(
+    const void* const   src
+,   void* const         dest
+,   const index_t       number_of_bytes
+) {
+    mgcom::collective::barrier();
+    
+    mgcom::mpi::untyped::native_alltoall(src, dest, number_of_bytes);
 }
 
 } // namespace untyped

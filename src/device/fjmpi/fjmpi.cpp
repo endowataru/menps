@@ -16,19 +16,19 @@ void initialize(int* argc, char*** argv)
 {
     mgcom::mpi::initialize(argc, argv);
     
+    mgcom::rma::initialize_contiguous();
+    
     mgcom::fjmpi::initialize_command_queue();
     
-    mgcom::rma::initialize_contiguous();
+    mgcom::rma::initialize_allocator();
     
     mgcom::rpc::initialize();
     
     mgcom::rma::initialize_atomic();
     
-    mgcom::rma::initialize_allocator();
-    
     mgcom::collective::initialize();
     
-    mpi::blocking_barrier();
+    mpi::native_barrier();
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
 }
@@ -37,19 +37,19 @@ void finalize()
 {
     mgcom::collective::barrier(); 
     
-    mgcom::mpi::blocking_barrier();
+    mgcom::mpi::native_barrier();
     
     mgcom::collective::finalize();
-    
-    mgcom::rma::finalize_allocator();
     
     mgcom::rma::finalize_atomic();
     
     mgcom::rpc::finalize();
     
-    mgcom::rma::finalize_contiguous();
+    mgcom::rma::finalize_allocator();
     
     mgcom::fjmpi::finalize_command_queue();
+    
+    mgcom::rma::finalize_contiguous();
     
     mgcom::mpi::finalize();
     

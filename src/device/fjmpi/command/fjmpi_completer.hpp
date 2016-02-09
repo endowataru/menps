@@ -6,6 +6,8 @@
 #include "device/fjmpi/fjmpi_error.hpp"
 #include <mgbase/container/circular_buffer.hpp>
 
+#include "device/fjmpi/remote_notice.hpp"
+
 namespace mgcom {
 namespace fjmpi {
 
@@ -33,13 +35,13 @@ public:
     
     bool try_new_tag(
         const int proc
-    ,   const int nic
+    ,   const int local_nic
     ,   int* const tag_result
     ) MGBASE_NOEXCEPT
     {
-        MGBASE_LOG_DEBUG("msg:Try to get a new tag.\tproc:{}\tnic:{}", proc, nic);
+        MGBASE_LOG_DEBUG("msg:Try to get a new tag.\tproc:{}\tnic:{}", proc, local_nic);
         
-        tag_queue_type& q = info_by_procs_[proc].by_nics[nic].free_tags;
+        tag_queue_type& q = info_by_procs_[proc].by_nics[local_nic].free_tags;
         if (q.empty())
             return false;
         
@@ -84,10 +86,32 @@ private:
         const int ret = FJMPI_Rdma_poll_cq(nic, &cq);
         
         if (ret == FJMPI_RDMA_NOTICE) {
+            MGBASE_LOG_DEBUG(
+                "msg:Polled FJMPI_RDMA_NOTICE.\t"
+                "nic:{}\tpid:{}\ttag:{}"
+            ,   nic
+            ,   cq.pid
+            ,   cq.tag
+            );
+            
             notify(nic, cq.pid, cq.tag);
             
             *pid = cq.pid;
             *tag = cq.tag;
+            
+            return true;
+        }
+        else if (ret == FJMPI_RDMA_HALFWAY_NOTICE)
+        {
+            MGBASE_LOG_DEBUG(
+                "msg:Polled FJMPI_RDMA_HALFWAY_NOTICE.\t"
+                "nic:{}\tpid:{}\ttag:{}"
+            ,   nic
+            ,   cq.pid
+            ,   cq.tag
+            );
+            
+            mgcom::fjmpi::remote_notice(nic, cq.pid, cq.tag);
             
             return true;
         }
@@ -100,7 +124,7 @@ private:
         nic_info& info = info_by_procs_[pid].by_nics[nic];
         mgbase::execute(info.by_tags[tag].on_complete);
         
-        MGBASE_LOG_DEBUG("msg:Recycle tag.\tnic:{}\tpid:{}\tqueue_size:{}", nic, pid, tag, info.free_tags.size());
+        MGBASE_LOG_DEBUG("msg:Recycle tag.\tnic:{}\tpid:{}\ttag:{}\tqueue_size:{}", nic, pid, tag, info.free_tags.size());
         info.free_tags.push_back(tag);
     }
     

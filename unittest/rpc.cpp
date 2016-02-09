@@ -2,21 +2,20 @@
 #include "unittest.hpp"
 
 struct test_handler {
-    static const mgcom::am::handler_id_t request_id = 1;
-    static const mgcom::am::handler_id_t reply_id   = 2;
+    static const mgcom::rpc::handler_id_t handler_id = 1;
     
     typedef int*    argument_type;
     typedef int     return_type;
     
-    static return_type on_request(const mgcom::am::callback_parameters& params, const argument_type& arg) {
+    static return_type on_request(const mgcom::rpc::handler_parameters& params, const argument_type& arg) {
         *arg += 10;
         return static_cast<int>(params.source);
     }
 };
 
-TEST(Am, Roundtrip)
+TEST(Rpc, Roundtrip)
 {
-    mgcom::am::register_roundtrip_handler<test_handler>();
+    mgcom::rpc::register_handler<test_handler>();
     
     int x = 0;
     int* dest = &x;
@@ -24,14 +23,11 @@ TEST(Am, Roundtrip)
     
     int result = -1;
     
-    mgcom::am::call_roundtrip_cb cb;
-    mgcom::am::call_roundtrip_nb<test_handler>(
-        cb
-    ,   0
+    mgcom::rpc::remote_call<test_handler>(
+        0
     ,   dest
     ,   &result
-    )
-    .wait();
+    );
     
     mgcom::collective::barrier();
     

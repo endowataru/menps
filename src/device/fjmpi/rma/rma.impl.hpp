@@ -35,6 +35,10 @@ public:
             memid_queue_.enqueue(memid);
         
         MGBASE_LOG_DEBUG("msg:Initialized FJMPI.");
+        
+        // This barrier seems necessary
+        // to ensure that all processes finished initialization.
+        mpi::native_barrier();
     }
     
     void finalize()
@@ -61,14 +65,14 @@ public:
             laddr = fjmpi_error::assert_not_error(
                 FJMPI_Rdma_reg_mem(memid, buf, length)
             );
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Registered region.\tptr:{:x}\tsize:{}\tladdr:{:x}"
+            ,   reinterpret_cast<mgbase::uintptr_t>(buf)
+            ,   length
+            ,   laddr
+            );
         }
-        
-        MGBASE_LOG_DEBUG(
-            "msg:Registered region.\tptr:{:x}\tsize:{}\tladdr:{:x}"
-        ,   reinterpret_cast<mgbase::uintptr_t>(buf)
-        ,   length
-        ,   laddr
-        );
         
         *laddr_result = laddr;
         return memid;

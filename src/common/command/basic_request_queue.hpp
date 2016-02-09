@@ -7,10 +7,9 @@
 #include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
-namespace rma {
 
 template <typename Request, index_t Size>
-class request_queue
+class basic_request_queue
 {
 public:
     template <typename T>
@@ -38,11 +37,13 @@ private:
     class starter
     {
     public:
-        starter(request_queue* self, const Arg& arg)
+        starter(basic_request_queue* self, const Arg& arg)
             : self_(self), arg_(arg) { }
         
         void operator() ()
         {
+            arg_->start_offloading();
+            
             while (!self_->finished_)
             {
                 // Check the queue.
@@ -59,10 +60,12 @@ private:
                 // TODO: improve external interface
                 arg_->poll();
             }
+            
+            arg_->stop_offloading();
         }
         
     private:
-        request_queue* self_;
+        basic_request_queue* self_;
         Arg arg_;
     };
     
@@ -71,6 +74,5 @@ private:
     mgbase::mpsc_circular_buffer<Request, Size> buf_;
 };
 
-} // namespace rma
 } // namespace mgcom
 

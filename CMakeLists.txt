@@ -53,6 +53,7 @@ if(${is_mpi_available})
         src/device/mpi/collective/barrier2.cpp
         src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
+        src/device/mpi/mpi_call.cpp
         src/device/mpi1/command/mpi1_command_queue.cpp
         src/device/mpi1/mpi1.cpp
         
@@ -74,8 +75,11 @@ if(${is_mpi3_available})
         src/device/mpi/rpc/rpc_client.cpp
         src/device/mpi3/command/mpi3_command_queue_base.cpp
         src/device/mpi3/command/mpi3_command_queue.cpp
-        src/device/mpi3/collective.cpp
+        #src/device/mpi3/collective.cpp # TODO : Disabled
+        src/device/mpi/collective/barrier2.cpp
+        src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
+        src/device/mpi/mpi_call.cpp
         src/device/mpi3/mpi3.cpp
         src/device/mpi3/rma.cpp
         
@@ -93,16 +97,21 @@ if (${is_fjmpi_available})
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
         src/device/mpi/command/mpi_command_queue_base.cpp
-        src/device/mpi/rpc/rpc_server.cpp
-        src/device/mpi/rpc/rpc_client.cpp
+        #src/device/mpi/rpc/rpc_server.cpp
+        #src/device/mpi/rpc/rpc_client.cpp
         src/common/rma/try_contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/mpi_base.cpp
+        src/device/mpi/mpi_call.cpp
         src/device/mpi/collective/barrier2.cpp
         src/device/mpi/collective/collective.cpp
         src/device/fjmpi/command/fjmpi_command_queue.cpp
         src/device/fjmpi/fjmpi.cpp
         src/device/fjmpi/rma/rma.cpp
+        
+        src/device/fjmpi/rpc/rpc_sender.cpp
+        src/device/fjmpi/rpc/rpc_receiver.cpp
+        src/device/fjmpi/rpc/rpc_connection_pool.cpp
         
         src/device/mpi/rma/poll.cpp
         src/common/rma/try_contiguous.cpp
@@ -122,7 +131,7 @@ set(mgcom-devices ${mgcom-devices} PARENT_SCOPE)
 foreach(device IN LISTS mgcom-devices)
     add_executable(mgcom-unittest-${device}
         ./unittest/unittest.cpp
-        #./unittest/am.cpp
+        ./unittest/rpc.cpp
         ./unittest/rma.cpp
     )
     target_link_libraries(mgcom-unittest-${device}

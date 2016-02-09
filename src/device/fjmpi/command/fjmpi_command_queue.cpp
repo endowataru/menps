@@ -1,6 +1,8 @@
 
 #include "fjmpi_command_queue.impl.hpp"
+#include "fjmpi_command_queue.hpp"
 #include "common/rma/rma.hpp"
+#include "device/fjmpi/rma/rma.hpp"
 
 namespace mgcom {
 namespace fjmpi {
@@ -56,7 +58,7 @@ bool try_remote_read_async_extra(
 ,   const remote_address&       remote_addr
 ,   const local_address&        local_addr
 ,   const index_t               size_in_bytes
-,   const int                   extra_flags
+,   const int                   flags
 ,   const mgbase::operation&    on_complete
 ) {
     return fjmpi::g_queue.try_get(
@@ -64,7 +66,7 @@ bool try_remote_read_async_extra(
     ,   get_absolute_address(local_addr)
     ,   get_absolute_address(remote_addr)
     ,   size_in_bytes
-    ,   extra_flags
+    ,   flags
     ,   on_complete
     );
 }
@@ -81,7 +83,7 @@ bool try_remote_read_async(
     ,   remote_addr
     ,   local_addr
     ,   size_in_bytes
-    ,   0
+    ,   fjmpi::g_queue.select_flags()
     ,   on_complete
     );
 }
@@ -91,7 +93,7 @@ bool try_remote_write_async_extra(
 ,   const remote_address&       remote_addr
 ,   const local_address&        local_addr
 ,   const index_t               size_in_bytes
-,   const int                   extra_flags
+,   const int                   flags
 ,   const mgbase::operation&    on_complete
 ) {
     return fjmpi::g_queue.try_put(
@@ -99,7 +101,7 @@ bool try_remote_write_async_extra(
     ,   get_absolute_address(local_addr)
     ,   get_absolute_address(remote_addr)
     ,   size_in_bytes
-    ,   extra_flags
+    ,   flags
     ,   on_complete
     );
 }
@@ -116,7 +118,7 @@ bool try_remote_write_async(
     ,   remote_addr
     ,   local_addr
     ,   size_in_bytes
-    ,   0
+    ,   fjmpi::g_queue.select_flags()
     ,   on_complete
     );
 }

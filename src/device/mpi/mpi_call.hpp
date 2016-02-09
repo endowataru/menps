@@ -49,10 +49,62 @@ void comm_set_name(MPI_Comm comm, const char* comm_name);
 
 /*
  * Important: This function blocks the communication thread.
+ *            Therefore, it might cause serious deadlock problems.
  */
-void blocking_barrier();
+
+namespace untyped {
+
+void native_broadcast(
+    process_id_t    root
+,   void*           ptr
+,   index_t         number_of_bytes
+);
+
+void native_allgather(
+    const void*     src
+,   void*           dest
+,   index_t         number_of_bytes
+);
+
+void native_alltoall(
+    const void*     src
+,   void*           dest
+,   index_t         number_of_bytes
+);
+
+} // namespace untyped
+
+void native_barrier();
 
 namespace /*unnamed*/ {
+
+template <typename T>
+inline void native_broadcast(
+    const process_id_t  root
+,   T* const            ptr
+,   const index_t       number_of_elements
+) {
+    untyped::native_broadcast(root, ptr, sizeof(T) * number_of_elements);
+}
+
+template <typename T>
+inline void native_allgather(
+    const T* const  src
+,   T* const        dest
+,   const index_t   number_of_elements
+) {
+    untyped::native_allgather(src, dest, sizeof(T) * number_of_elements);
+}
+
+template <typename T>
+inline void native_alltoall(
+    const T* const  src
+,   T* const        dest
+,   const index_t   number_of_elements
+) {
+    untyped::native_alltoall(src, dest, sizeof(T) * number_of_elements);
+}
+
 
 // ordinary non-blocking functions
 

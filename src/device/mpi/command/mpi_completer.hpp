@@ -77,6 +77,11 @@ public:
     {
         MGBASE_ASSERT(initialized_);
         
+        if (queue_.full()) {
+            // There are no established requests.
+            return;
+        }
+        
         int idx;
         int flag;
         MPI_Status status;

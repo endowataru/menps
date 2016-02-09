@@ -23,7 +23,7 @@ void initialize(int* argc, char*** argv)
     
     collective::initialize();
     
-    mgcom::mpi::blocking_barrier();
+    mgcom::mpi::native_barrier();
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
 }
@@ -32,7 +32,7 @@ void finalize()
 {
     collective::barrier();
     
-    mgcom::mpi::blocking_barrier();
+    mgcom::mpi::native_barrier();
     
     collective::finalize();
     

@@ -3,7 +3,7 @@
 
 #include "device/mpi/command/mpi_command_queue_base.hpp"
 #include "device/mpi/command/mpi_completer.hpp"
-#include "common/rma/request_queue.hpp"
+#include "common/command/basic_request_queue.hpp"
 
 namespace mgcom {
 namespace mpi1 {
@@ -50,7 +50,7 @@ private:
     }
     
 private:
-    friend class rma::request_queue<mpi1_command, queue_size>;
+    friend class basic_request_queue<mpi1_command, queue_size>;
     
     void poll()
     {
@@ -58,7 +58,7 @@ private:
     }
 
 private:
-    rma::request_queue<mpi1_command, queue_size> queue_;
+    basic_request_queue<mpi1_command, queue_size> queue_;
     mpi::mpi_completer completer_;
 };
 

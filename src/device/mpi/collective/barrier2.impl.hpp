@@ -13,9 +13,12 @@
 namespace mgcom {
 namespace collective {
 
-namespace detail {
-
 namespace /*unnamed*/ {
+
+struct barrier_cb {
+    MGBASE_CONTINUATION(void)   cont;
+    void*                       request;
+};
 
 class barrier_impl
 {
@@ -52,6 +55,8 @@ public:
     public:
         static result_type start(cb_type& cb)
         {
+            MGBASE_ASSERT(impl.initialized_);
+            
             impl.round_ = 0;
             
             return loop(cb);
@@ -119,8 +124,6 @@ private:
 };
 
 } // unnamed namespace
-
-} // namespace detail
 
 } // namespace collective
 } // namespace mgcom

@@ -23,12 +23,29 @@ union fjmpi_command_parameters
         mgbase::uint64_t    laddr;
         mgbase::uint64_t    raddr;
         std::size_t         size_in_bytes;
-        int                 nic;
-        int                 extra_flags;
+        int                 flags;
         mgbase::operation   on_complete;
     }
     contiguous;
 };
+
+namespace detail {
+
+MGBASE_ALWAYS_INLINE int get_local_nic_from_flag(const int flags)
+{
+    const int filter = FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_LOCAL_NIC3;
+    
+    switch (flags & filter)
+    {
+        case FJMPI_RDMA_LOCAL_NIC0: return 0;
+        case FJMPI_RDMA_LOCAL_NIC1: return 1;
+        case FJMPI_RDMA_LOCAL_NIC2: return 2;
+        case FJMPI_RDMA_LOCAL_NIC3: return 3;
+        default:                    MGBASE_UNREACHABLE();
+    }
+}
+
+} // namespace detail
 
 MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
     const fjmpi_command_code        code
@@ -48,30 +65,30 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
         case FJMPI_COMMAND_GET: {
             const fjmpi_command_parameters::contiguous_parameters& p = params.contiguous;
             
+            const int nic = detail::get_local_nic_from_flag(p.flags);
+            
             int tag;
-            const bool found_tag = completer.try_new_tag(p.proc, p.nic, &tag);
+            const bool found_tag = completer.try_new_tag(p.proc, nic, &tag);
             
             if (MGBASE_LIKELY(found_tag))
             {
-                const int flags = p.nic | p.extra_flags;
-                
                 fjmpi_error::assert_zero(
-                    FJMPI_Rdma_get(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, flags)
+                    FJMPI_Rdma_get(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, p.flags)
                 );
                 
-                completer.set_notification(p.proc, p.nic, tag, p.on_complete);
+                completer.set_notification(p.proc, nic, tag, p.on_complete);
             }
             
             MGBASE_LOG_DEBUG(
                 "msg:{}\t"
-                "src_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tnic:{}\textra_flags:{}"
+                "src_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}\tnic:{}"
             ,   (found_tag ? "Executed FJMPI_Rdma_get." : "RDMA Get because tag capacity exceeded.")
             ,   p.proc
             ,   p.laddr
             ,   p.raddr
             ,   p.size_in_bytes
-            ,   p.nic
-            ,   p.extra_flags
+            ,   p.flags
+            ,   nic
             );
             
             return found_tag;
@@ -80,30 +97,30 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
         case FJMPI_COMMAND_PUT: {
             const fjmpi_command_parameters::contiguous_parameters& p = params.contiguous;
             
+            const int nic = detail::get_local_nic_from_flag(p.flags);
+            
             int tag;
-            const bool found_tag = completer.try_new_tag(p.proc, p.nic, &tag);
+            const bool found_tag = completer.try_new_tag(p.proc, nic, &tag);
             
             if (MGBASE_LIKELY(found_tag))
             {
-                const int flags = p.nic | p.extra_flags;
-                
                 fjmpi_error::assert_zero(
-                    FJMPI_Rdma_put(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, flags)
+                    FJMPI_Rdma_put(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, p.flags)
                 );
                 
-                completer.set_notification(p.proc, p.nic, tag, p.on_complete);
+                completer.set_notification(p.proc, nic, tag, p.on_complete);
             }
             
             MGBASE_LOG_DEBUG(
                 "msg:{}\t"
-                "dest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tnic:{}\tflags:{}"
+                "dest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}\tnic:{}"
             ,   (found_tag ? "Executed FJMPI_Rdma_put." : "RDMA Put failed because tag capacity exceeded.")
             ,   p.proc
             ,   p.laddr
             ,   p.raddr
             ,   p.size_in_bytes
-            ,   p.nic
-            ,   p.extra_flags
+            ,   p.flags
+            ,   nic
             );
             
             return found_tag;

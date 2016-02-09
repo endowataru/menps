@@ -64,36 +64,6 @@ bool try_irsend(
     );
 }
 
-#if 0
-bool try_test(
-    MPI_Request* const          request
-,   bool* const                 success_result
-,   const mgbase::operation&    on_complete
-) {
-    return g_queue.try_test(
-        request
-    ,   success_result
-    ,   on_complete
-    );
-}
-
-bool try_testany(
-    const int                   count
-,   MPI_Request* const          first_request
-,   int* const                  index_result
-,   bool* const                 success_result
-,   const mgbase::operation&    on_complete
-) {
-    return g_queue.try_testany(
-        count
-    ,   first_request
-    ,   index_result
-    ,   success_result
-    ,   on_complete
-    );
-}
-#endif
-
 MPI_Comm comm_dup(const MPI_Comm comm)
 {
     mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
@@ -120,13 +90,6 @@ void comm_set_name(const MPI_Comm comm, const char* const comm_name)
     );
     
     MGBASE_LOG_DEBUG("msg:Set communicator name.\tname:{}", comm_name);
-}
-
-void blocking_barrier()
-{
-    mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
-    
-    MPI_Barrier(MPI_COMM_WORLD); // TODO: use another communicator
 }
 
 void mpi_lock::lock()

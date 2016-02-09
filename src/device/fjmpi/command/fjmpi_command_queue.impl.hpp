@@ -4,7 +4,7 @@
 #include <mgcom/rma/try_rma.hpp>
 #include "fjmpi_command.hpp"
 #include "device/mpi/command/mpi_command_queue_base.hpp"
-#include "common/rma/request_queue.hpp"
+#include "common/command/basic_request_queue.hpp"
 
 namespace mgcom {
 namespace fjmpi {
@@ -26,6 +26,7 @@ class fjmpi_command_queue
     : public mpi::mpi_command_queue_base
 {
     static const index_t queue_size = 256 * 256; // TODO
+    static const int number_of_flag_patterns = 4;
     
 public:
     void initialize()
@@ -48,18 +49,15 @@ public:
     ,   const mgbase::uint64_t      laddr
     ,   const mgbase::uint64_t      raddr
     ,   const std::size_t           size_in_bytes
-    ,   const int                   extra_flags
+    ,   const int                   flags
     ,   const mgbase::operation&    on_complete
     ) {
-        const int nic = select_nic();
-        
         const fjmpi_command_parameters::contiguous_parameters params = {
             src_proc
         ,   laddr
         ,   raddr
         ,   size_in_bytes
-        ,   nic
-        ,   extra_flags
+        ,   flags
         ,   on_complete
         };
         
@@ -70,14 +68,13 @@ public:
         
         const bool ret = queue_.try_enqueue(cmd);
         MGBASE_LOG_DEBUG(
-            "msg:{}\tsrc_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\textra_flags:{}"
+            "msg:{}\tsrc_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
         ,   (ret ? "Queued FJMPI_Rdma_get." : "Failed to queue FJMPI_Rdma_get.")
         ,   src_proc
         ,   laddr
         ,   raddr
         ,   size_in_bytes
-        ,   nic
-        ,   extra_flags
+        ,   flags
         );
         return ret;
     }
@@ -88,18 +85,15 @@ public:
     ,   const mgbase::uint64_t      laddr
     ,   const mgbase::uint64_t      raddr
     ,   const std::size_t           size_in_bytes
-    ,   const int                   extra_flags
+    ,   const int                   flags
     ,   const mgbase::operation&    on_complete
     ) {
-        const int nic = select_nic();
-         
         const fjmpi_command_parameters::contiguous_parameters params = {
             dest_proc
         ,   laddr
         ,   raddr
         ,   size_in_bytes
-        ,   nic
-        ,   extra_flags
+        ,   flags
         ,   on_complete
         };
         
@@ -110,20 +104,28 @@ public:
         
         const bool ret = queue_.try_enqueue(cmd);
         MGBASE_LOG_DEBUG(
-            "msg:{}\tdest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\textra_flags:{}"
+            "msg:{}\tdest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
         ,   (ret ? "Queued FJMPI_Rdma_put." : "Failed to queue FJMPI_Rdma_put.")
         ,   dest_proc
         ,   laddr
         ,   raddr
         ,   size_in_bytes
-        ,   nic
-        ,   extra_flags
+        ,   flags
         );
         return ret;
     }
     
     fjmpi_completer& get_completer() {
         return completer_;
+    }
+    
+    // Thread-safe
+    int select_flags()
+    {
+        const int result = send_nic_.fetch_add(1, mgbase::memory_order_relaxed);
+        const int num = result % number_of_flag_patterns;
+        
+        return flag_patterns_[num];
     }
 
 protected:
@@ -143,7 +145,7 @@ protected:
     }
     
 private:
-    friend class rma::request_queue<fjmpi_command, queue_size>;
+    friend class basic_request_queue<fjmpi_command, queue_size>;
     
     // NOT thread-safe
     void poll()
@@ -152,16 +154,18 @@ private:
     }
     
     fjmpi_completer completer_;
-    rma::request_queue<fjmpi_command, queue_size> queue_;
-    
-    // Thread-safe
-    int select_nic()
-    {
-        const int result = send_nic_.fetch_add(1, mgbase::memory_order_relaxed);
-        return result % fjmpi_completer::max_nic_count;
-    }
+    basic_request_queue<fjmpi_command, queue_size> queue_;
     
     mgbase::atomic<int> send_nic_;
+    
+    static const int flag_patterns_[number_of_flag_patterns];
+};
+
+const int fjmpi_command_queue::flag_patterns_[number_of_flag_patterns] = {
+    FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC0 | FJMPI_RDMA_PATH0
+,   FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_PATH0
+,   FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2 | FJMPI_RDMA_PATH0
+,   FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_PATH0
 };
 
 bool fjmpi_command::execute(fjmpi_command_queue* const queue) const

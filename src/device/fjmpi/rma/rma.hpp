@@ -32,6 +32,10 @@ bool try_remote_write_async_extra(
 
 } // namespace untyped
 
+struct constants {
+    static const int max_nic_count = 4;
+};
+
 } // namespace rma
 } // namespace mgcom
 

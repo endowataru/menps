@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <mgcom/collective.hpp>
+
 namespace mgcom {
 namespace collective {
 
