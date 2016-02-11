@@ -29,8 +29,6 @@ int main(int argc, char* argv[])
         = mgcom::rma::allocate<int>();
     
     for (int i = 0; i < number_of_trials; i++) {
-        *local_buf = 0;
-        
         mgbase::stopwatch sw;
         sw.start();
         

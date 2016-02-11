@@ -81,11 +81,11 @@ public:
     {
         MGBASE_ASSERT(initialized_);
         
-        /*if (queue_.full()) {
+        if (queue_.full()) {
             // There are no established requests.
             MGBASE_ASSERT(established_ == 0);
             return;
-        }*/
+        }
         
         int idx;
         int flag;
