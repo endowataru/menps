@@ -1,5 +1,6 @@
 
 #include "mpi_base.hpp"
+#include "mpi_call.hpp"
 #include "mpi_error.hpp"
 
 #include <mgbase/logging/logger.hpp>
@@ -49,9 +50,6 @@ public:
         MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN); // DEBUG
         
         MGBASE_LOG_DEBUG("msg:Initialized MPI.");
-        
-        // Issue the first barrier.
-        mpi::native_barrier();
     }
     
     void finalize()

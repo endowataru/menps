@@ -15,6 +15,8 @@ void initialize(int* argc, char*** argv);
 
 void finalize();
 
+#if 0
+
 struct mpi_lock
 {
     static void lock();
@@ -26,20 +28,29 @@ struct mpi_lock
 
 typedef mpi_lock    lock_type;
 
-namespace /*unnamed*/ {
+#endif
+
+
+#if 0
 
 inline lock_type& get_lock() MGBASE_NOEXCEPT {
     static mpi_lock lc;
     return lc;
 }
 
-} // unnamed namespace
 
 void native_barrier();
 
-inline bool is_valid_rank(int rank) {
+#endif
+
+namespace /*unnamed*/ {
+
+inline bool is_valid_rank(const int rank)
+{
     return valid_process_id(static_cast<process_id_t>(rank));
 }
+
+} // unnamed namespace
 
 } // namespace mpi
 

@@ -2,19 +2,19 @@
 #pragma once
 
 #include "mpi_command.hpp"
-#include "common/command/comm_lock.hpp"
+#include "common/command/basic_command_queue.hpp"
 
 namespace mgcom {
 namespace mpi {
 
 class mpi_command_queue_base
-    : public comm_lock
+    : public basic_command_queue
 {
 protected:
     mpi_command_queue_base() { }
     
     virtual bool try_enqueue_mpi(
-        const mpi_command_code          code
+        mpi_command_code                code
     ,   const mpi_command_parameters&   params
     ) = 0;
     
@@ -131,28 +131,20 @@ public:
         
         return ret;
     }
-
+    
 protected:
-    virtual bool try_enqueue_unlock() MGBASE_OVERRIDE
+    virtual bool try_enqueue_basic(
+        const basic_command_code        code
+    ,   const basic_command_parameters& params
+    ) MGBASE_OVERRIDE
     {
-        const mpi_command_parameters::lock_parameters params = {
-            this
-        };
+        mpi::mpi_command_parameters mpi_params;
+        mpi_params.basic = params;
         
-        mpi_command_parameters mpi_params;
-        mpi_params.lock = params;
-        
-        const bool ret = try_enqueue_mpi(
-            MPI_COMMAND_LOCK
+        return try_enqueue_mpi(
+            static_cast<mpi::mpi_command_code>(code)
         ,   mpi_params
         );
-        
-        MGBASE_LOG_DEBUG(
-            "msg:{}"
-        ,   (ret ? "Queued MPI lock." : "Failed to queue MPI lock.")
-        );
-        
-        return ret;
     }
 };
 

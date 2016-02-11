@@ -4,7 +4,8 @@
 #include <mgcom/rma/try_rma.hpp>
 #include "fjmpi_command.hpp"
 #include "device/mpi/command/mpi_command_queue_base.hpp"
-#include "common/command/basic_request_queue.hpp"
+#include "common/command/basic_command_queue.hpp"
+#include <mgbase/basic_active_object.hpp>
 
 namespace mgcom {
 namespace fjmpi {
@@ -17,29 +18,32 @@ struct fjmpi_command
 {
     fjmpi_command_code          code;
     fjmpi_command_parameters    params;
-    
-    MGBASE_ALWAYS_INLINE bool execute(fjmpi_command_queue* queue) const;
 };
 
 
 class fjmpi_command_queue
-    : public mpi::mpi_command_queue_base
+    : public mgbase::basic_active_object<fjmpi_command_queue, fjmpi_command>
+    , public mpi::mpi_command_queue_base
 {
+    typedef mgbase::basic_active_object<fjmpi_command_queue, fjmpi_command> base;
+    
     static const index_t queue_size = 256 * 256; // TODO
     static const int number_of_flag_patterns = 4;
     
 public:
     void initialize()
     {
-        completer_.initialize();
-        queue_.initialize(this);
-        
         send_nic_.store(0, mgbase::memory_order_relaxed);
+        
+        completer_.initialize();
+        
+        base::start();
     }
     
     void finalize()
     {
-        queue_.finalize();
+        base::stop();
+        
         completer_.finalize();
     }
     
@@ -66,7 +70,7 @@ public:
         
         const fjmpi_command cmd = { FJMPI_COMMAND_GET, fjmpi_params };
         
-        const bool ret = queue_.try_enqueue(cmd);
+        const bool ret = queue_.try_push(cmd);
         MGBASE_LOG_DEBUG(
             "msg:{}\tsrc_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
         ,   (ret ? "Queued FJMPI_Rdma_get." : "Failed to queue FJMPI_Rdma_get.")
@@ -102,7 +106,7 @@ public:
         
         const fjmpi_command cmd = { FJMPI_COMMAND_PUT, fjmpi_params };
         
-        const bool ret = queue_.try_enqueue(cmd);
+        const bool ret = queue_.try_push(cmd);
         MGBASE_LOG_DEBUG(
             "msg:{}\tdest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
         ,   (ret ? "Queued FJMPI_Rdma_put." : "Failed to queue FJMPI_Rdma_put.")
@@ -113,10 +117,6 @@ public:
         ,   flags
         );
         return ret;
-    }
-    
-    fjmpi_completer& get_completer() {
-        return completer_;
     }
     
     // Thread-safe
@@ -141,20 +141,29 @@ protected:
             static_cast<fjmpi_command_code>(code)
         ,   fjmpi_params
         };
-        return queue_.try_enqueue(cmd);
+        return queue_.try_push(cmd);
     }
     
 private:
-    friend class basic_request_queue<fjmpi_command, queue_size>;
+    friend class mgbase::basic_active_object<fjmpi_command_queue, fjmpi_command>;
+    
+    MGBASE_ALWAYS_INLINE fjmpi_command* peek_queue() { return queue_.peek(); }
+    
+    MGBASE_ALWAYS_INLINE void pop_queue() { queue_.pop(); }
+    
+    MGBASE_ALWAYS_INLINE bool execute(const fjmpi_command& cmd)
+    {
+        return execute_on_this_thread(cmd.code, cmd.params, completer_);
+    }
     
     // NOT thread-safe
-    void poll()
+    MGBASE_ALWAYS_INLINE void poll()
     {
         completer_.poll_on_this_thread();
     }
     
-    fjmpi_completer completer_;
-    basic_request_queue<fjmpi_command, queue_size> queue_;
+    fjmpi_completer                                         completer_;
+    mgbase::mpsc_circular_buffer<fjmpi_command, queue_size> queue_;
     
     mgbase::atomic<int> send_nic_;
     
@@ -167,11 +176,6 @@ const int fjmpi_command_queue::flag_patterns_[number_of_flag_patterns] = {
 ,   FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2 | FJMPI_RDMA_PATH0
 ,   FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_PATH0
 };
-
-bool fjmpi_command::execute(fjmpi_command_queue* const queue) const
-{
-    return execute_on_this_thread(code, params, queue->get_completer());
-}
 
 } // unnamed namespace
 

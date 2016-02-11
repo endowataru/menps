@@ -30,6 +30,8 @@ public:
             statuses_[i] = MGBASE_NULLPTR;
         }
         
+        established_ = 0;
+        
         initialized_ = true;
     }
     void finalize()
@@ -66,6 +68,8 @@ public:
         statuses_[index] = status;
         completions_[index] = on_complete;
         
+        ++established_;
+        
         MGBASE_LOG_DEBUG(
             "msg:Added completion of MPI request.\t"
             "index:{}"
@@ -77,10 +81,11 @@ public:
     {
         MGBASE_ASSERT(initialized_);
         
-        if (queue_.full()) {
+        /*if (queue_.full()) {
             // There are no established requests.
+            MGBASE_ASSERT(established_ == 0);
             return;
-        }
+        }*/
         
         int idx;
         int flag;
@@ -119,6 +124,8 @@ public:
             );
             
             queue_.push_back(index);
+            
+            --established_;
         }
     }
     
@@ -131,6 +138,8 @@ private:
     mgbase::scoped_ptr<MPI_Request []>          requests_;
     
     mgbase::scoped_ptr<mgbase::operation []>    completions_;
+    
+    int established_;
 };
 
 } // namespace mpi_base

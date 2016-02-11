@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "common/command/basic_command.hpp"
 #include "device/mpi/mpi_base.hpp"
 #include "mpi_completer.hpp"
 #include "common/command/comm_lock.hpp"
@@ -14,8 +15,7 @@ namespace mpi {
 
 enum mpi_command_code
 {
-    MPI_COMMAND_LOCK
-,   MPI_COMMAND_IRECV
+    MPI_COMMAND_IRECV = BASIC_COMMAND_END
 ,   MPI_COMMAND_ISEND
 ,   MPI_COMMAND_IRSEND
 ,   MPI_COMMAND_END
@@ -23,11 +23,14 @@ enum mpi_command_code
 
 union mpi_command_parameters
 {
+#if 0
     struct lock_parameters
     {
         comm_lock*                  lock;
     }
     lock;
+#endif
+    basic_command_parameters        basic;
     
     struct irecv_parameters
     {
@@ -74,10 +77,18 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
 ,   const mpi_command_parameters&   params
 ,   mpi_completer&                  completer
 ) {
-    MGBASE_ASSERT(MPI_COMMAND_LOCK <= code && code < MPI_COMMAND_END);
+    if (code < static_cast<mpi_command_code>(BASIC_COMMAND_END)) {
+        return execute_on_this_thread(
+            static_cast<basic_command_code>(code)
+        ,   params.basic
+        );
+    }
+    
+    MGBASE_ASSERT(MPI_COMMAND_IRECV <= code && code < MPI_COMMAND_END);
     
     switch (code)
     {
+        #if 0
         case MPI_COMMAND_LOCK: {
             const mpi_command_parameters::lock_parameters& p = params.lock;
             
@@ -94,7 +105,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             
             return true;
         }
-        
+        #endif
         case MPI_COMMAND_IRECV: {
             const mpi_command_parameters::irecv_parameters& p = params.irecv;
             
@@ -213,6 +224,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
         }
         
         case MPI_COMMAND_END:
+        default:
             MGBASE_UNREACHABLE();
             break;
     }

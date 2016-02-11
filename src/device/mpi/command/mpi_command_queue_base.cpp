@@ -1,6 +1,7 @@
 
 #include "mpi_command_queue_base.hpp"
 #include "device/mpi/mpi_call.hpp"
+#include "common/command/comm_call.hpp"
 
 namespace mgcom {
 namespace mpi {
@@ -64,49 +65,16 @@ bool try_irsend(
     );
 }
 
-MPI_Comm comm_dup(const MPI_Comm comm)
-{
-    mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
-    
-    MPI_Comm result;
-    mpi_error::check(
-        MPI_Comm_dup(comm, &result)
-    );
-    
-    MGBASE_LOG_DEBUG("msg:Duplicated communicator.");
-    
-    return result;
-}
-
-void comm_set_name(const MPI_Comm comm, const char* const comm_name)
-{
-    mgbase::lock_guard<mpi::lock_type> lc(mpi::get_lock());
-    
-    mpi_error::check(
-        MPI_Comm_set_name(
-            comm
-        ,   const_cast<char*>(comm_name) // const_cast is required for old MPI libraries
-        )
-    );
-    
-    MGBASE_LOG_DEBUG("msg:Set communicator name.\tname:{}", comm_name);
-}
-
-void mpi_lock::lock()
-{
-    g_queue.lock();
-}
-
-bool mpi_lock::try_lock()
-{
-    return g_queue.try_lock();
-}
-
-void mpi_lock::unlock()
-{
-    g_queue.unlock();
-}
-
 } // namespace mpi
+
+namespace detail {
+
+bool try_comm_call(const mgbase::bound_function<void ()>& func)
+{
+    return mpi::g_queue.try_call(func);
+}
+
+} // namespace detail
+
 } // namespace mgcom
 

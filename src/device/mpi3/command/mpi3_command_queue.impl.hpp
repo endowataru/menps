@@ -3,38 +3,40 @@
 
 #include "mpi3_command_queue_base.hpp"
 #include "device/mpi/command/mpi_command_queue_base.hpp"
-#include "common/command/basic_request_queue.hpp"
+#include "common/command/basic_command_queue.hpp"
+#include <mgbase/basic_active_object.hpp>
 
 namespace mgcom {
 namespace mpi3 {
 
 namespace /*unnamed*/ {
 
-class mpi3_command_queue;
-
 struct mpi3_command
 {
     mpi3_command_code       code;
     mpi3_command_parameters params;
-    
-    MGBASE_ALWAYS_INLINE bool execute(mpi3_command_queue* queue) const;
 };
 
 class mpi3_command_queue
-    : public mpi::mpi_command_queue_base
+    : public mgbase::basic_active_object<mpi3_command_queue, mpi3_command>
+    , public mpi::mpi_command_queue_base
     , public mpi3_command_queue_base
 {
+    typedef mgbase::basic_active_object<mpi3_command_queue, mpi3_command>   base;
+    
     static const index_t queue_size = 196; // TODO
     
 public:
     void initialize()
     {
         completer_.initialize();
-        queue_.initialize(this);
+        
+        base::start();
     }
     void finalize()
     {
-        queue_.finalize();
+        base::stop();
+        
         completer_.finalize();
     }
     
@@ -52,7 +54,7 @@ private:
         cmd.code = static_cast<mpi3_command_code>(code);
         cmd.params.mpi1 = params;
         
-        return queue_.try_enqueue(cmd);
+        return queue_.try_push(cmd);
     }
     
     virtual bool try_enqueue_mpi3(
@@ -61,26 +63,30 @@ private:
     ) MGBASE_OVERRIDE
     {
         const mpi3_command cmd = { code, params };
-        return queue_.try_enqueue(cmd);
+        return queue_.try_push(cmd);
     }
     
 private:
-    friend class basic_request_queue<mpi3_command, queue_size>;
+    friend class mgbase::basic_active_object<mpi3_command_queue, mpi3_command>;
     
-    void poll()
+    mpi3_command* peek_queue() { return queue_.peek(); }
+    
+    void pop_queue() { queue_.pop(); }
+    
+    MGBASE_ALWAYS_INLINE bool execute(const mpi3_command& cmd)
+    {
+        return execute_on_this_thread(cmd.code, cmd.params, completer_);
+    }
+    
+    MGBASE_ALWAYS_INLINE void poll()
     {
         completer_.poll_on_this_thread();
     }
     
 private:
-    basic_request_queue<mpi3_command, queue_size> queue_;
-    mpi3_completer completer_;
+    mgbase::mpsc_circular_buffer<mpi3_command, queue_size>  queue_;
+    mpi3_completer                                          completer_;
 };
-
-bool mpi3_command::execute(mpi3_command_queue* queue) const
-{
-    return execute_on_this_thread(code, params, queue->get_completer());
-}
 
 } // unnamed namespace
 
