@@ -31,7 +31,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
         -Xg
         -D GTEST_HAS_TR1_TUPLE=0
         --display_error_number
-        --diag_suppress 111,161,236,1406
+        --diag_suppress 111,161,236,1290,1406
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Release>:-Kfast>
         $<$<CONFIG:RelWithDebInfo>:-g -Kfast>
@@ -41,6 +41,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     # warning #161-D: unrecognized #pragma
     #   (cppformat, googletest)
     # warning #236-D: controlling expression is constant
+    #   (googletest)
+    # warning #1290-D: non-POD class type passed through ellipsis
     #   (googletest)
     # warning #1406-D: support for trigraphs is disabled
     #   (googletest)
