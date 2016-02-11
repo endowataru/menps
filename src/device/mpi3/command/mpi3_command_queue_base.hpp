@@ -206,6 +206,136 @@ public:
         
         return ret;
     }
+    
+    bool try_ibarrier(
+        const MPI_Comm              comm
+    ,   const mgbase::operation&    on_complete
+    ) {
+        const mpi3_command_parameters::ibarrier_parameters params = {
+            comm
+        ,   on_complete
+        };
+        
+        mpi3_command_parameters mpi3_params;
+        mpi3_params.ibarrier = params;
+        
+        const bool ret = this->try_enqueue_mpi3(
+            MPI3_COMMAND_IBARRIER
+        ,   mpi3_params
+        );
+        
+        MGBASE_LOG_DEBUG(
+            "msg:{}"
+        ,   (ret ? "Queued MPI_Ibarrier." : "Failed to queue MPI_Ibarrier.")
+        );
+        
+        return ret;
+    }
+    
+    bool try_ibcast(
+        const process_id_t          root
+    ,   void* const                 ptr
+    ,   const index_t               number_of_bytes
+    ,   const MPI_Comm              comm
+    ,   const mgbase::operation&    on_complete
+    ) {
+        const mpi3_command_parameters::ibcast_parameters params = {
+            root
+        ,   ptr
+        ,   number_of_bytes
+        ,   comm
+        ,   on_complete
+        };
+        
+        mpi3_command_parameters mpi3_params;
+        mpi3_params.ibcast = params;
+        
+        const bool ret = this->try_enqueue_mpi3(
+            MPI3_COMMAND_IBCAST
+        ,   mpi3_params
+        );
+        
+        MGBASE_LOG_DEBUG(
+            "msg:{}\t"
+            "root:{}\tptr:\tsize_in_bytes:{}"
+        ,   (ret ? "Queued MPI_Ibcast." : "Failed to queue MPI_Ibcast.")
+        ,   root
+        ,   reinterpret_cast<mgbase::intptr_t>(ptr)
+        ,   number_of_bytes
+        );
+        
+        return ret;
+    }
+    
+    bool try_iallgather(
+        const void* const           src
+    ,   void* const                 dest
+    ,   const index_t               number_of_bytes
+    ,   const MPI_Comm              comm
+    ,   const mgbase::operation&    on_complete
+    ) {
+        const mpi3_command_parameters::iallgather_parameters params = {
+            src
+        ,   dest
+        ,   number_of_bytes
+        ,   comm
+        ,   on_complete
+        };
+        
+        mpi3_command_parameters mpi3_params;
+        mpi3_params.iallgather = params;
+        
+        const bool ret = this->try_enqueue_mpi3(
+            MPI3_COMMAND_IALLGATHER
+        ,   mpi3_params
+        );
+        
+        MGBASE_LOG_DEBUG(
+            "msg:{}\t"
+            "src:{}\tdest:\tsize_in_bytes:{}"
+        ,   (ret ? "Queued MPI_Iallgather." : "Failed to queue MPI_Iallgather.")
+        ,   reinterpret_cast<mgbase::intptr_t>(src)
+        ,   reinterpret_cast<mgbase::intptr_t>(dest)
+        ,   number_of_bytes
+        );
+        
+        return ret;
+    }
+    
+    bool try_ialltoall(
+        const void* const           src
+    ,   void* const                 dest
+    ,   const index_t               number_of_bytes
+    ,   const MPI_Comm              comm
+    ,   const mgbase::operation&    on_complete
+    ) {
+        const mpi3_command_parameters::ialltoall_parameters params = {
+            src
+        ,   dest
+        ,   number_of_bytes
+        ,   comm
+        ,   on_complete
+        };
+        
+        mpi3_command_parameters mpi3_params;
+        mpi3_params.ialltoall = params;
+        
+        const bool ret = this->try_enqueue_mpi3(
+            MPI3_COMMAND_IALLTOALL
+        ,   mpi3_params
+        );
+        
+        MGBASE_LOG_DEBUG(
+            "msg:{}\t"
+            "root:{}\tptr:\tsize_in_bytes:{}"
+        ,   (ret ? "Queued MPI_Ialltoall." : "Failed to queue MPI_Ialltoall.")
+        ,   reinterpret_cast<mgbase::intptr_t>(src)
+        ,   reinterpret_cast<mgbase::intptr_t>(dest)
+        ,   number_of_bytes
+        );
+        
+        return ret;
+    }
 };
 
 } // namespace mpi3

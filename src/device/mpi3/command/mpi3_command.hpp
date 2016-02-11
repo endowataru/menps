@@ -15,6 +15,10 @@ enum mpi3_command_code
 ,   MPI3_COMMAND_PUT
 ,   MPI3_COMMAND_COMPARE_AND_SWAP
 ,   MPI3_COMMAND_FETCH_AND_OP
+,   MPI3_COMMAND_IBARRIER
+,   MPI3_COMMAND_IBCAST
+,   MPI3_COMMAND_IALLGATHER
+,   MPI3_COMMAND_IALLTOALL
 ,   MPI3_COMMAND_END
 };
 
@@ -81,6 +85,43 @@ union mpi3_command_parameters
         mgbase::operation   on_complete;
     }
     fetch_and_op;
+    
+    struct ibarrier_parameters
+    {
+        MPI_Comm            comm;
+        mgbase::operation   on_complete;
+    }
+    ibarrier;
+    
+    struct ibcast_parameters
+    {
+        process_id_t        root;
+        void*               ptr;
+        index_t             number_of_bytes;
+        MPI_Comm            comm;
+        mgbase::operation   on_complete;
+    }
+    ibcast;
+    
+    struct iallgather_parameters
+    {
+        const void*         src;
+        void*               dest;
+        index_t             number_of_bytes;
+        MPI_Comm            comm;
+        mgbase::operation   on_complete;
+    }
+    iallgather;
+    
+    struct ialltoall_parameters
+    {
+        const void*         src;
+        void*               dest;
+        index_t             number_of_bytes;
+        MPI_Comm            comm;
+        mgbase::operation   on_complete;
+    }
+    ialltoall;
 };
 
 MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
@@ -213,7 +254,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             /*
                 TODO: const_cast is needed for OpenMPI 1.8.4.
             */
-
+            
             mpi3_error::check(
                 MPI_Fetch_and_op(
                     const_cast<void*>(p.value_ptr)  // origin_addr
@@ -239,6 +280,134 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             );
             
             completer.add_completion(p.on_complete);
+            
+            return true;
+        }
+        
+        case MPI3_COMMAND_IBARRIER: {
+            if (completer.full())
+                return false;
+            
+            const mpi3_command_parameters::ibarrier_parameters& p = params.ibarrier;
+            
+            MPI_Request request;
+            
+            mpi_error::check(
+                MPI_Ibarrier(
+                    MPI_COMM_WORLD // TODO
+                ,   &request
+                )
+            );
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Executed MPI_Ibarrier."
+            );
+            
+            completer.get_mpi1_completer()
+                .complete(request, MPI_STATUS_IGNORE, p.on_complete);
+            
+            return true;
+        }
+        
+        case MPI3_COMMAND_IBCAST: {
+            if (completer.full())
+                return false;
+            
+            const mpi3_command_parameters::ibcast_parameters& p = params.ibcast;
+            
+            MPI_Request request;
+            
+            mpi_error::check(
+                MPI_Ibcast(
+                    p.ptr
+                ,   static_cast<int>(p.number_of_bytes)
+                ,   MPI_BYTE
+                ,   static_cast<int>(p.root)
+                ,   p.comm
+                ,   &request
+                )
+            );
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Executed MPI_Ibcast.\t"
+                "root:{}\tptr:\tsize_in_bytes:{}"
+            ,   p.root
+            ,   reinterpret_cast<mgbase::intptr_t>(p.ptr)
+            ,   p.number_of_bytes
+            );
+            
+            completer.get_mpi1_completer()
+                .complete(request, MPI_STATUS_IGNORE, p.on_complete);
+            
+            return true;
+        }
+        
+        case MPI3_COMMAND_IALLGATHER: {
+            if (completer.full())
+                return false;
+            
+            const mpi3_command_parameters::iallgather_parameters& p = params.iallgather;
+            
+            MPI_Request request;
+            
+            mpi_error::check(
+                MPI_Iallgather(
+                    p.src
+                ,   static_cast<int>(p.number_of_bytes)
+                ,   MPI_BYTE
+                ,   p.dest
+                ,   static_cast<int>(p.number_of_bytes)
+                ,   MPI_BYTE
+                ,   p.comm
+                ,   &request
+                )
+            );
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Executed MPI_Iallgather.\t"
+                "src:{}\tdest:\tsize_in_bytes:{}"
+            ,   reinterpret_cast<mgbase::intptr_t>(p.src)
+            ,   reinterpret_cast<mgbase::intptr_t>(p.dest)
+            ,   p.number_of_bytes
+            );
+            
+            completer.get_mpi1_completer()
+                .complete(request, MPI_STATUS_IGNORE, p.on_complete);
+            
+            return true;
+        }
+        
+        case MPI3_COMMAND_IALLTOALL: {
+            if (completer.full())
+                return false;
+            
+            const mpi3_command_parameters::ialltoall_parameters& p = params.ialltoall;
+            
+            MPI_Request request;
+            
+            mpi_error::check(
+                MPI_Iallgather(
+                    p.src
+                ,   static_cast<int>(p.number_of_bytes)
+                ,   MPI_BYTE
+                ,   p.dest
+                ,   static_cast<int>(p.number_of_bytes)
+                ,   MPI_BYTE
+                ,   p.comm
+                ,   &request
+                )
+            );
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Executed MPI_Ialltoall.\t"
+                "src:{}\tdest:\tsize_in_bytes:{}"
+            ,   reinterpret_cast<mgbase::intptr_t>(p.src)
+            ,   reinterpret_cast<mgbase::intptr_t>(p.dest)
+            ,   p.number_of_bytes
+            );
+            
+            completer.get_mpi1_completer()
+                .complete(request, MPI_STATUS_IGNORE, p.on_complete);
             
             return true;
         }

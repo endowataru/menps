@@ -75,9 +75,9 @@ if(${is_mpi3_available})
         src/device/mpi/rpc/rpc_client.cpp
         src/device/mpi3/command/mpi3_command_queue_base.cpp
         src/device/mpi3/command/mpi3_command_queue.cpp
-        #src/device/mpi3/collective.cpp # TODO : Disabled
-        src/device/mpi/collective/barrier2.cpp
-        src/device/mpi/collective/collective.cpp
+        src/device/mpi3/collective/collective.cpp # TODO : Disabled
+        #src/device/mpi/collective/barrier2.cpp
+        #src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
         src/device/mpi/mpi_call.cpp
         src/device/mpi3/mpi3.cpp
