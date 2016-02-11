@@ -22,8 +22,9 @@ public:
     
     ~mutex()
     {
-        if (pthread_mutex_destroy(&mtx_) != 0)
-            throw mutex_error();
+        if (pthread_mutex_destroy(&mtx_) != 0) {
+            //throw mutex_error(); // Ignore because this is in a destructor
+        }
     }
     
     void lock()

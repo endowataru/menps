@@ -26,6 +26,11 @@ inline Result bind_ref(void* arg1) {
     return Func(*static_cast<Arg1*>(arg1));
 }
 
+template <typename Result, typename Arg1, Result (Arg1::*Func)()>
+inline Result bind_this(void* arg1) {
+    return (static_cast<Arg1*>(arg1)->*Func)();
+}
+
 template <typename Result, typename Arg2, Result (*Func)(Arg2&)>
 inline Result unbound(void* /*ignored*/, Arg2 arg2) {
     return Func(arg2);
@@ -68,10 +73,21 @@ public:
     }
     
     template <typename Signature, Signature* Func, typename Arg1>
-    static bound_function create(Arg1* arg1)
+    static bound_function create(Arg1* const arg1)
     {
         bound_function f;
         Result (* const func)(void*) = &detail::bind_ref<Result, Arg1, Func>;
+        f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(func);
+        f.untyped_.arg1 = const_cast<void*>(static_cast<const void*>(arg1));
+        
+        return f;
+    }
+    
+    template <typename Signature, Signature Func, typename Arg1>
+    static bound_function create_member(Arg1* const arg1)
+    {
+        bound_function f;
+        Result (* const func)(void*) = &detail::bind_this<Result, Arg1, Func>;
         f.untyped_.func = reinterpret_cast<mgbase_untyped_bound_function_func_ptr_t>(func);
         f.untyped_.arg1 = const_cast<void*>(static_cast<const void*>(arg1));
         
@@ -163,6 +179,12 @@ struct bound_function_signature<R (A1, A2)>
     typedef R (type)(A2);
 };
 
+template <typename R, typename A1>
+struct bound_function_signature<R (A1::*)()>
+{
+    typedef R (type)();
+};
+
 } // namespace detail 
 
 namespace /*unnamed*/ {
@@ -175,6 +197,11 @@ inline bound_function<typename detail::bound_function_signature<Signature>::type
 template <typename Signature, Signature* Func, typename Arg1>
 inline bound_function<typename detail::bound_function_signature<Signature>::type> make_bound_function(Arg1* arg1) {
     return bound_function<typename detail::bound_function_signature<Signature>::type>::template create<Signature, Func>(arg1);
+}
+
+template <typename Signature, Signature Func, typename Arg1>
+inline bound_function<typename detail::bound_function_signature<Signature>::type> make_bound_member_function(Arg1* arg1) {
+    return bound_function<typename detail::bound_function_signature<Signature>::type>::template create_member<Signature, Func>(arg1);
 }
 
 template <typename Signature, Signature* Func>
