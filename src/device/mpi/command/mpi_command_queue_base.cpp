@@ -69,7 +69,7 @@ bool try_irsend(
 
 namespace detail {
 
-bool try_comm_call(const mgbase::bound_function<void ()>& func)
+bool try_comm_call(const mgbase::callback_function<void ()>& func)
 {
     return mpi::g_queue.try_call(func);
 }

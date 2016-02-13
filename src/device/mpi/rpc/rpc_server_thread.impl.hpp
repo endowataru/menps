@@ -27,7 +27,10 @@ public:
         finished_ = false;
         
         th_ = mgbase::thread(
-            mgbase::make_bound_function<void (rpc_server_thread&), &rpc_server_thread::start>(this)
+            mgbase::bind_ref1(
+                MGBASE_MAKE_INLINED_FUNCTION(&rpc_server_thread::start)
+            ,   *this
+            )
         );
     }
     
@@ -77,7 +80,12 @@ private:
         ,   get_comm()
         ,   &status
         ,   mgbase::make_operation_call(
-                mgbase::make_bound_function<void (rpc_server_thread&), &rpc_server_thread::notify>(this)
+                mgbase::make_callback_function(
+                    mgbase::bind_ref1(
+                        MGBASE_MAKE_INLINED_FUNCTION(&rpc_server_thread::notify)
+                    ,   *this
+                    )
+                )
             )
         );
         

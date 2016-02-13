@@ -21,7 +21,10 @@ public:
         invoker_ = &invoker;
         
         th_ = mgbase::thread(
-            mgbase::make_bound_function<void (rpc_receiver_thread&), &rpc_receiver_thread::start>(this)
+            mgbase::bind_ref1(
+                MGBASE_MAKE_INLINED_FUNCTION(&rpc_receiver_thread::start)
+            ,   *this
+            )
         );
     }
     

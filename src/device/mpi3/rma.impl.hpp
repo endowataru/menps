@@ -24,13 +24,13 @@ private:
     static const index_t max_num_requests = 16;
 
 private:
-    void initialize_on_this_thread()
+    static void initialize_on_this_thread(mpi3_rma& self)
     {
         mpi3_error::check(
-            MPI_Win_create_dynamic(MPI_INFO_NULL, MPI_COMM_WORLD, &win_)
+            MPI_Win_create_dynamic(MPI_INFO_NULL, MPI_COMM_WORLD, &self.win_)
         );
         mpi3_error::check( 
-            MPI_Win_lock_all(0, win_) // TODO : Assertion
+            MPI_Win_lock_all(0, self.win_) // TODO : Assertion
         );
     }
     
@@ -38,19 +38,22 @@ public:
     void initialize()
     {
         mgcom::comm_call<void>(
-            mgbase::make_bound_member_function<void (mpi3_rma::*)(), &mpi3_rma::initialize_on_this_thread>(this)
+            mgbase::bind_ref1(
+                MGBASE_MAKE_INLINED_FUNCTION(&mpi3_rma::initialize_on_this_thread)
+            ,   *this
+            )
         );
     }
     
 private:
-    void finalize_on_this_thread()
+    static void finalize_on_this_thread(mpi3_rma& self)
     {
         mpi3_error::check(
-            MPI_Win_unlock_all(win_)
+            MPI_Win_unlock_all(self.win_)
         );
         
         mpi3_error::check(
-            MPI_Win_free(&win_)
+            MPI_Win_free(&self.win_)
         );
     }
     
@@ -58,7 +61,10 @@ public:
     void finalize()
     {
         mgcom::comm_call<void>(
-            mgbase::make_bound_member_function<void (mpi3_rma::*)(), &mpi3_rma::finalize_on_this_thread>(this)
+            mgbase::bind_ref1(
+                MGBASE_MAKE_INLINED_FUNCTION(&mpi3_rma::finalize_on_this_thread)
+            ,   *this
+            )
         );
     }
     

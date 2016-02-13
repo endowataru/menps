@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgcom/common.hpp>
-#include <mgbase/bound_function.hpp>
+#include <mgbase/callback_function.hpp>
 
 namespace mgcom {
 
@@ -15,7 +15,7 @@ enum basic_command_code
 union basic_command_parameters
 {
     struct call_parameters {
-        mgbase::bound_function<void ()> func;
+        mgbase::callback_function<void ()> func;
     }
     call;
 };

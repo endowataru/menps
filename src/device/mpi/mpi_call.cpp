@@ -23,7 +23,9 @@ inline void execute_barrier()
 
 void native_barrier()
 {
-    comm_call<void>(&execute_barrier);
+    comm_call<void>(
+        MGBASE_MAKE_INLINED_FUNCTION(&execute_barrier)
+    );
 }
 
 namespace untyped {
@@ -183,11 +185,10 @@ MPI_Comm comm_dup(const MPI_Comm comm)
     
     const MPI_Comm result
         = comm_call<MPI_Comm>(
-            mgbase::make_bound_function<
-                MPI_Comm (const comm_dup_arg&)
-            ,   execute_comm_dup
-            >
-            (&arg)
+            mgbase::bind_ref1(
+                MGBASE_MAKE_INLINED_FUNCTION(execute_comm_dup)
+            ,   arg
+            )
         );
     
     MGBASE_LOG_DEBUG("msg:Duplicated communicator.");
@@ -220,11 +221,10 @@ void comm_set_name(const MPI_Comm comm, const char* const comm_name)
     const comm_set_name_arg arg = { comm, comm_name };
     
     comm_call<void>(
-        mgbase::make_bound_function<
-            void (const comm_set_name_arg&)
-        ,   execute_comm_set_name
-        >
-        (&arg)
+        mgbase::bind_ref1(
+            MGBASE_MAKE_INLINED_FUNCTION(execute_comm_set_name)
+        ,   arg
+        )
     );
     
     MGBASE_LOG_DEBUG("msg:Set communicator name.\tname:{}", comm_name);

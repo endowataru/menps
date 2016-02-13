@@ -41,7 +41,7 @@ MGBASE_ALWAYS_INLINE mgbase::deferred<R> comm_call_check(comm_call_cb<R, Func>& 
         (cb);
 }
 
-bool try_comm_call(const mgbase::bound_function<void ()>&);
+bool try_comm_call(const mgbase::callback_function<void ()>&);
 
 } // namespace detail
 
@@ -52,14 +52,15 @@ mgbase::optional< mgbase::deferred<R> > try_comm_call_async(comm_call_cb<R, Func
     cb.flag.store(false, mgbase::memory_order_relaxed);
     cb.func = func;
     
-    const mgbase::bound_function<void ()> bound_func
-        = mgbase::make_bound_function<
-            void (comm_call_cb<R, Func>&)
-        ,   &detail::execute_comm_call<R, Func>
-        >
-        (&cb);
+    const mgbase::callback_function<void ()> callback_func
+        = mgbase::make_callback_function(
+            mgbase::bind_ref1(
+                MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE((&detail::execute_comm_call<R, Func>))
+            ,   cb
+            )
+        );
     
-    const bool ret = detail::try_comm_call(bound_func);
+    const bool ret = detail::try_comm_call(callback_func);
     
     if (MGBASE_UNLIKELY(!ret))
         return mgbase::nullopt;

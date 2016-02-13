@@ -14,7 +14,7 @@ protected:
     ) = 0;
     
 public:
-    bool try_call(const mgbase::bound_function<void ()>& func)
+    bool try_call(const mgbase::callback_function<void ()>& func)
     {
         const basic_command_parameters::call_parameters call_params = { func };
         
