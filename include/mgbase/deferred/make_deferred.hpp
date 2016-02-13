@@ -23,7 +23,7 @@ MGBASE_ALWAYS_INLINE resumable make_deferred_pass(CB& cb)
     typedef typename detail::deferred_result<Signature>::type T;
     
     deferred<T> df = call_with_value_wrapper<return_type>(
-        Func
+        MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
     ,   wrap_reference(cb) // value_wrapper<CB&>
     );
     

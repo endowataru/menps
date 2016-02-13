@@ -37,11 +37,12 @@ resumable deferred_base<Derived, T>::set_terminal(T* dest)
     else
     {
         derived().set_continuation(
-            make_bound_function<
-                resumable (T&, const value_wrapper<T>&)
-            ,   &set_terminal_handler<T>::assign
-            >
-            (dest)
+            mgbase::make_callback_function(
+                mgbase::bind_ref1(
+                    MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&set_terminal_handler<T>::assign)
+                ,   *dest
+                )
+            )
         );
         
         MGBASE_ASSERT(!derived().get_resumable().empty());
@@ -62,10 +63,9 @@ resumable deferred_base<Derived, void>::set_terminal()
     else
     {
         derived().set_continuation(
-            make_unbound_function<
-                resumable (const value_wrapper<void>&)
-            ,   &set_terminal_handler<void>::assign
-            >()
+            mgbase::make_callback_function(
+                MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&set_terminal_handler<void>::assign)
+            )
         );
         
         MGBASE_ASSERT(!derived().get_resumable().empty());

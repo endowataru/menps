@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgbase/operation.h>
+#include <mgbase/callback_function.hpp>
 #include <mgbase/atomic.hpp>
 #include <mgbase/logger.hpp>
 
@@ -112,7 +113,7 @@ MGBASE_ALWAYS_INLINE void execute(const operation& opr) MGBASE_NOEXCEPT
             // Do nothing.
             break;
         
-        case MGBASE_OPERATION_CALL_BOUND_FUNCTION:
+        case MGBASE_OPERATION_CALL_CALLBACK_FUNCTION:
             opr.arg.func();
             break;
         
@@ -177,10 +178,10 @@ MGBASE_FETCH_OP_LIST(DEFINE_MAKE_OPERATION)
 #undef DEFINE_MAKE_OPERATION
 
 template <typename Signature>
-MGBASE_ALWAYS_INLINE operation make_operation_call(const bound_function<Signature>& func) MGBASE_NOEXCEPT {
+MGBASE_ALWAYS_INLINE operation make_operation_call(const callback_function<Signature>& func) MGBASE_NOEXCEPT {
     operation_argument arg;
     arg.func = func;
-    const operation result = { MGBASE_OPERATION_CALL_BOUND_FUNCTION, arg };
+    const operation result = { MGBASE_OPERATION_CALL_CALLBACK_FUNCTION, arg };
     return result;
 }
 

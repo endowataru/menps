@@ -36,8 +36,12 @@ struct integral_constant
     operator value_type() const MGBASE_NOEXCEPT { return value; }
 };
 
-typedef integral_constant<bool, true>   true_type;
-typedef integral_constant<bool, false>  false_type;
+template <bool B>
+struct bool_constant : integral_constant<bool, B> { };
+
+typedef bool_constant<true>   true_type;
+typedef bool_constant<false>  false_type;
+
 
 template <typename T, typename U>
 struct is_same : false_type {};
@@ -85,19 +89,19 @@ template <> struct is_floating_point<long double> : true_type { };
 
 template <typename T>
 struct is_arithmetic
-    : integral_constant<bool,
+    : bool_constant<
         is_integral<T>::value || is_floating_point<T>::value
     > { };
 
 template <typename T>
 struct is_fundamental
-    : integral_constant<bool,
+    : bool_constant<
         is_arithmetic<T>::value || is_void<T>::value
     > { };
 
 template <typename T>
 struct is_compound
-    : integral_constant<bool,
+    : bool_constant<
         !is_fundamental<T>::value
     > { };
 
@@ -144,7 +148,7 @@ struct is_convertible_impl
 
 template <typename From, typename To>
 struct is_convertible
-    : integral_constant<bool, detail::is_convertible_impl<From, To>::value> { };
+    : bool_constant<detail::is_convertible_impl<From, To>::value> { };
 
 // TODO : move to the unit test
 MGBASE_STATIC_ASSERT((mgbase::is_convertible<int*, const int*>::value));
@@ -221,6 +225,49 @@ public:
         align_type  al;
     };
 };
+
+namespace detail {
+
+template <mgbase::size_t> struct sizeof_trick;
+
+template <typename F> struct is_callable_impl;
+
+template <typename Func>
+struct is_callable_impl<Func ()>
+{
+private:
+    template <typename F>
+    static yes_type check(sizeof_trick<sizeof(
+        mgbase::declval<F>()(), 0
+    )>*);
+    template <typename F>
+    static no_type check(...);
+
+public:
+    static const bool value = sizeof(check<Func>(0)) == sizeof(yes_type);
+};
+
+template <typename Func, typename Arg1>
+struct is_callable_impl<Func (Arg1)>
+{
+private:
+    template <typename F, typename A1>
+    static yes_type check(sizeof_trick<sizeof(
+        mgbase::declval<F>()(mgbase::declval<A1>()), 0
+    )>*);
+    template <typename F, typename A1>
+    static no_type check(...);
+
+public:
+    static const bool value = sizeof(check<Func, Arg1>(0)) == sizeof(yes_type);
+};
+
+} // namespace detail
+
+template <typename F>
+struct is_callable
+    : bool_constant<detail::is_callable_impl<F>::value> { };
+
 
 } // namespace mgbase
 

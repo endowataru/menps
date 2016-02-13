@@ -1,14 +1,14 @@
 
 #pragma once
 
-#include <mgbase/bound_function.hpp>
+#include <mgbase/callback_function.hpp>
 
 namespace mgbase {
 
 class resumable
 {
 public:
-    typedef bound_function<resumable ()>    function_type;
+    typedef callback_function<resumable ()>    function_type;
     
     #if 0
     resumable() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
@@ -59,13 +59,18 @@ template <
 inline resumable make_resumable(CB& cb)
 {
     return resumable::create(
-        make_bound_function<Signature, Func>(&cb)
+        mgbase::make_callback_function(
+            mgbase::bind_ref1(
+                MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
+            ,   cb
+            )
+        )
     );
 }
 
 inline resumable make_empty_resumable() MGBASE_NOEXCEPT {
     return resumable::create(
-        bound_function<resumable ()>::create_empty()
+        callback_function<resumable ()>::create_empty()
     );
 }
 

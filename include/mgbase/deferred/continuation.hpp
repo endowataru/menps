@@ -11,7 +11,7 @@ template <typename T>
 class continuation
 {
 public:
-    typedef bound_function<resumable (const value_wrapper<T>&)>   function_type;
+    typedef callback_function<resumable (const value_wrapper<T>&)>   function_type;
     
     #ifdef MGBASE_CPP11_SUPPORTED
     continuation() noexcept = default;

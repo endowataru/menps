@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include <mgbase/bound_function.hpp>
+#include <mgbase/callback_function.hpp>
 
 MGBASE_EXTERN_C_BEGIN
 
-typedef struct mgbase_untyped_bound_function
+typedef struct mgbase_untyped_callback_function
     mgbase_untyped_resumable;
 
 #ifdef MGBASE_CPLUSPLUS

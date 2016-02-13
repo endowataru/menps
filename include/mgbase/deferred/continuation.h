@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include <mgbase/bound_function.h>
+#include <mgbase/callback_function.h>
 
 MGBASE_EXTERN_C_BEGIN
 
-typedef mgbase_untyped_bound_function
+typedef mgbase_untyped_callback_function
     mgbase_untyped_continuation;
 
 MGBASE_EXTERN_C_END

@@ -130,6 +130,7 @@ add_executable(mgbase-unittest
     unittest/unittest.cpp
     unittest/deferred.cpp
     unittest/thread.cpp
+    unittest/callback_function.cpp
     unittest/bound_function.cpp
     unittest/spinlock.cpp
     unittest/mpsc_circular_buffer.cpp

@@ -24,7 +24,10 @@ MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper
     typedef typename detail::deferred_result<Signature>::type           U;
     
     deferred<U> df = call_with_value_wrapper<return_type>(
-        mgbase::make_bound_function<Signature, Func>(&cb)
+        mgbase::bind_ref1(
+            MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
+        ,   cb
+        )
     ,   val
     );
     
@@ -73,18 +76,22 @@ deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB&
     if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
     {
         return call_with_value_wrapper<return_type>(
-            mgbase::make_bound_function<Signature, Func>(&cb)
+            mgbase::bind_ref1(
+                MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
+            ,   cb
+            )
         ,   df.to_ready()
         );
     }
     else
     {
         current_cont->set(
-            make_bound_function<
-                resumable (CB&, const value_wrapper<T>&)
-            ,   &detail::add_continuation_pass<Signature, Func, CB, T>
-            >
-            (&cb)
+            mgbase::make_callback_function(
+                mgbase::bind_ref1(
+                    MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE((&detail::add_continuation_pass<Signature, Func, CB, T>))
+                ,   cb
+                )
+            )
         );
         
         return deferred<U>(get_next_continuation<U>(cb), df.get_resumable());

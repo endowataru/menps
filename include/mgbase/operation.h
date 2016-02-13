@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgbase/lang.h>
-#include <mgbase/bound_function.h>
+#include <mgbase/callback_function.h>
 #include <mgbase/atomic.h>
 
 MGBASE_EXTERN_C_BEGIN
@@ -11,7 +11,7 @@ typedef enum mgbase_operation_code
 {
     // Put no operation for fast switch-case
     MGBASE_OPERATION_NO_OPERATION
-,   MGBASE_OPERATION_CALL_BOUND_FUNCTION
+,   MGBASE_OPERATION_CALL_CALLBACK_FUNCTION
 
 ,   MGBASE_OPERATION_STORE_RELEASE_INT8
 ,   MGBASE_OPERATION_STORE_RELEASE_INT16
@@ -39,8 +39,8 @@ typedef struct mgbase_operation_operands {
 mgbase_operation_operands;
 
 typedef union mgbase_operation_argument {
-    mgbase_operation_operands       operands;
-    MGBASE_BOUND_FUNCTION(void ())  func;
+    mgbase_operation_operands           operands;
+    MGBASE_CALLBACK_FUNCTION(void ())   func;
 }
 mgbase_operation_argument;
 
