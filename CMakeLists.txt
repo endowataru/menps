@@ -33,7 +33,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
         --display_error_number
         --diag_suppress 111,161,236,1290,1406
         $<$<CONFIG:Debug>:-g>
-        $<$<CONFIG:Release>:-Kfast>
+        $<$<CONFIG:Release>:-Kfast -O3 -x50>
         $<$<CONFIG:RelWithDebInfo>:-g -Kfast>
     )
     # warning #111-D: statement is unreachable

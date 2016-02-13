@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgbase/callback_function.hpp>
+#include <mgbase/value_wrapper.hpp>
 
 namespace mgbase {
 
@@ -60,9 +61,9 @@ inline resumable make_resumable(CB& cb)
 {
     return resumable::create(
         mgbase::make_callback_function(
-            mgbase::bind_ref1(
+            mgbase::bind1st_of_1(
                 MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
-            ,   cb
+            ,   mgbase::wrap_reference(cb)
             )
         )
     );

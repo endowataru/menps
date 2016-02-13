@@ -54,22 +54,24 @@ MGBASE_ALWAYS_INLINE Result pass_ref1(void* ptr, Arg2 arg2) {
 
 } // namespace detail
 
-template <typename Result, typename Arg1, Result (* Func)(Arg1&)>
+template <typename Result, typename Arg1, Result (* Func)(Arg1&), typename A1>
 MGBASE_ALWAYS_INLINE callback_function<Result ()>
-make_callback_function(bound_function_arg1<inlined_function<Result (*)(Arg1&), Func>, Arg1&> func)
+make_callback_function(bound1st_of_1<inlined_function<Result (*)(Arg1&), Func>, A1> bound)
 {
-    Result (* const f)(void*) = &detail::pass_ref1<Result, Arg1, Func>;
+    Result (* const func)(void*) = &detail::pass_ref1<Result, Arg1, Func>;
+    Arg1& arg1 = bound.arg1();
     
-    return callback_function<Result ()>::create(f, &func.arg1());
+    return callback_function<Result ()>::create(func, &arg1);
 }
 
-template <typename Result, typename Arg1, typename Arg2, Result (* Func)(Arg1&, Arg2)>
+template <typename Result, typename Arg1, typename Arg2, Result (* Func)(Arg1&, Arg2), typename A1>
 MGBASE_ALWAYS_INLINE callback_function<Result (Arg2)>
-make_callback_function(bound_function_arg1<inlined_function<Result (*)(Arg1&, Arg2), Func>, Arg1&> func)
+make_callback_function(bound1st_of_2<inlined_function<Result (*)(Arg1&, Arg2), Func>, A1> bound)
 {
-    Result (* const f)(void*, Arg2) = &detail::pass_ref1<Result, Arg1, Arg2, Func>;
+    Result (* const func)(void*, Arg2) = &detail::pass_ref1<Result, Arg1, Arg2, Func>;
+    Arg1& arg1 = bound.arg1();
     
-    return callback_function<Result (Arg2)>::create(f, &func.arg1());
+    return callback_function<Result (Arg2)>::create(func, &arg1);
 }
 
 namespace detail {

@@ -38,9 +38,9 @@ resumable deferred_base<Derived, T>::set_terminal(T* dest)
     {
         derived().set_continuation(
             mgbase::make_callback_function(
-                mgbase::bind_ref1(
+                mgbase::bind1st_of_2(
                     MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&set_terminal_handler<T>::assign)
-                ,   *dest
+                ,   mgbase::wrap_reference(*dest)
                 )
             )
         );

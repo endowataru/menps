@@ -11,33 +11,33 @@ typedef mgbase_untyped_bound_function  untyped_bound_function;
 
 namespace detail {
 
-inline bool equal(const untyped_bound_function& f0, const untyped_bound_function& f1)
+MGBASE_ALWAYS_INLINE bool equal(const untyped_bound_function& f0, const untyped_bound_function& f1)
 {
     return f0.func == f1.func && f0.arg1 == f1.arg1;
 }
 
 template <typename Result, Result (*Func)()>
-inline Result unbound(void* /*a1*/) {
+MGBASE_ALWAYS_INLINE Result unbound(void* /*a1*/) {
     return Func();
 }
 
 template <typename Result, typename Arg1, Result (*Func)(Arg1&)>
-inline Result bind_ref(void* arg1) {
+MGBASE_ALWAYS_INLINE Result bind_ref(void* arg1) {
     return Func(*static_cast<Arg1*>(arg1));
 }
 
 template <typename Result, typename Arg1, Result (Arg1::*Func)()>
-inline Result bind_this(void* arg1) {
+MGBASE_ALWAYS_INLINE Result bind_this(void* arg1) {
     return (static_cast<Arg1*>(arg1)->*Func)();
 }
 
 template <typename Result, typename Arg2, Result (*Func)(Arg2&)>
-inline Result unbound(void* /*ignored*/, Arg2 arg2) {
+MGBASE_ALWAYS_INLINE Result unbound(void* /*ignored*/, Arg2 arg2) {
     return Func(arg2);
 }
 
 template <typename Result, typename Arg1, typename Arg2, Result (*Func)(Arg1&, Arg2)>
-inline Result bind_ref(void* arg1, Arg2 arg2) {
+MGBASE_ALWAYS_INLINE Result bind_ref(void* arg1, Arg2 arg2) {
     return Func(*static_cast<Arg1*>(arg1), arg2);
 }
 

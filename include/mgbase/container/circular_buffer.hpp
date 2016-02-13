@@ -137,8 +137,9 @@ class circular_buffer
 {
     typedef circular_buffer_base<circular_buffer<T>, T> base;
     
+    typedef typename base::size_type    size_type;
+    
 public:
-    using typename base::size_type;
     
     circular_buffer() : ptr_(), capacity_(0) { }
     

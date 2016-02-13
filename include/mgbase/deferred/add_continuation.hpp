@@ -20,14 +20,12 @@ template <
 >
 MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper<T>& val)
 {
-    typedef typename mgbase::function_traits<Signature>::result_type    return_type;
     typedef typename detail::deferred_result<Signature>::type           U;
+    typedef typename mgbase::function_traits<Signature>::result_type    return_type;
     
-    deferred<U> df = call_with_value_wrapper<return_type>(
-        mgbase::bind_ref1(
-            MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
-        ,   cb
-        )
+    deferred<U> df = call_with_value_wrapper_2<return_type>(
+        MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
+    ,   mgbase::wrap_reference(cb)
     ,   val
     );
     
@@ -68,18 +66,16 @@ template <
 MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
 deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB& cb, deferred<T> df)
 {
-    typedef typename mgbase::function_traits<Signature>::result_type    return_type;
     typedef typename detail::deferred_result<Signature>::type           U;
+    typedef typename mgbase::function_traits<Signature>::result_type    return_type;
     
     continuation<T>* const current_cont = df.get_continuation();
     
     if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
     {
-        return call_with_value_wrapper<return_type>(
-            mgbase::bind_ref1(
-                MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
-            ,   cb
-            )
+        return call_with_value_wrapper_2<return_type>(
+            MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
+        ,   mgbase::wrap_reference(cb)
         ,   df.to_ready()
         );
     }
@@ -87,9 +83,9 @@ deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB&
     {
         current_cont->set(
             mgbase::make_callback_function(
-                mgbase::bind_ref1(
+                mgbase::bind1st_of_2(
                     MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE((&detail::add_continuation_pass<Signature, Func, CB, T>))
-                ,   cb
+                ,   mgbase::wrap_reference(cb)
                 )
             )
         );
