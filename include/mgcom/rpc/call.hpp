@@ -142,11 +142,9 @@ index_t on_callback(const handler_parameters* params)
     
     // Call the user-defined callback function.
     const mgbase::value_wrapper<return_type> res
-        = mgbase::call_with_value_wrapper<return_type>(
-            mgbase::bind_ref1(
-                MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&Handler::on_request)
-            ,   *params
-            )
+        = mgbase::call_with_value_wrapper_2<return_type>(
+            MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&Handler::on_request)
+        ,   mgbase::wrap_reference(*params)
         ,   arg_info
         );
     

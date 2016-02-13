@@ -185,7 +185,7 @@ MPI_Comm comm_dup(const MPI_Comm comm)
     
     const MPI_Comm result
         = comm_call<MPI_Comm>(
-            mgbase::bind_ref1(
+            mgbase::bind1st_of_1(
                 MGBASE_MAKE_INLINED_FUNCTION(execute_comm_dup)
             ,   arg
             )
@@ -221,7 +221,7 @@ void comm_set_name(const MPI_Comm comm, const char* const comm_name)
     const comm_set_name_arg arg = { comm, comm_name };
     
     comm_call<void>(
-        mgbase::bind_ref1(
+        mgbase::bind1st_of_1(
             MGBASE_MAKE_INLINED_FUNCTION(execute_comm_set_name)
         ,   arg
         )

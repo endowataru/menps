@@ -38,9 +38,9 @@ public:
     void initialize()
     {
         mgcom::comm_call<void>(
-            mgbase::bind_ref1(
+            mgbase::bind1st_of_1(
                 MGBASE_MAKE_INLINED_FUNCTION(&mpi3_rma::initialize_on_this_thread)
-            ,   *this
+            ,   mgbase::wrap_reference(*this)
             )
         );
     }
@@ -61,9 +61,9 @@ public:
     void finalize()
     {
         mgcom::comm_call<void>(
-            mgbase::bind_ref1(
+            mgbase::bind1st_of_1(
                 MGBASE_MAKE_INLINED_FUNCTION(&mpi3_rma::finalize_on_this_thread)
-            ,   *this
+            ,   mgbase::wrap_reference(*this)
             )
         );
     }

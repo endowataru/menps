@@ -54,9 +54,9 @@ mgbase::optional< mgbase::deferred<R> > try_comm_call_async(comm_call_cb<R, Func
     
     const mgbase::callback_function<void ()> callback_func
         = mgbase::make_callback_function(
-            mgbase::bind_ref1(
+            mgbase::bind1st_of_1(
                 MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE((&detail::execute_comm_call<R, Func>))
-            ,   cb
+            ,   mgbase::wrap_reference(cb)
             )
         );
     

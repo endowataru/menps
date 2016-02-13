@@ -27,9 +27,9 @@ public:
         finished_ = false;
         
         th_ = mgbase::thread(
-            mgbase::bind_ref1(
+            mgbase::bind1st_of_1(
                 MGBASE_MAKE_INLINED_FUNCTION(&rpc_server_thread::start)
-            ,   *this
+            ,   mgbase::wrap_reference(*this)
             )
         );
     }
@@ -81,9 +81,9 @@ private:
         ,   &status
         ,   mgbase::make_operation_call(
                 mgbase::make_callback_function(
-                    mgbase::bind_ref1(
+                    mgbase::bind1st_of_1(
                         MGBASE_MAKE_INLINED_FUNCTION(&rpc_server_thread::notify)
-                    ,   *this
+                    ,   mgbase::wrap_reference(*this)
                     )
                 )
             )
