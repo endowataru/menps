@@ -22,8 +22,9 @@ public:
     
     ~condition_variable()
     {
-        if (pthread_cond_destroy(&cond_) != 0)
-            throw condition_variable_error();
+        if (pthread_cond_destroy(&cond_) != 0) {
+            // Ignore because this is in a destructor
+        }
     }
     
     void wait(mgbase::unique_lock<mutex_type>& lc)
