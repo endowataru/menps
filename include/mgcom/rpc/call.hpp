@@ -135,7 +135,6 @@ index_t on_callback(const handler_parameters* params)
 {
     typedef detail::handler_types<Handler>  types;
     typedef typename types::argument_info   argument_info;
-    typedef typename Handler::argument_type argument_type;
     typedef typename Handler::return_type   return_type;
     
     const argument_info& arg_info = *static_cast<const argument_info*>(params->data);
