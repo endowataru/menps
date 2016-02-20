@@ -48,6 +48,8 @@
     #define MGBASE_ALWAYS_INLINE        inline __attribute__((always_inline))
 #endif
 
+#define MGBASE_NOINLINE             __attribute__((noinline))
+
 #define MGBASE_UNUSED               __attribute__((unused))
 #define MGBASE_WARN_UNUSED_RESULT   __attribute__((warn_unused_result))
 

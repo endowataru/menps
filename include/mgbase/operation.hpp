@@ -35,9 +35,9 @@ MGBASE_ALWAYS_INLINE void execute_store_release(const operation& opr) MGBASE_NOE
     target->store(value, mgbase::memory_order_release);
 }
 
-#define DEFINE_EXECUTE_FETCH_OP(op, OP) \
+#define DEFINE_EXECUTE_FETCH_OP(name, NAME, c_op) \
 template <typename T> \
-MGBASE_ALWAYS_INLINE void execute_fetch_##op(const operation& opr) MGBASE_NOEXCEPT \
+MGBASE_ALWAYS_INLINE void execute_fetch_##name(const operation& opr) MGBASE_NOEXCEPT \
 { \
     const operation_operands& operands = opr.arg.operands; \
     \
@@ -46,7 +46,7 @@ MGBASE_ALWAYS_INLINE void execute_fetch_##op(const operation& opr) MGBASE_NOEXCE
     \
     const T value = static_cast<T>(operands.value); \
     \
-    target->fetch_##op(value, mgbase::memory_order_release); \
+    target->fetch_##name(value, mgbase::memory_order_release); \
 }
 
 MGBASE_FETCH_OP_LIST(DEFINE_EXECUTE_FETCH_OP)
@@ -74,14 +74,14 @@ MGBASE_ALWAYS_INLINE operation_code get_store_code(volatile T* const /*obj*/) {
     }
 }
 
-#define DEFINE_FETCH_OP(op, OP) \
+#define DEFINE_FETCH_OP(name, NAME, c_op) \
 template <typename T> \
-MGBASE_ALWAYS_INLINE operation_code get_fetch_##op##_code(volatile T* const /*obj*/) { \
+MGBASE_ALWAYS_INLINE operation_code get_fetch_##name##_code(volatile T* const /*obj*/) { \
     switch (sizeof(T)) { \
-        case 1:     return MGBASE_OPERATION_FETCH_##OP##_INT8 ; \
-        case 2:     return MGBASE_OPERATION_FETCH_##OP##_INT16; \
-        case 4:     return MGBASE_OPERATION_FETCH_##OP##_INT32; \
-        case 8:     return MGBASE_OPERATION_FETCH_##OP##_INT64; \
+        case 1:     return MGBASE_OPERATION_FETCH_##NAME##_INT8 ; \
+        case 2:     return MGBASE_OPERATION_FETCH_##NAME##_INT16; \
+        case 4:     return MGBASE_OPERATION_FETCH_##NAME##_INT32; \
+        case 8:     return MGBASE_OPERATION_FETCH_##NAME##_INT64; \
         default:    MGBASE_UNREACHABLE(); \
     } \
 }
@@ -122,11 +122,11 @@ MGBASE_ALWAYS_INLINE void execute(const operation& opr) MGBASE_NOEXCEPT
         case MGBASE_OPERATION_STORE_RELEASE_INT32:  detail::execute_store_release<mgbase::int32_t>(opr);    break;
         case MGBASE_OPERATION_STORE_RELEASE_INT64:  detail::execute_store_release<mgbase::int64_t>(opr);    break;
         
-        #define DEFINE_FETCH_OP_CASE(op, OP)                                                                       \
-        case MGBASE_OPERATION_FETCH_##OP##_INT8:    detail::execute_fetch_##op<mgbase::int8_t >(opr);       break; \
-        case MGBASE_OPERATION_FETCH_##OP##_INT16:   detail::execute_fetch_##op<mgbase::int16_t>(opr);       break; \
-        case MGBASE_OPERATION_FETCH_##OP##_INT32:   detail::execute_fetch_##op<mgbase::int32_t>(opr);       break; \
-        case MGBASE_OPERATION_FETCH_##OP##_INT64:   detail::execute_fetch_##op<mgbase::int64_t>(opr);       break;
+        #define DEFINE_FETCH_OP_CASE(name, NAME, c_op)                                                             \
+        case MGBASE_OPERATION_FETCH_##NAME##_INT8:    detail::execute_fetch_##name<mgbase::int8_t >(opr);   break; \
+        case MGBASE_OPERATION_FETCH_##NAME##_INT16:   detail::execute_fetch_##name<mgbase::int16_t>(opr);   break; \
+        case MGBASE_OPERATION_FETCH_##NAME##_INT32:   detail::execute_fetch_##name<mgbase::int32_t>(opr);   break; \
+        case MGBASE_OPERATION_FETCH_##NAME##_INT64:   detail::execute_fetch_##name<mgbase::int64_t>(opr);   break;
         
         MGBASE_FETCH_OP_LIST(DEFINE_FETCH_OP_CASE)
         
@@ -155,19 +155,19 @@ MGBASE_ALWAYS_INLINE operation make_operation_store_release(volatile mgbase::ato
     return result;
 }
 
-#define DEFINE_MAKE_OPERATION(op, OP)   \
+#define DEFINE_MAKE_OPERATION(name, NAME, c_op) \
 template <typename A, typename C> \
-MGBASE_ALWAYS_INLINE operation make_operation_fetch_##op##_release(volatile A* const obj, const C val) MGBASE_NOEXCEPT { \
+MGBASE_ALWAYS_INLINE operation make_operation_fetch_##name##_release(volatile A* const obj, const C val) MGBASE_NOEXCEPT { \
     operation result = { \
-        detail::get_fetch_##op##_code(obj) \
+        detail::get_fetch_##name##_code(obj) \
     ,   detail::make_operands(obj, static_cast<mgbase::uint64_t>(val)) \
     }; \
     return result; \
 } \
 template <typename T> \
-MGBASE_ALWAYS_INLINE operation make_operation_fetch_##op##_release(volatile mgbase::atomic<T>* const obj, const T val) MGBASE_NOEXCEPT { \
+MGBASE_ALWAYS_INLINE operation make_operation_fetch_##name##_release(volatile mgbase::atomic<T>* const obj, const T val) MGBASE_NOEXCEPT { \
     operation result = { \
-        detail::get_fetch_##op##_code(obj) \
+        detail::get_fetch_##name##_code(obj) \
     ,   detail::make_operands(obj, static_cast<mgbase::uint64_t>(val)) \
     }; \
     return result; \
