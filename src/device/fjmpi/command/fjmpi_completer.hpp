@@ -42,7 +42,7 @@ public:
         MGBASE_LOG_DEBUG("msg:Try to get a new tag.\tproc:{}\tnic:{}", proc, local_nic);
         
         tag_queue_type& q = info_by_procs_[proc].by_nics[local_nic].free_tags;
-        if (q.empty())
+        if (MGBASE_UNLIKELY(q.empty()))
             return false;
         
         const int tag = q.front();
@@ -65,6 +65,7 @@ public:
         info_by_procs_[proc].by_nics[nic].by_tags[tag].on_complete = on_complete;
     }
     
+    MGBASE_ALWAYS_INLINE
     void poll_on_this_thread()
     {
         // RDMA polling
@@ -72,7 +73,7 @@ public:
         int tag;
         poll_nic(poll_nic_, &pid, &tag);
         
-        if (++poll_nic_ >= fjmpi_completer::max_nic_count)
+        if (MGBASE_UNLIKELY(++poll_nic_ >= fjmpi_completer::max_nic_count))
             poll_nic_ = 0;
         
         // MPI polling
@@ -80,6 +81,7 @@ public:
     }
     
 private:
+    MGBASE_ALWAYS_INLINE
     bool poll_nic(const int nic, int* const pid, int* const tag) MGBASE_NOEXCEPT
     {
         FJMPI_Rdma_cq cq;
@@ -119,6 +121,7 @@ private:
             return false;
     }
     
+    MGBASE_ALWAYS_INLINE
     void notify(const int nic, const int pid, const int tag) MGBASE_NOEXCEPT
     {
         nic_info& info = info_by_procs_[pid].by_nics[nic];

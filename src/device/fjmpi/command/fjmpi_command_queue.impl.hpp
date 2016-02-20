@@ -48,6 +48,7 @@ public:
     }
     
     // Thread-safe
+    MGBASE_ALWAYS_INLINE
     bool try_get(
         const int                   src_proc
     ,   const mgbase::uint64_t      laddr
@@ -84,6 +85,7 @@ public:
     }
     
     // Thread-safe
+    MGBASE_ALWAYS_INLINE
     bool try_put(
         const int                   dest_proc
     ,   const mgbase::uint64_t      laddr
@@ -92,6 +94,7 @@ public:
     ,   const int                   flags
     ,   const mgbase::operation&    on_complete
     ) {
+        asm volatile ("#try_put:1");
         const fjmpi_command_parameters::contiguous_parameters params = {
             dest_proc
         ,   laddr
@@ -101,12 +104,16 @@ public:
         ,   on_complete
         };
         
+        //asm volatile ("#try_put2");
         fjmpi_command_parameters fjmpi_params;
         fjmpi_params.contiguous = params;
         
+        //asm volatile ("#try_put3");
         const fjmpi_command cmd = { FJMPI_COMMAND_PUT, fjmpi_params };
+        //asm volatile ("#try_put4");
         
         const bool ret = queue_.try_push(cmd);
+        asm volatile ("#try_put5");
         MGBASE_LOG_DEBUG(
             "msg:{}\tdest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
         ,   (ret ? "Queued FJMPI_Rdma_put." : "Failed to queue FJMPI_Rdma_put.")
@@ -120,6 +127,7 @@ public:
     }
     
     // Thread-safe
+    MGBASE_ALWAYS_INLINE
     int select_flags()
     {
         const int result = send_nic_.fetch_add(1, mgbase::memory_order_relaxed);

@@ -26,14 +26,26 @@ void start_bench_thread(const mgbase::uint32_t thread_id)
         
         const mgcom::process_id_t target_proc = g_root_proc; // FIXME
         
-        mgcom::rma::remote_read_cb cb;
-        mgcom::rma::remote_read_nb(
+        //mgcom::rma::remote_read_cb cb;
+        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgcom::rma::remote_read_async(
+            //cb
+            target_proc
+        ,   g_remote_ptr
+        ,   local_buf
+        ,   1
+        ,   mgbase::make_operation_store_release(&flag, true)
+        );
+        
+        while (!flag.load(mgbase::memory_order_acquire)) { }
+        
+        /*mgcom::rma::remote_read_nb(
             cb
         ,   target_proc
         ,   g_remote_ptr
         ,   local_buf
         )
-        .wait();
+        .wait();*/
         
         g_clocks[thread_id] += sw.elapsed();
         
