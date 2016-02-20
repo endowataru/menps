@@ -16,6 +16,7 @@ add_library(mgbase-header INTERFACE)
 target_include_directories(mgbase-header
     INTERFACE ./include
     INTERFACE ./external
+    INTERFACE ./external/cmdline
     INTERFACE ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_compile_definitions(mgbase-header

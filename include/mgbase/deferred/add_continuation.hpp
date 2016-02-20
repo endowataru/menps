@@ -84,7 +84,7 @@ deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB&
         current_cont->set(
             mgbase::make_callback_function(
                 mgbase::bind1st_of_2(
-                    MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE((&detail::add_continuation_pass<Signature, Func, CB, T>))
+                    MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&detail::add_continuation_pass<Signature, Func, CB, T>)
                 ,   mgbase::wrap_reference(cb)
                 )
             )
