@@ -1,11 +1,7 @@
 
 #pragma once
 
-#error "Deprecated"
-
 #include <mgbase/memory_order.h>
-
-MGBASE_EXTERN_C_BEGIN
 
 #define MGBASE_C_ATOMIC_LIST(x)  \
     x(bool                     ,   bool            )    \
@@ -45,136 +41,27 @@ MGBASE_EXTERN_C_BEGIN
     x(mgbase_intmax_t          ,   intmax_t        )    \
     x(mgbase_uintmax_t         ,   uintmax_t       )
 
+
 #ifdef MGBASE_CPLUSPLUS
+    namespace mgbase {
+    
+        template <typename T>
+        class atomic;
+    
+    } // namespace mgbase
+    
     #define DEFINE_TYPE(T, name) \
-        typedef struct mgbase_atomic_##name { \
-            typedef T   value_type; /*nonstandard*/ \
-            volatile T val; \
-        } \
-        mgbase_atomic_##name;
+        namespace mgbase { typedef atomic<T> atomic_##name; } \
+        typedef mgbase::atomic_##name mgbase_atomic_##name;
 #else
-    #define DEFINE_TYPE(T, name) \
-        typedef struct mgbase_atomic_##name { \
-            volatile T val; \
-        } \
-        mgbase_atomic_##name;
+    #error
 #endif
 
 MGBASE_C_ATOMIC_LIST(DEFINE_TYPE)
 
 #undef DEFINE_TYPE
 
-MGBASE_EXTERN_C_END
-
 #ifdef MGBASE_CPLUSPLUS
-    #include "atomic_base.hpp"
-    
-    namespace /*unnamed*/ {
-    
-    template <typename A>
-    MGBASE_ALWAYS_INLINE typename A::value_type mgbase_atomic_load_explicit(
-        volatile A* const           obj
-    ,   const mgbase_memory_order   order
-    ) MGBASE_NOEXCEPT
-    {
-        return mgbase::detail::load(&obj->val, order);
-    }
-    template <typename A>
-    MGBASE_ALWAYS_INLINE typename A::value_type mgbase_atomic_load(
-        volatile A* const   obj
-    ) MGBASE_NOEXCEPT
-    {
-        return mgbase_atomic_load_explicit(obj, mgbase_memory_order_seq_cst);
-    }
-    
-    template <typename A, typename C>
-    MGBASE_ALWAYS_INLINE void mgbase_atomic_store_explicit(
-        volatile A* const           obj
-    ,   const C                     desired
-    ,   const mgbase_memory_order   order
-    ) MGBASE_NOEXCEPT
-    {
-        mgbase::detail::store(&obj->val, desired, order);
-    }
-    template <typename A, typename C>
-    MGBASE_ALWAYS_INLINE void mgbase_atomic_store(
-        volatile A* const   obj
-    ,   const C             desired
-    ) MGBASE_NOEXCEPT
-    {
-        mgbase_atomic_store_explicit(obj, desired, mgbase_memory_order_seq_cst);
-    }
-    
-    template <typename A, typename C>
-    MGBASE_ALWAYS_INLINE bool mgbase_atomic_compare_exchange_strong_explicit(
-        volatile A* const           obj
-    ,   C* const                    expected
-    ,   C const                     desired
-    ,   const mgbase_memory_order   success
-    ,   const mgbase_memory_order   failure
-    ) MGBASE_NOEXCEPT
-    {
-        return mgbase::detail::compare_exchange_strong(&obj->val, expected, desired, success, failure);
-    }
-    template <typename A, typename C>
-    MGBASE_ALWAYS_INLINE bool mgbase_atomic_compare_exchange_strong(
-        volatile A* const           obj
-    ,   C* const                    expected
-    ,   C const                     desired
-    ) MGBASE_NOEXCEPT
-    {
-        return mgbase_atomic_compare_exchange_strong_explicit(&obj->val, expected, desired,
-            mgbase_memory_order_seq_cst, mgbase_memory_order_seq_cst);
-    }
-    
-    template <typename A, typename C>
-    MGBASE_ALWAYS_INLINE bool mgbase_atomic_compare_exchange_weak_explicit(
-        volatile A* const           obj
-    ,   C* const                    expected
-    ,   C const                     desired
-    ,   const mgbase_memory_order   success
-    ,   const mgbase_memory_order   failure
-    ) MGBASE_NOEXCEPT
-    {
-        return mgbase::detail::compare_exchange_weak(&obj->val, expected, desired, success, failure);
-    }
-    template <typename A, typename C>
-    MGBASE_ALWAYS_INLINE bool mgbase_atomic_compare_exchange_weak(
-        volatile A* const           obj
-    ,   C* const                    expected
-    ,   C const                     desired
-    ) MGBASE_NOEXCEPT
-    {
-        return mgbase_atomic_compare_exchange_weak_explicit(&obj->val, expected, desired,
-            mgbase_memory_order_seq_cst, mgbase_memory_order_seq_cst);
-    }
-    
-    #define DEFINE_FETCH_OP(op, OP) \
-        template <typename A, typename C> \
-        MGBASE_ALWAYS_INLINE C mgbase_atomic_fetch_##op##_explicit( \
-            volatile A* const           obj \
-        ,   C const                     arg \
-        ,   const mgbase_memory_order   order \
-        ) { \
-            return mgbase::detail::fetch_##op(&obj->val, arg, order); \
-        } \
-        template <typename A, typename C> \
-        MGBASE_ALWAYS_INLINE C mgbase_atomic_fetch_##op( \
-            volatile A* const           obj \
-        ,   C const                     arg \
-        ) { \
-            return mgbase_atomic_fetch_##op##_explicit(&obj->val, arg, mgbase_memory_order_seq_cst); \
-        }
-    
-    MGBASE_FETCH_OP_LIST(DEFINE_FETCH_OP)
-    
-    #undef DEFINE_FETCH_OP
-    
-    } // unnamed namespace
-    
-#else
-    // Please implement the standard-compliant atomic operations in C by yourself
-    // if you are a C fanatic.
+    #include "atomic.hpp"
 #endif
-
 

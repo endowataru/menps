@@ -1,6 +1,5 @@
 
 #pragma once
 
-#include <mgbase/atomic2/atomic.hpp>
-#include <mgbase/atomic2/atomic.h>
+#include <mgbase/atomic/atomic.h>
 
