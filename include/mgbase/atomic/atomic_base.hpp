@@ -24,7 +24,11 @@ MGBASE_ALWAYS_INLINE void fence_after_load(const memory_order order) MGBASE_NOEX
     // If the memory order is acquire or consume or seq_cst,
     // prevent from advancing the following operations.
     
-    #ifdef MGBASE_ARCH_SPARC
+    #ifdef MGBASE_ARCH_SPARC64_IXFX
+        // SPARC64 IXfx (TSO only)
+        if (order == memory_order_seq_cst)
+            __asm__ __volatile__ ("membar #Sync" ::: "memory");
+    #elif MGBASE_ARCH_SPARC
         // SPARC
         if (order == memory_order_seq_cst)
             __asm__ __volatile__ ("membar #Sync" ::: "memory");
@@ -42,7 +46,11 @@ MGBASE_ALWAYS_INLINE void fence_before_store(const memory_order order) MGBASE_NO
     // If the memory order is release or seq_cst,
     // prevent from postponing the preceding operations.
     
-    #ifdef MGBASE_ARCH_SPARC
+    #ifdef MGBASE_ARCH_SPARC64_IXFX
+        // SPARC64 IXfx (TSO only)
+        if (order == memory_order_seq_cst)
+            __asm__ __volatile__ ("membar #Sync" ::: "memory");
+    #elif MGBASE_ARCH_SPARC
         // SPARC
         if (order == memory_order_seq_cst)
             __asm__ __volatile__ ("membar #Sync" ::: "memory");

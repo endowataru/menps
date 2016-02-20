@@ -15,6 +15,13 @@
     #define MGBASE_CACHE_LINE_SIZE  64
 #endif
 
+#if (defined(__sparc))
+    #define MGBASE_ARCH_SPARC_V9
+    
+    // FIXME: How to detect SPARC64 IXfx extensions?
+    #define MGBASE_ARCH_SPARC64_IXFX
+#endif
+
 // Compiler Compatibility
 
 #ifdef __FUJITSU

@@ -34,11 +34,13 @@ public:
     
     ~mpsc_circular_buffer() MGBASE_EMPTY_DEFINITION
     
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     bool try_push(const T& value)
     {
         return try_push_multiple(&value, 1);
     }
     
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     bool try_push_multiple(const T* values, mgbase::size_t number_of_values)
     {
         mgbase::size_t tail;
@@ -63,6 +65,7 @@ public:
         return true;
     }
     
+    MGBASE_ALWAYS_INLINE
     T* peek() const
     {
         if (counter_.empty()) {
@@ -86,6 +89,7 @@ public:
         return &elem.value;
     }
     
+    MGBASE_ALWAYS_INLINE
     void pop()
     {
         element& elem = buf_[counter_.front()];

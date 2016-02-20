@@ -18,6 +18,7 @@ class mpsc_circular_buffer_counter_base
     : mgbase::noncopyable
 {
 public:
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     bool try_enqueue(const Index diff, Index* const tail_result)
     {
         MGBASE_ASSERT(diff < derived().size());
@@ -71,6 +72,7 @@ public:
         
     }
     
+    MGBASE_ALWAYS_INLINE
     bool empty() const
     {
         // Load "tail" and "head".
@@ -83,12 +85,14 @@ public:
         return ret;
     }
     
+    MGBASE_ALWAYS_INLINE
     Index front() const MGBASE_NOEXCEPT
     {
         const Index head = head_.load(mgbase::memory_order_relaxed);
         return count_to_index(head);
     }
     
+    MGBASE_ALWAYS_INLINE
     void dequeue()
     {
         const Index head = head_.load(mgbase::memory_order_relaxed);
@@ -112,6 +116,7 @@ protected:
     mpsc_circular_buffer_counter_base() { }
     
 private:
+    MGBASE_ALWAYS_INLINE
     Index count_to_index(const Index count) const MGBASE_NOEXCEPT
     {
         // If the index is a constant expression and a power of 2,
