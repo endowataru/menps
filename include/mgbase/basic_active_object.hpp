@@ -35,7 +35,7 @@ protected:
 private:
     void loop()
     {
-        while (!finished_)
+        while (MGBASE_LIKELY(!finished_))
         {
             // Check the queue.
             if (Closure* closure = derived().peek_queue())

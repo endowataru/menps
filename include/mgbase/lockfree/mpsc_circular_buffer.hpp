@@ -34,6 +34,38 @@ public:
     
     ~mpsc_circular_buffer() MGBASE_EMPTY_DEFINITION
     
+    template <typename Func>
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+    bool try_push_with_functor(Func func) {
+        return try_multiple_push_with_functor(func, 1);
+    }
+    
+    template <typename Func>
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+    bool try_multiple_push_with_functor(Func func, const mgbase::size_t number_of_values)
+    {
+        mgbase::size_t tail;
+        if (!counter_.try_enqueue(number_of_values, &tail))
+            return false;
+        
+        for (mgbase::size_t i = 0; i < number_of_values; ++i)
+        {
+            const mgbase::size_t index = (tail + i) % counter_.size();
+            element* const elem = &buf_[index];
+            
+            MGBASE_ASSERT(!elem->visible.load());
+            
+            func(&elem->value);
+            
+            if (i == (number_of_values - 1))
+                elem->visible.store(true, mgbase::memory_order_release);
+            else
+                elem->visible.store(true, mgbase::memory_order_relaxed);
+        }
+        
+        return true;
+    }
+    
     MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     bool try_push(const T& value)
     {
