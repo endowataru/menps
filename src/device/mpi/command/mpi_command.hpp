@@ -80,7 +80,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
     if (code < static_cast<mpi_command_code>(BASIC_COMMAND_END)) {
     }
     
-    MGBASE_ASSERT(MPI_COMMAND_IRECV <= code && code < MPI_COMMAND_END);
+    //MGBASE_ASSERT(MPI_COMMAND_IRECV <= code && code < MPI_COMMAND_END);
     
     switch (code)
     {

@@ -9,7 +9,7 @@ namespace fjmpi {
 
 enum fjmpi_command_code
 {
-    FJMPI_COMMAND_GET = mpi::MPI_COMMAND_END
+    FJMPI_COMMAND_GET = mpi::MPI_COMMAND_END + 1
 ,   FJMPI_COMMAND_PUT
 ,   FJMPI_COMMAND_END
 };
