@@ -162,6 +162,10 @@ int main(int argc, char* argv[])
         mgcom::collective::barrier();
     }
     
+    if (mgcom::current_process_id() == 0) {
+        std::cout << std::endl;
+    }
+    
     mgcom::finalize();
     
     return 0;
