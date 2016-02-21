@@ -126,11 +126,11 @@ MGBASE_ALWAYS_INLINE bool compare_exchange_strong(
     return compare_exchange_weak(obj, expected, desired, success, failure);
 }
 
-#define DEFINE_FETCH_OP(op, OP) \
+#define DEFINE_FETCH_OP(name, NAME, opr) \
     template <typename T> \
-    MGBASE_ALWAYS_INLINE T fetch_##op(volatile T* const obj, const T arg, const memory_order /*order*/) MGBASE_NOEXCEPT \
+    MGBASE_ALWAYS_INLINE T fetch_##name(volatile T* const obj, const T arg, const memory_order /*order*/) MGBASE_NOEXCEPT \
     { \
-        const T old = __sync_fetch_and_##op(obj, arg); \
+        const T old = __sync_fetch_and_##name(obj, arg); \
         return old; \
     }
 
