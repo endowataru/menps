@@ -19,12 +19,16 @@ try:
 except IndexError:
     x_name = 'number_of_processes'
 
+print("Loading yaml...")
 data = yaml.load(open(file_path).read().decode('utf-8'))
+
+print(data)
 
 results = defaultdict(list)
 
 alpha = 0.95
 
+print("Processing...")
 for execution in data:
     samples = []
     for process_result in execution['process_results']:
