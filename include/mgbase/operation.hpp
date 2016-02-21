@@ -95,8 +95,7 @@ MGBASE_FETCH_OP_LIST(DEFINE_FETCH_OP)
 
 namespace /*unnamed*/ {
 
-/*MGBASE_ALWAYS_INLINE*/
-MGBASE_NOINLINE void execute(const operation& opr) MGBASE_NOEXCEPT
+MGBASE_ALWAYS_INLINE void execute(const operation& opr) MGBASE_NOEXCEPT
 {
     MGBASE_ASSERT(0 <= opr.code && opr.code < MGBASE_OPERATION_END);
     
