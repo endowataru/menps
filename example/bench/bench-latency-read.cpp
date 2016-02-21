@@ -15,7 +15,7 @@ mgbase::uint64_t g_num_startup_samples;
 mgbase::scoped_ptr<double [/*g_num_threads*/]> g_clocks_sum;
 mgbase::scoped_ptr<double [/*g_num_threads*/]> g_clocks_sum_squared;
 mgcom::process_id_t g_root_proc;
-mgcom::rma::remote_pointer<int> g_remote_ptr;
+mgbase::scoped_ptr<mgcom::rma::remote_pointer<int> []> g_remote_ptrs;
 
 void record_sample(const mgbase::uint32_t thread_id, const double clocks)
 {
@@ -52,7 +52,7 @@ void start_bench_thread(const mgbase::uint32_t thread_id)
         mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
         mgcom::rma::remote_read_async(
             target_proc
-        ,   g_remote_ptr
+        ,   g_remote_ptrs[target_proc]
         ,   local_buf
         ,   1
         ,   mgbase::make_operation_store_release(&flag, true)
@@ -73,10 +73,17 @@ void start_bench()
     mgcom::rma::local_pointer<int> local_ptr
         = mgcom::rma::allocate<int>();
     
-    //const mgcom::process_id_t root_proc = 0;
-    mgcom::collective::broadcast(g_root_proc, &local_ptr, 1);
+    mgbase::scoped_ptr<mgcom::rma::local_pointer<int> []> local_ptrs(
+        new mgcom::rma::local_pointer<int>[mgcom::number_of_processes()]
+    );
     
-    g_remote_ptr = mgcom::rma::use_remote_pointer(g_root_proc, local_ptr);
+    //const mgcom::process_id_t root_proc = 0;
+    //mgcom::collective::broadcast(g_root_proc, &local_ptr, 1);
+    mgcom::collective::allgather(&local_ptr, &local_ptrs[0], 1);
+    
+    g_remote_ptrs = new mgcom::rma::remote_pointer<int>[mgcom::number_of_processes()];
+    for (mgcom::process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
+        g_remote_ptrs[proc] = mgcom::rma::use_remote_pointer(proc, local_ptrs[proc]);
     
     //if (mgcom::current_process_id() == g_root_proc)
     *local_ptr = mgcom::current_process_id() * 100;
