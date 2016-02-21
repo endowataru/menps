@@ -9,7 +9,7 @@ namespace fjmpi {
 
 enum fjmpi_command_code
 {
-    FJMPI_COMMAND_GET = mpi::MPI_COMMAND_END + 1
+    FJMPI_COMMAND_GET = mpi::MPI_COMMAND_END
 ,   FJMPI_COMMAND_PUT
 ,   FJMPI_COMMAND_END
 };
@@ -33,6 +33,14 @@ namespace detail {
 
 MGBASE_ALWAYS_INLINE int get_local_nic_from_flag(const int flags)
 {
+    MGBASE_STATIC_ASSERT(FJMPI_RDMA_LOCAL_NIC0 == 0);
+    MGBASE_STATIC_ASSERT(FJMPI_RDMA_LOCAL_NIC1 == 1);
+    MGBASE_STATIC_ASSERT(FJMPI_RDMA_LOCAL_NIC2 == 2);
+    MGBASE_STATIC_ASSERT(FJMPI_RDMA_LOCAL_NIC3 == 3);
+    
+    return flags & 0x03;
+    
+    /*
     const int filter = FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_LOCAL_NIC3;
     
     switch (flags & filter)
@@ -42,7 +50,7 @@ MGBASE_ALWAYS_INLINE int get_local_nic_from_flag(const int flags)
         case FJMPI_RDMA_LOCAL_NIC2: return 2;
         case FJMPI_RDMA_LOCAL_NIC3: return 3;
         default:                    MGBASE_UNREACHABLE();
-    }
+    }*/
 }
 
 } // namespace detail
@@ -52,14 +60,6 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
 ,   const fjmpi_command_parameters& params
 ,   fjmpi_completer&                completer
 ) {
-    if (code < static_cast<fjmpi_command_code>(mpi::MPI_COMMAND_END)) {
-        return mpi::execute_on_this_thread(
-            static_cast<mpi::mpi_command_code>(code)
-        ,   params.mpi1
-        ,   completer.get_mpi1_completer()
-        );
-    }
-    
     switch (code)
     {
         case FJMPI_COMMAND_GET: {
@@ -126,8 +126,13 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             return found_tag;
         }
         
-        default:
-            MGBASE_UNREACHABLE();
+        default: {
+            return mpi::execute_on_this_thread(
+                static_cast<mpi::mpi_command_code>(code)
+            ,   params.mpi1
+            ,   completer.get_mpi1_completer()
+            );
+        }
     }
 }
 

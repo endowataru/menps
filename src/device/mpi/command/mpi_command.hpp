@@ -78,10 +78,6 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
 ,   mpi_completer&                  completer
 ) {
     if (code < static_cast<mpi_command_code>(BASIC_COMMAND_END)) {
-        return execute_on_this_thread(
-            static_cast<basic_command_code>(code)
-        ,   params.basic
-        );
     }
     
     MGBASE_ASSERT(MPI_COMMAND_IRECV <= code && code < MPI_COMMAND_END);
@@ -224,9 +220,12 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
         }
         
         case MPI_COMMAND_END:
-        default:
-            MGBASE_UNREACHABLE();
-            break;
+        default: {
+            return execute_on_this_thread(
+                static_cast<basic_command_code>(code)
+            ,   params.basic
+            );
+        }
     }
 }
 

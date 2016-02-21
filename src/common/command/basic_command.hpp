@@ -24,8 +24,6 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
     const basic_command_code        code
 ,   const basic_command_parameters& params
 ) {
-    MGBASE_ASSERT(code < BASIC_COMMAND_END);
-    
     switch (code)
     {
         case BASIC_COMMAND_CALL: {
@@ -39,6 +37,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
         
         case BASIC_COMMAND_END:
         default:
+            MGBASE_ASSERT(code < BASIC_COMMAND_END);
             MGBASE_UNREACHABLE();
             break;
     }

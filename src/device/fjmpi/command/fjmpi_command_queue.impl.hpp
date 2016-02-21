@@ -47,6 +47,30 @@ public:
         completer_.finalize();
     }
     
+private:
+    struct get_parameters {
+        const int*                  src_proc;
+        const mgbase::uint64_t*     laddr;
+        const mgbase::uint64_t*     raddr;
+        const std::size_t*          size_in_bytes;
+        const int*                  flags;
+        const mgbase::operation*    on_complete;
+    };
+    
+    static void assign_get(const get_parameters& params, fjmpi_command* cmd)
+    {
+        cmd->code = FJMPI_COMMAND_GET;
+        
+        fjmpi_command_parameters::contiguous_parameters& cont_params = cmd->params.contiguous;
+        cont_params.proc            = *params.src_proc;
+        cont_params.laddr           = *params.laddr;
+        cont_params.raddr           = *params.raddr;
+        cont_params.size_in_bytes   = *params.size_in_bytes;
+        cont_params.flags           = *params.flags;
+        cont_params.on_complete     = *params.on_complete;
+    }
+    
+public:
     // Thread-safe
     MGBASE_ALWAYS_INLINE
     bool try_get(
@@ -57,7 +81,8 @@ public:
     ,   const int                   flags
     ,   const mgbase::operation&    on_complete
     ) {
-        const fjmpi_command_parameters::contiguous_parameters params = {
+        
+        /*const fjmpi_command_parameters::contiguous_parameters params = {
             src_proc
         ,   laddr
         ,   raddr
@@ -71,7 +96,23 @@ public:
         
         const fjmpi_command cmd = { FJMPI_COMMAND_GET, fjmpi_params };
         
-        const bool ret = queue_.try_push(cmd);
+        const bool ret = queue_.try_push(cmd);*/
+        const get_parameters params = {
+            &src_proc
+        ,   &laddr
+        ,   &raddr
+        ,   &size_in_bytes
+        ,   &flags
+        ,   &on_complete
+        };
+        
+        const bool ret = queue_.try_push_with_functor(
+            mgbase::bind1st_of_2(
+                MGBASE_MAKE_INLINED_FUNCTION(&assign_get)
+            ,   mgbase::wrap_reference(params)
+            )
+        );
+        
         MGBASE_LOG_DEBUG(
             "msg:{}\tsrc_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
         ,   (ret ? "Queued FJMPI_Rdma_get." : "Failed to queue FJMPI_Rdma_get.")
