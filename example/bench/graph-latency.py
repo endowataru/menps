@@ -55,10 +55,19 @@ for k, v in results.items():
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
+
+#ax.plot(4366.7)
+
 ax.errorbar(x_list, y_list,
     yerr = (-1 * np.array([ e[0] for e in error_list]), [ e[1] for e in error_list]),
     marker = 'o')
-ax.set_xlim(0, 5)
+ax.set_xlim(min(x_list)-1, max(x_list)+1)
+ax.set_ylim(0, 7000)
+ax.set_xlabel("Number of Processes")
+ax.set_ylabel("Latency [cycles]")
+
+plt.savefig("fig.pdf")
+
 plt.show()
 
 print(results)
