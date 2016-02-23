@@ -73,7 +73,7 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             if (MGBASE_LIKELY(found_tag))
             {
                 fjmpi_error::assert_zero(
-                    FJMPI_Rdma_get(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, p.flags)
+                    FJMPI_Rdma_get(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, p.flags | FJMPI_RDMA_IMMEDIATE_RETURN)
                 );
                 
                 completer.set_notification(p.proc, nic, tag, p.on_complete);
