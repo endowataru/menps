@@ -64,7 +64,7 @@ public:
                 = mgcom::rma::use_remote_pointer(proc, remote_receiver_bufs[proc]);
         }
         
-        MGBASE_LOG_DEBUG("msg:Initialized RPC connection pool.")
+        MGBASE_LOG_DEBUG("msg:Initialized RPC connection pool.");
     }
     
     void finalize()
@@ -79,7 +79,7 @@ public:
         
         manager_.finalize();
         
-        MGBASE_LOG_DEBUG("msg:Finalized RPC connection pool.")
+        MGBASE_LOG_DEBUG("msg:Finalized RPC connection pool.");
     }
     
     struct sender_info
