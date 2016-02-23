@@ -8,6 +8,8 @@
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/lock_guard.hpp>
 
+#include <mgbase/profiling/stopwatch.hpp>
+
 namespace mgcom {
 namespace mpi {
 
@@ -19,10 +21,11 @@ std::string get_state()
     
     fmt::MemoryWriter w;
     w.write(
-        "proc:{}\tthread:{:x}\tlog_id:{}\t"
+        "proc:{}\tthread:{:x}\tlog_id:{}\tclock:{}\t"
     ,   current_process_id()
     ,   mgbase::this_thread::get_id().to_integer()
     ,   number++
+    ,   mgbase::get_cpu_clock() // TODO
     );
     return w.str();
 }
