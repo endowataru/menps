@@ -143,9 +143,9 @@ public:
     
     circular_buffer() : ptr_(), capacity_(0) { }
     
-    explicit circular_buffer(const size_type capacity)
+    explicit circular_buffer(const size_type cap)
     {
-        set_capacity(capacity);
+        set_capacity(cap);
     }
     
     ~circular_buffer() MGBASE_EMPTY_DEFINITION
