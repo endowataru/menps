@@ -61,7 +61,12 @@ make_callback_function(bound1st_of_1<inlined_function<Result (*)(Arg1&), Func>, 
     Result (* const func)(void*) = &detail::pass_ref1<Result, Arg1, Func>;
     Arg1& arg1 = bound.arg1();
     
-    return callback_function<Result ()>::create(func, &arg1);
+    // Implicitly cast to void* first.
+    const volatile void* arg1_cv_ptr = &arg1;
+    // Remove CV.
+    void* const arg1_ptr = const_cast<void*>(arg1_cv_ptr);
+    
+    return callback_function<Result ()>::create(func, arg1_ptr);
 }
 
 template <typename Result, typename Arg1, typename Arg2, Result (* Func)(Arg1&, Arg2), typename A1>
@@ -71,7 +76,12 @@ make_callback_function(bound1st_of_2<inlined_function<Result (*)(Arg1&, Arg2), F
     Result (* const func)(void*, Arg2) = &detail::pass_ref1<Result, Arg1, Arg2, Func>;
     Arg1& arg1 = bound.arg1();
     
-    return callback_function<Result (Arg2)>::create(func, &arg1);
+    // Implicitly cast to void* first.
+    const volatile void* arg1_cv_ptr = &arg1;
+    // Remove CV.
+    void* const arg1_ptr = const_cast<void*>(arg1_cv_ptr);
+    
+    return callback_function<Result (Arg2)>::create(func, arg1_ptr);
 }
 
 namespace detail {

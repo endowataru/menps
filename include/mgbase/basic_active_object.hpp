@@ -33,7 +33,7 @@ protected:
     }
     
 private:
-    void loop()
+    /*void loop()
     {
         while (MGBASE_LIKELY(!finished_))
         {
@@ -55,6 +55,12 @@ private:
             // Do polling.
             derived().poll();
         }
+    }*/
+    
+    void loop()
+    {
+        while (MGBASE_LIKELY(!finished_))
+            derived().process();
     }
     
     class starter

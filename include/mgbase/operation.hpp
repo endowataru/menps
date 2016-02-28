@@ -1,6 +1,10 @@
 
 #pragma once
 
+#include "operation2.hpp"
+
+#if 0
+
 #include <mgbase/operation.h>
 #include <mgbase/callback_function.hpp>
 #include <mgbase/atomic.hpp>
@@ -188,4 +192,6 @@ MGBASE_ALWAYS_INLINE operation make_operation_call(const callback_function<Signa
 } // unnamed namespace
 
 } // namespace mgbase
+
+#endif
 

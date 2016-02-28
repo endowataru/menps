@@ -1,6 +1,10 @@
 
 #pragma once
 
+#include "operation2.h"
+
+#if 0
+
 #include <mgbase/lang.h>
 #include <mgbase/callback_function.h>
 #include <mgbase/atomic.h>
@@ -52,4 +56,6 @@ typedef struct mgbase_operation
 mgbase_operation;
 
 MGBASE_EXTERN_C_END
+
+#endif
 
