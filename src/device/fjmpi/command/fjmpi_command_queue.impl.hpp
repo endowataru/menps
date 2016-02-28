@@ -201,10 +201,10 @@ private:
                 MGBASE_LOG_DEBUG("msg:Operation failed. Postponed.");
             }
         }
-        else {
-            // Do polling.
-            poll();
-        }
+        
+        // Do polling.
+        // Note: Disabling this polling may cause a deadlock in RmaBasic.ConcurrentGet.
+        poll();
     }
     
     MGBASE_ALWAYS_INLINE fjmpi_command* peek_queue() { return queue_.peek(); }
