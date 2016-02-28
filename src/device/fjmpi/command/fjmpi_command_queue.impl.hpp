@@ -109,6 +109,30 @@ public:
         return ret;
     }
     
+private:
+    struct put_parameters {
+        const int*                  dest_proc;
+        const mgbase::uint64_t*     laddr;
+        const mgbase::uint64_t*     raddr;
+        const std::size_t*          size_in_bytes;
+        const int*                  flags;
+        const mgbase::operation*    on_complete;
+    };
+    
+    static void assign_put(const put_parameters& params, fjmpi_command* cmd)
+    {
+        cmd->code = FJMPI_COMMAND_PUT;
+        
+        fjmpi_command_parameters::contiguous_parameters& cont_params = cmd->params.contiguous;
+        cont_params.proc            = *params.dest_proc;
+        cont_params.laddr           = *params.laddr;
+        cont_params.raddr           = *params.raddr;
+        cont_params.size_in_bytes   = *params.size_in_bytes;
+        cont_params.flags           = *params.flags;
+        cont_params.on_complete     = *params.on_complete;
+    }
+    
+public:
     // Thread-safe
     MGBASE_ALWAYS_INLINE
     bool try_put(
@@ -119,28 +143,24 @@ public:
     ,   const int                   flags
     ,   const mgbase::operation&    on_complete
     ) {
-        asm volatile ("#try_put:1");
-        const fjmpi_command_parameters::contiguous_parameters params = {
-            dest_proc
-        ,   laddr
-        ,   raddr
-        ,   size_in_bytes
-        ,   flags
-        ,   on_complete
+        const put_parameters params = {
+            &dest_proc
+        ,   &laddr
+        ,   &raddr
+        ,   &size_in_bytes
+        ,   &flags
+        ,   &on_complete
         };
         
-        //asm volatile ("#try_put2");
-        fjmpi_command_parameters fjmpi_params;
-        fjmpi_params.contiguous = params;
+        const bool ret = queue_.try_push_with_functor(
+            mgbase::bind1st_of_2(
+                MGBASE_MAKE_INLINED_FUNCTION(&assign_put)
+            ,   mgbase::wrap_reference(params)
+            )
+        );
         
-        //asm volatile ("#try_put3");
-        const fjmpi_command cmd = { FJMPI_COMMAND_PUT, fjmpi_params };
-        //asm volatile ("#try_put4");
-        
-        const bool ret = queue_.try_push(cmd);
-        asm volatile ("#try_put5");
         MGBASE_LOG_DEBUG(
-            "msg:{}\tdest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
+            "msg:{}\tsrc_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}"
         ,   (ret ? "Queued FJMPI_Rdma_put." : "Failed to queue FJMPI_Rdma_put.")
         ,   dest_proc
         ,   laddr
