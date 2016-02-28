@@ -71,7 +71,7 @@ TEST_F(RmaBasic, ConcurrentGet)
         ,   rptr
         ,   *itr
         ,   1
-        ,   mgbase::make_operation_fetch_add_release(&count, 1)
+        ,   mgbase::make_operation_fetch_add_release(&count, static_cast<mgbase::uint64_t>(1))
         );
     }
     

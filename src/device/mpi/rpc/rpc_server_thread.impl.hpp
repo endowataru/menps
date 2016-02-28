@@ -81,7 +81,7 @@ private:
         ,   &status
         ,   mgbase::make_operation_call(
                 mgbase::make_callback_function(
-                    mgbase::bind1st_of_1(
+                    mgbase::bind1st_of_2(
                         MGBASE_MAKE_INLINED_FUNCTION(&rpc_server_thread::notify)
                     ,   mgbase::wrap_reference(*this)
                     )
@@ -149,7 +149,7 @@ private:
         }
     }
     
-    static void notify(rpc_server_thread& self) {
+    static void notify(rpc_server_thread& self, const mgbase::operation&) {
         mgbase::unique_lock<mgbase::mutex> lc(self.mtx_);
         self.ready_ = true;
         self.cv_.notify_one();

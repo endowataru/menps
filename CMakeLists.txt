@@ -155,3 +155,12 @@ foreach(device IN LISTS mgcom-devices)
     endforeach()
 endforeach()
 
+# Raw Benchmark
+
+#if (${is_fjmpi_available})
+#    add_executable(raw-latency
+#        example/raw/latency.cpp
+#    )
+#    target_link_libraries(raw-latency mgbase)
+#endif()
+

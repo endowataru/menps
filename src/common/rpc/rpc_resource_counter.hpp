@@ -2,6 +2,10 @@
 #pragma once
 
 #include <mgcom/rpc.hpp>
+#include <mgbase/threading/spinlock.hpp>
+#include <mgbase/atomic.hpp>
+#include <mgbase/logger.hpp>
+#include <mgbase/external/cppformat.hpp>
 
 namespace mgcom {
 namespace rpc {

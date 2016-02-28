@@ -68,6 +68,27 @@ private:
     
 private:
     friend class mgbase::basic_active_object<mpi3_command_queue, mpi3_command>;
+     
+    void process()
+    {
+        // Check the queue.
+        if (mpi3_command* closure = peek_queue())
+        {
+            // Call the closure.
+            const bool succeeded = execute(*closure);
+            
+            if (succeeded) {
+                MGBASE_LOG_DEBUG("msg:Operation succeeded.");
+                pop_queue();
+            }
+            else {
+                MGBASE_LOG_DEBUG("msg:Operation failed. Postponed.");
+            }
+        }
+        
+        // Do polling.
+        poll();
+    }
     
     mpi3_command* peek_queue() { return queue_.peek(); }
     

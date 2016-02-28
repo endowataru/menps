@@ -4,11 +4,20 @@
 #include <mgbase/scoped_ptr.hpp>
 #include <mgbase/thread.hpp>
 #include <mgbase/external/cmdline.hpp>
+#include <mgbase/external/cppformat.hpp>
 #include <iostream>
 #include <fstream>
 #include <vector>
 
+#include <mgbase/logging/queueing_logger.hpp>
+
 #include <cmath>
+
+#include <mgbase/profiling/average_accumulator.hpp>
+#include <mgbase/profiling/stopwatch.hpp>
+
+/*extern mgbase::average_accumulator<mgbase::cpu_clock_t> g_get_cycles;
+extern mgbase::average_accumulator<mgbase::cpu_clock_t> g_poll_cycles;*/
 
 mgbase::uint32_t g_num_threads;
 mgbase::uint64_t g_num_trials;
@@ -163,6 +172,7 @@ int main(int argc, char* argv[])
                 fmt::print(ofs, "          latency: {{ average: {}, stddev: {} }} # [clocks]\n",
                     latency_average, latency_stddev);
             }
+            
         }
         
         mgcom::collective::barrier();
@@ -173,6 +183,15 @@ int main(int argc, char* argv[])
     }
     
     mgcom::finalize();
+    
+    if (mgcom::current_process_id() == 0) // TODO: finalized
+    {
+        /*std::cout << g_get_cycles.summary() << std::endl;
+        std::cout << g_poll_cycles.summary() << std::endl;*/
+        
+        const std::string header = fmt::format("proc:{}\t", mgcom::current_process_id());
+        mgbase::queueing_logger::show(header.c_str());
+    }
     
     return 0;
 }

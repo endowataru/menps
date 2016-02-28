@@ -28,7 +28,7 @@ class fjmpi_command_queue
     typedef mgbase::basic_active_object<fjmpi_command_queue, fjmpi_command> base;
     
     static const index_t queue_size = 256 * 256; // TODO
-    static const int number_of_flag_patterns = 4 * 4;
+    static const int number_of_flag_patterns = 4 /** 4*/;
     
 public:
     void initialize()
@@ -81,22 +81,6 @@ public:
     ,   const int                   flags
     ,   const mgbase::operation&    on_complete
     ) {
-        
-        /*const fjmpi_command_parameters::contiguous_parameters params = {
-            src_proc
-        ,   laddr
-        ,   raddr
-        ,   size_in_bytes
-        ,   flags
-        ,   on_complete
-        };
-        
-        fjmpi_command_parameters fjmpi_params;
-        fjmpi_params.contiguous = params;
-        
-        const fjmpi_command cmd = { FJMPI_COMMAND_GET, fjmpi_params };
-        
-        const bool ret = queue_.try_push(cmd);*/
         const get_parameters params = {
             &src_proc
         ,   &laddr
@@ -196,6 +180,33 @@ protected:
 private:
     friend class mgbase::basic_active_object<fjmpi_command_queue, fjmpi_command>;
     
+    void process()
+    {
+        #ifndef MGCOM_FJMPI_DISABLE_PREDICTION
+        if (completer_.predicted_polling())
+            return;
+        #endif
+        
+        // Check the queue.
+        if (fjmpi_command* closure = peek_queue())
+        {
+            // Call the closure.
+            const bool succeeded = execute(*closure);
+            
+            if (succeeded) {
+                MGBASE_LOG_DEBUG("msg:Operation succeeded.");
+                pop_queue();
+            }
+            else {
+                MGBASE_LOG_DEBUG("msg:Operation failed. Postponed.");
+            }
+        }
+        else {
+            // Do polling.
+            poll();
+        }
+    }
+    
     MGBASE_ALWAYS_INLINE fjmpi_command* peek_queue() { return queue_.peek(); }
     
     MGBASE_ALWAYS_INLINE void pop_queue() { queue_.pop(); }
@@ -224,7 +235,7 @@ const int fjmpi_command_queue::flag_patterns_[number_of_flag_patterns] = {
 ,   FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_PATH0
 ,   FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2 | FJMPI_RDMA_PATH0
 ,   FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_PATH0
-,   FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC0 | FJMPI_RDMA_PATH1
+/*,   FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC0 | FJMPI_RDMA_PATH1
 ,   FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_PATH1
 ,   FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2 | FJMPI_RDMA_PATH1
 ,   FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_PATH1
@@ -235,7 +246,7 @@ const int fjmpi_command_queue::flag_patterns_[number_of_flag_patterns] = {
 ,   FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC0 | FJMPI_RDMA_PATH3
 ,   FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_PATH3
 ,   FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2 | FJMPI_RDMA_PATH3
-,   FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_PATH3
+,   FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_PATH3*/
 };
 
 } // unnamed namespace

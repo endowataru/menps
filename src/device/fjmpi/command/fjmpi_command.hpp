@@ -4,6 +4,15 @@
 #include "fjmpi_completer.hpp"
 #include "device/mpi/command/mpi_command.hpp"
 
+//#include <mgbase/profiling/clock.hpp>
+
+#include <mgbase/logging/queueing_logger.hpp>
+
+//#include <mgbase/profiling/average_accumulator.hpp>
+//#include <mgbase/profiling/stopwatch.hpp>
+
+//mgbase::average_accumulator<mgbase::cpu_clock_t> g_get_cycles;
+
 namespace mgcom {
 namespace fjmpi {
 
@@ -72,9 +81,19 @@ MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
             
             if (MGBASE_LIKELY(found_tag))
             {
+                //std::cout << mgcom::current_process_id() << " " << mgbase::get_cpu_clock() << " get" << std::endl;
+                mgbase::queueing_logger::add_log("get start", nic, tag);
+                
+                /*mgbase::stopwatch sw;
+                sw.start();*/
+                
                 fjmpi_error::assert_zero(
                     FJMPI_Rdma_get(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, p.flags | FJMPI_RDMA_IMMEDIATE_RETURN)
                 );
+                
+                //g_get_cycles.add(sw.elapsed());
+                
+                mgbase::queueing_logger::add_log("get finish", nic, tag);
                 
                 completer.set_notification(p.proc, nic, tag, p.on_complete);
             }

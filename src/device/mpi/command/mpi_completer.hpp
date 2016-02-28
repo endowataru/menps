@@ -5,6 +5,7 @@
 #include <mgbase/scoped_ptr.hpp>
 #include <mgbase/container/circular_buffer.hpp>
 #include <mgbase/operation.hpp>
+#include <mgbase/logger.hpp>
 
 namespace mgcom {
 namespace mpi {

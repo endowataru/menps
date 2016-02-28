@@ -70,12 +70,6 @@ MGBASE_ALWAYS_INLINE void remote_read(
     );
     
     while (!finished.load(mgbase::memory_order_acquire)) { }
-    
-    MGBASE_LOG_DEBUG(
-        "msg:Finished remote_read."
-    );
-    
-    //mgbase::atomic_thread_fence(mgbase::memory_order_seq_cst); // for debugging
 }
 /**
  * Do contiguous write.
@@ -98,12 +92,6 @@ MGBASE_ALWAYS_INLINE void remote_write(
     );
     
     while (!finished.load(mgbase::memory_order_acquire)) { }
-    
-    MGBASE_LOG_DEBUG(
-        "msg:Finished remote_write."
-    );
-
-    //mgbase::atomic_thread_fence(mgbase::memory_order_seq_cst); // for debugging
 }
 
 /**
