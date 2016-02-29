@@ -38,6 +38,9 @@ is_mpi3_available)
 CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
 #set(is_fjmpi_available TRUE) # Just for compilation check
 
+CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" is_ibv_available)
+#set(is_ibv_available TRUE) # Just for compilation check
+
 # Library for each device
 
 if(${is_mpi_available})
@@ -121,6 +124,36 @@ if (${is_fjmpi_available})
     
     list(APPEND mgcom-devices fjmpi)
 endif()
+
+if (${is_ibv_available})
+    add_library(mgcom-ibv
+        src/device/ibv/endpoint.cpp
+        src/device/ibv/ibv.cpp
+        
+        src/common/rma/region_allocator.cpp
+        src/common/rma/malloc.c
+        
+        src/device/mpi/command/mpi_command_queue_base.cpp
+        
+        src/device/mpi/rpc/rpc_server.cpp
+        src/device/mpi/rpc/rpc_client.cpp
+        src/device/mpi/collective/barrier2.cpp
+        src/device/mpi/collective/collective.cpp
+        src/device/mpi/mpi_base.cpp
+        src/device/mpi/mpi_call.cpp
+        src/device/mpi1/command/mpi1_command_queue.cpp
+        
+        src/device/mpi/rma/poll.cpp
+        src/common/rma/try_contiguous.cpp
+        src/common/rma/try_atomic.cpp
+    )
+    target_link_libraries(mgcom-ibv mgcom-base mgbase)
+    
+    list(APPEND mgcom-devices ibv)
+endif()
+
+
+
 
 # Publish the device list
 

@@ -33,7 +33,7 @@ mgcom_rma_region_key;
 typedef struct mgcom_rma_local_region {
     mgcom_rma_region_key key;
     
-    // (ibv)   info = lkey
+    // (ibv)   info = mr
     // (fjmpi) info = laddr
     uint64_t info;
 }

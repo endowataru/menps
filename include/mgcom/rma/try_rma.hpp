@@ -15,7 +15,7 @@ namespace untyped {
  * Try to do contiguous read.
  */
 MGBASE_WARN_UNUSED_RESULT bool try_remote_read_async(
-    process_id_t                proc
+    process_id_t                src_proc
 ,   const remote_address&       remote_addr
 ,   const local_address&        local_addr
 ,   index_t                     size_in_bytes
@@ -25,7 +25,7 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_read_async(
  * Try to do contiguous write.
  */
 MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
-    process_id_t                proc
+    process_id_t                dest_proc
 ,   const remote_address&       remote_addr
 ,   const local_address&        local_addr
 ,   index_t                     size_in_bytes
@@ -101,7 +101,7 @@ bool try_remote_write_async(
  * Try to start atomic read.
  */
 MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_read_async(
-    process_id_t                                    proc
+    process_id_t                                    target_proc
 ,   const remote_pointer<const atomic_default_t>&   remote_ptr
 ,   const local_pointer<atomic_default_t>&          local_ptr
 ,   const local_pointer<atomic_default_t>&          buf_ptr
@@ -112,7 +112,7 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_read_async(
  * Try to start atomic write.
  */
 MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_write_async(
-    process_id_t                                    proc
+    process_id_t                                    target_proc
 ,   const remote_pointer<atomic_default_t>&         remote_ptr
 ,   const local_pointer<const atomic_default_t>&    local_ptr
 ,   const local_pointer<atomic_default_t>&          buf_ptr

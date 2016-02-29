@@ -91,5 +91,6 @@ Supported compilers:
 
 - Clang
 - GCC
+- Intel C++ Compiler
 - Fujitsu compiler
 
