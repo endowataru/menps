@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <mgbase/lockfree/mpsc_circular_buffer.hpp>
 #include <mgbase/threading/thread.hpp>
 #include <mgbase/logging/logger.hpp>
 
