@@ -58,6 +58,7 @@ else()
         $<$<CXX_COMPILER_ID:Clang>:-Wno-weak-vtables> # couldn't find a correct way to suppress this warning
         -Wall
         #$<$<COMPILE_LANGUAGE:CXX>:-std=c++03> # TODO: COMPILE_LANGUAGE doesn't work on old CMake versions
+        -DGTEST_HAS_TR1_TUPLE=0
         -pedantic
         -Wextra
         -Wcast-qual
