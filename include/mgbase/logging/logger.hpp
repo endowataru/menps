@@ -22,7 +22,7 @@ public:
     
     typedef std::string (*state_callback_type)();
     
-    MGBASE_NOINLINE static void add_log(
+    static void add_log(
         const log_level_t   level
     ,   const char* const   fmt_str
     ) {
@@ -35,22 +35,14 @@ public:
         const log_level_t   level
     ,   const char* const   fmt_str
     ,   const A1&           a1
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
     ,   const char* const   fmt_str
     ,   const A1&           a1
     ,   const A2&           a2
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2, typename A3>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
@@ -58,11 +50,7 @@ public:
     ,   const A1&           a1
     ,   const A2&           a2
     ,   const A3&           a3
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2, a3);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2, typename A3, typename A4>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
@@ -71,11 +59,7 @@ public:
     ,   const A2&           a2
     ,   const A3&           a3
     ,   const A4&           a4
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2, a3, a4);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2, typename A3, typename A4, typename A5>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
@@ -85,11 +69,7 @@ public:
     ,   const A3&           a3
     ,   const A4&           a4
     ,   const A5&           a5
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2, a3, a4, a5);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
@@ -100,11 +80,7 @@ public:
     ,   const A4&           a4
     ,   const A5&           a5
     ,   const A6&           a6
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2, a3, a4, a5, a6);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
@@ -116,11 +92,7 @@ public:
     ,   const A5&           a5
     ,   const A6&           a6
     ,   const A7&           a7
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2, a3, a4, a5, a6, a7);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
@@ -133,11 +105,7 @@ public:
     ,   const A6&           a6
     ,   const A7&           a7
     ,   const A8&           a8
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2, a3, a4, a5, a6, a7, a8);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
@@ -151,11 +119,7 @@ public:
     ,   const A7&           a7
     ,   const A8&           a8
     ,   const A9&           a9
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2, a3, a4, a5, a6, a7, a8, a9);
-        finish_print_log();
-    }
+    );
     template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
     MGBASE_NOINLINE static void add_log(
         const log_level_t   level
@@ -170,11 +134,7 @@ public:
     ,   const A8&           a8
     ,   const A9&           a9
     ,   const A10&          a10
-    ) {
-        if (!start_print_log(level)) return;
-        fmt::print(fmt_str, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
-        finish_print_log();
-    }
+    );
 
 private:
     static bool start_print_log(const log_level_t level)
@@ -233,6 +193,151 @@ private:
     }
 };
 
+template <typename A1>
+MGBASE_NOINLINE void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1);
+    finish_print_log();
+}
+template <typename A1, typename A2>
+MGBASE_NOINLINE void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2);
+    finish_print_log();
+}
+template <typename A1, typename A2, typename A3>
+MGBASE_NOINLINE void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+,   const A3&           a3
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2, a3);
+    finish_print_log();
+}
+template <typename A1, typename A2, typename A3, typename A4>
+MGBASE_NOINLINE void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+,   const A3&           a3
+,   const A4&           a4
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2, a3, a4);
+    finish_print_log();
+}
+template <typename A1, typename A2, typename A3, typename A4, typename A5>
+MGBASE_NOINLINE void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+,   const A3&           a3
+,   const A4&           a4
+,   const A5&           a5
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2, a3, a4, a5);
+    finish_print_log();
+}
+template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
+MGBASE_NOINLINE void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+,   const A3&           a3
+,   const A4&           a4
+,   const A5&           a5
+,   const A6&           a6
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2, a3, a4, a5, a6);
+    finish_print_log();
+}
+template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
+MGBASE_NOINLINE  void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+,   const A3&           a3
+,   const A4&           a4
+,   const A5&           a5
+,   const A6&           a6
+,   const A7&           a7
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2, a3, a4, a5, a6, a7);
+    finish_print_log();
+}
+template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
+MGBASE_NOINLINE  void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+,   const A3&           a3
+,   const A4&           a4
+,   const A5&           a5
+,   const A6&           a6
+,   const A7&           a7
+,   const A8&           a8
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2, a3, a4, a5, a6, a7, a8);
+    finish_print_log();
+}
+template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
+MGBASE_NOINLINE  void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+,   const A3&           a3
+,   const A4&           a4
+,   const A5&           a5
+,   const A6&           a6
+,   const A7&           a7
+,   const A8&           a8
+,   const A9&           a9
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+    finish_print_log();
+}
+template <typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
+MGBASE_NOINLINE  void logger::add_log(
+    const log_level_t   level
+,   const char* const   fmt_str
+,   const A1&           a1
+,   const A2&           a2
+,   const A3&           a3
+,   const A4&           a4
+,   const A5&           a5
+,   const A6&           a6
+,   const A7&           a7
+,   const A8&           a8
+,   const A9&           a9
+,   const A10&          a10
+) {
+    if (!start_print_log(level)) return;
+    fmt::print(fmt_str, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+    finish_print_log();
+}
 
 #ifndef MGBASE_ENABLE_LOG
     #ifdef MGBASE_DEBUG

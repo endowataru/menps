@@ -36,6 +36,10 @@
     #define MGBASE_COMPILER_CLANG
 #endif
 
+#ifdef __INTEL_COMPILER
+    #define MGBASE_COMPILER_INTEL
+#endif
+
 // Language Compatibility
 
 #define MGBASE_CONCAT(x, y)  MGBASE_CONCAT1(x, y)

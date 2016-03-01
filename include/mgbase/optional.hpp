@@ -141,11 +141,11 @@ private:
 };
 
 template <typename T>
-MGBASE_CONSTEXPR_CPP14 optional<T> make_optional(T& value) {
+MGBASE_ALWAYS_INLINE MGBASE_CONSTEXPR_CPP14 optional<T> make_optional(T& value) {
     return optional<T>(value);
 }
 template <typename T>
-MGBASE_CONSTEXPR_CPP14 optional<T> make_optional(const T& value) {
+MGBASE_ALWAYS_INLINE MGBASE_CONSTEXPR_CPP14 optional<T> make_optional(const T& value) {
     return optional<T>(value);
 }
 

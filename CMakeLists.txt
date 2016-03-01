@@ -62,24 +62,43 @@ else()
         -pedantic
         -Wextra
         -Wcast-qual
-        -Wctor-dtor-privacy
         -Wdisabled-optimization
         -Wformat=2
         -Winit-self
         -Wmissing-declarations
         -Wmissing-include-dirs
         -Woverloaded-virtual
-        -Wredundant-decls
-        -Wshadow
         -Wsign-promo
-        -Wstrict-overflow=5
-        -Wswitch-default
         -Wno-variadic-macros
-        $<$<CXX_COMPILER_ID:Clang>:-Wno-c++11-long-long> # for mpi.h
-        $<$<CXX_COMPILER_ID:GNU>:-Wno-long-long> # for mpi.h
-        $<$<CXX_COMPILER_ID:Clang>:-ferror-limit=${error_limit}>
-        $<$<CXX_COMPILER_ID:GNU>:-fmax-errors=${error_limit}>
     )
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        target_compile_options(mgbase-options INTERFACE
+            -Wshadow
+            -Wno-c++11-long-long # for mpi.h
+            -ferror-limit=${error_limit}
+            -Wstrict-overflow=5
+            -Wctor-dtor-privacy
+            -Wswitch-default
+            -Wredundant-decls
+        )
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GCC")
+        target_compile_options(mgbase-options INTERFACE
+            -Wshadow
+            -Wno-long-long
+            -fmax-errors=${error_limit}
+            -Wstrict-overflow=5
+            -Wctor-dtor-privacy
+            -Wswitch-default
+            -Wredundant-decls
+        )
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+        target_compile_options(mgbase-options INTERFACE
+            -Wno-long-long
+            -fmax-errors=${error_limit}
+            -Wno-shadow # ICC cannot disable this warning in template classes/functions
+        )
+    endif()
+    
     if(MGBASE_PROFILER_USE_GPROF)
     target_compile_options(mgbase-options INTERFACE
         $<$<CXX_COMPILER_ID:GNU>:-pg>
