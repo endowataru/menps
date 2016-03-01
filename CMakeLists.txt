@@ -49,13 +49,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     #   (googletest)
 else()
     target_compile_options(mgbase-options INTERFACE
-        #$<$<CXX_COMPILER_ID:Clang>:-Weverything>
-        $<$<CXX_COMPILER_ID:Clang>:-Wno-global-constructors>
-        $<$<CXX_COMPILER_ID:Clang>:-Wno-exit-time-destructors>
-        $<$<CXX_COMPILER_ID:Clang>:-Wno-padded> # TODO: alignment issues
-        $<$<CXX_COMPILER_ID:Clang>:-Wno-disabled-macro-expansion> # Problem of stdbool.h
-        $<$<CXX_COMPILER_ID:Clang>:-Wno-used-but-marked-unused> # e.g. mgbase::try_to_lock
-        $<$<CXX_COMPILER_ID:Clang>:-Wno-weak-vtables> # couldn't find a correct way to suppress this warning
         -Wall
         #$<$<COMPILE_LANGUAGE:CXX>:-std=c++03> # TODO: COMPILE_LANGUAGE doesn't work on old CMake versions
         -DGTEST_HAS_TR1_TUPLE=0
@@ -73,6 +66,16 @@ else()
     )
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         target_compile_options(mgbase-options INTERFACE
+            # Enable -Weverything
+            -Weverything
+            # Disable some warnings of -Weverything
+            -Wno-global-constructors
+            -Wno-exit-time-destructors
+            -Wno-padded # TODO: alignment issues
+            -Wno-disabled-macro-expansion # Problem of stdbool.h
+            -Wno-used-but-marked-unused # e.g. mgbase::try_to_lock
+            -Wno-weak-vtables # couldn't find a correct way to suppress this warning
+            # Other options
             -Wshadow
             -Wno-c++11-long-long # for mpi.h
             -ferror-limit=${error_limit}
