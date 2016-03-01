@@ -15,7 +15,7 @@ message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}
 add_library(mgbase-header INTERFACE)
 target_include_directories(mgbase-header
     INTERFACE ./include
-    INTERFACE ./external
+    INTERFACE ./external/cppformat
     INTERFACE ./external/cmdline
     INTERFACE ${CMAKE_CURRENT_BINARY_DIR}
 )
@@ -112,7 +112,7 @@ endif()
 
 
 add_library(mgbase
-    ./external/cppformat/format.cc
+    ./external/cppformat/cppformat/format.cc
 )
 target_link_libraries(mgbase mgbase-header)
 
@@ -130,6 +130,10 @@ endif()
 
 add_library(googletest
     ./external/googletest/googletest/src/gtest-all.cc
+)
+target_compile_options(googletest
+    PRIVATE
+    -w # Suppress ALL warnings
 )
 target_include_directories(googletest
     PUBLIC ./external/googletest/googletest
