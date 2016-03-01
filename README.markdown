@@ -60,7 +60,7 @@ Features
 
 RMA (a.k.a. one-sided communication)
 enables users to read/write the memory on the remote nodes over interconnects.
-Some interconnect hardwares have the feature called Remote Direct Memory Access (RDMA).
+Some interconnects have the feature called Remote Direct Memory Access (RDMA).
 mgcom provides a thin RMA layer that is specialized for
 exploiting the performance of RDMA.
 
@@ -70,10 +70,10 @@ exploiting the performance of RDMA.
     - Atomic remote compare-and-swap/fetch-and-op.
 - Description of alignment requirements.
 
-### Active Messages (AM)
+### Remote Procedure Call (RPC)
 
-mgcom also provides Active Messages (AM),
-which is one representation of Remote Procedure Call (RPC).
+mgcom also provides Remote Procedure Call (RPC)
+(a.k.a. Active Messages (AM)).
 Currently, only the fixed-size AM is supported
 (sending variable-length messages is a future work.)
 
@@ -85,7 +85,7 @@ Supported interconnects:
 - MPI-1
 - MPI-3
 - Tofu (FJMPI)
-- Infiniband Verbs (future work)
+- InfiniBand Verbs
 
 Supported compilers:
 
