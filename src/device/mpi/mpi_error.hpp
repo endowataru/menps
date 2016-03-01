@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mpi.h>
+#include "mpi.hpp"
 
 namespace mgcom {
 

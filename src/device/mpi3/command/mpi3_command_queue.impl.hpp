@@ -5,6 +5,7 @@
 #include "device/mpi/command/mpi_command_queue_base.hpp"
 #include "common/command/basic_command_queue.hpp"
 #include <mgbase/basic_active_object.hpp>
+#include <mgbase/lockfree/mpsc_circular_buffer.hpp>
 
 namespace mgcom {
 namespace mpi3 {

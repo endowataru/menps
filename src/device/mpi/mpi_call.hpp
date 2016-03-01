@@ -3,7 +3,7 @@
 
 #include <mgcom/common.hpp>
 #include <mgbase/operation.hpp>
-#include <mpi.h>
+#include "mpi.hpp"
 
 namespace mgcom {
 namespace mpi {
