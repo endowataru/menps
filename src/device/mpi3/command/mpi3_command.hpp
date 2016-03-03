@@ -9,39 +9,8 @@
 namespace mgcom {
 namespace mpi3 {
 
-enum mpi3_command_code
-{
-    MPI3_COMMAND_GET = mpi::MPI_COMMAND_END + 1
-,   MPI3_COMMAND_PUT
-,   MPI3_COMMAND_COMPARE_AND_SWAP
-,   MPI3_COMMAND_FETCH_AND_OP
-,   MPI3_COMMAND_IBARRIER
-,   MPI3_COMMAND_IBCAST
-,   MPI3_COMMAND_IALLGATHER
-,   MPI3_COMMAND_IALLTOALL
-,   MPI3_COMMAND_END
-};
-
-
-namespace detail {
-
-inline std::string get_datatype_name(const MPI_Datatype datatype) {
-    char buf[MPI_MAX_OBJECT_NAME];
-    int len;
-    
-    mpi3_error::check(
-        MPI_Type_get_name(datatype, buf, &len)
-    );
-    
-    return buf;
-}
-
-} // namespace detail
-
 union mpi3_command_parameters
 {
-    mpi::mpi_command_parameters mpi1;
-    
     struct get_parameters
     {
         void*               dest_ptr;
@@ -124,298 +93,347 @@ union mpi3_command_parameters
     ialltoall;
 };
 
-MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
-    const mpi3_command_code         code
-,   const mpi3_command_parameters&  params
-,   mpi3_completer&                 completer
-)
-{
-    if (code < static_cast<mpi3_command_code>(mpi::MPI_COMMAND_END)) {
-        return mpi::execute_on_this_thread(
-            static_cast<mpi::mpi_command_code>(code)
-        ,   params.mpi1
-        ,   completer.get_mpi1_completer()
-        );
-    }
+namespace detail {
+
+inline std::string get_datatype_name(const MPI_Datatype datatype) {
+    char buf[MPI_MAX_OBJECT_NAME];
+    int len;
     
-    MGBASE_ASSERT(MPI3_COMMAND_GET <= code && code < MPI3_COMMAND_END);
+    mpi3_error::check(
+        MPI_Type_get_name(datatype, buf, &len)
+    );
     
-    switch (code) {
-        case MPI3_COMMAND_GET: {
-            if (completer.full())
-                return false;
-            
-            const mpi3_command_parameters::get_parameters& p = params.get;
-            
-            mpi3_error::check(
-                MPI_Get(
-                    p.dest_ptr
-                ,   p.size_in_bytes
-                ,   MPI_BYTE
-                ,   p.src_rank
-                ,   p.src_index
-                ,   p.size_in_bytes
-                ,   MPI_BYTE
-                ,   rma::get_win()
-                )
-            );
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Executed MPI_Get.\t"
-                "src_rank:{}\tsrc_index:{:x}\tdest_ptr:{:x}\tsize_in_bytes:{}"
-            ,   p.src_rank
-            ,   p.src_index
-            ,   reinterpret_cast<mgbase::intptr_t>(p.dest_ptr)
-            ,   p.size_in_bytes
-            );
-            
-            completer.add_completion(p.on_complete);
-            
-            return true;
-        }
-        
-        case MPI3_COMMAND_PUT:{
-            if (completer.full())
-                return false;
-            
-            const mpi3_command_parameters::put_parameters& p = params.put;
-            
-            mpi3_error::check(
-                MPI_Put(
-                    p.src_ptr
-                ,   p.size_in_bytes
-                ,   MPI_BYTE
-                ,   p.dest_rank
-                ,   p.dest_index
-                ,   p.size_in_bytes
-                ,   MPI_BYTE
-                ,   rma::get_win()
-                )
-            );
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Executed MPI_Put.\t"
-                "src_ptr:{:x}\tdest_rank:{}\tdest_index:{:x}\tsize_in_bytes:{}"
-            ,   reinterpret_cast<mgbase::intptr_t>(p.src_ptr)
-            ,   p.dest_rank
-            ,   p.dest_index
-            ,   p.size_in_bytes
-            );
-            
-            completer.add_completion(p.on_complete);
-            
-            return true;
-        }
-        
-        case MPI3_COMMAND_COMPARE_AND_SWAP: {
-            if (completer.full())
-                return false;
-            
-            const mpi3_command_parameters::compare_and_swap_parameters& p = params.compare_and_swap;
-            
-            /*
-                TODO: const_cast is needed for OpenMPI 1.8.4.
-            */
-            mpi3_error::check(
-                MPI_Compare_and_swap(
-                    const_cast<void*>(p.desired_ptr)    // origin_addr
-                ,   const_cast<void*>(p.expected_ptr)   // compare_addr
-                ,   p.result_ptr                        // result_addr
-                ,   p.datatype                          // datatype
-                ,   p.dest_rank                         // target_rank
-                ,   p.dest_index                        // target_disp
-                ,   rma::get_win()                      // win
-                )
-            );
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Executed MPI_Compare_and_swap.\t"
-                "desired_ptr:{:x}\texpected_ptr:{:x}\tresult_ptr:{:x}\t"
-                "datatype:{}\tdest_rank:{}\tdest_index:{:x}"
-            ,   reinterpret_cast<mgbase::intptr_t>(p.desired_ptr)
-            ,   reinterpret_cast<mgbase::intptr_t>(p.expected_ptr)
-            ,   reinterpret_cast<mgbase::intptr_t>(p.result_ptr)
-            ,   detail::get_datatype_name(p.datatype)
-            ,   p.dest_rank
-            ,   p.dest_index
-            );
-            
-            completer.add_completion(p.on_complete);
-            
-            return true;
-        }
-        
-        case MPI3_COMMAND_FETCH_AND_OP: {
-            if (completer.full())
-                return false;
-            
-            const mpi3_command_parameters::fetch_and_op_parameters& p = params.fetch_and_op;
-            
-            /*
-                TODO: const_cast is needed for OpenMPI 1.8.4.
-            */
-            
-            mpi3_error::check(
-                MPI_Fetch_and_op(
-                    const_cast<void*>(p.value_ptr)  // origin_addr
-                ,   p.result_ptr                    // result_addr
-                ,   p.datatype                      // datatype
-                ,   p.dest_rank                     // target_rank
-                ,   p.dest_index                    // target_disp
-                ,   p.operation                     // op
-                ,   rma::get_win()                  // win
-                )
-            );
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Executed MPI_Fetch_and_op.\t"
-                "value_ptr:{:x}\tresult_ptr:{:x}\t"
-                "dest_rank:{}\tdest_index:{:x}\tdatatype:{}\toperation:{}"
-            ,   reinterpret_cast<mgbase::intptr_t>(p.value_ptr)
-            ,   reinterpret_cast<mgbase::intptr_t>(p.result_ptr)
-            ,   p.dest_rank
-            ,   p.dest_index
-            ,   detail::get_datatype_name(p.datatype)
-            ,   reinterpret_cast<mgbase::intptr_t>(p.operation)
-            );
-            
-            completer.add_completion(p.on_complete);
-            
-            return true;
-        }
-        
-        case MPI3_COMMAND_IBARRIER: {
-            if (completer.full())
-                return false;
-            
-            const mpi3_command_parameters::ibarrier_parameters& p = params.ibarrier;
-            
-            MPI_Request request;
-            
-            mpi_error::check(
-                MPI_Ibarrier(
-                    MPI_COMM_WORLD // TODO
-                ,   &request
-                )
-            );
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Executed MPI_Ibarrier."
-            );
-            
-            completer.get_mpi1_completer()
-                .complete(request, MPI_STATUS_IGNORE, p.on_complete);
-            
-            return true;
-        }
-        
-        case MPI3_COMMAND_IBCAST: {
-            if (completer.full())
-                return false;
-            
-            const mpi3_command_parameters::ibcast_parameters& p = params.ibcast;
-            
-            MPI_Request request;
-            
-            mpi_error::check(
-                MPI_Ibcast(
-                    p.ptr
-                ,   static_cast<int>(p.number_of_bytes)
-                ,   MPI_BYTE
-                ,   static_cast<int>(p.root)
-                ,   p.comm
-                ,   &request
-                )
-            );
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Executed MPI_Ibcast.\t"
-                "root:{}\tptr:\tsize_in_bytes:{}"
-            ,   p.root
-            ,   reinterpret_cast<mgbase::intptr_t>(p.ptr)
-            ,   p.number_of_bytes
-            );
-            
-            completer.get_mpi1_completer()
-                .complete(request, MPI_STATUS_IGNORE, p.on_complete);
-            
-            return true;
-        }
-        
-        case MPI3_COMMAND_IALLGATHER: {
-            if (completer.full())
-                return false;
-            
-            const mpi3_command_parameters::iallgather_parameters& p = params.iallgather;
-            
-            MPI_Request request;
-            
-            mpi_error::check(
-                MPI_Iallgather(
-                    p.src
-                ,   static_cast<int>(p.number_of_bytes)
-                ,   MPI_BYTE
-                ,   p.dest
-                ,   static_cast<int>(p.number_of_bytes)
-                ,   MPI_BYTE
-                ,   p.comm
-                ,   &request
-                )
-            );
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Executed MPI_Iallgather.\t"
-                "src:{}\tdest:\tsize_in_bytes:{}"
-            ,   reinterpret_cast<mgbase::intptr_t>(p.src)
-            ,   reinterpret_cast<mgbase::intptr_t>(p.dest)
-            ,   p.number_of_bytes
-            );
-            
-            completer.get_mpi1_completer()
-                .complete(request, MPI_STATUS_IGNORE, p.on_complete);
-            
-            return true;
-        }
-        
-        case MPI3_COMMAND_IALLTOALL: {
-            if (completer.full())
-                return false;
-            
-            const mpi3_command_parameters::ialltoall_parameters& p = params.ialltoall;
-            
-            MPI_Request request;
-            
-            mpi_error::check(
-                MPI_Iallgather(
-                    p.src
-                ,   static_cast<int>(p.number_of_bytes)
-                ,   MPI_BYTE
-                ,   p.dest
-                ,   static_cast<int>(p.number_of_bytes)
-                ,   MPI_BYTE
-                ,   p.comm
-                ,   &request
-                )
-            );
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Executed MPI_Ialltoall.\t"
-                "src:{}\tdest:\tsize_in_bytes:{}"
-            ,   reinterpret_cast<mgbase::intptr_t>(p.src)
-            ,   reinterpret_cast<mgbase::intptr_t>(p.dest)
-            ,   p.number_of_bytes
-            );
-            
-            completer.get_mpi1_completer()
-                .complete(request, MPI_STATUS_IGNORE, p.on_complete);
-            
-            return true;
-        }
-        
-        case MPI3_COMMAND_END:
-            MGBASE_UNREACHABLE();
-    }
+    return buf;
 }
+
+} // namespace detail
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_get(
+    const mpi3_command_parameters::get_parameters&  params
+,   mpi3_completer&                                 completer
+) {
+    if (completer.full())
+        return false;
+    
+    mpi3_error::check(
+        MPI_Get(
+            params.dest_ptr
+        ,   params.size_in_bytes
+        ,   MPI_BYTE
+        ,   params.src_rank
+        ,   params.src_index
+        ,   params.size_in_bytes
+        ,   MPI_BYTE
+        ,   rma::get_win()
+        )
+    );
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Executed MPI_Get.\t"
+        "src_rank:{}\tsrc_index:{:x}\tdest_ptr:{:x}\tsize_in_bytes:{}"
+    ,   params.src_rank
+    ,   params.src_index
+    ,   reinterpret_cast<mgbase::intptr_t>(params.dest_ptr)
+    ,   params.size_in_bytes
+    );
+    
+    completer.add_completion(params.on_complete);
+    
+    return true;
+}
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_put(
+    const mpi3_command_parameters::put_parameters&  params
+,   mpi3_completer&                                 completer
+) {
+    if (completer.full())
+        return false;
+    
+    mpi3_error::check(
+        MPI_Put(
+            params.src_ptr
+        ,   params.size_in_bytes
+        ,   MPI_BYTE
+        ,   params.dest_rank
+        ,   params.dest_index
+        ,   params.size_in_bytes
+        ,   MPI_BYTE
+        ,   rma::get_win()
+        )
+    );
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Executed MPI_Put.\t"
+        "src_ptr:{:x}\tdest_rank:{}\tdest_index:{:x}\tsize_in_bytes:{}"
+    ,   reinterpret_cast<mgbase::intptr_t>(params.src_ptr)
+    ,   params.dest_rank
+    ,   params.dest_index
+    ,   params.size_in_bytes
+    );
+    
+    completer.add_completion(params.on_complete);
+    
+    return true;
+}
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_compare_and_swap(
+    const mpi3_command_parameters::compare_and_swap_parameters& params
+,   mpi3_completer&                                             completer
+) {
+    if (completer.full())
+        return false;
+    
+    /*
+        TODO: const_cast is needed for OpenMPI 1.8.4.
+    */
+    mpi3_error::check(
+        MPI_Compare_and_swap(
+            const_cast<void*>(params.desired_ptr)    // origin_addr
+        ,   const_cast<void*>(params.expected_ptr)   // compare_addr
+        ,   params.result_ptr                        // result_addr
+        ,   params.datatype                          // datatype
+        ,   params.dest_rank                         // target_rank
+        ,   params.dest_index                        // target_disp
+        ,   rma::get_win()                      // win
+        )
+    );
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Executed MPI_Compare_and_swap.\t"
+        "desired_ptr:{:x}\texpected_ptr:{:x}\tresult_ptr:{:x}\t"
+        "datatype:{}\tdest_rank:{}\tdest_index:{:x}"
+    ,   reinterpret_cast<mgbase::intptr_t>(params.desired_ptr)
+    ,   reinterpret_cast<mgbase::intptr_t>(params.expected_ptr)
+    ,   reinterpret_cast<mgbase::intptr_t>(params.result_ptr)
+    ,   detail::get_datatype_name(params.datatype)
+    ,   params.dest_rank
+    ,   params.dest_index
+    );
+    
+    completer.add_completion(params.on_complete);
+    
+    return true;
+}
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_fetch_and_op(
+    const mpi3_command_parameters::fetch_and_op_parameters& params
+,   mpi3_completer&                                         completer
+) {
+    if (completer.full())
+        return false;
+    
+    /*
+        TODO: const_cast is needed for OpenMPI 1.8.4.
+    */
+    
+    mpi3_error::check(
+        MPI_Fetch_and_op(
+            const_cast<void*>(params.value_ptr)  // origin_addr
+        ,   params.result_ptr                    // result_addr
+        ,   params.datatype                      // datatype
+        ,   params.dest_rank                     // target_rank
+        ,   params.dest_index                    // target_disp
+        ,   params.operation                     // op
+        ,   rma::get_win()                  // win
+        )
+    );
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Executed MPI_Fetch_and_op.\t"
+        "value_ptr:{:x}\tresult_ptr:{:x}\t"
+        "dest_rank:{}\tdest_index:{:x}\tdatatype:{}\toperation:{}"
+    ,   reinterpret_cast<mgbase::intptr_t>(params.value_ptr)
+    ,   reinterpret_cast<mgbase::intptr_t>(params.result_ptr)
+    ,   params.dest_rank
+    ,   params.dest_index
+    ,   detail::get_datatype_name(params.datatype)
+    ,   reinterpret_cast<mgbase::intptr_t>(params.operation)
+    );
+    
+    completer.add_completion(params.on_complete);
+    
+    return true;
+}
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_ibarrier(
+    const mpi3_command_parameters::ibarrier_parameters&     params
+,   mpi::mpi_completer&                                     completer
+) {
+    if (completer.full())
+        return false;
+    
+    MPI_Request request;
+    
+    mpi_error::check(
+        MPI_Ibarrier(
+            MPI_COMM_WORLD // TODO
+        ,   &request
+        )
+    );
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Executed MPI_Ibarrier."
+    );
+    
+    completer.complete(request, MPI_STATUS_IGNORE, params.on_complete);
+    
+    return true;
+}
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_ibcast(
+    const mpi3_command_parameters::ibcast_parameters&   params
+,   mpi::mpi_completer&                                 completer
+) {
+    if (completer.full())
+        return false;
+    
+    MPI_Request request;
+    
+    mpi_error::check(
+        MPI_Ibcast(
+            params.ptr
+        ,   static_cast<int>(params.number_of_bytes)
+        ,   MPI_BYTE
+        ,   static_cast<int>(params.root)
+        ,   params.comm
+        ,   &request
+        )
+    );
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Executed MPI_Ibcast.\t"
+        "root:{}\tptr:\tsize_in_bytes:{}"
+    ,   params.root
+    ,   reinterpret_cast<mgbase::intptr_t>(params.ptr)
+    ,   params.number_of_bytes
+    );
+    
+    completer.complete(request, MPI_STATUS_IGNORE, params.on_complete);
+    
+    return true;
+}
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_iallgather(
+    const mpi3_command_parameters::iallgather_parameters&   params
+,   mpi::mpi_completer&                                     completer
+) {
+    if (completer.full())
+        return false;
+    
+    MPI_Request request;
+    
+    mpi_error::check(
+        MPI_Iallgather(
+            params.src
+        ,   static_cast<int>(params.number_of_bytes)
+        ,   MPI_BYTE
+        ,   params.dest
+        ,   static_cast<int>(params.number_of_bytes)
+        ,   MPI_BYTE
+        ,   params.comm
+        ,   &request
+        )
+    );
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Executed MPI_Iallgather.\t"
+        "src:{}\tdest:\tsize_in_bytes:{}"
+    ,   reinterpret_cast<mgbase::intptr_t>(params.src)
+    ,   reinterpret_cast<mgbase::intptr_t>(params.dest)
+    ,   params.number_of_bytes
+    );
+    
+    completer.complete(request, MPI_STATUS_IGNORE, params.on_complete);
+    
+    return true;
+}
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_ialltoall(
+    const mpi3_command_parameters::ialltoall_parameters&    params
+,   mpi::mpi_completer&                                     completer
+) {
+    if (completer.full())
+        return false;
+    
+    MPI_Request request;
+    
+    mpi_error::check(
+        MPI_Iallgather(
+            params.src
+        ,   static_cast<int>(params.number_of_bytes)
+        ,   MPI_BYTE
+        ,   params.dest
+        ,   static_cast<int>(params.number_of_bytes)
+        ,   MPI_BYTE
+        ,   params.comm
+        ,   &request
+        )
+    );
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Executed MPI_Ialltoall.\t"
+        "src:{}\tdest:\tsize_in_bytes:{}"
+    ,   reinterpret_cast<mgbase::intptr_t>(params.src)
+    ,   reinterpret_cast<mgbase::intptr_t>(params.dest)
+    ,   params.number_of_bytes
+    );
+    
+    completer.complete(request, MPI_STATUS_IGNORE, params.on_complete);
+    
+    return true;
+}
+
+#define MGCOM_MPI3_COMMAND_CODES(x)         \
+        x(MPI3_COMMAND_GET)                 \
+    ,   x(MPI3_COMMAND_PUT)                 \
+    ,   x(MPI3_COMMAND_COMPARE_AND_SWAP)    \
+    ,   x(MPI3_COMMAND_FETCH_AND_OP)        \
+    ,   x(MPI3_COMMAND_IBARRIER)            \
+    ,   x(MPI3_COMMAND_IBCAST)              \
+    ,   x(MPI3_COMMAND_IALLGATHER)          \
+    ,   x(MPI3_COMMAND_IALLTOALL)            
+
+#define MGCOM_MPI3_COMMAND_EXECUTE_CASES(CASE, RETURN, params, completer) \
+    CASE(MPI3_COMMAND_GET): { \
+        const bool ret = ::mgcom::mpi3::try_execute_get((params).get, (completer)); \
+        RETURN(ret); \
+    } \
+    CASE(MPI3_COMMAND_PUT): { \
+        const bool ret = ::mgcom::mpi3::try_execute_put((params).put, (completer)); \
+        RETURN(ret); \
+    } \
+    CASE(MPI3_COMMAND_COMPARE_AND_SWAP): { \
+        const bool ret = ::mgcom::mpi3::try_execute_compare_and_swap((params).compare_and_swap, (completer)); \
+        RETURN(ret); \
+    } \
+    CASE(MPI3_COMMAND_FETCH_AND_OP): { \
+        const bool ret = ::mgcom::mpi3::try_execute_fetch_and_op((params).fetch_and_op, (completer)); \
+        RETURN(ret); \
+    } \
+    CASE(MPI3_COMMAND_IBARRIER): { \
+        const bool ret = ::mgcom::mpi3::try_execute_ibarrier((params).ibarrier, (completer).get_mpi1_completer()); \
+        RETURN(ret); \
+    } \
+    CASE(MPI3_COMMAND_IBCAST): { \
+        const bool ret = ::mgcom::mpi3::try_execute_ibcast((params).ibcast, (completer).get_mpi1_completer()); \
+        RETURN(ret); \
+    } \
+    CASE(MPI3_COMMAND_IALLGATHER): { \
+        const bool ret = ::mgcom::mpi3::try_execute_iallgather((params).iallgather, (completer).get_mpi1_completer()); \
+        RETURN(ret); \
+    } \
+    CASE(MPI3_COMMAND_IALLTOALL): { \
+        const bool ret = ::mgcom::mpi3::try_execute_ialltoall((params).ialltoall, (completer).get_mpi1_completer()); \
+        RETURN(ret); \
+    }
 
 } // namespace mpi3
 } // namespace mgcom

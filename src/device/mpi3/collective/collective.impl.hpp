@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include "device/mpi3/command/mpi3_command_queue_base.hpp"
 
 namespace mgcom {
@@ -6,7 +8,7 @@ namespace mgcom {
 namespace mpi3 {
 
 // Points to a global variable defined in another compilation unit.
-extern mpi3_command_queue_base& g_queue;
+//  /*???*/& g_queue;
 
 } // namespace mpi3
 

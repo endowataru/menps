@@ -25,9 +25,15 @@ void finalize_command_queue()
 
 namespace mpi {
 
-mpi_command_queue_base& g_queue = mpi1::g_queue;
+namespace /*unnamed*/ {
+
+mpi1::mpi1_command_queue& g_queue = mpi1::g_queue;
+
+} // unnamed namespace
 
 } // namespace mpi
 
 } // namespace mgcom
+
+#include "device/mpi/command/mpi_interface.impl.hpp"
 

@@ -2,22 +2,17 @@
 #pragma once
 
 #include "basic_command.hpp"
+#include <mgbase/scoped_enum.hpp>
 
 namespace mgcom {
 
+template <typename Derived, typename CommandCode>
 class basic_command_queue
 {
+    typedef CommandCode     command_code_type;
+    
 protected:
     basic_command_queue() MGBASE_EMPTY_DEFINITION
-    
-public:
-    virtual ~basic_command_queue() MGBASE_EMPTY_DEFINITION
-
-protected:
-    virtual bool try_enqueue_basic(
-        basic_command_code              code
-    ,   const basic_command_parameters& params
-    ) = 0;
     
 public:
     bool try_call(const mgbase::callback_function<void ()>& func)
@@ -27,10 +22,16 @@ public:
         basic_command_parameters params;
         params.call = call_params;
         
-        const bool ret = try_enqueue_basic(BASIC_COMMAND_CALL, params);
+        const bool ret = derived().try_enqueue_basic(
+            command_code_type::BASIC_COMMAND_CALL
+        ,   params
+        );
         
         return ret;
     }
+
+private:
+    Derived& derived() MGBASE_NOEXCEPT { return static_cast<Derived&>(*this); }
 };
 
 } // namespace mgcom

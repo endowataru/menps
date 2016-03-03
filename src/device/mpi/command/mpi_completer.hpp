@@ -146,4 +146,3 @@ private:
 } // namespace mpi_base
 } // namespace mgcom
 
-

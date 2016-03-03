@@ -32,7 +32,7 @@ void poll()
 
 namespace mpi {
 
-mpi_command_queue_base& g_queue = fjmpi::g_queue;
+fjmpi::fjmpi_command_queue& g_queue = fjmpi::g_queue;
 
 } // namespace mpi
 
@@ -127,4 +127,6 @@ bool try_remote_write_async(
 } // namespace rma
 
 } // namespace mgcom
+
+#include "device/mpi/command/mpi_interface.impl.hpp"
 

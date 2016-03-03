@@ -1,12 +1,16 @@
 
+#pragma once
+
 #include "mpi3_command_queue_base.hpp"
 #include "device/mpi3/mpi3_call.hpp"
+
+#include "device/mpi3/collective/collective.impl.hpp"
 
 namespace mgcom {
 namespace mpi3 {
 
 // Points to a global variable defined in another compilation unit.
-extern mpi3_command_queue_base& g_queue;
+//  /**/ & g_queue;
 
 bool try_get(
     void*                       dest_ptr

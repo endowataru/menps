@@ -8,28 +8,29 @@ namespace mpi3 {
 
 namespace /*unnamed*/ {
 
-mpi3_command_queue g_mpi3;
+mpi3_command_queue g_queue;
 
 } // unnamed namespace
 
-mpi3_command_queue_base& g_queue = g_mpi3;
-
 void initialize_command_queue()
 {
-    g_mpi3.initialize();
+    g_queue.initialize();
 }
 void finalize_command_queue()
 {
-    g_mpi3.finalize();
+    g_queue.finalize();
 }
 
 } // namespace mpi3
 
 namespace mpi {
 
-mpi_command_queue_base& g_queue = mpi3::g_mpi3;
+mpi3::mpi3_command_queue& g_queue = mpi3::g_queue;
 
 } // namespace mpi
 
 } // namespace mgcom
+
+#include "device/mpi/command/mpi_interface.impl.hpp"
+#include "mpi3_interface.impl.hpp"
 

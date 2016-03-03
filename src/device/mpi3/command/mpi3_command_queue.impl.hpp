@@ -6,22 +6,43 @@
 #include "common/command/basic_command_queue.hpp"
 #include <mgbase/basic_active_object.hpp>
 #include <mgbase/lockfree/mpsc_circular_buffer.hpp>
+#include <mgbase/scoped_enum.hpp>
 
 namespace mgcom {
 namespace mpi3 {
 
 namespace /*unnamed*/ {
 
+#define DEFINE_ENUM(x)  x
+
+MGBASE_SCOPED_ENUM_DECLARE_BEGIN(command_code)
+{
+    MGCOM_BASIC_COMMAND_CODES(DEFINE_ENUM)
+,   MGCOM_MPI_COMMAND_CODES(DEFINE_ENUM)
+,   MGCOM_MPI3_COMMAND_CODES(DEFINE_ENUM)
+}
+MGBASE_SCOPED_ENUM_DECLARE_END(command_code)
+
+#undef DEFINE_ENUM
+
+struct command_parameters
+{
+    basic_command_parameters    basic;
+    mpi::mpi_command_parameters mpi;
+    mpi3_command_parameters     mpi3;
+};
+
 struct mpi3_command
 {
-    mpi3_command_code       code;
-    mpi3_command_parameters params;
+    command_code        code;
+    command_parameters  params;
 };
 
 class mpi3_command_queue
     : public mgbase::basic_active_object<mpi3_command_queue, mpi3_command>
-    , public mpi::mpi_command_queue_base
-    , public mpi3_command_queue_base
+    , public basic_command_queue<mpi3_command_queue, command_code>
+    , public mpi::mpi_command_queue_base<mpi3_command_queue, command_code>
+    , public mpi3_command_queue_base<mpi3_command_queue, command_code>
 {
     typedef mgbase::basic_active_object<mpi3_command_queue, mpi3_command>   base;
     
@@ -41,28 +62,35 @@ public:
         completer_.finalize();
     }
     
-    mpi3_completer& get_completer() MGBASE_NOEXCEPT {
-        return completer_;
-    }
-    
-private:
-    virtual bool try_enqueue_mpi(
-        const mpi::mpi_command_code         code
-    ,   const mpi::mpi_command_parameters&  params
-    ) MGBASE_OVERRIDE
-    {
-        mpi3_command cmd;
-        cmd.code = static_cast<mpi3_command_code>(code);
-        cmd.params.mpi1 = params;
+    bool try_enqueue_basic(
+        const command_code                  code
+    ,   const basic_command_parameters&     basic_params
+    ) {
+        command_parameters params;
+        params.basic = basic_params;
         
+        const mpi3_command cmd = { code, params };
         return queue_.try_push(cmd);
     }
     
-    virtual bool try_enqueue_mpi3(
-        const mpi3_command_code         code
-    ,   const mpi3_command_parameters&  params
-    ) MGBASE_OVERRIDE
-    {
+    bool try_enqueue_mpi(
+        const command_code                  code
+    ,   const mpi::mpi_command_parameters&  mpi_params
+    ) {
+        command_parameters params;
+        params.mpi = mpi_params;
+        
+        const mpi3_command cmd = { code, params };
+        return queue_.try_push(cmd);
+    }
+    
+    bool try_enqueue_mpi3(
+        const command_code              code
+    ,   const mpi3_command_parameters&  mpi3_params
+    ) {
+        command_parameters params;
+        params.mpi3 = mpi3_params;
+        
         const mpi3_command cmd = { code, params };
         return queue_.try_push(cmd);
     }
@@ -73,14 +101,14 @@ private:
     void process()
     {
         // Check the queue.
-        if (mpi3_command* closure = peek_queue())
+        if (mpi3_command* const cmd = queue_.peek())
         {
             // Call the closure.
-            const bool succeeded = execute(*closure);
+            const bool succeeded = execute(*cmd);
             
             if (succeeded) {
                 MGBASE_LOG_DEBUG("msg:Operation succeeded.");
-                pop_queue();
+                queue_.pop();
             }
             else {
                 MGBASE_LOG_DEBUG("msg:Operation failed. Postponed.");
@@ -88,21 +116,26 @@ private:
         }
         
         // Do polling.
-        poll();
+        completer_.poll_on_this_thread();
     }
-    
-    mpi3_command* peek_queue() { return queue_.peek(); }
-    
-    void pop_queue() { queue_.pop(); }
     
     MGBASE_ALWAYS_INLINE bool execute(const mpi3_command& cmd)
     {
-        return execute_on_this_thread(cmd.code, cmd.params, completer_);
-    }
-    
-    MGBASE_ALWAYS_INLINE void poll()
-    {
-        completer_.poll_on_this_thread();
+        #define CASE(x)     case command_code::x
+        #define RETURN(x)   return x;
+        
+        switch (mgbase::native_value(cmd.code))
+        {
+            MGCOM_BASIC_COMMAND_EXECUTE_CASES(CASE, RETURN, cmd.params.basic)
+            MGCOM_MPI_COMMAND_EXECUTE_CASES(CASE, RETURN, cmd.params.mpi, completer_.get_mpi1_completer())
+            MGCOM_MPI3_COMMAND_EXECUTE_CASES(CASE, RETURN, cmd.params.mpi3, completer_)
+        }
+        
+        #undef CASE
+        #undef RETURN
+        
+        MGBASE_UNREACHABLE();
+        return false;
     }
     
 private:

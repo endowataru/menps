@@ -7,16 +7,13 @@
 namespace mgcom {
 namespace mpi {
 
+template <typename Derived, typename CommandCode>
 class mpi_command_queue_base
-    : public basic_command_queue
 {
-protected:
-    mpi_command_queue_base() { }
+    typedef CommandCode     command_code_type;
     
-    virtual bool try_enqueue_mpi(
-        mpi_command_code                code
-    ,   const mpi_command_parameters&   params
-    ) = 0;
+protected:
+    mpi_command_queue_base() MGBASE_EMPTY_DEFINITION
     
 public:
     bool try_irecv(
@@ -41,8 +38,8 @@ public:
         mpi_command_parameters mpi_params;
         mpi_params.irecv = params;
         
-        const bool ret = try_enqueue_mpi(
-            MPI_COMMAND_IRECV
+        const bool ret = derived().try_enqueue_mpi(
+            command_code_type::MPI_COMMAND_IRECV
         ,   mpi_params
         );
         
@@ -78,8 +75,8 @@ public:
         mpi_command_parameters mpi_params;
         mpi_params.isend = params;
         
-        const bool ret = try_enqueue_mpi(
-            MPI_COMMAND_ISEND
+        const bool ret = derived().try_enqueue_mpi(
+            command_code_type::MPI_COMMAND_ISEND
         ,   mpi_params
         );
         
@@ -115,8 +112,8 @@ public:
         mpi_command_parameters mpi_params;
         mpi_params.isend = params;
         
-        const bool ret = try_enqueue_mpi(
-            MPI_COMMAND_IRSEND
+        const bool ret = derived().try_enqueue_mpi(
+            command_code_type::MPI_COMMAND_IRSEND
         ,   mpi_params
         );
         
@@ -132,20 +129,8 @@ public:
         return ret;
     }
     
-protected:
-    virtual bool try_enqueue_basic(
-        const basic_command_code        code
-    ,   const basic_command_parameters& params
-    ) MGBASE_OVERRIDE
-    {
-        mpi::mpi_command_parameters mpi_params;
-        mpi_params.basic = params;
-        
-        return try_enqueue_mpi(
-            static_cast<mpi::mpi_command_code>(code)
-        ,   mpi_params
-        );
-    }
+private:
+    Derived& derived() { return static_cast<Derived&>(*this); }
 };
 
 } // namespace mpi

@@ -6,24 +6,43 @@
 #include "device/mpi/command/mpi_command_queue_base.hpp"
 #include "common/command/basic_command_queue.hpp"
 #include <mgbase/basic_active_object.hpp>
+#include <mgbase/lockfree/mpsc_circular_buffer.hpp>
 
 namespace mgcom {
 namespace fjmpi {
 
 namespace /*unnamed*/ {
 
-class fjmpi_command_queue;
+#define DEFINE_ENUM(x)  x
+
+MGBASE_SCOPED_ENUM_DECLARE_BEGIN(command_code)
+{
+    MGCOM_BASIC_COMMAND_CODES(DEFINE_ENUM)
+,   MGCOM_MPI_COMMAND_CODES(DEFINE_ENUM)
+,   MGCOM_FJMPI_COMMAND_CODES(DEFINE_ENUM)
+}
+MGBASE_SCOPED_ENUM_DECLARE_END(command_code)
+
+#undef DEFINE_ENUM
+
+union command_parameters
+{
+    basic_command_parameters    basic;
+    mpi::mpi_command_parameters mpi;
+    fjmpi_command_parameters    fjmpi;
+};
 
 struct fjmpi_command
 {
-    fjmpi_command_code          code;
-    fjmpi_command_parameters    params;
+    command_code        code;
+    command_parameters  params;
 };
 
 
 class fjmpi_command_queue
     : public mgbase::basic_active_object<fjmpi_command_queue, fjmpi_command>
-    , public mpi::mpi_command_queue_base
+    , public basic_command_queue<fjmpi_command_queue, command_code>
+    , public mpi::mpi_command_queue_base<fjmpi_command_queue, command_code>
 {
     typedef mgbase::basic_active_object<fjmpi_command_queue, fjmpi_command> base;
     
@@ -47,6 +66,28 @@ public:
         completer_.finalize();
     }
     
+    bool try_enqueue_basic(
+        const command_code                  code
+    ,   const basic_command_parameters&     basic_params
+    ) {
+        command_parameters params;
+        params.basic = basic_params;
+        
+        const fjmpi_command cmd = { code, params };
+        return queue_.try_push(cmd);
+    }
+    
+    bool try_enqueue_mpi(
+        const command_code                  code
+    ,   const mpi::mpi_command_parameters&  mpi_params
+    ) {
+        command_parameters params;
+        params.mpi = mpi_params;
+        
+        const fjmpi_command cmd = { code, params };
+        return queue_.try_push(cmd);
+    }
+    
 private:
     struct get_parameters {
         const int*                  src_proc;
@@ -59,9 +100,11 @@ private:
     
     static void assign_get(const get_parameters& params, fjmpi_command* cmd)
     {
-        cmd->code = FJMPI_COMMAND_GET;
+        cmd->code = command_code::FJMPI_COMMAND_GET;
         
-        fjmpi_command_parameters::contiguous_parameters& cont_params = cmd->params.contiguous;
+        fjmpi_command_parameters::contiguous_parameters& cont_params
+            = cmd->params.fjmpi.contiguous;
+        
         cont_params.proc            = *params.src_proc;
         cont_params.laddr           = *params.laddr;
         cont_params.raddr           = *params.raddr;
@@ -121,9 +164,11 @@ private:
     
     static void assign_put(const put_parameters& params, fjmpi_command* cmd)
     {
-        cmd->code = FJMPI_COMMAND_PUT;
+        cmd->code = command_code::FJMPI_COMMAND_PUT;
         
-        fjmpi_command_parameters::contiguous_parameters& cont_params = cmd->params.contiguous;
+        fjmpi_command_parameters::contiguous_parameters& cont_params
+            = cmd->params.fjmpi.contiguous;
+        
         cont_params.proc            = *params.dest_proc;
         cont_params.laddr           = *params.laddr;
         cont_params.raddr           = *params.raddr;
@@ -181,22 +226,6 @@ public:
         return flag_patterns_[num];
     }
 
-protected:
-    virtual bool try_enqueue_mpi(
-        const mpi::mpi_command_code         code
-    ,   const mpi::mpi_command_parameters&  params
-    ) MGBASE_OVERRIDE
-    {
-        fjmpi_command_parameters fjmpi_params;
-        fjmpi_params.mpi1 = params;
-        
-        fjmpi_command cmd = {
-            static_cast<fjmpi_command_code>(code)
-        ,   fjmpi_params
-        };
-        return queue_.try_push(cmd);
-    }
-    
 private:
     friend class mgbase::basic_active_object<fjmpi_command_queue, fjmpi_command>;
     
@@ -208,14 +237,14 @@ private:
         #endif
         
         // Check the queue.
-        if (fjmpi_command* closure = peek_queue())
+        if (fjmpi_command* const cmd = queue_.peek())
         {
             // Call the closure.
-            const bool succeeded = execute(*closure);
+            const bool succeeded = execute(*cmd);
             
             if (succeeded) {
                 MGBASE_LOG_DEBUG("msg:Operation succeeded.");
-                pop_queue();
+                queue_.pop();
             }
             else {
                 MGBASE_LOG_DEBUG("msg:Operation failed. Postponed.");
@@ -224,22 +253,26 @@ private:
         
         // Do polling.
         // Note: Disabling this polling may cause a deadlock in RmaBasic.ConcurrentGet.
-        poll();
+        completer_.poll_on_this_thread();
     }
-    
-    MGBASE_ALWAYS_INLINE fjmpi_command* peek_queue() { return queue_.peek(); }
-    
-    MGBASE_ALWAYS_INLINE void pop_queue() { queue_.pop(); }
     
     MGBASE_ALWAYS_INLINE bool execute(const fjmpi_command& cmd)
     {
-        return execute_on_this_thread(cmd.code, cmd.params, completer_);
-    }
-    
-    // NOT thread-safe
-    MGBASE_ALWAYS_INLINE void poll()
-    {
-        completer_.poll_on_this_thread();
+        #define CASE(x)     case command_code::x
+        #define RETURN(x)   return x;
+        
+        switch (mgbase::native_value(cmd.code))
+        {
+            MGCOM_BASIC_COMMAND_EXECUTE_CASES(CASE, RETURN, cmd.params.basic)
+            MGCOM_MPI_COMMAND_EXECUTE_CASES(CASE, RETURN, cmd.params.mpi, completer_.get_mpi1_completer())
+            MGCOM_FJMPI_COMMAND_EXECUTE_CASES(CASE, RETURN, cmd.params.fjmpi, completer_)
+        }
+        
+        #undef CASE
+        #undef RETURN
+        
+        MGBASE_UNREACHABLE();
+        return false;
     }
     
     fjmpi_completer                                         completer_;

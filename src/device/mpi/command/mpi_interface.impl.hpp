@@ -7,7 +7,7 @@ namespace mgcom {
 namespace mpi {
 
 // Points to a global variable defined in another compilation unit.
-extern mpi_command_queue_base& g_queue;
+//  /*???*/& g_queue;
 
 bool try_irecv(
     void* const                 buf

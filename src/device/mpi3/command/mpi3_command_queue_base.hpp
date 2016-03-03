@@ -6,17 +6,13 @@
 namespace mgcom {
 namespace mpi3 {
 
+template <typename Derived, typename CommandCode>
 class mpi3_command_queue_base
 {
+    typedef CommandCode     command_code_type;
+    
 protected:
-    mpi3_command_queue_base() { }
-    
-    virtual ~mpi3_command_queue_base() MGBASE_EMPTY_DEFINITION
-    
-    virtual bool try_enqueue_mpi3(
-        const mpi3_command_code          code
-    ,   const mpi3_command_parameters&   params
-    ) = 0;
+    mpi3_command_queue_base() MGBASE_EMPTY_DEFINITION
     
 public:
     bool try_get(
@@ -45,8 +41,8 @@ public:
         mpi3_command_parameters mpi3_params;
         mpi3_params.get = params;
         
-        const bool ret = this->try_enqueue_mpi3(
-            MPI3_COMMAND_GET
+        const bool ret = derived().try_enqueue_mpi3(
+            command_code_type::MPI3_COMMAND_GET
         ,   mpi3_params
         );
         
@@ -89,8 +85,8 @@ public:
         mpi3_command_parameters mpi3_params;
         mpi3_params.put = params;
         
-        const bool ret = this->try_enqueue_mpi3(
-            MPI3_COMMAND_PUT
+        const bool ret = derived().try_enqueue_mpi3(
+            command_code_type::MPI3_COMMAND_PUT
         ,   mpi3_params
         );
         
@@ -136,8 +132,8 @@ public:
         mpi3_command_parameters mpi3_params;
         mpi3_params.compare_and_swap = params;
         
-        const bool ret = this->try_enqueue_mpi3(
-            MPI3_COMMAND_COMPARE_AND_SWAP
+        const bool ret = derived().try_enqueue_mpi3(
+            command_code_type::MPI3_COMMAND_COMPARE_AND_SWAP
         ,   mpi3_params
         );
         
@@ -186,8 +182,8 @@ public:
         mpi3_command_parameters mpi3_params;
         mpi3_params.fetch_and_op = params;
         
-        const bool ret = this->try_enqueue_mpi3(
-            MPI3_COMMAND_FETCH_AND_OP
+        const bool ret = derived().try_enqueue_mpi3(
+            command_code_type::MPI3_COMMAND_FETCH_AND_OP
         ,   mpi3_params
         );
         
@@ -219,8 +215,8 @@ public:
         mpi3_command_parameters mpi3_params;
         mpi3_params.ibarrier = params;
         
-        const bool ret = this->try_enqueue_mpi3(
-            MPI3_COMMAND_IBARRIER
+        const bool ret = derived().try_enqueue_mpi3(
+            command_code_type::MPI3_COMMAND_IBARRIER
         ,   mpi3_params
         );
         
@@ -250,8 +246,8 @@ public:
         mpi3_command_parameters mpi3_params;
         mpi3_params.ibcast = params;
         
-        const bool ret = this->try_enqueue_mpi3(
-            MPI3_COMMAND_IBCAST
+        const bool ret = derived().try_enqueue_mpi3(
+            command_code_type::MPI3_COMMAND_IBCAST
         ,   mpi3_params
         );
         
@@ -285,8 +281,8 @@ public:
         mpi3_command_parameters mpi3_params;
         mpi3_params.iallgather = params;
         
-        const bool ret = this->try_enqueue_mpi3(
-            MPI3_COMMAND_IALLGATHER
+        const bool ret = derived().try_enqueue_mpi3(
+            command_code_type::MPI3_COMMAND_IALLGATHER
         ,   mpi3_params
         );
         
@@ -320,8 +316,8 @@ public:
         mpi3_command_parameters mpi3_params;
         mpi3_params.ialltoall = params;
         
-        const bool ret = this->try_enqueue_mpi3(
-            MPI3_COMMAND_IALLTOALL
+        const bool ret = derived().try_enqueue_mpi3(
+            command_code_type::MPI3_COMMAND_IALLTOALL
         ,   mpi3_params
         );
         
@@ -336,6 +332,9 @@ public:
         
         return ret;
     }
+
+private:
+    Derived& derived() { return static_cast<Derived&>(*this); }
 };
 
 } // namespace mpi3

@@ -47,7 +47,7 @@ if(${is_mpi_available})
     add_library(mgcom-mpi1
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
-        src/device/mpi/command/mpi_command_queue_base.cpp
+        #src/device/mpi/command/mpi_command_queue_base.cpp
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp
         src/device/mpi/rma/contiguous.cpp
@@ -73,14 +73,9 @@ if(${is_mpi3_available})
     add_library(mgcom-mpi3
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
-        src/device/mpi/command/mpi_command_queue_base.cpp
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp
-        src/device/mpi3/command/mpi3_command_queue_base.cpp
         src/device/mpi3/command/mpi3_command_queue.cpp
-        src/device/mpi3/collective/collective.cpp # TODO : Disabled
-        #src/device/mpi/collective/barrier2.cpp
-        #src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
         src/device/mpi/mpi_call.cpp
         src/device/mpi3/mpi3.cpp
@@ -99,9 +94,6 @@ if (${is_fjmpi_available})
     add_library(mgcom-fjmpi
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
-        src/device/mpi/command/mpi_command_queue_base.cpp
-        #src/device/mpi/rpc/rpc_server.cpp
-        #src/device/mpi/rpc/rpc_client.cpp
         src/common/rma/try_contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/mpi_base.cpp
@@ -132,8 +124,6 @@ if (${is_ibv_available})
         
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.c
-        
-        src/device/mpi/command/mpi_command_queue_base.cpp
         
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp

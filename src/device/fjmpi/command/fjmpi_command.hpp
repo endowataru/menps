@@ -16,17 +16,8 @@
 namespace mgcom {
 namespace fjmpi {
 
-enum fjmpi_command_code
-{
-    FJMPI_COMMAND_GET = mpi::MPI_COMMAND_END + 1
-,   FJMPI_COMMAND_PUT
-,   FJMPI_COMMAND_END
-};
-
 union fjmpi_command_parameters
 {
-    mpi::mpi_command_parameters mpi1;
-    
     struct contiguous_parameters {
         int                 proc;
         mgbase::uint64_t    laddr;
@@ -50,6 +41,8 @@ MGBASE_ALWAYS_INLINE int get_local_nic_from_flag(const int flags)
     return flags & 0x03;
     
     /*
+    // More portable implementation
+    
     const int filter = FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_LOCAL_NIC3;
     
     switch (flags & filter)
@@ -64,96 +57,97 @@ MGBASE_ALWAYS_INLINE int get_local_nic_from_flag(const int flags)
 
 } // namespace detail
 
-MGBASE_ALWAYS_INLINE bool execute_on_this_thread(
-    const fjmpi_command_code        code
-,   const fjmpi_command_parameters& params
-,   fjmpi_completer&                completer
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_get(
+    const fjmpi_command_parameters::contiguous_parameters&  params
+,   fjmpi_completer&                                        completer
 ) {
-    switch (code)
+    const int nic = detail::get_local_nic_from_flag(params.flags);
+    
+    int tag;
+    const bool found_tag = completer.try_new_tag(params.proc, nic, &tag);
+    
+    if (MGBASE_LIKELY(found_tag))
     {
-        case FJMPI_COMMAND_GET: {
-            const fjmpi_command_parameters::contiguous_parameters& p = params.contiguous;
-            
-            const int nic = detail::get_local_nic_from_flag(p.flags);
-            
-            int tag;
-            const bool found_tag = completer.try_new_tag(p.proc, nic, &tag);
-            
-            if (MGBASE_LIKELY(found_tag))
-            {
-                //std::cout << mgcom::current_process_id() << " " << mgbase::get_cpu_clock() << " get" << std::endl;
-                mgbase::queueing_logger::add_log("get start", nic, tag);
-                
-                /*mgbase::stopwatch sw;
-                sw.start();*/
-                
-                fjmpi_error::assert_zero(
-                    FJMPI_Rdma_get(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, p.flags | FJMPI_RDMA_IMMEDIATE_RETURN)
-                );
-                
-                //g_get_cycles.add(sw.elapsed());
-                
-                mgbase::queueing_logger::add_log("get finish", nic, tag);
-                
-                completer.set_notification(p.proc, nic, tag, p.on_complete);
-            }
-            
-            MGBASE_LOG_DEBUG(
-                "msg:{}\t"
-                "src_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}\tnic:{}"
-            ,   (found_tag ? "Executed FJMPI_Rdma_get." : "RDMA Get because tag capacity exceeded.")
-            ,   p.proc
-            ,   p.laddr
-            ,   p.raddr
-            ,   p.size_in_bytes
-            ,   p.flags
-            ,   nic
-            );
-            
-            return found_tag;
-        }
+        //std::cout << mgcom::current_process_id() << " " << mgbase::get_cpu_clock() << " get" << std::endl;
+        mgbase::queueing_logger::add_log("get start", nic, tag);
         
-        case FJMPI_COMMAND_PUT: {
-            const fjmpi_command_parameters::contiguous_parameters& p = params.contiguous;
-            
-            const int nic = detail::get_local_nic_from_flag(p.flags);
-            
-            int tag;
-            const bool found_tag = completer.try_new_tag(p.proc, nic, &tag);
-            
-            if (MGBASE_LIKELY(found_tag))
-            {
-                fjmpi_error::assert_zero(
-                    FJMPI_Rdma_put(p.proc, tag, p.raddr, p.laddr, p.size_in_bytes, p.flags)
-                );
-                
-                completer.set_notification(p.proc, nic, tag, p.on_complete);
-            }
-            
-            MGBASE_LOG_DEBUG(
-                "msg:{}\t"
-                "dest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}\tnic:{}"
-            ,   (found_tag ? "Executed FJMPI_Rdma_put." : "RDMA Put failed because tag capacity exceeded.")
-            ,   p.proc
-            ,   p.laddr
-            ,   p.raddr
-            ,   p.size_in_bytes
-            ,   p.flags
-            ,   nic
-            );
-            
-            return found_tag;
-        }
+        /*mgbase::stopwatch sw;
+        sw.start();*/
         
-        default: {
-            return mpi::execute_on_this_thread(
-                static_cast<mpi::mpi_command_code>(code)
-            ,   params.mpi1
-            ,   completer.get_mpi1_completer()
-            );
-        }
+        fjmpi_error::assert_zero(
+            FJMPI_Rdma_get(params.proc, tag, params.raddr, params.laddr, params.size_in_bytes, params.flags)
+        );
+        
+        //g_get_cycles.add(sw.elapsed());
+        
+        mgbase::queueing_logger::add_log("get finish", nic, tag);
+        
+        completer.set_notification(params.proc, nic, tag, params.on_complete);
     }
+    
+    MGBASE_LOG_DEBUG(
+        "msg:{}\t"
+        "src_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}\tnic:{}"
+    ,   (found_tag ? "Executed FJMPI_Rdma_get." : "RDMA Get because tag capacity exceeded.")
+    ,   params.proc
+    ,   params.laddr
+    ,   params.raddr
+    ,   params.size_in_bytes
+    ,   params.flags
+    ,   nic
+    );
+    
+    return found_tag;
 }
+
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+bool try_execute_put(
+    const fjmpi_command_parameters::contiguous_parameters&  params
+,   fjmpi_completer&                                        completer
+) {
+    const int nic = detail::get_local_nic_from_flag(params.flags);
+    
+    int tag;
+    const bool found_tag = completer.try_new_tag(params.proc, nic, &tag);
+    
+    if (MGBASE_LIKELY(found_tag))
+    {
+        fjmpi_error::assert_zero(
+            FJMPI_Rdma_put(params.proc, tag, params.raddr, params.laddr, params.size_in_bytes, params.flags)
+        );
+        
+        completer.set_notification(params.proc, nic, tag, params.on_complete);
+    }
+    
+    MGBASE_LOG_DEBUG(
+        "msg:{}\t"
+        "dest_proc:{}\tladdr:{:x}\traddr:{:x}\tsize_in_bytes:{}\tflags:{}\tnic:{}"
+    ,   (found_tag ? "Executed FJMPI_Rdma_put." : "RDMA Put failed because tag capacity exceeded.")
+    ,   params.proc
+    ,   params.laddr
+    ,   params.raddr
+    ,   params.size_in_bytes
+    ,   params.flags
+    ,   nic
+    );
+    
+    return found_tag;
+}
+
+#define MGCOM_FJMPI_COMMAND_CODES(x)    \
+        x(FJMPI_COMMAND_GET)            \
+    ,   x(FJMPI_COMMAND_PUT)
+
+#define MGCOM_FJMPI_COMMAND_EXECUTE_CASES(CASE, RETURN, params, completer) \
+    CASE(FJMPI_COMMAND_GET): { \
+        const bool ret = ::mgcom::fjmpi::try_execute_get((params).contiguous, (completer)); \
+        RETURN(ret);\
+    } \
+    CASE(FJMPI_COMMAND_PUT): { \
+        const bool ret = ::mgcom::fjmpi::try_execute_put((params).contiguous, (completer)); \
+        RETURN(ret); \
+    }
 
 } // namespace fjmpi
 } // namespace mgcom
