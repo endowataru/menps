@@ -9,9 +9,9 @@ namespace rma {
 
 namespace /*unnamed*/ {
 
-MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
+MGBASE_UNUSED MGBASE_CONSTEXPR index_t registration_alignment = MGCOM_REGISTRATION_ALIGNMENT;
 
-MGBASE_CONSTEXPR index_t buffer_alignment       = MGCOM_BUFFER_ALIGNMENT;
+MGBASE_UNUSED MGBASE_CONSTEXPR index_t buffer_alignment       = MGCOM_BUFFER_ALIGNMENT;
 
 } // unnamed namespace
 
