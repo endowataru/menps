@@ -8,9 +8,13 @@ namespace mgcom {
 
 namespace ibv {
 
+namespace /*unnamed*/ {
+
 endpoint g_endpoint;
 
 poll_thread g_poll;
+
+} // unnamed namespace
 
 bool try_get_new_wr_id(const mgbase::operation& on_complete, mgbase::uint64_t* const wr_id_result)
 {

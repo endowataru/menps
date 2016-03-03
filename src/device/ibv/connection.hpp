@@ -5,6 +5,9 @@
 #include <mgbase/assert.hpp>
 #include "infiniband/verbs.h"
 
+#include <limits>
+#include <algorithm>
+
 namespace mgcom {
 namespace ibv {
 
@@ -91,12 +94,17 @@ private:
     ,   const mgbase::uint16_t  lid
     ,   const ibv_device_attr&  device_attr
     ) {
+        const int max_dest_rd_atomic = std::min(
+            device_attr.max_qp_rd_atom
+        ,   static_cast<int>(std::numeric_limits<mgbase::uint8_t>::max())
+        );
+        
         ibv_qp_attr attr = ibv_qp_attr();
         attr.qp_state              = IBV_QPS_RTR;
         attr.path_mtu              = IBV_MTU_4096;
         attr.dest_qp_num           = qp_num;
         attr.rq_psn                = 0; // PSN starts from 0
-        attr.max_dest_rd_atomic    = device_attr.max_qp_rd_atom;
+        attr.max_dest_rd_atomic    = static_cast<mgbase::uint8_t>(max_dest_rd_atomic);
         attr.max_rd_atomic         = 0;
         attr.min_rnr_timer         = 0; // Arbitary from 0 to 31 (TODO: Is it true?)
         attr.ah_attr.is_global     = 0; // Doesn't use Global Routing Header (GRH)
@@ -147,7 +155,7 @@ public:
         
         ibv_sge sge = ibv_sge();
         sge.addr   = laddr;
-        sge.length = size_in_bytes;
+        sge.length = static_cast<mgbase::uint32_t>(size_in_bytes);
         sge.lkey   = lkey;
         
         ibv_send_wr wr = ibv_send_wr();
@@ -175,7 +183,7 @@ public:
         
         ibv_sge sge = ibv_sge();
         sge.addr   = laddr;
-        sge.length = size_in_bytes;
+        sge.length = static_cast<mgbase::uint32_t>(size_in_bytes);
         sge.lkey   = lkey;
         
         ibv_send_wr wr = ibv_send_wr();
