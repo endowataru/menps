@@ -77,14 +77,14 @@ else()
             -Wno-weak-vtables # couldn't find a correct way to suppress this warning
             # Other options
             -Wshadow
-            -Wno-c++11-long-long # for mpi.h
+            -Wno-c++11-long-long # TODO
             -ferror-limit=${error_limit}
             -Wstrict-overflow=5
             -Wctor-dtor-privacy
             #-Wswitch-default
             -Wredundant-decls
         )
-    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GCC")
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(mgbase-options INTERFACE
             -Wshadow
             -Wno-long-long
@@ -93,6 +93,7 @@ else()
             -Wctor-dtor-privacy
             -Wswitch-default
             -Wredundant-decls
+            -Wno-long-long # TODO
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         target_compile_options(mgbase-options INTERFACE
