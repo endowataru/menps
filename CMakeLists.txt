@@ -81,7 +81,7 @@ else()
             -ferror-limit=${error_limit}
             -Wstrict-overflow=5
             -Wctor-dtor-privacy
-            -Wswitch-default
+            #-Wswitch-default
             -Wredundant-decls
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GCC")

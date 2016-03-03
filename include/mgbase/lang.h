@@ -136,16 +136,6 @@
         #define MGBASE_CONSTEXPR                    constexpr
         #define MGBASE_CONSTEXPR_FUNCTION           constexpr
         
-        namespace mgbase {
-            class noncopyable {
-            public:
-                noncopyable(const noncopyable&) = delete;
-                noncopyable& operator = (const noncopyable) = delete;
-
-            protected:
-                noncopyable() noexcept = default;
-            };
-        }
         
         #define MGBASE_NORETURN                     [[noreturn]]
         
@@ -183,7 +173,7 @@
         #define MGBASE_EMPTY_DEFINITION             { }
         #define MGBASE_ALIGNAS(a)                   __attribute__((aligned(a)))
         #define MGBASE_DECLTYPE(x)                  __typeof__(x)
-        #define MGBASE_CONSTEXPR                    const
+        #define MGBASE_CONSTEXPR                    
         #define MGBASE_CONSTEXPR_FUNCTION           
         
         namespace mgbase {
@@ -197,17 +187,6 @@
                 MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)
         
         #define MGBASE_STATIC_ASSERT_MSG(expr, msg) MGBASE_STATIC_ASSERT(expr)
-        
-        namespace mgbase {
-            class noncopyable {
-            private:
-                noncopyable(const noncopyable&);
-                noncopyable& operator = (const noncopyable&);
-
-            protected:
-                noncopyable() { }
-            };
-        }
         
         #define MGBASE_NORETURN                     __attribute__((noreturn))
     #endif
@@ -239,6 +218,8 @@
         using ::intptr_t;
         using ::uintptr_t;
     }
+    
+    #include <mgbase/noncopyable.hpp>
 
 #endif
 
@@ -279,4 +260,5 @@ typedef uintptr_t       mgbase_uintptr_t;
 
 typedef intmax_t        mgbase_intmax_t;
 typedef uintmax_t       mgbase_uintmax_t;
+
 
