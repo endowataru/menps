@@ -2,6 +2,7 @@
 #pragma once
 
 #include "device/mpi3/command/mpi3_command_queue_base.hpp"
+#include <mgcom/collective.hpp>
 
 namespace mgcom {
 

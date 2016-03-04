@@ -16,6 +16,8 @@
 #include <mgbase/profiling/average_accumulator.hpp>
 #include <mgbase/profiling/stopwatch.hpp>
 
+namespace /*unnamed*/ {
+
 /*extern mgbase::average_accumulator<mgbase::cpu_clock_t> g_get_cycles;
 extern mgbase::average_accumulator<mgbase::cpu_clock_t> g_poll_cycles;*/
 
@@ -113,6 +115,8 @@ void start_bench()
         ths[thread_id].join();
     
 }
+
+} // unnamed namespace
 
 int main(int argc, char* argv[])
 {
