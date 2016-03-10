@@ -3,8 +3,9 @@
 #include "device/mpi/mpi_call.hpp"
 #include "device/mpi1/command/mpi1_command_queue.hpp"
 #include "device/mpi/rpc/rpc.hpp"
-#include "device/mpi/rma/rma.hpp"
+#include "common/rma/region_allocator.hpp"
 #include "device/mpi/collective/collective.hpp"
+#include "ibv.hpp"
 #include <mgcom/collective.hpp>
 
 #include <mgbase/logging/logger.hpp>
@@ -21,7 +22,9 @@ void initialize(int* argc, char*** argv)
     
     collective::initialize();
     
-    rma::initialize();
+    ibv::initialize();
+    
+    rma::initialize_allocator();
     
     mgcom::mpi::native_barrier();
     
@@ -34,7 +37,9 @@ void finalize()
     
     mgcom::mpi::native_barrier();
     
-    rma::finalize();
+    rma::finalize_allocator();
+    
+    ibv::finalize();
     
     collective::finalize();
     

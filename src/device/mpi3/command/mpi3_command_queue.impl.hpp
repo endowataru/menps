@@ -103,7 +103,7 @@ private:
         // Check the queue.
         if (mpi3_command* const cmd = queue_.peek())
         {
-            // Call the closure.
+            // Execute the command.
             const bool succeeded = execute(*cmd);
             
             if (succeeded) {

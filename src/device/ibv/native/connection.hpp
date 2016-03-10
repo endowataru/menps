@@ -1,9 +1,10 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include "verbs.hpp"
 #include <mgbase/assert.hpp>
-#include "infiniband/verbs.h"
+
+#include "device/ibv/ibv_error.hpp"
 
 #include <limits>
 #include <algorithm>
@@ -11,9 +12,8 @@
 namespace mgcom {
 namespace ibv {
 
-struct ibv_error { };
-
 class connection
+    : mgbase::noncopyable
 {
     static const mgbase::uint32_t max_send_wr = 1024;
     static const mgbase::uint32_t max_recv_wr = 1024;
@@ -24,19 +24,24 @@ public:
     connection()
         : qp_(MGBASE_NULLPTR) { }
     
+    ~connection() {
+        if (qp_ != MGBASE_NULLPTR)
+            destroy();
+    }
+    
     mgbase::uint32_t get_qp_num() const MGBASE_NOEXCEPT {
         return qp_->qp_num;
     }
     
-    void create(ibv_cq* cq, ibv_pd* pd)
+    void create(ibv_cq& cq, ibv_pd& pd)
     {
         MGBASE_ASSERT(qp_ == MGBASE_NULLPTR);
         
         ibv_qp_init_attr attr = ibv_qp_init_attr();
         attr.qp_context          = MGBASE_NULLPTR;
         attr.qp_type             = IBV_QPT_RC; // Reliable Connection (RC)
-        attr.send_cq             = cq;
-        attr.recv_cq             = cq;
+        attr.send_cq             = &cq;
+        attr.recv_cq             = &cq;
         attr.srq                 = MGBASE_NULLPTR;
         attr.cap.max_send_wr     = max_send_wr;
         attr.cap.max_recv_wr     = max_recv_wr;
@@ -45,9 +50,9 @@ public:
         attr.cap.max_inline_data = 1; // TODO
         attr.sq_sig_all          = 1;
         
-        qp_ = ibv_create_qp(pd, &attr);
+        qp_ = ibv_create_qp(&pd, &attr);
         if (qp_ == MGBASE_NULLPTR)
-            throw ibv_error();
+            throw ibv_error("ibv_create_qp() failed");
     }
     
     void destroy()
@@ -86,7 +91,7 @@ private:
             IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS);
         
         if (ret != 0)
-            throw ibv_error();
+            throw ibv_error("ibv_modify_qp() failed (Reset -> Init)");
     }
     
     void modify_qp_init_to_rtr(
@@ -120,7 +125,7 @@ private:
             IBV_QP_DEST_QPN | IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER);
         
         if (ret != 0)
-            throw ibv_error();
+            throw ibv_error("ibv_modify_qp() failed (Init to RTR)");
     }
     
     void modify_qp_rtr_to_rts()
@@ -139,7 +144,7 @@ private:
             IBV_QP_RNR_RETRY | IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC);
         
         if (ret != 0)
-            throw ibv_error();
+            throw ibv_error("ibv_modify_qp() failed (RTR to RTS)");
     }
     
 public:
@@ -150,7 +155,8 @@ public:
     ,   const mgbase::uint64_t  laddr
     ,   const mgbase::uint32_t  lkey
     ,   const std::size_t       size_in_bytes
-    ) {
+    ) const
+    {
         MGBASE_ASSERT(qp_ != MGBASE_NULLPTR);
         
         ibv_sge sge = ibv_sge();
@@ -178,7 +184,8 @@ public:
     ,   const mgbase::uint64_t  laddr
     ,   const mgbase::uint32_t  lkey
     ,   const std::size_t       size_in_bytes
-    ) {
+    ) const
+    {
         MGBASE_ASSERT(qp_ != MGBASE_NULLPTR);
         
         ibv_sge sge = ibv_sge();
@@ -207,7 +214,8 @@ public:
     ,   const mgbase::uint32_t  lkey
     ,   const mgbase::uint64_t  expected
     ,   const mgbase::uint64_t  desired
-    ) {
+    ) const
+    {
         MGBASE_ASSERT(qp_ != MGBASE_NULLPTR);
         
         ibv_sge sge = ibv_sge();
@@ -237,7 +245,8 @@ public:
     ,   const mgbase::uint64_t  laddr
     ,   const mgbase::uint32_t  lkey
     ,   const mgbase::uint64_t  value
-    ) {
+    ) const
+    {
         MGBASE_ASSERT(qp_ != MGBASE_NULLPTR);
         
         ibv_sge sge = ibv_sge();
@@ -261,7 +270,7 @@ public:
     }
     
 private:
-    bool post_send(ibv_send_wr& wr)
+    bool post_send(ibv_send_wr& wr) const
     {
         ibv_send_wr* bad_wr;
         const int err = ibv_post_send(qp_, &wr, &bad_wr);
@@ -271,7 +280,7 @@ private:
         else if (err == ENOMEM)
             return false;
         else
-            throw ibv_error();
+            throw ibv_error("ibv_post_send() failed", err);
     }
 
 private:

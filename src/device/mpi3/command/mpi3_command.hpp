@@ -5,6 +5,7 @@
 #include "mpi3_completer.hpp"
 #include "device/mpi3/mpi3_error.hpp"
 #include "device/mpi3/rma.hpp"
+#include <mgbase/force_integer_cast.hpp>
 
 namespace mgcom {
 namespace mpi3 {
@@ -251,7 +252,7 @@ bool try_execute_fetch_and_op(
     ,   params.dest_rank
     ,   params.dest_index
     ,   detail::get_datatype_name(params.datatype)
-    ,   reinterpret_cast<mgbase::intptr_t>(params.operation)
+    ,   mgbase::force_integer_cast<mgbase::intptr_t>(params.operation)
     );
     
     completer.add_completion(params.on_complete);

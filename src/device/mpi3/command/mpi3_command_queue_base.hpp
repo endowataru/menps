@@ -2,6 +2,7 @@
 #pragma once
 
 #include "mpi3_command.hpp"
+#include <mgbase/force_integer_cast.hpp>
 
 namespace mgcom {
 namespace mpi3 {
@@ -197,7 +198,7 @@ public:
         ,   dest_rank
         ,   dest_index
         ,   detail::get_datatype_name(datatype)
-        ,   reinterpret_cast<mgbase::intptr_t>(operation)
+        ,   mgbase::force_integer_cast<mgbase::intptr_t>(operation)
         );
         
         return ret;

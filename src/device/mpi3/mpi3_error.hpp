@@ -5,17 +5,17 @@
 
 namespace mgcom {
 
-struct mpi3_error
+class mpi3_error
     : public mpi_error
 {
-    static void check(int err) {
-        if (err != MPI_SUCCESS)
-            emit();
-    }
+public:
+    explicit mpi3_error(const std::string& what_arg) MGBASE_NOEXCEPT
+        : mpi_error(what_arg) { }
     
-    MGBASE_NORETURN static void emit()
-    {
-        throw mpi3_error();
+    
+    static void check(const int err_code) {
+        if (err_code != MPI_SUCCESS)
+            throw mpi3_error(mpi_error::get_description(err_code));
     }
 };
 

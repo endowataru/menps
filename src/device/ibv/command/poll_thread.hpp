@@ -1,23 +1,22 @@
 
 #pragma once
 
+#include "device/ibv/native/completion_queue.hpp"
 #include "completer.hpp"
 #include <mgbase/thread.hpp>
 
 namespace mgcom {
-
 namespace ibv {
 
 class poll_thread
 {
 public:
-    void start(ibv_cq* const cq)
+    poll_thread(completion_queue& cq, completer& comp)
+        : cq_(&cq)
+        , completer_(&comp) { }
+    
+    void start()
     {
-        completer_.initialize();
-        
-        MGBASE_ASSERT(cq != MGBASE_NULLPTR);
-        cq_ = cq;
-        
         finished_ = false;
         
         th_ = mgbase::thread(
@@ -33,20 +32,18 @@ public:
         finished_ = true;
         
         th_.join();
-        
-        completer_.finalize();
     }
     
     bool try_complete(
         const mgbase::operation& on_complete
     ,   mgbase::uint64_t* const wr_id_result
     ) {
-        return completer_.try_complete(on_complete, wr_id_result);
+        return completer_->try_complete(on_complete, wr_id_result);
     }
     
     void failed(const mgbase::uint64_t wr_id)
     {
-        completer_.failed(wr_id);
+        completer_->failed(wr_id);
     }
     
 private:
@@ -63,15 +60,15 @@ private:
         {
             ibv_wc wc;
             
-            const int num = poll(&wc, 1);
+            const int num = cq_->poll(&wc, 1);
             
             if (num == 1)
             {
                 if (wc.status != IBV_WC_SUCCESS) {
-                    throw ibv_error();
+                    throw ibv_error("polling failed", wc.status);
                 }
                 
-                completer_.notify(wc.wr_id);
+                completer_->notify(wc.wr_id);
                 
                 MGBASE_LOG_DEBUG(
                     "msg:Polled completion.\t"
@@ -88,7 +85,7 @@ private:
         MGBASE_LOG_DEBUG("msg:Finished IBV polling.");
     }
     
-    int poll(
+    /*int poll(
         ibv_wc* const   wc_array
     ,   const int       num_entries
     ) {
@@ -97,16 +94,14 @@ private:
             throw ibv_error();
         
         return ret;
-    }
+    }*/
     
     bool finished_;
-    ibv_cq* cq_;
-    completer completer_;
+    completion_queue* cq_;
+    completer* completer_;
     mgbase::thread th_;
 };
 
 } // namespace ibv
-
 } // namespace mgcom
-
 

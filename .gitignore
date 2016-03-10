@@ -7,5 +7,5 @@ gyp-mac-tool
 .DS_Store
 
 /src/device/fjmpi/mpi-ext.h
-/src/device/ibv/infiniband
+/src/device/ibv/native/infiniband
 

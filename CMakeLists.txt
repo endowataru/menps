@@ -38,8 +38,8 @@ is_mpi3_available)
 CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
 #set(is_fjmpi_available TRUE) # Just for compilation check
 
-CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" is_ibv_available)
-#set(is_ibv_available TRUE) # Just for compilation check
+#CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" is_ibv_available)
+set(is_ibv_available TRUE) # Just for compilation check
 
 # Library for each device
 
@@ -119,7 +119,8 @@ endif()
 
 if (${is_ibv_available})
     add_library(mgcom-ibv
-        src/device/ibv/endpoint.cpp
+        src/device/ibv/command/proxy.cpp
+        #src/device/ibv/endpoint.cpp
         src/device/ibv/ibv.cpp
         
         src/common/rma/region_allocator.cpp
@@ -137,7 +138,9 @@ if (${is_ibv_available})
         src/common/rma/try_contiguous.cpp
         src/common/rma/try_atomic.cpp
     )
-    target_link_libraries(mgcom-ibv mgcom-base mgbase)
+    target_link_libraries(mgcom-ibv mgcom-base mgbase
+        ibverbs # libibverbs.so
+    )
     
     list(APPEND mgcom-devices ibv)
 endif()

@@ -43,7 +43,8 @@ public:
         
         mgbase::atomic<bool> send_finished = MGBASE_ATOMIC_VAR_INIT(false);
         
-        mpi::irsend(
+        //mpi::irsend( // TODO: Introduce buffer management
+        mpi::isend(
             &msg_buf                                    // buf
         ,   static_cast<int>(sizeof(message_buffer))    // size_in_bytes
         ,   static_cast<int>(dest_proc)                 // dest_proc

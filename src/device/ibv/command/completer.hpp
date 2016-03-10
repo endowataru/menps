@@ -8,7 +8,6 @@
 #include <mgbase/operation.hpp>
 
 namespace mgcom {
-
 namespace ibv {
 
 class completer
@@ -71,6 +70,5 @@ private:
 };
 
 } // namespace ibv
-
 } // namespace mgcom
 
