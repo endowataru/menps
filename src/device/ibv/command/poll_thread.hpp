@@ -64,7 +64,7 @@ private:
             
             if (num == 1)
             {
-                if (wc.status != IBV_WC_SUCCESS) {
+                if (MGBASE_UNLIKELY(wc.status != IBV_WC_SUCCESS)) {
                     throw ibv_error("polling failed", wc.status);
                 }
                 

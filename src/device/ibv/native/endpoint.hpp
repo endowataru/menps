@@ -22,9 +22,9 @@ public:
         devices.get_list();
         
         if (const char* const dev_name = get_device_name())
-            ctx_.open(devices.get_by_name(dev_name)); // TODO
+            ctx_.open(devices.get_by_name(dev_name));
         else
-            ctx_.open(devices.get_by_index(0)); // TODO
+            ctx_.open(devices.get_by_index(0));
         
         cq_.create(ctx_.get());
         protection_domain::alloc(ctx_.get());

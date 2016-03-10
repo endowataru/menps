@@ -47,7 +47,7 @@ public:
         MGBASE_ASSERT(cq_ != MGBASE_NULLPTR);
         
         const int ret = ibv_poll_cq(cq_, num_entries, wc_array);
-        if (ret < 0)
+        if (MGBASE_UNLIKELY(ret < 0))
             throw ibv_error("ibv_poll_cq() failed", ret);
         
         return ret;

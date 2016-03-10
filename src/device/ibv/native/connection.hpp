@@ -110,7 +110,7 @@ private:
         attr.dest_qp_num           = qp_num;
         attr.rq_psn                = 0; // PSN starts from 0
         attr.max_dest_rd_atomic    = static_cast<mgbase::uint8_t>(max_dest_rd_atomic);
-        attr.max_rd_atomic         = 0;
+        attr.max_rd_atomic         = 16;
         attr.min_rnr_timer         = 0; // Arbitary from 0 to 31 (TODO: Is it true?)
         attr.ah_attr.is_global     = 0; // Doesn't use Global Routing Header (GRH)
         attr.ah_attr.dlid          = lid;
@@ -136,7 +136,7 @@ private:
         attr.retry_cnt     = 7; // Arbitary from 0 to 7
         attr.rnr_retry     = 7; // TODO
         attr.sq_psn        = 0; // Arbitary
-        attr.max_rd_atomic = 0; // TODO : Usually 0 ?
+        attr.max_rd_atomic = 16; // TODO : Usually 0 ?
         
         // RTR to RTS
         const int ret = ibv_modify_qp(qp_, &attr,
@@ -275,7 +275,7 @@ private:
         ibv_send_wr* bad_wr;
         const int err = ibv_post_send(qp_, &wr, &bad_wr);
         
-        if (err == 0)
+        if (MGBASE_LIKELY(err == 0))
             return true;
         else if (err == ENOMEM)
             return false;
