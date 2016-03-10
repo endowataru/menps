@@ -99,7 +99,7 @@ MGBASE_ALWAYS_INLINE bool compare_exchange_weak(
 ,   T* const            expected
 ,   const T             desired
 ,   const memory_order  //success
-,   memory_order        //failure
+,   const memory_order  //failure
 ) MGBASE_NOEXCEPT
 {
     const T expected_val = *expected;
@@ -118,8 +118,8 @@ MGBASE_ALWAYS_INLINE bool compare_exchange_strong(
     volatile T* const   obj
 ,   T* const            expected
 ,   const T             desired
-,   memory_order        success
-,   memory_order        failure
+,   const memory_order  success
+,   const memory_order  failure
 ) MGBASE_NOEXCEPT
 {
     // Assume that there's no spurious failure.
