@@ -8,7 +8,7 @@ namespace mgbase {
 template <typename T, typename U>
 MGBASE_ALWAYS_INLINE
 typename mgbase::enable_if<
-    !mgbase::is_pointer<T>::value
+    !mgbase::is_pointer<U>::value
 ,   T
 >::type
 force_integer_cast(const U& value) MGBASE_NOEXCEPT
@@ -19,7 +19,7 @@ force_integer_cast(const U& value) MGBASE_NOEXCEPT
 template <typename T, typename U>
 MGBASE_ALWAYS_INLINE
 typename mgbase::enable_if<
-    mgbase::is_pointer<T>::value
+    mgbase::is_pointer<U>::value
 ,   T
 >::type
 force_integer_cast(const U& value) MGBASE_NOEXCEPT

@@ -27,8 +27,15 @@
 #ifdef __FUJITSU
     #define MGBASE_COMPILER_FUJITSU
 #else
+    // See also: https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
+    
     #ifdef __GNUC__
         #define MGBASE_COMPILER_GCC
+        
+        #define MGBASE_COMPILER_GCC_VERSION \
+            (  __GNUC__ * 10000 \
+             + __GNUC_MINOR__ * 100 \
+             + __GNUC_PATCHLEVEL__)
     #endif
 #endif
 
@@ -64,6 +71,12 @@
     #define MGBASE_UNREACHABLE()    abort()
 #else
     #define MGBASE_UNREACHABLE()    __builtin_unreachable()
+#endif
+
+#ifdef MGBASE_COMPILER_CLANG
+    #define MGBASE_COVERED_SWITCH()
+#else
+    #define MGBASE_COVERED_SWITCH()     default: MGBASE_UNREACHABLE(); break;
 #endif
 
 #ifdef MGBASE_DEBUG
@@ -149,6 +162,13 @@
         
         namespace mgbase
         {
+            #ifdef MGBASE_COMPILER_GCC
+                #if MGBASE_COMPILER_GCC_VERSION > 40700
+                    #pragma GCC diagnostic push
+                    #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+                #endif
+            #endif
+            
             class nullptr_t
             {
             public:
@@ -166,6 +186,12 @@
             private:
                 void operator&() const;
             };
+            
+            #ifdef MGBASE_COMPILER_GCC
+                #if MGBASE_COMPILER_GCC_VERSION > 40700
+                    #pragma GCC diagnostic pop
+                #endif
+            #endif
         }
         
         #define MGBASE_NULLPTR                      (::mgbase::nullptr_t())

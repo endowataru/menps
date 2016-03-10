@@ -50,10 +50,10 @@ typename EnumType::enum_type native_value(const EnumType e) MGBASE_NOEXCEPT {
                                                                             \
         EnumType() MGBASE_NOEXCEPT {}                                       \
                                                                             \
-        explicit MGBASE_CONSTEXPR                                           \
+        MGBASE_UNUSED explicit MGBASE_CONSTEXPR                             \
         EnumType(const underlying_type val) MGBASE_NOEXCEPT : val_(val) {}  \
                                                                             \
-        MGBASE_CONSTEXPR underlying_type                                    \
+        MGBASE_UNUSED MGBASE_CONSTEXPR underlying_type                      \
         get_underlying_value_() const MGBASE_NOEXCEPT { return val_; }      \
                                                                             \
     private:                                                                \
