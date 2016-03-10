@@ -38,8 +38,8 @@ is_mpi3_available)
 CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
 #set(is_fjmpi_available TRUE) # Just for compilation check
 
-#CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" is_ibv_available)
-set(is_ibv_available TRUE) # Just for compilation check
+CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" is_ibv_available)
+#set(is_ibv_available TRUE) # Just for compilation check
 
 # Library for each device
 
