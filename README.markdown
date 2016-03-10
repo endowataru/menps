@@ -101,7 +101,9 @@ Platform-Specific Information
 
 #### Environment Variables
 
-- `MGCOM_IBV_DEVICE`
+- `MGCOM_IBV_DEVICE` (default: the first device)
     - Sets the device name.
     - Use the command `ibv_devices` to show all available devices on your platform.
+- `MGCOM_IBV_PORT` (default: 1)
+    - Sets the port number.
 

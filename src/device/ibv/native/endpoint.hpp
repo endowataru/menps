@@ -21,7 +21,7 @@ public:
         device_list devices;
         devices.get_list();
         
-        if (const char* dev_name = get_device_name())
+        if (const char* const dev_name = get_device_name())
             ctx_.open(devices.get_by_name(dev_name)); // TODO
         else
             ctx_.open(devices.get_by_index(0)); // TODO
@@ -35,7 +35,7 @@ public:
         dev_attr.query(ctx_);
         
         port_attributes port_attr;
-        port_attr.query(ctx_, 1); // TODO: Change port number
+        port_attr.query(ctx_, get_port_number());
         
         alltoall_connections::collective_start(dev_attr, port_attr);
     }
@@ -49,6 +49,14 @@ public:
     }
     
 private:
+    static mgbase::uint8_t get_port_number() MGBASE_NOEXCEPT
+    {
+        if (const char* const port_str = std::getenv("MGCOM_IBV_PORT"))
+            return static_cast<mgbase::uint8_t>(std::atoi(port_str));
+        else
+            return 1; // Default
+    }
+    
     static const char* get_device_name() MGBASE_NOEXCEPT
     {
         return std::getenv("MGCOM_IBV_DEVICE");
