@@ -20,6 +20,8 @@ public:
         
         for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
             conns_[proc].create(cq, pd);
+
+        MGBASE_LOG_DEBUG("msg:Created all IBV connections.");
     }
     
     void destroy()
@@ -28,6 +30,8 @@ public:
             conns_[proc].destroy();
         
         conns_.reset();
+        
+        MGBASE_LOG_DEBUG("msg:Destroyed all IBV connections.");
     }
     
     void collective_start(const ibv_device_attr& device_attr, const ibv_port_attr& port_attr)
@@ -55,6 +59,8 @@ public:
         // Start all of the connections.
         for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
             conns_[proc].start(remote_qp_nums[proc], lids[proc], device_attr);
+        
+        MGBASE_LOG_DEBUG("msg:Started all IBV connections.");
     }
     
     MGBASE_WARN_UNUSED_RESULT bool try_write_async(

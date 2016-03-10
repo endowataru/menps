@@ -90,7 +90,18 @@ Supported interconnects:
 Supported compilers:
 
 - Clang
-- GCC
+- GCC (4.4 or higher)
 - Intel C++ Compiler
 - Fujitsu compiler
+
+Platform-Specific Information
+-----------------------------
+
+### InfiniBand
+
+#### Environment Variables
+
+- `MGCOM_IBV_DEVICE`
+    - Sets the device name.
+    - Use the command `ibv_devices` to show all available devices on your platform.
 

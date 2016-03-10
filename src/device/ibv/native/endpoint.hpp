@@ -21,7 +21,10 @@ public:
         device_list devices;
         devices.get_list();
         
-        ctx_.open(devices.get_by_index(0)); // TODO
+        if (const char* dev_name = get_device_name())
+            ctx_.open(devices.get_by_name(dev_name)); // TODO
+        else
+            ctx_.open(devices.get_by_index(0)); // TODO
         
         cq_.create(ctx_.get());
         protection_domain::alloc(ctx_.get());
@@ -45,6 +48,13 @@ public:
         ctx_.close();
     }
     
+private:
+    static const char* get_device_name() MGBASE_NOEXCEPT
+    {
+        return std::getenv("MGCOM_IBV_DEVICE");
+    }
+    
+public:
     using alltoall_connections::try_read_async;
     using alltoall_connections::try_write_async;
     using alltoall_connections::try_compare_and_swap_async;
