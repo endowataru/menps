@@ -71,17 +71,17 @@ else()
             -ferror-limit=${error_limit}
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WCXX14_COMPAT "-Wc++14-compat")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED "-Wconditionally-supported")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WDATE_TYPE "-Wdate-time")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR "-Wdelete-non-virtual-dtor")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WDOUBLE_PROMOTION "-Wdouble-promotion")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WFORMAT_SIGNEDNESS "-Wformat-signedness")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WNOEXCEPT "-Wnoexcept")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE "-Wsuggest-attribute=format")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WSUGGEST_OVERRIDE "-Wsuggest-override")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WUSELESS_CAST "-Wuseless-cast")
-        CHECK_CXX_COMPILER_FLAG(MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT "-Wzero-as-null-pointer-constant")
+        CHECK_CXX_COMPILER_FLAG("-Wc++14-compat" MGBASE_GCC_SUPPORTS_WCXX14_COMPAT)
+        CHECK_CXX_COMPILER_FLAG("-Wconditionally-supported" MGBASE_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED)
+        CHECK_CXX_COMPILER_FLAG("-Wdate-time" MGBASE_GCC_SUPPORTS_WDATE_TIME)
+        CHECK_CXX_COMPILER_FLAG("-Wdelete-non-virtual-dtor" MGBASE_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR)
+        CHECK_CXX_COMPILER_FLAG("-Wdouble-promotion" MGBASE_GCC_SUPPORTS_WDOUBLE_PROMOTION)
+        CHECK_CXX_COMPILER_FLAG("-Wformat-signedness" MGBASE_GCC_SUPPORTS_WFORMAT_SIGNEDNESS)
+        CHECK_CXX_COMPILER_FLAG("-Wnoexcept" MGBASE_GCC_SUPPORTS_WNOEXCEPT)
+        CHECK_CXX_COMPILER_FLAG("-Wsuggest-attribute=format" MGBASE_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE)
+        CHECK_CXX_COMPILER_FLAG("-Wsuggest-override" MGBASE_GCC_SUPPORTS_WSUGGEST_OVERRIDE)
+        CHECK_CXX_COMPILER_FLAG("-Wuseless-cast" MGBASE_GCC_SUPPORTS_WUSELESS_CAST)
+        CHECK_CXX_COMPILER_FLAG("-Wzero-as-null-pointer-constant" MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT)
         
         target_compile_options(mgbase-options INTERFACE
             # Meta warnings
@@ -126,7 +126,7 @@ else()
             -Wreorder
             -Wsign-promo
             -Wstrict-null-sentinel
-            $<$<BOOL:${MGBASE_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE}>:-Wsuggest-attribute>
+            $<$<BOOL:${MGBASE_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE}>:-Wsuggest-attribute=format>
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WSUGGEST_OVERRIDE}>:-Wsuggest-override>
             -Wswitch-default
             -Wswitch-enum
@@ -150,10 +150,10 @@ else()
     endif()
     
     if(MGBASE_PROFILER_USE_GPROF)
-    target_compile_options(mgbase-options INTERFACE
-        $<$<CXX_COMPILER_ID:GNU>:-pg>
-    )
-    target_link_libraries(mgbase-options INTERFACE "-pg")
+        target_compile_options(mgbase-options INTERFACE
+            $<$<CXX_COMPILER_ID:GNU>:-pg>
+        )
+        target_link_libraries(mgbase-options INTERFACE "-pg")
     endif()
 endif()
 
