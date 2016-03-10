@@ -530,6 +530,10 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
     #pragma clang system_header
 #endif
 
+#ifdef __GNUC__
+    #pragma GCC system_header
+#endif
+
 /*--- Custom settings for mgcom ends ---*/
 
 

@@ -14,6 +14,10 @@
     #pragma clang system_header
 #endif
 
+#ifdef __GNUC__
+    #pragma GCC system_header
+#endif
+
 /*--- Custom settings for mgcom ends ---*/
 
 

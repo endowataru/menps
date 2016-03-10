@@ -112,6 +112,8 @@ private:
         {
             MGCOM_BASIC_COMMAND_EXECUTE_CASES(CASE, RETURN, cmd.params.basic)
             MGCOM_MPI_COMMAND_EXECUTE_CASES(CASE, RETURN, cmd.params.mpi, completer_)
+            
+            MGBASE_COVERED_SWITCH()
         }
         
         #undef CASE
