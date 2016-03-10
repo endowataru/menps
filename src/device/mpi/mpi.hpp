@@ -1,11 +1,7 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#define MGBASE_SYSTEM_HEADER    <mpi.h>
+#include <mgbase/system_header.hpp>
 
-#ifdef MGBASE_COMPILER_CLANG
-    #pragma clang system_header
-#endif
-
-#include <mpi.h>
 
