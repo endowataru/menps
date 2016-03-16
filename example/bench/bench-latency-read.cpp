@@ -28,11 +28,15 @@ mgbase::scoped_ptr<double [/*g_num_threads*/]> g_clocks_sum;
 mgbase::scoped_ptr<double [/*g_num_threads*/]> g_clocks_sum_squared;
 mgcom::process_id_t g_root_proc;
 mgbase::scoped_ptr<mgcom::rma::remote_pointer<int> []> g_remote_ptrs;
+mgbase::scoped_ptr<mgbase::uint64_t []> g_counts;
+double g_total_time;
 
 void record_sample(const mgbase::uint32_t thread_id, const double clocks)
 {
     g_clocks_sum[thread_id] += clocks;
     g_clocks_sum_squared[thread_id] += clocks * clocks;
+    
+    ++g_counts[thread_id];
 }
 
 void start_bench_thread(const mgbase::uint32_t thread_id)
@@ -42,6 +46,7 @@ void start_bench_thread(const mgbase::uint32_t thread_id)
     
     g_clocks_sum[thread_id] = 0.0;
     g_clocks_sum_squared[thread_id] = 0.0;
+    g_counts[thread_id] = 0;
     
     const mgbase::uint64_t num_total_trials = g_num_startup_samples + g_num_trials;
     
@@ -104,6 +109,9 @@ void start_bench()
     
     std::vector<mgbase::thread> ths;
     
+    mgbase::stopwatch sw;
+    sw.start();
+    
     for (mgbase::uint32_t thread_id = 0; thread_id < g_num_threads; ++thread_id)
         ths.push_back(
             mgbase::thread(
@@ -114,6 +122,7 @@ void start_bench()
     for (mgbase::uint32_t thread_id = 0; thread_id < g_num_threads; ++thread_id)
         ths[thread_id].join();
     
+    g_total_time = sw.elapsed();
 }
 
 } // unnamed namespace
@@ -123,8 +132,8 @@ int main(int argc, char* argv[])
     mgcom::initialize(&argc, &argv);
     
     cmdline::parser p;
-    p.add<mgbase::uint32_t>("num_threads", 'p', "number of threads", false, 1);
-    p.add<mgbase::uint64_t>("num_trials" , 'c', "number of trials" , false, 1000000);
+    p.add<mgbase::uint32_t>("num_threads", 't', "number of threads", false, 1);
+    p.add<mgbase::uint64_t>("num_trials" , 'n', "number of trials" , false, 1000000);
     p.add<mgbase::uint64_t>("num_startup_samples" , 's', "number of initially omitted samples" , false, 1000);
     p.add<std::string>("output_file", 'o', "path to the output file", false, "output.yaml");
     
@@ -139,6 +148,7 @@ int main(int argc, char* argv[])
     
     g_clocks_sum = new double[g_num_threads];
     g_clocks_sum_squared = new double[g_num_threads];
+    g_counts = new mgbase::uint64_t[g_num_threads];
     
     start_bench();
     
@@ -163,7 +173,8 @@ int main(int argc, char* argv[])
         {
             std::fstream ofs(output_file.c_str(), std::fstream::out | std::fstream::app);
             
-            fmt::print(ofs, "    - process_id : {}\n", proc);
+            fmt::print(ofs, "    - process_id: {}\n", proc);
+            fmt::print(ofs, "      total_time: {} # [cycles]\n", g_total_time);
             fmt::print(ofs, "      thread_results:\n");
             
             for (mgbase::uint32_t thread_id = 0; thread_id < g_num_threads; ++thread_id)
@@ -173,8 +184,9 @@ int main(int argc, char* argv[])
                     = std::sqrt(g_clocks_sum_squared[thread_id] / g_num_trials - latency_average * latency_average);
                 
                 fmt::print(ofs, "        - thread_id: {}\n", thread_id);
-                fmt::print(ofs, "          latency: {{ average: {}, stddev: {} }} # [clocks]\n",
+                fmt::print(ofs, "          latency: {{ average: {}, stddev: {} }} # [cycles]\n",
                     latency_average, latency_stddev);
+                fmt::print(ofs, "          count: {}\n", g_counts[thread_id]);
             }
             
         }
@@ -183,7 +195,8 @@ int main(int argc, char* argv[])
     }
     
     if (mgcom::current_process_id() == 0) {
-        std::cout << std::endl;
+        std::fstream ofs(output_file.c_str(), std::fstream::out | std::fstream::app);
+        ofs << std::endl;
     }
     
     mgcom::finalize();
