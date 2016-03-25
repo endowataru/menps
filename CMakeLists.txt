@@ -46,7 +46,7 @@ CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" is_ibv_available)
 if(${is_mpi_available})
     add_library(mgcom-mpi1
         src/common/rma/region_allocator.cpp
-        src/common/rma/malloc.c
+        src/common/rma/malloc.cpp
         #src/device/mpi/command/mpi_command_queue_base.cpp
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp
@@ -72,7 +72,7 @@ endif()
 if(${is_mpi3_available})
     add_library(mgcom-mpi3
         src/common/rma/region_allocator.cpp
-        src/common/rma/malloc.c
+        src/common/rma/malloc.cpp
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp
         src/device/mpi3/command/mpi3_command_queue.cpp
@@ -93,7 +93,7 @@ endif()
 if (${is_fjmpi_available})
     add_library(mgcom-fjmpi
         src/common/rma/region_allocator.cpp
-        src/common/rma/malloc.c
+        src/common/rma/malloc.cpp
         src/common/rma/try_contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/mpi_base.cpp
@@ -124,7 +124,7 @@ if (${is_ibv_available})
         src/device/ibv/ibv.cpp
         
         src/common/rma/region_allocator.cpp
-        src/common/rma/malloc.c
+        src/common/rma/malloc.cpp
         
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp
