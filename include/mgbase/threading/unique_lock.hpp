@@ -3,6 +3,18 @@
 
 #include <mgbase/threading/lock_t.hpp>
 
+#ifdef MGBASE_CPP11_SUPPORTED
+
+#include <mutex>
+
+namespace mgbase {
+
+using std::unique_lock;
+
+} // namespace mgbase
+
+#else
+
 namespace mgbase {
 
 class condition_variable; // for friend declaration
@@ -90,4 +102,6 @@ private:
 };
 
 } // namespace mgbase
+
+#endif // MGBASE_CPP11_SUPPORTED
 

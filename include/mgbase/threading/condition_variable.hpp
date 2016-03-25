@@ -4,6 +4,18 @@
 #include <mgbase/threading/unique_lock.hpp>
 #include <mgbase/threading/mutex.hpp>
 
+#ifdef MGBASE_CPP11_SUPPORTED
+
+#include <condition_variable>
+
+namespace mgbase {
+
+using std::condition_variable;
+
+} // namespace mgbase
+
+#else
+
 namespace mgbase {
 
 struct condition_variable_error { };
@@ -70,4 +82,6 @@ private:
 };
 
 } // namespace mgbase
+
+#endif // MGBASE_CPP11_SUPPORTED
 

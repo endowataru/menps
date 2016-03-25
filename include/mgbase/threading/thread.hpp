@@ -2,6 +2,19 @@
 #pragma once
 
 #include <mgbase/threading/thread_id.hpp>
+
+#ifdef MGBASE_CPP11_SUPPORTED
+
+#include <thread>
+
+namespace mgbase {
+
+using std::thread;
+
+} // namespace mgbase
+
+#else
+
 #include <mgbase/move.hpp>
 
 namespace mgbase {
@@ -83,4 +96,6 @@ private:
 };
 
 } // namespace mgbase
+
+#endif
 

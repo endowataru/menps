@@ -1,6 +1,20 @@
 
 #pragma once
 
+#include <mgbase/lang.hpp>
+
+#ifdef MGBASE_CPP11_SUPPORTED
+
+#include <mutex>
+
+namespace mgbase {
+
+using std::mutex;
+
+} // namespace mgbase
+
+#else // MGBASE_CPP11_SUPPORTED
+
 #include <pthread.h>
 #include <errno.h>
 
@@ -60,4 +74,6 @@ private:
 };
 
 } // namespace mgbase
+
+#endif // MGBASE_CPP11_SUPPORTED
 

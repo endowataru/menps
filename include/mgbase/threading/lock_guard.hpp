@@ -3,36 +3,41 @@
 
 #include <mgbase/threading/lock_t.hpp>
 
-namespace mgbase {
-
 #ifdef MGBASE_CPP11_SUPPORTED
 
-    using std::lock_guard;
+    #include <mutex>
 
-#else
+    namespace mgbase {
+        using std::lock_guard;
+    }
 
-    template <typename Mutex>
-    class lock_guard
-        : noncopyable
-    {
-    public:
-        explicit lock_guard(Mutex& mutex)
-            : mutex_(mutex)
+#else // MGBASE_CPP11_SUPPORTED
+
+    namespace mgbase {
+
+        template <typename Mutex>
+        class lock_guard
+            : noncopyable
         {
-            mutex.lock();
-        }
-        lock_guard(Mutex& mutex, adopt_lock_t) MGBASE_NOEXCEPT
-            : mutex_(mutex) { }
-        
-        ~lock_guard() {
-            mutex_.unlock();
-        }
+        public:
+            explicit lock_guard(Mutex& mutex)
+                : mutex_(mutex)
+            {
+                mutex.lock();
+            }
+            lock_guard(Mutex& mutex, adopt_lock_t) MGBASE_NOEXCEPT
+                : mutex_(mutex) { }
+            
+            ~lock_guard() {
+                mutex_.unlock();
+            }
 
-    private:
-        Mutex& mutex_;
-    };
+        private:
+            Mutex& mutex_;
+        };
 
-#endif
+    } // namespace mgbase
+    
+#endif // MGBASE_CPP11_SUPPORTED
 
-} // namespace mgbase
 

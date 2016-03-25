@@ -3,6 +3,24 @@
 
 #include <mgbase/lang.hpp>
 
+#ifdef MGBASE_CPP11_SUPPORTED
+
+#include <mutex>
+
+namespace mgbase {
+
+using std::adopt_lock_t;
+using std::defer_lock_t;
+using std::try_to_lock_t;
+
+using std::adopt_lock;
+using std::defer_lock;
+using std::try_to_lock;
+
+} // namespace mgbase
+
+#else // MGBASE_CPP11_SUPPORTED
+
 namespace mgbase {
 
 struct adopt_lock_t { };
@@ -25,4 +43,5 @@ MGBASE_UNUSED try_to_lock_t try_to_lock;
 
 } // namespace mgbase
 
+#endif // MGBASE_CPP11_SUPPORTED
 
