@@ -111,14 +111,13 @@ void start_bench()
     mgcom::collective::barrier();
     
     // Create threads.
-    std::vector<mgbase::thread> ths;
+    mgbase::scoped_ptr<mgbase::thread []> ths(new mgbase::thread[g_num_threads]);
     
     for (mgbase::uint32_t thread_id = 0; thread_id < g_num_threads; ++thread_id)
-        ths.push_back(
+        ths[thread_id] =
             mgbase::thread(
                 mgbase::bind1st_of_1(&start_bench_thread, thread_id)
-            )
-        );
+            );
     
     // Sleep awhile.
     mgbase::this_thread::sleep_for_ns(static_cast<mgbase::uint64_t>(g_duration * 1e9));

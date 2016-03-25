@@ -30,13 +30,17 @@ alpha = 0.95
 
 print("Processing...")
 for execution in data:
-    samples = []
+    rates = []
     for process_result in execution['process_results']:
+        counts = []
+        times = []
         for thread_result in process_result['thread_results']:
-            samples.append(thread_result['latency']['average'])
+            counts.append(thread_result['count'])
+            times.append(thread_result['time'])
+        rates.append(np.sum(counts) / np.mean(times))
     
     x = execution[x_name]
-    y = np.mean(samples)
+    y = stats.hmean(rates)
     
     results[x].append(y)
 
@@ -64,7 +68,7 @@ ax.errorbar(x_list, y_list,
 ax.set_xlim(min(x_list)-1, max(x_list)+1)
 #ax.set_ylim(0, 7000)
 ax.set_xlabel("Number of Threads")
-ax.set_ylabel("Latency [cycles]")
+ax.set_ylabel("Message Rate [1/cycles]")
 
 plt.savefig("fig.pdf")
 
