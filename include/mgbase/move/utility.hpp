@@ -11,7 +11,8 @@ namespace mgbase {
 
 template <typename T>
 MGBASE_ALWAYS_INLINE rv<T>& move(T& x) MGBASE_NOEXCEPT {
-    return detail::move_to_rv_cast<rv<T>&>(x);
+    // TODO: use addressof
+    return * detail::move_to_rv_cast<rv<T>*>(& x);
 }
 
 template <typename T>

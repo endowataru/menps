@@ -8,7 +8,7 @@ option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
 option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
 
-set(MGBASE_CXX_STANDARD "03" CACHE STRING "C++ standard version")
+set(MGBASE_CXX_STANDARD "" CACHE STRING "C++ standard version")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/mgbase/config.h)
@@ -63,7 +63,7 @@ else()
     if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"))
         target_compile_options(mgbase-options INTERFACE
             # C++ Standard
-            -std=c++${MGBASE_CXX_STANDARD}
+            $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
             
             # Enable -Weverything
             -Weverything
@@ -96,7 +96,7 @@ else()
         
         target_compile_options(mgbase-options INTERFACE
             # C++ Standard
-            -std=c++${MGBASE_CXX_STANDARD}
+            $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
             
             # Meta warnings
             -Wall
@@ -158,7 +158,7 @@ else()
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         target_compile_options(mgbase-options INTERFACE
             # C++ Standard
-            -std=c++${MGBASE_CXX_STANDARD}
+            $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
             
             # Enable -Wall
             -Wall
@@ -201,13 +201,11 @@ add_library(googletest
 target_compile_options(googletest
     PRIVATE
     -w # Suppress ALL warnings
+    -DGTEST_HAS_TR1_TUPLE=0
 )
 target_include_directories(googletest
     PUBLIC ./external/googletest/googletest
     PUBLIC ./external/googletest/googletest/include
-)
-target_link_libraries(googletest
-    PRIVATE mgbase-options
 )
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     target_sources(googletest
@@ -217,7 +215,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
         PRIVATE
         -Xg
         -include ${CMAKE_CURRENT_SOURCE_DIR}/src/workaround/wcscasecmp.h
-        -D GTEST_HAS_TR1_TUPLE=0
     )
 endif()
 

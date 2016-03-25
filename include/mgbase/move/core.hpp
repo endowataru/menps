@@ -16,7 +16,7 @@ namespace detail {
 struct move_nat { };
 
 template <typename T, typename U>
-MGBASE_ALWAYS_INLINE T move_to_rv_cast(U& arg) MGBASE_NOEXCEPT {
+MGBASE_ALWAYS_INLINE T move_to_rv_cast(const U arg) MGBASE_NOEXCEPT {
     return static_cast<T>(arg);
 }
 
@@ -68,10 +68,10 @@ struct is_rv< const rv<T> > : true_type { };
     \
     public: \
         MGBASE_ALWAYS_INLINE operator ::mgbase::rv<TYPE>&() MGBASE_NOEXCEPT { \
-            return ::mgbase::detail::move_to_rv_cast< ::mgbase::rv< TYPE >&>(*this); \
+            return * ::mgbase::detail::move_to_rv_cast< ::mgbase::rv< TYPE >*>(this); \
         } \
         MGBASE_ALWAYS_INLINE operator const ::mgbase::rv<TYPE>&() const MGBASE_NOEXCEPT { \
-            return ::mgbase::detail::move_to_rv_cast<const ::mgbase::rv< TYPE >&>(*this); \
+            return * ::mgbase::detail::move_to_rv_cast<const ::mgbase::rv< TYPE >*>(this); \
         }
 
 // MGBASE_RV_REF
