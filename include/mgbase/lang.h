@@ -137,9 +137,18 @@
     #define MGBASE_EXTERN_C_BEGIN   extern "C" {
     #define MGBASE_EXTERN_C_END     }
     
+    #ifdef MGBASE_COMPILER_INTEL
+        #if defined(__GXX_EXPERIMENTAL_CPP0X__) || defined(__GXX_EXPERIMENTAL_CXX0X__)
+            #define MGBASE_CPP11_SUPPORTED
+        #endif
+    #else
+        #if __cplusplus >= 201103L
+            #define MGBASE_CPP11_SUPPORTED
+        #endif
+    #endif
+    
     // For C++
-    #if (__cplusplus >= 201103L)
-        #define MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CPP11_SUPPORTED
         #define MGBASE_IF_CPP11_SUPPORTED(t, f)     t
         
         // For C++11 or later
@@ -155,7 +164,6 @@
         #define MGBASE_CONSTEXPR                    constexpr
         #define MGBASE_CONSTEXPR_FUNCTION           constexpr
         
-        
         #define MGBASE_NORETURN                     [[noreturn]]
         
         namespace mgbase {
@@ -166,8 +174,6 @@
         
     #else
         // For C++03
-        #define MGBASE_IF_CPP11_SUPPORTED(t, f)     f
-        
         #define MGBASE_EXPLICIT_OPERATOR            operator
         #define MGBASE_NOEXCEPT                     throw()
         #define MGBASE_OVERRIDE
