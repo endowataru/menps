@@ -192,9 +192,9 @@ struct runtime_sized_array_traits {
     typedef T   element_type;
     
     template <template <typename> class Derived, typename U>
-    static Derived<element_type> get_element_at(const pointer_facade<Derived, U>& ptr, std::size_t index) {
+    static Derived<element_type> get_element_at(const pointer_facade<Derived, U>& ptr, const std::size_t index) {
         MGBASE_ASSERT(index < Size());
-        return mgbase::reinterpret_pointer_cast<element_type>(ptr) + index;
+        return mgbase::reinterpret_pointer_cast<element_type>(ptr) + static_cast<mgbase::ptrdiff_t>(index);
     }
 };
 
@@ -203,9 +203,9 @@ struct statically_sized_array_traits {
     typedef T   element_type;
     
     template <template <typename> class Derived, typename U>
-    static Derived<element_type> get_element_at(const pointer_facade<Derived, U>& ptr, std::size_t index) {
+    static Derived<element_type> get_element_at(const pointer_facade<Derived, U>& ptr, const std::size_t index) {
         MGBASE_ASSERT(index < Size);
-        return mgbase::reinterpret_pointer_cast<element_type>(ptr) + index;
+        return mgbase::reinterpret_pointer_cast<element_type>(ptr) + static_cast<mgbase::ptrdiff_t>(index);
     }
 };
 

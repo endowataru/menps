@@ -23,13 +23,17 @@ class queueing_logger
     typedef std::deque<entry> container_type;
     
 public:
+    #ifdef MGBASE_ENABLE_QUEUED_LOGGER
     static void add_log(const char* msg, mgbase::int64_t arg1 = -1, mgbase::int64_t arg2 = -1, mgbase::int64_t arg3 = -1)
     {
-        #ifdef MGBASE_ENABLE_QUEUED_LOGGER
         const entry e = { get_cpu_clock(), msg, arg1, arg2, arg3 };
         get_instance().entries_.push_back(e);
-        #endif
     }
+    #else
+    static void add_log(const char* /*msg*/, mgbase::int64_t /*arg1*/ = -1, mgbase::int64_t /*arg2*/ = -1, mgbase::int64_t /*arg3*/ = -1)
+    {
+    }
+    #endif
     
     static void show(const char* header)
     {

@@ -82,7 +82,7 @@ private:
     }
     
     template <template <typename> class Derived, typename T>
-    static void advance(pointer_facade<Derived, T>& ptr, std::ptrdiff_t diff) {
+    static void advance(pointer_facade<Derived, T>& ptr, const mgbase::ptrdiff_t diff) {
         derived(ptr).advance(diff);
     }
     
@@ -149,9 +149,9 @@ class pointer_facade_member<Derived, T, true>
     
 public:
     template <typename U>
-    Derived<U> member(U (T::*q)) const {
+    Derived<U> member(U (T::* const q)) const {
         // Calculate the offset of the member q in the struct T.
-        const std::size_t offset =
+        const mgbase::ptrdiff_t offset =
             reinterpret_cast<const mgbase::uint8_t*>(&(static_cast<T*>(MGBASE_NULLPTR)->*q))
             - static_cast<const mgbase::uint8_t*>(MGBASE_NULLPTR);
         
@@ -171,12 +171,12 @@ class pointer_facade_operators
     typedef Derived<T>                      derived_type;
     
 public:
-    derived_type operator += (std::ptrdiff_t diff) {
+    derived_type operator += (mgbase::ptrdiff_t diff) {
         pointer_core_access::advance(derived(), diff);
         return derived();
     }
     
-    derived_type operator + (std::ptrdiff_t diff) const {
+    derived_type operator + (mgbase::ptrdiff_t diff) const {
         derived_type result = derived();
         result += diff;
         return result;
