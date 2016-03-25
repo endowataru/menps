@@ -208,9 +208,20 @@ MGBASE_STATIC_ASSERT((mgbase::is_convertible<int*, const int*>::value));
 // is_union
 // based on compiler intrinsic
 
+#ifdef MGBASE_COMPILER_FUJITSU
+
+// Not working on Fujitsu compiler
+
+template <typename T>
+struct is_union : false_type { };
+
+#else
+
 template <typename T>
 struct is_union
-    : bool_constant<__is_union(T)> { };
+    : bool_constant<(__is_union(T))> { };
+
+#endif
 
 // is_class
 

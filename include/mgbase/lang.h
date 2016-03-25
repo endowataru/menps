@@ -61,7 +61,11 @@
 
 #define MGBASE_NOINLINE             __attribute__((noinline))
 
-#define MGBASE_MAY_ALIAS            __attribute__((may_alias))
+#ifdef MGBASE_COMPILER_FUJITSU
+    #define MGBASE_MAY_ALIAS
+#else
+    #define MGBASE_MAY_ALIAS        __attribute__((may_alias))
+#endif
 
 #define MGBASE_UNUSED               __attribute__((unused))
 #define MGBASE_WARN_UNUSED_RESULT   __attribute__((warn_unused_result))
