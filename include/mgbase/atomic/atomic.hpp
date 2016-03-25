@@ -2,9 +2,14 @@
 #pragma once
 
 #include <mgbase/lang.hpp>
-#include "atomic.h"
-#include <mgbase/atomic/atomic_base.hpp>
 #include <mgbase/memory_order.hpp>
+
+#include "atomic.h"
+#include <mgbase/atomic/atomic_base.h>
+
+#ifndef MGBASE_ATOMIC_USE_STANDARD
+
+#include <mgbase/atomic/atomic_base.hpp>
 #include <mgbase/atomic/memory_barrier.hpp>
 
 namespace mgbase {
@@ -111,12 +116,7 @@ public:
     volatile storage_type value_;
 };
 
-
-#define MGBASE_ATOMIC(T)        mgbase::atomic<T>
-
-#define MGBASE_ATOMIC_PTR(T)    mgbase::atomic<T*>
-
-#define MGBASE_ATOMIC_VAR_INIT(x) { x }
-
 } // namespace mgbase
+
+#endif
 

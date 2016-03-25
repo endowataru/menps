@@ -5,6 +5,25 @@
 
 // Following flags of Boost.Atomic
 
+#ifdef MGBASE_ATOMIC_USE_STANDARD
+
+#include <atomic>
+
+namespace mgbase {
+
+using std::memory_order;
+
+using std::memory_order_relaxed;
+using std::memory_order_consume;
+using std::memory_order_acquire;
+using std::memory_order_release;
+using std::memory_order_acq_rel;
+using std::memory_order_seq_cst;
+
+} // namespace mgbase
+
+#else
+
 MGBASE_CPLUSPLUS_ONLY(namespace mgbase {)
 
 enum MGBASE_C_ONLY_PREFIX(mgbase_, memory_order)
@@ -18,6 +37,8 @@ enum MGBASE_C_ONLY_PREFIX(mgbase_, memory_order)
 };
 
 MGBASE_CPLUSPLUS_ONLY(}) // namespace mgbase
+
+#endif
 
 #ifdef MGBASE_CPLUSPLUS
     typedef mgbase::memory_order    mgbase_memory_order;

@@ -6,6 +6,7 @@ INCLUDE (CheckCXXCompilerFlag)
 
 option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
 option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
+option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
 
 set(MGBASE_CXX_STANDARD "03" CACHE STRING "C++ standard version")
 
@@ -16,6 +17,7 @@ message(STATUS "Generate mgbase/config.h ...")
 message(STATUS "MGBASE_PROFILER_USE_GPROF=${MGBASE_PROFILER_USE_GPROF}")
 message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}")
 message(STATUS "MGBASE_CXX_STANDARD=${MGBASE_CXX_STANDARD}")
+message(STATUS "MGBASE_ATOMIC_USE_STANDARD=${MGBASE_ATOMIC_USE_STANDARD}")
 
 add_library(mgbase-header INTERFACE)
 target_include_directories(mgbase-header

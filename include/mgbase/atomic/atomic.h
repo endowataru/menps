@@ -41,21 +41,47 @@
     x(mgbase_intmax_t          ,   intmax_t        )    \
     x(mgbase_uintmax_t         ,   uintmax_t       )
 
+// declaration of mgbase::atomic<T>
 
-#ifdef MGBASE_CPLUSPLUS
+#ifdef MGBASE_ATOMIC_USE_STANDARD
+
     namespace mgbase {
-    
+
+        using std::atomic;
+
+    } // namespace mgbase
+
+    #define MGBASE_ATOMIC_VAR_INIT(x) { x }
+
+#else
+
+    namespace mgbase {
+
         template <typename T>
         class atomic;
-    
+
     } // namespace mgbase
-    
+
+#endif // MGBASE_ATOMIC_USE_STANDARD
+
+// macros for atomic types for both C and C++
+
+#define MGBASE_ATOMIC(T)        mgbase::atomic<T>
+#define MGBASE_ATOMIC_PTR(T)    mgbase::atomic<T*>
+
+#ifdef MGBASE_CPLUSPLUS
+
     #define DEFINE_TYPE(T, name) \
         namespace mgbase { typedef atomic<T> atomic_##name; } \
         typedef mgbase::atomic_##name mgbase_atomic_##name;
+    
+    #define MGBASE_ATOMIC_VAR_INIT(x) { x }
+    
 #else
     #error
 #endif
+
+
 
 MGBASE_C_ATOMIC_LIST(DEFINE_TYPE)
 
@@ -64,4 +90,5 @@ MGBASE_C_ATOMIC_LIST(DEFINE_TYPE)
 #ifdef MGBASE_CPLUSPLUS
     #include "atomic.hpp"
 #endif
+
 
