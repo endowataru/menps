@@ -56,8 +56,11 @@ private:
         return remote_pointer<U>::cast_from(to_address());
     }
     
-    void advance(index_t index) MGBASE_NOEXCEPT {
-        addr_ = mgcom::rma::untyped::advanced(addr_, index * mgbase::runtime_size_of<T>());
+    void advance(const mgbase::ptrdiff_t index) MGBASE_NOEXCEPT {
+        addr_ = mgcom::rma::untyped::advanced(
+            addr_
+        ,   index * static_cast<mgbase::ptrdiff_t>(mgbase::runtime_size_of<T>())
+        );
     }
     
     bool is_null() const MGBASE_NOEXCEPT {
@@ -117,8 +120,11 @@ private:
         return result;
     }*/
     
-    void advance(index_t index) MGBASE_NOEXCEPT {
-        addr_ = mgcom::rma::untyped::advanced(addr_, index * mgbase::runtime_size_of<T>());
+    void advance(const mgbase::ptrdiff_t index) MGBASE_NOEXCEPT {
+        addr_ = mgcom::rma::untyped::advanced(
+            addr_
+        ,   index * static_cast<mgbase::ptrdiff_t>(mgbase::runtime_size_of<T>())
+        );
     }
     
     bool is_null() const MGBASE_NOEXCEPT {

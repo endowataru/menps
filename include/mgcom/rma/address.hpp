@@ -80,12 +80,12 @@ inline local_address to_address(const registered_buffer& buffer) MGBASE_NOEXCEPT
     return buffer.addr;
 }
 
-inline local_address advanced(const local_address& addr, index_t diff) MGBASE_NOEXCEPT {
-    local_address result = { addr.region, addr.offset + diff };
+inline local_address advanced(const local_address& addr, const mgbase::ptrdiff_t diff) MGBASE_NOEXCEPT {
+    local_address result = { addr.region, static_cast<index_t>(static_cast<mgbase::ptrdiff_t>(addr.offset) + diff) };
     return result;
 }
-inline remote_address advanced(const remote_address& addr, index_t diff) MGBASE_NOEXCEPT {
-    remote_address result = { addr.region, addr.offset + diff };
+inline remote_address advanced(const remote_address& addr, const mgbase::ptrdiff_t diff) MGBASE_NOEXCEPT {
+    remote_address result = { addr.region, static_cast<index_t>(static_cast<mgbase::ptrdiff_t>(addr.offset) + diff) };
     return result;
 }
 
