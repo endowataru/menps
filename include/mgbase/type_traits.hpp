@@ -211,6 +211,29 @@ struct is_convertible
 // TODO : move to the unit test
 MGBASE_STATIC_ASSERT((mgbase::is_convertible<int*, const int*>::value));
 
+// is_union
+// based on compiler intrinsic
+
+template <typename T>
+struct is_union
+    : bool_constant<__is_union(T)> { };
+
+// is_class
+
+namespace detail {
+
+template <typename T> yes_type is_class_helper(int T::*);
+template <typename T> no_type is_class_helper();
+
+} // namespace detail
+
+template <typename T>
+struct is_class
+    : bool_constant<
+        (sizeof(detail::is_class_helper<T>(0)) == sizeof(detail::yes_type))
+    &&  ! is_union<T>::value
+    > { };
+
 // conditional
 
 template <bool Condition, typename True, typename False>

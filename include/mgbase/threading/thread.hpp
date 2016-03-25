@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgbase/threading/thread_id.hpp>
+#include <mgbase/move.hpp>
 
 namespace mgbase {
 
@@ -24,15 +25,44 @@ class thread
         }
     };
     
+    MGBASE_MOVABLE_BUT_NOT_COPYABLE(thread)
+    
 public:
-    thread() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
+    thread() MGBASE_NOEXCEPT
+        : running_(false) { }
+    
+    thread(MGBASE_RV_REF(thread) other) MGBASE_NOEXCEPT
+    {
+        if (other.running_) {
+            this->running_ = true;
+            this->th_ = other.th_;
+            other.running_ = false;
+        }
+    }
     
     template <typename Func>
     explicit thread(const Func& func)
+        : running_(true)
     {
         run(func);
     }
     
+    thread& operator = (MGBASE_RV_REF(thread) other) MGBASE_NOEXCEPT {
+        if (other.running_) {
+            this->running_ = true;
+            this->th_ = other.th_;
+            other.running_ = false;
+        }
+        return *this;
+    }
+    
+    void join() {
+        pthread_join(th_, MGBASE_NULLPTR);
+        running_ = false;
+    }
+    
+
+private:
     template <typename Func>
     void run(const Func& func)
     {
@@ -48,11 +78,7 @@ public:
             throw thread_error();
     }
     
-    void join() {
-        pthread_join(th_, MGBASE_NULLPTR);
-    }
-
-private:
+    bool running_;
     pthread_t th_;
 };
 
