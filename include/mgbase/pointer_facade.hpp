@@ -209,5 +209,5 @@ inline bool operator != (const pointer_facade<Derived, T>& ptr, mgbase::nullptr_
     return !(ptr == MGBASE_NULLPTR);
 }
 
-}
+} // namespace mgbase
 

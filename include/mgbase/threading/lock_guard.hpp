@@ -5,10 +5,9 @@
 
 namespace mgbase {
 
-#if (__cplusplus >= 201103L)
+#ifdef MGBASE_CPP11_SUPPORTED
 
-    using adopt_lock_t = std::adopt_lock_t;
-    using lock_guard   = std::lock_guard;
+    using std::lock_guard;
 
 #else
 

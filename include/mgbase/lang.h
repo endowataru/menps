@@ -143,8 +143,8 @@
         #define MGBASE_NOEXCEPT                     noexcept
         #define MGBASE_OVERRIDE                     override
         #define MGBASE_NULLPTR                      nullptr
-        #define MGBASE_STATIC_ASSERT(expr)          static_assert(expr, #expr);
-        #define MGBASE_STATIC_ASSERT_MSG(expr, msg) static_assert(expr, msg);
+        #define MGBASE_STATIC_ASSERT(expr)          static_assert(expr, #expr)
+        #define MGBASE_STATIC_ASSERT_MSG(expr, msg) static_assert(expr, msg)
         #define MGBASE_EMPTY_DEFINITION             = default;
         #define MGBASE_ALIGNAS(a)                   alignas(a)
         #define MGBASE_DECLTYPE(x)                  decltype(x)
@@ -153,6 +153,12 @@
         
         
         #define MGBASE_NORETURN                     [[noreturn]]
+        
+        namespace mgbase {
+        
+            using std::nullptr_t;
+        
+        } // namespace mgbase
         
     #else
         // For C++03

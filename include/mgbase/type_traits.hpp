@@ -18,12 +18,6 @@ struct enable_if<true, T>
     typedef T   type;
 };
 
-// identity (not included in C++ standard)
-
-template <typename T>
-struct identity {
-    typedef T   type;
-};
 
 // declval
 
@@ -418,11 +412,88 @@ struct is_callable
 
 namespace mgbase {
 
-using std::enable_if;
+// Helper classes
+
+using std::integral_constant;
+
+template <bool B>
+using bool_constant = integral_constant<bool, B>;
+
+using std::true_type;
+using std::false_type;
+
+// Primary type categories
+
+using std::is_void;
+using std::is_integral;
+using std::is_floating_point;
+using std::is_array;
+using std::is_enum;
+using std::is_union;
+using std::is_class;
+using std::is_function;
+using std::is_pointer;
+//using std::is_lvalue_reference;
+//using std::is_rvalue_reference;
+//using std::is_member_object_pointer;
+//using std::is_member_function_pointer;
+
+// Composite type categories
 
 using std::is_fundamental;
+using std::is_arithmetic;
+//using std::is_scalar;
+//using std::is_object;
+using std::is_compound;
+
+// Type properties
+
+using std::is_const;
+using std::is_volatile;
+//using std::is_trivial;
+//using std::is_pod;
+
+using std::is_signed;
+using std::is_unsigned;
+
+// Type relationships
+
+using std::is_same;
+using std::is_convertible;
+
+// Property queries
+
+using std::alignment_of;
+
+// Const-volatility specifiers
+
+using std::remove_const;
+using std::remove_volatile;
+using std::remove_cv;
+
+// Sign modifiers
+
+using std::make_signed;
+using std::make_unsigned;
+
+// Miscellaneous transformations
+
+using std::aligned_storage;
+using std::enable_if;
+using std::conditional;
 
 }
 
 #endif
+
+namespace mgbase {
+
+// identity (not included in C++ standard)
+
+template <typename T>
+struct identity {
+    typedef T   type;
+};
+
+} // namespace mgbase
 

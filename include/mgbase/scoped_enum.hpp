@@ -11,7 +11,7 @@ namespace mgbase {
 
 template <typename EnumType>
 struct native_type {
-    typedef EnumType    EnumType;
+    typedef EnumType    type;
 };
 
 template <typename EnumType>

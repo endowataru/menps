@@ -15,6 +15,8 @@ class callback_function<Result ()>
 
 public:
     #ifdef MGBASE_CPP11_SUPPORTED
+    callback_function() = default;
+    
     callback_function(func_type* const func, void* const data)
         : func_(func), data_(data) { }
     #endif
@@ -52,6 +54,8 @@ class callback_function<Result (Arg1)>
     
 public:
     #ifdef MGBASE_CPP11_SUPPORTED
+    callback_function() = default;
+    
     callback_function(func_type* const func, void* const data)
         : func_(func), data_(data) { }
     #endif

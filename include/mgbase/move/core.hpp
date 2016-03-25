@@ -82,11 +82,21 @@ struct is_rv< const rv<T> > : true_type { };
 
 #else
 
+#include <utility>
+
+#define MGBASE_MOVABLE_BUT_NOT_COPYABLE(TYPE)   \
+    public: \
+        TYPE(const TYPE&) = delete; \
+        TYPE& operator = (TYPE&) = delete;
+
+#define MGBASE_RV_REF(...) __VA_ARGS__ &&
+
 namespace mgbase {
 
+using std::move;
+using std::forward;
 
-
-}
+} // namespace mgbase
 
 #endif
 

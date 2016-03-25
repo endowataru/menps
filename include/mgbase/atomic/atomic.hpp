@@ -24,12 +24,7 @@ public:
     #ifdef MGBASE_CPP11_SUPPORTED
     atomic() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
-    /*
-     * Note: Although C++11 standard defines this constructor as an implicit constructor,
-     *       it is defined as an explicit constructor
-     *       because the assignment operator in C++03 cannot be explicitly deleted.
-     */
-    explicit atomic(const T val) MGBASE_NOEXCEPT
+    /*implicit*/ atomic(const T val) MGBASE_NOEXCEPT
         : value_(val) { }
     
     volatile atomic& operator = (const T val) volatile MGBASE_NOEXCEPT {
@@ -112,9 +107,9 @@ private:
 #else
 public:
 #endif
+    // Exposed in C++03 to use aggregate initialization
     volatile storage_type value_;
 };
-
 
 
 #define MGBASE_ATOMIC(T)        mgbase::atomic<T>
