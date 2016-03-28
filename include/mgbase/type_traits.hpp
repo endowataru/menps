@@ -3,7 +3,85 @@
 
 #include "lang.hpp"
 
-#if (__cplusplus < 201103L)
+#ifdef MGBASE_CPP11_SUPPORTED
+
+#include <type_traits>
+
+namespace mgbase {
+
+// Helper classes
+
+using std::integral_constant;
+
+template <bool B>
+using bool_constant = integral_constant<bool, B>;
+
+using std::true_type;
+using std::false_type;
+
+// Primary type categories
+
+using std::is_void;
+using std::is_integral;
+using std::is_floating_point;
+using std::is_array;
+using std::is_enum;
+using std::is_union;
+using std::is_class;
+using std::is_function;
+using std::is_pointer;
+//using std::is_lvalue_reference;
+//using std::is_rvalue_reference;
+//using std::is_member_object_pointer;
+//using std::is_member_function_pointer;
+
+// Composite type categories
+
+using std::is_fundamental;
+using std::is_arithmetic;
+//using std::is_scalar;
+//using std::is_object;
+using std::is_compound;
+
+// Type properties
+
+using std::is_const;
+using std::is_volatile;
+//using std::is_trivial;
+//using std::is_pod;
+
+using std::is_signed;
+using std::is_unsigned;
+
+// Type relationships
+
+using std::is_same;
+using std::is_convertible;
+
+// Property queries
+
+using std::alignment_of;
+
+// Const-volatility specifiers
+
+using std::remove_const;
+using std::remove_volatile;
+using std::remove_cv;
+
+// Sign modifiers
+
+using std::make_signed;
+using std::make_unsigned;
+
+// Miscellaneous transformations
+
+using std::aligned_storage;
+using std::enable_if;
+using std::conditional;
+
+} // namespace mgbase
+
+#else // MGBASE_CPP11_SUPPORTED
 
 namespace mgbase {
 
@@ -367,135 +445,10 @@ template <typename T> struct make_unsigned<const volatile T> {
     typedef const volatile typename make_unsigned<T>::type type;
 };
 
-
-#if 0
-
-namespace detail {
-
-template <mgbase::size_t> struct sizeof_trick;
-
-template <typename F> struct is_callable_impl;
-
-template <typename Func>
-struct is_callable_impl<Func ()>
-{
-private:
-    template <typename F>
-    static yes_type check(sizeof_trick<sizeof(
-        mgbase::declval<F>()(), 0
-    )>*);
-    template <typename F>
-    static no_type check(...);
-
-public:
-    static const bool value = sizeof(check<Func>(0)) == sizeof(yes_type);
-};
-
-template <typename Func, typename Arg1>
-struct is_callable_impl<Func (Arg1)>
-{
-private:
-    template <typename F, typename A1>
-    static yes_type check(sizeof_trick<sizeof(
-        mgbase::declval<F>()(mgbase::declval<A1>()), 0
-    )>*);
-    template <typename F, typename A1>
-    static no_type check(...);
-
-public:
-    static const bool value = sizeof(check<Func, Arg1>(0)) == sizeof(yes_type);
-};
-
-} // namespace detail
-
-template <typename F>
-struct is_callable
-    : bool_constant<detail::is_callable_impl<F>::value> { };
-
-
-#endif
-
 } // namespace mgbase
 
-#else
 
-#include <type_traits>
-
-namespace mgbase {
-
-// Helper classes
-
-using std::integral_constant;
-
-template <bool B>
-using bool_constant = integral_constant<bool, B>;
-
-using std::true_type;
-using std::false_type;
-
-// Primary type categories
-
-using std::is_void;
-using std::is_integral;
-using std::is_floating_point;
-using std::is_array;
-using std::is_enum;
-using std::is_union;
-using std::is_class;
-using std::is_function;
-using std::is_pointer;
-//using std::is_lvalue_reference;
-//using std::is_rvalue_reference;
-//using std::is_member_object_pointer;
-//using std::is_member_function_pointer;
-
-// Composite type categories
-
-using std::is_fundamental;
-using std::is_arithmetic;
-//using std::is_scalar;
-//using std::is_object;
-using std::is_compound;
-
-// Type properties
-
-using std::is_const;
-using std::is_volatile;
-//using std::is_trivial;
-//using std::is_pod;
-
-using std::is_signed;
-using std::is_unsigned;
-
-// Type relationships
-
-using std::is_same;
-using std::is_convertible;
-
-// Property queries
-
-using std::alignment_of;
-
-// Const-volatility specifiers
-
-using std::remove_const;
-using std::remove_volatile;
-using std::remove_cv;
-
-// Sign modifiers
-
-using std::make_signed;
-using std::make_unsigned;
-
-// Miscellaneous transformations
-
-using std::aligned_storage;
-using std::enable_if;
-using std::conditional;
-
-}
-
-#endif
+#endif // MGBASE_CPP11_SUPPORTED
 
 namespace mgbase {
 

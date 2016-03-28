@@ -21,7 +21,7 @@ protected:
     noncopyable() noexcept = default;
 };
 
-#else
+#else // MGBASE_CPP11_SUPPORTED
 
 class noncopyable {
 private:
@@ -32,10 +32,11 @@ protected:
     noncopyable() { }
 };
 
-#endif
+#endif // MGBASE_CPP11_SUPPORTED
 
 } // namespace noncopyable_
 
 typedef noncopyable_::noncopyable   noncopyable;
 
 } // naemspace mgbase
+
