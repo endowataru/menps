@@ -8,7 +8,33 @@
 
 namespace mgbase {
 
+template <typename T>
+class deferred;
+
 namespace detail {
+
+template <typename T>
+struct remove_deferred {
+    typedef T   type;
+};
+
+template <typename T>
+struct remove_deferred< deferred<T> > {
+    typedef T   type;
+};
+template <typename T>
+struct remove_deferred< value_wrapper<T> > {
+    typedef T   type;
+};
+
+template <typename Signature>
+struct deferred_result {
+    typedef typename remove_deferred<
+        typename mgbase::function_traits<Signature>::result_type
+    >::type
+    type;
+};
+
 
 template <typename Derived, typename T>
 class deferred_base
@@ -54,7 +80,7 @@ class deferred
     /*
      * The value is defined as a base class (not a member)
      * in order to utilize the empty base optimization
-     * when T is void.
+     * when T is void or an empty class.
      */
     typedef value_wrapper<T>   base_value;
     
@@ -75,9 +101,9 @@ public:
         { }
     
     #ifdef MGBASE_CPP11_SUPPORTED
-    deferred(const deferred&) = default;
+    deferred(const deferred&) = default; // TODO
     
-    deferred& operator = (const deferred&) = default;
+    deferred& operator = (const deferred&) = default; // TODO
     #endif
     
     continuation<T>* get_continuation() const MGBASE_NOEXCEPT {
@@ -106,38 +132,16 @@ public:
         MGBASE_ASSERT(cont_ == MGBASE_NULLPTR);
         return *this;
     }
+    
+    template <typename Signature, Signature Func, typename CB>
+    MGBASE_ALWAYS_INLINE
+    deferred<typename detail::deferred_result<Signature>::type>
+    add_continuation(inlined_function<Signature, Func>, CB&);
 
 private:
     resumable        res_;
     continuation<T>* cont_;
 };
-
-namespace detail {
-
-template <typename T>
-struct remove_deferred {
-    typedef T   type;
-};
-
-template <typename T>
-struct remove_deferred< deferred<T> > {
-    typedef T   type;
-};
-template <typename T>
-struct remove_deferred< value_wrapper<T> > {
-    typedef T   type;
-};
-
-template <typename Signature>
-struct deferred_result {
-    typedef typename remove_deferred<
-        typename mgbase::function_traits<Signature>::result_type
-    >::type
-    type;
-};
-
-} // namespace detail
-
 
 } // namespace mgbase
 

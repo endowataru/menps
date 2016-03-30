@@ -14,7 +14,7 @@ namespace /*unnamed*/ {
 
 template <
     typename Signature
-,   Signature* Func
+,   Signature Func
 ,   typename CB
 ,   typename T
 >
@@ -55,6 +55,45 @@ MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper
 
 } // namespace detail
 
+template <typename T>
+template <typename Signature, Signature Func, typename CB>
+deferred<typename detail::deferred_result<Signature>::type>
+deferred<T>::add_continuation(
+    inlined_function<Signature, Func> /*ignored*/
+,   CB& cb
+) {
+    continuation<T>* const current_cont = this->get_continuation();
+    
+    if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
+    {
+        return call_with_value_wrapper_2<typename mgbase::function_traits<Signature>::result_type>(
+            MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
+        ,   mgbase::wrap_reference(cb)
+        ,   this->to_ready()
+        );
+    }
+    else
+    {
+        current_cont->set(
+            mgbase::make_callback_function(
+                mgbase::bind1st_of_2(
+                    MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(
+                        &detail::add_continuation_pass<Signature, Func, CB, T>
+                    )
+                ,   mgbase::wrap_reference(cb)
+                )
+            )
+        );
+        
+        typedef typename detail::deferred_result<Signature>::type   next_return_type;
+        
+        return deferred<next_return_type>(
+            get_next_continuation<next_return_type>(cb)
+        ,   this->get_resumable()
+        );
+    }
+}
+
 namespace /*unnamed*/ {
 
 template <
@@ -63,35 +102,11 @@ template <
 ,   typename CB
 ,   typename T
 >
+MGBASE_DEPRECATED
 MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
 deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB& cb, deferred<T> df)
 {
-    typedef typename detail::deferred_result<Signature>::type           U;
-    typedef typename mgbase::function_traits<Signature>::result_type    return_type;
-    
-    continuation<T>* const current_cont = df.get_continuation();
-    
-    if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
-    {
-        return call_with_value_wrapper_2<return_type>(
-            MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
-        ,   mgbase::wrap_reference(cb)
-        ,   df.to_ready()
-        );
-    }
-    else
-    {
-        current_cont->set(
-            mgbase::make_callback_function(
-                mgbase::bind1st_of_2(
-                    MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&detail::add_continuation_pass<Signature, Func, CB, T>)
-                ,   mgbase::wrap_reference(cb)
-                )
-            )
-        );
-        
-        return deferred<U>(get_next_continuation<U>(cb), df.get_resumable());
-    }
+    return df.add_continuation(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func), cb);
 }
 
 } /* unnamed namespace */

@@ -172,6 +172,8 @@
         
         } // namespace mgbase
         
+        #define MGBASE_DEPRECATED           __attribute__((deprecated))
+        
     #else
         // For C++03
         #define MGBASE_EXPLICIT_OPERATOR            operator
@@ -238,9 +240,13 @@
     #if (__cplusplus >= 201403L)
         // For C++14 or later
         #define MGBASE_CONSTEXPR_CPP14  constexpr
+        
+        #define MGBASE_DEPRECATED       [[deprecated]]
     #else
         // For C++11 or older
         #define MGBASE_CONSTEXPR_CPP14
+        
+        #define MGBASE_DEPRECATED       __attribute__((deprecated))
     #endif
 
     namespace mgbase {
