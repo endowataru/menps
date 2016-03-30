@@ -75,7 +75,6 @@ make_signature_deducer(Signature /*unused*/) MGBASE_NOEXCEPT {
 
 // Factory functions defined as macros
 
-
 #define MGBASE_MAKE_INLINED_FUNCTION(...) \
     (::mgbase::detail::make_signature_deducer(__VA_ARGS__).make_inlined<__VA_ARGS__>())
 

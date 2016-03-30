@@ -3,7 +3,7 @@
 
 #include "callback_function.hpp"
 #include <mgbase/value_wrapper.hpp>
-#include <mgbase/type_traits.hpp>
+#include <mgbase/functional/result_of.hpp>
 
 namespace mgbase {
 

@@ -6,6 +6,9 @@
 
 namespace mgbase {
 
+// make_callback_function
+//  Do type-erasure for inlined_function.
+
 namespace detail {
 
 template <typename Result, Result (* Func)()>
