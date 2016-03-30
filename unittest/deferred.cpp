@@ -24,7 +24,7 @@ inline mgbase::deferred<void> g1(B& b) {
 inline mgbase::deferred<void> g0(B& b) {
     b.x += 1;
     // Call g1 when the function is resumed.
-    return mgbase::make_deferred<mgbase::deferred<void> (B&), &g1>(b);
+    return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION(&g1), b);
 }
 
 inline mgbase::deferred<void> f2(A& a) {
@@ -36,19 +36,22 @@ inline mgbase::deferred<void> f2(A& a) {
 inline mgbase::deferred<void> f1(A& a) {
     a.x += 10;
     // Call f2 when g0 finishes.
-    return mgbase::add_continuation<mgbase::deferred<void> (A&), &f2>(
-        a
-    ,   g0(a.b)
-    );
+    return g0(a.b)
+        .add_continuation(
+            MGBASE_MAKE_INLINED_FUNCTION(&f2)
+        ,   a
+        );
+    
 }
 
 inline mgbase::deferred<void> f0(A& a) {
     a.x += 1;
     // Call f1 when g0 finishes.
-    return mgbase::add_continuation<mgbase::deferred<void> (A&), &f1>(
-        a
-    ,   g0(a.b)
-    );
+    return g0(a.b)
+        .add_continuation(
+            MGBASE_MAKE_INLINED_FUNCTION(&f1)
+        ,   a
+        );
 }
 
 } // unnamed namespace
@@ -88,7 +91,7 @@ mgbase::deferred<void> func(A& a)
     if (a.x < 10) {
         ++a.x;
         // Call func when the function is resumed.
-        return mgbase::make_deferred<mgbase::deferred<void> (A&), &func>(a);
+        return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION(&func), a);
     }
     else {
         // Immediately finish.

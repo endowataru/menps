@@ -59,8 +59,8 @@ template <typename T>
 template <typename Signature, Signature Func, typename CB>
 deferred<typename detail::deferred_result<Signature>::type>
 deferred<T>::add_continuation(
-    inlined_function<Signature, Func> /*ignored*/
-,   CB& cb
+    inlined_function<Signature, Func>   /*ignored*/
+,   CB&                                 cb
 ) {
     continuation<T>* const current_cont = this->get_continuation();
     
