@@ -101,11 +101,11 @@ make_signature_deducer(Signature /*unused*/) MGBASE_NOEXCEPT {
     even if it contains commas (,).
 */
 
-// Template specialization for new_function_traits
+// Template specialization for function_traits
 
 template <typename Signature, Signature Func>
-struct new_function_traits< inlined_function<Signature, Func> >
-    : new_function_traits<Signature> { };
+struct function_traits< inlined_function<Signature, Func> >
+    : function_traits<Signature> { };
 
 } // namespace mgbase
 
