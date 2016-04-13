@@ -4,24 +4,21 @@
 namespace mgcom {
 namespace collective {
 
-namespace detail {
-
 namespace /*unnamed*/ {
 
 barrier_impl g_impl;
 
 } // unnamed namespace
 
-} // namespace detail
-
-mgbase::deferred<void> barrier_nb(barrier_cb& cb)
+void barrier()
 {
-    return detail::barrier_impl::handlers<detail::g_impl>::start(cb);
+    barrier_cb cb;
+    barrier_impl::handlers<g_impl>::start(cb).wait();
 }
 
 void initialize()
 {
-    detail::g_impl.initialize();
+    g_impl.initialize();
 }
 
 void finalize()

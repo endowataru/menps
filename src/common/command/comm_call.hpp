@@ -34,11 +34,7 @@ MGBASE_ALWAYS_INLINE mgbase::deferred<R> comm_call_check(comm_call_cb<R, Func>& 
     if (cb.flag.load(mgbase::memory_order_acquire))
         return cb.result;
     else
-        return mgbase::make_deferred<
-            mgbase::deferred<R> (comm_call_cb<R, Func>&)
-        ,   comm_call_check
-        >
-        (cb);
+        return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(comm_call_check<R, Func>), cb);
 }
 
 bool try_comm_call(const mgbase::callback_function<void ()>&);
@@ -65,11 +61,7 @@ mgbase::optional< mgbase::deferred<R> > try_comm_call_async(comm_call_cb<R, Func
     if (MGBASE_UNLIKELY(!ret))
         return mgbase::nullopt;
     
-    return mgbase::make_deferred<
-        mgbase::deferred<R> (comm_call_cb<R, Func>&)
-    ,   &detail::comm_call_check<R>
-    >
-    (cb);
+    return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&detail::comm_call_check<R, Func>), cb);
 }
 
 template <typename R, typename Func>

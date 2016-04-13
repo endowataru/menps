@@ -52,7 +52,7 @@ if(${is_mpi_available})
         src/device/mpi/rma/contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/rma/rma.cpp
-        src/device/mpi/collective/barrier2.cpp
+        src/device/mpi/collective/barrier.cpp
         src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
         src/device/mpi/mpi_call.cpp
@@ -85,11 +85,10 @@ if (${is_fjmpi_available})
     add_library(mgcom-fjmpi
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.cpp
-        src/common/rma/try_contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/mpi_base.cpp
         src/device/mpi/mpi_call.cpp
-        src/device/mpi/collective/barrier2.cpp
+        src/device/mpi/collective/barrier.cpp
         src/device/mpi/collective/collective.cpp
         src/device/fjmpi/command/fjmpi_command_queue.cpp
         src/device/fjmpi/fjmpi.cpp
@@ -98,8 +97,6 @@ if (${is_fjmpi_available})
         src/device/fjmpi/rpc/rpc_sender.cpp
         src/device/fjmpi/rpc/rpc_receiver.cpp
         src/device/fjmpi/rpc/rpc_connection_pool.cpp
-        
-        src/device/mpi/rma/poll.cpp
     )
     target_link_libraries(mgcom-fjmpi mgcom-base mgbase)
     
@@ -109,7 +106,6 @@ endif()
 if (${is_ibv_available})
     add_library(mgcom-ibv
         src/device/ibv/command/proxy.cpp
-        #src/device/ibv/endpoint.cpp
         src/device/ibv/ibv.cpp
         
         src/common/rma/region_allocator.cpp
@@ -117,14 +113,11 @@ if (${is_ibv_available})
         
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp
-        src/device/mpi/collective/barrier2.cpp
+        src/device/mpi/collective/barrier.cpp
         src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
         src/device/mpi/mpi_call.cpp
         src/device/mpi1/command/mpi1_command_queue.cpp
-        
-        src/common/rma/try_contiguous.cpp
-        src/common/rma/try_atomic.cpp
     )
     target_link_libraries(mgcom-ibv mgcom-base mgbase
         ibverbs # libibverbs.so
