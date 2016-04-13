@@ -89,6 +89,14 @@ public:
         return raw();
     }
     
+    T* operator -> () const MGBASE_NOEXCEPT {
+        return raw();
+    }
+    
+    T& operator * () const MGBASE_NOEXCEPT {
+        return *raw();
+    }
+    
     T* raw() const MGBASE_NOEXCEPT { return static_cast<T*>(untyped::to_raw_pointer(addr_)); }
     
     address_type to_address() const MGBASE_NOEXCEPT {
