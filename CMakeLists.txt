@@ -47,7 +47,6 @@ if(${is_mpi_available})
     add_library(mgcom-mpi1
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.cpp
-        #src/device/mpi/command/mpi_command_queue_base.cpp
         src/device/mpi/rpc/rpc_server.cpp
         src/device/mpi/rpc/rpc_client.cpp
         src/device/mpi/rma/contiguous.cpp
@@ -59,10 +58,6 @@ if(${is_mpi_available})
         src/device/mpi/mpi_call.cpp
         src/device/mpi1/command/mpi1_command_queue.cpp
         src/device/mpi1/mpi1.cpp
-        
-        src/device/mpi/rma/poll.cpp
-        src/common/rma/try_contiguous.cpp
-        src/common/rma/try_atomic.cpp
     )
     target_link_libraries(mgcom-mpi1 mgcom-base mgbase)
     
@@ -80,10 +75,6 @@ if(${is_mpi3_available})
         src/device/mpi/mpi_call.cpp
         src/device/mpi3/mpi3.cpp
         src/device/mpi3/rma.cpp
-        
-        src/device/mpi/rma/poll.cpp
-        src/common/rma/try_contiguous.cpp
-        src/common/rma/try_atomic.cpp
     )
     target_link_libraries(mgcom-mpi3 mgcom-base mgbase)
     
@@ -109,8 +100,6 @@ if (${is_fjmpi_available})
         src/device/fjmpi/rpc/rpc_connection_pool.cpp
         
         src/device/mpi/rma/poll.cpp
-        src/common/rma/try_contiguous.cpp
-        src/common/rma/try_atomic.cpp
     )
     target_link_libraries(mgcom-fjmpi mgcom-base mgbase)
     
@@ -134,7 +123,6 @@ if (${is_ibv_available})
         src/device/mpi/mpi_call.cpp
         src/device/mpi1/command/mpi1_command_queue.cpp
         
-        src/device/mpi/rma/poll.cpp
         src/common/rma/try_contiguous.cpp
         src/common/rma/try_atomic.cpp
     )

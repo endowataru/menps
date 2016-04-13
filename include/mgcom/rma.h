@@ -1,5 +1,6 @@
 
 #pragma once
 
-#include <mgcom/rma/nb.h>
+#include <mgcom/rma/address.h>
+#include <mgcom/rma/pointer.h>
 
