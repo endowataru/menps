@@ -95,7 +95,7 @@ public:
         *this = df.get();
     }
     
-    explicit deferred(continuation<T>& cont, const resumable& res) MGBASE_NOEXCEPT
+    deferred(continuation<T>& cont, const resumable& res) MGBASE_NOEXCEPT
         : res_(res)
         , cont_(&cont)
         { }

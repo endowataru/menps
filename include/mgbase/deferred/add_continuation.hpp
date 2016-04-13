@@ -57,6 +57,7 @@ MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper
 
 template <typename T>
 template <typename Signature, Signature Func, typename CB>
+MGBASE_ALWAYS_INLINE
 deferred<typename detail::deferred_result<Signature>::type>
 deferred<T>::add_continuation(
     inlined_function<Signature, Func>   /*ignored*/
