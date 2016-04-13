@@ -6,6 +6,104 @@
 namespace mgcom {
 namespace rma {
 
+namespace untyped {
+
+struct remote_read_params {
+    process_id_t    src_proc;
+    remote_address  src_raddr;
+    local_address   dest_laddr;
+    index_t         number_of_bytes;
+};
+
+struct remote_write_params {
+    process_id_t    dest_proc;
+    remote_address  dest_raddr;
+    local_address   src_laddr;
+    index_t         number_of_bytes;
+};
+
+namespace detail {
+
+template <typename Config>
+struct read_config
+{
+    typedef typename Config::cb_type        cb_type;
+    typedef typename Config::result_type    result_type;
+    
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+    static bool try_call(cb_type& cb)
+    {
+        remote_read_params params;
+        Config::set_params(cb, &params);
+        
+        return try_remote_read_async(
+            params.src_proc
+        ,   params.src_raddr
+        ,   params.dest_laddr
+        ,   params.number_of_bytes
+        ,   mgbase::make_notification(&get_flag(cb))
+        );
+    }
+    
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+    static result_type on_complete(cb_type& cb) {
+        return Config::on_complete(cb);
+    }
+    
+    MGBASE_ALWAYS_INLINE
+    static mgbase::wait_flag& get_flag(cb_type& cb) MGBASE_NOEXCEPT {
+        return Config::get_flag(cb);
+    }
+};
+
+template <typename Config>
+struct write_config
+{
+    typedef typename Config::cb_type        cb_type;
+    typedef typename Config::result_type    result_type;
+    
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+    static bool try_call(cb_type& cb)
+    {
+        remote_write_params params;
+        Config::set_params(cb, &params);
+        
+        return try_remote_write_async(
+            params.dest_proc
+        ,   params.dest_raddr
+        ,   params.src_laddr
+        ,   params.number_of_bytes
+        ,   mgbase::make_notification(&get_flag(cb))
+        );
+    }
+    
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+    static result_type on_complete(cb_type& cb) {
+        return Config::on_complete(cb);
+    }
+    
+    MGBASE_ALWAYS_INLINE
+    static mgbase::wait_flag& get_flag(cb_type& cb) MGBASE_NOEXCEPT {
+        return Config::get_flag(cb);
+    }
+};
+
+} // namespace detail
+
+template <typename Config>
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+typename Config::result_type remote_read_as(typename Config::cb_type& cb) {
+    return mgbase::try_call_and_wait< detail::read_config<Config> >(cb);
+}
+
+template <typename Config>
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+typename Config::result_type remote_write_as(typename Config::cb_type& cb) {
+    return mgbase::try_call_and_wait< detail::write_config<Config> >(cb);
+}
+
+} // namespace untyped
+
 template <typename T>
 struct remote_read_params
 {
@@ -73,7 +171,6 @@ struct read_config
     typedef typename Config::cb_type        cb_type;
     typedef typename Config::result_type    result_type;
     typedef typename Config::element_type   element_type;
-    
     
     MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     static bool try_call(cb_type& cb)
