@@ -49,8 +49,6 @@ public:
     {
         typedef mgbase::deferred<void>  result_type;
         typedef barrier_cb              cb_type;
-        typedef handlers                handlers_type;
-        typedef result_type (func_type)(cb_type&);
         
     public:
         static result_type start(cb_type& cb)
@@ -111,7 +109,7 @@ public:
                 return loop(cb);
             }
             else
-                return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION(test), cb);
+                return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&handlers::test), cb);
         }
     };
 
