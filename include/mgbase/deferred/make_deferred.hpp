@@ -80,6 +80,7 @@ make_deferred(inlined_function<Signature, Func> /*ignored*/, CB& cb)
 }
 
 
+#if 0
 template <
     typename Signature
 ,   Signature* Func
@@ -104,6 +105,7 @@ make_deferred(CB& cb)
         (cb)
     );*/
 }
+#endif
 
 } // unnamed namespace
 

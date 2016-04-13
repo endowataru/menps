@@ -95,22 +95,5 @@ deferred<T>::add_continuation(
     }
 }
 
-namespace /*unnamed*/ {
-
-template <
-    typename Signature
-,   Signature* Func
-,   typename CB
-,   typename T
->
-MGBASE_DEPRECATED
-MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
-deferred<typename detail::deferred_result<Signature>::type> add_continuation(CB& cb, deferred<T> df)
-{
-    return df.add_continuation(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func), cb);
-}
-
-} /* unnamed namespace */
-
 } // namespace mgbase
 
