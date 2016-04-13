@@ -25,6 +25,12 @@ MGBASE_ALWAYS_INLINE T move_to_rv_cast(const U arg) MGBASE_NOEXCEPT {
 
 // rv
 
+#ifdef MGBASE_COMPILER_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+        // warning: ‘class mgbase::rv<T>’ only defines a private destructor and has no friends [-Wctor-dtor-privacy]
+#endif
+
 template <typename T>
 class rv
     : public mgbase::conditional<
@@ -40,6 +46,10 @@ private:
     
 }
 MGBASE_MAY_ALIAS;
+
+#ifdef MGBASE_COMPILER_GCC
+    #pragma GCC diagnostic pop
+#endif
 
 // is_rv
 

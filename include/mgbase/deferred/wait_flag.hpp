@@ -35,6 +35,7 @@ namespace detail {
 template <typename Config>
 class wait_handlers
 {
+    typedef wait_handlers                   handlers;
     typedef typename Config::cb_type        cb_type;
     typedef typename Config::result_type    result_type;
     
@@ -55,8 +56,7 @@ private:
         if (MGBASE_LIKELY(Config::try_call(cb)))
             return wait(cb);
         else
-            return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&try_), cb);
-        
+            return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&handlers::try_), cb);
     }
     
     MGBASE_ALWAYS_INLINE
@@ -67,7 +67,7 @@ private:
         if (MGBASE_LIKELY(is_notified(wr)))
             return Config::on_complete(cb);
         else
-            return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&wait), cb);
+            return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&handlers::wait), cb);
     }
 };
 
