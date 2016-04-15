@@ -11,20 +11,28 @@ class resumable
 public:
     typedef callback_function<resumable ()>    function_type;
     
-    #if 0
-    resumable() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
+    #ifdef MGBASE_CPP11_SUPPORTED
     
-    /*implicit*/ resumable(const bound_function<resumable ()>& func) MGBASE_NOEXCEPT
+    resumable() MGBASE_NOEXCEPT = default;
+    
+    resumable(const resumable&) MGBASE_NOEXCEPT = default;
+    
+    /*implicit*/ resumable(const function_type& func) MGBASE_NOEXCEPT
         : func_(func)
         { }
+    
+    resumable& operator = (const resumable&) MGBASE_NOEXCEPT = default;
+    
     #endif
     
-    static resumable create(const function_type& func) {
+    MGBASE_ALWAYS_INLINE
+    static resumable create(const function_type& func) MGBASE_NOEXCEPT {
         resumable r;
         r.func_ = func;
         return r;
     }
     
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     bool resume()
     {
         const resumable r = func_();
@@ -33,6 +41,7 @@ public:
         return empty();
     }
     
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     bool checked_resume()
     {
         if (empty())
@@ -41,6 +50,7 @@ public:
             return resume();
     }
     
+    MGBASE_ALWAYS_INLINE
     bool empty() const MGBASE_NOEXCEPT
     {
         return func_.empty();
@@ -52,24 +62,25 @@ private:
 
 namespace /*unnamed*/ {
 
-template <
-    typename Signature
-,   Signature* Func
-,   typename CB
->
-inline resumable make_resumable(CB& cb)
+template <typename Signature, Signature Func, typename CB>
+MGBASE_ALWAYS_INLINE
+resumable make_resumable(
+    inlined_function<Signature, Func>   func
+,   CB&                                 cb
+) MGBASE_NOEXCEPT
 {
     return resumable::create(
         mgbase::make_callback_function(
             mgbase::bind1st_of_1(
-                MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
+                func
             ,   mgbase::wrap_reference(cb)
             )
         )
     );
 }
 
-inline resumable make_empty_resumable() MGBASE_NOEXCEPT {
+MGBASE_ALWAYS_INLINE
+resumable make_empty_resumable() MGBASE_NOEXCEPT {
     return resumable::create(
         callback_function<resumable ()>::create_empty()
     );

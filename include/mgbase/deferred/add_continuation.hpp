@@ -8,20 +8,19 @@ namespace mgbase {
 
 namespace detail {
 
-#ifdef MGBASE_IF_CPP11_SUPPORTED
-namespace /*unnamed*/ {
-#endif
-
 template <
-    typename Signature
-,   Signature Func
-,   typename CB
-,   typename T
+    typename    Signature
+,   Signature   Func
+,   typename    CB
+,   typename    T
 >
-MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper<T>& val)
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+resumable add_continuation_pass(CB& cb, const value_wrapper<T>& val)
 {
     typedef typename detail::deferred_result<Signature>::type           U;
     typedef typename mgbase::function_traits<Signature>::result_type    return_type;
+    
+    // Call the current continuation function.
     
     deferred<U> df = call_with_value_wrapper_2<return_type>(
         MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func)
@@ -32,11 +31,17 @@ MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper
     continuation<U>* const current_cont = df.get_continuation();
     continuation<U>& next_cont = get_next_continuation<U>(cb);
     
+    // Check whether the returned value is ready or not.
+    
     if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))
     {
+        // Immediately call the next continuation function.
+        
         return next_cont.call(df.to_ready());
     }
     else {
+        // The next continuation cannot be executed now.
+        
         if (current_cont != &next_cont) {
             // Move the continuation.
             *current_cont = next_cont;
@@ -49,15 +54,15 @@ MGBASE_ALWAYS_INLINE resumable add_continuation_pass(CB& cb, const value_wrapper
     }
 }
 
-#ifdef MGBASE_IF_CPP11_SUPPORTED
-} /* unnamed namespace */
-#endif
-
 } // namespace detail
 
 template <typename T>
-template <typename Signature, Signature Func, typename CB>
-MGBASE_ALWAYS_INLINE
+template <
+    typename    Signature
+,   Signature   Func
+,   typename    CB
+>
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
 deferred<typename detail::deferred_result<Signature>::type>
 deferred<T>::add_continuation(
     inlined_function<Signature, Func>   /*ignored*/

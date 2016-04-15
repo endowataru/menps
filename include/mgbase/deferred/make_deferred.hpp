@@ -8,10 +8,6 @@ namespace mgbase {
 
 namespace detail {
 
-#ifdef MGBASE_IF_CPP11_SUPPORTED
-namespace /*unnamed*/ {
-#endif
-
 template <
     typename    Signature
 ,   Signature   Func
@@ -49,10 +45,6 @@ resumable make_deferred_pass(CB& cb)
     }
 }
 
-#ifdef MGBASE_IF_CPP11_SUPPORTED
-} /* unnamed namespace */
-#endif
-
 } // namespace detail
 
 namespace /*unnamed*/ {
@@ -64,7 +56,10 @@ template <
 >
 MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
 deferred<typename detail::deferred_result<Signature>::type>
-make_deferred(inlined_function<Signature, Func> /*ignored*/, CB& cb)
+make_deferred(
+    inlined_function<Signature, Func>   /*ignored*/
+,   CB&                                 cb
+) MGBASE_NOEXCEPT
 {
     typedef typename detail::deferred_result<Signature>::type T;
     
@@ -72,11 +67,12 @@ make_deferred(inlined_function<Signature, Func> /*ignored*/, CB& cb)
     
     return deferred<T>(
         cont
-    ,   make_resumable<
-            resumable (CB&)
-        ,   &detail::make_deferred_pass<Signature, Func, CB>
-        >
-        (cb)
+    ,   make_resumable(
+            MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(
+                &detail::make_deferred_pass<Signature, Func, CB>
+            )
+        ,   cb
+        )
     );
 }
 

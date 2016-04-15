@@ -40,7 +40,8 @@ template <typename Derived, typename T>
 class deferred_base
 {
 public:
-    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT resumable set_terminal(T* dest);
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+    resumable set_terminal(T* dest);
     
     T wait() {
         T result;
@@ -58,7 +59,8 @@ template <typename Derived>
 class deferred_base<Derived, void>
 {
 public:
-    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT resumable set_terminal();
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+    resumable set_terminal();
     
     void wait() {
         resumable res = this->set_terminal();
@@ -101,9 +103,13 @@ public:
         { }
     
     #ifdef MGBASE_CPP11_SUPPORTED
-    deferred(const deferred&) = default; // TODO
+    // Move-only type
+    //deferred(const deferred&) = delete;
     
-    deferred& operator = (const deferred&) = default; // TODO
+    //deferred(deferred&&) = default;
+    
+    // Move-only type
+    //deferred& operator = (const deferred&) = delete;
     #endif
     
     continuation<T>* get_continuation() const MGBASE_NOEXCEPT {
@@ -134,7 +140,7 @@ public:
     }
     
     template <typename Signature, Signature Func, typename CB>
-    MGBASE_ALWAYS_INLINE
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     deferred<typename detail::deferred_result<Signature>::type>
     add_continuation(inlined_function<Signature, Func>, CB&);
 

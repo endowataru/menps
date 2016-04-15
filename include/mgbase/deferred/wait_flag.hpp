@@ -31,9 +31,9 @@ void set_notfiied(wait_flag* const wf) MGBASE_NOEXCEPT
 }
 
 MGBASE_ALWAYS_INLINE
-bool is_notified(const wait_flag& flag) MGBASE_NOEXCEPT
+bool is_notified(const wait_flag& wf) MGBASE_NOEXCEPT
 {
-    return flag.flag.load(mgbase::memory_order_acquire);
+    return wf.flag.load(mgbase::memory_order_acquire);
 }
 
 namespace detail {
@@ -46,7 +46,7 @@ class wait_handlers
     typedef typename Config::result_type    result_type;
     
 public:
-    MGBASE_ALWAYS_INLINE
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     static result_type start(cb_type& cb)
     {
         wait_flag& wr = Config::get_flag(cb);
@@ -56,7 +56,7 @@ public:
     }
 
 private:
-    MGBASE_ALWAYS_INLINE
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     static result_type try_(cb_type& cb)
     {
         if (MGBASE_LIKELY(Config::try_call(cb)))
@@ -65,7 +65,7 @@ private:
             return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&handlers::try_), cb);
     }
     
-    MGBASE_ALWAYS_INLINE
+    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     static result_type wait(cb_type& cb)
     {
         wait_flag& wr = Config::get_flag(cb);
