@@ -11,13 +11,13 @@ namespace mgbase {
 typedef mgbase_wait_flag    wait_flag;
 
 MGBASE_ALWAYS_INLINE
-void initialize_flag(wait_flag* const wf)
+void initialize_flag(wait_flag* const wf) MGBASE_NOEXCEPT
 {
     wf->flag.store(mgbase::memory_order_relaxed);
 }
 
 MGBASE_ALWAYS_INLINE
-operation make_notification(wait_flag* const wf)
+operation make_notification(wait_flag* const wf) MGBASE_NOEXCEPT
 {
     MGBASE_ASSERT(!wf->flag.load());
     
@@ -25,7 +25,13 @@ operation make_notification(wait_flag* const wf)
 }
 
 MGBASE_ALWAYS_INLINE
-bool is_notified(const wait_flag& flag)
+void set_notfiied(wait_flag* const wf) MGBASE_NOEXCEPT
+{
+    mgbase::execute(make_notification(wf));
+}
+
+MGBASE_ALWAYS_INLINE
+bool is_notified(const wait_flag& flag) MGBASE_NOEXCEPT
 {
     return flag.flag.load(mgbase::memory_order_acquire);
 }

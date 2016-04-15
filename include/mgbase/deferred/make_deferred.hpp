@@ -17,7 +17,8 @@ template <
 ,   Signature   Func
 ,   typename    CB
 >
-MGBASE_ALWAYS_INLINE resumable make_deferred_pass(CB& cb)
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
+resumable make_deferred_pass(CB& cb)
 {
     typedef typename mgbase::function_traits<Signature>::result_type    return_type;
     typedef typename detail::deferred_result<Signature>::type T;
@@ -61,7 +62,7 @@ template <
 ,   Signature   Func
 ,   typename    CB
 >
-MGBASE_ALWAYS_INLINE
+MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
 deferred<typename detail::deferred_result<Signature>::type>
 make_deferred(inlined_function<Signature, Func> /*ignored*/, CB& cb)
 {
@@ -78,34 +79,6 @@ make_deferred(inlined_function<Signature, Func> /*ignored*/, CB& cb)
         (cb)
     );
 }
-
-
-#if 0
-template <
-    typename Signature
-,   Signature* Func
-,   typename CB
->
-MGBASE_DEPRECATED
-MGBASE_ALWAYS_INLINE
-deferred<typename detail::deferred_result<Signature>::type>
-make_deferred(CB& cb)
-{
-    return make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(Func), cb);
-    /*typedef typename detail::deferred_result<Signature>::type T;
-    
-    continuation<T>& cont = get_next_continuation<T>(cb);
-    
-    return deferred<T>(
-        cont
-    ,   make_resumable<
-            resumable (CB&)
-        ,   &detail::make_deferred_pass<Signature, Func, CB>
-        >
-        (cb)
-    );*/
-}
-#endif
 
 } // unnamed namespace
 
