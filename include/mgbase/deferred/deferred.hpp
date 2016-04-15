@@ -100,12 +100,12 @@ public:
     #endif
     
     // For unwrapping
-    MGBASE_CONSTEXPR /*implicit*/ deferred(const value_wrapper< deferred<T> >& df) {
+    MGBASE_CONSTEXPR_CXX14 /*implicit*/ deferred(const value_wrapper< deferred<T> >& df) {
         *this = df.get();
     }
     
     #ifdef MGBASE_CPP11_SUPPORTED
-    MGBASE_CONSTEXPR /*implicit*/ deferred(value_wrapper< deferred<T> >&& df) {
+    MGBASE_CONSTEXPR_CXX14 /*implicit*/ deferred(value_wrapper< deferred<T> >&& df) {
         *this = mgbase::move(df.get());
     }
     #endif
@@ -155,7 +155,8 @@ public:
     template <typename Signature, Signature Func, typename CB>
     MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     deferred<typename detail::deferred_result<Signature>::type>
-    add_continuation(inlined_function<Signature, Func>, CB&);
+    add_continuation(inlined_function<Signature, Func>, CB&)
+    MGBASE_IF_CXX11_SUPPORTED(&&);
 
 private:
     resumable        res_;

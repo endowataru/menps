@@ -110,7 +110,7 @@
     #define MGBASE_NULLPTR              ((void*)0)
     #define MGBASE_EMPTY_DECL           { }
     #define MGBASE_CONSTEXPR
-    #define MGBASE_CONSTEXPR_CPP14
+    #define MGBASE_CONSTEXPR_CXX14
     
     #define MGBASE_STATIC_ASSERT(expr) \
         MGBASE_UNUSED typedef char MGBASE_CONCAT(_static_assertion_at_line_, __LINE__)[((expr)) ? 1 : -1]
@@ -149,7 +149,7 @@
     
     // For C++
     #ifdef MGBASE_CPP11_SUPPORTED
-        #define MGBASE_IF_CPP11_SUPPORTED(t, f)     t
+        #define MGBASE_IF_CXX11_SUPPORTED(x)        x
         
         // For C++11 or later
         #define MGBASE_EXPLICIT_OPERATOR            explicit operator
@@ -162,7 +162,6 @@
         #define MGBASE_ALIGNAS(a)                   alignas(a)
         #define MGBASE_DECLTYPE(x)                  decltype(x)
         #define MGBASE_CONSTEXPR                    constexpr
-        #define MGBASE_CONSTEXPR_FUNCTION           constexpr
         
         #define MGBASE_NORETURN                     [[noreturn]]
         
@@ -172,9 +171,11 @@
         
         } // namespace mgbase
         
-        #define MGBASE_DEPRECATED           __attribute__((deprecated))
+        #define MGBASE_DEPRECATED                   __attribute__((deprecated))
         
     #else
+        #define MGBASE_IF_CXX11_SUPPORTED(x)
+        
         // For C++03
         #define MGBASE_EXPLICIT_OPERATOR            operator
         #define MGBASE_NOEXCEPT                     throw()
@@ -220,7 +221,6 @@
         #define MGBASE_ALIGNAS(a)                   __attribute__((aligned(a)))
         #define MGBASE_DECLTYPE(x)                  __typeof__(x)
         #define MGBASE_CONSTEXPR                    
-        #define MGBASE_CONSTEXPR_FUNCTION           
         
         namespace mgbase {
             template <bool> struct static_assertion;
@@ -239,12 +239,12 @@
 
     #if (__cplusplus >= 201403L)
         // For C++14 or later
-        #define MGBASE_CONSTEXPR_CPP14  constexpr
+        #define MGBASE_CONSTEXPR_CXX14  constexpr
         
         #define MGBASE_DEPRECATED       [[deprecated]]
     #else
         // For C++11 or older
-        #define MGBASE_CONSTEXPR_CPP14
+        #define MGBASE_CONSTEXPR_CXX14
         
         #define MGBASE_DEPRECATED       __attribute__((deprecated))
     #endif

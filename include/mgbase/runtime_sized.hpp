@@ -15,7 +15,7 @@ namespace detail {
 
 template <typename T>
 struct runtime_sized_traits {
-    static MGBASE_CONSTEXPR_FUNCTION runtime_size_t size() MGBASE_NOEXCEPT {
+    static MGBASE_CONSTEXPR runtime_size_t size() MGBASE_NOEXCEPT {
         return sizeof(T);
     }
 };
@@ -31,7 +31,7 @@ struct runtime_sized_traits
 
 // helper function to calculate the size
 template <typename T>
-inline MGBASE_CONSTEXPR_FUNCTION runtime_size_t runtime_size_of() MGBASE_NOEXCEPT {
+inline MGBASE_CONSTEXPR runtime_size_t runtime_size_of() MGBASE_NOEXCEPT {
     return runtime_sized_traits<T>::size();
 }
 
@@ -65,7 +65,7 @@ namespace detail {
 
 template <runtime_size_t (*Size)()>
 struct runtime_sized_traits< runtime_sized_struct<Size> > {
-    static MGBASE_CONSTEXPR_FUNCTION runtime_size_t size() MGBASE_NOEXCEPT {
+    static MGBASE_CONSTEXPR runtime_size_t size() MGBASE_NOEXCEPT {
         return Size();
     }
 };

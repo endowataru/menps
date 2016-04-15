@@ -67,7 +67,9 @@ deferred<typename detail::deferred_result<Signature>::type>
 deferred<T>::add_continuation(
     inlined_function<Signature, Func>   /*ignored*/
 ,   CB&                                 cb
-) {
+)
+MGBASE_IF_CXX11_SUPPORTED(&&)
+{
     continuation<T>* const current_cont = this->get_continuation();
     
     if (MGBASE_LIKELY(current_cont == MGBASE_NULLPTR))

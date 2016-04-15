@@ -8,7 +8,7 @@ namespace mgbase {
 
 struct nullopt_t {
     // See also: http://stackoverflow.com/questions/28332078/experimentaloptional-nullopt-t-constructor
-    MGBASE_CONSTEXPR_FUNCTION nullopt_t(int) { }
+    MGBASE_CONSTEXPR nullopt_t(int) { }
 };
 
 //extern nullopt_t nullopt; // never defined
@@ -23,10 +23,10 @@ template <typename T>
 class optional
 {
 public:
-    MGBASE_CONSTEXPR_CPP14 optional() MGBASE_NOEXCEPT {
+    MGBASE_CONSTEXPR_CXX14 optional() MGBASE_NOEXCEPT {
         create_empty();
     }
-    MGBASE_CONSTEXPR_CPP14 /*implicit*/ optional(nullopt_t) MGBASE_NOEXCEPT {
+    MGBASE_CONSTEXPR_CXX14 /*implicit*/ optional(nullopt_t) MGBASE_NOEXCEPT {
         create_empty();
     }
     
@@ -59,24 +59,24 @@ public:
     }
     
     // TODO: replace with safe-bool idioms
-    MGBASE_CONSTEXPR_FUNCTION MGBASE_EXPLICIT_OPERATOR bool () const MGBASE_NOEXCEPT {
+    MGBASE_CONSTEXPR MGBASE_EXPLICIT_OPERATOR bool () const MGBASE_NOEXCEPT {
         return engaged_;
     }
     
-    MGBASE_CONSTEXPR_CPP14 T* operator -> () MGBASE_NOEXCEPT {
+    MGBASE_CONSTEXPR_CXX14 T* operator -> () MGBASE_NOEXCEPT {
         MGBASE_ASSERT(engaged_);
         return &value();
     }
-    MGBASE_CONSTEXPR_CPP14 const T* operator -> () const MGBASE_NOEXCEPT {
+    MGBASE_CONSTEXPR_CXX14 const T* operator -> () const MGBASE_NOEXCEPT {
         MGBASE_ASSERT(engaged_);
         return &value();
     }
     
-    MGBASE_CONSTEXPR_CPP14 T& operator * () MGBASE_NOEXCEPT {
+    MGBASE_CONSTEXPR_CXX14 T& operator * () MGBASE_NOEXCEPT {
         MGBASE_ASSERT(engaged_);
         return value();
     }
-    MGBASE_CONSTEXPR_CPP14 const T& operator * () const MGBASE_NOEXCEPT {
+    MGBASE_CONSTEXPR_CXX14 const T& operator * () const MGBASE_NOEXCEPT {
         MGBASE_ASSERT(engaged_);
         return value();
     }
@@ -141,11 +141,13 @@ private:
 };
 
 template <typename T>
-MGBASE_ALWAYS_INLINE MGBASE_CONSTEXPR_CPP14 optional<T> make_optional(T& value) {
+MGBASE_ALWAYS_INLINE MGBASE_CONSTEXPR_CXX14
+optional<T> make_optional(T& value) {
     return optional<T>(value);
 }
 template <typename T>
-MGBASE_ALWAYS_INLINE MGBASE_CONSTEXPR_CPP14 optional<T> make_optional(const T& value) {
+MGBASE_ALWAYS_INLINE MGBASE_CONSTEXPR_CXX14
+optional<T> make_optional(const T& value) {
     return optional<T>(value);
 }
 
