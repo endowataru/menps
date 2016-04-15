@@ -94,6 +94,21 @@ MGBASE_ALWAYS_INLINE void store(volatile T* const obj, const T desired, /*const*
 }
 
 template <typename T>
+MGBASE_ALWAYS_INLINE T exchange(
+    volatile T* const   obj
+,   const T             desired
+,   const memory_order  order
+) MGBASE_NOEXCEPT
+{
+    // See the comment of Boost.Atomic:
+    //  boost/atomic/detail/ops_gcc_sync.hpp
+    if ((order & memory_order_release) != 0)
+        __sync_synchronize();
+    
+    return __sync_lock_test_and_set(obj, desired);
+}
+
+template <typename T>
 MGBASE_ALWAYS_INLINE bool compare_exchange_weak(
     volatile T* const   obj
 ,   T* const            expected

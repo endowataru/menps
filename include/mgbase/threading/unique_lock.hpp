@@ -13,7 +13,7 @@ using std::unique_lock;
 
 } // namespace mgbase
 
-#else
+#else // MGBASE_CXX11_SUPPORTED
 
 namespace mgbase {
 

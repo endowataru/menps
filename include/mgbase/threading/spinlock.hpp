@@ -4,15 +4,9 @@
 #include <mgbase/atomic.hpp>
 #include <mgbase/assert.hpp>
 
-#ifndef MGBASE_CXX11_SUPPORTED
-
 namespace mgbase {
 
-// In C++03
-
-#if (defined(MGBASE_ARCH_INTEL) || defined(MGBASE_ARCH_SPARC))
-
-// This implementation is available on the architectures with Total Store Ordering (TSO).
+// Implementation using compare_exchange_weak
 
 class spinlock
     : noncopyable
@@ -49,41 +43,33 @@ private:
     atomic<bool> flag_;
 };
 
-#else
-
-#error "Spinlock is not defined!"
-
-#endif
-
-}
-
-#else
-
-// In C++11
-
-#include <atomic>
-
-namespace mgbase {
-
-#define MGBASE_SPINLOCK_TTAS_BACKOFF
-
-#ifdef MGBASE_SPINLOCK_TTAS_BACKOFF
+#if 0
 
 // test-and-test-and-set (TTAS) spinlock with exponential backoff
 
-class spinlock {
+class spinlock
+    : noncopyable
+{
 public:
-    spinlock() noexcept : flag_{false} { }
-    spinlock(const spinlock&) = delete;
+    spinlock() MGBASE_NOEXCEPT
+    #ifdef MGBASE_CXX11_SUPPORTED
+        : flag_(false) { }
+    #else
+    {
+        flag_.store(false, mgbase::memory_order_relaxed);
+    }
+    #endif
     
-    spinlock& operator = (const spinlock&) = delete;
-
-    void lock() noexcept {
-        std::size_t wait = 1;
-        while (flag_.exchange(true, std::memory_order_acquire)) {
+    void lock() MGBASE_NOEXCEPT
+    {
+        mgbase::size_t wait = 1;
+        
+        while (flag_.exchange(true, mgbase::memory_order_acquire))
+        {
             do {
                 // Wait for a while.
-                for (std::size_t i = 0; i < wait; i++) {
+                for (mgbase::size_t i = 0; i < wait; i++)
+                {
                     // Insert a relax instruction. (x86 only)
                     //cpu_relax(); // TODO
                 }
@@ -92,23 +78,27 @@ public:
                 if (wait < 1024) // TODO: reconfigurable
                     wait *= 2;
             }
-            while (flag_);
+            while (flag_.load(mgbase::memory_order_relaxed));
         }
     }
     
-    bool try_lock() noexcept {
-        return !flag_.exchange(true, std::memory_order_acquire);
+    bool try_lock() MGBASE_NOEXCEPT
+    {
+        return !flag_.exchange(true, mgbase::memory_order_acquire);
     }
     
-    void unlock() noexcept {
-        flag_.store(false, std::memory_order_release);
+    void unlock() MGBASE_NOEXCEPT
+    {
+        flag_.store(false, mgbase::memory_order_release);
     }
 
 private:
-    std::atomic<bool> flag_;
+    mgbase::atomic<bool> flag_;
 };
 
-#else // MGBASE_SPINLOCK_TTAS_BACKOFF
+#endif
+
+#if 0
 
 // The most simple spinlock (but not scalable)
 
@@ -139,6 +129,3 @@ private:
 
 }
  
-#endif // MGBASE_CXX11_SUPPORTED
-
-
