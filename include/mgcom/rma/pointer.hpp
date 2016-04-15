@@ -20,7 +20,7 @@ class remote_pointer
 public:
     typedef untyped::remote_address     address_type;
     
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
     remote_pointer() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
     template <typename U>
@@ -38,7 +38,7 @@ public:
     }
     
 private:
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
     explicit remote_pointer(address_type addr)
         : addr_(addr) { }
 #endif
@@ -79,7 +79,7 @@ class local_pointer
 public:
     typedef untyped::local_address      address_type;
     
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
     local_pointer() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
     template <typename U>
@@ -110,7 +110,7 @@ public:
     }
 
 private:
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
     explicit local_pointer(address_type addr)
         : addr_(addr) { }
 #endif
