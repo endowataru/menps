@@ -87,15 +87,28 @@ class deferred
     typedef value_wrapper<T>   base_value;
     
 public:
-    /*implicit*/ deferred(const value_wrapper<T>& val)
+    MGBASE_CONSTEXPR /*implicit*/ deferred(const value_wrapper<T>& val)
         : base_value(val)
         , cont_(MGBASE_NULLPTR)
         { }
     
+    #ifdef MGBASE_CPP11_SUPPORTED
+    MGBASE_CONSTEXPR /*implicit*/ deferred(value_wrapper<T>&& val)
+        : base_value(mgbase::move(val))
+        , cont_(MGBASE_NULLPTR)
+        { }
+    #endif
+    
     // For unwrapping
-    /*implicit*/ deferred(const value_wrapper< deferred<T> >& df) {
+    MGBASE_CONSTEXPR /*implicit*/ deferred(const value_wrapper< deferred<T> >& df) {
         *this = df.get();
     }
+    
+    #ifdef MGBASE_CPP11_SUPPORTED
+    MGBASE_CONSTEXPR /*implicit*/ deferred(value_wrapper< deferred<T> >&& df) {
+        *this = mgbase::move(df.get());
+    }
+    #endif
     
     deferred(continuation<T>& cont, const resumable& res) MGBASE_NOEXCEPT
         : res_(res)
@@ -104,12 +117,12 @@ public:
     
     #ifdef MGBASE_CPP11_SUPPORTED
     // Move-only type
-    //deferred(const deferred&) = delete;
-    
-    //deferred(deferred&&) = default;
+    MGBASE_CONSTEXPR deferred(const deferred&) MGBASE_NOEXCEPT = delete;
+    MGBASE_CONSTEXPR deferred(deferred&&) MGBASE_NOEXCEPT = default;
     
     // Move-only type
-    //deferred& operator = (const deferred&) = delete;
+    deferred& operator = (const deferred&) MGBASE_NOEXCEPT = delete;
+    deferred& operator = (deferred&&) MGBASE_NOEXCEPT = default;
     #endif
     
     continuation<T>* get_continuation() const MGBASE_NOEXCEPT {

@@ -109,7 +109,7 @@
     #define MGBASE_OVERRIDE
     #define MGBASE_NULLPTR              ((void*)0)
     #define MGBASE_EMPTY_DECL           { }
-    #define MGBASE_CONSTEXPR            const
+    #define MGBASE_CONSTEXPR
     #define MGBASE_CONSTEXPR_CPP14
     
     #define MGBASE_STATIC_ASSERT(expr) \

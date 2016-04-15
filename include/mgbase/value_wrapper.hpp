@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <mgbase/move.hpp>
 
 namespace mgbase {
 
@@ -11,8 +11,13 @@ class value_wrapper
 public:
     value_wrapper() MGBASE_EMPTY_DEFINITION
     
-    /*implicit*/ value_wrapper(const T& val)
+    MGBASE_CONSTEXPR  /*implicit*/ value_wrapper(const T& val)
         : val_(val) { }
+    
+    #ifdef MGBASE_CPP11_SUPPORTED
+    MGBASE_CONSTEXPR /*implicit*/ value_wrapper(T&& val)
+        : val_(mgbase::move(val)) { }
+    #endif
     
     T& get() {
         return val_;
