@@ -3,7 +3,7 @@
 
 #include <mgbase/type_traits.hpp>
 
-#if !defined(MGBASE_ENABLE_EMULATE_MOVE) && !defined(MGBASE_CPP11_SUPPORTED)
+#if !defined(MGBASE_ENABLE_EMULATE_MOVE) && !defined(MGBASE_CXX11_SUPPORTED)
     #define MGBASE_ENABLE_EMULATE_MOVE
 #endif
 

@@ -10,7 +10,7 @@ namespace mgbase {
 // "ADL firewall"
 namespace noncopyable_ {
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 class noncopyable {
 public:
@@ -21,7 +21,7 @@ protected:
     noncopyable() noexcept = default;
 };
 
-#else // MGBASE_CPP11_SUPPORTED
+#else // MGBASE_CXX11_SUPPORTED
 
 class noncopyable {
 private:
@@ -32,7 +32,7 @@ protected:
     noncopyable() { }
 };
 
-#endif // MGBASE_CPP11_SUPPORTED
+#endif // MGBASE_CXX11_SUPPORTED
 
 } // namespace noncopyable_
 

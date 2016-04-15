@@ -4,7 +4,7 @@
 #include <mgbase/threading/unique_lock.hpp>
 #include <mgbase/threading/mutex.hpp>
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 #include <condition_variable>
 
@@ -83,5 +83,5 @@ private:
 
 } // namespace mgbase
 
-#endif // MGBASE_CPP11_SUPPORTED
+#endif // MGBASE_CXX11_SUPPORTED
 

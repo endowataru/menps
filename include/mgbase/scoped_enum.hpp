@@ -7,7 +7,7 @@
 
 namespace mgbase {
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 template <typename EnumType>
 struct native_type {

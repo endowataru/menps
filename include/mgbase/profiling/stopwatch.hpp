@@ -9,7 +9,7 @@ class stopwatch {
 public:
     stopwatch() MGBASE_NOEXCEPT { start(); }
     
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     stopwatch(const stopwatch&) = default;
     stopwatch& operator = (const stopwatch&) noexcept = default;
     #endif

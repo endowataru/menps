@@ -139,16 +139,16 @@
     
     #ifdef MGBASE_COMPILER_INTEL
         #if defined(__GXX_EXPERIMENTAL_CPP0X__) || defined(__GXX_EXPERIMENTAL_CXX0X__)
-            #define MGBASE_CPP11_SUPPORTED
+            #define MGBASE_CXX11_SUPPORTED
         #endif
     #else
         #if __cplusplus >= 201103L
-            #define MGBASE_CPP11_SUPPORTED
+            #define MGBASE_CXX11_SUPPORTED
         #endif
     #endif
     
     // For C++
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
         #define MGBASE_IF_CXX11_SUPPORTED(x)        x
         
         // For C++11 or later

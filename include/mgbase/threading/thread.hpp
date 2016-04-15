@@ -3,7 +3,7 @@
 
 #include <mgbase/threading/thread_id.hpp>
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 #include <thread>
 

@@ -19,14 +19,14 @@ namespace mgbase {
 
 template <typename T>
 class atomic
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     : noncopyable
     #endif
 {
     typedef typename detail::atomic_storage<T>::type    storage_type;
     
 public:
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     atomic() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
     /*implicit*/ atomic(const T val) MGBASE_NOEXCEPT
@@ -107,7 +107,7 @@ public:
     
     #undef DEFINE_FETCH_OP
     
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 private:
 #else
 public:

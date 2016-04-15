@@ -3,7 +3,7 @@
 
 #include <mgbase/lang.hpp>
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 #include <mutex>
 
@@ -19,7 +19,7 @@ using std::try_to_lock;
 
 } // namespace mgbase
 
-#else // MGBASE_CPP11_SUPPORTED
+#else // MGBASE_CXX11_SUPPORTED
 
 namespace mgbase {
 
@@ -43,5 +43,5 @@ MGBASE_UNUSED try_to_lock_t try_to_lock;
 
 } // namespace mgbase
 
-#endif // MGBASE_CPP11_SUPPORTED
+#endif // MGBASE_CXX11_SUPPORTED
 

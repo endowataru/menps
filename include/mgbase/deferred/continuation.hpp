@@ -13,7 +13,7 @@ class continuation
 public:
     typedef callback_function<resumable (const value_wrapper<T>&)>   function_type;
     
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     continuation() noexcept = default;
     #endif
     

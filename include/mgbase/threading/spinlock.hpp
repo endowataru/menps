@@ -4,28 +4,7 @@
 #include <mgbase/atomic.hpp>
 #include <mgbase/assert.hpp>
 
-#ifdef MGBASE_DISABLE_MULTITHREADING
-
-namespace mgbase {
-
-// Replace spinlock with a dummy lock class
-
-class spinlock
-    : noncopyable
-{
-public:
-    void lock() MGBASE_NOEXCEPT { }
-    
-    bool try_lock() MGBASE_NOEXCEPT { return true; }
-    
-    void unlock() MGBASE_NOEXCEPT { }
-};
-
-}
-
-#else
-
-#ifndef MGBASE_CPP11_SUPPORTED
+#ifndef MGBASE_CXX11_SUPPORTED
 
 namespace mgbase {
 
@@ -129,7 +108,7 @@ private:
     std::atomic<bool> flag_;
 };
 
-#else
+#else // MGBASE_SPINLOCK_TTAS_BACKOFF
 
 // The most simple spinlock (but not scalable)
 
@@ -156,11 +135,10 @@ private:
     std::atomic_flag flag_;
 };
 
-#endif
+#endif // MGBASE_SPINLOCK_TTAS_BACKOFF
 
 }
+ 
+#endif // MGBASE_CXX11_SUPPORTED
 
-#endif
-
-#endif
 

@@ -3,7 +3,7 @@
 
 #include <mgbase/threading/lock_t.hpp>
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 #include <mutex>
 
@@ -103,5 +103,5 @@ private:
 
 } // namespace mgbase
 
-#endif // MGBASE_CPP11_SUPPORTED
+#endif // MGBASE_CXX11_SUPPORTED
 

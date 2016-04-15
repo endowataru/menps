@@ -19,7 +19,7 @@ inline void* aligned_alloc(std::size_t alignment, std::size_t size) {
     MGBASE_ASSERT(size % alignment == 0);
     
     void* result;
-    /*#ifdef MGBASE_CPP11_SUPPORTED
+    /*#ifdef MGBASE_CXX11_SUPPORTED
         result = std::aligned_alloc(alignment, size);
     #else*/
         if (alignment < sizeof(void*)) {

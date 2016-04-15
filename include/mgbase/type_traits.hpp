@@ -3,7 +3,7 @@
 
 #include "lang.hpp"
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 #include <type_traits>
 
@@ -81,7 +81,7 @@ using std::conditional;
 
 } // namespace mgbase
 
-#else // MGBASE_CPP11_SUPPORTED
+#else // MGBASE_CXX11_SUPPORTED
 
 namespace mgbase {
 
@@ -448,7 +448,7 @@ template <typename T> struct make_unsigned<const volatile T> {
 } // namespace mgbase
 
 
-#endif // MGBASE_CPP11_SUPPORTED
+#endif // MGBASE_CXX11_SUPPORTED
 
 namespace mgbase {
 

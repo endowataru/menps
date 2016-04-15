@@ -14,7 +14,7 @@ public:
     MGBASE_CONSTEXPR  /*implicit*/ value_wrapper(const T& val)
         : val_(val) { }
     
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     MGBASE_CONSTEXPR /*implicit*/ value_wrapper(T&& val)
         : val_(mgbase::move(val)) { }
     #endif

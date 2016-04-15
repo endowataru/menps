@@ -11,7 +11,7 @@ class resumable
 public:
     typedef callback_function<resumable ()>    function_type;
     
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     
     resumable() MGBASE_NOEXCEPT = default;
     

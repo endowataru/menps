@@ -1,7 +1,7 @@
 
 #pragma once
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 #include <type_traits>
 

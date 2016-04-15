@@ -3,7 +3,7 @@
 
 #include <mgbase/lang.hpp>
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
     #define MGBASE_THREAD_LOCAL     thread_local
 #else
     #define MGBASE_THREAD_LOCAL     __thread

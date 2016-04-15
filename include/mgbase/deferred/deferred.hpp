@@ -92,7 +92,7 @@ public:
         , cont_(MGBASE_NULLPTR)
         { }
     
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     MGBASE_CONSTEXPR /*implicit*/ deferred(value_wrapper<T>&& val)
         : base_value(mgbase::move(val))
         , cont_(MGBASE_NULLPTR)
@@ -104,7 +104,7 @@ public:
         *this = df.get();
     }
     
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     MGBASE_CONSTEXPR_CXX14 /*implicit*/ deferred(value_wrapper< deferred<T> >&& df) {
         *this = mgbase::move(df.get());
     }
@@ -115,7 +115,7 @@ public:
         , cont_(&cont)
         { }
     
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     // Move-only type
     MGBASE_CONSTEXPR deferred(const deferred&) MGBASE_NOEXCEPT = delete;
     MGBASE_CONSTEXPR deferred(deferred&&) MGBASE_NOEXCEPT = default;

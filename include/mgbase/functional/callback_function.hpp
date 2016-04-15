@@ -14,7 +14,7 @@ class callback_function<Result ()>
     typedef Result (func_type)(void*);
 
 public:
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     callback_function() = default;
     callback_function(const callback_function&) = default;
     
@@ -56,7 +56,7 @@ class callback_function<Result (Arg1)>
     typedef Result (func_type)(void*, Arg1);
     
 public:
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     callback_function() = default;
     callback_function(const callback_function&) = default;
     

@@ -3,7 +3,7 @@
 
 #include <mgbase/lang.hpp>
 
-#ifdef MGBASE_CPP11_SUPPORTED
+#ifdef MGBASE_CXX11_SUPPORTED
 
 #include <mutex>
 
@@ -13,7 +13,7 @@ using std::mutex;
 
 } // namespace mgbase
 
-#else // MGBASE_CPP11_SUPPORTED
+#else // MGBASE_CXX11_SUPPORTED
 
 #include <pthread.h>
 #include <errno.h>
@@ -75,5 +75,5 @@ private:
 
 } // namespace mgbase
 
-#endif // MGBASE_CPP11_SUPPORTED
+#endif // MGBASE_CXX11_SUPPORTED
 

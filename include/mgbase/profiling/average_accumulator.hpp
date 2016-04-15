@@ -16,7 +16,7 @@ public:
         , min_(std::numeric_limits<Sample>::min())
         , max_(std::numeric_limits<Sample>::max()) { }
     
-    #ifdef MGBASE_CPP11_SUPPORTED
+    #ifdef MGBASE_CXX11_SUPPORTED
     average_accumulator(const average_accumulator&) noexcept = default;
     
     average_accumulator& operator = (const average_accumulator&) noexcept = default;
