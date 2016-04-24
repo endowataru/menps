@@ -7,7 +7,8 @@
 namespace mgbase {
 
 template <typename Derived, typename Closure>
-class basic_active_object
+class MGBASE_DEPRECATED
+basic_active_object
 {
 protected:
     void start()
