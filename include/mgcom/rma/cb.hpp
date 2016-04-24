@@ -12,14 +12,14 @@ struct remote_read_params {
     process_id_t    src_proc;
     remote_address  src_raddr;
     local_address   dest_laddr;
-    index_t         number_of_bytes;
+    index_t         num_bytes;
 };
 
 struct remote_write_params {
     process_id_t    dest_proc;
     remote_address  dest_raddr;
     local_address   src_laddr;
-    index_t         number_of_bytes;
+    index_t         num_bytes;
 };
 
 namespace detail {
@@ -40,7 +40,7 @@ struct read_config
             params.src_proc
         ,   params.src_raddr
         ,   params.dest_laddr
-        ,   params.number_of_bytes
+        ,   params.num_bytes
         ,   mgbase::make_notification(&get_flag(cb))
         );
     }
@@ -72,7 +72,7 @@ struct write_config
             params.dest_proc
         ,   params.dest_raddr
         ,   params.src_laddr
-        ,   params.number_of_bytes
+        ,   params.num_bytes
         ,   mgbase::make_notification(&get_flag(cb))
         );
     }
@@ -110,7 +110,7 @@ struct remote_read_params
     process_id_t        src_proc;
     remote_pointer<T>   src_rptr;
     local_pointer<T>    dest_lptr;
-    index_t             number_of_elements;
+    index_t             num_elems;
 };
 
 template <typename T>
@@ -119,7 +119,7 @@ struct remote_write_params
     process_id_t        dest_proc;
     remote_pointer<T>   dest_rptr;
     local_pointer<T>    src_lptr;
-    index_t             number_of_elements;
+    index_t             num_elems;
 };
 
 
@@ -182,7 +182,7 @@ struct read_config
             params.src_proc
         ,   params.src_rptr
         ,   params.dest_lptr
-        ,   params.number_of_elements
+        ,   params.num_elems
         ,   mgbase::make_notification(&get_flag(cb))
         );
     }
@@ -215,7 +215,7 @@ struct write_config
             params.dest_proc
         ,   params.dest_rptr
         ,   params.src_lptr
-        ,   params.number_of_elements
+        ,   params.num_elems
         ,   mgbase::make_notification(&get_flag(cb))
         );
     }

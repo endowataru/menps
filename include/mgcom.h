@@ -2,4 +2,5 @@
 #pragma once
 
 #include <mgcom/rma.h>
-#include <mgcom/am.h>
+#include <mgcom/rpc.h>
+
