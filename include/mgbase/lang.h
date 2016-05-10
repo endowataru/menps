@@ -22,6 +22,16 @@
     #define MGBASE_ARCH_SPARC64_IXFX
 #endif
 
+// OS Compatibility
+
+#ifdef __linux__
+    #define MGBASE_OS_LINUX
+#elif __APPLE__
+    #define MGBASE_OS_MAC_OS_X
+#else
+    #error "Unsupported OS"
+#endif
+
 // Compiler Compatibility
 
 #ifdef __FUJITSU
