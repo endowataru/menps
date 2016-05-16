@@ -34,7 +34,6 @@ public:
         
         msg_buf.id      = handler_id;
         msg_buf.size    = arg_size;
-        std::memcpy(msg_buf.data, arg_ptr, arg_size);
         
         msg_buf.reply_size  = static_cast<int>(return_size);
         msg_buf.reply_tag   = recv_tag;
