@@ -50,6 +50,14 @@ public:
         return result;
     }
     
+    template <typename F>
+    T wait(F f) {
+        T result;
+        resumable res = this->set_terminal(&result);
+        while (!res.checked_resume()) { f(); }
+        return result;
+    }
+    
 private:
     Derived& derived() MGBASE_NOEXCEPT { return *static_cast<Derived*>(this); }
     const Derived& derived() const MGBASE_NOEXCEPT { return *static_cast<const Derived*>(this); }
@@ -65,6 +73,12 @@ public:
     void wait() {
         resumable res = this->set_terminal();
         while (!res.checked_resume()) { }
+    }
+    
+    template <typename F>
+    void wait(F f) {
+        resumable res = this->set_terminal();
+        while (!res.checked_resume()) { f(); }
     }
     
 private:
