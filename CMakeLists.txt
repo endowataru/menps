@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mgbase)
 
+find_package(Threads)
+
 INCLUDE (CheckCXXCompilerFlag)
 
 option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
@@ -180,8 +182,11 @@ endif()
 
 add_library(mgbase
     ./external/cppformat/cppformat/format.cc
-)
-target_link_libraries(mgbase mgbase-header)
+    )
+
+target_link_libraries(mgbase mgbase-header 
+    pthread # TODO: Use ${CMAKE_THREAD_LIBS_INIT} ?
+    )
 
 if (MGBASE_PROFILER_USE_GPERFTOOLS)
     target_link_libraries(mgbase profiler)
