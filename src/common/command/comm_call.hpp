@@ -50,7 +50,7 @@ private:
             const mgbase::callback_function<void ()> f
                 = mgbase::make_callback_function(
                     mgbase::bind1st_of_1(
-                        MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(execute)
+                        MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(comm_call_handlers<R, Func>::execute)
                     ,   mgbase::wrap_reference(cb)
                     )
                 );
