@@ -46,6 +46,10 @@
             (  __GNUC__ * 10000 \
              + __GNUC_MINOR__ * 100 \
              + __GNUC_PATCHLEVEL__)
+        
+        #if MGBASE_COMPILER_GCC_VERSION >= 40600
+            #define MGBASE_COMPILER_GCC_SUPPORTS_PRAGMA_DIAGNOSTIC
+        #endif
     #endif
 #endif
 
@@ -193,11 +197,9 @@
         
         namespace mgbase
         {
-            #ifdef MGBASE_COMPILER_GCC
-                #if MGBASE_COMPILER_GCC_VERSION > 40700
-                    #pragma GCC diagnostic push
-                    #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-                #endif
+            #ifdef MGBASE_COMPILER_GCC_SUPPORTS_PRAGMA_DIAGNOSTIC
+                #pragma GCC diagnostic push
+                #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
             #endif
             
             class nullptr_t
@@ -218,10 +220,8 @@
                 void operator&() const;
             };
             
-            #ifdef MGBASE_COMPILER_GCC
-                #if MGBASE_COMPILER_GCC_VERSION > 40700
-                    #pragma GCC diagnostic pop
-                #endif
+            #ifdef MGBASE_COMPILER_GCC_SUPPORTS_PRAGMA_DIAGNOSTIC
+                #pragma GCC diagnostic pop
             #endif
         }
         
