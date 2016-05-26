@@ -75,6 +75,16 @@ else()
             -ferror-limit=${error_limit}
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        # Get the version
+        execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+                OUTPUT_VARIABLE MGBASE_COMPILER_GCC_VERSION)
+        string(REGEX MATCHALL "[0-9]+" MGBASE_COMPILER_GCC_VERSION_COMPONENTS ${MGBASE_COMPILER_GCC_VERSION})
+        list(GET MGBASE_COMPILER_GCC_VERSION_COMPONENTS 0 MGBASE_COMPILER_GCC_VERSION_MAJOR)
+        list(GET MGBASE_COMPILER_GCC_VERSION_COMPONENTS 1 MGBASE_COMPILER_GCC_VERSION_MINOR)
+        message(STATUS "MGBASE_COMPILER_GCC_VERSION=${MGBASE_COMPILER_GCC_VERSION}")
+        message(STATUS "MGBASE_COMPILER_GCC_VERSION_MAJOR=${MGBASE_COMPILER_GCC_VERSION_MAJOR}")
+        message(STATUS "MGBASE_COMPILER_GCC_VERSION_MINOR=${MGBASE_COMPILER_GCC_VERSION_MINOR}")
+        
         CHECK_CXX_COMPILER_FLAG("-Wc++14-compat" MGBASE_GCC_SUPPORTS_WCXX14_COMPAT)
         CHECK_CXX_COMPILER_FLAG("-Wconditionally-supported" MGBASE_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED)
         CHECK_CXX_COMPILER_FLAG("-Wdate-time" MGBASE_GCC_SUPPORTS_WDATE_TIME)
@@ -109,7 +119,7 @@ else()
             #-Wchkp # Undocumented warning option
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED}>:-Wconditionally-supported>
             -Wconversion
-            #-Wctor-dtor-privacy # TODO: enable for >= 4.6, "#pragma GCC diagnostic" is required
+            $<$<VERSION_GREATER:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wctor-dtor-privacy> # #pragma GCC diagnostic is required
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WDATE_TIME}>:-Wdate-time>
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR}>:-Wdelete-non-virtual-dtor>
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WDOUBLE_PROMOTION}>:-Wdouble-promotion>
@@ -127,7 +137,7 @@ else()
             -Wmultichar
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WNOEXCEPT}>:-Wnoexcept>
             -Wnon-virtual-dtor
-            -Wold-style-cast
+            $<$<VERSION_GREATER:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wold-style-cast> # #pragma GCC diagnostic is required
             -Woverloaded-virtual
             -Wredundant-decls
             -Wreorder
@@ -147,6 +157,9 @@ else()
             
             # Other warnings
             -Wstrict-overflow=5
+            
+            # Disabled on old versions
+            $<$<VERSION_LESS:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wno-logical-op>
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         target_compile_options(mgbase-options INTERFACE
