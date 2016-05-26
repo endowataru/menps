@@ -12,15 +12,6 @@ option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
 
 set(MGBASE_CXX_STANDARD "" CACHE STRING "C++ standard version")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mgbase/config.h)
-
-message(STATUS "Generate mgbase/config.h ...")
-message(STATUS "MGBASE_PROFILER_USE_GPROF=${MGBASE_PROFILER_USE_GPROF}")
-message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}")
-message(STATUS "MGBASE_CXX_STANDARD=${MGBASE_CXX_STANDARD}")
-message(STATUS "MGBASE_ATOMIC_USE_STANDARD=${MGBASE_ATOMIC_USE_STANDARD}")
-
 add_library(mgbase-header INTERFACE)
 target_include_directories(mgbase-header
     INTERFACE ./include
@@ -179,6 +170,13 @@ else()
     endif()
 endif()
 
+CHECK_CXX_SOURCE_COMPILES(
+"
+__attribute__((always_inline))
+void f() { }
+
+int main() { return 0; }
+" MGBASE_COMPILER_SUPPORTS_ALWAYS_INLINE)
 
 add_library(mgbase
     ./external/cppformat/cppformat/format.cc
@@ -238,4 +236,12 @@ add_executable(mgbase-unittest
 
 target_link_libraries(mgbase-unittest mgbase mgbase-options googletest)
 
+message(STATUS "Generate mgbase/config.h ...")
+message(STATUS "MGBASE_PROFILER_USE_GPROF=${MGBASE_PROFILER_USE_GPROF}")
+message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}")
+message(STATUS "MGBASE_CXX_STANDARD=${MGBASE_CXX_STANDARD}")
+message(STATUS "MGBASE_ATOMIC_USE_STANDARD=${MGBASE_ATOMIC_USE_STANDARD}")
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mgbase/config.h)
 

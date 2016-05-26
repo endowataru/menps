@@ -24,9 +24,9 @@
 
 // OS Compatibility
 
-#ifdef __linux__
+#if (defined(__linux__))
     #define MGBASE_OS_LINUX
-#elif __APPLE__
+#elif (defined(__APPLE__))
     #define MGBASE_OS_MAC_OS_X
 #else
     #error "Unsupported OS"
@@ -63,10 +63,10 @@
 #define MGBASE_CONCAT1(x, y) MGBASE_CONCAT2(x, y)
 #define MGBASE_CONCAT2(x, y) x##y
 
-#ifdef MGBASE_DEBUG
-    #define MGBASE_ALWAYS_INLINE        inline
+#if (defined(MGBASE_COMPILER_SUPPORTS_ALWAYS_INLINE) && !defined(MGBASE_DEBUG))
+    #define MGBASE_ALWAYS_INLINE    inline __attribute__((always_inline))
 #else
-    #define MGBASE_ALWAYS_INLINE        inline __attribute__((always_inline))
+    #define MGBASE_ALWAYS_INLINE    inline
 #endif
 
 #define MGBASE_NOINLINE             __attribute__((noinline))
