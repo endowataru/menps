@@ -211,6 +211,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     )
 endif()
 
+# Google Test
+
 add_library(googletest
     ./external/googletest/googletest/src/gtest-all.cc
 )
@@ -233,6 +235,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
         -include ${CMAKE_CURRENT_SOURCE_DIR}/src/workaround/wcscasecmp.h
     )
 endif()
+
+# Unit tests
 
 add_executable(mgbase-unittest
     unittest/unittest.cpp
@@ -257,4 +261,11 @@ message(STATUS "MGBASE_ATOMIC_USE_STANDARD=${MGBASE_ATOMIC_USE_STANDARD}")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/mgbase/config.h)
+
+
+# MassiveThreads
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    include(cmake/massivethreads.cmake)
+endif()
 
