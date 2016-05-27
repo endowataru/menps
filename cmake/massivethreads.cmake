@@ -11,18 +11,19 @@ configure_file(cmake/massivethreads-configure.sh.in massivethreads-configure.sh 
 ExternalProject_Add(MassiveThreads
     SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/massivethreads
     #GIT_REPOSITORY https://github.com/massivethreads/massivethreads
-    CONFIGURE_COMMAND /bin/sh ${CMAKE_CURRENT_BINARY_DIR}/massivethreads-configure.sh <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --enable-malloc-wrapper=no)
+    CONFIGURE_COMMAND /bin/sh ${CMAKE_CURRENT_BINARY_DIR}/massivethreads-configure.sh
+        <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --enable-malloc-wrapper=no)
 
 ExternalProject_Get_Property(MassiveThreads source_dir)
 ExternalProject_Get_Property(MassiveThreads install_dir)
 
-add_library(massivethreads STATIC IMPORTED GLOBAL)
+add_library(massivethreads SHARED IMPORTED GLOBAL)
 add_dependencies(massivethreads MassiveThreads)
 
 set_property(
     TARGET massivethreads
     PROPERTY IMPORTED_LOCATION
-    ${install_dir}/lib/libmyth-native.a)
+    ${install_dir}/lib/libmyth-native.so)
 
 set_property(
     TARGET massivethreads
@@ -33,6 +34,5 @@ set_property(
     TARGET massivethreads
     APPEND PROPERTY INTERFACE_LINK_LIBRARIES
     dl
-    pthread
-    )
+    pthread)
 
