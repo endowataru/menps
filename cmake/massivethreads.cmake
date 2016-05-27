@@ -16,7 +16,7 @@ add_dependencies(massivethreads MassiveThreads)
 set_property(
     TARGET massivethreads
     PROPERTY IMPORTED_LOCATION
-    ${install_dir}/lib/libmyth.a)
+    ${install_dir}/lib/libmyth-native.a)
 
 set_property(
     TARGET massivethreads
