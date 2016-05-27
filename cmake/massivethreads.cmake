@@ -2,10 +2,16 @@ cmake_minimum_required(VERSION 3.0)
 
 include(ExternalProject)
 
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(MGBASE_MASSIVETHREADS_CFLAGS "-O0 -g")
+endif()
+
+configure_file(cmake/massivethreads-configure.sh.in massivethreads-configure.sh @ONLY)
+
 ExternalProject_Add(MassiveThreads
     SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/massivethreads
     #GIT_REPOSITORY https://github.com/massivethreads/massivethreads
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>)
+    CONFIGURE_COMMAND /bin/sh ${CMAKE_CURRENT_BINARY_DIR}/massivethreads-configure.sh <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --enable-malloc-wrapper=no)
 
 ExternalProject_Get_Property(MassiveThreads source_dir)
 ExternalProject_Get_Property(MassiveThreads install_dir)
