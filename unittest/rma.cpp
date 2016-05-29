@@ -86,3 +86,102 @@ TEST_F(RmaBasic, ConcurrentGet)
     }
 }
 
+class RmaAtomic
+    : public ::testing::Test
+{
+protected:
+    virtual void SetUp()
+    {
+        if (mgcom::current_process_id() == 0) {
+            lptr = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
+            *lptr = 123;
+        }
+        
+        mgcom::collective::broadcast(0, &lptr, 1);
+        
+        rptr = mgcom::rma::use_remote_pointer(0, lptr);
+        
+        buf = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
+        buf2 = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
+        buf3 = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
+    }
+    
+    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t> lptr;
+    mgcom::rma::remote_pointer<mgcom::rma::atomic_default_t> rptr;
+    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t> buf;
+    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t> buf2;
+    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t> buf3;
+};
+
+
+TEST_F(RmaAtomic, FetchAndAdd)
+{
+    if (mgcom::current_process_id() == 0) {
+        *lptr = 1;
+    }
+    
+    mgcom::collective::barrier();
+    
+    *buf = 100;
+    
+    mgcom::rma::remote_fetch_and_add(
+        0
+    ,   rptr
+    ,   buf
+    ,   buf2
+    );
+    
+    mgcom::collective::barrier();
+    
+    if (mgcom::current_process_id() == 0) {
+        mgcom::rma::atomic_default_t val = *lptr;
+        ASSERT_EQ(mgcom::number_of_processes() * 100 + 1, val);
+    }
+}
+
+
+TEST_F(RmaAtomic, CompareAndSwap)
+{
+    if (mgcom::current_process_id() == 0) {
+        *lptr = 1;
+    }
+    
+    mgcom::collective::barrier();
+    
+    *buf = mgcom::current_process_id() * 100 + 1;
+    *buf2 = mgcom::current_process_id() * 100 + 101;
+    
+    for (mgcom::process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
+    {
+        if (mgcom::current_process_id() == proc)
+        {
+            mgcom::rma::remote_compare_and_swap(
+                0
+            ,   rptr
+            ,   buf
+            ,   buf2
+            ,   buf3
+            );
+        }
+        
+        mgcom::collective::barrier();
+        
+        if (mgcom::current_process_id() == 0)
+        {
+            ASSERT_EQ(proc * 100 + 101, *lptr);
+        }
+        
+        if (mgcom::current_process_id() == proc)
+        {
+            ASSERT_EQ(*buf3, *buf);
+        }
+    }
+    
+    mgcom::collective::barrier();
+    
+    if (mgcom::current_process_id() == 0) {
+        mgcom::rma::atomic_default_t val = *lptr;
+        ASSERT_EQ(mgcom::number_of_processes() * 100 + 1, val);
+    }
+}
+
