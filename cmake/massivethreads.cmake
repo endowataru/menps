@@ -28,7 +28,7 @@ set_property(
 set_property(
     TARGET massivethreads
     APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-    ${source_dir}/include)
+    ${install_dir}/include)
 
 set_property(
     TARGET massivethreads
