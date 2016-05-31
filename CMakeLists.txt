@@ -58,6 +58,9 @@ else()
             # C++ Standard
             $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
             
+            # Optimizations
+            $<$<CONFIG:Debug>:-O0>
+            
             # Enable -Weverything
             -Weverything
             
@@ -100,6 +103,9 @@ else()
         target_compile_options(mgbase-options INTERFACE
             # C++ Standard
             $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
+            
+            # Optimizations
+            $<$<CONFIG:Debug>:-O0>
             
             # Meta warnings
             -Wall
@@ -165,6 +171,9 @@ else()
         target_compile_options(mgbase-options INTERFACE
             # C++ Standard
             $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
+            
+            # Optimizations
+            $<$<CONFIG:Debug>:-O0>
             
             # Enable -Wall
             -Wall
