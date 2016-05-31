@@ -25,6 +25,11 @@ set_property(
     PROPERTY IMPORTED_LOCATION
     ${install_dir}/lib/libmyth-native.so)
 
+# Make a directory for include path if it doesn't exist
+# Reported as a bug of CMake:
+# https://cmake.org/Bug/view.php?id=15052
+file(MAKE_DIRECTORY ${install_dir}/include)
+
 set_property(
     TARGET massivethreads
     APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
