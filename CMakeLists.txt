@@ -177,6 +177,8 @@ else()
             
             # Enable -Wall
             -Wall
+            -Wextra
+            -pedantic
             
             # Disable some warnings
             -Wno-long-long
