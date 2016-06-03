@@ -30,7 +30,7 @@ typedef mgcom_rma_remote_address           remote_address;
  * Register a region located on the current process.
  */
 local_region register_region(
-    void*   local_pointer
+    void*   local_ptr
 ,   index_t size_in_bytes
 );
 

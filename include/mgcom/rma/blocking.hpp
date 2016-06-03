@@ -13,16 +13,16 @@ namespace rma {
  */
 template <typename Remote, typename Local>
 MGBASE_ALWAYS_INLINE void remote_read_async(
-    const process_id_t              proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-,   const index_t                   number_of_elements
-,   const mgbase::operation&        on_complete
+    const process_id_t          src_proc
+,   const remote_ptr<Remote>&   src_rptr
+,   const local_ptr<Local>&     dest_lptr
+,   const index_t               number_of_elements
+,   const mgbase::operation&    on_complete
 ) {
     while (!try_remote_read_async(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        src_proc
+    ,   src_rptr
+    ,   dest_lptr
     ,   number_of_elements
     ,   on_complete
     ))
@@ -33,16 +33,16 @@ MGBASE_ALWAYS_INLINE void remote_read_async(
  */
 template <typename Remote, typename Local>
 MGBASE_ALWAYS_INLINE void remote_write_async(
-    const process_id_t              proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-,   const index_t                   number_of_elements
-,   const mgbase::operation&        on_complete
+    const process_id_t          dest_proc
+,   const remote_ptr<Remote>&   dest_rptr
+,   const local_ptr<Local>&     src_lptr
+,   const index_t               number_of_elements
+,   const mgbase::operation&    on_complete
 ) {
     while (!try_remote_write_async(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        dest_proc
+    ,   dest_rptr
+    ,   src_lptr
     ,   number_of_elements
     ,   on_complete
     ))
@@ -54,17 +54,17 @@ MGBASE_ALWAYS_INLINE void remote_write_async(
  */
 template <typename Remote, typename Local>
 MGBASE_ALWAYS_INLINE void remote_read(
-    const process_id_t              proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-,   const index_t                   number_of_elements
+    const process_id_t          src_proc
+,   const remote_ptr<Remote>&   src_rptr
+,   const local_ptr<Local>&     dest_lptr
+,   const index_t               number_of_elements
 ) {
     mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_read_async(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        src_proc
+    ,   src_rptr
+    ,   dest_lptr
     ,   number_of_elements
     ,   mgbase::make_operation_store_release(&finished, true)
     );
@@ -76,17 +76,17 @@ MGBASE_ALWAYS_INLINE void remote_read(
  */
 template <typename Remote, typename Local>
 MGBASE_ALWAYS_INLINE void remote_write(
-    const process_id_t              proc
-,   const remote_pointer<Remote>&   remote_ptr
-,   const local_pointer<Local>&     local_ptr
-,   const index_t                   number_of_elements
+    const process_id_t          dest_proc
+,   const remote_ptr<Remote>&   dest_rptr
+,   const local_ptr<Local>&     src_lptr
+,   const index_t               number_of_elements
 ) {
     mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_write_async(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        dest_proc
+    ,   dest_rptr
+    ,   src_lptr
     ,   number_of_elements
     ,   mgbase::make_operation_store_release(&finished, true)
     );
@@ -98,16 +98,16 @@ MGBASE_ALWAYS_INLINE void remote_write(
  * Try to do atomic read.
  */
 MGBASE_ALWAYS_INLINE void remote_atomic_read_async(
-    const process_id_t                              proc
-,   const remote_pointer<const atomic_default_t>&   remote_ptr
-,   const local_pointer<atomic_default_t>&          local_ptr
-,   const local_pointer<atomic_default_t>&          buf_ptr
-,   const mgbase::operation&                        on_complete
+    const process_id_t                          src_proc
+,   const remote_ptr<const atomic_default_t>&   src_rptr
+,   const local_ptr<atomic_default_t>&          dest_lptr
+,   const local_ptr<atomic_default_t>&          buf_ptr
+,   const mgbase::operation&                    on_complete
 ) {
     while (!try_remote_atomic_read_async(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        src_proc
+    ,   src_rptr
+    ,   dest_lptr
     ,   buf_ptr
     ,   on_complete
     ))
@@ -117,16 +117,16 @@ MGBASE_ALWAYS_INLINE void remote_atomic_read_async(
  * Try to do atomic write.
  */
 MGBASE_ALWAYS_INLINE void remote_atomic_write_async(
-    process_id_t                                    proc
-,   const remote_pointer<atomic_default_t>&         remote_ptr
-,   const local_pointer<const atomic_default_t>&    local_ptr
-,   const local_pointer<atomic_default_t>&          buf_ptr
-,   const mgbase::operation&                        on_complete
+    const process_id_t                          dest_proc
+,   const remote_ptr<atomic_default_t>&         dest_rptr
+,   const local_ptr<const atomic_default_t>&    src_lptr
+,   const local_ptr<atomic_default_t>&          buf_ptr
+,   const mgbase::operation&                    on_complete
 ) {
     while (!try_remote_atomic_write_async(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        dest_proc
+    ,   dest_rptr
+    ,   src_lptr
     ,   buf_ptr
     ,   on_complete
     ))
@@ -137,10 +137,10 @@ MGBASE_ALWAYS_INLINE void remote_atomic_write_async(
  */
 MGBASE_ALWAYS_INLINE void remote_compare_and_swap_async(
     process_id_t                                    target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    expected_ptr
-,   const local_pointer<const atomic_default_t>&    desired_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
+,   const remote_ptr<atomic_default_t>&         target_ptr
+,   const local_ptr<const atomic_default_t>&    expected_ptr
+,   const local_ptr<const atomic_default_t>&    desired_ptr
+,   const local_ptr<atomic_default_t>&          result_ptr
 ,   const mgbase::operation&                        on_complete
 ) {
     while (!try_remote_compare_and_swap_async(
@@ -158,9 +158,9 @@ MGBASE_ALWAYS_INLINE void remote_compare_and_swap_async(
  */
 MGBASE_ALWAYS_INLINE void remote_fetch_and_add_async(
     process_id_t                                    target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    value_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
+,   const remote_ptr<atomic_default_t>&         target_ptr
+,   const local_ptr<const atomic_default_t>&    value_ptr
+,   const local_ptr<atomic_default_t>&          result_ptr
 ,   const mgbase::operation&                        on_complete
 ) {
     while (!try_remote_fetch_and_add_async(
@@ -177,17 +177,17 @@ MGBASE_ALWAYS_INLINE void remote_fetch_and_add_async(
  * Do atomic read.
  */
 MGBASE_ALWAYS_INLINE void remote_atomic_read(
-    const process_id_t                              proc
-,   const remote_pointer<const atomic_default_t>&   remote_ptr
-,   const local_pointer<atomic_default_t>&          local_ptr
-,   const local_pointer<atomic_default_t>&          buf_ptr
+    const process_id_t                          src_proc
+,   const remote_ptr<const atomic_default_t>&   src_rptr
+,   const local_ptr<atomic_default_t>&          dest_lptr
+,   const local_ptr<atomic_default_t>&          buf_ptr
 ) {
     mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_atomic_read_async(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        src_proc
+    ,   src_rptr
+    ,   dest_lptr
     ,   buf_ptr
     ,   mgbase::make_operation_store_release(&finished, true)
     );
@@ -198,17 +198,17 @@ MGBASE_ALWAYS_INLINE void remote_atomic_read(
  * Do atomic write.
  */
 MGBASE_ALWAYS_INLINE void remote_atomic_write(
-    process_id_t                                    proc
-,   const remote_pointer<atomic_default_t>&         remote_ptr
-,   const local_pointer<const atomic_default_t>&    local_ptr
-,   const local_pointer<atomic_default_t>&          buf_ptr
+    const process_id_t                          dest_proc
+,   const remote_ptr<atomic_default_t>&         dest_rptr
+,   const local_ptr<const atomic_default_t>&    src_lptr
+,   const local_ptr<atomic_default_t>&          buf_ptr
 ) {
     mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
     remote_atomic_write_async(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        dest_proc
+    ,   dest_rptr
+    ,   src_lptr
     ,   buf_ptr
     ,   mgbase::make_operation_store_release(&finished, true)
     );
@@ -219,11 +219,11 @@ MGBASE_ALWAYS_INLINE void remote_atomic_write(
  * Do remote compare-and-swap.
  */
 MGBASE_ALWAYS_INLINE void remote_compare_and_swap(
-    process_id_t                                    target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    expected_ptr
-,   const local_pointer<const atomic_default_t>&    desired_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
+    const process_id_t                          target_proc
+,   const remote_ptr<atomic_default_t>&         target_ptr
+,   const local_ptr<const atomic_default_t>&    expected_ptr
+,   const local_ptr<const atomic_default_t>&    desired_ptr
+,   const local_ptr<atomic_default_t>&          result_ptr
 ) {
     mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     
@@ -243,9 +243,9 @@ MGBASE_ALWAYS_INLINE void remote_compare_and_swap(
  */
 MGBASE_ALWAYS_INLINE void remote_fetch_and_add(
     process_id_t                                    target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    value_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
+,   const remote_ptr<atomic_default_t>&         target_ptr
+,   const local_ptr<const atomic_default_t>&    value_ptr
+,   const local_ptr<atomic_default_t>&          result_ptr
 ) {
     mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
     

@@ -12,8 +12,8 @@ template <typename T>
 class alltoall_buffer
 {
 private:
-    typedef mgcom::rma::local_pointer<T>    local_ptr_type;
-    typedef mgcom::rma::remote_pointer<T>   remote_ptr_type;
+    typedef mgcom::rma::local_ptr<T>    local_ptr_type;
+    typedef mgcom::rma::remote_ptr<T>   remote_ptr_type;
     
 public:
     void collective_initialize(const local_ptr_type& local_ptr)
@@ -27,7 +27,7 @@ public:
         remote_ptrs_ = new remote_ptr_type[number_of_processes()];
         
         for (process_id_t proc = 0; proc < number_of_processes(); ++proc)
-            remote_ptrs_[proc] = mgcom::rma::use_remote_pointer(proc, local_ptrs[proc]);
+            remote_ptrs_[proc] = mgcom::rma::use_remote_ptr(proc, local_ptrs[proc]);
     }
     
     void finalize()

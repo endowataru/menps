@@ -22,20 +22,20 @@ void finalize_contiguous()
 namespace untyped {
 
 local_region register_region(
-    void* const     local_pointer
+    void* const     local_ptr
 ,   index_t const   size_in_bytes
 ) {
     mgbase::uint64_t laddr;
     
     const int memid = g_impl.register_memory(
-        local_pointer
+        local_ptr
     ,   size_in_bytes
     ,   &laddr
     );
     
     return make_local_region(
         make_region_key(
-            local_pointer
+            local_ptr
         ,   static_cast<mgbase::uint64_t>(memid)
         )
     ,   laddr

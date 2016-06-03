@@ -108,8 +108,8 @@ template <typename T>
 struct remote_read_params
 {
     process_id_t        src_proc;
-    remote_pointer<T>   src_rptr;
-    local_pointer<T>    dest_lptr;
+    remote_ptr<T>   src_rptr;
+    local_ptr<T>    dest_lptr;
     index_t             num_elems;
 };
 
@@ -117,8 +117,8 @@ template <typename T>
 struct remote_write_params
 {
     process_id_t        dest_proc;
-    remote_pointer<T>   dest_rptr;
-    local_pointer<T>    src_lptr;
+    remote_ptr<T>   dest_rptr;
+    local_ptr<T>    src_lptr;
     index_t             num_elems;
 };
 
@@ -127,18 +127,18 @@ template <typename T>
 struct remote_atomic_read_params
 {
     process_id_t            src_proc;
-    remote_pointer<T>       src_lptr;
-    local_pointer<const T>  dest_lptr;
-    local_pointer<T>        buf_lptr;
+    remote_ptr<T>       src_lptr;
+    local_ptr<const T>  dest_lptr;
+    local_ptr<T>        buf_lptr;
 };
 
 template <typename T>
 struct remote_atomic_write_params
 {
     process_id_t            dest_proc;
-    remote_pointer<T>       dest_rptr;
-    local_pointer<const T>  src_lptr;
-    local_pointer<T>        buf_lptr;
+    remote_ptr<T>       dest_rptr;
+    local_ptr<const T>  src_lptr;
+    local_ptr<T>        buf_lptr;
 };
 
 
@@ -146,19 +146,19 @@ template <typename T>
 struct remote_compare_and_swap_params
 {
     process_id_t            target_proc;
-    remote_pointer<T>       target_rptr;
-    local_pointer<const T>  expected_lptr;
-    local_pointer<const T>  desired_lptr;
-    local_pointer<T>        result_lptr;
+    remote_ptr<T>       target_rptr;
+    local_ptr<const T>  expected_lptr;
+    local_ptr<const T>  desired_lptr;
+    local_ptr<T>        result_lptr;
 };
 
 template <typename T>
 struct remote_fetch_and_add_params
 {
     process_id_t            target_proc;
-    remote_pointer<T>       target_rptr;
-    local_pointer<const T>  value_lptr;
-    local_pointer<T>        result_lptr;
+    remote_ptr<T>       target_rptr;
+    local_ptr<const T>  value_lptr;
+    local_ptr<T>        result_lptr;
 };
 
 

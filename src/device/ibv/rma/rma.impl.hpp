@@ -95,9 +95,9 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
 
 MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_read_async(
     const process_id_t                              target_proc
-,   const remote_pointer<const atomic_default_t>&   remote_ptr
-,   const local_pointer<atomic_default_t>&          local_ptr
-,   const local_pointer<atomic_default_t>&          //buf_ptr
+,   const remote_ptr<const atomic_default_t>&   remote_ptr
+,   const local_ptr<atomic_default_t>&          local_ptr
+,   const local_ptr<atomic_default_t>&          //buf_ptr
 ,   const mgbase::operation&                        on_complete
 ) {
     // TODO: Is this correct?
@@ -112,9 +112,9 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_read_async(
 
 MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_write_async(
     const process_id_t                              target_proc
-,   const remote_pointer<atomic_default_t>&         remote_ptr
-,   const local_pointer<const atomic_default_t>&    local_ptr
-,   const local_pointer<atomic_default_t>&          //buf_ptr
+,   const remote_ptr<atomic_default_t>&         remote_ptr
+,   const local_ptr<const atomic_default_t>&    local_ptr
+,   const local_ptr<atomic_default_t>&          //buf_ptr
 ,   const mgbase::operation&                        on_complete
 ) {
     // TODO: Is this correct?
@@ -129,10 +129,10 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_write_async(
 
 MGBASE_WARN_UNUSED_RESULT bool try_remote_compare_and_swap_async(
     const process_id_t                              target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    expected_ptr
-,   const local_pointer<const atomic_default_t>&    desired_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
+,   const remote_ptr<atomic_default_t>&         target_ptr
+,   const local_ptr<const atomic_default_t>&    expected_ptr
+,   const local_ptr<const atomic_default_t>&    desired_ptr
+,   const local_ptr<atomic_default_t>&          result_ptr
 ,   const mgbase::operation&                        on_complete
 ) {
     mgbase::uint64_t wr_id;
@@ -163,9 +163,9 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_compare_and_swap_async(
 
 MGBASE_WARN_UNUSED_RESULT bool try_remote_fetch_and_add_async(
     const process_id_t                              target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    value_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
+,   const remote_ptr<atomic_default_t>&         target_ptr
+,   const local_ptr<const atomic_default_t>&    value_ptr
+,   const local_ptr<atomic_default_t>&          result_ptr
 ,   const mgbase::operation&                        on_complete
 ) {
     mgbase::uint64_t wr_id;

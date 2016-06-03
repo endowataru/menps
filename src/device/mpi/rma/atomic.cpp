@@ -15,42 +15,42 @@ void finalize_atomic()
 }
 
 bool try_remote_atomic_read_async(
-    process_id_t                                    proc
-,   const remote_pointer<const atomic_default_t>&   remote_ptr
-,   const local_pointer<atomic_default_t>&          local_ptr
-,   const local_pointer<atomic_default_t>&          /*buf_ptr*/ // unused
-,   const mgbase::operation&                        on_complete
+    const process_id_t                          src_proc
+,   const remote_ptr<const atomic_default_t>&   src_rptr
+,   const local_ptr<atomic_default_t>&          dest_lptr
+,   const local_ptr<atomic_default_t>&          /*buf_ptr*/ // unused
+,   const mgbase::operation&                    on_complete
 ) {
     return emulated_atomic<atomic_default_t>::try_read(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        src_proc
+    ,   src_rptr
+    ,   dest_lptr
     ,   on_complete
     );
 }
 
 bool try_remote_atomic_write_async(
-    process_id_t                                    proc
-,   const remote_pointer<atomic_default_t>&         remote_ptr
-,   const local_pointer<const atomic_default_t>&    local_ptr
-,   const local_pointer<atomic_default_t>&          /*buf_ptr*/ // unused
-,   const mgbase::operation&                        on_complete
+    const process_id_t                          dest_proc
+,   const remote_ptr<atomic_default_t>&         dest_rptr
+,   const local_ptr<const atomic_default_t>&    src_lptr
+,   const local_ptr<atomic_default_t>&          /*buf_ptr*/ // unused
+,   const mgbase::operation&                    on_complete
 ) {
     return emulated_atomic<atomic_default_t>::try_write(
-        proc
-    ,   remote_ptr
-    ,   local_ptr
+        dest_proc
+    ,   dest_rptr
+    ,   src_lptr
     ,   on_complete
     );
 }
 
 bool try_remote_compare_and_swap_async(
-    process_id_t                                    target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    expected_ptr
-,   const local_pointer<const atomic_default_t>&    desired_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
-,   const mgbase::operation&                        on_complete
+    const process_id_t                          target_proc
+,   const remote_ptr<atomic_default_t>&         target_ptr
+,   const local_ptr<const atomic_default_t>&    expected_ptr
+,   const local_ptr<const atomic_default_t>&    desired_ptr
+,   const local_ptr<atomic_default_t>&          result_ptr
+,   const mgbase::operation&                    on_complete
 ) {
     return emulated_atomic<atomic_default_t>::try_compare_and_swap(
         target_proc
@@ -63,11 +63,11 @@ bool try_remote_compare_and_swap_async(
 }
 
 bool try_remote_fetch_and_add_async(
-    process_id_t                                    target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    value_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
-,   const mgbase::operation&                        on_complete
+    const process_id_t                          target_proc
+,   const remote_ptr<atomic_default_t>&         target_ptr
+,   const local_ptr<const atomic_default_t>&    value_ptr
+,   const local_ptr<atomic_default_t>&          result_ptr
+,   const mgbase::operation&                    on_complete
 ) {
     return emulated_atomic<atomic_default_t>::try_fetch_and_add(
         target_proc

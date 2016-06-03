@@ -62,8 +62,8 @@ private:
 public:
     static bool try_read(
         process_id_t                                    proc
-    ,   const remote_pointer<const atomic_default_t>&   remote_ptr
-    ,   const local_pointer<atomic_default_t>&          local_ptr
+    ,   const remote_ptr<const atomic_default_t>&   remote_ptr
+    ,   const local_ptr<atomic_default_t>&          local_ptr
     ,   const mgbase::operation&                        on_complete
     ) {
         const typename am_read::argument_type arg = { to_raw_pointer(remote_ptr) };
@@ -118,8 +118,8 @@ private:
 public:
     static bool try_write(
         process_id_t                                    proc
-    ,   const remote_pointer<atomic_default_t>&         remote_ptr
-    ,   const local_pointer<const atomic_default_t>&    local_ptr
+    ,   const remote_ptr<atomic_default_t>&         remote_ptr
+    ,   const local_ptr<const atomic_default_t>&    local_ptr
     ,   const mgbase::operation&                        on_complete
     ) {
         const typename am_write::argument_type arg = { to_raw_pointer(remote_ptr), *local_ptr };
@@ -179,10 +179,10 @@ private:
 public:
     static bool try_compare_and_swap(
         const process_id_t                              target_proc
-    ,   const remote_pointer<atomic_default_t>&         target_ptr
-    ,   const local_pointer<const atomic_default_t>&    expected_ptr
-    ,   const local_pointer<const atomic_default_t>&    desired_ptr
-    ,   const local_pointer<atomic_default_t>&          result_ptr
+    ,   const remote_ptr<atomic_default_t>&         target_ptr
+    ,   const local_ptr<const atomic_default_t>&    expected_ptr
+    ,   const local_ptr<const atomic_default_t>&    desired_ptr
+    ,   const local_ptr<atomic_default_t>&          result_ptr
     ,   const mgbase::operation&                        on_complete
     ) {
         const typename am_compare_and_swap::argument_type arg = {
@@ -245,9 +245,9 @@ private:
 public:
     static bool try_fetch_and_add(
         process_id_t                                    target_proc
-    ,   const remote_pointer<atomic_default_t>&         target_ptr
-    ,   const local_pointer<const atomic_default_t>&    value_ptr
-    ,   const local_pointer<atomic_default_t>&          result_ptr
+    ,   const remote_ptr<atomic_default_t>&         target_ptr
+    ,   const local_ptr<const atomic_default_t>&    value_ptr
+    ,   const local_ptr<atomic_default_t>&          result_ptr
     ,   const mgbase::operation&                        on_complete
     ) {
         const typename am_fetch_and_add::argument_type arg = {

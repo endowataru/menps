@@ -81,10 +81,10 @@ public:
     MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     bool try_remote_compare_and_swap_async(
         const process_id_t&                                     target_proc
-    ,   const rma::remote_pointer<rma::atomic_default_t>&       target_ptr
-    ,   const rma::local_pointer<const rma::atomic_default_t>&  expected_ptr
-    ,   const rma::local_pointer<const rma::atomic_default_t>&  desired_ptr
-    ,   const rma::local_pointer<rma::atomic_default_t>&        result_ptr
+    ,   const rma::remote_ptr<rma::atomic_default_t>&       target_ptr
+    ,   const rma::local_ptr<const rma::atomic_default_t>&  expected_ptr
+    ,   const rma::local_ptr<const rma::atomic_default_t>&  desired_ptr
+    ,   const rma::local_ptr<rma::atomic_default_t>&        result_ptr
     ,   const mgbase::operation&                                on_complete
     ) const
     {
@@ -117,9 +117,9 @@ public:
     MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
     bool try_remote_fetch_and_add_async(
         const process_id_t&                                     target_proc
-    ,   const rma::remote_pointer<rma::atomic_default_t>&       target_ptr
-    ,   const rma::local_pointer<const rma::atomic_default_t>&  value_ptr
-    ,   const rma::local_pointer<rma::atomic_default_t>&        result_ptr
+    ,   const rma::remote_ptr<rma::atomic_default_t>&       target_ptr
+    ,   const rma::local_ptr<const rma::atomic_default_t>&  value_ptr
+    ,   const rma::local_ptr<rma::atomic_default_t>&        result_ptr
     ,   const mgbase::operation&                                on_complete
     ) const {
         mgbase::uint64_t wr_id;

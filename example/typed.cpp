@@ -17,13 +17,13 @@ mgcom::index_t entry_size() {
 
 int main()
 {
-    mgcom::typed_rma::remote_pointer<X> p;
-    mgcom::typed_rma::remote_pointer<Y> q = p.member(&X::y);
-    mgcom::typed_rma::remote_pointer<int> r = q.member(&Y::x);
+    mgcom::typed_rma::remote_ptr<X> p;
+    mgcom::typed_rma::remote_ptr<Y> q = p.member(&X::y);
+    mgcom::typed_rma::remote_ptr<int> r = q.member(&Y::x);
     
     std::cout << r.to_address().offset;
     
-    mgcom::typed_rma::remote_pointer< mgcom::typed_rma::static_buffer<entry_size> > p2;
+    mgcom::typed_rma::remote_ptr< mgcom::typed_rma::static_buffer<entry_size> > p2;
     
 }
 

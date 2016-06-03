@@ -50,69 +50,69 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
 } // namespace untyped
 
 MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_read_async(
-    const process_id_t                              target_proc
-,   const remote_pointer<const atomic_default_t>&   remote_ptr
-,   const local_pointer<atomic_default_t>&          local_ptr
-,   const local_pointer<atomic_default_t>&          /*buf_ptr*/
-,   const mgbase::operation&                        on_complete
+    process_id_t                                src_proc
+,   const remote_ptr<const atomic_default_t>&   src_rptr
+,   const local_ptr<atomic_default_t>&          dest_lptr
+,   const local_ptr<atomic_default_t>&          //buf_lptr
+,   const mgbase::operation&                    on_complete
 ) {
     // TODO: Is this correct?
     return untyped::try_remote_read_async(
-        target_proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
+        src_proc
+    ,   src_rptr.to_address()
+    ,   dest_lptr.to_address()
     ,   sizeof(atomic_default_t)
     ,   on_complete
     );
 }
 
 MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_write_async(
-    const process_id_t                              target_proc
-,   const remote_pointer<atomic_default_t>&         remote_ptr
-,   const local_pointer<const atomic_default_t>&    local_ptr
-,   const local_pointer<atomic_default_t>&          /*buf_ptr*/
-,   const mgbase::operation&                        on_complete
+    process_id_t                                dest_proc
+,   const remote_ptr<atomic_default_t>&         dest_rptr
+,   const local_ptr<const atomic_default_t>&    src_lptr
+,   const local_ptr<atomic_default_t>&          //buf_lptr
+,   const mgbase::operation&                    on_complete
 ) {
     // TODO: Is this correct?
     return untyped::try_remote_write_async(
-        target_proc
-    ,   remote_ptr.to_address()
-    ,   local_ptr.to_address()
+        dest_proc
+    ,   dest_rptr.to_address()
+    ,   src_lptr.to_address()
     ,   sizeof(atomic_default_t)
     ,   on_complete
     );
 }
 
 MGBASE_WARN_UNUSED_RESULT bool try_remote_compare_and_swap_async(
-    const process_id_t                              target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    expected_ptr
-,   const local_pointer<const atomic_default_t>&    desired_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
-,   const mgbase::operation&                        on_complete
+    const process_id_t                          target_proc
+,   const remote_ptr<atomic_default_t>&         target_rptr
+,   const local_ptr<const atomic_default_t>&    expected_lptr
+,   const local_ptr<const atomic_default_t>&    desired_lptr
+,   const local_ptr<atomic_default_t>&          result_lptr
+,   const mgbase::operation&                    on_complete
 ) {
     return mgcom::ibv::g_proxy.try_remote_compare_and_swap_async(
         target_proc
-    ,   target_ptr
-    ,   expected_ptr
-    ,   desired_ptr
-    ,   result_ptr
+    ,   target_rptr
+    ,   expected_lptr
+    ,   desired_lptr
+    ,   result_lptr
     ,   on_complete
     );
 }
 
 MGBASE_WARN_UNUSED_RESULT bool try_remote_fetch_and_add_async(
-    const process_id_t                              target_proc
-,   const remote_pointer<atomic_default_t>&         target_ptr
-,   const local_pointer<const atomic_default_t>&    value_ptr
-,   const local_pointer<atomic_default_t>&          result_ptr
-,   const mgbase::operation&                        on_complete
+    process_id_t                                target_proc
+,   const remote_ptr<atomic_default_t>&         target_rptr
+,   const local_ptr<const atomic_default_t>&    value_lptr
+,   const local_ptr<atomic_default_t>&          result_lptr
+,   const mgbase::operation&                    on_complete
 ) {
     return mgcom::ibv::g_proxy.try_remote_fetch_and_add_async(
         target_proc
-    ,   target_ptr
-    ,   value_ptr
-    ,   result_ptr
+    ,   target_rptr
+    ,   value_lptr
+    ,   result_lptr
     ,   on_complete
     );
 }

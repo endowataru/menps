@@ -15,14 +15,14 @@ protected:
         
         mgcom::collective::broadcast(0, &lptr, 1);
         
-        rptr = mgcom::rma::use_remote_pointer(0, lptr);
+        rptr = mgcom::rma::use_remote_ptr(0, lptr);
         
         buf = mgcom::rma::allocate<int>(1);
     }
     
-    mgcom::rma::local_pointer<int> lptr;
-    mgcom::rma::remote_pointer<int> rptr;
-    mgcom::rma::local_pointer<int> buf;
+    mgcom::rma::local_ptr<int> lptr;
+    mgcom::rma::remote_ptr<int> rptr;
+    mgcom::rma::local_ptr<int> buf;
 };
 
 TEST_F(RmaBasic, Get)
@@ -58,7 +58,7 @@ TEST_F(RmaBasic, Put)
 TEST_F(RmaBasic, ConcurrentGet)
 {
     mgbase::atomic<mgbase::uint64_t> count = MGBASE_ATOMIC_VAR_INIT(0);
-    typedef std::vector< mgcom::rma::local_pointer<int> > vec_type;
+    typedef std::vector< mgcom::rma::local_ptr<int> > vec_type;
     vec_type ptrs;
     
     for (mgbase::uint64_t i = 0; i < 100; ++i) {
@@ -99,18 +99,18 @@ protected:
         
         mgcom::collective::broadcast(0, &lptr, 1);
         
-        rptr = mgcom::rma::use_remote_pointer(0, lptr);
+        rptr = mgcom::rma::use_remote_ptr(0, lptr);
         
         buf = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
         buf2 = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
         buf3 = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
     }
     
-    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t> lptr;
-    mgcom::rma::remote_pointer<mgcom::rma::atomic_default_t> rptr;
-    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t> buf;
-    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t> buf2;
-    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t> buf3;
+    mgcom::rma::local_ptr<mgcom::rma::atomic_default_t> lptr;
+    mgcom::rma::remote_ptr<mgcom::rma::atomic_default_t> rptr;
+    mgcom::rma::local_ptr<mgcom::rma::atomic_default_t> buf;
+    mgcom::rma::local_ptr<mgcom::rma::atomic_default_t> buf2;
+    mgcom::rma::local_ptr<mgcom::rma::atomic_default_t> buf3;
 };
 
 

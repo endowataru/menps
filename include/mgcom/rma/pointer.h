@@ -4,8 +4,8 @@
 #include <mgcom/rma/address.h>
 
 #ifdef MGBASE_CPLUSPLUS
-    #define MGCOM_RMA_LOCAL_POINTER(type)   mgcom::rma::local_pointer<type>
-    #define MGCOM_RMA_REMOTE_POINTER(type)  mgcom::rma::remote_pointer<type>
+    #define MGCOM_RMA_LOCAL_POINTER(type)   mgcom::rma::local_ptr<type>
+    #define MGCOM_RMA_REMOTE_POINTER(type)  mgcom::rma::remote_ptr<type>
     
     #include "pointer.hpp"
 #else

@@ -41,7 +41,7 @@ inline remote_region make_remote_region(const region_key& key, mgbase::uint64_t 
 namespace /*unnamed*/ {
 
 template <typename T>
-inline T* to_raw_pointer(const remote_pointer<T>& ptr) MGBASE_NOEXCEPT {
+inline T* to_raw_pointer(const remote_ptr<T>& ptr) MGBASE_NOEXCEPT {
     return static_cast<T*>(untyped::to_raw_pointer(ptr.to_address()));
 }
 

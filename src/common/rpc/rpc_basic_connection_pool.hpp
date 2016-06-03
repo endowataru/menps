@@ -21,8 +21,8 @@ class rpc_basic_connection_pool
     static const ticket_type max_num_connections = MaxConns;
     static const nic_type number_of_nics = NumNics;
     
-    typedef mgcom::rma::local_pointer<buffer_type>   local_buffer_ptr_type;
-    typedef mgcom::rma::remote_pointer<buffer_type>  remote_buffer_ptr_type;
+    typedef mgcom::rma::local_ptr<buffer_type>   local_buffer_ptr_type;
+    typedef mgcom::rma::remote_ptr<buffer_type>  remote_buffer_ptr_type;
     
 public:
     void initialize()
@@ -61,7 +61,7 @@ public:
         for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
         {
             info_by_procs_[proc].sender_remote_buf
-                = mgcom::rma::use_remote_pointer(proc, remote_receiver_bufs[proc]);
+                = mgcom::rma::use_remote_ptr(proc, remote_receiver_bufs[proc]);
         }
         
         MGBASE_LOG_DEBUG("msg:Initialized RPC connection pool.");
@@ -85,8 +85,8 @@ public:
     struct sender_info
     {
         nic_type                                    remote_nic;
-        mgcom::rma::local_pointer<buffer_type>      local_buf;
-        mgcom::rma::remote_pointer<buffer_type>     remote_buf;
+        mgcom::rma::local_ptr<buffer_type>      local_buf;
+        mgcom::rma::remote_ptr<buffer_type>     remote_buf;
     };
     
     bool try_start_sending(
@@ -113,10 +113,10 @@ public:
         
         // Get the pointers corresponding to the position.
         
-        const mgcom::rma::local_pointer<buffer_type> local_buf
+        const mgcom::rma::local_ptr<buffer_type> local_buf
             = info.sender_local_buf + sender_pos;
         
-        const mgcom::rma::remote_pointer<buffer_type> remote_buf
+        const mgcom::rma::remote_ptr<buffer_type> remote_buf
             = info.sender_remote_buf + sender_pos;
         
         buffer_type* const buf = local_buf;
@@ -163,7 +163,7 @@ public:
         
         // Get the pointer corresponding to the position.
         
-        const mgcom::rma::local_pointer<buffer_type> local_buf
+        const mgcom::rma::local_ptr<buffer_type> local_buf
             = info.receiver_local_buf + receiver_pos;
         
         buffer_type& buf = *local_buf;
@@ -225,10 +225,10 @@ private:
         ticket_type                     receiver_latest_counts[number_of_nics];
         mgbase::atomic<ticket_type>     receiver_processed_counts[number_of_nics];
         
-        mgcom::rma::local_pointer<buffer_type>       sender_local_buf;
-        mgcom::rma::remote_pointer<buffer_type>      sender_remote_buf;
+        mgcom::rma::local_ptr<buffer_type>       sender_local_buf;
+        mgcom::rma::remote_ptr<buffer_type>      sender_remote_buf;
         
-        mgcom::rma::local_pointer<buffer_type>       receiver_local_buf;
+        mgcom::rma::local_ptr<buffer_type>       receiver_local_buf;
         
         processor_info()
         {

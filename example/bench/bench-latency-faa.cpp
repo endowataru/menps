@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
 {
     mgcom::initialize(&argc, &argv);
     
-    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>
+    mgcom::rma::local_ptr<mgcom::rma::atomic_default_t>
         local_ptr = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
     
     *local_ptr = 0;
@@ -15,16 +15,16 @@ int main(int argc, char* argv[])
     const mgcom::process_id_t root_proc = 0;
     mgcom::collective::broadcast(root_proc, &local_ptr, 1);
     
-    mgcom::rma::remote_pointer<mgcom::rma::atomic_default_t>
-        remote_ptr = mgcom::rma::use_remote_pointer(root_proc, local_ptr);
+    mgcom::rma::remote_ptr<mgcom::rma::atomic_default_t>
+        remote_ptr = mgcom::rma::use_remote_ptr(root_proc, local_ptr);
     
     double clocks = 0;
     const int number_of_trials = atoi(argv[1]);
     
-    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>
+    mgcom::rma::local_ptr<mgcom::rma::atomic_default_t>
         value_ptr = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
     
-    mgcom::rma::local_pointer<mgcom::rma::atomic_default_t>
+    mgcom::rma::local_ptr<mgcom::rma::atomic_default_t>
         result_ptr = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
     
     *value_ptr = 1;

@@ -28,7 +28,7 @@ double g_duration;
 mgbase::uint64_t g_num_startup_samples;
 mgbase::scoped_ptr<double [/*g_num_threads*/]> g_clocks_sum;
 mgbase::scoped_ptr<double [/*g_num_threads*/]> g_clocks_sum_squared;
-mgbase::scoped_ptr<mgcom::rma::remote_pointer<int> []> g_remote_ptrs;
+mgbase::scoped_ptr<mgcom::rma::remote_ptr<int> []> g_remote_ptrs;
 mgbase::scoped_ptr<mgbase::uint64_t []> g_counts;
 mgbase::scoped_ptr<double [/*g_num_threads*/]> g_total_time;
 
@@ -42,7 +42,7 @@ void record_sample(const mgbase::uint32_t thread_id, const double clocks)
 
 void start_bench_thread(const mgbase::uint32_t thread_id)
 {
-    const mgcom::rma::local_pointer<int> local_buf
+    const mgcom::rma::local_ptr<int> local_buf
         = mgcom::rma::allocate<int>();
     
     g_clocks_sum[thread_id] = 0.0;
@@ -93,18 +93,18 @@ void start_bench()
 {
     // Set up variables.
     
-    mgcom::rma::local_pointer<int> local_ptr
+    mgcom::rma::local_ptr<int> local_ptr
         = mgcom::rma::allocate<int>();
     
-    mgbase::scoped_ptr<mgcom::rma::local_pointer<int> []> local_ptrs(
-        new mgcom::rma::local_pointer<int>[mgcom::number_of_processes()]
+    mgbase::scoped_ptr<mgcom::rma::local_ptr<int> []> local_ptrs(
+        new mgcom::rma::local_ptr<int>[mgcom::number_of_processes()]
     );
     
     mgcom::collective::allgather(&local_ptr, &local_ptrs[0], 1);
     
-    g_remote_ptrs = new mgcom::rma::remote_pointer<int>[mgcom::number_of_processes()];
+    g_remote_ptrs = new mgcom::rma::remote_ptr<int>[mgcom::number_of_processes()];
     for (mgcom::process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
-        g_remote_ptrs[proc] = mgcom::rma::use_remote_pointer(proc, local_ptrs[proc]);
+        g_remote_ptrs[proc] = mgcom::rma::use_remote_ptr(proc, local_ptrs[proc]);
     
     *local_ptr = mgcom::current_process_id() * 100;
     
