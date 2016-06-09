@@ -4,6 +4,7 @@
 #include <mgbase/threading/thread_id.hpp>
 #include <time.h>
 #include <errno.h>
+#include <sched.h>
 #include <stdexcept>
 
 namespace mgbase {
@@ -39,6 +40,11 @@ inline void sleep_for_ns(mgbase::int64_t nsec)
                 throw std::runtime_error("nanosleep()");
         }
     }
+}
+
+inline void yield()
+{
+    sched_yield();
 }
 
 } // namespace this_thread
