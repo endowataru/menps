@@ -3,7 +3,7 @@
 
 #include "mpi.hpp"
 #include <stdexcept>
-#include <mgbase/external/cppformat.hpp>
+#include <mgbase/external/fmt.hpp>
 
 namespace mgcom {
 

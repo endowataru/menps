@@ -5,7 +5,7 @@
 #include <mgbase/thread.hpp>
 #include <mgbase/threading/this_thread.hpp>
 #include <mgbase/external/cmdline.hpp>
-#include <mgbase/external/cppformat.hpp>
+#include <mgbase/external/fmt.hpp>
 #include <iostream>
 #include <fstream>
 #include <vector>

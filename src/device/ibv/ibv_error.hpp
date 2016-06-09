@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgbase/lang.hpp>
-#include <mgbase/external/cppformat.hpp>
+#include <mgbase/external/fmt.hpp>
 #include <string>
 #include <stdexcept>
 

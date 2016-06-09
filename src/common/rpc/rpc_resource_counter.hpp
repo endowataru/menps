@@ -5,7 +5,7 @@
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/atomic.hpp>
 #include <mgbase/logger.hpp>
-#include <mgbase/external/cppformat.hpp>
+#include <mgbase/external/fmt.hpp>
 
 namespace mgcom {
 namespace rpc {
