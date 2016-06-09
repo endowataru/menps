@@ -14,17 +14,20 @@ namespace untyped {
 /**
  * Try to do contiguous read.
  */
-MGBASE_WARN_UNUSED_RESULT bool try_remote_read_async(
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_read_async(
     process_id_t                src_proc
 ,   const remote_address&       src_raddr
 ,   const local_address&        dest_laddr
 ,   index_t                     size_in_bytes
 ,   const mgbase::operation&    on_complete
 );
+
 /**
  * Try to do contiguous write.
  */
-MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_write_async(
     process_id_t                dest_proc
 ,   const remote_address&       dest_raddr
 ,   const local_address&        src_laddr
@@ -33,8 +36,6 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
 );
 
 } // namespace untyped
-
-namespace /*unnamed*/ {
 
 /**
  * Try to do contiguous read.
@@ -95,8 +96,6 @@ bool try_remote_write_async(
     );
 }
 
-} // unnamed namespace
-
 /**
  * Try to start atomic read.
  */
@@ -126,8 +125,8 @@ MGBASE_WARN_UNUSED_RESULT
 bool try_remote_compare_and_swap_async(
     process_id_t                                target_proc
 ,   const remote_ptr<atomic_default_t>&         target_rptr
-,   atomic_default_t                            expected_val
-,   atomic_default_t                            desired_val
+,   atomic_default_t                            expected
+,   atomic_default_t                            desired
 ,   atomic_default_t*                           result_ptr
 ,   const mgbase::operation&                    on_complete
 );

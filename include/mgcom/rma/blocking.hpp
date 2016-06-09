@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgcom/rma/try_rma.hpp>
+#include <mgbase/ult.hpp>
 
 namespace mgcom {
 namespace rma {
@@ -26,8 +27,9 @@ void remote_read_async(
     ,   dest_lptr
     ,   number_of_elements
     ,   on_complete
-    ))
-    { }
+    )) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 /**
  * Do contiguous write asynchronously.
@@ -47,8 +49,9 @@ void remote_write_async(
     ,   src_lptr
     ,   number_of_elements
     ,   on_complete
-    ))
-    { }
+    )) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 
 /**
@@ -72,7 +75,9 @@ void remote_read(
     ,   mgbase::make_operation_store_release(&finished, true)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) { }
+    while (!finished.load(mgbase::memory_order_acquire)) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 /**
  * Do contiguous write.
@@ -95,7 +100,9 @@ void remote_write(
     ,   mgbase::make_operation_store_release(&finished, true)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) { }
+    while (!finished.load(mgbase::memory_order_acquire)) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 
 /**
@@ -113,8 +120,9 @@ void remote_atomic_read_async(
     ,   src_rptr
     ,   dest_ptr
     ,   on_complete
-    ))
-    { }
+    )) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 /**
  * Try to do atomic write.
@@ -131,8 +139,9 @@ void remote_atomic_write_async(
     ,   dest_rptr
     ,   value
     ,   on_complete
-    ))
-    { }
+    )) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 /**
  * Try to do remote compare-and-swap.
@@ -152,8 +161,9 @@ MGBASE_ALWAYS_INLINE void remote_compare_and_swap_async(
     ,   desired_val
     ,   result_ptr
     ,   on_complete
-    ))
-    { }
+    )) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 /**
  * Try to do remote fetch-and-add.
@@ -171,8 +181,9 @@ MGBASE_ALWAYS_INLINE void remote_fetch_and_add_async(
     ,   value
     ,   result_ptr
     ,   on_complete
-    ))
-    { }
+    )) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 
 /**
@@ -193,7 +204,9 @@ void remote_atomic_read(
     ,   mgbase::make_operation_store_release(&finished, true)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) { }
+    while (!finished.load(mgbase::memory_order_acquire)) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 /**
  * Do atomic write.
@@ -213,7 +226,9 @@ void remote_atomic_write(
     ,   mgbase::make_operation_store_release(&finished, true)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) { }
+    while (!finished.load(mgbase::memory_order_acquire)) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 /**
  * Do remote compare-and-swap.
@@ -237,7 +252,9 @@ void remote_compare_and_swap(
     ,   mgbase::make_operation_store_release(&finished, true)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) { }
+    while (!finished.load(mgbase::memory_order_acquire)) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 /**
  * Do remote fetch-and-add.
@@ -259,7 +276,9 @@ void remote_fetch_and_add(
     ,   mgbase::make_operation_store_release(&finished, true)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) { }
+    while (!finished.load(mgbase::memory_order_acquire)) {
+        mgbase::ult::this_thread::yield();
+    }
 }
 
 } // namespace rma
