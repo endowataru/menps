@@ -61,24 +61,24 @@ private:
     
 public:
     static bool try_read(
-        process_id_t                                    proc
-    ,   const remote_ptr<const atomic_default_t>&   remote_ptr
-    ,   const local_ptr<atomic_default_t>&          local_ptr
-    ,   const mgbase::operation&                        on_complete
+        const process_id_t                          src_proc
+    ,   const remote_ptr<const atomic_default_t>&   src_rptr
+    ,   atomic_default_t* const                     dest_ptr
+    ,   const mgbase::operation&                    on_complete
     ) {
-        const typename am_read::argument_type arg = { to_raw_pointer(remote_ptr) };
+        const typename am_read::argument_type arg = { to_raw_pointer(src_rptr) };
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote read.\t"
-            "proc:{}\tsrc_ptr:{:x}"
-        ,   proc
+            "src_proc:{}\tsrc_rptr:{:x}"
+        ,   src_proc
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
         );
         
         return mgcom::rpc::try_remote_call_async<am_read>(
-            proc
+            src_proc
         ,   arg
-        ,   to_raw_pointer(local_ptr)
+        ,   dest_ptr
         ,   on_complete
         );
     }
@@ -117,23 +117,23 @@ private:
     
 public:
     static bool try_write(
-        process_id_t                                    proc
-    ,   const remote_ptr<atomic_default_t>&         remote_ptr
-    ,   const local_ptr<const atomic_default_t>&    local_ptr
-    ,   const mgbase::operation&                        on_complete
+        const process_id_t                          dest_proc
+    ,   const remote_ptr<atomic_default_t>&         dest_rptr
+    ,   const atomic_default_t                      value
+    ,   const mgbase::operation&                    on_complete
     ) {
-        const typename am_write::argument_type arg = { to_raw_pointer(remote_ptr), *local_ptr };
+        const typename am_write::argument_type arg = { to_raw_pointer(dest_rptr), value };
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote write.\t"
-            "proc:{}\tvalue:{}\tdest_ptr:{:x}"
-        ,   proc
-        ,   arg.value
+            "dest_proc:{}\tdest_rptr:{:x}\tvalue:{}"
+        ,   dest_proc
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+        ,   arg.value
         );
         
         return mgcom::rpc::try_remote_call_async<am_write>(
-            proc
+            dest_proc
         ,   arg
         ,   on_complete
         );
@@ -178,33 +178,33 @@ private:
     
 public:
     static bool try_compare_and_swap(
-        const process_id_t                              target_proc
-    ,   const remote_ptr<atomic_default_t>&         target_ptr
-    ,   const local_ptr<const atomic_default_t>&    expected_ptr
-    ,   const local_ptr<const atomic_default_t>&    desired_ptr
-    ,   const local_ptr<atomic_default_t>&          result_ptr
-    ,   const mgbase::operation&                        on_complete
+        const process_id_t                          target_proc
+    ,   const remote_ptr<atomic_default_t>&         target_rptr
+    ,   const atomic_default_t                      expected_val
+    ,   const atomic_default_t                      desired_val
+    ,   atomic_default_t* const                     result_ptr
+    ,   const mgbase::operation&                    on_complete
     ) {
         const typename am_compare_and_swap::argument_type arg = {
-            to_raw_pointer(target_ptr)
-        ,   *expected_ptr
-        ,   *desired_ptr
+            to_raw_pointer(target_rptr)
+        ,   expected_val
+        ,   desired_val
         };
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote compare and swap.\t"
-            "proc:{:x}\ttarget_addr:{:x}\texpected:{}\tdesired:{}\tresult_ptr:{:x}"
+            "proc:{:x}\ttarget:{:x}\texpected:{}\tdesired:{}\tresult_ptr:{:x}"
         ,   target_proc
-        ,   reinterpret_cast<mgbase::uintptr_t>(to_raw_pointer(target_ptr))
+        ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
         ,   arg.expected
         ,   arg.desired
-        ,   reinterpret_cast<mgbase::uintptr_t>(to_raw_pointer(result_ptr))
+        ,   reinterpret_cast<mgbase::uintptr_t>(result_ptr)
         );
         
         return mgcom::rpc::try_remote_call_async<am_compare_and_swap>(
             target_proc
         ,   arg
-        ,   to_raw_pointer(result_ptr)
+        ,   result_ptr
         ,   on_complete
         );
     }
@@ -244,15 +244,15 @@ private:
     
 public:
     static bool try_fetch_and_add(
-        process_id_t                                    target_proc
-    ,   const remote_ptr<atomic_default_t>&         target_ptr
-    ,   const local_ptr<const atomic_default_t>&    value_ptr
-    ,   const local_ptr<atomic_default_t>&          result_ptr
-    ,   const mgbase::operation&                        on_complete
+        const process_id_t                          target_proc
+    ,   const remote_ptr<atomic_default_t>&         target_rptr
+    ,   const atomic_default_t                      value
+    ,   atomic_default_t* const                     result_ptr
+    ,   const mgbase::operation&                    on_complete
     ) {
         const typename am_fetch_and_add::argument_type arg = {
-            to_raw_pointer(target_ptr)
-        ,   *value_ptr
+            to_raw_pointer(target_rptr)
+        ,   value
         };
         
         MGBASE_LOG_DEBUG(
@@ -261,13 +261,13 @@ public:
         ,   target_proc
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
         ,   arg.diff
-        ,   reinterpret_cast<mgbase::uintptr_t>(to_raw_pointer(result_ptr))
+        ,   reinterpret_cast<mgbase::uintptr_t>(result_ptr)
         );
         
         return mgcom::rpc::try_remote_call_async<am_fetch_and_add>(
             target_proc
         ,   arg
-        ,   to_raw_pointer(result_ptr)
+        ,   result_ptr
         ,   on_complete
         );
     }

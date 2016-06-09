@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
             mgcom::rma::remote_fetch_and_add(
                 root_proc
             ,   remote_ptr
-            ,   value_ptr
+            ,   *value_ptr
             ,   result_ptr
             );
             

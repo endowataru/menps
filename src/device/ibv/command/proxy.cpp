@@ -4,6 +4,7 @@
 #include "completer.hpp"
 #include "poll_thread.hpp"
 #include "device/ibv/ibv.hpp"
+#include "common/rma/region_allocator.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -20,16 +21,24 @@ poll_thread g_poll(g_ep.get_cq(), g_comp);
 
 void initialize()
 {
-    g_comp.initialize();
     g_ep.collective_initialize();
+    
+    rma::initialize_allocator();
+    
+    g_comp.initialize(); // completer requires allocator
+    
     g_poll.start();
 }
 
 void finalize()
 {
     g_poll.stop();
-    g_ep.finalize();
+    
     g_comp.finalize();
+     
+    rma::finalize_allocator();
+    
+    g_ep.finalize();
 }
 
 } // namespace ibv

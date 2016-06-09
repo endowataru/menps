@@ -127,7 +127,7 @@ TEST_F(RmaAtomic, FetchAndAdd)
     mgcom::rma::remote_fetch_and_add(
         0
     ,   rptr
-    ,   buf
+    ,   *buf
     ,   buf2
     );
     
@@ -158,8 +158,8 @@ TEST_F(RmaAtomic, CompareAndSwap)
             mgcom::rma::remote_compare_and_swap(
                 0
             ,   rptr
-            ,   buf
-            ,   buf2
+            ,   *buf
+            ,   *buf2
             ,   buf3
             );
         }

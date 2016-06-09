@@ -4,7 +4,8 @@
 #include "device/mpi/command/mpi_command.hpp"
 #include "mpi3_completer.hpp"
 #include "device/mpi3/mpi3_error.hpp"
-#include "device/mpi3/rma.hpp"
+#include "device/mpi3/mpi3_type.hpp"
+#include "device/mpi3/rma/rma.hpp"
 #include <mgbase/force_integer_cast.hpp>
 
 namespace mgcom {
@@ -34,8 +35,8 @@ union mpi3_command_parameters
     
     struct compare_and_swap_parameters
     {
-        const void*         expected_ptr;
-        const void*         desired_ptr;
+        mgbase::uint64_t    expected;
+        mgbase::uint64_t    desired;
         void*               result_ptr;
         MPI_Datatype        datatype;
         int                 dest_rank;
@@ -46,7 +47,7 @@ union mpi3_command_parameters
     
     struct fetch_and_op_parameters
     {
-        const void*         value_ptr;
+        mgbase::uint64_t    value;
         void*               result_ptr;
         MPI_Datatype        datatype;
         int                 dest_rank;
@@ -93,21 +94,6 @@ union mpi3_command_parameters
     }
     ialltoall;
 };
-
-namespace detail {
-
-inline std::string get_datatype_name(const MPI_Datatype datatype) {
-    char buf[MPI_MAX_OBJECT_NAME];
-    int len;
-    
-    mpi3_error::check(
-        MPI_Type_get_name(datatype, buf, &len)
-    );
-    
-    return buf;
-}
-
-} // namespace detail
 
 MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
 bool try_execute_get(
@@ -192,24 +178,24 @@ bool try_execute_compare_and_swap(
     */
     mpi3_error::check(
         MPI_Compare_and_swap(
-            const_cast<void*>(params.desired_ptr)    // origin_addr
-        ,   const_cast<void*>(params.expected_ptr)   // compare_addr
-        ,   params.result_ptr                        // result_addr
-        ,   params.datatype                          // datatype
-        ,   params.dest_rank                         // target_rank
-        ,   params.dest_index                        // target_disp
-        ,   rma::get_win()                      // win
+            const_cast<mgbase::uint64_t*>(&params.desired)      // origin_addr
+        ,   const_cast<mgbase::uint64_t*>(&params.expected)     // compare_addr
+        ,   params.result_ptr                       // result_addr
+        ,   params.datatype                         // datatype
+        ,   params.dest_rank                        // target_rank
+        ,   params.dest_index                       // target_disp
+        ,   rma::get_win()                          // win
         )
     );
     
     MGBASE_LOG_DEBUG(
         "msg:Executed MPI_Compare_and_swap.\t"
-        "desired_ptr:{:x}\texpected_ptr:{:x}\tresult_ptr:{:x}\t"
+        "desired:{}\texpected:{}\tresult_ptr:{:x}\t"
         "datatype:{}\tdest_rank:{}\tdest_index:{:x}"
-    ,   reinterpret_cast<mgbase::intptr_t>(params.desired_ptr)
-    ,   reinterpret_cast<mgbase::intptr_t>(params.expected_ptr)
+    ,   params.desired
+    ,   params.expected
     ,   reinterpret_cast<mgbase::intptr_t>(params.result_ptr)
-    ,   detail::get_datatype_name(params.datatype)
+    ,   get_datatype_name(params.datatype)
     ,   params.dest_rank
     ,   params.dest_index
     );
@@ -231,27 +217,37 @@ bool try_execute_fetch_and_op(
         TODO: const_cast is needed for OpenMPI 1.8.4.
     */
     
+    void* result_ptr = params.result_ptr;
+    
+    if (result_ptr == MGBASE_NULLPTR)
+    {
+        // Although MPI-3 requires the memory to store the results,
+        // we don't need it in this case.
+        static mgbase::uint64_t sink;
+        result_ptr = &sink;
+    }
+    
     mpi3_error::check(
         MPI_Fetch_and_op(
-            const_cast<void*>(params.value_ptr)  // origin_addr
-        ,   params.result_ptr                    // result_addr
-        ,   params.datatype                      // datatype
-        ,   params.dest_rank                     // target_rank
-        ,   params.dest_index                    // target_disp
-        ,   params.operation                     // op
-        ,   rma::get_win()                  // win
+            const_cast<mgbase::uint64_t*>(&params.value)    // origin_addr
+        ,   result_ptr                          // result_addr
+        ,   params.datatype                     // datatype
+        ,   params.dest_rank                    // target_rank
+        ,   params.dest_index                   // target_disp
+        ,   params.operation                    // op
+        ,   rma::get_win()                      // win
         )
     );
     
     MGBASE_LOG_DEBUG(
         "msg:Executed MPI_Fetch_and_op.\t"
-        "value_ptr:{:x}\tresult_ptr:{:x}\t"
+        "value:{}\tresult_ptr:{:x}\t"
         "dest_rank:{}\tdest_index:{:x}\tdatatype:{}\toperation:{}"
-    ,   reinterpret_cast<mgbase::intptr_t>(params.value_ptr)
+    ,   params.value
     ,   reinterpret_cast<mgbase::intptr_t>(params.result_ptr)
     ,   params.dest_rank
     ,   params.dest_index
-    ,   detail::get_datatype_name(params.datatype)
+    ,   get_datatype_name(params.datatype)
     ,   mgbase::force_integer_cast<mgbase::intptr_t>(params.operation)
     );
     

@@ -49,70 +49,68 @@ MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
 
 } // namespace untyped
 
-MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_read_async(
-    process_id_t                                src_proc
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_atomic_read_async(
+    const process_id_t                          src_proc
 ,   const remote_ptr<const atomic_default_t>&   src_rptr
-,   const local_ptr<atomic_default_t>&          dest_lptr
-,   const local_ptr<atomic_default_t>&          //buf_lptr
+,   atomic_default_t* const                     dest_ptr
 ,   const mgbase::operation&                    on_complete
 ) {
-    // TODO: Is this correct?
-    return untyped::try_remote_read_async(
+    return mgcom::ibv::g_proxy.try_remote_atomic_read_async(
         src_proc
-    ,   src_rptr.to_address()
-    ,   dest_lptr.to_address()
-    ,   sizeof(atomic_default_t)
+    ,   src_rptr
+    ,   dest_ptr
     ,   on_complete
     );
 }
 
-MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_write_async(
-    process_id_t                                dest_proc
-,   const remote_ptr<atomic_default_t>&         dest_rptr
-,   const local_ptr<const atomic_default_t>&    src_lptr
-,   const local_ptr<atomic_default_t>&          //buf_lptr
-,   const mgbase::operation&                    on_complete
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_atomic_write_async(
+    const process_id_t                  dest_proc
+,   const remote_ptr<atomic_default_t>& dest_rptr
+,   const atomic_default_t              value
+,   const mgbase::operation&            on_complete
 ) {
-    // TODO: Is this correct?
-    return untyped::try_remote_write_async(
+    return mgcom::ibv::g_proxy.try_remote_atomic_write_async(
         dest_proc
-    ,   dest_rptr.to_address()
-    ,   src_lptr.to_address()
-    ,   sizeof(atomic_default_t)
+    ,   dest_rptr
+    ,   value
     ,   on_complete
     );
 }
 
-MGBASE_WARN_UNUSED_RESULT bool try_remote_compare_and_swap_async(
-    const process_id_t                          target_proc
-,   const remote_ptr<atomic_default_t>&         target_rptr
-,   const local_ptr<const atomic_default_t>&    expected_lptr
-,   const local_ptr<const atomic_default_t>&    desired_lptr
-,   const local_ptr<atomic_default_t>&          result_lptr
-,   const mgbase::operation&                    on_complete
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_compare_and_swap_async(
+    const process_id_t                  target_proc
+,   const remote_ptr<atomic_default_t>& target_rptr
+,   const atomic_default_t              expected
+,   const atomic_default_t              desired
+,   atomic_default_t* const             result_ptr
+,   const mgbase::operation&            on_complete
 ) {
     return mgcom::ibv::g_proxy.try_remote_compare_and_swap_async(
         target_proc
     ,   target_rptr
-    ,   expected_lptr
-    ,   desired_lptr
-    ,   result_lptr
+    ,   expected
+    ,   desired
+    ,   result_ptr
     ,   on_complete
     );
 }
 
-MGBASE_WARN_UNUSED_RESULT bool try_remote_fetch_and_add_async(
-    process_id_t                                target_proc
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_fetch_and_add_async(
+    const process_id_t                          target_proc
 ,   const remote_ptr<atomic_default_t>&         target_rptr
-,   const local_ptr<const atomic_default_t>&    value_lptr
-,   const local_ptr<atomic_default_t>&          result_lptr
+,   const atomic_default_t                      value
+,   atomic_default_t* const                     result_ptr
 ,   const mgbase::operation&                    on_complete
 ) {
     return mgcom::ibv::g_proxy.try_remote_fetch_and_add_async(
         target_proc
     ,   target_rptr
-    ,   value_lptr
-    ,   result_lptr
+    ,   value
+    ,   result_ptr
     ,   on_complete
     );
 }

@@ -24,8 +24,6 @@ void initialize(int* argc, char*** argv)
     
     ibv::initialize();
     
-    rma::initialize_allocator();
-    
     mgcom::mpi::native_barrier();
     
     MGBASE_LOG_DEBUG("msg:Initialized.");
@@ -36,8 +34,6 @@ void finalize()
     collective::barrier();
     
     mgcom::mpi::native_barrier();
-    
-    rma::finalize_allocator();
     
     ibv::finalize();
     

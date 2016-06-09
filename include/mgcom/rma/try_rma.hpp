@@ -100,45 +100,47 @@ bool try_remote_write_async(
 /**
  * Try to start atomic read.
  */
-MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_read_async(
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_atomic_read_async(
     process_id_t                                src_proc
 ,   const remote_ptr<const atomic_default_t>&   src_rptr
-,   const local_ptr<atomic_default_t>&          dest_lptr
-,   const local_ptr<atomic_default_t>&          buf_lptr
+,   atomic_default_t*                           dest_ptr
 ,   const mgbase::operation&                    on_complete
 );
 
 /**
  * Try to start atomic write.
  */
-MGBASE_WARN_UNUSED_RESULT bool try_remote_atomic_write_async(
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_atomic_write_async(
     process_id_t                                dest_proc
 ,   const remote_ptr<atomic_default_t>&         dest_rptr
-,   const local_ptr<const atomic_default_t>&    src_lptr
-,   const local_ptr<atomic_default_t>&          buf_lptr
+,   atomic_default_t                            value
 ,   const mgbase::operation&                    on_complete
 );
 
 /**
  * Try to start remote compare-and-swap.
  */
-MGBASE_WARN_UNUSED_RESULT bool try_remote_compare_and_swap_async(
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_compare_and_swap_async(
     process_id_t                                target_proc
 ,   const remote_ptr<atomic_default_t>&         target_rptr
-,   const local_ptr<const atomic_default_t>&    expected_lptr
-,   const local_ptr<const atomic_default_t>&    desired_lptr
-,   const local_ptr<atomic_default_t>&          result_lptr
+,   atomic_default_t                            expected_val
+,   atomic_default_t                            desired_val
+,   atomic_default_t*                           result_ptr
 ,   const mgbase::operation&                    on_complete
 );
 
 /**
  * Try to start remote fetch-and-add.
  */
-MGBASE_WARN_UNUSED_RESULT bool try_remote_fetch_and_add_async(
+MGBASE_WARN_UNUSED_RESULT
+bool try_remote_fetch_and_add_async(
     process_id_t                                target_proc
 ,   const remote_ptr<atomic_default_t>&         target_rptr
-,   const local_ptr<const atomic_default_t>&    value_lptr
-,   const local_ptr<atomic_default_t>&          result_lptr
+,   atomic_default_t                            value
+,   atomic_default_t*                           result_ptr
 ,   const mgbase::operation&                    on_complete
 );
 

@@ -104,27 +104,25 @@ public:
         return ret;
     }
     
+    template <typename T>
     bool try_compare_and_swap(
-        const void*                 expected_ptr
-    ,   const void*                 desired_ptr
-    ,   void*                       result_ptr
-    ,   MPI_Datatype                datatype
+        T                           expected
+    ,   T                           desired
+    ,   T*                          result_ptr
     ,   int                         dest_rank
     ,   MPI_Aint                    dest_index
     ,   const mgbase::operation&    on_complete
     ) {
-        MGBASE_ASSERT(expected_ptr != MGBASE_NULLPTR);
-        MGBASE_ASSERT(desired_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(mpi::is_valid_rank(dest_rank));
         // TODO: This assertion might not be compliant to the MPI standard,
         //       but it's helpful to check whether the pointer is not null
         MGBASE_ASSERT(dest_index != 0);
         
         const mpi3_command_parameters::compare_and_swap_parameters params = {
-            expected_ptr
-        ,   desired_ptr
+            expected
+        ,   desired
         ,   result_ptr
-        ,   datatype
+        ,   mpi_type<T>::datatype()
         ,   dest_rank
         ,   dest_index
         ,   on_complete
@@ -140,13 +138,13 @@ public:
         
         MGBASE_LOG_DEBUG(
             "msg:{}\t"
-            "desired_ptr:{:x}\texpected_ptr:{:x}\tresult_ptr:{:x}\t"
+            "desired:{}\texpected:{}\tresult_ptr:{:x}\t"
             "datatype:{}\tdest_rank:{}\tdest_index:{:x}"
         ,   (ret ? "Queued MPI_Compare_and_swap." : "Failed to queue MPI_Compare_and_swap.")
-        ,   reinterpret_cast<mgbase::intptr_t>(desired_ptr)
-        ,   reinterpret_cast<mgbase::intptr_t>(expected_ptr)
+        ,   desired
+        ,   expected
         ,   reinterpret_cast<mgbase::intptr_t>(result_ptr)
-        ,   detail::get_datatype_name(datatype)
+        ,   mpi_type<T>::name()
         ,   dest_rank
         ,   dest_index
         );
@@ -154,26 +152,24 @@ public:
         return ret;
     }
     
+    template <typename T>
     bool try_fetch_and_op(
-        const void*                 value_ptr
-    ,   void*                       result_ptr
-    ,   MPI_Datatype                datatype
+        const T                     value
+    ,   T*                          result_ptr // If null, ignored
     ,   int                         dest_rank
     ,   MPI_Aint                    dest_index
     ,   MPI_Op                      operation
     ,   const mgbase::operation&    on_complete
     ) {
-        MGBASE_ASSERT(value_ptr != MGBASE_NULLPTR);
-        MGBASE_ASSERT(result_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(mpi::is_valid_rank(dest_rank));
         // TODO: This assertion might not be compliant to the MPI standard,
         //       but it's helpful to check whether the pointer is not null
         MGBASE_ASSERT(dest_index != 0);
         
         const mpi3_command_parameters::fetch_and_op_parameters params = {
-            value_ptr
+            value
         ,   result_ptr
-        ,   datatype
+        ,   mpi_type<T>::datatype()
         ,   dest_rank
         ,   dest_index
         ,   operation
@@ -190,20 +186,20 @@ public:
         
         MGBASE_LOG_DEBUG(
             "msg:{}\t"
-            "value_ptr:{:x}\tresult_ptr:{:x}\t"
+            "value:{}\tresult_ptr:{:x}\t"
             "dest_rank:{}\tdest_index:{:x}\tdatatype:{}\toperation:{}"
         ,   (ret ? "Queued MPI_Fetch_and_op." : "Failed to queue MPI_Fetch_and_op.")
-        ,   reinterpret_cast<mgbase::intptr_t>(value_ptr)
+        ,   value
         ,   reinterpret_cast<mgbase::intptr_t>(result_ptr)
         ,   dest_rank
         ,   dest_index
-        ,   detail::get_datatype_name(datatype)
+        ,   mpi_type<T>::name()
         ,   mgbase::force_integer_cast<mgbase::intptr_t>(operation)
         );
         
         return ret;
     }
-    
+       
     bool try_ibarrier(
         const MPI_Comm              comm
     ,   const mgbase::operation&    on_complete

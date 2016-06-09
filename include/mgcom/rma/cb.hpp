@@ -127,9 +127,8 @@ template <typename T>
 struct remote_atomic_read_params
 {
     process_id_t        src_proc;
-    remote_ptr<T>       src_lptr;
-    local_ptr<const T>  dest_lptr;
-    local_ptr<T>        buf_lptr;
+    remote_ptr<const T> src_lptr;
+    T*                  dest_ptr;
 };
 
 template <typename T>
@@ -137,8 +136,7 @@ struct remote_atomic_write_params
 {
     process_id_t        dest_proc;
     remote_ptr<T>       dest_rptr;
-    local_ptr<const T>  src_lptr;
-    local_ptr<T>        buf_lptr;
+    T                   value;
 };
 
 
@@ -147,9 +145,9 @@ struct remote_compare_and_swap_params
 {
     process_id_t        target_proc;
     remote_ptr<T>       target_rptr;
-    local_ptr<const T>  expected_lptr;
-    local_ptr<const T>  desired_lptr;
-    local_ptr<T>        result_lptr;
+    T                   expected;
+    T                   desired;
+    T*                  result_ptr;
 };
 
 template <typename T>
@@ -157,8 +155,8 @@ struct remote_fetch_and_add_params
 {
     process_id_t        target_proc;
     remote_ptr<T>       target_rptr;
-    local_ptr<const T>  value_lptr;
-    local_ptr<T>        result_lptr;
+    T                   value;
+    T*                  result_ptr;
 };
 
 
@@ -248,8 +246,7 @@ struct atomic_read_config
         return try_remote_atomic_read_async(
             params.src_proc
         ,   params.src_rptr
-        ,   params.dest_lptr
-        ,   params.buf_lptr
+        ,   params.dest_ptr
         ,   mgbase::make_notification(&get_flag(cb))
         );
     }
@@ -282,8 +279,7 @@ struct atomic_write_config
         return try_remote_atomic_write_async(
             params.dest_proc
         ,   params.dest_rptr
-        ,   params.src_lptr
-        ,   params.buf_lptr
+        ,   params.value
         ,   mgbase::make_notification(&get_flag(cb))
         );
     }
@@ -316,9 +312,9 @@ struct compare_and_swap_config
         return try_remote_compare_and_swap_async(
             params.target_proc
         ,   params.target_rptr
-        ,   params.expected_lptr
-        ,   params.desired_lptr
-        ,   params.result_lptr
+        ,   params.expected
+        ,   params.desired
+        ,   params.result_ptr
         ,   mgbase::make_notification(&get_flag(cb))
         );
     }
@@ -350,8 +346,8 @@ struct fetch_and_add_config
         return try_remote_fetch_and_add_async(
             params.target_proc
         ,   params.target_rptr
-        ,   params.value_lptr
-        ,   params.result_lptr
+        ,   params.value
+        ,   params.result_ptr
         ,   mgbase::make_notification(&get_flag(cb))
         );
     }

@@ -32,5 +32,7 @@ mpi3::mpi3_command_queue& g_queue = mpi3::g_queue;
 } // namespace mgcom
 
 #include "device/mpi/command/mpi_interface.impl.hpp"
+
+#include "device/mpi3/collective/collective.impl.hpp"
 #include "mpi3_interface.impl.hpp"
 

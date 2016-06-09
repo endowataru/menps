@@ -85,7 +85,7 @@ if(${is_mpi3_available})
         src/device/mpi/mpi_base.cpp
         src/device/mpi/mpi_call.cpp
         src/device/mpi3/mpi3.cpp
-        src/device/mpi3/rma.cpp
+        src/device/mpi3/rma/rma.cpp
     )
     target_link_libraries(mgcom-mpi3 mgcom-base mgbase)
     

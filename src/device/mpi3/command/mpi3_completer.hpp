@@ -3,7 +3,7 @@
 
 #include "device/mpi/command/mpi_completer.hpp"
 #include "device/mpi3/mpi3_error.hpp"
-#include "device/mpi3/rma.hpp"
+#include "device/mpi3/rma/rma.hpp"
 #include <mgbase/container/circular_buffer.hpp>
 
 namespace mgcom {
