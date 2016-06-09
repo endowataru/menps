@@ -107,26 +107,26 @@ typename Config::result_type remote_write_as(typename Config::cb_type& cb) {
 template <typename T>
 struct remote_read_params
 {
-    process_id_t        src_proc;
+    process_id_t    src_proc;
     remote_ptr<T>   src_rptr;
     local_ptr<T>    dest_lptr;
-    index_t             num_elems;
+    index_t         num_elems;
 };
 
 template <typename T>
 struct remote_write_params
 {
-    process_id_t        dest_proc;
+    process_id_t    dest_proc;
     remote_ptr<T>   dest_rptr;
     local_ptr<T>    src_lptr;
-    index_t             num_elems;
+    index_t         num_elems;
 };
 
 
 template <typename T>
 struct remote_atomic_read_params
 {
-    process_id_t            src_proc;
+    process_id_t        src_proc;
     remote_ptr<T>       src_lptr;
     local_ptr<const T>  dest_lptr;
     local_ptr<T>        buf_lptr;
@@ -135,7 +135,7 @@ struct remote_atomic_read_params
 template <typename T>
 struct remote_atomic_write_params
 {
-    process_id_t            dest_proc;
+    process_id_t        dest_proc;
     remote_ptr<T>       dest_rptr;
     local_ptr<const T>  src_lptr;
     local_ptr<T>        buf_lptr;
@@ -145,7 +145,7 @@ struct remote_atomic_write_params
 template <typename T>
 struct remote_compare_and_swap_params
 {
-    process_id_t            target_proc;
+    process_id_t        target_proc;
     remote_ptr<T>       target_rptr;
     local_ptr<const T>  expected_lptr;
     local_ptr<const T>  desired_lptr;
@@ -155,7 +155,7 @@ struct remote_compare_and_swap_params
 template <typename T>
 struct remote_fetch_and_add_params
 {
-    process_id_t            target_proc;
+    process_id_t        target_proc;
     remote_ptr<T>       target_rptr;
     local_ptr<const T>  value_lptr;
     local_ptr<T>        result_lptr;
