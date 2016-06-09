@@ -4,7 +4,7 @@
 #include <functional>
 #include <iostream>
 
-#include <mgbase/external/cppformat.hpp>
+#include <mgbase/external/fmt.hpp>
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/lock_guard.hpp>
 

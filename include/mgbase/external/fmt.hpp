@@ -28,7 +28,8 @@
     #pragma warning(disable: 1418)
 #endif
 
-#include <cppformat/format.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #if defined(MGBASE_COMPILER_INTEL)
     #pragma warning(pop)

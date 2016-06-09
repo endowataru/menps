@@ -15,7 +15,7 @@ set(MGBASE_CXX_STANDARD "" CACHE STRING "C++ standard version")
 add_library(mgbase-header INTERFACE)
 target_include_directories(mgbase-header
     INTERFACE ./include
-    INTERFACE ./external/cppformat
+    INTERFACE ./external/fmt
     INTERFACE ./external/cmdline
     INTERFACE ${CMAKE_CURRENT_BINARY_DIR}
 )
@@ -38,9 +38,9 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
         $<$<CONFIG:RelWithDebInfo>:-g -Kfast>
     )
     # warning #111-D: statement is unreachable
-    #   (cppformat)
+    #   (fmt)
     # warning #161-D: unrecognized #pragma
-    #   (cppformat, googletest)
+    #   (fmt, googletest)
     # warning #236-D: controlling expression is constant
     #   (googletest)
     # warning #1290-D: non-POD class type passed through ellipsis
@@ -203,7 +203,8 @@ int main() { return 0; }
 " MGBASE_COMPILER_SUPPORTS_ALWAYS_INLINE)
 
 add_library(mgbase
-    ./external/cppformat/cppformat/format.cc
+    ./external/fmt/fmt/format.cc
+    ./external/fmt/fmt/ostream.cc
     )
 
 target_link_libraries(mgbase mgbase-header 
@@ -218,7 +219,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     target_compile_options(mgbase
         PRIVATE
         -Xg
-        -include ${CMAKE_CURRENT_SOURCE_DIR}/include/mgbase/external/cppformat.hpp
+        -include ${CMAKE_CURRENT_SOURCE_DIR}/include/mgbase/external/fmt.hpp
     )
 endif()
 
