@@ -14,12 +14,12 @@ class alltoall_connections
 public:
     alltoall_connections() MGBASE_EMPTY_DEFINITION
     
-    void create(ibv_cq& cq, ibv_pd& pd)
+    void create(ibv_context& ctx, ibv_cq& cq, ibv_pd& pd)
     {
         conns_ = new connection[mgcom::number_of_processes()];
         
         for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
-            conns_[proc].create(cq, pd);
+            conns_[proc].create(ctx, cq, pd);
 
         MGBASE_LOG_DEBUG("msg:Created all IBV connections.");
     }

@@ -9,6 +9,7 @@ INCLUDE (CheckSymbolExists)
 add_library(mgcom-header INTERFACE)
 target_include_directories(mgcom-header
     INTERFACE ./include
+    INTERFACE ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_link_libraries(mgcom-header
     INTERFACE mgbase-header
@@ -40,6 +41,16 @@ CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
 
 CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" is_ibv_available)
 #set(is_ibv_available TRUE) # Just for compilation check
+
+CHECK_INCLUDE_FILE_CXX("infiniband/verbs_exp.h" MGCOM_IBV_EXP_SUPPORTED)
+
+CHECK_CXX_SOURCE_COMPILES("
+#include <infiniband/verbs.h>
+#include <infiniband/verbs_exp.h>
+
+int x = IBV_EXP_DEVICE_ATTR_EXT_ATOMIC_ARGS;"
+MGCOM_IBV_MASKED_ATOMICS_SUPPORTED)
+
 
 # Library for each device
 
@@ -127,7 +138,10 @@ if (${is_ibv_available})
 endif()
 
 
+# Generate config.h
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mgcom/config.h)
 
 # Publish the device list
 

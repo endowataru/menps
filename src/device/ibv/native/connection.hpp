@@ -33,11 +33,46 @@ public:
         return qp_->qp_num;
     }
     
-    void create(ibv_cq& cq, ibv_pd& pd)
+    #ifdef MGCOM_IBV_EXP_SUPPORTED
+    void create(ibv_context& ctx, ibv_cq& cq, ibv_pd& pd)
+    {
+        // See also: ctx_exp_qp_create() of perftest
+        
+        ibv_exp_qp_init_attr attr = ibv_exp_qp_init_attr();
+            // Notice: zero filled by value initialization
+        
+        attr.comp_mask = IBV_EXP_QP_INIT_ATTR_PD | IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS;
+            // Both flags are not documented
+        
+        attr.qp_type             = IBV_QPT_RC; // Reliable Connection (RC)
+        attr.pd                  = &pd;
+        attr.send_cq             = &cq;
+        attr.recv_cq             = &cq;
+        attr.srq                 = MGBASE_NULLPTR;
+        attr.cap.max_send_wr     = max_send_wr;
+        attr.cap.max_recv_wr     = max_recv_wr;
+        attr.cap.max_send_sge    = max_send_sge;
+        attr.cap.max_recv_sge    = max_recv_sge;
+        attr.cap.max_inline_data = 1; // TODO
+        attr.sq_sig_all          = 1;
+        
+        #ifdef MGCOM_IBV_MASKED_ATOMICS_SUPPORTED
+        attr.max_atomic_arg      = 8; // TODO : correct?
+        attr.exp_create_flags |= IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY;
+        #endif
+        
+        qp_ = ibv_exp_create_qp(&ctx, &attr);
+        if (qp_ == MGBASE_NULLPTR)
+            throw ibv_error("ibv_exp_create_qp() failed");
+    }
+    #else
+    void create(ibv_context& /*ctx*/, ibv_cq& cq, ibv_pd& pd)
     {
         MGBASE_ASSERT(qp_ == MGBASE_NULLPTR);
         
         ibv_qp_init_attr attr = ibv_qp_init_attr();
+            // Notice: zero filled by value initialization
+        
         attr.qp_context          = MGBASE_NULLPTR;
         attr.qp_type             = IBV_QPT_RC; // Reliable Connection (RC)
         attr.send_cq             = &cq;
@@ -54,6 +89,7 @@ public:
         if (qp_ == MGBASE_NULLPTR)
             throw ibv_error("ibv_create_qp() failed");
     }
+    #endif
     
     void destroy()
     {

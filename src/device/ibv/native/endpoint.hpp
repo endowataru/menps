@@ -29,7 +29,7 @@ public:
         cq_.create(ctx_.get());
         protection_domain::alloc(ctx_.get());
         
-        alltoall_connections::create(cq_.get(), protection_domain::get());
+        alltoall_connections::create(ctx_.get(), cq_.get(), protection_domain::get());
         
         device_attributes dev_attr;
         dev_attr.query(ctx_);
