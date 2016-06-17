@@ -3,6 +3,7 @@
 #include <cstdlib> // getenv
 #include <stdexcept>
 #include "device/mpi1/mpi1.hpp"
+#include <mgbase/logger.hpp>
 
 namespace mgcom {
 
@@ -37,6 +38,8 @@ factory_func_t select_starter()
             }
         }
     }
+    
+    MGBASE_LOG_DEBUG("msg:Default device was seleted.\tname:{}", devs[0].name);
     
     return devs[0].func;
 }

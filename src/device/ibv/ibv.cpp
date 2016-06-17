@@ -84,45 +84,6 @@ mgbase::unique_ptr<starter> make_starter(int* const argc, char*** const argv)
     // TODO: replace with make_unique
     return mgbase::unique_ptr<starter>(new ibv_starter(argc, argv));
 }
-#if 0
-
-void initialize(int* argc, char*** argv)
-{
-    mgcom::mpi::initialize(argc, argv);
-    
-    mgcom::mpi1::initialize_command_queue();
-    
-    rpc::initialize();
-    
-    collective::initialize();
-    
-    ibv::initialize();
-    
-    mgcom::mpi::native_barrier();
-    
-    MGBASE_LOG_DEBUG("msg:Initialized.");
-}
-
-void finalize()
-{
-    collective::barrier();
-    
-    mgcom::mpi::native_barrier();
-    
-    ibv::finalize();
-    
-    collective::finalize();
-    
-    rpc::finalize();
-    
-    mgcom::mpi1::finalize_command_queue();
-    
-    mgcom::mpi::finalize();
-    
-    MGBASE_LOG_DEBUG("msg:Finalized.");
-}
-
-#endif
 
 } // namespace ibv
 } // namespace mgcom
