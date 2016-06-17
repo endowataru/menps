@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 
 include(ExternalProject)
 
+set(MGBASE_MASSIVETHREADS_CC ${CMAKE_C_COMPILER})
+
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(MGBASE_MASSIVETHREADS_CFLAGS "-O0 -g")
 endif()

@@ -280,6 +280,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
 # MassiveThreads
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    include(cmake/massivethreads.cmake)
+    if (${MGBASE_ENABLE_MASSIVETHREADS})
+        include(cmake/massivethreads.cmake)
+    endif()
 endif()
 

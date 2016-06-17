@@ -3,6 +3,7 @@
 
 #include <mgbase/operation.h>
 #include <mgbase/atomic.hpp>
+#include <mgbase/callback_function.hpp>
 
 namespace mgbase {
 

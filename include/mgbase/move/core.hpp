@@ -90,6 +90,10 @@ struct is_rv< const rv<T> > : true_type { };
 
 } // namespace mgbase
 
+// MGBASE_MOVE_RET
+
+#define MGBASE_MOVE_RET(type, val)  (::mgbase::move(val))
+
 #else
 
 #include <utility>
@@ -107,6 +111,8 @@ using std::move;
 using std::forward;
 
 } // namespace mgbase
+
+#define MGBASE_MOVE_RET(type, val)  (val)
 
 #endif
 
