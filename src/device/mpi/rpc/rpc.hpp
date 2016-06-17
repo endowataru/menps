@@ -5,11 +5,14 @@
 #include "device/mpi/mpi_base.hpp"
 
 namespace mgcom {
+namespace mpi {
 namespace rpc {
 
-void initialize();
+using namespace mgcom::rpc;
 
-void finalize();
+namespace untyped = mgcom::rpc::untyped;
+
+mgbase::unique_ptr<requester> make_requester();
 
 struct message_buffer {
     handler_id_t    id;
@@ -21,6 +24,12 @@ struct message_buffer {
 
 MPI_Comm get_comm();
 
+
+bool try_call_async(const untyped::call_params& params);
+
+void register_handler(const untyped::register_handler_params& params);
+
 } // namespace rpc
+} // namespace mpi
 } // namespace mgcom
 

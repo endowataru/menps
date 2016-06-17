@@ -4,6 +4,7 @@
 #include "common/rma/region_allocator.hpp"
 
 namespace mgcom {
+namespace mpi3 {
 namespace rma {
 
 namespace /*unnamed*/ {
@@ -12,47 +13,64 @@ mpi3_rma g_impl;
 
 } // unnamed namespace
 
-void initialize()
-{
-    g_impl.initialize();
-}
-void finalize()
-{
-    g_impl.finalize();
-}
-
 MPI_Win get_win() MGBASE_NOEXCEPT
 {
     return g_impl.get_win();
 }
 
+namespace /*unnamed*/ {
 
-namespace untyped {
-
-local_region register_region(
-    void*   local_ptr
-,   index_t size_in_bytes
-) {
-    const MPI_Aint addr = g_impl.attach(local_ptr, static_cast<MPI_Aint>(size_in_bytes));
-    return make_local_region(make_region_key(reinterpret_cast<void*>(addr), 0), 0);
-}
-
-void deregister_region(const local_region& region)
+class mpi3_registrator
+    : public registrator
 {
-    g_impl.detach(to_raw_pointer(region));
+public:
+    mpi3_registrator()
+    {
+        g_impl.initialize();
+    }
+    
+    virtual ~mpi3_registrator()
+    {
+        g_impl.finalize();
+    }
+    
+    virtual untyped::local_region register_region(const untyped::register_region_params& params) MGBASE_OVERRIDE
+    {
+        const MPI_Aint addr = g_impl.attach(params.local_ptr, static_cast<MPI_Aint>(params.size_in_bytes));
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Registered region\tptr:{:x}\tsize_in_bytes:{}"
+        ,   reinterpret_cast<mgbase::uint64_t>(params.local_ptr)
+        ,   params.size_in_bytes
+        );
+        
+        return untyped::make_local_region(untyped::make_region_key(reinterpret_cast<void*>(addr), 0), 0);
+    }
+    
+    virtual untyped::remote_region use_remote_region(const untyped::use_remote_region_params& params) MGBASE_OVERRIDE
+    {
+        MGBASE_LOG_DEBUG(
+            "msg:Use remote region. (but doing nothing.)"
+        );
+        
+        return untyped::make_remote_region(params.key, 0 /* unused */);
+    }
+    
+    virtual void deregister_region(const untyped::deregister_region_params& params)
+    {
+        g_impl.detach(untyped::to_raw_pointer(params.region));
+    }
+};
+
+} // unnamed namespace
+
+mgbase::unique_ptr<registrator> make_registrator()
+{
+    // TODO: replace with make_unique
+    return mgbase::unique_ptr<registrator>(new mpi3_registrator);
 }
-
-remote_region use_remote_region(
-    process_id_t      /*proc_id*/
-,   const region_key& key
-) {
-    // Do nothing on MPI-3
-    return make_remote_region(key, 0 /* unused */);
-}
-
-
-} // namespace untyped
 
 } // namespace rma
+} // namespace mpi3
 } // namespace mgcom
 

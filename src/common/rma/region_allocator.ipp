@@ -2,7 +2,7 @@
 #pragma once
 
 #include "region_allocator.hpp"
-#include <mgcom/rma/address.hpp>
+#include <mgcom/rma/registration.hpp>
 #include "./malloc.h"
 #include <mgbase/memory/aligned_alloc.hpp>
 #include <mgbase/threading/spinlock.hpp>
@@ -13,7 +13,7 @@ namespace mgcom {
 namespace rma {
 namespace untyped {
 
-namespace /*untyped*/ {
+namespace /*unnamed*/ {
 
 class region_allocator
 {
@@ -93,7 +93,7 @@ private:
     mspace ms_;
 };
 
-} // untyped namespace
+} // unnamed namespace
 
 } // namespace untyped
 } // namespace rma

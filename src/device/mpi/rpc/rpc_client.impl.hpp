@@ -6,6 +6,7 @@
 #include "device/mpi/mpi_call.hpp"
 
 namespace mgcom {
+namespace mpi {
 namespace rpc {
 
 namespace /*unnamed*/ {
@@ -84,5 +85,6 @@ private:
 } // unnamed namespace
 
 } // namespace rpc
+} // namespace mpi
 } // namespace mgcom
 

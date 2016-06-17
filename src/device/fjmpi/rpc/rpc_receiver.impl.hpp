@@ -4,6 +4,7 @@
 #include "rpc_receiver_thread.impl.hpp"
 
 namespace mgcom {
+namespace fjmpi {
 namespace rpc {
 
 namespace /*unnamed*/ {
@@ -62,5 +63,6 @@ private:
 } // unnamed namespace
 
 } // namespace rpc
+} // namespace fjmpi
 } // namespace mgcom
 

@@ -5,6 +5,7 @@
 #include "device/fjmpi/fjmpi.hpp"
 
 namespace mgcom {
+namespace fjmpi {
 namespace rpc {
 
 class rpc_sender
@@ -103,5 +104,6 @@ private:
 };
 
 } // namespace rpc
+} // namespace fjmpi
 } // namespace mgcom
 

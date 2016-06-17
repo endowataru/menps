@@ -17,6 +17,52 @@ typedef mgcom_rpc_handler_parameters    handler_parameters;
 typedef mgcom_rpc_handler_function_t    handler_function_t;
 typedef mgcom_rpc_handler_id_t          handler_id_t;
 
+namespace untyped {
+
+struct register_handler_params
+{
+    handler_id_t            id;
+    handler_function_t      callback;
+};
+
+struct call_params
+{
+    process_id_t        proc;
+    handler_id_t        handler_id;
+    const void*         arg_ptr;
+    index_t             arg_size;
+    void*               return_ptr;
+    index_t             return_size;
+    mgbase::operation   on_complete;
+};
+
+} // namespace untyped
+
+class requester
+    : mgbase::noncopyable
+{
+public:
+    virtual ~requester() MGBASE_EMPTY_DEFINITION
+    
+    virtual void register_handler(const untyped::register_handler_params& params) = 0;
+    
+    MGBASE_WARN_UNUSED_RESULT
+    virtual bool try_call_async(const untyped::call_params& params) = 0;
+    
+    static requester& get_instance() MGBASE_NOEXCEPT {
+        MGBASE_ASSERT(req_ != MGBASE_NULLPTR);
+        return *req_;
+    }
+    
+    static void set_instance(requester& req) {
+        req_ = &req;
+    }
+    
+private:
+    static requester* req_;
+};
+
+
 /*
 
 struct example_handler {
@@ -55,27 +101,37 @@ struct handler_types
 
 namespace untyped {
 
-void register_handler(
-    handler_id_t            id
-,   handler_function_t      callback
-);
+inline void register_handler(
+    const handler_id_t          id
+,   const handler_function_t    callback
+) {
+    register_handler_params params = { id, callback };
+    requester::get_instance().register_handler(params);
+}
 
-bool try_remote_call_async(
-    process_id_t                proc
-,   handler_id_t                handler_id
-,   const void*                 arg_ptr
-,   index_t                     arg_size
-,   void*                       return_ptr
-,   index_t                     return_size
+MGBASE_WARN_UNUSED_RESULT
+inline bool try_remote_call_async(
+    const process_id_t          proc
+,   const handler_id_t          handler_id
+,   const void* const           arg_ptr
+,   const index_t               arg_size
+,   void* const                 return_ptr
+,   const index_t               return_size
 ,   const mgbase::operation&    on_complete
-);
+) {
+    call_params params = { proc, handler_id, arg_ptr,
+        arg_size, return_ptr, return_size, on_complete };
+    
+    return requester::get_instance().try_call_async(params);
+}
 
 } // namespace untyped
 
 namespace /*unnamed*/ {
 
 template <typename Handler>
-MGBASE_ALWAYS_INLINE bool try_remote_call_async(
+MGBASE_WARN_UNUSED_RESULT
+inline bool try_remote_call_async(
     const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
 ,   typename Handler::return_type* const    return_result
@@ -99,7 +155,8 @@ MGBASE_ALWAYS_INLINE bool try_remote_call_async(
 }
 
 template <typename Handler>
-MGBASE_ALWAYS_INLINE bool try_remote_call_async(
+MGBASE_WARN_UNUSED_RESULT
+inline bool try_remote_call_async(
     const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
 ,   const mgbase::operation&                on_complete
@@ -131,7 +188,7 @@ MGBASE_ALWAYS_INLINE bool try_remote_call_async(
 namespace detail {
 
 template <typename Handler>
-index_t on_callback(const handler_parameters* params)
+inline index_t on_callback(const handler_parameters* params)
 {
     typedef detail::handler_types<Handler>  types;
     typedef typename types::argument_info   argument_info;

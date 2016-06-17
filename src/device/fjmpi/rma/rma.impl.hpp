@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "rma.hpp"
 #include "common/rma.hpp"
 #include "device/fjmpi/fjmpi.hpp"
 #include "device/fjmpi/fjmpi_error.hpp"
@@ -13,6 +14,7 @@
 
 namespace mgcom {
 namespace fjmpi {
+namespace rma {
 
 namespace /*unnamed*/ {
 
@@ -157,6 +159,7 @@ private:
 
 } // unnamed namespace
 
+} // namespace rma
 } // namespace fjmpi
 } // namespace mgcom
 

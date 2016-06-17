@@ -9,56 +9,97 @@
 #include "common/rma/region_allocator.hpp"
 
 namespace mgcom {
+namespace mpi {
 namespace rma {
 
-void initialize() {
-    initialize_contiguous();
-    initialize_atomic();
-    initialize_allocator();
-}
+namespace /*unnamed*/ {
 
-void finalize()
+class mpi_requester
+    : public requester
 {
-    finalize_allocator();
-    finalize_atomic();
-    finalize_contiguous();
-}
-
-namespace untyped {
-
-local_region register_region(
-    void* const     ptr
-,   const index_t   size_in_bytes MGBASE_UNUSED
-) {
-    // do nothing
+public:
+    mpi_requester()
+    {
+        initialize_contiguous();
+        initialize_atomic();
+    }
     
-    MGBASE_LOG_DEBUG(
-        "msg:Registered region (but doing nothing.)\tptr:{:x}\tsize_in_bytes:{}"
-    ,   reinterpret_cast<mgbase::uint64_t>(ptr)
-    ,   size_in_bytes
-    );
+    virtual ~mpi_requester()
+    {
+        finalize_atomic();
+        finalize_contiguous();
+    }
     
-    return make_local_region(make_region_key(ptr, 0 /*unused*/), 0);
-}
-
-remote_region use_remote_region(
-    process_id_t      //proc_id
-,   const region_key& key
-) {
-    MGBASE_LOG_DEBUG(
-        "msg:Use remote region. (but doing nothing.)"
-    );
+    virtual bool try_read_async(const untyped::read_params& params) MGBASE_OVERRIDE {
+        return mgcom::mpi::rma::try_read_async(params);
+    }
     
-    return make_remote_region(key, 0 /* unused */);
-}
+    virtual bool try_write_async(const untyped::write_params& params) MGBASE_OVERRIDE {
+        return mgcom::mpi::rma::try_write_async(params);
+    }
+    
+    virtual bool try_atomic_read_async(const atomic_read_params<atomic_default_t>& params) MGBASE_OVERRIDE {
+        return mgcom::mpi::rma::try_atomic_read_async(params);
+    }
+    
+    virtual bool try_atomic_write_async(const atomic_write_params<atomic_default_t>& params) MGBASE_OVERRIDE {
+        return mgcom::mpi::rma::try_atomic_write_async(params);
+    }
+    
+    virtual bool try_compare_and_swap_async(const compare_and_swap_params<atomic_default_t>& params) MGBASE_OVERRIDE {
+        return mgcom::mpi::rma::try_compare_and_swap_async(params);
+    }
+    
+    virtual bool try_fetch_and_add_async(const fetch_and_add_params<atomic_default_t>& params) MGBASE_OVERRIDE {
+        return mgcom::mpi::rma::try_fetch_and_add_async(params);
+    }
+};
 
-void deregister_region(const local_region& /*region*/)
+class mpi_registrator
+    : public registrator
 {
-    // do nothing
+public:
+    virtual untyped::local_region register_region(const untyped::register_region_params& params) MGBASE_OVERRIDE {
+        // do nothing
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Registered region (but doing nothing.)\tptr:{:x}\tsize_in_bytes:{}"
+        ,   reinterpret_cast<mgbase::uint64_t>(params.local_ptr)
+        ,   params.size_in_bytes
+        );
+        
+        return untyped::make_local_region(untyped::make_region_key(params.local_ptr, 0 /*unused*/), 0);
+    }
+    
+    virtual untyped::remote_region use_remote_region(const untyped::use_remote_region_params& params) MGBASE_OVERRIDE
+    {
+        MGBASE_LOG_DEBUG(
+            "msg:Use remote region. (but doing nothing.)"
+        );
+        
+        return untyped::make_remote_region(params.key, 0 /* unused */);
+    }
+    
+    virtual void deregister_region(const untyped::deregister_region_params& /*params*/) {
+        // do nothing
+    }
+};
+
+} // unnamed namespace
+
+mgbase::unique_ptr<requester> make_requester()
+{
+    // TODO: replace with make_unique
+    return mgbase::unique_ptr<requester>(new mpi_requester);
 }
 
-} // namespace untyped
+mgbase::unique_ptr<registrator> make_registrator()
+{
+    // TODO: replace with make_unique
+    return mgbase::unique_ptr<registrator>(new mpi_registrator);
+}
 
 } // namespace rma
+} // namespace mpi
 } // namespace mgcom
 

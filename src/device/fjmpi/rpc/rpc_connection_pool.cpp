@@ -4,6 +4,7 @@
 #include "rpc_sender.hpp"
 
 namespace mgcom {
+namespace fjmpi {
 namespace rpc {
 
 namespace /*unnamed*/ {
@@ -31,5 +32,6 @@ void finalize()
 }
 
 } // namespace rpc
+} // namespace fjmpi
 } // namespace mgcom
 

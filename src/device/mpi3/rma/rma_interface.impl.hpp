@@ -6,118 +6,111 @@
 #include "common/rma/region_allocator.hpp"
 
 namespace mgcom {
-namespace rma {
-
 namespace mpi3 {
 
-// Points to a global variable defined in another compilation unit.
 //  /*???*/& g_queue;
 
-} // namespace mpi3
+namespace rma {
 
-namespace untyped {
+// Points to a global variable defined in another compilation unit.
 
-bool try_remote_read_async(
-    const process_id_t          src_proc
-,   const remote_address&       src_raddr
-,   const local_address&        dest_laddr
-,   const index_t               size_in_bytes
-,   const mgbase::operation&    on_complete
-) {
-    return mgcom::mpi3::g_queue.try_get(
-        to_raw_pointer(dest_laddr)
-    ,   static_cast<int>(src_proc)
-    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(src_raddr))
-    ,   static_cast<int>(size_in_bytes)
-    ,   on_complete
-    );
-}
+namespace /*unnamed*/ {
 
-bool try_remote_write_async(
-    const process_id_t          dest_proc
-,   const remote_address&       dest_raddr
-,   const local_address&        src_laddr
-,   const index_t               size_in_bytes
-,   const mgbase::operation&    on_complete
-) {
-    return mgcom::mpi3::g_queue.try_put(
-        to_raw_pointer(src_laddr)
-    ,   static_cast<int>(dest_proc)
-    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(dest_raddr))
-    ,   static_cast<int>(size_in_bytes)
-    ,   on_complete
-    );
-}
+class mpi3_requester
+    : public requester
+{
+public:
+    mpi3_requester()
+    {
+        // do nothing
+    }
+    
+    virtual ~mpi3_requester()
+    {
+        // do nothing
+    }
+    
+    virtual bool try_read_async(const untyped::read_params& params) MGBASE_OVERRIDE
+    {
+        return mgcom::mpi3::g_queue.try_get(
+            untyped::to_raw_pointer(params.dest_laddr)
+        ,   static_cast<int>(params.src_proc)
+        ,   reinterpret_cast<MPI_Aint>(untyped::to_raw_pointer(params.src_raddr))
+        ,   static_cast<int>(params.size_in_bytes)
+        ,   params.on_complete
+        );
+    }
+    
+    virtual bool try_write_async(const untyped::write_params& params) MGBASE_OVERRIDE
+    {
+        return mgcom::mpi3::g_queue.try_put(
+            untyped::to_raw_pointer(params.src_laddr)
+        ,   static_cast<int>(params.dest_proc)
+        ,   reinterpret_cast<MPI_Aint>(untyped::to_raw_pointer(params.dest_raddr))
+        ,   static_cast<int>(params.size_in_bytes)
+        ,   params.on_complete
+        );
+        
+    }
+    
+    virtual bool try_atomic_read_async(const atomic_read_params<atomic_default_t>& params) MGBASE_OVERRIDE
+    {
+        return mgcom::mpi3::g_queue.try_fetch_and_op<atomic_default_t>(
+            0 // parameter "value" is unused
+        ,   params.dest_ptr
+        ,   static_cast<int>(params.src_proc)
+        ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(params.src_rptr))
+        ,   MPI_NO_OP
+        ,   params.on_complete
+        );
+    }
+    
+    virtual bool try_atomic_write_async(const atomic_write_params<atomic_default_t>& params) MGBASE_OVERRIDE
+    {
+        return mgcom::mpi3::g_queue.try_fetch_and_op<atomic_default_t>(
+            params.value
+        ,   MGBASE_NULLPTR
+        ,   static_cast<int>(params.dest_proc)
+        ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(params.dest_rptr))
+        ,   MPI_REPLACE
+        ,   params.on_complete
+        );
+    }
+    
+    virtual bool try_compare_and_swap_async(const compare_and_swap_params<atomic_default_t>& params) MGBASE_OVERRIDE
+    {
+        return mgcom::mpi3::g_queue.try_compare_and_swap<atomic_default_t>(
+            params.expected
+        ,   params.desired
+        ,   params.result_ptr
+        ,   static_cast<int>(params.target_proc)
+        ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(params.target_rptr))
+        ,   params.on_complete
+        );
+    }
+    
+    virtual bool try_fetch_and_add_async(const fetch_and_add_params<atomic_default_t>& params) MGBASE_OVERRIDE
+    {
+        return mgcom::mpi3::g_queue.try_fetch_and_op<atomic_default_t>(
+            params.value
+        ,   params.result_ptr
+        ,   static_cast<int>(params.target_proc)
+        ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(params.target_rptr))
+        ,   MPI_SUM
+        ,   params.on_complete
+        );
+    }
+};
 
-} // namespace untyped
+} // unnamed namespace
 
-bool try_remote_atomic_read_async(
-    const process_id_t                          src_proc
-,   const remote_ptr<const atomic_default_t>&   src_rptr
-,   atomic_default_t* const                     dest_ptr
-,   const mgbase::operation&                    on_complete
-) {
-    return mgcom::mpi3::g_queue.try_fetch_and_op<atomic_default_t>(
-        0 // parameter "value" is unused
-    ,   dest_ptr
-    ,   static_cast<int>(src_proc)
-    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(src_rptr))
-    ,   MPI_NO_OP
-    ,   on_complete
-    );
-}
-
-bool try_remote_atomic_write_async(
-    const process_id_t                          dest_proc
-,   const remote_ptr<atomic_default_t>&         dest_rptr
-,   const atomic_default_t                      value
-,   const mgbase::operation&                    on_complete
-) {
-    return mgcom::mpi3::g_queue.try_fetch_and_op<atomic_default_t>(
-        value
-    ,   MGBASE_NULLPTR
-    ,   static_cast<int>(dest_proc)
-    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(dest_rptr))
-    ,   MPI_REPLACE
-    ,   on_complete
-    );
-}
-
-bool try_remote_compare_and_swap_async(
-    const process_id_t                          target_proc
-,   const remote_ptr<atomic_default_t>&         target_rptr
-,   const atomic_default_t                      expected_val
-,   const atomic_default_t                      desired_val
-,   atomic_default_t* const                     result_ptr
-,   const mgbase::operation&                    on_complete
-) {
-    return mgcom::mpi3::g_queue.try_compare_and_swap<atomic_default_t>(
-        expected_val
-    ,   desired_val
-    ,   result_ptr
-    ,   static_cast<int>(target_proc)
-    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(target_rptr))
-    ,   on_complete
-    );
-}
-
-bool try_remote_fetch_and_add_async(
-    const process_id_t                          target_proc
-,   const remote_ptr<atomic_default_t>&         target_rptr
-,   const atomic_default_t                      value
-,   atomic_default_t* const                     result_ptr
-,   const mgbase::operation&                    on_complete
-) {
-    return mgcom::mpi3::g_queue.try_fetch_and_op<atomic_default_t>(
-        value
-    ,   result_ptr
-    ,   static_cast<int>(target_proc)
-    ,   reinterpret_cast<MPI_Aint>(to_raw_pointer(target_rptr))
-    ,   MPI_SUM
-    ,   on_complete
-    );
+mgbase::unique_ptr<requester> make_requester()
+{
+    // TODO: replace with make_unique
+    return mgbase::unique_ptr<requester>(new mpi3_requester);
 }
 
 } // namespace rma
+} // namespace mpi3
 } // namespace mgcom
 

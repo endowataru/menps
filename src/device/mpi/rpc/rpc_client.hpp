@@ -2,6 +2,7 @@
 #include "rpc.hpp"
 
 namespace mgcom {
+namespace mpi {
 namespace rpc {
 
 void send_reply(
@@ -11,5 +12,6 @@ void send_reply(
 );
 
 } // namespace rpc
+} // namespace mpi
 } // namespace mgcom
 

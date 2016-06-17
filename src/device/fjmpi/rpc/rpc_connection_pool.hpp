@@ -5,6 +5,7 @@
 #include "common/rpc/rpc_basic_connection_pool.hpp"
 
 namespace mgcom {
+namespace fjmpi {
 namespace rpc {
 
 typedef rpc_basic_connection_pool<
@@ -17,5 +18,6 @@ typedef rpc_basic_connection_pool<
 rpc_connection_pool;
 
 } // namespace rpc
+} // namespace fjmpi
 } // namespace mgcom
 

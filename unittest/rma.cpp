@@ -29,7 +29,7 @@ TEST_F(RmaBasic, Get)
 {
     *buf = 0;
     
-    mgcom::rma::remote_read(0, rptr, buf, 1);
+    mgcom::rma::read(0, rptr, buf, 1);
     
     const int val = *buf;
     ASSERT_EQ(123, val);
@@ -40,7 +40,7 @@ TEST_F(RmaBasic, Put)
     if (mgcom::current_process_id() == 0) {
         *buf = 234;
         
-        mgcom::rma::remote_write(0, rptr, buf, 1);
+        mgcom::rma::write(0, rptr, buf, 1);
         
         const int val = *lptr;
         ASSERT_EQ(234, val);
@@ -49,7 +49,7 @@ TEST_F(RmaBasic, Put)
     mgcom::collective::barrier();
     
     *buf = 0;
-    mgcom::rma::remote_read(0, rptr, buf, 1);
+    mgcom::rma::read(0, rptr, buf, 1);
     
     const int val = *buf;
     ASSERT_EQ(234, val);
@@ -66,7 +66,7 @@ TEST_F(RmaBasic, ConcurrentGet)
     }
     
     for (vec_type::iterator itr = ptrs.begin(); itr != ptrs.end(); ++itr) {
-        mgcom::rma::remote_read_async(
+        mgcom::rma::read_async(
             0
         ,   rptr
         ,   *itr
@@ -79,6 +79,8 @@ TEST_F(RmaBasic, ConcurrentGet)
         const mgbase::uint64_t x = count.load(mgbase::memory_order_acquire);
         if (x == ptrs.size())
             break;
+        
+        mgbase::ult::this_thread::yield();
     }
     
     for (vec_type::iterator itr = ptrs.begin(); itr != ptrs.end(); ++itr) {
@@ -124,7 +126,7 @@ TEST_F(RmaAtomic, FetchAndAdd)
     
     *buf = 100;
     
-    mgcom::rma::remote_fetch_and_add(
+    mgcom::rma::fetch_and_add(
         0
     ,   rptr
     ,   *buf
@@ -155,7 +157,7 @@ TEST_F(RmaAtomic, CompareAndSwap)
     {
         if (mgcom::current_process_id() == proc)
         {
-            mgcom::rma::remote_compare_and_swap(
+            mgcom::rma::compare_and_swap(
                 0
             ,   rptr
             ,   *buf

@@ -11,6 +11,7 @@
 #include "device/mpi/mpi_call.hpp"
 
 namespace mgcom {
+namespace mpi {
 namespace collective {
 
 namespace /*unnamed*/ {
@@ -124,5 +125,6 @@ private:
 } // unnamed namespace
 
 } // namespace collective
+} // namespace mpi
 } // namespace mgcom
 

@@ -4,7 +4,7 @@
 #include "device/fjmpi/remote_notice.hpp"
 
 namespace mgcom {
-
+namespace fjmpi {
 namespace rpc {
 
 namespace /*unnamed*/ {
@@ -23,18 +23,12 @@ void finalize_receiver()
     g_receiver.finalize();
 }
 
-namespace untyped {
-
-void register_handler(const handler_id_t id, const handler_function_t callback)
+void register_handler_to_receiver(const untyped::register_handler_params& params)
 {
-    g_receiver.register_handler(id, callback);
+    g_receiver.register_handler(params.id, params.callback);
 }
 
-} // namespace untyped
-
 } // namespace rpc
-
-namespace fjmpi {
 
 void remote_notice(const int nic, const int pid, const int /*tag*/)
 {
@@ -45,6 +39,5 @@ void remote_notice(const int nic, const int pid, const int /*tag*/)
 }
 
 } // namespace fjmpi
-
 } // namespace mgcom
 

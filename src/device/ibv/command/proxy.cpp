@@ -5,6 +5,7 @@
 #include "poll_thread.hpp"
 #include "device/ibv/ibv.hpp"
 #include "common/rma/region_allocator.hpp"
+#include "device/ibv/rma/rma.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -47,36 +48,34 @@ void finalize()
 #include "ibv_interface.impl.hpp"
 
 namespace mgcom {
+namespace ibv {
 namespace rma {
 namespace untyped {
 
-local_region register_region(
-    void* const     buf
-,   const index_t   size_in_bytes
-) {
-    ibv_mr& mr = ibv::g_ep.register_memory(buf, size_in_bytes);
+untyped::local_region register_region(const untyped::register_region_params& params)
+{
+    ibv_mr& mr = ibv::g_ep.register_memory(params.local_ptr, params.size_in_bytes);
     
-    const region_key key = { buf, mr.lkey };
+    const region_key key = { params.local_ptr, mr.lkey };
     const local_region reg = { key, reinterpret_cast<mgbase::uint64_t>(&mr) };
     return reg;
 }
 
-void deregister_region(const local_region& region)
+void deregister_region(const untyped::deregister_region_params& params)
 {
-    ibv_mr* const mr = ibv::to_mr(region);
+    ibv_mr* const mr = ibv::to_mr(params.region);
     ibv::g_ep.deregister_memory(*mr);
 }
 
-remote_region use_remote_region(
-    const process_id_t  //proc_id
-,   const region_key&   key
-) {
+untyped::remote_region use_remote_region(const untyped::use_remote_region_params& params) 
+{
     remote_region region;
-    region.key = key;
+    region.key = params.key;
     return region;
 }
 
 } // namespace untyped
 } // namespace rma
+} // namespace ibv
 } // namespace mgcom
 

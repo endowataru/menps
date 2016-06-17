@@ -13,8 +13,8 @@
 #include "contiguous.hpp"
 
 namespace mgcom {
+namespace mpi {
 namespace rma {
-namespace untyped {
 
 namespace /*unnamed*/ {
 
@@ -87,25 +87,20 @@ private:
     
 public:
     template <emulated_contiguous& self>
-    static bool try_read(
-        process_id_t                proc
-    ,   const remote_address&       remote_addr
-    ,   const local_address&        local_addr
-    ,   index_t                     size_in_bytes
-    ,   const mgbase::operation&    on_complete
-    ) {
+    static bool try_read(const untyped::read_params& params)
+    {
         const int tag = self.new_tag();
         
         const typename am_read<self>::argument_type arg = {
             tag
-        ,   to_raw_pointer(remote_addr)
-        ,   size_in_bytes
+        ,   untyped::to_raw_pointer(params.src_raddr)
+        ,   params.size_in_bytes
         };
         
         // The completion of RPC is ignored.
         
         const bool ret = rpc::try_remote_call_async< am_read<self> >(
-            proc
+            params.src_proc
         ,   arg
         ,   mgbase::make_no_operation()
         );
@@ -115,22 +110,22 @@ public:
             // Wait for the local completion of MPI_Irecv().
             
             mpi::irecv(
-                to_raw_pointer(local_addr)
-            ,   static_cast<int>(size_in_bytes)
-            ,   static_cast<int>(proc)
+                untyped::to_raw_pointer(params.dest_laddr)
+            ,   static_cast<int>(params.size_in_bytes)
+            ,   static_cast<int>(params.src_proc)
             ,   tag
             ,   self.get_comm()
             ,   MPI_STATUS_IGNORE
-            ,   on_complete
+            ,   params.on_complete
             );
         }
         
         MGBASE_LOG_DEBUG("msg:{}"
             "\tsrc_proc:{}\tremote:{:x}\tlocal:{:x}\tsize_in_bytes:{}\ttag:{}"
         ,   (ret ? "Started emulated get." : "Failed to start emulated get.")
-        ,   proc
-        ,   static_cast<mgbase::intptr_t>(to_integer(remote_addr))
-        ,   static_cast<mgbase::intptr_t>(to_integer(local_addr))
+        ,   params.src_proc
+        ,   static_cast<mgbase::intptr_t>(to_integer(params.src_raddr))
+        ,   static_cast<mgbase::intptr_t>(to_integer(params.dest_laddr))
         ,   arg.size_in_bytes
         ,   arg.tag
         );
@@ -185,35 +180,30 @@ private:
     
 public:
     template <emulated_contiguous& self>
-    static bool try_write(
-        process_id_t                proc
-    ,   const remote_address&       remote_addr
-    ,   const local_address&        local_addr
-    ,   index_t                     size_in_bytes
-    ,   const mgbase::operation&    on_complete
-    ) {
+    static bool try_write(const untyped::write_params& params)
+    {
         const int tag = self.new_tag();
         
         const typename am_write<self>::argument_type arg = {
             tag
-        ,   to_raw_pointer(remote_addr)
-        ,   size_in_bytes
+        ,   untyped::to_raw_pointer(params.dest_raddr)
+        ,   params.size_in_bytes
         };
         
         // Wait for the completion of MPI_Irecv() at the destination node.
         
         const bool ret = rpc::try_remote_call_async< am_write<self> >(
-            proc
+            params.dest_proc
         ,   arg
-        ,   on_complete
+        ,   params.on_complete
         );
         
-        if (ret)
+        if (MGBASE_LIKELY(ret))
         {
             mpi::isend(
-                to_raw_pointer(local_addr)
-            ,   static_cast<int>(size_in_bytes)
-            ,   static_cast<int>(proc)
+                untyped::to_raw_pointer(params.src_laddr)
+            ,   static_cast<int>(params.size_in_bytes)
+            ,   static_cast<int>(params.dest_proc)
             ,   tag
             ,   self.get_comm()
             ,   mgbase::make_no_operation()
@@ -223,9 +213,9 @@ public:
         MGBASE_LOG_DEBUG("msg:{}"
             "\tdest_proc:{}\tremote:{:x}\tlocal:{:x}\tsize_in_bytes:{}\ttag:{}"
         ,   (ret ? "Started emulated put." : "Failed to start emulated put.")
-        ,   proc
-        ,   static_cast<mgbase::intptr_t>(to_integer(remote_addr))
-        ,   static_cast<mgbase::intptr_t>(to_integer(local_addr))
+        ,   params.dest_proc
+        ,   static_cast<mgbase::intptr_t>(to_integer(params.dest_raddr))
+        ,   static_cast<mgbase::intptr_t>(to_integer(params.src_laddr))
         ,   arg.size_in_bytes
         ,   arg.tag
         );
@@ -252,7 +242,7 @@ private:
 
 } // unnamed namespace
 
-} // namespace untyped
 } // namespace rma
+} // namespace mpi
 } // namespace mgcom
 

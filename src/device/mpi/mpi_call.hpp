@@ -5,6 +5,8 @@
 #include <mgbase/operation.hpp>
 #include "mpi.hpp"
 
+#include <mgbase/ult.hpp>
+
 namespace mgcom {
 namespace mpi {
 
@@ -131,7 +133,9 @@ MGBASE_ALWAYS_INLINE void irecv(
     ,   status_result
     ,   on_complete
     ))
-    { }
+    {
+        mgbase::ult::this_thread::yield();
+    }
 }
 
 MGBASE_ALWAYS_INLINE void isend(
@@ -150,7 +154,9 @@ MGBASE_ALWAYS_INLINE void isend(
     ,   comm
     ,   on_complete
     ))
-    { }
+    {
+        mgbase::ult::this_thread::yield();
+    }
 }
 
 MGBASE_ALWAYS_INLINE void irsend(
@@ -169,7 +175,9 @@ MGBASE_ALWAYS_INLINE void irsend(
     ,   comm
     ,   on_complete
     ))
-    { }
+    {
+        mgbase::ult::this_thread::yield();
+    }
 }
 
 /*MGBASE_ALWAYS_INLINE void send(

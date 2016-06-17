@@ -24,7 +24,7 @@ target_link_libraries(mgcom-base INTERFACE mgcom-header mgbase-options)
 # Platform Checks
 
 CHECK_INCLUDE_FILE_CXX("mpi.h" is_mpi_available)
-#set(is_mpi_available FALSE) # FIXME: Temporary
+#set(is_mpi_available FALSE) # Just for compilation check
 
 CHECK_CXX_SOURCE_COMPILES("
 #include <mpi.h>
@@ -34,7 +34,7 @@ int a[MPI_VERSION - 3];
 
 int main() { }
 "
-is_mpi3_available)
+MGCOM_DEVICE_MPI3_SUPPORTED)
 
 CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
 #set(is_fjmpi_available TRUE) # Just for compilation check
@@ -69,13 +69,14 @@ if(${is_mpi_available})
         src/device/mpi/mpi_call.cpp
         src/device/mpi1/command/mpi1_command_queue.cpp
         src/device/mpi1/mpi1.cpp
+        src/common/entrypoint.cpp
     )
     target_link_libraries(mgcom-mpi1 mgcom-base mgbase)
     
     list(APPEND mgcom-devices mpi1)
 endif()
 
-if(${is_mpi3_available})
+if(${MGCOM_DEVICE_MPI3_SUPPORTED})
     add_library(mgcom-mpi3
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.cpp
@@ -86,6 +87,7 @@ if(${is_mpi3_available})
         src/device/mpi/mpi_call.cpp
         src/device/mpi3/mpi3.cpp
         src/device/mpi3/rma/rma.cpp
+        src/device/mpi3/entrypoint.cpp
     )
     target_link_libraries(mgcom-mpi3 mgcom-base mgbase)
     
@@ -105,9 +107,11 @@ if (${is_fjmpi_available})
         src/device/fjmpi/fjmpi.cpp
         src/device/fjmpi/rma/rma.cpp
         
+        src/device/fjmpi/rpc/rpc.cpp
         src/device/fjmpi/rpc/rpc_sender.cpp
         src/device/fjmpi/rpc/rpc_receiver.cpp
         src/device/fjmpi/rpc/rpc_connection_pool.cpp
+        src/device/fjmpi/entrypoint.cpp
     )
     target_link_libraries(mgcom-fjmpi mgcom-base mgbase)
     
@@ -117,7 +121,9 @@ endif()
 if (${is_ibv_available})
     add_library(mgcom-ibv
         src/device/ibv/command/proxy.cpp
+        src/device/ibv/entrypoint.cpp
         src/device/ibv/ibv.cpp
+        src/device/ibv/rma/rma.cpp
         
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.cpp

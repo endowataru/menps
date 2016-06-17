@@ -31,6 +31,7 @@ public:
         return result;
     }
     
+    MGBASE_NORETURN
     static void emit()
     {
         throw fjmpi_error();

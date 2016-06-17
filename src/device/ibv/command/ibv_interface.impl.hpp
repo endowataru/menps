@@ -9,112 +9,78 @@ namespace ibv {
 
 // /*???*/ g_proxy;
 
-} // namespace ibv
-
 namespace rma {
 
 namespace untyped {
 
-MGBASE_WARN_UNUSED_RESULT bool try_remote_read_async(
-    const process_id_t          src_proc
-,   const remote_address&       remote_addr
-,   const local_address&        local_addr
-,   const index_t               size_in_bytes
-,   const mgbase::operation&    on_complete
-) {
+MGBASE_WARN_UNUSED_RESULT
+bool try_read_async(const untyped::read_params& params) {
     return mgcom::ibv::g_proxy.try_remote_read_async(
-        src_proc
-    ,   remote_addr
-    ,   local_addr
-    ,   size_in_bytes
-    ,   on_complete
+        params.src_proc
+    ,   params.src_raddr
+    ,   params.dest_laddr
+    ,   params.size_in_bytes
+    ,   params.on_complete
     );
 }
 
-MGBASE_WARN_UNUSED_RESULT bool try_remote_write_async(
-    const process_id_t          dest_proc
-,   const remote_address&       remote_addr
-,   const local_address&        local_addr
-,   const index_t               size_in_bytes
-,   const mgbase::operation&    on_complete
-) {
+MGBASE_WARN_UNUSED_RESULT
+bool try_write_async(const untyped::write_params& params) {
     return mgcom::ibv::g_proxy.try_remote_write_async(
-        dest_proc
-    ,   remote_addr
-    ,   local_addr
-    ,   size_in_bytes
-    ,   on_complete
+        params.dest_proc
+    ,   params.dest_raddr
+    ,   params.src_laddr
+    ,   params.size_in_bytes
+    ,   params.on_complete
     );
 }
 
 } // namespace untyped
 
 MGBASE_WARN_UNUSED_RESULT
-bool try_remote_atomic_read_async(
-    const process_id_t                          src_proc
-,   const remote_ptr<const atomic_default_t>&   src_rptr
-,   atomic_default_t* const                     dest_ptr
-,   const mgbase::operation&                    on_complete
-) {
+bool try_atomic_read_async(const atomic_read_params<atomic_default_t>& params) {
     return mgcom::ibv::g_proxy.try_remote_atomic_read_async(
-        src_proc
-    ,   src_rptr
-    ,   dest_ptr
-    ,   on_complete
+        params.src_proc
+    ,   params.src_rptr
+    ,   params.dest_ptr
+    ,   params.on_complete
     );
 }
 
 MGBASE_WARN_UNUSED_RESULT
-bool try_remote_atomic_write_async(
-    const process_id_t                  dest_proc
-,   const remote_ptr<atomic_default_t>& dest_rptr
-,   const atomic_default_t              value
-,   const mgbase::operation&            on_complete
-) {
+bool try_atomic_write_async(const atomic_write_params<atomic_default_t>& params) {
     return mgcom::ibv::g_proxy.try_remote_atomic_write_async(
-        dest_proc
-    ,   dest_rptr
-    ,   value
-    ,   on_complete
+        params.dest_proc
+    ,   params.dest_rptr
+    ,   params.value
+    ,   params.on_complete
     );
 }
 
 MGBASE_WARN_UNUSED_RESULT
-bool try_remote_compare_and_swap_async(
-    const process_id_t                  target_proc
-,   const remote_ptr<atomic_default_t>& target_rptr
-,   const atomic_default_t              expected
-,   const atomic_default_t              desired
-,   atomic_default_t* const             result_ptr
-,   const mgbase::operation&            on_complete
-) {
+bool try_compare_and_swap_async(const compare_and_swap_params<atomic_default_t>& params) {
     return mgcom::ibv::g_proxy.try_remote_compare_and_swap_async(
-        target_proc
-    ,   target_rptr
-    ,   expected
-    ,   desired
-    ,   result_ptr
-    ,   on_complete
+        params.target_proc
+    ,   params.target_rptr
+    ,   params.expected
+    ,   params.desired
+    ,   params.result_ptr
+    ,   params.on_complete
     );
 }
 
 MGBASE_WARN_UNUSED_RESULT
-bool try_remote_fetch_and_add_async(
-    const process_id_t                          target_proc
-,   const remote_ptr<atomic_default_t>&         target_rptr
-,   const atomic_default_t                      value
-,   atomic_default_t* const                     result_ptr
-,   const mgbase::operation&                    on_complete
-) {
+bool try_fetch_and_add_async(const fetch_and_add_params<atomic_default_t>& params) {
     return mgcom::ibv::g_proxy.try_remote_fetch_and_add_async(
-        target_proc
-    ,   target_rptr
-    ,   value
-    ,   result_ptr
-    ,   on_complete
+        params.target_proc
+    ,   params.target_rptr
+    ,   params.value
+    ,   params.result_ptr
+    ,   params.on_complete
     );
 }
 
 } // namespace rma
+} // namespace ibv
 } // namespace mgcom
 

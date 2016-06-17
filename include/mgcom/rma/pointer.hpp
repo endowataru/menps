@@ -142,12 +142,6 @@ private:
     address_type addr_;
 };
 
-namespace /*unnamed*/ {
-
-template <typename T>
-inline remote_ptr<T> use_remote_ptr(process_id_t proc_id, const local_ptr<T>& ptr) {
-    return remote_ptr<T>::cast_from(mgcom::rma::untyped::use_remote_address(proc_id, ptr.to_address()));
-}
 
 template <typename T>
 inline local_ptr<T> allocate(std::size_t number_of_elements = 1) {
@@ -175,8 +169,6 @@ template <typename T>
 inline T* to_raw_pointer(const local_ptr<T>& ptr) MGBASE_NOEXCEPT {
     return static_cast<T*>(mgcom::rma::untyped::to_raw_pointer(ptr.to_address()));
 }
-
-} // unnamed namespace
 
 } // namespace rma
 } // namespace mgcom

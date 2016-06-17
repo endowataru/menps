@@ -4,11 +4,11 @@
 namespace mgcom {
 namespace rma {
 
-namespace /*untyped*/ {
+namespace /*unnamed*/ {
 
 untyped::region_allocator g_alloc;
 
-} // untyped namespace
+} // unnamed namespace
 
 namespace untyped {
 

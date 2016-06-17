@@ -30,11 +30,11 @@ std::string get_state()
     return w.str();
 }
 
-class impl
-    : mgbase::noncopyable
+class mpi_endpoint
+    : public mgcom::endpoint
 {
 public:
-    void initialize(int* argc, char*** argv)
+    mpi_endpoint(int* const argc, char*** const argv)
     {
         int provided;
         mpi_error::check(
@@ -45,58 +45,34 @@ public:
         mpi_error::check(MPI_Comm_size(MPI_COMM_WORLD, &size));
         mpi_error::check(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
         
-        current_process_id_ = static_cast<process_id_t>(rank);
-        number_of_processes_ = static_cast<index_t>(size);
+        this->set_current_process_id(static_cast<process_id_t>(rank));
+        this->set_number_of_processes(static_cast<index_t>(size));
         
         mgbase::logger::set_state_callback(get_state);
         
         MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN); // DEBUG
         
+        endpoint::set_instance(*this); // TODO
+        
         MGBASE_LOG_DEBUG("msg:Initialized MPI.");
     }
     
-    void finalize()
+    virtual ~mpi_endpoint() MGBASE_NOEXCEPT
     {
         mpi_error::check(MPI_Finalize());
         
         MGBASE_LOG_DEBUG("msg:Finalized MPI.");
     }
-    
-    process_id_t current_process_id() const MGBASE_NOEXCEPT {
-        return current_process_id_;
-    }
-    index_t number_of_processes() const MGBASE_NOEXCEPT {
-        return number_of_processes_;
-    }
-    
-private:
-    process_id_t current_process_id_;
-    index_t number_of_processes_;
 };
-
-impl g_impl;
 
 } // unnamed namespace
 
-void initialize(int* argc, char*** argv)
+mgbase::unique_ptr<endpoint> make_endpoint(int* const argc, char*** const argv)
 {
-    g_impl.initialize(argc, argv);
+    // TODO: replace with make_unique
+    return mgbase::unique_ptr<endpoint>(new mpi_endpoint(argc, argv));
 }
 
-void finalize()
-{
-    g_impl.finalize();
-}
-
-}
-
-process_id_t current_process_id() MGBASE_NOEXCEPT {
-    return mpi::g_impl.current_process_id();
-}
-
-index_t number_of_processes() MGBASE_NOEXCEPT {
-    return mpi::g_impl.number_of_processes();
-}
-
+} // namespace mpi
 } // namespace mgcom
 

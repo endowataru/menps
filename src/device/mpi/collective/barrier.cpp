@@ -2,6 +2,7 @@
 #include "barrier.impl.hpp"
 
 namespace mgcom {
+namespace mpi {
 namespace collective {
 
 namespace /*unnamed*/ {
@@ -16,16 +17,47 @@ void barrier()
     barrier_impl::handlers<g_impl>::start(cb).wait();
 }
 
-void initialize()
-{
-    g_impl.initialize();
-}
+namespace /*unnamed*/ {
 
-void finalize()
+class mpi_requester
+    : public requester
 {
-    // do nothing
+public:
+    mpi_requester()
+    {
+        g_impl.initialize();
+    }
+    
+    virtual ~mpi_requester()
+    {
+        // do nothing
+    }
+    
+    virtual void barrier() {
+        mgcom::mpi::collective::barrier();
+    }
+    
+    virtual void broadcast(const untyped::broadcast_params& params) {
+        mgcom::mpi::collective::untyped::broadcast(params);
+    }
+    
+    virtual void allgather(const untyped::allgather_params& params) {
+        mgcom::mpi::collective::untyped::allgather(params);
+    }
+    
+    virtual void alltoall(const untyped::alltoall_params& params) {
+        mgcom::mpi::collective::untyped::alltoall(params);
+    }
+};
+
+} // unnamed namespace
+
+mgbase::unique_ptr<requester> make_requester()
+{
+    return mgbase::unique_ptr<requester>(new mpi_requester);
 }
 
 } // namespace collective
+} // namespace mpi
 } // namespace mgcom
 

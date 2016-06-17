@@ -8,6 +8,7 @@
 #include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
+namespace mpi {
 namespace rma {
 
 namespace /*unnamed*/ {
@@ -60,26 +61,22 @@ private:
     };
     
 public:
-    static bool try_read(
-        const process_id_t                          src_proc
-    ,   const remote_ptr<const atomic_default_t>&   src_rptr
-    ,   atomic_default_t* const                     dest_ptr
-    ,   const mgbase::operation&                    on_complete
-    ) {
-        const typename am_read::argument_type arg = { to_raw_pointer(src_rptr) };
+    static bool try_read(const atomic_read_params<atomic_default_t>& params)
+    {
+        const typename am_read::argument_type arg = { to_raw_pointer(params.src_rptr) };
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote read.\t"
             "src_proc:{}\tsrc_rptr:{:x}"
-        ,   src_proc
+        ,   params.src_proc
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
         );
         
         return mgcom::rpc::try_remote_call_async<am_read>(
-            src_proc
+            params.src_proc
         ,   arg
-        ,   dest_ptr
-        ,   on_complete
+        ,   params.dest_ptr
+        ,   params.on_complete
         );
     }
     
@@ -116,26 +113,25 @@ private:
     };
     
 public:
-    static bool try_write(
-        const process_id_t                          dest_proc
-    ,   const remote_ptr<atomic_default_t>&         dest_rptr
-    ,   const atomic_default_t                      value
-    ,   const mgbase::operation&                    on_complete
-    ) {
-        const typename am_write::argument_type arg = { to_raw_pointer(dest_rptr), value };
+    static bool try_write(const atomic_write_params<atomic_default_t>& params)
+    {
+        const typename am_write::argument_type arg = {
+            to_raw_pointer(params.dest_rptr)
+        ,   params.value
+        };
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote write.\t"
             "dest_proc:{}\tdest_rptr:{:x}\tvalue:{}"
-        ,   dest_proc
+        ,   params.dest_proc
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
         ,   arg.value
         );
         
         return mgcom::rpc::try_remote_call_async<am_write>(
-            dest_proc
+            params.dest_proc
         ,   arg
-        ,   on_complete
+        ,   params.on_complete
         );
     }
     
@@ -177,35 +173,29 @@ private:
     };
     
 public:
-    static bool try_compare_and_swap(
-        const process_id_t                          target_proc
-    ,   const remote_ptr<atomic_default_t>&         target_rptr
-    ,   const atomic_default_t                      expected_val
-    ,   const atomic_default_t                      desired_val
-    ,   atomic_default_t* const                     result_ptr
-    ,   const mgbase::operation&                    on_complete
-    ) {
+    static bool try_compare_and_swap(const compare_and_swap_params<atomic_default_t>& params)
+    {
         const typename am_compare_and_swap::argument_type arg = {
-            to_raw_pointer(target_rptr)
-        ,   expected_val
-        ,   desired_val
+            to_raw_pointer(params.target_rptr)
+        ,   params.expected
+        ,   params.desired
         };
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote compare and swap.\t"
             "proc:{:x}\ttarget:{:x}\texpected:{}\tdesired:{}\tresult_ptr:{:x}"
-        ,   target_proc
+        ,   params.target_proc
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
         ,   arg.expected
         ,   arg.desired
-        ,   reinterpret_cast<mgbase::uintptr_t>(result_ptr)
+        ,   reinterpret_cast<mgbase::uintptr_t>(params.result_ptr)
         );
         
         return mgcom::rpc::try_remote_call_async<am_compare_and_swap>(
-            target_proc
+            params.target_proc
         ,   arg
-        ,   result_ptr
-        ,   on_complete
+        ,   params.result_ptr
+        ,   params.on_complete
         );
     }
     
@@ -243,32 +233,27 @@ private:
     };
     
 public:
-    static bool try_fetch_and_add(
-        const process_id_t                          target_proc
-    ,   const remote_ptr<atomic_default_t>&         target_rptr
-    ,   const atomic_default_t                      value
-    ,   atomic_default_t* const                     result_ptr
-    ,   const mgbase::operation&                    on_complete
-    ) {
+    static bool try_fetch_and_add(const fetch_and_add_params<atomic_default_t>& params)
+    {
         const typename am_fetch_and_add::argument_type arg = {
-            to_raw_pointer(target_rptr)
-        ,   value
+            to_raw_pointer(params.target_rptr)
+        ,   params.value
         };
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote fetch and add.\t"
             "proc:{:x}\ttarget_addr:{:x}\tdiff:{}\tresult_ptr:{:x}"
-        ,   target_proc
+        ,   params.target_proc
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
         ,   arg.diff
-        ,   reinterpret_cast<mgbase::uintptr_t>(result_ptr)
+        ,   reinterpret_cast<mgbase::uintptr_t>(params.result_ptr)
         );
         
         return mgcom::rpc::try_remote_call_async<am_fetch_and_add>(
-            target_proc
+            params.target_proc
         ,   arg
-        ,   result_ptr
-        ,   on_complete
+        ,   params.result_ptr
+        ,   params.on_complete
         );
     }
 };
@@ -276,5 +261,6 @@ public:
 } // unnamed namespace
 
 } // namespace rma
+} // namespace mpi
 } // namespace mgcom
 

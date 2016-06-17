@@ -3,14 +3,25 @@
 
 #include <mgcom.hpp>
 #include "common/rma/rma.hpp"
+#include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {
+namespace fjmpi {
 namespace rma {
 
-void initialize_contiguous();
-void finalize_contiguous();
+using namespace mgcom::rma;
+
+mgbase::unique_ptr<requester> make_requester();
+
+mgbase::unique_ptr<registrator> make_registrator();
 
 namespace untyped {
+
+using namespace mgcom::rma::untyped;
+
+bool try_read_async(const untyped::read_params& params);
+
+bool try_write_async(const untyped::write_params& params);
 
 bool try_remote_read_async_extra(
     process_id_t                proc
@@ -37,5 +48,6 @@ struct constants {
 };
 
 } // namespace rma
+} // namespace fjmpi
 } // namespace mgcom
 

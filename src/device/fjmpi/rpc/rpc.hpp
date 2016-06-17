@@ -5,11 +5,18 @@
 #include "device/fjmpi/rma/rma.hpp"
 
 namespace mgcom {
+namespace fjmpi {
 namespace rpc {
 
-void initialize();
+using namespace mgcom::rpc;
 
-void finalize();
+namespace untyped {
+
+using namespace mgcom::rpc::untyped;
+
+} // namespace untyped
+
+mgbase::unique_ptr<requester> make_requester();
 
 struct rpc_client_connection;
 
@@ -28,5 +35,6 @@ struct message_buffer {
 };
 
 } // namespace rpc
+} // namespace fjmpi
 } // namespace mgcom
 

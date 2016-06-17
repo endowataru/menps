@@ -36,7 +36,7 @@ struct read_config
         remote_read_params params;
         Config::set_params(cb, &params);
         
-        return try_remote_read_async(
+        return try_read_async(
             params.src_proc
         ,   params.src_raddr
         ,   params.dest_laddr
@@ -68,7 +68,7 @@ struct write_config
         remote_write_params params;
         Config::set_params(cb, &params);
         
-        return try_remote_write_async(
+        return try_write_async(
             params.dest_proc
         ,   params.dest_raddr
         ,   params.src_laddr
@@ -176,7 +176,7 @@ struct read_config
         remote_read_params<element_type> params;
         Config::set_params(cb, &params);
         
-        return try_remote_read_async(
+        return try_read_async(
             params.src_proc
         ,   params.src_rptr
         ,   params.dest_lptr
@@ -209,7 +209,7 @@ struct write_config
         remote_write_params<element_type> params;
         Config::set_params(cb, &params);
         
-        return try_remote_write_async(
+        return try_write_async(
             params.dest_proc
         ,   params.dest_rptr
         ,   params.src_lptr
@@ -243,7 +243,7 @@ struct atomic_read_config
         remote_atomic_read_params<element_type> params;
         Config::set_params(cb, &params);
         
-        return try_remote_atomic_read_async(
+        return try_atomic_read_async(
             params.src_proc
         ,   params.src_rptr
         ,   params.dest_ptr
@@ -276,7 +276,7 @@ struct atomic_write_config
         remote_atomic_write_params<element_type> params;
         Config::set_params(cb, &params);
         
-        return try_remote_atomic_write_async(
+        return try_atomic_write_async(
             params.dest_proc
         ,   params.dest_rptr
         ,   params.value
@@ -309,7 +309,7 @@ struct compare_and_swap_config
         remote_compare_and_swap_params<element_type> params;
         Config::set_params(cb, &params);
         
-        return try_remote_compare_and_swap_async(
+        return try_compare_and_swap_async(
             params.target_proc
         ,   params.target_rptr
         ,   params.expected
@@ -343,7 +343,7 @@ struct fetch_and_add_config
         remote_fetch_and_add_params<element_type> params;
         Config::set_params(cb, &params);
         
-        return try_remote_fetch_and_add_async(
+        return try_fetch_and_add_async(
             params.target_proc
         ,   params.target_rptr
         ,   params.value

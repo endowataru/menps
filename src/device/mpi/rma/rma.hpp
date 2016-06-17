@@ -1,13 +1,22 @@
 
 #pragma once
 
+#include <mgcom/rma.hpp>
+#include <mgbase/unique_ptr.hpp>
+
 namespace mgcom {
+namespace mpi {
 namespace rma {
 
-void initialize();
+using namespace mgcom::rma;
 
-void finalize();
+namespace untyped = mgcom::rma::untyped;
+
+mgbase::unique_ptr<requester> make_requester();
+
+mgbase::unique_ptr<registrator> make_registrator();
 
 } // namespace rma
+} // namespace mpi
 } // namespace mgcom
 

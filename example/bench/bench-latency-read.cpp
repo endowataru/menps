@@ -68,16 +68,12 @@ void start_bench_thread(const mgbase::uint32_t thread_id)
         mgbase::stopwatch sw;
         sw.start();
         
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
-        mgcom::rma::remote_read_async(
+        mgcom::rma::read(
             target_proc
         ,   g_remote_ptrs[target_proc]
         ,   local_buf
         ,   1
-        ,   mgbase::make_operation_store_release(&flag, true)
         );
-        
-        while (!flag.load(mgbase::memory_order_acquire)) { }
         
         if (i > g_num_startup_samples)
             record_sample(thread_id, sw.elapsed());

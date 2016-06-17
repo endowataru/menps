@@ -26,28 +26,6 @@ typedef mgcom_rma_remote_region            remote_region;
 typedef mgcom_rma_local_address            local_address;
 typedef mgcom_rma_remote_address           remote_address;
 
-/**
- * Register a region located on the current process.
- */
-local_region register_region(
-    void*   local_ptr
-,   index_t size_in_bytes
-);
-
-/**
- * Prepare a region located on a remote process.
- */
-remote_region use_remote_region(
-    process_id_t      proc_id
-,   const region_key& key
-);
-
-/**
- * De-register the region located on the current process.
- */
-void deregister_region(const local_region& region);
-
-
 typedef mgcom_rma_registered_buffer   registered_buffer;
 
 /**
@@ -60,7 +38,6 @@ registered_buffer allocate(index_t size_in_bytes);
  */
 void deallocate(const registered_buffer& buffer);
 
-namespace /*unnamed*/ {
 
 inline region_key to_region_key(const local_region& region) MGBASE_NOEXCEPT {
     return region.key;
@@ -101,34 +78,18 @@ inline void* to_raw_pointer(const registered_buffer& buffer) MGBASE_NOEXCEPT {
     return to_raw_pointer(to_address(buffer));
 }
 
-inline local_region allocate_region(index_t size_in_bytes) {
-    void* const ptr = new mgbase::uint8_t[size_in_bytes];
-    return register_region(ptr, size_in_bytes);
-}
-inline void deallocate_region(const local_region& region) {
-    deregister_region(region);
-    delete[] static_cast<mgbase::uint8_t*>(to_raw_pointer(region));
-}
-
-inline remote_address use_remote_address(process_id_t proc_id, const local_address& addr) {
-    remote_address result = { use_remote_region(proc_id, addr.region.key), addr.offset };
-    return result;
-}
-
-} // unnamed namespace
-
 } // namespace untyped
 
-namespace /*unnamed*/ {
-
 inline mgbase::uint64_t to_integer(const untyped::remote_address& addr) MGBASE_NOEXCEPT {
-    return reinterpret_cast<mgbase::uint64_t>(static_cast<mgbase::uint8_t*>(addr.region.key.pointer) + addr.offset);
+    return reinterpret_cast<mgbase::uint64_t>(
+        static_cast<mgbase::uint8_t*>(addr.region.key.pointer) + addr.offset
+    );
 }
 inline mgbase::uint64_t to_integer(const untyped::local_address& addr) MGBASE_NOEXCEPT {
-    return reinterpret_cast<mgbase::uint64_t>(static_cast<mgbase::uint8_t*>(untyped::to_raw_pointer(addr.region)) + addr.offset);
+    return reinterpret_cast<mgbase::uint64_t>(
+        static_cast<mgbase::uint8_t*>(untyped::to_raw_pointer(addr.region)) + addr.offset
+    );
 }
-
-} // unnamed namespace
 
 } // namespace rma
 } // namespace mgcom
