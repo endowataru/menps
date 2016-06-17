@@ -10,7 +10,7 @@ option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
 option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
 
-set(MGBASE_CXX_STANDARD "" CACHE STRING "C++ standard version")
+set(MGBASE_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
 add_library(mgbase-header INTERFACE)
 target_include_directories(mgbase-header
@@ -71,7 +71,8 @@ else()
             -Wno-disabled-macro-expansion # Problem of stdbool.h
             -Wno-used-but-marked-unused # e.g. mgbase::try_to_lock
             -Wno-weak-vtables # couldn't find a correct way to suppress this warning
-            $<$<VERSION_GREATER:${MGBASE_CXX_STANDARD},03>:-Wno-c++98-compat -Wno-c++98-compat-pedantic>
+            -Wno-c++98-compat
+            -Wno-c++98-compat-pedantic
             
             # Other options
             -Wno-c++11-long-long # TODO
