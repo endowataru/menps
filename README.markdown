@@ -6,8 +6,6 @@ Communication Library for MassiveThreads/GAS 2.
 
 This project is experimental and the API is still unstable.
 
-Requires C++03 or later.
-
 Description
 -----------
 
@@ -87,12 +85,12 @@ Supported interconnects:
 - Tofu (FJMPI)
 - InfiniBand Verbs
 
-Supported compilers:
+Supported compilers (`-std=c++0x` is required):
 
-- Clang
+- Clang (3.1 or higher)
 - GCC (4.4 or higher)
-- Intel C++ Compiler
-- Fujitsu compiler
+- Intel C++ Compiler (14.0 or higher)
+
 
 Platform-Specific Information
 -----------------------------
