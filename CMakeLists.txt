@@ -203,6 +203,14 @@ void f() { }
 int main() { return 0; }
 " MGBASE_COMPILER_SUPPORTS_ALWAYS_INLINE)
 
+CHECK_CXX_SOURCE_COMPILES(
+"
+void f() { __builtin_unreachable(); }
+
+int main() { return 0; }
+" MGBASE_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE
+)
+
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc

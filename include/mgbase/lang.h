@@ -87,10 +87,10 @@
 #define MGBASE_LIKELY(x)            __builtin_expect(!!(x), 1)
 #define MGBASE_UNLIKELY(x)          __builtin_expect(!!(x), 0)
 
-#ifdef MGBASE_COMPILER_FUJITSU
-    #define MGBASE_UNREACHABLE()    abort()
-#else
+#ifdef MGBASE_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE
     #define MGBASE_UNREACHABLE()    __builtin_unreachable()
+#else
+    #define MGBASE_UNREACHABLE()    abort()
 #endif
 
 #ifdef MGBASE_COMPILER_CLANG
