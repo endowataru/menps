@@ -177,6 +177,8 @@ TEST_F(RmaAtomic, CompareAndSwap)
         {
             ASSERT_EQ(*buf3, *buf);
         }
+        
+        mgcom::collective::barrier();
     }
     
     mgcom::collective::barrier();
