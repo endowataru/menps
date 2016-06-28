@@ -1,13 +1,15 @@
 
-#include "device/fjmpi/command/fjmpi_command_queue.hpp"
 #include "device/mpi/mpi_base.hpp"
-#include "device/mpi/mpi_call.hpp"
 #include "rma/rma.hpp"
-#include "device/fjmpi/rpc/rpc.hpp"
 #include "device/mpi/collective/collective.hpp"
 #include "device/mpi/rma/atomic.hpp"
 #include "common/rma/region_allocator.hpp"
-#include "common/starter.hpp"
+#include "starter.hpp"
+#include "device/fjmpi/rpc/requester.hpp"
+#include "device/fjmpi/rma/rma.hpp"
+#include "endpoint.hpp"
+
+#include "device/fjmpi/scheduler/scheduler.hpp"
 
 #include <mgbase/logging/logger.hpp>
 
@@ -22,34 +24,32 @@ class fjmpi_starter
 public:
     fjmpi_starter(int* const argc, char*** const argv)
     {
-        endpoint_ = mpi::make_endpoint(argc, argv);
+        endpoint_ = fjmpi::make_endpoint(argc, argv);
         
-        rma_registrator_ = fjmpi::rma::make_registrator();
+        scheduler_ = fjmpi::make_scheduler();
+        
+        rma_registrator_ = make_rma_registrator(scheduler_->get_fjmpi_interface());
         rma::registrator::set_instance(*rma_registrator_);
-        
-        mgcom::fjmpi::initialize_command_queue();
         
         mgcom::rma::initialize_allocator();
         
-        rpc_requester_ = fjmpi::rpc::make_requester();
+        rpc_requester_ = make_rpc_requester(scheduler_->get_fjmpi_interface(), scheduler_->get_mpi_interface());
         rpc::requester::set_instance(*rpc_requester_);
         
-        rma_requester_ = fjmpi::rma::make_requester();
+        rma_requester_ = fjmpi::make_rma_requester(scheduler_->get_command_producer());
         rma::requester::set_instance(*rma_requester_);
         
-        collective_requester_ = mpi::collective::make_requester();
+        collective_requester_ = mpi::collective::make_requester(scheduler_->get_mpi_interface());
         collective::requester::set_instance(*collective_requester_);
         
-        mgcom::mpi::native_barrier();
+        scheduler_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
         
         MGBASE_LOG_DEBUG("msg:Initialized.");
     }
     
     virtual ~fjmpi_starter()
     {
-        collective::barrier();
-        
-        mgcom::mpi::native_barrier();
+        scheduler_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
         
         collective_requester_.reset();
         
@@ -59,9 +59,9 @@ public:
         
         mgcom::rma::finalize_allocator();
         
-        mgcom::fjmpi::finalize_command_queue();
-        
         rma_registrator_.reset();
+        
+        scheduler_.reset();
         
         endpoint_.reset();
         
@@ -70,6 +70,7 @@ public:
     
 private:
     mgbase::unique_ptr<endpoint> endpoint_;
+    mgbase::unique_ptr<scheduler> scheduler_;
     mgbase::unique_ptr<rma::registrator> rma_registrator_;
     mgbase::unique_ptr<rma::requester> rma_requester_;
     mgbase::unique_ptr<rpc::requester> rpc_requester_;
@@ -80,8 +81,7 @@ private:
 
 mgbase::unique_ptr<starter> make_starter(int* const argc, char*** const argv)
 {
-    // TODO: replace with make_unique
-    return mgbase::unique_ptr<starter>(new fjmpi_starter(argc, argv));
+    return mgbase::make_unique<fjmpi_starter>(argc, argv);
 }
 
 } // namespace fjmpi

@@ -28,7 +28,7 @@ class endpoint
     : mgbase::noncopyable
 {
 public:
-    virtual ~endpoint() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
+    virtual ~endpoint() MGBASE_EMPTY_DEFINITION
     
     process_id_t current_process_id() MGBASE_NOEXCEPT {
         return proc_id_;

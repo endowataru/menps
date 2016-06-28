@@ -10,24 +10,24 @@ namespace rpc {
 namespace /*unnamed*/ {
 
 class rpc_server
+    : mgbase::noncopyable
 {
     static const index_t num_threads = 1;
     
 public:
-    void initialize()
+    explicit rpc_server(mpi_interface& mi)
     {
         invoker_.initialize();
         
-        comm_ = mpi::comm_dup(MPI_COMM_WORLD);
-        mpi::comm_set_name(comm_, "MGCOM_COMM_RPC");
+        comm_ = mi.comm_dup(MPI_COMM_WORLD, "MGCOM_COMM_RPC");
         
         ths_ = new rpc_server_thread[num_threads];
         
         for (index_t i = 0; i < num_threads; ++i)
-            ths_[i].initialize(invoker_, comm_, 100/*FIXME*/);
+            ths_[i].initialize(mi, invoker_, comm_, 100/*FIXME*/);
     }
     
-    void finalize()
+    ~rpc_server()
     {
         for (index_t i = 0; i < num_threads; ++i)
             ths_[i].finalize();

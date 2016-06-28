@@ -58,18 +58,18 @@ if(${is_mpi_available})
     add_library(mgcom-mpi1
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.cpp
-        src/device/mpi/rpc/rpc_server.cpp
-        src/device/mpi/rpc/rpc_client.cpp
+        src/device/mpi/rpc/rpc.cpp
         src/device/mpi/rma/contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/rma/rma.cpp
         src/device/mpi/collective/barrier.cpp
-        src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
-        src/device/mpi/mpi_call.cpp
-        src/device/mpi1/command/mpi1_command_queue.cpp
+        src/device/mpi/endpoint.cpp
+        src/device/mpi/command/mpi_delegator.cpp
+        src/device/mpi1/command/commander.cpp
         src/device/mpi1/mpi1.cpp
         src/common/entrypoint.cpp
+        src/device/mpi/mpi_communicator.cpp
     )
     target_link_libraries(mgcom-mpi1 mgcom-base mgbase)
     
@@ -80,14 +80,19 @@ if(${MGCOM_DEVICE_MPI3_SUPPORTED})
     add_library(mgcom-mpi3
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.cpp
-        src/device/mpi/rpc/rpc_server.cpp
-        src/device/mpi/rpc/rpc_client.cpp
-        src/device/mpi3/command/mpi3_command_queue.cpp
+        src/device/mpi/rpc/rpc.cpp
         src/device/mpi/mpi_base.cpp
-        src/device/mpi/mpi_call.cpp
+        src/device/mpi/endpoint.cpp
+        src/device/mpi/command/mpi_delegator.cpp
+        src/device/mpi3/command/mpi3_delegator.cpp
+        src/device/mpi3/rma/rma_window.cpp
+        src/device/mpi3/command/commander.cpp
         src/device/mpi3/mpi3.cpp
-        src/device/mpi3/rma/rma.cpp
         src/device/mpi3/entrypoint.cpp
+        src/device/mpi3/collective/collective.cpp
+        src/device/mpi/mpi_communicator.cpp
+        src/device/mpi3/rma/requester.cpp
+        src/device/mpi3/rma/registrator.cpp
     )
     target_link_libraries(mgcom-mpi3 mgcom-base mgbase)
     
@@ -100,18 +105,23 @@ if (${is_fjmpi_available})
         src/common/rma/malloc.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/mpi_base.cpp
-        src/device/mpi/mpi_call.cpp
+        src/device/mpi/endpoint.cpp
         src/device/mpi/collective/barrier.cpp
-        src/device/mpi/collective/collective.cpp
-        src/device/fjmpi/command/fjmpi_command_queue.cpp
+        src/device/mpi/command/mpi_delegator.cpp
+        #src/device/fjmpi/command/fjmpi_command_queue.cpp
         src/device/fjmpi/fjmpi.cpp
-        src/device/fjmpi/rma/rma.cpp
-        
+        src/device/fjmpi/rma/requester.cpp
+        src/device/fjmpi/rma/registrator.cpp
         src/device/fjmpi/rpc/rpc.cpp
         src/device/fjmpi/rpc/rpc_sender.cpp
         src/device/fjmpi/rpc/rpc_receiver.cpp
         src/device/fjmpi/rpc/rpc_connection_pool.cpp
         src/device/fjmpi/entrypoint.cpp
+        src/device/fjmpi/endpoint.cpp
+        
+        src/device/fjmpi/scheduler/scheduler.cpp
+        src/device/fjmpi/scheduler/fjmpi_delegator.cpp
+        src/device/fjmpi/scheduler/command_consumer.cpp
     )
     target_link_libraries(mgcom-fjmpi mgcom-base mgbase)
     
@@ -128,13 +138,12 @@ if (${is_ibv_available})
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.cpp
         
-        src/device/mpi/rpc/rpc_server.cpp
-        src/device/mpi/rpc/rpc_client.cpp
+        src/device/mpi/rpc/rpc.cpp
         src/device/mpi/collective/barrier.cpp
-        src/device/mpi/collective/collective.cpp
         src/device/mpi/mpi_base.cpp
-        src/device/mpi/mpi_call.cpp
-        src/device/mpi1/command/mpi1_command_queue.cpp
+        src/device/mpi/endpoint.cpp
+        src/device/mpi1/command/commander.cpp
+        src/device/mpi/command/mpi_delegator.cpp
     )
     target_link_libraries(mgcom-ibv mgcom-base mgbase
         ibverbs # libibverbs.so
@@ -143,6 +152,28 @@ if (${is_ibv_available})
     list(APPEND mgcom-devices ibv)
 endif()
 
+
+#add_library(mgcom-uni
+#    src/common/rma/region_allocator.cpp
+#    src/common/rma/malloc.cpp
+#    
+#    src/device/mpi/rpc/rpc.cpp
+#    src/device/mpi/rma/contiguous.cpp
+#    src/device/mpi/rma/atomic.cpp
+#    src/device/mpi/rma/rma.cpp
+#    src/device/mpi/collective/barrier.cpp
+#    src/device/mpi/mpi_base.cpp
+#    src/device/mpi/command/mpi_delegator.cpp
+#    src/device/mpi1/command/commander.cpp
+#    src/device/mpi1/mpi1.cpp
+#    src/common/entrypoint.cpp
+#    $<$<BOOL:${MGCOM_DEVICE_MPI3_SUPPORTED}>:
+#        src/device/mpi3/command/mpi3_command_queue.cpp
+#        src/device/mpi3/mpi3.cpp
+#        src/device/mpi3/rma/rma.cpp>
+#)
+#target_link_libraries(mgcom-uni mgcom-base mgbase)
+#list(APPEND mgcom-devices uni)
 
 # Generate config.h
 

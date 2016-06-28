@@ -11,8 +11,9 @@ namespace rpc {
 class rpc_sender
 {
 public:
-    void initialize(rpc_connection_pool& pool)
+    void initialize(fjmpi_interface& fi, rpc_connection_pool& pool)
     {
+        fi_ = &fi;
         pool_ = &pool;
     }
     
@@ -75,14 +76,14 @@ private:
         
         const int flags = get_flags(info.remote_nic);
         
-        while (!rma::untyped::try_remote_write_async_extra(
-            dest_proc
-        ,   info.remote_buf.to_address()
-        ,   info.local_buf.to_address()
+        while (!fi_->try_put_async({
+            static_cast<int>(dest_proc)
+        ,   get_absolute_address(info.local_buf.to_address())
+        ,   get_absolute_address(info.remote_buf.to_address())
         ,   sizeof(message_buffer)
         ,   flags | FJMPI_RDMA_REMOTE_NOTICE
         ,   mgbase::make_no_operation()
-        ))
+        }))
         { }
         
         pool_->finish_sending(dest_proc, info.remote_nic);
@@ -100,6 +101,7 @@ private:
         }
     }
     
+    fjmpi_interface* fi_;
     rpc_connection_pool* pool_;
 };
 

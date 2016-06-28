@@ -8,7 +8,12 @@
 namespace mgcom {
 namespace fjmpi {
 
-mgbase::unique_ptr<starter> make_starter(int* const argc, char*** const argv);
+struct constants
+{
+    static const int max_nic_count = 4;
+    static const int max_memid_count = 510;
+    static const int max_tag_count = 15;
+};
 
 } // namespace fjmpi
 } // namespace mgcom

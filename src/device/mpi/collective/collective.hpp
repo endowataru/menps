@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgcom/collective.hpp>
+#include "device/mpi/mpi_interface.hpp"
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {
@@ -10,19 +11,7 @@ namespace collective {
 
 using namespace mgcom::collective;
 
-mgbase::unique_ptr<requester> make_requester();
-
-namespace untyped {
-
-using namespace mgcom::collective::untyped;
-
-void broadcast(const broadcast_params& params);
-
-void allgather(const allgather_params& params);
-
-void alltoall(const alltoall_params& params);
-
-} // namespace untyped
+mgbase::unique_ptr<requester> make_requester(mpi_interface&);
 
 } // namespace collective
 } // namespace mpi

@@ -11,21 +11,16 @@ barrier_impl g_impl;
 
 } // unnamed namespace
 
-void barrier()
-{
-    barrier_cb cb;
-    barrier_impl::handlers<g_impl>::start(cb).wait();
-}
-
 namespace /*unnamed*/ {
 
 class mpi_requester
     : public requester
 {
 public:
-    mpi_requester()
+    mpi_requester(mpi_interface& mi)
+        : mi_(mi)
     {
-        g_impl.initialize();
+        g_impl.initialize(mi);
     }
     
     virtual ~mpi_requester()
@@ -33,28 +28,54 @@ public:
         // do nothing
     }
     
-    virtual void barrier() {
-        mgcom::mpi::collective::barrier();
+    virtual void barrier() MGBASE_OVERRIDE
+    {
+        barrier_cb cb;
+        barrier_impl::handlers<g_impl>::start(cb).wait();
     }
     
-    virtual void broadcast(const untyped::broadcast_params& params) {
-        mgcom::mpi::collective::untyped::broadcast(params);
+    virtual void broadcast(const untyped::broadcast_params& params) MGBASE_OVERRIDE
+    {
+        // do barrier to avoid deadlocking
+        barrier();
+        
+        mi_.native_broadcast({
+            params
+        ,   g_impl.get_communicator()
+        });
     }
     
-    virtual void allgather(const untyped::allgather_params& params) {
-        mgcom::mpi::collective::untyped::allgather(params);
+    virtual void allgather(const untyped::allgather_params& params) MGBASE_OVERRIDE
+    {
+        // do barrier to avoid deadlocking
+        barrier();
+        
+        mi_.native_allgather({
+            params
+        ,   g_impl.get_communicator()
+        });
     }
     
-    virtual void alltoall(const untyped::alltoall_params& params) {
-        mgcom::mpi::collective::untyped::alltoall(params);
+    virtual void alltoall(const untyped::alltoall_params& params) MGBASE_OVERRIDE
+    {
+        // do barrier to avoid deadlocking
+        barrier();
+        
+        mi_.native_alltoall({
+            params
+        ,   g_impl.get_communicator()
+        });
     }
+
+private:
+    mpi_interface& mi_;
 };
 
 } // unnamed namespace
 
-mgbase::unique_ptr<requester> make_requester()
+mgbase::unique_ptr<requester> make_requester(mpi_interface& mi)
 {
-    return mgbase::unique_ptr<requester>(new mpi_requester);
+    return mgbase::make_unique<mpi_requester>(mi);
 }
 
 } // namespace collective

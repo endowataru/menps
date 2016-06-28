@@ -7,7 +7,7 @@ namespace mgcom {
 namespace fjmpi {
 namespace rpc {
 
-void initialize_sender(rpc_connection_pool& pool);
+void initialize_sender(fjmpi_interface& fi, rpc_connection_pool& pool);
 void finalize_sender();
 
 MGBASE_WARN_UNUSED_RESULT

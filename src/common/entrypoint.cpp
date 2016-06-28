@@ -1,9 +1,14 @@
 
 #include <mgcom.hpp>
 #include <cstdlib> // getenv
+#include <cstring> // strcmp
 #include <stdexcept>
-#include "device/mpi1/mpi1.hpp"
 #include <mgbase/logger.hpp>
+
+#include "device/mpi1/mpi1.hpp"
+/*#ifdef MGCOM_DEVICE_MPI3_SUPPORTED
+    #include "device/mpi3/mpi3.hpp"
+#endif*/
 
 namespace mgcom {
 
@@ -21,6 +26,13 @@ struct device
 
 const device devs[] =
 {
+    // Earlier one has a better priority.
+/*#ifdef MGCOM_DEVICE_IBV_SUPPORTED
+    { "ibv", ibv::make_starter },
+#endif
+#ifdef MGCOM_DEVICE_MPI3_SUPPORTED
+    { "mpi3", mpi3::make_starter },
+#endif*/
     { "mpi1", mpi1::make_starter }
 };
 
@@ -32,8 +44,9 @@ factory_func_t select_starter()
     {
         for (mgbase::size_t i = 0; i < sizeof(devs)/sizeof(devs[0]); ++i)
         {
-            if (strcmp(dev_name, devs[i].name) == 0)
+            if (std::strcmp(dev_name, devs[i].name) == 0)
             {
+                MGBASE_LOG_DEBUG("msg:Selected device.\tname:{}", devs[i].name);
                 return devs[i].func;
             }
         }

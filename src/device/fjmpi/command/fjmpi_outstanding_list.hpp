@@ -1,6 +1,8 @@
 
 #pragma once
 
+#error "No longer used"
+
 #include <mgbase/profiling/clock.hpp>
 #include <mgbase/operation.hpp>
 #include <limits>

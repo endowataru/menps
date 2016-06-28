@@ -2,13 +2,13 @@
 #include "rpc.hpp"
 #include "rpc_receiver.hpp"
 #include "rpc_sender.hpp"
+#include "rpc_connection_pool.hpp"
+#include "requester.hpp"
 
 namespace mgcom {
 namespace fjmpi {
-namespace rpc {
 
-void initialize();
-void finalize();
+namespace rpc {
 
 namespace /*unnamed*/ {
 
@@ -16,9 +16,9 @@ class fjmpi_requester
     : public requester
 {
 public:
-    fjmpi_requester()
+    fjmpi_requester(fjmpi_interface& fi, mpi::mpi_interface& mi)
     {
-        fjmpi::rpc::initialize();
+        fjmpi::rpc::initialize(fi, mi);
     }
     
     virtual ~fjmpi_requester()
@@ -40,13 +40,14 @@ public:
 
 } // unnamed namespace
 
-mgbase::unique_ptr<requester> make_requester()
+} // namespace rpc
+
+mgbase::unique_ptr<rpc::requester> make_rpc_requester(fjmpi_interface& fi, mpi::mpi_interface& mi)
 {
     // TODO: replace with make_unique
-    return mgbase::unique_ptr<requester>(new fjmpi_requester);
+    return mgbase::make_unique<rpc::fjmpi_requester>(fi, mi);
 }
 
-} // namespace rpc
 } // namespace fjmpi
 } // namespace mgcom
 

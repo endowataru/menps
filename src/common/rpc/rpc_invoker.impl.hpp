@@ -15,7 +15,7 @@ class rpc_invoker
 public:
     void initialize()
     {
-        callbacks_ = new handler_function_t[constants::max_num_handlers];
+        callbacks_ = new handler_function_t[constants::max_num_handlers]{};
     }
     
     void finalize()

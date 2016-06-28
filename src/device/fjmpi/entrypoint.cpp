@@ -1,6 +1,7 @@
 
 #include <mgcom.hpp>
 #include "device/fjmpi/fjmpi.hpp"
+#include "starter.hpp"
 
 namespace mgcom {
 

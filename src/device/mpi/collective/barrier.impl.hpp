@@ -8,7 +8,6 @@
 #include <mgbase/logging/logger.hpp>
 
 #include "device/mpi/mpi_base.hpp"
-#include "device/mpi/mpi_call.hpp"
 
 namespace mgcom {
 namespace mpi {
@@ -32,13 +31,15 @@ public:
     
     barrier_impl() : initialized_(false) { }
     
-    void initialize()
+    void initialize(mpi_interface& mi)
     {
+        mi_ = &mi;
+        
         required_rounds_ = static_cast<index_t>(
             mgbase::ceil_log2(mgcom::number_of_processes())
         );
         
-        comm_ = mpi::comm_dup(MPI_COMM_WORLD);
+        comm_ = mi.comm_dup(MPI_COMM_WORLD, "MGCOM_COMM_COLLECTIVE");
         
         initialized_ = true;
         
@@ -81,16 +82,16 @@ public:
             const mgcom::process_id_t src_proc
                 = static_cast<process_id_t>((current_proc + num_procs - diff) % num_procs);
             
-            mpi::isend(
+            impl.mi_->isend({
                 MGBASE_NULLPTR
             ,   0
             ,   static_cast<int>(dest_proc)
             ,   0
             ,   impl.comm_
             ,   mgbase::make_no_operation()
-            );
+            });
             
-            mpi::irecv(
+            impl.mi_->irecv({
                 MGBASE_NULLPTR
             ,   0
             ,   static_cast<int>(src_proc)
@@ -98,7 +99,7 @@ public:
             ,   impl.comm_
             ,   MPI_STATUS_IGNORE
             ,   mgbase::make_operation_store_release(&impl.finished_, true)
-            );
+            });
             
             return test(cb);
         }
@@ -113,6 +114,11 @@ public:
                 return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION_TEMPLATE(&handlers::test), cb);
         }
     };
+    
+    MPI_Comm get_communicator() const MGBASE_NOEXCEPT
+    {
+        return comm_;
+    }
 
 private:
     bool initialized_;
@@ -120,6 +126,8 @@ private:
     index_t required_rounds_;
     MPI_Comm comm_;
     mgbase::atomic<bool> finished_;
+    
+    mpi_interface* mi_;
 };
 
 } // unnamed namespace

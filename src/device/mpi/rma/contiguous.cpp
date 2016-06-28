@@ -11,9 +11,9 @@ emulated_contiguous g_impl;
 
 } // unnamed namespace
 
-void initialize_contiguous()
+void initialize_contiguous(mpi_interface& mi)
 {
-    emulated_contiguous::initialize<g_impl>();
+    emulated_contiguous::initialize<g_impl>(mi);
 }
 
 void finalize_contiguous()

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#error "Removed, but might be used later"
+
 #include "device/mpi/command/mpi_completer.hpp"
 #include "device/mpi3/mpi3_error.hpp"
 #include "device/mpi3/rma/rma.hpp"

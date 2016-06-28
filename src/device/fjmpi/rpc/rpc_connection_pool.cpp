@@ -13,13 +13,13 @@ rpc_connection_pool g_pool;
 
 } // unnamed namespace
 
-void initialize()
+void initialize(fjmpi_interface& fi, mpi::mpi_interface& mi)
 {
-    g_pool.initialize();
+    g_pool.initialize(mi);
     
     initialize_receiver(g_pool);
     
-    initialize_sender(g_pool);
+    initialize_sender(fi, g_pool);
 }
 
 void finalize()

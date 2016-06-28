@@ -12,9 +12,9 @@ rpc_sender g_sender;
 
 } // unnamed namespace
 
-void initialize_sender(rpc_connection_pool& pool)
+void initialize_sender(fjmpi_interface& fi, rpc_connection_pool& pool)
 {
-    g_sender.initialize(pool);
+    g_sender.initialize(fi, pool);
 }
 
 void finalize_sender()

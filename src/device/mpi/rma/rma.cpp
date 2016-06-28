@@ -18,9 +18,9 @@ class mpi_requester
     : public requester
 {
 public:
-    mpi_requester()
+    explicit mpi_requester(mpi_interface& mi)
     {
-        initialize_contiguous();
+        initialize_contiguous(mi);
         initialize_atomic();
     }
     
@@ -80,17 +80,17 @@ public:
         return untyped::make_remote_region(params.key, 0 /* unused */);
     }
     
-    virtual void deregister_region(const untyped::deregister_region_params& /*params*/) {
+    virtual void deregister_region(const untyped::deregister_region_params& /*params*/) MGBASE_OVERRIDE {
         // do nothing
     }
 };
 
 } // unnamed namespace
 
-mgbase::unique_ptr<requester> make_requester()
+mgbase::unique_ptr<requester> make_requester(mpi_interface& mi)
 {
     // TODO: replace with make_unique
-    return mgbase::unique_ptr<requester>(new mpi_requester);
+    return mgbase::unique_ptr<requester>(new mpi_requester(mi));
 }
 
 mgbase::unique_ptr<registrator> make_registrator()

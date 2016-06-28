@@ -6,11 +6,12 @@
 
 #include "common/rma/rma.hpp"
 #include "device/mpi/mpi_base.hpp"
-#include "device/mpi/mpi_call.hpp"
 
 #include <mgbase/logging/logger.hpp>
 
 #include "contiguous.hpp"
+
+#include "device/mpi/mpi_interface.hpp"
 
 namespace mgcom {
 namespace mpi {
@@ -27,13 +28,14 @@ public:
     }
     
     template <emulated_contiguous& self>
-    static void initialize()
+    static void initialize(mpi_interface& mi)
     {
+        self.mi_ = &mi;
+        
         mgcom::rpc::register_handler< am_read<self> >();
         mgcom::rpc::register_handler< am_write<self> >();
         
-        self.comm_ = mpi::comm_dup(MPI_COMM_WORLD);
-        mpi::comm_set_name(self.comm_, "MGCOM_COMM_RMA_EMULATOR");
+        self.comm_ = mi.comm_dup(MPI_COMM_WORLD, "MGCOM_COMM_RMA_EMULATOR");
     }
     
     void finalize()
@@ -61,14 +63,14 @@ private:
         ) {
             mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
             
-            mpi::isend(
+            self.mi_->isend({
                 arg.src_ptr
             ,   static_cast<int>(arg.size_in_bytes)
             ,   static_cast<int>(params.source)
             ,   arg.tag
             ,   self.get_comm()
             ,   mgbase::make_operation_store_release(&finished, true)
-            );
+            });
             
             MGBASE_LOG_DEBUG("msg:Started sending data for emulated get."
                 "\tsrc_proc:{}\taddr:{:x}\tsize_in_bytes:{}\ttag:{}"
@@ -109,7 +111,7 @@ public:
         {
             // Wait for the local completion of MPI_Irecv().
             
-            mpi::irecv(
+            self.mi_->irecv({
                 untyped::to_raw_pointer(params.dest_laddr)
             ,   static_cast<int>(params.size_in_bytes)
             ,   static_cast<int>(params.src_proc)
@@ -117,7 +119,7 @@ public:
             ,   self.get_comm()
             ,   MPI_STATUS_IGNORE
             ,   params.on_complete
-            );
+            });
         }
         
         MGBASE_LOG_DEBUG("msg:{}"
@@ -153,7 +155,7 @@ private:
         ) {
             mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
             
-            mpi::irecv(
+            self.mi_->irecv({
                 arg.dest_ptr
             ,   static_cast<int>(arg.size_in_bytes)
             ,   static_cast<int>(params.source)
@@ -161,7 +163,7 @@ private:
             ,   self.get_comm()
             ,   MPI_STATUS_IGNORE
             ,   mgbase::make_operation_store_release(&finished, true)
-            );
+            });
             
             MGBASE_LOG_DEBUG("msg:Start receiving data for emulated put."
                 "\tsrc_proc:{}\taddr:{:x}\tsize_in_bytes:{}\ttag:{}"
@@ -200,14 +202,14 @@ public:
         
         if (MGBASE_LIKELY(ret))
         {
-            mpi::isend(
+            self.mi_->isend({
                 untyped::to_raw_pointer(params.src_laddr)
             ,   static_cast<int>(params.size_in_bytes)
             ,   static_cast<int>(params.dest_proc)
             ,   tag
             ,   self.get_comm()
             ,   mgbase::make_no_operation()
-            );
+            });
         }
         
         MGBASE_LOG_DEBUG("msg:{}"
@@ -238,6 +240,7 @@ private:
     
     MPI_Comm comm_;
     mgbase::atomic<int> tag_;
+    mpi_interface* mi_;
 };
 
 } // unnamed namespace

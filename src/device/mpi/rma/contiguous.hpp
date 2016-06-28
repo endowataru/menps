@@ -2,12 +2,13 @@
 #pragma once
 
 #include "rma.hpp"
+#include "device/mpi/mpi_interface.hpp"
 
 namespace mgcom {
 namespace mpi {
 namespace rma {
 
-void initialize_contiguous();
+void initialize_contiguous(mpi_interface&);
 
 void finalize_contiguous();
 

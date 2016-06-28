@@ -192,7 +192,7 @@ public:
         MGBASE_LOG_DEBUG(
             "msg:{}\t"
             "wr_id:{}\ttarget_proc:{}\traddr:{:x}\trkey:{:x}\t"
-            "laddr:{:x}\tlkey:{:x}\texpected:{}\tdesired:{}"
+            "laddr:{:x}\tlkey:{:x}\tvalue:{}"
         ,   (ret ? "Executed RDMA FAA." : "Failed to execute RDMA FAA.")
         ,   wr_id
         ,   target_proc

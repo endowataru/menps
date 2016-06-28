@@ -1,14 +1,12 @@
 
 #include "device/mpi/mpi_base.hpp"
-#include "device/mpi/mpi_call.hpp"
-#include "device/mpi1/command/mpi1_command_queue.hpp"
 #include "device/mpi/rpc/rpc.hpp"
 #include "common/rma/region_allocator.hpp"
 #include "device/mpi/collective/collective.hpp"
 #include "ibv.hpp"
 #include "rma/rma.hpp"
 #include "common/starter.hpp"
-#include <mgcom/collective.hpp>
+#include "device/mpi1/command/commander.hpp"
 
 #include <mgbase/logging/logger.hpp>
 
@@ -25,23 +23,23 @@ public:
     {
         endpoint_ = mpi::make_endpoint(argc, argv);
         
-        mgcom::mpi1::initialize_command_queue();
+        commander_ = mgcom::mpi1::make_commander();
         
         rma_registrator_ = ibv::rma::make_registrator();
         rma::registrator::set_instance(*rma_registrator_);
         
-        rpc_requester_ = mpi::rpc::make_requester();
+        rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface());
         rpc::requester::set_instance(*rpc_requester_);
         
         rma_requester_ = ibv::rma::make_requester();
         rma::requester::set_instance(*rma_requester_);
         
-        collective_requester_ = mpi::collective::make_requester();
+        collective_requester_ = mpi::collective::make_requester(commander_->get_mpi_interface());
         collective::requester::set_instance(*collective_requester_);
         
         mgcom::ibv::initialize();
         
-        mgcom::mpi::native_barrier();
+        commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
         
         MGBASE_LOG_DEBUG("msg:Initialized.");
     }
@@ -50,7 +48,7 @@ public:
     {
         collective::barrier();
         
-        mgcom::mpi::native_barrier();
+        commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
         
         mgcom::ibv::finalize();
         
@@ -62,7 +60,7 @@ public:
         
         rma_registrator_.reset();
         
-        mgcom::mpi1::finalize_command_queue();
+        commander_.reset();
         
         endpoint_.reset();
         
@@ -71,6 +69,7 @@ public:
     
 private:
     mgbase::unique_ptr<endpoint> endpoint_;
+    mgbase::unique_ptr<mpi1::commander> commander_;
     mgbase::unique_ptr<rma::registrator> rma_registrator_;
     mgbase::unique_ptr<rma::requester> rma_requester_;
     mgbase::unique_ptr<rpc::requester> rpc_requester_;

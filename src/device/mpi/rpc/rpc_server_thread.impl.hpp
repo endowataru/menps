@@ -3,7 +3,6 @@
 
 #include "rpc.hpp"
 #include "common/rpc/rpc_invoker.impl.hpp"
-#include "device/mpi/mpi_call.hpp"
 #include <mgbase/mutex.hpp>
 #include <mgbase/thread.hpp>
 #include <mgbase/condition_variable.hpp>
@@ -18,8 +17,10 @@ namespace /*unnamed*/ {
 class rpc_server_thread
 {
 public:
-    void initialize(rpc_invoker& invoker, const MPI_Comm comm, const int tag)
+    void initialize(mpi_interface& mi, rpc_invoker& invoker, const MPI_Comm comm, const int tag)
     {
+        mi_ = &mi;
+        
         invoker_ = &invoker;
         
         comm_ = comm;
@@ -73,12 +74,12 @@ private:
         
         MPI_Status status;
         
-        mpi::irecv(
+        mi_->irecv({
             request_buf
         ,   sizeof(message_buffer)
         ,   MPI_ANY_SOURCE
         ,   this->get_tag()
-        ,   get_comm()
+        ,   comm_
         ,   &status
         ,   mgbase::make_operation_call(
                 mgbase::make_callback_function(
@@ -88,7 +89,7 @@ private:
                     )
                 )
             )
-        );
+        });
         
         while (!this->ready_)
         {
@@ -134,19 +135,21 @@ private:
     {
         mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
         
-        mpi::isend(
+        mi_->isend({
             reply_data
         ,   reply_size
         ,   client_rank
         ,   reply_tag
-        ,   get_comm()
+        ,   comm_
         ,   mgbase::make_operation_store_release(&flag, true)
-        );
+        });
         
         while (!flag.load(mgbase::memory_order_acquire))
         {
             if (this->finished_)
                 return;
+            
+            mgbase::ult::this_thread::yield();
         }
     }
     
@@ -160,6 +163,7 @@ private:
         return tag_;
     }
     
+    mpi_interface*              mi_;
     rpc_invoker*                invoker_;
     
     mgbase::thread              th_;

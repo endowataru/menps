@@ -5,8 +5,7 @@
 #include <mgcom/rma.hpp>
 #include <mgcom/collective.hpp>
 #include <algorithm>
-
-#include "device/mpi/mpi_call.hpp"
+#include "device/mpi/mpi_interface.hpp" // TODO: depends on MPI
 
 namespace mgcom {
 namespace rpc {
@@ -25,7 +24,7 @@ class rpc_basic_connection_pool
     typedef mgcom::rma::remote_ptr<buffer_type>  remote_buffer_ptr_type;
     
 public:
-    void initialize()
+    void initialize(mpi::mpi_interface& mi)
     {
         manager_.initialize(max_num_connections);
         
@@ -56,7 +55,7 @@ public:
         );
         
         // All-to-all address exchange.
-        mgcom::mpi::native_alltoall(&local_receicer_bufs[0], &remote_receiver_bufs[0], 1);
+        mpi::native_alltoall(mi, &local_receicer_bufs[0], &remote_receiver_bufs[0], 1);
         
         for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
         {

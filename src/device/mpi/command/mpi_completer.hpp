@@ -7,10 +7,13 @@
 #include <mgbase/operation.hpp>
 #include <mgbase/logger.hpp>
 
+#include "mpi_completer_base.hpp"
+
 namespace mgcom {
 namespace mpi {
 
 class mpi_completer
+    : public mpi_completer_base
 {
     static const index_t max_completion_count = 256;
     
@@ -48,26 +51,23 @@ public:
         completions_.reset();
     }
     
-    bool full() const MGBASE_NOEXCEPT
+    virtual bool full() const MGBASE_NOEXCEPT MGBASE_OVERRIDE
     {
         // If the index queue is empty, all elements are used.
         return queue_.empty();
     }
     
-    void complete(
-        const MPI_Request&          req
-    ,   MPI_Status* const           status
-    ,   const mgbase::operation&    on_complete
-    ) {
+    virtual void complete(const complete_params& params) MGBASE_OVERRIDE
+    {
         MGBASE_ASSERT(initialized_);
         MGBASE_ASSERT(!queue_.empty());
         
         const index_t index = queue_.front();
         queue_.pop_front();
         
-        requests_[index] = req;
-        statuses_[index] = status;
-        completions_[index] = on_complete;
+        requests_[index] = params.req;
+        statuses_[index] = params.status;
+        completions_[index] = params.on_complete;
         
         ++established_;
         
@@ -143,6 +143,6 @@ private:
     int established_;
 };
 
-} // namespace mpi_base
+} // namespace mpi
 } // namespace mgcom
 
