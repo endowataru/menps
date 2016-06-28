@@ -211,6 +211,35 @@ int main() { return 0; }
 " MGBASE_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE
 )
 
+set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+void f() noexcept { }
+int main() { return 0; }
+" MGBASE_CXX11_NOEXCEPT_SUPPORTED
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+int main() { int* x = nullptr; return 0; }
+" MGBASE_CXX11_NULLPTR_SUPPORTED
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+#include <cstddef>
+int main() { std::nullptr_t x = nullptr; return 0; }
+" MGBASE_CXX11_NULLPTR_T_SUPPORTED
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+#include <memory>
+int main() { std::unique_ptr<int> p(new int); return 0; }
+" MGBASE_CXX11_UNIQUE_PTR_SUPPORTED
+)
+
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc

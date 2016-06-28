@@ -18,7 +18,7 @@ public:
     noncopyable& operator = (const noncopyable) = delete;
 
 protected:
-    noncopyable() noexcept = default;
+    noncopyable() MGBASE_NOEXCEPT = default;
 };
 
 #else // MGBASE_CXX11_SUPPORTED

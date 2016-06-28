@@ -151,53 +151,40 @@
     #define MGBASE_EXTERN_C_BEGIN   extern "C" {
     #define MGBASE_EXTERN_C_END     }
     
-    #ifdef MGBASE_COMPILER_INTEL
+    /*#ifdef MGBASE_COMPILER_INTEL
         #if defined(__GXX_EXPERIMENTAL_CPP0X__) || defined(__GXX_EXPERIMENTAL_CXX0X__)
             #define MGBASE_CXX11_SUPPORTED
         #endif
-    #else
+    #else*/
         #if __cplusplus >= 201103L
             #define MGBASE_CXX11_SUPPORTED
         #endif
-    #endif
+    //#endif
     
     // For C++
-    #ifdef MGBASE_CXX11_SUPPORTED
-        #define MGBASE_IF_CXX11_SUPPORTED(x)        x
-        
-        // For C++11 or later
-        #define MGBASE_EXPLICIT_OPERATOR            explicit operator
+    
+    #ifdef MGBASE_CXX11_NOEXCEPT_SUPPORTED
         #define MGBASE_NOEXCEPT                     noexcept
-        #define MGBASE_OVERRIDE                     override
+    #else
+        #define MGBASE_NOEXCEPT                     throw()
+    #endif
+    
+    #ifdef MGBASE_CXX11_NULLPTR_SUPPORTED
         #define MGBASE_NULLPTR                      nullptr
-        #define MGBASE_STATIC_ASSERT(expr)          static_assert(expr, #expr)
-        #define MGBASE_STATIC_ASSERT_MSG(expr, msg) static_assert(expr, msg)
-        #define MGBASE_EMPTY_DEFINITION             = default;
-        #define MGBASE_ALIGNAS(a)                   alignas(a)
-        #define MGBASE_DECLTYPE(x)                  decltype(x)
-        #define MGBASE_CONSTEXPR                    constexpr
-        
-        #define MGBASE_NORETURN                     [[noreturn]]
         
         namespace mgbase {
         
+        #ifdef MGBASE_CXX11_NULLPTR_T_SUPPORTED
             using std::nullptr_t;
+        #else
+            typedef decltype(nullptr)   nullptr_t;
+        #endif
         
         } // namespace mgbase
-        
-        #define MGBASE_DEPRECATED                   __attribute__((deprecated))
-        
     #else
-        #define MGBASE_IF_CXX11_SUPPORTED(x)
-        
-        // For C++03
-        #define MGBASE_EXPLICIT_OPERATOR            operator
-        #define MGBASE_NOEXCEPT                     throw()
-        #define MGBASE_OVERRIDE
-        
         namespace mgbase
         {
-            #ifdef MGBASE_COMPILER_GCC_SUPPORTS_PRAGMA_DIAGNOSTIC
+            #if (defined(MGBASE_COMPILER_GCC_SUPPORTS_PRAGMA_DIAGNOSTIC) && defined(MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT))
                 #pragma GCC diagnostic push
                 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
             #endif
@@ -209,23 +196,50 @@
                 operator T*() const {
                     return 0;
                 }
-
+                
                 template<class C, class T>
                 operator T C::*() const
                 {
                     return 0;
                 }
-
+                
             private:
                 void operator&() const;
             };
             
-            #ifdef MGBASE_COMPILER_GCC_SUPPORTS_PRAGMA_DIAGNOSTIC
+            #if (defined(MGBASE_COMPILER_GCC_SUPPORTS_PRAGMA_DIAGNOSTIC) && defined(MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT))
                 #pragma GCC diagnostic pop
             #endif
         }
         
         #define MGBASE_NULLPTR                      (::mgbase::nullptr_t())
+    #endif
+    
+    
+    #ifdef MGBASE_CXX11_SUPPORTED
+        #define MGBASE_IF_CXX11_SUPPORTED(x)        x
+        
+        // For C++11 or later
+        #define MGBASE_EXPLICIT_OPERATOR            explicit operator
+        #define MGBASE_OVERRIDE                     override
+        #define MGBASE_STATIC_ASSERT(expr)          static_assert(expr, #expr)
+        #define MGBASE_STATIC_ASSERT_MSG(expr, msg) static_assert(expr, msg)
+        #define MGBASE_EMPTY_DEFINITION             = default;
+        #define MGBASE_ALIGNAS(a)                   alignas(a)
+        #define MGBASE_DECLTYPE(x)                  decltype(x)
+        #define MGBASE_CONSTEXPR                    constexpr
+        
+        #define MGBASE_NORETURN                     [[noreturn]]
+        
+        #define MGBASE_DEPRECATED                   __attribute__((deprecated))
+        
+    #else
+        #define MGBASE_IF_CXX11_SUPPORTED(x)
+        
+        // For C++03
+        #define MGBASE_EXPLICIT_OPERATOR            operator
+        #define MGBASE_OVERRIDE
+        
         
         #define MGBASE_EMPTY_DEFINITION             { }
         #define MGBASE_ALIGNAS(a)                   __attribute__((aligned(a)))
