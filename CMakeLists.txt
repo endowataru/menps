@@ -298,7 +298,6 @@ add_executable(mgbase-unittest
     unittest/mpsc_circular_buffer.cpp
     unittest/condition_variable.cpp
     unittest/optional.cpp
-    unittest/move.cpp
 )
 
 target_link_libraries(mgbase-unittest mgbase mgbase-options googletest)

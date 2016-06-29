@@ -10,9 +10,11 @@ namespace /*unnamed*/ {
 int val;
 mgbase::spinlock lock;
 
+const mgbase::size_t count = 100000;
+
 void f()
 {
-    for (int i = 0; i < 1000000; ++i)
+    for (int i = 0; i < count; ++i)
     {
         mgbase::lock_guard<mgbase::spinlock> lc(lock);
         ++val;
@@ -25,7 +27,7 @@ TEST(Spinlock, Basic)
 {
     val = 0;
     
-    const mgbase::size_t num_threads = 10;
+    const mgbase::size_t num_threads = 5;
     
     mgbase::scoped_ptr<mgbase::thread []> ths(new mgbase::thread[num_threads]);
     for (mgbase::size_t i = 0; i < num_threads; ++i)
@@ -34,6 +36,6 @@ TEST(Spinlock, Basic)
     for (mgbase::size_t i = 0; i < num_threads; ++i)
         ths[i].join();
     
-    ASSERT_EQ(10000000, val);
+    ASSERT_EQ(count * num_threads, val);
 }
 

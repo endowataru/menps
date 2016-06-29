@@ -18,8 +18,8 @@ class mpsc_circular_buffer_counter_base
     : mgbase::noncopyable
 {
 public:
-    MGBASE_ALWAYS_INLINE MGBASE_WARN_UNUSED_RESULT
-    bool try_enqueue(const Index diff, Index* const tail_result)
+    MGBASE_WARN_UNUSED_RESULT
+    bool try_enqueue(const Index diff, Index* const tail_result) MGBASE_NOEXCEPT
     {
         MGBASE_ASSERT(diff < derived().size());
         
@@ -69,11 +69,9 @@ public:
                 return true;
             }
         }
-        
     }
     
-    MGBASE_ALWAYS_INLINE
-    bool empty() const
+    Index number_of_enqueued() const MGBASE_NOEXCEPT
     {
         // Load "tail" and "head".
         // Reordering the following operations must be prohibited
@@ -81,19 +79,21 @@ public:
         const Index tail = tail_.load(mgbase::memory_order_relaxed); // TODO: tail is not changed by producers
         const Index head = head_.load(mgbase::memory_order_acquire); // barrier after load
         
-        const bool ret = count_to_index(tail) == count_to_index(head);
-        return ret;
+        return count_to_index(tail - head);
     }
     
-    MGBASE_ALWAYS_INLINE
+    bool empty() const MGBASE_NOEXCEPT
+    {
+        return number_of_enqueued() == 0;
+    }
+    
     Index front() const MGBASE_NOEXCEPT
     {
         const Index head = head_.load(mgbase::memory_order_relaxed);
         return count_to_index(head);
     }
     
-    MGBASE_ALWAYS_INLINE
-    void dequeue()
+    void dequeue() MGBASE_NOEXCEPT
     {
         const Index head = head_.load(mgbase::memory_order_relaxed);
         
@@ -113,10 +113,9 @@ public:
     }
     
 protected:
-    mpsc_circular_buffer_counter_base() { }
+    mpsc_circular_buffer_counter_base() MGBASE_NOEXCEPT { }
     
 private:
-    MGBASE_ALWAYS_INLINE
     Index count_to_index(const Index count) const MGBASE_NOEXCEPT
     {
         // If the index is a constant expression and a power of 2,
