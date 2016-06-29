@@ -392,6 +392,25 @@ struct comm_set_name_closure
     }
 };
 
+struct comm_free_closure
+{
+    MPI_Comm* comm;
+    
+    bool operator() () const
+    {
+        MGBASE_LOG_DEBUG(
+            "msg:Executing MPI_Comm_free.\tcomm:{}"
+        ,   get_comm_name(*comm)
+        );
+        
+        mpi_error::check(
+            MPI_Comm_free(comm)
+        );
+        
+        return true;
+    }
+};
+
 
 } // namespace unnamed
 
@@ -409,27 +428,8 @@ MPI_Comm mpi_delegator::comm_dup(const MPI_Comm comm)
 
 void mpi_delegator::comm_free(MPI_Comm* const comm)
 {
-    struct closure
-    {
-        MPI_Comm* comm;
-        
-        bool operator() () const
-        {
-            MGBASE_LOG_DEBUG(
-                "msg:Executing MPI_Comm_free.\tcomm:{}"
-            ,   get_comm_name(*comm)
-            );
-            
-            mpi_error::check(
-                MPI_Comm_free(comm)
-            );
-            
-            return true;
-        }
-    };
-    
     MGBASE_ASSERT(comm != MGBASE_NULLPTR);
-    return execute(del_, closure{ comm });
+    execute(del_, comm_free_closure{ comm });
 }
 
 void mpi_delegator::comm_set_name(const MPI_Comm comm, const char* const comm_name)

@@ -111,7 +111,7 @@ public:
         {
             // Wait for the local completion of MPI_Irecv().
             
-            self.mi_->irecv({
+            self.mi_->irecv(irecv_params{
                 untyped::to_raw_pointer(params.dest_laddr)
             ,   static_cast<int>(params.size_in_bytes)
             ,   static_cast<int>(params.src_proc)
@@ -155,7 +155,7 @@ private:
         ) {
             mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
             
-            self.mi_->irecv({
+            self.mi_->irecv(irecv_params{
                 arg.dest_ptr
             ,   static_cast<int>(arg.size_in_bytes)
             ,   static_cast<int>(params.source)
@@ -202,7 +202,7 @@ public:
         
         if (MGBASE_LIKELY(ret))
         {
-            self.mi_->isend({
+            self.mi_->isend(isend_params{
                 untyped::to_raw_pointer(params.src_laddr)
             ,   static_cast<int>(params.size_in_bytes)
             ,   static_cast<int>(params.dest_proc)

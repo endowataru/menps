@@ -82,7 +82,7 @@ public:
             const mgcom::process_id_t src_proc
                 = static_cast<process_id_t>((current_proc + num_procs - diff) % num_procs);
             
-            impl.mi_->isend({
+            impl.mi_->isend(isend_params{
                 MGBASE_NULLPTR
             ,   0
             ,   static_cast<int>(dest_proc)
@@ -91,7 +91,7 @@ public:
             ,   mgbase::make_no_operation()
             });
             
-            impl.mi_->irecv({
+            impl.mi_->irecv(irecv_params{
                 MGBASE_NULLPTR
             ,   0
             ,   static_cast<int>(src_proc)
