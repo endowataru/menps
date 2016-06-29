@@ -54,7 +54,9 @@ public:
             // but in that case this CAS fails
             // because loading "tail_" must precede this CAS (constrained by memory_order_acquire)
             // and other producers must have already written the incremented value.
-            if (tail_.compare_exchange_weak(tail, next_tail, mgbase::memory_order_acquire))
+            if (MGBASE_LIKELY(
+                tail_.compare_exchange_weak(tail, next_tail, mgbase::memory_order_acquire)
+            ))
             {
                 // Successfully acquired the element at "tail"; assign the result.
                 *tail_result = count_to_index(tail);
@@ -95,10 +97,15 @@ public:
     
     void dequeue() MGBASE_NOEXCEPT
     {
+        dequeue_multiple(1);
+    }
+    
+    void dequeue_multiple(const Index diff) MGBASE_NOEXCEPT
+    {
         const Index head = head_.load(mgbase::memory_order_relaxed);
         
         // Increment "head".
-        const Index next_head = head + 1;
+        const Index next_head = head + diff;
         
         // Allow producers to use the element at "head".
         // If a producer sees this modification,
@@ -106,14 +113,17 @@ public:
         head_.store(next_head, mgbase::memory_order_release);
         
         MGBASE_LOG_DEBUG(
-            "msg:Finished dequeuing.\thead:{:x}\tnext_head:{:x}"
+            "msg:Finished dequeuing.\thead:{:x}\tnext_head:{:x}\tdiff:{}"
         ,   head
         ,   next_head
+        ,   diff
         );
     }
     
 protected:
-    mpsc_circular_buffer_counter_base() MGBASE_NOEXCEPT { }
+    mpsc_circular_buffer_counter_base() MGBASE_NOEXCEPT
+        : head_{0}
+        , tail_{0} { }
     
 private:
     Index count_to_index(const Index count) const MGBASE_NOEXCEPT

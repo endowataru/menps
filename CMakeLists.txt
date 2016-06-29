@@ -296,6 +296,7 @@ add_executable(mgbase-unittest
     unittest/bound_function.cpp
     unittest/spinlock.cpp
     unittest/mpsc_circular_buffer.cpp
+    unittest/mpsc_bounded_blocking_queue.cpp
     unittest/condition_variable.cpp
     unittest/optional.cpp
 )
