@@ -28,10 +28,13 @@ rma_window::rma_window(/*delegator& del*/)
             
             MPI_Win_get_attr(self.win_, MPI_WIN_MODEL, &model, &flag);
             
+            // Cast the type of "model".
+            const int model_i = static_cast<int>(reinterpret_cast<mgbase::intptr_t>(model));
+            
             MGBASE_LOG_DEBUG(
                 "msg:Called MPI_Win_create_dynamic.\t"
                 "model:{}"
-            ,   (flag ? (model == MPI_WIN_UNIFIED ? "MPI_WIN_UNIFIED" : "MPI_WIN_SEPARATE") : "no model")
+            ,   (flag ? (model_i == MPI_WIN_UNIFIED ? "MPI_WIN_UNIFIED" : "MPI_WIN_SEPARATE") : "no model")
             );
             
             mpi3_error::check( 
