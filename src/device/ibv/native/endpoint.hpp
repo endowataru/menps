@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "alltoall_connections.hpp"
+#include "alltoall_queue_pairs.hpp"
 #include "completion_queue.hpp"
 #include "device_list.hpp"
 #include "protection_domain.hpp"
@@ -12,7 +12,7 @@ namespace mgcom {
 namespace ibv {
 
 class endpoint
-    : protected alltoall_connections
+    : protected alltoall_queue_pairs
     , protected protection_domain
 {
 public:
@@ -29,7 +29,7 @@ public:
         cq_.create(ctx_.get());
         protection_domain::alloc(ctx_.get());
         
-        alltoall_connections::create(ctx_.get(), cq_.get(), protection_domain::get());
+        alltoall_queue_pairs::create(ctx_.get(), cq_.get(), protection_domain::get());
         
         device_attributes dev_attr;
         dev_attr.query(ctx_);
@@ -37,12 +37,12 @@ public:
         port_attributes port_attr;
         port_attr.query(ctx_, get_port_number());
         
-        alltoall_connections::collective_start(dev_attr, port_attr);
+        alltoall_queue_pairs::collective_start(dev_attr, port_attr);
     }
     
     void finalize()
     {
-        alltoall_connections::destroy();
+        alltoall_queue_pairs::destroy();
         protection_domain::dealloc();
         cq_.destroy();
         ctx_.close();
@@ -63,10 +63,7 @@ private:
     }
     
 public:
-    using alltoall_connections::try_read_async;
-    using alltoall_connections::try_write_async;
-    using alltoall_connections::try_compare_and_swap_async;
-    using alltoall_connections::try_fetch_and_add_async;
+    using alltoall_queue_pairs::try_post_send;
     
     using protection_domain::register_memory;
     using protection_domain::deregister_memory;

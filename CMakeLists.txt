@@ -144,6 +144,8 @@ if (${is_ibv_available})
         src/device/mpi/endpoint.cpp
         src/device/mpi1/command/commander.cpp
         src/device/mpi/command/mpi_delegator.cpp
+        
+        #src/device/ibv/scheduler/command_consumer.cpp
     )
     target_link_libraries(mgcom-ibv mgcom-base mgbase
         ibverbs # libibverbs.so

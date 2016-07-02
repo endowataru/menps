@@ -7,12 +7,13 @@
 #include "device/ibv/ibv_error.hpp"
 
 #include <limits>
-#include <algorithm>
+
+#include <mgbase/logger.hpp>
 
 namespace mgcom {
 namespace ibv {
 
-class connection
+class queue_pair
     : mgbase::noncopyable
 {
     static const mgbase::uint32_t max_send_wr = 1024;
@@ -21,10 +22,10 @@ class connection
     static const mgbase::uint32_t max_recv_sge = 1;
     
 public:
-    connection()
+    queue_pair()
         : qp_(MGBASE_NULLPTR) { }
     
-    ~connection() {
+    ~queue_pair() {
         if (qp_ != MGBASE_NULLPTR)
             destroy();
     }
@@ -44,7 +45,7 @@ public:
         attr.comp_mask = IBV_EXP_QP_INIT_ATTR_PD | IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS;
             // Both flags are not documented
         
-        attr.qp_type             = IBV_QPT_RC; // Reliable Connection (RC)
+        attr.qp_type             = IBV_QPT_RC; // Reliable queue_pair (RC)
         attr.pd                  = &pd;
         attr.send_cq             = &cq;
         attr.recv_cq             = &cq;
@@ -74,7 +75,7 @@ public:
             // Notice: zero filled by value initialization
         
         attr.qp_context          = MGBASE_NULLPTR;
-        attr.qp_type             = IBV_QPT_RC; // Reliable Connection (RC)
+        attr.qp_type             = IBV_QPT_RC; // Reliable queue_pair (RC)
         attr.send_cq             = &cq;
         attr.recv_cq             = &cq;
         attr.srq                 = MGBASE_NULLPTR;
@@ -183,6 +184,7 @@ private:
             throw ibv_error("ibv_modify_qp() failed (RTR to RTS)");
     }
     
+    #if 0
 public:
     bool try_write_async(
         const mgbase::uint64_t  wr_id
@@ -304,19 +306,112 @@ public:
         
         return post_send(wr);
     }
+    #endif
     
-private:
-    bool post_send(ibv_send_wr& wr) const
+public:
+    MGBASE_WARN_UNUSED_RESULT
+    bool try_post_send(ibv_send_wr& wr) const
     {
+        MGBASE_ASSERT(qp_ != MGBASE_NULLPTR);
+        
         ibv_send_wr* bad_wr;
         const int err = ibv_post_send(qp_, &wr, &bad_wr);
         
+        bool ret;
+        
         if (MGBASE_LIKELY(err == 0))
-            return true;
+            ret = true;
         else if (err == ENOMEM)
-            return false;
+            ret = false;
         else
             throw ibv_error("ibv_post_send() failed", err);
+        
+        log_wr(ret, wr);
+        
+        return ret;
+    }
+    
+private:
+    void log_wr(const bool ret, const ibv_send_wr& wr) const
+    {
+        switch (wr.opcode)
+        {
+            case IBV_WR_RDMA_WRITE: {
+                MGBASE_LOG_DEBUG(
+                    "msg:{}\t"
+                    "wr_id:{}\traddr:{:x}\trkey:{:x}\t"
+                    "laddr:{:x}\tlkey:{:x}\tsize_in_bytes:{}"
+                ,   (ret ? "Posted RDMA WRITE." : "Failed to post RDMA WRITE.")
+                ,   wr.wr_id
+                ,   wr.wr.rdma.remote_addr
+                ,   wr.wr.rdma.rkey
+                ,   wr.sg_list[0].addr // TODO: show as a list
+                ,   wr.sg_list[0].lkey
+                ,   wr.sg_list[0].length
+                );
+                break;
+            }
+            case IBV_WR_RDMA_READ: {
+                MGBASE_LOG_DEBUG(
+                    "msg:{}\t"
+                    "wr_id:{}\traddr:{:x}\trkey:{:x}\t"
+                    "laddr:{:x}\tlkey:{:x}\tsize_in_bytes:{}"
+                ,   (ret ? "Posted RDMA READ." : "Failed to post RDMA READ.")
+                ,   wr.wr_id
+                ,   wr.wr.rdma.remote_addr
+                ,   wr.wr.rdma.rkey
+                ,   wr.sg_list[0].addr // TODO: show as a list
+                ,   wr.sg_list[0].lkey
+                ,   wr.sg_list[0].length
+                );
+                break;
+            }
+            case IBV_WR_ATOMIC_CMP_AND_SWP: {
+                MGBASE_LOG_DEBUG(
+                    "msg:{}\t"
+                    "wr_id:{}\traddr:{:x}\trkey:{:x}\t"
+                    "laddr:{:x}\tlkey:{:x}\tlength:{}\t"
+                    "expected:{}\tdesired:{}"
+                ,   (ret ? "Posted RDMA CAS." : "Failed to post DMA CAS.")
+                ,   wr.wr_id
+                ,   wr.wr.atomic.remote_addr
+                ,   wr.wr.atomic.rkey
+                ,   wr.sg_list[0].addr // TODO: show as a list
+                ,   wr.sg_list[0].lkey
+                ,   wr.sg_list[0].length
+                ,   wr.wr.atomic.compare_add
+                ,   wr.wr.atomic.swap
+                );
+                break;
+            }
+            case IBV_WR_ATOMIC_FETCH_AND_ADD: {
+                MGBASE_LOG_DEBUG(
+                    "msg:{}\t"
+                    "wr_id:{}\traddr:{:x}\trkey:{:x}\t"
+                    "laddr:{:x}\tlkey:{:x}\tlength:{}\t"
+                    "value:{}"
+                ,   (ret ? "Posted RDMA FAA." : "Failed to post RDMA FAA.")
+                ,   wr.wr_id
+                ,   wr.wr.atomic.remote_addr
+                ,   wr.wr.atomic.rkey
+                ,   wr.sg_list[0].addr // TODO: show as a list
+                ,   wr.sg_list[0].lkey
+                ,   wr.sg_list[0].length
+                ,   wr.wr.atomic.compare_add
+                );
+                break;
+            }
+            default: {
+                MGBASE_LOG_DEBUG(
+                    "msg:{}\t"
+                    "wr_id:{}\topcode:{}"
+                ,   (ret ? "Posted unknown WR." : "Failed to post unknown WR.")
+                ,   wr.wr_id
+                ,   wr.opcode
+                );
+                break;
+            }
+        }
     }
 
 private:
