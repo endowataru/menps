@@ -19,6 +19,7 @@ struct functor
             while (!q.try_push(i)) {
                 mgbase::this_thread::yield();
             }
+            q.notify();
         }
     }
 };
