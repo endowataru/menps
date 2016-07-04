@@ -40,7 +40,17 @@ public:
     ) {
         make_notification_base(wr_id, on_complete, MGBASE_NULLPTR);
         
-        return { mgbase::make_no_operation(), buf_ + wr_id };
+        return {
+            mgbase::make_operation_call(
+                mgbase::make_callback_function(
+                    mgbase::bind1st_of_2(
+                        MGBASE_MAKE_INLINED_FUNCTION(atomic_buffer::handler_write)
+                    ,   mgbase::wrap_reference(entries_[wr_id])
+                    )
+                )
+            )
+        ,   buf_ + wr_id
+        };
     }
     
     // read
@@ -92,6 +102,13 @@ private:
         rma::atomic_default_t*  src;
         rma::atomic_default_t*  dest;
     };
+    
+    static void handler_write(const entry& e, const mgbase::operation& /*ignored*/)
+    {
+        // do nothing
+        
+        mgbase::execute(e.on_complete);
+    }
     
     static void handler_read(const entry& e, const mgbase::operation& /*ignored*/)
     {
