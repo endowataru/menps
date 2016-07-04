@@ -124,20 +124,23 @@ TEST_F(RmaAtomic, FetchAndAdd)
     
     mgcom::collective::barrier();
     
-    *buf = 100;
+    const mgcom::rma::atomic_default_t diff = 100;
     
     mgcom::rma::fetch_and_add(
         0
     ,   rptr
-    ,   *buf
+    ,   diff
     ,   buf2
     );
     
     mgcom::collective::barrier();
     
+    ASSERT_GE((mgcom::number_of_processes() - 1) * diff + 1, *buf2);
+    ASSERT_EQ(1, *buf2 % diff);
+    
     if (mgcom::current_process_id() == 0) {
         mgcom::rma::atomic_default_t val = *lptr;
-        ASSERT_EQ(mgcom::number_of_processes() * 100 + 1, val);
+        ASSERT_EQ(mgcom::number_of_processes() * diff + 1, val);
     }
 }
 

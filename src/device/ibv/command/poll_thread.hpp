@@ -34,13 +34,6 @@ public:
         th_.join();
     }
     
-    bool try_complete(
-        const mgbase::operation& on_complete
-    ,   mgbase::uint64_t* const wr_id_result
-    ) {
-        return completer_->try_complete(on_complete, wr_id_result);
-    }
-    
     void failed(const mgbase::uint64_t wr_id)
     {
         completer_->failed(wr_id);

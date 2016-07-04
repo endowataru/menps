@@ -32,7 +32,7 @@ CHECK_CXX_SOURCE_COMPILES("
 // MPI_VERSION must be greater than 3
 int a[MPI_VERSION - 3];
 
-int main() { }
+int main() { return 0; }
 "
 MGCOM_DEVICE_MPI3_SUPPORTED)
 
@@ -48,7 +48,9 @@ CHECK_CXX_SOURCE_COMPILES("
 #include <infiniband/verbs.h>
 #include <infiniband/verbs_exp.h>
 
-int x = IBV_EXP_DEVICE_ATTR_EXT_ATOMIC_ARGS;"
+int x = IBV_EXP_DEVICE_ATTR_EXT_ATOMIC_ARGS;
+
+int main() { return 0; } "
 MGCOM_IBV_MASKED_ATOMICS_SUPPORTED)
 
 

@@ -13,10 +13,10 @@ namespace ibv {
 namespace /*unnamed*/ {
 
 endpoint g_ep;
-completer g_comp;
+mgbase::unique_ptr<completer> g_comp;
 
-direct_proxy g_proxy(g_ep, g_comp);
-poll_thread g_poll(g_ep.get_cq(), g_comp);
+mgbase::unique_ptr<direct_proxy> g_proxy;
+mgbase::unique_ptr<poll_thread> g_poll;
 
 } // unnamed namespace
 
@@ -26,16 +26,21 @@ void initialize()
     
     rma::initialize_allocator();
     
-    g_comp.initialize(); // completer requires allocator
+    g_comp = mgbase::make_unique<completer>(); // completer requires allocator
     
-    g_poll.start();
+    g_proxy = mgbase::make_unique<direct_proxy>(g_ep, *g_comp);
+    
+    g_poll = mgbase::make_unique<poll_thread>(g_ep.get_cq(), *g_comp);
+    
+    g_poll->start();
 }
 
 void finalize()
 {
-    g_poll.stop();
+    g_poll->stop();
+    g_poll.reset();
     
-    g_comp.finalize();
+    g_comp.reset();
      
     rma::finalize_allocator();
     
