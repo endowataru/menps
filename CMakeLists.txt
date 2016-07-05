@@ -132,10 +132,10 @@ endif()
 
 if (${is_ibv_available})
     add_library(mgcom-ibv
-        src/device/ibv/command/proxy.cpp
+        #src/device/ibv/command/proxy.cpp
         src/device/ibv/entrypoint.cpp
         src/device/ibv/ibv.cpp
-        src/device/ibv/rma/rma.cpp
+        #src/device/ibv/rma/rma.cpp
         
         src/common/rma/region_allocator.cpp
         src/common/rma/malloc.cpp
@@ -148,6 +148,11 @@ if (${is_ibv_available})
         src/device/mpi/command/mpi_delegator.cpp
         
         #src/device/ibv/scheduler/command_consumer.cpp
+        #src/device/ibv/rma/requester.cpp
+        src/device/ibv/rma/direct_requester.cpp
+        src/device/ibv/rma/rma_comm.cpp
+        src/device/ibv/rma/registrator.cpp
+        src/device/ibv/command/poll_thread.cpp
     )
     target_link_libraries(mgcom-ibv mgcom-base mgbase
         ibverbs # libibverbs.so

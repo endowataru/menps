@@ -1,12 +1,11 @@
 
 #include "device/mpi/mpi_base.hpp"
 #include "device/mpi/rpc/rpc.hpp"
-#include "common/rma/region_allocator.hpp"
 #include "device/mpi/collective/collective.hpp"
 #include "ibv.hpp"
-#include "rma/rma.hpp"
 #include "common/starter.hpp"
 #include "device/mpi1/command/commander.hpp"
+#include "rma/rma_comm.hpp"
 
 #include <mgbase/logging/logger.hpp>
 
@@ -25,19 +24,13 @@ public:
         
         commander_ = mgcom::mpi1::make_commander();
         
-        rma_registrator_ = ibv::rma::make_registrator();
-        rma::registrator::set_instance(*rma_registrator_);
-        
         rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface());
         rpc::requester::set_instance(*rpc_requester_);
-        
-        rma_requester_ = ibv::rma::make_requester();
-        rma::requester::set_instance(*rma_requester_);
         
         collective_requester_ = mpi::collective::make_requester(commander_->get_mpi_interface());
         collective::requester::set_instance(*collective_requester_);
         
-        mgcom::ibv::initialize();
+        rma_ = make_direct_rma_comm();
         
         commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
         
@@ -50,15 +43,11 @@ public:
         
         commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
         
-        mgcom::ibv::finalize();
+        rma_.reset();
         
         collective_requester_.reset();
         
-        rma_requester_.reset();
-        
         rpc_requester_.reset();
-        
-        rma_registrator_.reset();
         
         commander_.reset();
         
@@ -70,8 +59,7 @@ public:
 private:
     mgbase::unique_ptr<endpoint> endpoint_;
     mgbase::unique_ptr<mpi1::commander> commander_;
-    mgbase::unique_ptr<rma::registrator> rma_registrator_;
-    mgbase::unique_ptr<rma::requester> rma_requester_;
+    mgbase::unique_ptr<rma_comm> rma_;
     mgbase::unique_ptr<rpc::requester> rpc_requester_;
     mgbase::unique_ptr<collective::requester> collective_requester_;
 };

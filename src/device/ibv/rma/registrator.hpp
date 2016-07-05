@@ -1,13 +1,15 @@
 
 #pragma once
 
-#include "common/starter.hpp"
+#include <mgcom/rma/registrator.hpp>
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {
 namespace ibv {
 
-mgbase::unique_ptr<starter> make_starter(int* argc, char*** argv);
+class endpoint;
+
+mgbase::unique_ptr<rma::registrator> make_rma_registrator(endpoint&);
 
 } // namespace ibv
 } // namespace mgcom

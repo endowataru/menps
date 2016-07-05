@@ -11,7 +11,7 @@ inline void copy_params_to(
 ,   ibv_send_wr* const  wr
 ,   ibv_sge* const      sge
 ) {
-    // wr->wr_id is unset
+    wr->wr_id                 = params.wr_id;
     // wr->next is unset
     wr->sg_list               = sge;
     wr->num_sge               = 1;
@@ -30,7 +30,7 @@ inline void copy_params_to(
 ,   ibv_send_wr* const  wr
 ,   ibv_sge* const      sge
 ) {
-    // wr->wr_id is unset
+    wr->wr_id                 = params.wr_id;
     // wr->next is unset
     wr->sg_list               = sge;
     wr->num_sge               = 1;
@@ -49,7 +49,7 @@ inline void copy_params_to(
 ,   ibv_send_wr* const              wr
 ,   ibv_sge* const                  sge
 ) {
-    // wr->wr_id is unset
+    wr->wr_id                 = params.wr_id;
     // wr->next is unset
     wr->sg_list               = sge;
     wr->num_sge               = 1;
@@ -70,7 +70,7 @@ inline void copy_params_to(
 ,   ibv_send_wr* const          wr
 ,   ibv_sge* const              sge
 ) {
-    // wr->wr_id is unset
+    wr->wr_id                 = params.wr_id;
     // wr->next is unset
     wr->sg_list               = sge;
     wr->num_sge               = 1;
