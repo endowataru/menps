@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "device/ibv/native/params.hpp"
+#include "params.hpp"
 
 namespace mgcom {
 namespace ibv {

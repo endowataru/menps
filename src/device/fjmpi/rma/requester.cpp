@@ -48,32 +48,6 @@ public:
         mgcom::mpi::rma::finalize_atomic();
     }
     
-    #if 0
-    virtual bool try_read_async(const untyped::read_params& params) MGBASE_OVERRIDE
-    {
-        return fi_.try_get_async({
-            static_cast<int>(params.src_proc)
-        ,   get_absolute_address(params.dest_laddr) // Note: Be careful of the order
-        ,   get_absolute_address(params.src_raddr)
-        ,   params.size_in_bytes
-        ,   select_flags()
-        ,   params.on_complete
-        });
-    }
-    
-    virtual bool try_write_async(const untyped::write_params& params) MGBASE_OVERRIDE
-    {
-        return fi_.try_put_async({
-            static_cast<int>(params.dest_proc)
-        ,   get_absolute_address(params.src_laddr) // Note: Be careful of the order
-        ,   get_absolute_address(params.dest_raddr)
-        ,   params.size_in_bytes
-        ,   select_flags()
-        ,   params.on_complete
-        });
-    }
-    #endif
-    
     virtual bool try_atomic_read_async(const atomic_read_params<atomic_default_t>& params) MGBASE_OVERRIDE
     {
         return mgcom::mpi::rma::try_atomic_read_async(params); // TODO

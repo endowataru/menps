@@ -8,7 +8,6 @@ namespace ibv {
 
 struct write_params
 {
-    mgbase::uint64_t    wr_id;
     mgbase::uint64_t    raddr;
     mgbase::uint32_t    rkey;
     mgbase::uint64_t    laddr;
@@ -18,7 +17,6 @@ struct write_params
 
 struct read_params
 {
-    mgbase::uint64_t    wr_id;
     mgbase::uint64_t    raddr;
     mgbase::uint32_t    rkey;
     mgbase::uint64_t    laddr;
@@ -28,7 +26,6 @@ struct read_params
 
 struct compare_and_swap_params
 {
-    mgbase::uint64_t    wr_id;
     mgbase::uint64_t    raddr;
     mgbase::uint32_t    rkey;
     mgbase::uint64_t    laddr;
@@ -39,7 +36,6 @@ struct compare_and_swap_params
 
 struct fetch_and_add_params
 {
-    mgbase::uint64_t    wr_id;
     mgbase::uint64_t    raddr;
     mgbase::uint32_t    rkey;
     mgbase::uint64_t    laddr;
