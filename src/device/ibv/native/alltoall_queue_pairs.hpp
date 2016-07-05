@@ -26,9 +26,6 @@ public:
     
     void destroy()
     {
-        for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
-            conns_[proc].destroy();
-        
         conns_.reset();
         
         MGBASE_LOG_DEBUG("msg:Destroyed all IBV queue_pairs.");

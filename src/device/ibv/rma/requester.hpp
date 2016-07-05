@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "device/ibv/command/completer.hpp"
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {

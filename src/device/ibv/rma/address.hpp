@@ -17,7 +17,7 @@ inline mgbase::uint64_t to_raddr(const rma::remote_ptr<T>& rptr) MGBASE_NOEXCEPT
 }
 
 inline mgbase::uint32_t to_rkey(const rma::untyped::remote_address& addr) MGBASE_NOEXCEPT {
-    return addr.region.key.info;
+    return static_cast<mgbase::uint32_t>(addr.region.key.info);
 }
 
 template <typename T>

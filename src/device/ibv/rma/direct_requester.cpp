@@ -5,7 +5,7 @@
 #include "device/ibv/command/atomic_buffer.hpp"
 #include "device/ibv/command/code.hpp"
 #include "device/ibv/native/endpoint.hpp"
-#include "device/ibv/command/copy_params.hpp"
+#include "device/ibv/command/make_wr_to.hpp"
 #include "device/ibv/native/send_work_request.hpp"
 #include "device/ibv/native/scatter_gather_entry.hpp"
 #include <mgbase/unique_ptr.hpp>
@@ -51,7 +51,7 @@ private:
         ibv::send_work_request wr = ibv::send_work_request();
         ibv::scatter_gather_entry sge = ibv::scatter_gather_entry();
         
-        copy_params_to(params, &wr, &sge);
+        make_wr_to(params, &wr, &sge);
         
         wr.next = MGBASE_NULLPTR;
         

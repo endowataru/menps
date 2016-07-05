@@ -6,7 +6,7 @@
 namespace mgcom {
 namespace ibv {
 
-inline void copy_params_to(
+inline void make_wr_to(
     const write_params& params
 ,   ibv_send_wr* const  wr
 ,   ibv_sge* const      sge
@@ -25,7 +25,7 @@ inline void copy_params_to(
     sge->lkey   = params.lkey;
 }
 
-inline void copy_params_to(
+inline void make_wr_to(
     const read_params&  params
 ,   ibv_send_wr* const  wr
 ,   ibv_sge* const      sge
@@ -44,7 +44,7 @@ inline void copy_params_to(
     sge->lkey   = params.lkey;
 }
 
-inline void copy_params_to(
+inline void make_wr_to(
     const compare_and_swap_params&  params
 ,   ibv_send_wr* const              wr
 ,   ibv_sge* const                  sge
@@ -65,7 +65,7 @@ inline void copy_params_to(
     sge->lkey   = params.lkey;
 }
 
-inline void copy_params_to(
+inline void make_wr_to(
     const fetch_and_add_params& params
 ,   ibv_send_wr* const          wr
 ,   ibv_sge* const              sge

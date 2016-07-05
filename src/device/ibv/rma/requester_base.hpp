@@ -32,7 +32,7 @@ public:
     {
         auto& completer = derived().get_completer();
         
-        mgbase::uint64_t wr_id;
+        mgbase::uint64_t wr_id = 0;
         if (MGBASE_UNLIKELY(
             !completer.try_complete(&wr_id)
         )) {
@@ -75,7 +75,7 @@ public:
     {
         auto& completer = derived().get_completer();
         
-        mgbase::uint64_t wr_id;
+        mgbase::uint64_t wr_id = 0;
         if (MGBASE_UNLIKELY(
             !completer.try_complete(&wr_id)
         )) {
@@ -119,7 +119,7 @@ public:
     {
         auto& completer = derived().get_completer();
         
-        mgbase::uint64_t wr_id;
+        mgbase::uint64_t wr_id = 0;
         if (MGBASE_UNLIKELY(
             !completer.try_complete(&wr_id)
         )) {
@@ -167,7 +167,7 @@ public:
     {
         auto& completer = derived().get_completer();
         
-        mgbase::uint64_t wr_id;
+        mgbase::uint64_t wr_id = 0;
         if (MGBASE_UNLIKELY(
             !completer.try_complete(&wr_id)
         )) {
@@ -217,7 +217,7 @@ public:
     {
         auto& completer = derived().get_completer();
         
-        mgbase::uint64_t wr_id;
+        mgbase::uint64_t wr_id = 0;
         if (MGBASE_UNLIKELY(
             !completer.try_complete(&wr_id)
         )) {
@@ -265,7 +265,7 @@ public:
     {
         auto& completer = derived().get_completer();
         
-        mgbase::uint64_t wr_id;
+        mgbase::uint64_t wr_id = 0;
         if (MGBASE_UNLIKELY(
             !completer.try_complete(&wr_id)
         )) {
