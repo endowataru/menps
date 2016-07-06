@@ -1,12 +1,9 @@
 
 #pragma once
 
-#include <mgbase/lockfree/mpsc_circular_buffer_counter.hpp>
+#include <mgbase/lockfree/mpsc_bounded_blocking_queue_counter.hpp>
 #include <mgbase/scoped_ptr.hpp>
 #include <mgbase/assert.hpp>
-#include <mgbase/ult/mutex.hpp>
-#include <mgbase/ult/condition_variable.hpp>
-#include <mgbase/ult/this_thread.hpp>
 
 namespace mgbase {
 
@@ -17,9 +14,6 @@ template <
 class mpsc_bounded_blocking_queue
     : mgbase::noncopyable
 {
-    typedef mgbase::ult::mutex                  mutex_type;
-    typedef mgbase::ult::condition_variable     condition_variable_type;
-    
     // TODO: consider cache line size
     struct /*MGBASE_ALIGNAS(MGBASE_CACHE_LINE_SIZE)*/ element
     {
@@ -29,7 +23,6 @@ class mpsc_bounded_blocking_queue
     
 public:
     mpsc_bounded_blocking_queue()
-        : wait_flag_{false}
     {
         buf_ = new element[Size];
         for (std::size_t i = 0; i < Size; ++i)
@@ -66,7 +59,6 @@ public:
     {
         mgbase::size_t tail;
         if (MGBASE_UNLIKELY(!counter_.try_enqueue(number_of_values, &tail))) {
-            notify();
             return false;
         }
         
@@ -90,10 +82,7 @@ public:
     
     void notify()
     {
-        if (wait_flag_.load(mgbase::memory_order_acquire)) {
-            mgbase::unique_lock<mutex_type> lc{ mtx_ };
-            cv_.notify_one();
-        }
+        counter_.notify();
     }
     
     #if 0
@@ -128,6 +117,56 @@ public:
         return true;
     }
     #endif
+    
+    #if 0
+    
+    class pop_result
+    {
+    public:
+        pop_result(
+            mpsc_bounded_blocking_queue&    self
+        ,   const mgbase::size_t            first
+        ,   const mgbase::size_t            last
+        ,   const mgbase::size_t            popped
+        )
+            : self_(self)
+            , first_{first}
+            , last_{last}
+            , popped_{popped}
+        {
+        }
+        
+        ~pop_result()
+        {
+            for (mgbase::size_t i = 0; i < popped_; ++i) {
+                buf_[(first_ + i) % counter_.size()].visible.store(false, mgbase::memory_order_relaxed);
+            }
+            
+            counter_.dequeue_multiple(popped_);
+        }
+        
+        pop_result(const pop_result&) = delete;
+        pop_result& operator = (const pop_result&) = delete;
+        
+        #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
+        pop_result(pop_result&&) = default;
+        #else
+        pop_result(pop_result&& other)
+            : self_(other.self_), first_{other.first_}, last_{other.last_} { }
+        #endif
+        
+        iterator begin() { return {self_, first_}; }
+        iterator end() { return {self_, last_}; }
+        
+    private:
+        mpsc_bounded_blocking_queue& self_;
+        mgbase::size_t first_;
+        mgbase::size_t last_;
+        mgbase::size_t popped_;
+    };
+    
+    #endif
+    
 private:
     struct default_pop_closure {
         mpsc_bounded_blocking_queue& self;
@@ -156,15 +195,8 @@ public:
     {
         while (true)
         {
-            while (MGBASE_UNLIKELY(counter_.empty())) // TODO: "unlikely" is correct?
-            {
-                mgbase::unique_lock<mutex_type> lc{ mtx_ };
-                if (MGBASE_LIKELY(counter_.empty())) {
-                    wait_flag_.store(true, mgbase::memory_order_release);
-                    cv_.wait(lc);
-                    wait_flag_.store(false, mgbase::memory_order_release);
-                }
-            }
+            if (counter_.empty())
+                counter_.wait();
             
             const mgbase::size_t num_enqueued = counter_.number_of_enqueued();
             
@@ -276,10 +308,7 @@ public:
     #endif
     
 private:
-    mpsc_static_circular_buffer_counter<mgbase::size_t, Size> counter_;
-    mutex_type mtx_;
-    condition_variable_type cv_;
-    mgbase::atomic<bool> wait_flag_;
+    mpsc_bounded_blocking_queue_counter<mgbase::size_t, Size> counter_;
     mgbase::scoped_ptr<element []> buf_;
 };
 

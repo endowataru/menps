@@ -241,6 +241,24 @@ int main() { std::unique_ptr<int> p(new int); return 0; }
 " MGBASE_CXX11_UNIQUE_PTR_SUPPORTED
 )
 
+CHECK_CXX_SOURCE_COMPILES(
+"
+struct A {
+    A(A&&) = default;
+};
+int main() { return 0; }
+" MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+struct A {
+    A(A&&) = default;
+};
+int main() { return 0; }
+" MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
+)
+
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc
