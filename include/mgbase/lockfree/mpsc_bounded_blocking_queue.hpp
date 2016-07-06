@@ -198,61 +198,59 @@ private:
 public:
     pop_result pop(const mgbase::size_t lim)
     {
-        while (true)
+        if (counter_.empty())
+            counter_.wait();
+        
+        const mgbase::size_t num_enqueued = counter_.number_of_enqueued();
+        
+        const mgbase::size_t first = counter_.front();
+        mgbase::size_t last = first;
+        
+        mgbase::size_t popped;
+        for (popped = 0; popped < num_enqueued && popped < lim; ++popped)
         {
-            if (counter_.empty())
-                counter_.wait();
-            
-            const mgbase::size_t num_enqueued = counter_.number_of_enqueued();
-            
-            const mgbase::size_t first = counter_.front();
-            mgbase::size_t last = first;
-            
-            mgbase::size_t popped;
-            for (popped = 0; popped < num_enqueued && popped < lim; ++popped)
-            {
-                if (MGBASE_UNLIKELY(
-                    !buf_[last].visible.load(mgbase::memory_order_acquire)
-                )) {
-                    if (popped == 0) {
-                        // If there's no available element but some are being enqueued
-                        mgbase::ult::this_thread::yield();
-                    }
-                    break;
+            if (MGBASE_UNLIKELY(
+                !buf_[last].visible.load(mgbase::memory_order_acquire)
+            )) {
+                if (popped == 0) {
+                    // If there's no available element but some are being enqueued
+                    mgbase::ult::this_thread::yield();
                 }
-                
-                last = (last + 1) % counter_.size();
+                break;
             }
             
-            if (popped > 0)
-            {
-                MGBASE_LOG_DEBUG(
-                    "msg:Popping elements.\t"
-                    "first:{:x}\tlast:{:x}\tpopped:{}"
-                ,   first
-                ,   last
-                ,   popped
-                );
-                
-                return { *this, first, last, popped };
-            }
+            last = (last + 1) % counter_.size();
         }
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Popping elements.\t"
+            "first:{:x}\tlast:{:x}\tpopped:{}"
+        ,   first
+        ,   last
+        ,   popped
+        );
+        
+        return { *this, first, last, popped };
     }
     
     T pop()
     {
-        auto ret = pop(1);
-        
-        auto first = ret.begin();
-        auto last = ret.end();
-        
-        MGBASE_ASSERT(first != last);
-        
-        const auto r = *first;
-        
-        MGBASE_ASSERT(++first == last);
-        
-        return r;
+        while (true)
+        {
+            auto ret = pop(1);
+            
+            auto first = ret.begin();
+            auto last = ret.end();
+            
+            if (MGBASE_LIKELY(first != last))
+            {
+                const auto r = *first;
+                
+                MGBASE_ASSERT(++first == last);
+                
+                return r;
+            }
+        }
     }
     
 private:
