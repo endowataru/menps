@@ -2,6 +2,7 @@
 #pragma once
 
 #include "verbs.hpp"
+#include <mgbase/logger.hpp>
 
 namespace mgcom {
 namespace ibv {

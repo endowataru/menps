@@ -1,6 +1,10 @@
 
 #include "queue_pair.hpp"
 
+#include <limits>
+
+#include <mgbase/logger.hpp>
+
 namespace mgcom {
 namespace ibv {
 
@@ -81,7 +85,6 @@ void queue_pair::create(ibv_context& /*ctx*/, ibv_cq& cq, ibv_pd& pd)
         throw ibv_error("ibv_create_qp() failed");
 }
 #endif
-
 
 namespace /*unnamed*/ {
 

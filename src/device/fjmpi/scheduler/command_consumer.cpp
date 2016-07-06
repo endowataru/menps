@@ -2,6 +2,7 @@
 #include "command_consumer.hpp"
 #include "fjmpi_completer.hpp"
 #include "device/fjmpi/command/execute.hpp"
+#include <mgbase/thread.hpp>
 
 namespace mgcom {
 namespace fjmpi {
@@ -50,7 +51,7 @@ private:
     
     void loop(command_queue& queue)
     {
-        while (MGBASE_LIKELY((! finished_)))
+        while (MGBASE_LIKELY(! finished_))
         {
             // Check the queue.
             if (command* const cmd = queue.peek())

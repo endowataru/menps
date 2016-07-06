@@ -2,13 +2,8 @@
 #pragma once
 
 #include "verbs.hpp"
-#include <mgbase/assert.hpp>
-
 #include "device/ibv/ibv_error.hpp"
-
-#include <limits>
-
-#include <mgbase/logger.hpp>
+#include <mgbase/assert.hpp>
 
 namespace mgcom {
 namespace ibv {

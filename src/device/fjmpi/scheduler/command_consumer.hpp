@@ -3,7 +3,6 @@
 
 #include "command_queue.hpp"
 #include "device/mpi/command/mpi_completer.hpp"
-#include <mgbase/thread.hpp>
 
 namespace mgcom {
 namespace fjmpi {

@@ -48,8 +48,7 @@ namespace ibv {
 
 mgbase::unique_ptr<rma::registrator> make_rma_registrator(endpoint& ep)
 {
-    // TODO: replace with make_unique
-    return mgbase::unique_ptr<rma::ibv_registrator>(new rma::ibv_registrator(ep));
+    return mgbase::make_unique<rma::ibv_registrator>(ep);
 }
 
 } // namespace ibv
