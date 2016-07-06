@@ -118,128 +118,6 @@ public:
     }
     #endif
     
-    #if 0
-    
-    class pop_result
-    {
-    public:
-        pop_result(
-            mpsc_bounded_blocking_queue&    self
-        ,   const mgbase::size_t            first
-        ,   const mgbase::size_t            last
-        ,   const mgbase::size_t            popped
-        )
-            : self_(self)
-            , first_{first}
-            , last_{last}
-            , popped_{popped}
-        {
-        }
-        
-        ~pop_result()
-        {
-            for (mgbase::size_t i = 0; i < popped_; ++i) {
-                buf_[(first_ + i) % counter_.size()].visible.store(false, mgbase::memory_order_relaxed);
-            }
-            
-            counter_.dequeue_multiple(popped_);
-        }
-        
-        pop_result(const pop_result&) = delete;
-        pop_result& operator = (const pop_result&) = delete;
-        
-        #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-        pop_result(pop_result&&) = default;
-        #else
-        pop_result(pop_result&& other)
-            : self_(other.self_), first_{other.first_}, last_{other.last_} { }
-        #endif
-        
-        iterator begin() { return {self_, first_}; }
-        iterator end() { return {self_, last_}; }
-        
-    private:
-        mpsc_bounded_blocking_queue& self_;
-        mgbase::size_t first_;
-        mgbase::size_t last_;
-        mgbase::size_t popped_;
-    };
-    
-    #endif
-    
-private:
-    struct default_pop_closure {
-        mpsc_bounded_blocking_queue& self;
-        T* result;
-        
-        template <typename Iterator>
-        void operator() (Iterator first, Iterator last) {
-            if (first != last) {
-                *result = *first;
-                ++first;
-                MGBASE_ASSERT(first == last);
-            }
-        }
-    };
-
-public:
-    T pop()
-    {
-        T result;
-        pop_with_functor(default_pop_closure{*this, &result}, 1);
-        return result;
-    }
-    
-    template <typename Func>
-    void pop_with_functor(Func func, const mgbase::size_t lim)
-    {
-        while (true)
-        {
-            if (counter_.empty())
-                counter_.wait();
-            
-            const mgbase::size_t num_enqueued = counter_.number_of_enqueued();
-            
-            const mgbase::size_t first = counter_.front();
-            mgbase::size_t last = first;
-            
-            mgbase::size_t popped;
-            for (popped = 0; popped < num_enqueued && popped < lim; ++popped)
-            {
-                if (MGBASE_UNLIKELY(
-                    !buf_[last].visible.load(mgbase::memory_order_acquire)
-                )) {
-                    break;
-                }
-                
-                last = (last + 1) % counter_.size();
-            }
-            
-            if (popped == 0) {
-                mgbase::ult::this_thread::yield();
-                continue;
-            }
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Popping elements.\t"
-                "first:{:x}\tlast:{:x}\tpopped:{}"
-            ,   first
-            ,   last
-            ,   popped
-            );
-            
-            func(iterator{*this, first}, iterator{*this, last});
-            
-            for (mgbase::size_t i = 0; i < popped; ++i) {
-                buf_[(first + i) % counter_.size()].visible.store(false, mgbase::memory_order_relaxed);
-            }
-            
-            counter_.dequeue_multiple(popped);
-            
-            break;
-        }
-    }
-    
     class iterator
     {
     public:
@@ -268,44 +146,114 @@ public:
         mgbase::size_t index_;
     };
     
-    
-    #if 0
-    MGBASE_ALWAYS_INLINE
-    T* peek() const
+private:
+    class pop_result
     {
-        if (counter_.empty()) {
-            MGBASE_LOG_VERBOSE(
-                "msg:Peeked but queue is empty."
-                /*"\thead:{:x}\ttail:{:x}"
-            ,   head
-            ,   tail*/
-            );
-            return MGBASE_NULLPTR;
+    public:
+        pop_result(
+            mpsc_bounded_blocking_queue&    self
+        ,   const mgbase::size_t            first
+        ,   const mgbase::size_t            last
+        ,   const mgbase::size_t            popped
+        )
+            : self_(self)
+            , first_{first}
+            , last_{last}
+            , popped_{popped}
+        {
         }
         
-        element& elem = buf_[counter_.front()];
-        const bool already_visible = elem.visible.load(mgbase::memory_order_acquire);
-        
-        if (!already_visible) {
-            MGBASE_LOG_VERBOSE("msg:Peeked but entry is not visible yet.");
-            return MGBASE_NULLPTR;
+        ~pop_result()
+        {
+            auto& counter = self_.counter_;
+            const auto size = counter.size();
+            
+            for (mgbase::size_t i = 0; i < popped_; ++i) {
+                self_.buf_[(first_ + i) % size].visible.store(false, mgbase::memory_order_relaxed);
+            }
+            
+            counter.dequeue_multiple(popped_);
         }
         
-        return &elem.value;
+        pop_result(const pop_result&) = delete;
+        pop_result& operator = (const pop_result&) = delete;
+        
+        #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
+        pop_result(pop_result&&) = default;
+        #else
+        pop_result(pop_result&& other)
+            : self_(other.self_), first_{other.first_}, last_{other.last_}, popped_{other.popped_} { }
+        #endif
+        
+        iterator begin() { return {self_, first_}; }
+        iterator end() { return {self_, last_}; }
+        
+    private:
+        mpsc_bounded_blocking_queue& self_;
+        mgbase::size_t first_;
+        mgbase::size_t last_;
+        mgbase::size_t popped_;
+    };
+    
+public:
+    pop_result pop(const mgbase::size_t lim)
+    {
+        while (true)
+        {
+            if (counter_.empty())
+                counter_.wait();
+            
+            const mgbase::size_t num_enqueued = counter_.number_of_enqueued();
+            
+            const mgbase::size_t first = counter_.front();
+            mgbase::size_t last = first;
+            
+            mgbase::size_t popped;
+            for (popped = 0; popped < num_enqueued && popped < lim; ++popped)
+            {
+                if (MGBASE_UNLIKELY(
+                    !buf_[last].visible.load(mgbase::memory_order_acquire)
+                )) {
+                    if (popped == 0) {
+                        // If there's no available element but some are being enqueued
+                        mgbase::ult::this_thread::yield();
+                    }
+                    break;
+                }
+                
+                last = (last + 1) % counter_.size();
+            }
+            
+            if (popped > 0)
+            {
+                MGBASE_LOG_DEBUG(
+                    "msg:Popping elements.\t"
+                    "first:{:x}\tlast:{:x}\tpopped:{}"
+                ,   first
+                ,   last
+                ,   popped
+                );
+                
+                return { *this, first, last, popped };
+            }
+        }
     }
     
-    MGBASE_ALWAYS_INLINE
-    void pop()
+    T pop()
     {
-        element& elem = buf_[counter_.front()];
+        auto ret = pop(1);
         
-        MGBASE_ASSERT(elem.visible.load());
+        auto first = ret.begin();
+        auto last = ret.end();
         
-        elem.visible.store(false, mgbase::memory_order_relaxed); // Reset for the next use
+        MGBASE_ASSERT(first != last);
         
-        counter_.dequeue();
+        const auto r = *first;
+        
+        MGBASE_ASSERT(++first == last);
+        
+        return r;
     }
-    #endif
     
 private:
     mpsc_bounded_blocking_queue_counter<mgbase::size_t, Size> counter_;
