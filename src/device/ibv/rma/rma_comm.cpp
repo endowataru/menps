@@ -6,17 +6,18 @@
 #include "registrator.hpp"
 #include "device/ibv/command/poll_thread.hpp"
 #include "common/rma/region_allocator.hpp"
+#include "device/ibv/scheduler/scheduler.hpp"
 
 namespace mgcom {
 namespace ibv {
 
 namespace /*unnamed*/ {
 
-class direct_rma_comm
+class rma_comm_base
     : public rma_comm
 {
-public:
-    direct_rma_comm()
+protected:
+    rma_comm_base()
     {
         ep_.collective_initialize();
         
@@ -27,17 +28,12 @@ public:
         
         comp_ = mgbase::make_unique<completer>(); // completer requires allocator
         
-        req_ = make_rma_direct_requester(ep_, *comp_); // depends on rma::registrator
-        rma::requester::set_instance(*req_);
-        
         poll_ = mgbase::make_unique<poll_thread>(ep_.get_cq(), *comp_);
     }
     
-    virtual ~direct_rma_comm()
+    virtual ~rma_comm_base()
     {
         poll_.reset();
-        
-        req_.reset();
         
         comp_.reset();
          
@@ -48,9 +44,15 @@ public:
         ep_.finalize();
     }
     
-    virtual rma::requester& get_requester() MGBASE_OVERRIDE {
-        return *req_;
+    endpoint& get_endpoint() {
+        return ep_;
     }
+    
+    completer& get_completer() {
+        return *comp_;
+    }
+    
+public:
     virtual rma::registrator& get_registrator() MGBASE_OVERRIDE {
         return *reg_;
     }
@@ -58,9 +60,44 @@ public:
 private:
     endpoint ep_;
     mgbase::unique_ptr<completer> comp_;
-    mgbase::unique_ptr<rma::requester> req_;
     mgbase::unique_ptr<rma::registrator> reg_;
     mgbase::unique_ptr<poll_thread> poll_;
+};
+
+class direct_rma_comm
+    : public rma_comm_base
+{
+public:
+    direct_rma_comm()
+    {
+        req_ = make_rma_direct_requester(this->get_endpoint(), this->get_completer()); // depends on rma::registrator
+        rma::requester::set_instance(*req_);
+    }
+    
+    virtual rma::requester& get_requester() MGBASE_OVERRIDE {
+        return *req_;
+    }
+    
+private:
+    mgbase::unique_ptr<rma::requester> req_;
+};
+
+class scheduled_rma_comm
+    : public rma_comm_base
+{
+public:
+    scheduled_rma_comm()
+    {
+        req_ = make_scheduled_rma_requester(this->get_endpoint(), this->get_completer()); // depends on rma::registrator
+        rma::requester::set_instance(*req_);
+    }
+    
+    virtual rma::requester& get_requester() MGBASE_OVERRIDE {
+        return *req_;
+    }
+    
+private:
+    mgbase::unique_ptr<rma::requester> req_;
 };
 
 } // unnamed namespace
@@ -68,6 +105,11 @@ private:
 mgbase::unique_ptr<rma_comm> make_direct_rma_comm()
 {
     return mgbase::make_unique<direct_rma_comm>();
+}
+
+mgbase::unique_ptr<rma_comm> make_scheduled_rma_comm()
+{
+    return mgbase::make_unique<scheduled_rma_comm>();
 }
 
 } // namespace ibv

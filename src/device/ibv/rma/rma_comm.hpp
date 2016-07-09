@@ -25,6 +25,8 @@ protected:
 
 mgbase::unique_ptr<rma_comm> make_direct_rma_comm();
 
+mgbase::unique_ptr<rma_comm> make_scheduled_rma_comm();
+
 } // namespace ibv
 } // namespace mgcom
 

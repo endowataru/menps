@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <mgcom/common.hpp>
+
 #define MGCOM_IBV_COMMAND_CODES(x) \
         x(ibv_read) \
     ,   x(ibv_write) \
@@ -14,8 +16,7 @@ namespace ibv {
 
 enum class command_code
 {
-    call = 1
-,   MGCOM_IBV_COMMAND_CODES(DEFINE_ENUM)
+    MGCOM_IBV_COMMAND_CODES(DEFINE_ENUM)
 };
 
 #undef DEFINE_ENUM

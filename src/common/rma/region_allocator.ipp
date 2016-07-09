@@ -33,6 +33,9 @@ public:
         ms_ = create_mspace_with_base(ptr, total_region_size, 1);
         
         MGBASE_LOG_DEBUG("msg:Initialized RMA region allocator.");
+        
+        from_ = reinterpret_cast<mgbase::uintptr_t>(ptr);
+        to_ = reinterpret_cast<mgbase::uintptr_t>(ptr) + total_region_size;
     }
     
     void finalize()
@@ -50,6 +53,9 @@ public:
         mgbase::lock_guard<mgbase::spinlock> lc(lock_);
         
         void* const ptr = mspace_malloc(ms_, size_in_bytes);
+        
+        MGBASE_ASSERT(ptr != MGBASE_NULLPTR);
+        MGBASE_ASSERT(from_ <= reinterpret_cast<mgbase::uintptr_t>(ptr) && reinterpret_cast<mgbase::uintptr_t>(ptr) < to_);
         
         const local_address base = to_address(region_);
         const index_t diff = static_cast<index_t>(
@@ -91,6 +97,8 @@ private:
     mgbase::spinlock lock_;
     local_region region_;
     mspace ms_;
+    mgbase::uintptr_t from_;
+    mgbase::uintptr_t to_;
 };
 
 } // unnamed namespace

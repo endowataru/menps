@@ -30,7 +30,10 @@ public:
         collective_requester_ = mpi::collective::make_requester(commander_->get_mpi_interface());
         collective::requester::set_instance(*collective_requester_);
         
-        rma_ = make_direct_rma_comm();
+        if (is_scheduled())
+            rma_ = make_scheduled_rma_comm();
+        else
+            rma_ = make_direct_rma_comm();
         
         commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
         
@@ -57,6 +60,14 @@ public:
     }
     
 private:
+    static bool is_scheduled() MGBASE_NOEXCEPT
+    {
+        if (const char* const direct = std::getenv("MGCOM_IBV_DIRECT"))
+            return std::atoi(direct) == 0;
+        else
+            return true; // Default
+    }
+    
     mgbase::unique_ptr<endpoint> endpoint_;
     mgbase::unique_ptr<mpi1::commander> commander_;
     mgbase::unique_ptr<rma_comm> rma_;

@@ -6,7 +6,7 @@ class RmaBasic
     : public ::testing::Test
 {
 protected:
-    virtual void SetUp()
+    virtual void SetUp() MGBASE_OVERRIDE
     {
         if (mgcom::current_process_id() == 0) {
             lptr = mgcom::rma::allocate<int>(1);
@@ -18,6 +18,16 @@ protected:
         rptr = mgcom::rma::use_remote_ptr(0, lptr);
         
         buf = mgcom::rma::allocate<int>(1);
+    }
+    
+    virtual void TearDown() MGBASE_OVERRIDE
+    {
+        mgcom::collective::barrier();
+        
+        if (mgcom::current_process_id() == 0) {
+            mgcom::rma::deallocate(lptr);
+        }
+        mgcom::rma::deallocate(buf);
     }
     
     mgcom::rma::local_ptr<int> lptr;
@@ -33,6 +43,8 @@ TEST_F(RmaBasic, Get)
     
     const int val = *buf;
     ASSERT_EQ(123, val);
+    
+    mgcom::collective::barrier();
 }
 
 TEST_F(RmaBasic, Put)
@@ -53,6 +65,8 @@ TEST_F(RmaBasic, Put)
     
     const int val = *buf;
     ASSERT_EQ(234, val);
+    
+    mgcom::collective::barrier();
 }
 
 TEST_F(RmaBasic, ConcurrentGet)
@@ -86,13 +100,19 @@ TEST_F(RmaBasic, ConcurrentGet)
     for (vec_type::iterator itr = ptrs.begin(); itr != ptrs.end(); ++itr) {
         ASSERT_EQ(123, **itr);
     }
+    
+    for (auto itr = ptrs.begin(); itr != ptrs.end(); ++itr) {
+        mgcom::rma::deallocate(*itr);
+    }
+    
+    mgcom::collective::barrier();
 }
 
 class RmaAtomic
     : public ::testing::Test
 {
 protected:
-    virtual void SetUp()
+    virtual void SetUp() MGBASE_OVERRIDE
     {
         if (mgcom::current_process_id() == 0) {
             lptr = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
@@ -106,6 +126,18 @@ protected:
         buf = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
         buf2 = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
         buf3 = mgcom::rma::allocate<mgcom::rma::atomic_default_t>(1);
+    }
+    
+    virtual void TearDown() MGBASE_OVERRIDE
+    {
+        mgcom::collective::barrier();
+        
+        if (mgcom::current_process_id() == 0) {
+            mgcom::rma::deallocate(lptr);
+        }
+        mgcom::rma::deallocate(buf);
+        mgcom::rma::deallocate(buf2);
+        mgcom::rma::deallocate(buf3);
     }
     
     mgcom::rma::local_ptr<mgcom::rma::atomic_default_t> lptr;
@@ -142,6 +174,8 @@ TEST_F(RmaAtomic, FetchAndAdd)
         mgcom::rma::atomic_default_t val = *lptr;
         ASSERT_EQ(mgcom::number_of_processes() * diff + 1, val);
     }
+    
+    mgcom::collective::barrier();
 }
 
 
@@ -190,5 +224,7 @@ TEST_F(RmaAtomic, CompareAndSwap)
         mgcom::rma::atomic_default_t val = *lptr;
         ASSERT_EQ(mgcom::number_of_processes() * 100 + 1, val);
     }
+    
+    mgcom::collective::barrier();
 }
 

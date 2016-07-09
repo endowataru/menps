@@ -152,7 +152,8 @@ if (${is_ibv_available})
         src/device/ibv/native/queue_pair.cpp
         src/device/ibv/native/alltoall_queue_pairs.cpp
         
-        #src/device/ibv/scheduler/command_consumer.cpp
+        src/device/ibv/scheduler/command_consumer.cpp
+        src/device/ibv/scheduler/scheduler.cpp
     )
     target_link_libraries(mgcom-ibv mgcom-base mgbase
         ibverbs # libibverbs.so
