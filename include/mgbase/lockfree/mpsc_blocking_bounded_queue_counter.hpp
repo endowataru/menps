@@ -7,7 +7,7 @@
 #include <mgbase/ult/mutex.hpp>
 #include <mgbase/ult/condition_variable.hpp>
 
-//#define MGBASE_BLOCKING_BOUNDED_QUEUE_DISABLE_MUTEX
+#define MGBASE_BLOCKING_BOUNDED_QUEUE_DISABLE_MUTEX
 
 namespace mgbase {
 

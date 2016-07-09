@@ -373,6 +373,11 @@ public:
         }
     }
     
+    void notify()
+    {
+        counter_.notify(); // just delegate
+    }
+    
 private:
     counter_type counter_;
     mgbase::scoped_ptr<element []> buf_;
