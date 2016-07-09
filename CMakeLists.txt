@@ -259,6 +259,16 @@ int main() { return 0; }
 " MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
 )
 
+CHECK_CXX_SOURCE_COMPILES(
+"
+int main() {
+    int a[1];
+    for (int x : a) { }
+    return 0;
+}
+" MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED
+)
+
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc

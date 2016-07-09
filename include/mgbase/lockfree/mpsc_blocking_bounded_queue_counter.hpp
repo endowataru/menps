@@ -7,6 +7,8 @@
 #include <mgbase/ult/mutex.hpp>
 #include <mgbase/ult/condition_variable.hpp>
 
+//#define MGBASE_BLOCKING_BOUNDED_QUEUE_DISABLE_MUTEX
+
 namespace mgbase {
 
 template <
@@ -118,6 +120,7 @@ public:
                     "con:{:x}\tpro:{:x}\tnext_pro:{:x}"
                 ,   con
                 ,   pro
+                ,   next_pro
                 );
                 
                 return {};
@@ -166,6 +169,7 @@ public:
     
     void wait()
     {
+        #ifndef MGBASE_BLOCKING_BOUNDED_QUEUE_DISABLE_MUTEX
         mgbase::unique_lock<mutex_type> lc{ mtx_ };
         
         MGBASE_ASSERT((pro_.load(mgbase::memory_order_relaxed) & 1) == 0);
@@ -177,12 +181,15 @@ public:
         
         MGBASE_ASSERT((pro_.load(mgbase::memory_order_relaxed) & 1) == 1);
         pro_.fetch_sub(1, mgbase::memory_order_release);
+        #endif
     }
     
     void notify()
     {
+        #ifndef MGBASE_BLOCKING_BOUNDED_QUEUE_DISABLE_MUTEX
         mgbase::lock_guard<mutex_type> lc{ mtx_ };
         cv_.notify_one();
+        #endif
     }
     
     void dequeue(const Index diff) MGBASE_NOEXCEPT
