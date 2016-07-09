@@ -11,7 +11,7 @@ namespace ibv {
 class completion_queue
     : mgbase::noncopyable
 {
-    static const mgbase::uint32_t num_cqe = 1024;
+    static const mgbase::uint32_t num_cqe = 1 << 18;
     
 public:
     completion_queue()

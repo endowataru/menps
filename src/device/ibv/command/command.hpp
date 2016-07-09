@@ -11,7 +11,7 @@ struct command
     // TODO: 
     static const mgbase::size_t params_size = 128 - sizeof(long) - sizeof(void*); // TODO
     
-    static const index_t queue_size = 4; // TODO
+    static const index_t queue_size = 1 << 10; // TODO
     
     command_code code;
     process_id_t proc;

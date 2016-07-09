@@ -15,18 +15,21 @@ class command_consumer::impl
 {
 public:
     impl(command_queue& queue, const config& conf)
-        : finished_{false}
+        : queue_(queue)
+        , finished_{false}
         , wr_bufs_{new send_wr_buffer[conf.num_procs]}
         , sges_(conf.num_procs, std::vector<scatter_gather_entry>(send_wr_buffer::max_size))
         , conf_(conf)
     {
-        th_ = mgbase::thread(starter{*this, queue});
+        th_ = mgbase::thread(starter{*this});
     }
     
     virtual ~impl()
     {
         // Order the running thread to stop.
         finished_ = true;
+        
+        queue_.notify();
         
         // Join the running thread.
         th_.join();
@@ -36,15 +39,16 @@ private:
     struct starter
     {
         impl& self;
-        command_queue& queue;
         
         void operator() () {
-            self.loop(queue);
+            self.loop();
         }
     };
     
-    void loop(command_queue& queue)
+    void loop()
     {
+        auto& queue = queue_;
+        
         const auto proc_first = conf_.proc_first;
         const auto num_procs = conf_.num_procs;
         
@@ -133,6 +137,7 @@ private:
     }
     
 private:
+    command_queue& queue_;
     bool finished_;
     mgbase::thread th_;
     mgbase::scoped_ptr<send_wr_buffer []> wr_bufs_;

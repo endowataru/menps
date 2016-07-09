@@ -11,8 +11,8 @@ namespace ibv {
 class queue_pair
     : mgbase::noncopyable
 {
-    static const mgbase::uint32_t max_send_wr = 1024;
-    static const mgbase::uint32_t max_recv_wr = 1024;
+    static const mgbase::uint32_t max_send_wr = 1 << 14;
+    static const mgbase::uint32_t max_recv_wr = 1 << 14;
     static const mgbase::uint32_t max_send_sge = 1; // Scatter/Gather
     static const mgbase::uint32_t max_recv_sge = 1;
     

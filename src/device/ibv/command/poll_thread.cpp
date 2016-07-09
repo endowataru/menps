@@ -10,6 +10,8 @@ namespace ibv {
 
 class poll_thread::impl
 {
+    static const mgbase::size_t max_num_polled = 1 << 12;
+    
 public:
     impl(completion_queue& cq, completer& comp)
         : finished_{false}
@@ -43,23 +45,28 @@ private:
         
         while (MGBASE_LIKELY(!finished_))
         {
-            ibv_wc wc;
+            ibv_wc wcs[max_num_polled];
             
-            const int num = cq_.poll(&wc, 1);
+            const int num = cq_.poll(wcs, max_num_polled);
             
-            if (num == 1)
+            if (num > 0)
             {
-                if (MGBASE_UNLIKELY(wc.status != IBV_WC_SUCCESS)) {
-                    throw ibv_error("polling failed", wc.status);
+                for (mgbase::size_t i = 0; i < num; ++i)
+                {
+                    auto& wc = wcs[i];
+                    
+                    if (MGBASE_UNLIKELY(wc.status != IBV_WC_SUCCESS)) {
+                        throw ibv_error("polling failed", wc.status);
+                    }
+                    
+                    completer_.notify(wc.wr_id);
+                    
+                    MGBASE_LOG_DEBUG(
+                        "msg:Polled completion.\t"
+                        "wr_id:{}"
+                    ,   wc.wr_id
+                    );
                 }
-                
-                completer_.notify(wc.wr_id);
-                
-                MGBASE_LOG_DEBUG(
-                    "msg:Polled completion.\t"
-                    "wr_id:{}"
-                ,   wc.wr_id
-                );
             }
             else
             {
