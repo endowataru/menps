@@ -103,6 +103,9 @@ protected:
         
         info.count = count.load();
         
+        while (count.load() < posted)
+            mgbase::ult::this_thread::yield();
+        
         for (auto itr = lptrs.begin(); itr != lptrs.end(); ++itr)
             mgcom::rma::deallocate(*itr);
     }
