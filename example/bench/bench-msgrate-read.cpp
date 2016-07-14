@@ -76,7 +76,7 @@ void start_bench_thread(const mgbase::uint32_t thread_id)
         ,   g_remote_ptrs[target_proc]
         ,   local_buf
         ,   1
-        ,   mgbase::make_operation_fetch_add_release(&count, 1ul)
+        ,   mgbase::make_operation_fetch_add_release(&count, static_cast<mgbase::uint64_t>(1))
         );
         
         if (!ret) continue;

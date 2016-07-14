@@ -22,7 +22,7 @@ public:
             new local_ptr_type[number_of_processes()]
         );
         
-        mgcom::collective::allgather(&local_ptr, local_ptrs, 1);
+        mgcom::collective::allgather(&local_ptr, &local_ptrs[0], 1);
         
         remote_ptrs_ = new remote_ptr_type[number_of_processes()];
         
