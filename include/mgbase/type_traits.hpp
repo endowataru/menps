@@ -34,6 +34,7 @@ using std::is_pointer;
 //using std::is_rvalue_reference;
 //using std::is_member_object_pointer;
 //using std::is_member_function_pointer;
+using std::is_reference;
 
 // Composite type categories
 
@@ -53,6 +54,7 @@ using std::is_volatile;
 using std::is_signed;
 using std::is_unsigned;
 
+
 // Type relationships
 
 using std::is_same;
@@ -68,6 +70,8 @@ using std::remove_const;
 using std::remove_volatile;
 using std::remove_cv;
 
+using std::remove_reference;
+
 // Sign modifiers
 
 using std::make_signed;
@@ -78,6 +82,14 @@ using std::make_unsigned;
 using std::aligned_storage;
 using std::enable_if;
 using std::conditional;
+
+
+using std::add_lvalue_reference;
+using std::add_rvalue_reference;
+using std::add_const;
+using std::add_volatile;
+using std::add_cv;
+using std::add_volatile;
 
 } // namespace mgbase
 
@@ -445,8 +457,44 @@ template <typename T> struct make_unsigned<const volatile T> {
     typedef const volatile typename make_unsigned<T>::type type;
 };
 
-} // namespace mgbase
+// is_reference
 
+template <typename T> struct is_reference      : false_type {};
+template <typename T> struct is_reference<T&>  : true_type {};
+template <typename T> struct is_reference<T&&> : true_type {};
+
+// remove_reference
+
+template <typename T> struct remove_reference      { typedef T type; };
+template <typename T> struct remove_reference<T&>  { typedef T type; };
+template <typename T> struct remove_reference<T&&> { typedef T type; };
+
+// add_lvalue_reference
+
+template <typename T> struct add_lvalue_reference      { typedef T& type; };
+template <typename T> struct add_lvalue_reference<T&>  { typedef T& type; };
+template <typename T> struct add_lvalue_reference<T&&> { typedef T& type; };
+
+// add_rvalue_reference
+
+template <typename T> struct add_rvalue_reference      { typedef T&& type; };
+template <typename T> struct add_rvalue_reference<T&>  { typedef T&  type; };
+template <typename T> struct add_rvalue_reference<T&&> { typedef T&& type; };
+
+// add_const
+
+template <typename T> struct add_const { typedef const T type; };
+
+// add_volatile
+
+template <typename T> struct add_volatile { typedef volatile T type; };
+
+// add_cv
+
+template <typename T> struct add_cv { typedef const volatile T type; };
+
+
+} // namespace mgbase
 
 #endif // MGBASE_CXX11_SUPPORTED
 
