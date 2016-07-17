@@ -91,6 +91,8 @@ using std::add_volatile;
 using std::add_cv;
 using std::add_volatile;
 
+using std::declval;
+
 } // namespace mgbase
 
 #else // MGBASE_CXX11_SUPPORTED

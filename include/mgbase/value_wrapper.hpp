@@ -1,7 +1,8 @@
 
 #pragma once
 
-#include <mgbase/move.hpp>
+#include <mgbase/type_traits.hpp>
+#include <utility>
 
 namespace mgbase {
 
@@ -16,7 +17,7 @@ public:
     
     #ifdef MGBASE_CXX11_SUPPORTED
     MGBASE_CONSTEXPR /*implicit*/ value_wrapper(T&& val)
-        : val_(mgbase::move(val)) { }
+        : val_(std::move(val)) { }
     #endif
     
     T& get() {
@@ -67,8 +68,6 @@ public:
     }
 };
 
-namespace /*unnamed*/ {
-
 inline value_wrapper<void> wrap_void() MGBASE_NOEXCEPT {
     return value_wrapper<void>();
 }
@@ -90,7 +89,122 @@ inline value_wrapper<const T&> wrap_reference(const T& value) MGBASE_NOEXCEPT {
     return value_wrapper<const T&>(value);
 }
 
-} // unnamed namespace
+namespace detail {
+
+template <typename Func, typename... Args>
+struct call_with_value_wrapper_result
+{
+    typedef decltype(mgbase::declval<Func>()(mgbase::declval<Args>()...))
+        type;
+};
+
+
+} // namespace detail
+
+template <typename T, typename Func, typename... Args,
+    typename = typename mgbase::enable_if<
+        mgbase::is_same<
+            void
+        ,   decltype(mgbase::declval<Func>()(mgbase::declval<Args>()..., mgbase::declval<T>()))
+        >::value
+    >::type>
+inline value_wrapper<void> call_with_value_wrapper_(const value_wrapper<T>& val, Func&& func, Args&&... args)
+{
+    std::forward<Func>(func)(std::forward<Args>(args)..., val.get());
+    return wrap_void();
+}
+template <typename T, typename Func, typename... Args,
+    typename = typename mgbase::enable_if<
+        ! mgbase::is_same<
+            void
+        ,   decltype(mgbase::declval<Func>()(mgbase::declval<Args>()..., mgbase::declval<T>()))
+        >::value
+    >::type>
+inline typename detail::call_with_value_wrapper_result<Func, Args..., T>::type
+call_with_value_wrapper_(const value_wrapper<T>& val, Func&& func, Args&&... args)
+{
+    return std::forward<Func>(func)(std::forward<Args>(args)..., val.get());
+}
+
+template <typename Func, typename... Args,
+    typename = typename mgbase::enable_if<
+        mgbase::is_same<
+            void
+        ,   decltype(mgbase::declval<Func>()(mgbase::declval<Args>()...))
+        >::value
+    >::type>
+inline value_wrapper<void> call_with_value_wrapper_(const value_wrapper<void>& /*val*/, Func&& func, Args&&... args)
+{
+    std::forward<Func>(func)(std::forward<Args>(args)...);
+    return wrap_void();
+}
+template <typename Func, typename... Args, typename T,
+    typename = typename mgbase::enable_if<
+        ! mgbase::is_same<
+            void
+        ,   decltype(mgbase::declval<Func>()(mgbase::declval<Args>()...))
+        >::value
+    >::type>
+inline typename detail::call_with_value_wrapper_result<Func, Args..., void>::type
+call_with_value_wrapper_(const value_wrapper<void>& /*val*/, Func&& func, Args&&... args)
+{
+    return std::forward<Func>(func)(std::forward<Args>(args)...);
+}
+
+
+#if 0
+template <typename T, typename Func, typename... Args>
+inline typename mgbase::enable_if<
+    mgbase::is_same<
+        void
+    ,   decltype(mgbase::declval<Func>()(mgbase::declval<Args>()..., mgbase::declval<T>()))
+    >::value
+,   value_wrapper<void>
+>::type
+call_with_value_wrapper_(const value_wrapper<T>& val, Func&& func, Args&&... args)
+{
+    std::forward<Func>(func)(std::forward<Args>(args)..., val.get());
+    return wrap_void();
+}
+template <typename T, typename Func, typename... Args>
+inline typename mgbase::enable_if<
+    ! mgbase::is_same<
+        void
+    ,   decltype(mgbase::declval<Func>()(mgbase::declval<Args>()..., mgbase::declval<T>()))
+    >::value
+,   typename detail::call_with_value_wrapper_result<Func, Args..., T>::type
+>::type
+call_with_value_wrapper_(const value_wrapper<T>& val, Func&& func, Args&&... args)
+{
+    return std::forward<Func>(func)(std::forward<Args>(args)..., val.get());
+}
+
+template <typename Func, typename... Args>
+inline typename mgbase::enable_if<
+    mgbase::is_same<
+        void
+    ,   decltype(mgbase::declval<Func>()(mgbase::declval<Args>()...))
+    >::value
+,   value_wrapper<void>
+>::type
+call_with_value_wrapper_(const value_wrapper<void>& /*val*/, Func&& func, Args&&... args)
+{
+    std::forward<Func>(func)(std::forward<Args>(args)...);
+    return wrap_void();
+}
+template <typename Func, typename... Args, typename T>
+inline typename mgbase::enable_if<
+    ! mgbase::is_same<
+        void
+    ,   decltype(mgbase::declval<Func>()(mgbase::declval<Args>()...))
+    >::value
+,   typename detail::call_with_value_wrapper_result<Func, Args..., void>::type
+>::type
+call_with_value_wrapper_(const value_wrapper<void>& /*val*/, Func&& func, Args&&... args)
+{
+    return std::forward<Func>(func)(std::forward<Args>(args)...);
+}
+#endif
 
 namespace detail {
 
