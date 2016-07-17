@@ -64,6 +64,7 @@ if(${is_mpi_available})
         src/device/mpi/rma/contiguous.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/rma/rma.cpp
+        src/device/mpi/rma/registrator.cpp
         src/device/mpi/collective/barrier.cpp
         src/device/mpi/mpi_base.cpp
         src/device/mpi/endpoint.cpp
@@ -161,6 +162,16 @@ if (${is_ibv_available})
     
     list(APPEND mgcom-devices ibv)
 endif()
+
+#add_library(mgcom
+#    src/common/entrypoint.cpp
+#)
+#target_link_libraries(mgcom
+#    $<$<BOOL:${is_mpi_available}>:mgcom-mpi1>
+#    $<$<BOOL:${MGCOM_DEVICE_MPI3_SUPPORTED}>:mgcom-mpi3>
+#    $<$<BOOL:${is_ibv_available}>:mgcom-ibv>
+#    $<$<BOOL:${is_fjmpi_available}>:mgcom-fjmpi>
+#)
 
 
 #add_library(mgcom-uni

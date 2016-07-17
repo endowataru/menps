@@ -22,8 +22,9 @@ namespace untyped {
 
 struct register_handler_params
 {
-    handler_id_t            id;
-    handler_function_t      callback;
+    handler_id_t        id;
+    handler_function_t  callback;
+    void*               ptr;
 };
 
 struct call_params

@@ -4,6 +4,7 @@
 #include <mgcom/rpc.hpp>
 #include <mgbase/scoped_ptr.hpp>
 #include <mgbase/logging/logger.hpp>
+#include <vector>
 
 namespace mgcom {
 namespace rpc {
@@ -12,24 +13,34 @@ namespace /*unnamed*/ {
 
 class rpc_invoker
 {
+    struct handler
+    {
+        handler_function_t  callback;
+        void*               ptr;
+    };
+    
 public:
-    void initialize()
+    rpc_invoker()
+        : handlers_(constants::max_num_handlers)
     {
-        callbacks_ = new handler_function_t[constants::max_num_handlers]{};
+        /*// Zero-fill by value initialization
+        handlers_ = new handler[]{};*/
     }
     
-    void finalize()
+    void register_handler(const untyped::register_handler_params& params)
     {
-        callbacks_.reset();
-    }
-    
-    void register_handler(handler_id_t id, handler_function_t callback)
-    {
-        MGBASE_ASSERT(id < constants::max_num_handlers);
-        MGBASE_ASSERT(callback != MGBASE_NULLPTR);
+        MGBASE_ASSERT(params.id < constants::max_num_handlers);
+        MGBASE_ASSERT(params.callback != MGBASE_NULLPTR);
         
-        callbacks_[id] = callback;
-        MGBASE_LOG_DEBUG("msg:Registered a handler.\tsrc:{}\tcallback:{:x}", id, reinterpret_cast<mgbase::uint64_t>(callback));
+        handlers_[params.id] = handler{ params.callback, params.ptr };
+        
+        MGBASE_LOG_DEBUG(
+            "msg:Registered a handler.\t"
+            "src:{}\tcallback:{:x}\tptr:{:x}"
+        ,   params.id
+        ,   reinterpret_cast<mgbase::uintptr_t>(params.callback)
+        ,   reinterpret_cast<mgbase::uintptr_t>(params.ptr)
+        );
     }
     
     index_t call(
@@ -47,12 +58,17 @@ public:
         ,   result_data
         };
         
-        MGBASE_LOG_DEBUG("msg:Invoking callback.\tsrc:{}\tid:{}", src_proc, handler_id);
+        MGBASE_LOG_DEBUG(
+            "msg:Invoking callback.\t"
+            "src:{}\tid:{}"
+        ,   src_proc
+        ,   handler_id
+        );
         
-        const handler_function_t callback = callbacks_[handler_id];
-        MGBASE_ASSERT(callback != MGBASE_NULLPTR);
+        const auto& h = handlers_[handler_id];
+        MGBASE_ASSERT(h.callback != MGBASE_NULLPTR);
         
-        const index_t reply_size = callback(&params);
+        const index_t reply_size = h.callback(h.ptr, &params);
         
         MGBASE_ASSERT(reply_size <= result_capacity);
         
@@ -62,7 +78,7 @@ public:
     }
     
 private:
-    mgbase::scoped_ptr<handler_function_t []>   callbacks_;
+    std::vector<handler> handlers_;
 };
 
 } // unnamed namespace

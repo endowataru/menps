@@ -14,11 +14,11 @@ class rpc_receiver
     static const index_t num_threads = 1;
     
 public:
-    void initialize(rpc_connection_pool& pool)
+    rpc_receiver(rpc_connection_pool& pool)
+        : invoker_{}
     {
         pool_ = &pool;
         
-        invoker_.initialize();
         notifier_.initialize();
         
         ths_ = new rpc_receiver_thread[num_threads];
@@ -27,7 +27,7 @@ public:
             ths_[i].initialize(*pool_, notifier_, invoker_);
     }
     
-    void finalize()
+    ~rpc_receiver()
     {
         notifier_.set_finished();
         
@@ -37,13 +37,11 @@ public:
         ths_.reset();
         
         notifier_.finalize();
-        
-        invoker_.finalize();
     }
     
-    void register_handler(const handler_id_t id, const handler_function_t callback)
+    void register_handler(const untyped::register_handler_params& params)
     {
-        invoker_.register_handler(id, callback);
+        invoker_.register_handler(params);
     }
     
     void notify(

@@ -33,40 +33,15 @@ const int flag_patterns[] = {
 
 class fjmpi_requester
     : public fjmpi_requester_base<fjmpi_requester>
+    , public mpi::emulated_atomic_requester
 {
 public:
     typedef fjmpi::command_code command_code_type;
     
-    explicit fjmpi_requester(command_producer& cp)
-        : cp_(cp)
-    {
-        mgcom::mpi::rma::initialize_atomic();
-    }
-    
-    virtual ~fjmpi_requester()
-    {
-        mgcom::mpi::rma::finalize_atomic();
-    }
-    
-    virtual bool try_atomic_read_async(const atomic_read_params<atomic_default_t>& params) MGBASE_OVERRIDE
-    {
-        return mgcom::mpi::rma::try_atomic_read_async(params); // TODO
-    }
-    
-    virtual bool try_atomic_write_async(const atomic_write_params<atomic_default_t>& params) MGBASE_OVERRIDE
-    {
-        return mgcom::mpi::rma::try_atomic_write_async(params); // TODO
-    }
-    
-    virtual bool try_compare_and_swap_async(const compare_and_swap_params<atomic_default_t>& params) MGBASE_OVERRIDE
-    {
-        return mgcom::mpi::rma::try_compare_and_swap_async(params);
-    }
-    
-    virtual bool try_fetch_and_add_async(const fetch_and_add_params<atomic_default_t>& params) MGBASE_OVERRIDE
-    {
-        return mgcom::mpi::rma::try_fetch_and_add_async(params);
-    }
+    explicit fjmpi_requester(command_producer& cp, rpc::requester& req)
+        : mpi::emulated_atomic_requester(req)
+        , cp_(cp)
+        { }
     
 private:
     template <typename Params, typename Func>
@@ -95,9 +70,9 @@ private:
 
 namespace fjmpi {
 
-mgbase::unique_ptr<rma::requester> make_rma_requester(command_producer& cp)
+mgbase::unique_ptr<rma::requester> make_rma_requester(command_producer& cp, rpc::requester& req)
 {
-    return mgbase::make_unique<rma::fjmpi_requester>(cp);
+    return mgbase::make_unique<rma::fjmpi_requester>(cp, req);
 }
 
 } // namespace fjmpi

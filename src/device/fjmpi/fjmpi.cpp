@@ -36,7 +36,7 @@ public:
         rpc_requester_ = make_rpc_requester(scheduler_->get_fjmpi_interface(), scheduler_->get_mpi_interface());
         rpc::requester::set_instance(*rpc_requester_);
         
-        rma_requester_ = fjmpi::make_rma_requester(scheduler_->get_command_producer());
+        rma_requester_ = fjmpi::make_rma_requester(scheduler_->get_command_producer(), *rpc_requester_);
         rma::requester::set_instance(*rma_requester_);
         
         collective_requester_ = mpi::collective::make_requester(scheduler_->get_mpi_interface());

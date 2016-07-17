@@ -3,35 +3,30 @@
 
 namespace mgcom {
 namespace mpi {
-namespace rma {
 
-namespace /*unnamed*/ {
-
-emulated_contiguous g_impl;
-
-} // unnamed namespace
-
-void initialize_contiguous(mpi_interface& mi)
+class emulated_contiguous_requester::impl
+    : public emulated_contiguous
 {
-    emulated_contiguous::initialize<g_impl>(mi);
+    typedef emulated_contiguous base;
+    
+public:
+    impl(rpc::requester& req, mpi_interface& mi)
+        : base{req, mi} { }
+};
+
+emulated_contiguous_requester::emulated_contiguous_requester(rpc::requester& req, mpi_interface& mi)
+    : impl_{mgbase::make_unique<impl>(req, mi)} { }
+
+emulated_contiguous_requester::~emulated_contiguous_requester() = default;
+
+bool emulated_contiguous_requester::try_read_async(const rma::untyped::read_params& params) {
+    return impl_->try_read_async(params);
 }
 
-void finalize_contiguous()
-{
-    g_impl.finalize();
+bool emulated_contiguous_requester::try_write_async(const rma::untyped::write_params& params) {
+    return impl_->try_write_async(params);
 }
 
-bool try_read_async(const untyped::read_params& params)
-{
-    return emulated_contiguous::try_read<g_impl>(params);
-}
-
-bool try_write_async(const untyped::write_params& params)
-{
-    return emulated_contiguous::try_write<g_impl>(params);
-}
-
-} // namespace rma
 } // namespace mpi
 } // namespace mgcom
 

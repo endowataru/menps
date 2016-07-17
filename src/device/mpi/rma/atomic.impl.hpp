@@ -9,24 +9,20 @@
 
 namespace mgcom {
 namespace mpi {
-namespace rma {
 
 namespace /*unnamed*/ {
 
 template <typename T>
 class emulated_atomic {
 public:
-    static void initialize()
+    explicit emulated_atomic(rpc::requester& req)
+        : req_(req)
     {
-        mgcom::rpc::register_handler<am_read>();
-        mgcom::rpc::register_handler<am_write>();
-        mgcom::rpc::register_handler<am_fetch_and_add>();
-        mgcom::rpc::register_handler<am_compare_and_swap>();
-    }
-    
-    static void finalize()
-    {
-        // do nothing
+        using rpc::register_handler;
+        register_handler<am_read>(req_);
+        register_handler<am_write>(req_);
+        register_handler<am_fetch_and_add>(req_);
+        register_handler<am_compare_and_swap>(req_);
     }
 
 private:
@@ -61,7 +57,7 @@ private:
     };
     
 public:
-    static bool try_read(const atomic_read_params<atomic_default_t>& params)
+    bool try_read(const rma::atomic_read_params<T>& params)
     {
         const typename am_read::argument_type arg = { to_raw_pointer(params.src_rptr) };
         
@@ -72,8 +68,10 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
         );
         
-        return mgcom::rpc::try_remote_call_async<am_read>(
-            params.src_proc
+        using rpc::try_remote_call_async;
+        return try_remote_call_async<am_read>(
+            req_
+        ,   params.src_proc
         ,   arg
         ,   params.dest_ptr
         ,   params.on_complete
@@ -113,7 +111,7 @@ private:
     };
     
 public:
-    static bool try_write(const atomic_write_params<atomic_default_t>& params)
+    bool try_write(const rma::atomic_write_params<T>& params)
     {
         const typename am_write::argument_type arg = {
             to_raw_pointer(params.dest_rptr)
@@ -128,8 +126,10 @@ public:
         ,   arg.value
         );
         
-        return mgcom::rpc::try_remote_call_async<am_write>(
-            params.dest_proc
+        using rpc::try_remote_call_async;
+        return try_remote_call_async<am_write>(
+            req_
+        ,   params.dest_proc
         ,   arg
         ,   params.on_complete
         );
@@ -173,7 +173,7 @@ private:
     };
     
 public:
-    static bool try_compare_and_swap(const compare_and_swap_params<atomic_default_t>& params)
+    bool try_compare_and_swap(const rma::compare_and_swap_params<T>& params)
     {
         const typename am_compare_and_swap::argument_type arg = {
             to_raw_pointer(params.target_rptr)
@@ -191,8 +191,10 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(params.result_ptr)
         );
         
-        return mgcom::rpc::try_remote_call_async<am_compare_and_swap>(
-            params.target_proc
+        using rpc::try_remote_call_async;
+        return try_remote_call_async<am_compare_and_swap>(
+            req_
+        ,   params.target_proc
         ,   arg
         ,   params.result_ptr
         ,   params.on_complete
@@ -233,7 +235,7 @@ private:
     };
     
 public:
-    static bool try_fetch_and_add(const fetch_and_add_params<atomic_default_t>& params)
+    bool try_fetch_and_add(const rma::fetch_and_add_params<T>& params)
     {
         const typename am_fetch_and_add::argument_type arg = {
             to_raw_pointer(params.target_rptr)
@@ -249,18 +251,22 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(params.result_ptr)
         );
         
-        return mgcom::rpc::try_remote_call_async<am_fetch_and_add>(
-            params.target_proc
+        using rpc::try_remote_call_async;
+        return try_remote_call_async<am_fetch_and_add>(
+            req_
+        ,   params.target_proc
         ,   arg
         ,   params.result_ptr
         ,   params.on_complete
         );
     }
+    
+private:
+    mgcom::rpc::requester& req_;
 };
 
 } // unnamed namespace
 
-} // namespace rma
 } // namespace mpi
 } // namespace mgcom
 

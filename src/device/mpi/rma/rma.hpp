@@ -2,22 +2,17 @@
 #pragma once
 
 #include <mgcom/rma.hpp>
+#include <mgcom/rpc/requester.hpp>
 #include <mgbase/unique_ptr.hpp>
 #include "device/mpi/mpi_interface.hpp"
 
 namespace mgcom {
 namespace mpi {
-namespace rma {
 
-using namespace mgcom::rma;
+mgbase::unique_ptr<rma::requester> make_rma_requester(rpc::requester&, mpi_interface&);
 
-namespace untyped = mgcom::rma::untyped;
+mgbase::unique_ptr<rma::registrator> make_rma_registrator();
 
-mgbase::unique_ptr<requester> make_requester(mpi_interface&);
-
-mgbase::unique_ptr<registrator> make_registrator();
-
-} // namespace rma
 } // namespace mpi
 } // namespace mgcom
 

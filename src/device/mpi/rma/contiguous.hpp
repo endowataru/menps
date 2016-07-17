@@ -2,21 +2,32 @@
 #pragma once
 
 #include "rma.hpp"
+#include <mgcom/rpc/requester.hpp>
 #include "device/mpi/mpi_interface.hpp"
 
 namespace mgcom {
 namespace mpi {
-namespace rma {
 
-void initialize_contiguous(mpi_interface&);
+class emulated_contiguous_requester
+    : public virtual rma::requester
+{
+protected:
+    emulated_contiguous_requester(rpc::requester&, mpi_interface&);
+    
+public:
+    virtual ~emulated_contiguous_requester();
+    
+    MGBASE_WARN_UNUSED_RESULT
+    virtual bool try_read_async(const rma::untyped::read_params&) MGBASE_OVERRIDE;
+    
+    MGBASE_WARN_UNUSED_RESULT
+    virtual bool try_write_async(const rma::untyped::write_params&) MGBASE_OVERRIDE;
+    
+private:
+    class impl;
+    mgbase::unique_ptr<impl> impl_;
+};
 
-void finalize_contiguous();
-
-bool try_read_async(const untyped::read_params& params);
-
-bool try_write_async(const untyped::write_params& params);
-
-} // namespace rma
 } // namespace mpi
 } // namespace mgcom
 

@@ -18,7 +18,7 @@ typedef struct mgcom_rpc_handler_parameters {
 }
 mgcom_rpc_handler_parameters;
 
-typedef mgcom_index_t (*mgcom_rpc_handler_function_t)(const mgcom_rpc_handler_parameters*);
+typedef mgcom_index_t (*mgcom_rpc_handler_function_t)(void*, const mgcom_rpc_handler_parameters*);
 
 MGBASE_EXTERN_C_END
 

@@ -16,11 +16,11 @@ public:
         : server_(mi)
         , client_(mi, server_.get_comm()) { }
     
-    virtual ~mpi_requester() MGBASE_EMPTY_DEFINITION;
+    virtual ~mpi_requester() MGBASE_EMPTY_DEFINITION
     
     virtual void register_handler(const untyped::register_handler_params& params)
     {
-        server_.register_handler(params.id, params.callback);
+        server_.register_handler(params);
     }
     
     MGBASE_WARN_UNUSED_RESULT

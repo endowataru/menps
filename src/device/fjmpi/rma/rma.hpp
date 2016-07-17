@@ -11,7 +11,7 @@ namespace fjmpi {
 
 class command_producer;
 
-mgbase::unique_ptr<rma::requester> make_rma_requester(command_producer&);
+mgbase::unique_ptr<rma::requester> make_rma_requester(command_producer&, rpc::requester&);
 
 mgbase::unique_ptr<rma::registrator> make_rma_registrator(fjmpi_interface&);
 

@@ -134,13 +134,13 @@ inline bool try_remote_call_async(
 namespace detail {
 
 template <typename Handler>
-inline index_t on_callback(const handler_parameters* params)
+inline index_t on_callback(void* /*ptr*/, const handler_parameters* params)
 {
     typedef detail::handler_types<Handler>  types;
     typedef typename types::argument_info   argument_info;
     typedef typename Handler::return_type   return_type;
     
-    const argument_info& arg_info = *static_cast<const argument_info*>(params->data);
+    const auto& arg_info = *static_cast<const argument_info*>(params->data);
     
     // Call the user-defined callback function.
     const mgbase::value_wrapper<return_type> res
@@ -158,6 +158,31 @@ inline index_t on_callback(const handler_parameters* params)
     return return_type_size<return_type>::value;
 }
 
+template <typename Handler, typename T>
+inline index_t on_callback_ptr(void* ptr, const handler_parameters* params)
+{
+    typedef detail::handler_types<Handler>  types;
+    typedef typename types::argument_info   argument_info;
+    typedef typename Handler::return_type   return_type;
+    
+    const auto& arg_info = *static_cast<const argument_info*>(params->data);
+    
+    // Call the user-defined callback function.
+    const auto res = mgbase::call_with_value_wrapper_(
+        arg_info
+    ,   &Handler::on_request
+    ,   *static_cast<T*>(ptr)
+    ,   *params
+    );
+    
+    const auto ret = static_cast<return_type*>(params->result);
+    
+    // Set the result.
+    res.assign_to(ret);
+    
+    return return_type_size<return_type>::value;
+}
+
 } // namespace detail
 
 
@@ -167,6 +192,17 @@ inline void register_handler(requester& req)
     req.register_handler({
         Handler::handler_id
     ,   &detail::on_callback<Handler>
+    ,   MGBASE_NULLPTR
+    });
+}
+
+template <typename Handler, typename T>
+inline void register_handler(requester& req, T& val)
+{
+    req.register_handler({
+        Handler::handler_id
+    ,   &detail::on_callback_ptr<Handler, T>
+    ,   &val
     });
 }
 

@@ -16,9 +16,8 @@ class rpc_server
     
 public:
     explicit rpc_server(mpi_interface& mi)
+        : invoker_{}
     {
-        invoker_.initialize();
-        
         comm_ = mi.comm_dup(MPI_COMM_WORLD, "MGCOM_COMM_RPC");
         
         ths_ = new rpc_server_thread[num_threads];
@@ -33,17 +32,15 @@ public:
             ths_[i].finalize();
         
         ths_.reset();
-        
-        invoker_.finalize();
     }
     
     MPI_Comm get_comm() const MGBASE_NOEXCEPT {
         return comm_;
     }
     
-    void register_handler(const handler_id_t id, const handler_function_t callback)
+    void register_handler(const untyped::register_handler_params& params)
     {
-        invoker_.register_handler(id, callback);
+        invoker_.register_handler(params);
     }
     
 private:

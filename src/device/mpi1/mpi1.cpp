@@ -25,7 +25,7 @@ public:
     {
         endpoint_ = mpi::make_endpoint(argc, argv);
         
-        rma_registrator_ = mpi::rma::make_registrator();
+        rma_registrator_ = mpi::make_rma_registrator();
         rma::registrator::set_instance(*rma_registrator_);
         
         commander_ = mgcom::mpi1::make_commander();
@@ -33,7 +33,7 @@ public:
         rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface());
         rpc::requester::set_instance(*rpc_requester_);
         
-        rma_requester_ = mpi::rma::make_requester(commander_->get_mpi_interface());
+        rma_requester_ = mpi::make_rma_requester(*rpc_requester_, commander_->get_mpi_interface());
         rma::requester::set_instance(*rma_requester_);
         
         mgcom::rma::initialize_allocator();
