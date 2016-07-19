@@ -6,7 +6,10 @@ find_package(Threads)
 
 INCLUDE (CheckCXXCompilerFlag)
 
-#option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+# Do not link shared libraries again
+set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
+
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
 option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
@@ -335,7 +338,7 @@ add_executable(mgbase-unittest
 target_link_libraries(mgbase-unittest mgbase mgbase-options googletest)
 
 message(STATUS "Generate mgbase/config.h ...")
-#message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
+message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 message(STATUS "MGBASE_PROFILER_USE_GPROF=${MGBASE_PROFILER_USE_GPROF}")
 message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}")
 message(STATUS "MGBASE_CXX_STANDARD=${MGBASE_CXX_STANDARD}")

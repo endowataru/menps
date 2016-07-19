@@ -20,7 +20,8 @@ class logger {
 public:
     typedef mgbase::uint32_t log_level_t;
     
-    typedef std::string (*state_callback_type)();
+    typedef std::function<std::string ()>   state_callback_type;
+    //typedef std::string (*state_callback_type)();
     
     static void add_log(
         const log_level_t   level
@@ -159,8 +160,8 @@ public:
     
 private:
     static std::string get_state() {
-        state_callback_type callback = get_state_callback();
-        if (callback != MGBASE_NULLPTR)
+        const state_callback_type& callback = get_state_callback();
+        if (callback)
             return callback();
         else
             return std::string();
@@ -188,7 +189,7 @@ private:
     
     // TODO: Singleton
     static state_callback_type& get_state_callback() {
-        static state_callback_type callback = MGBASE_NULLPTR;
+        static state_callback_type callback{};
         return callback;
     }
 };
