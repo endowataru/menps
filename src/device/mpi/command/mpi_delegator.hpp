@@ -12,8 +12,11 @@ class mpi_delegator
     : public virtual mpi_interface
 {
 public:
-    mpi_delegator(delegator& del, mpi_completer_base& comp)
-        : del_(del), comp_(comp) { }
+    mpi_delegator(endpoint& ep, delegator& del, mpi_completer_base& comp)
+        : mpi_interface(ep)
+        , del_(del)
+        , comp_(comp)
+        { }
     
     mpi_delegator(const mpi_delegator&) = delete;
     mpi_delegator& operator = (const mpi_delegator&) = delete;

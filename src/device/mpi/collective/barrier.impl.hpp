@@ -36,7 +36,7 @@ public:
         mi_ = &mi;
         
         required_rounds_ = static_cast<index_t>(
-            mgbase::ceil_log2(mgcom::number_of_processes())
+            mgbase::ceil_log2(mi.get_endpoint().number_of_processes())
         );
         
         comm_ = mi.comm_dup(MPI_COMM_WORLD, "MGCOM_COMM_COLLECTIVE");
@@ -70,8 +70,10 @@ public:
             
             impl.finished_.store(false, mgbase::memory_order_relaxed);
             
-            const mgcom::process_id_t current_proc = mgcom::current_process_id();
-            const index_t num_procs = mgcom::number_of_processes();
+            auto& ep = impl.mi_->get_endpoint();
+            
+            const mgcom::process_id_t current_proc = ep.current_process_id();
+            const index_t num_procs = ep.number_of_processes();
             
             const mgcom::process_id_t diff = 1 << impl.round_;
             

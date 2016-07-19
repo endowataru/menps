@@ -22,18 +22,16 @@ public:
     {
         endpoint_ = mpi::make_endpoint(argc, argv);
         
-        commander_ = mgcom::mpi1::make_commander();
+        commander_ = mgcom::mpi1::make_commander(*endpoint_);
         
-        rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface());
-        rpc::requester::set_instance(*rpc_requester_);
+        rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface(), *endpoint_);
         
         collective_requester_ = mpi::collective::make_requester(commander_->get_mpi_interface());
-        collective::requester::set_instance(*collective_requester_);
         
         if (is_scheduled())
-            rma_ = make_scheduled_rma_comm();
+            rma_ = make_scheduled_rma_comm(*endpoint_, *collective_requester_);
         else
-            rma_ = make_direct_rma_comm();
+            rma_ = make_direct_rma_comm(*endpoint_, *collective_requester_);
         
         commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
         
@@ -57,6 +55,25 @@ public:
         endpoint_.reset();
         
         MGBASE_LOG_DEBUG("msg:Finalized.");
+    }
+    
+    virtual endpoint& get_endpoint() MGBASE_OVERRIDE {
+        return *endpoint_;
+    }
+    virtual rma::requester& get_rma_requester() MGBASE_OVERRIDE {
+        return rma_->get_requester();
+    }
+    virtual rma::registrator& get_rma_registrator() MGBASE_OVERRIDE {
+        return rma_->get_registrator();
+    }
+    virtual rma::allocator& get_rma_allocator() MGBASE_OVERRIDE {
+        return rma_->get_allocator();
+    }
+    virtual rpc::requester& get_rpc_requester() MGBASE_OVERRIDE {
+        return *rpc_requester_;
+    }
+    virtual collective::requester& get_collective_requester() MGBASE_OVERRIDE {
+        return *collective_requester_;
     }
     
 private:

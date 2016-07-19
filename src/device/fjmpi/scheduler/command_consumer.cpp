@@ -10,10 +10,10 @@ namespace fjmpi {
 class command_consumer::impl
 {
 public:
-    impl(command_queue& queue)
+    impl(endpoint& ep, command_queue& queue)
         : finished_{false}
         , completer_()
-        , fjmpi_comp_{}
+        , fjmpi_comp_{ep}
     {
         completer_.initialize();
         
@@ -106,8 +106,8 @@ private:
 };
 
 
-command_consumer::command_consumer()
-    : impl_{mgbase::make_unique<impl>(static_cast<command_queue&>(*this))} { }
+command_consumer::command_consumer(endpoint& ep)
+    : impl_{mgbase::make_unique<impl>(ep, static_cast<command_queue&>(*this))} { }
 
 command_consumer::~command_consumer() = default;
 

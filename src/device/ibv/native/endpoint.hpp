@@ -11,12 +11,14 @@
 namespace mgcom {
 namespace ibv {
 
+// TODO: conflicting names (mgcom::endpoint)
+
 class endpoint
     : protected alltoall_queue_pairs
     , protected protection_domain
 {
 public:
-    void collective_initialize()
+    void collective_initialize(mgcom::endpoint& ep, collective::requester& coll)
     {
         device_list devices;
         devices.get_list();
@@ -29,7 +31,7 @@ public:
         cq_.create(ctx_.get());
         protection_domain::alloc(ctx_.get());
         
-        alltoall_queue_pairs::create(ctx_.get(), cq_.get(), protection_domain::get());
+        alltoall_queue_pairs::create(ep, coll, ctx_.get(), cq_.get(), protection_domain::get());
         
         device_attributes dev_attr;
         dev_attr.query(ctx_);

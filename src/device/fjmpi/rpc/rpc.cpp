@@ -16,9 +16,9 @@ class fjmpi_requester
     : public requester
 {
 public:
-    fjmpi_requester(fjmpi_interface& fi, mpi::mpi_interface& mi)
+    fjmpi_requester(fjmpi_interface& fi, mpi::mpi_interface& mi, rma::allocator& alloc, rma::registrator& reg)
     {
-        fjmpi::rpc::initialize(fi, mi);
+        fjmpi::rpc::initialize(fi, mi, alloc, reg);
     }
     
     virtual ~fjmpi_requester()
@@ -42,10 +42,10 @@ public:
 
 } // namespace rpc
 
-mgbase::unique_ptr<rpc::requester> make_rpc_requester(fjmpi_interface& fi, mpi::mpi_interface& mi)
+mgbase::unique_ptr<rpc::requester> make_rpc_requester(fjmpi_interface& fi, mpi::mpi_interface& mi, rma::allocator& alloc, rma::registrator& reg)
 {
     // TODO: replace with make_unique
-    return mgbase::make_unique<rpc::fjmpi_requester>(fi, mi);
+    return mgbase::make_unique<rpc::fjmpi_requester>(fi, mi, alloc, reg);
 }
 
 } // namespace fjmpi

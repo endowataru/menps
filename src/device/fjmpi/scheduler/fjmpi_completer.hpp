@@ -26,8 +26,8 @@ public:
     static const int max_tag_count = 15; // Decided by FJMPI specification
     static const int max_nic_count = 4; // Decided by FJMPI specification
     
-    fjmpi_completer()
-        : info_by_procs_(new processor_info[number_of_processes()]) { }
+    explicit fjmpi_completer(endpoint& ep)
+        : info_by_procs_(new processor_info[ep.number_of_processes()]) { }
     
     ~fjmpi_completer() = default;
     

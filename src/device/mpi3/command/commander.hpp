@@ -11,7 +11,7 @@ namespace mpi3 {
 class commander
 {
 public:
-    commander();
+    commander(endpoint&);
     ~commander();
     
     mpi3_interface& get_mpi_interface() MGBASE_NOEXCEPT;
@@ -23,7 +23,7 @@ private:
     mgbase::unique_ptr<impl> impl_;
 };
 
-mgbase::unique_ptr<commander> make_commander();
+mgbase::unique_ptr<commander> make_commander(endpoint&);
 
 } // namespace mpi3
 } // namespace mgcom

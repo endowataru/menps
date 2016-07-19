@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mgcom)
 
+# Do not link shared libraries again
+set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
+
 INCLUDE (CheckIncludeFileCXX)
 INCLUDE (CheckCXXSourceCompiles)
 INCLUDE (CheckSymbolExists)
@@ -23,8 +26,8 @@ target_link_libraries(mgcom-base INTERFACE mgcom-header mgbase-options)
 
 # Platform Checks
 
-CHECK_INCLUDE_FILE_CXX("mpi.h" is_mpi_available)
-#set(is_mpi_available FALSE) # Just for compilation check
+CHECK_INCLUDE_FILE_CXX("mpi.h" MGCOM_DEVICE_MPI_SUPPORTED)
+#set(MGCOM_DEVICE_MPI_SUPPORTED FALSE) # Just for compilation check
 
 CHECK_CXX_SOURCE_COMPILES("
 #include <mpi.h>
@@ -36,11 +39,11 @@ int main() { return 0; }
 "
 MGCOM_DEVICE_MPI3_SUPPORTED)
 
-CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" is_fjmpi_available)
-#set(is_fjmpi_available TRUE) # Just for compilation check
+CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" MGCOM_DEVICE_FJMPI_SUPPORTED)
+#set(MGCOM_DEVICE_FJMPI_SUPPORTED TRUE) # Just for compilation check
 
-CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" is_ibv_available)
-#set(is_ibv_available TRUE) # Just for compilation check
+CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" MGCOM_DEVICE_IBV_SUPPORTED)
+#set(MGCOM_DEVICE_IBV_SUPPORTED TRUE) # Just for compilation check
 
 CHECK_INCLUDE_FILE_CXX("infiniband/verbs_exp.h" MGCOM_IBV_EXP_SUPPORTED)
 
@@ -56,8 +59,8 @@ MGCOM_IBV_MASKED_ATOMICS_SUPPORTED)
 
 # Library for each device
 
-if(${is_mpi_available})
-    add_library(mgcom-mpi1
+if(${MGCOM_DEVICE_MPI_SUPPORTED})
+    add_library(mgcom-dev-mpi1
         src/common/rma/default_allocator.cpp
         src/common/rma/malloc.cpp
         src/device/mpi/rpc/rpc.cpp
@@ -71,16 +74,13 @@ if(${is_mpi_available})
         src/device/mpi/command/mpi_delegator.cpp
         src/device/mpi1/command/commander.cpp
         src/device/mpi1/mpi1.cpp
-        src/common/entrypoint.cpp
         src/device/mpi/mpi_communicator.cpp
     )
-    target_link_libraries(mgcom-mpi1 mgcom-base mgbase)
-    
-    list(APPEND mgcom-devices mpi1)
+    target_link_libraries(mgcom-dev-mpi1 mgcom-base mgbase)
 endif()
 
 if(${MGCOM_DEVICE_MPI3_SUPPORTED})
-    add_library(mgcom-mpi3
+    add_library(mgcom-dev-mpi3
         src/common/rma/default_allocator.cpp
         src/common/rma/malloc.cpp
         src/device/mpi/rpc/rpc.cpp
@@ -91,19 +91,16 @@ if(${MGCOM_DEVICE_MPI3_SUPPORTED})
         src/device/mpi3/rma/rma_window.cpp
         src/device/mpi3/command/commander.cpp
         src/device/mpi3/mpi3.cpp
-        src/device/mpi3/entrypoint.cpp
         src/device/mpi3/collective/collective.cpp
         src/device/mpi/mpi_communicator.cpp
         src/device/mpi3/rma/requester.cpp
         src/device/mpi3/rma/registrator.cpp
     )
-    target_link_libraries(mgcom-mpi3 mgcom-base mgbase)
-    
-    list(APPEND mgcom-devices mpi3)
+    target_link_libraries(mgcom-dev-mpi3 mgcom-base mgbase)
 endif()
 
-if (${is_fjmpi_available})
-    add_library(mgcom-fjmpi
+if (${MGCOM_DEVICE_FJMPI_SUPPORTED})
+    add_library(mgcom-dev-fjmpi
         src/common/rma/default_allocator.cpp
         src/common/rma/malloc.cpp
         src/device/mpi/rma/atomic.cpp
@@ -111,7 +108,6 @@ if (${is_fjmpi_available})
         src/device/mpi/endpoint.cpp
         src/device/mpi/collective/barrier.cpp
         src/device/mpi/command/mpi_delegator.cpp
-        #src/device/fjmpi/command/fjmpi_command_queue.cpp
         src/device/fjmpi/fjmpi.cpp
         src/device/fjmpi/rma/requester.cpp
         src/device/fjmpi/rma/registrator.cpp
@@ -119,21 +115,17 @@ if (${is_fjmpi_available})
         src/device/fjmpi/rpc/rpc_sender.cpp
         src/device/fjmpi/rpc/rpc_receiver.cpp
         src/device/fjmpi/rpc/rpc_connection_pool.cpp
-        src/device/fjmpi/entrypoint.cpp
         src/device/fjmpi/endpoint.cpp
         
         src/device/fjmpi/scheduler/scheduler.cpp
         src/device/fjmpi/scheduler/fjmpi_delegator.cpp
         src/device/fjmpi/scheduler/command_consumer.cpp
     )
-    target_link_libraries(mgcom-fjmpi mgcom-base mgbase)
-    
-    list(APPEND mgcom-devices fjmpi)
+    target_link_libraries(mgcom-dev-fjmpi mgcom-base mgbase)
 endif()
 
-if (${is_ibv_available})
-    add_library(mgcom-ibv
-        src/device/ibv/entrypoint.cpp
+if (${MGCOM_DEVICE_IBV_SUPPORTED})
+    add_library(mgcom-dev-ibv
         src/device/ibv/ibv.cpp
         
         src/common/rma/default_allocator.cpp
@@ -156,45 +148,24 @@ if (${is_ibv_available})
         src/device/ibv/scheduler/command_consumer.cpp
         src/device/ibv/scheduler/scheduler.cpp
     )
-    target_link_libraries(mgcom-ibv mgcom-base mgbase
+    target_link_libraries(mgcom-dev-ibv mgcom-base mgbase
         ibverbs # libibverbs.so
     )
-    
-    list(APPEND mgcom-devices ibv)
 endif()
 
-#add_library(mgcom
-#    src/common/entrypoint.cpp
-#)
-#target_link_libraries(mgcom
-#    $<$<BOOL:${is_mpi_available}>:mgcom-mpi1>
-#    $<$<BOOL:${MGCOM_DEVICE_MPI3_SUPPORTED}>:mgcom-mpi3>
-#    $<$<BOOL:${is_ibv_available}>:mgcom-ibv>
-#    $<$<BOOL:${is_fjmpi_available}>:mgcom-fjmpi>
-#)
+
+add_library(mgcom-uni
+    src/common/entrypoint.cpp
+)
+target_link_libraries(mgcom-uni
+    $<$<BOOL:${MGCOM_DEVICE_MPI_SUPPORTED}>:mgcom-dev-mpi1>
+    $<$<BOOL:${MGCOM_DEVICE_MPI3_SUPPORTED}>:mgcom-dev-mpi3>
+    $<$<BOOL:${MGCOM_DEVICE_IBV_SUPPORTED}>:mgcom-dev-ibv>
+    $<$<BOOL:${MGCOM_DEVICE_FJMPI_SUPPORTED}>:mgcom-dev-fjmpi>
+)
+list(APPEND mgcom-devices uni)
 
 
-#add_library(mgcom-uni
-#    src/common/rma/region_allocator.cpp
-#    src/common/rma/malloc.cpp
-#    
-#    src/device/mpi/rpc/rpc.cpp
-#    src/device/mpi/rma/contiguous.cpp
-#    src/device/mpi/rma/atomic.cpp
-#    src/device/mpi/rma/rma.cpp
-#    src/device/mpi/collective/barrier.cpp
-#    src/device/mpi/mpi_base.cpp
-#    src/device/mpi/command/mpi_delegator.cpp
-#    src/device/mpi1/command/commander.cpp
-#    src/device/mpi1/mpi1.cpp
-#    src/common/entrypoint.cpp
-#    $<$<BOOL:${MGCOM_DEVICE_MPI3_SUPPORTED}>:
-#        src/device/mpi3/command/mpi3_command_queue.cpp
-#        src/device/mpi3/mpi3.cpp
-#        src/device/mpi3/rma/rma.cpp>
-#)
-#target_link_libraries(mgcom-uni mgcom-base mgbase)
-#list(APPEND mgcom-devices uni)
 
 # Generate config.h
 
@@ -233,13 +204,4 @@ foreach(device IN LISTS mgcom-devices)
         )
     endforeach()
 endforeach()
-
-# Raw Benchmark
-
-#if (${is_fjmpi_available})
-#    add_executable(raw-latency
-#        example/raw/latency.cpp
-#    )
-#    target_link_libraries(raw-latency mgbase)
-#endif()
 

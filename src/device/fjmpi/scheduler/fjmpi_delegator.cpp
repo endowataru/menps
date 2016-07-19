@@ -6,8 +6,9 @@
 namespace mgcom {
 namespace fjmpi {
 
-fjmpi_delegator::fjmpi_delegator(command_producer& cp)
-    : cp_(cp) { }
+fjmpi_delegator::fjmpi_delegator(endpoint& ep, command_producer& cp)
+    : fjmpi_interface(ep)
+    , cp_(cp) { }
 
 bool fjmpi_delegator::try_get_async(const get_params& params)
 {

@@ -17,9 +17,9 @@ class rma_comm_base
     : public rma_comm
 {
 protected:
-    rma_comm_base()
+    rma_comm_base(mgcom::endpoint& ep, collective::requester& coll)
     {
-        ep_.collective_initialize();
+        ep_.collective_initialize(ep, coll);
         
         reg_ = make_rma_registrator(ep_);
         rma::registrator::set_instance(*reg_);
@@ -74,7 +74,8 @@ class direct_rma_comm
     : public rma_comm_base
 {
 public:
-    direct_rma_comm()
+    direct_rma_comm(mgcom::endpoint& ep, collective::requester& coll)
+        : rma_comm_base(ep, coll)
     {
         req_ = make_rma_direct_requester(this->get_endpoint(), this->get_completer(), this->get_allocator()); // depends on rma::registrator
         rma::requester::set_instance(*req_);
@@ -92,9 +93,10 @@ class scheduled_rma_comm
     : public rma_comm_base
 {
 public:
-    scheduled_rma_comm()
+    scheduled_rma_comm(mgcom::endpoint& ep, collective::requester& coll)
+        : rma_comm_base(ep, coll)
     {
-        req_ = make_scheduled_rma_requester(this->get_endpoint(), this->get_completer(), this->get_allocator()); // depends on rma::registrator
+        req_ = make_scheduled_rma_requester(this->get_endpoint(), this->get_completer(), this->get_allocator(), ep); // depends on rma::registrator
         rma::requester::set_instance(*req_);
     }
     
@@ -108,14 +110,14 @@ private:
 
 } // unnamed namespace
 
-mgbase::unique_ptr<rma_comm> make_direct_rma_comm()
+mgbase::unique_ptr<rma_comm> make_direct_rma_comm(mgcom::endpoint& ep, collective::requester& coll)
 {
-    return mgbase::make_unique<direct_rma_comm>();
+    return mgbase::make_unique<direct_rma_comm>(ep, coll);
 }
 
-mgbase::unique_ptr<rma_comm> make_scheduled_rma_comm()
+mgbase::unique_ptr<rma_comm> make_scheduled_rma_comm(mgcom::endpoint& ep, collective::requester& coll)
 {
-    return mgbase::make_unique<scheduled_rma_comm>();
+    return mgbase::make_unique<scheduled_rma_comm>(ep, coll);
 }
 
 } // namespace ibv

@@ -13,12 +13,12 @@ class scheduler::impl
     , public command_producer
 {
 public:
-    impl()
+    impl(endpoint& ep)
         : command_queue()
-        , command_consumer()
+        , command_consumer(ep)
         , command_producer()
-        , mpi_{this->get_delegator(), command_consumer::get_mpi_completer()}
-        , fjmpi_{*this} { }
+        , mpi_{ep, this->get_delegator(), command_consumer::get_mpi_completer()}
+        , fjmpi_{ep, *this} { }
     
     impl(const impl&) = delete;
     
@@ -36,14 +36,14 @@ private:
 };
 
 
-scheduler::scheduler()
-    : impl_{mgbase::make_unique<impl>()} { }
+scheduler::scheduler(endpoint& ep)
+    : impl_{mgbase::make_unique<impl>(ep)} { }
 
 scheduler::~scheduler() = default;
 
-mgbase::unique_ptr<scheduler> make_scheduler()
+mgbase::unique_ptr<scheduler> make_scheduler(endpoint& ep)
 {
-    return mgbase::make_unique<scheduler>();
+    return mgbase::make_unique<scheduler>(ep);
 }
 
 command_producer& scheduler::get_command_producer() MGBASE_NOEXCEPT

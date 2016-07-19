@@ -99,10 +99,13 @@ struct dereg_mem_params
 class fjmpi_interface
 {
 protected:
-    fjmpi_interface() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
+    explicit fjmpi_interface(endpoint& ep) MGBASE_NOEXCEPT
+        : ep_(ep) { }
 
 public:
     virtual ~fjmpi_interface() MGBASE_EMPTY_DEFINITION
+    
+    endpoint& get_endpoint() MGBASE_NOEXCEPT { return ep_; }
     
     fjmpi_interface(const fjmpi_interface&) = delete;
     fjmpi_interface& operator = (const fjmpi_interface&) = delete;
@@ -116,6 +119,9 @@ public:
     virtual get_remote_addr_result get_remote_addr(const get_remote_addr_params&) = 0;
     
     virtual void dereg_mem(const dereg_mem_params&) = 0;
+    
+private:
+    endpoint& ep_;
 };
 
 } // namespace fjmpi

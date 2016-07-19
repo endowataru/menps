@@ -10,7 +10,7 @@ namespace mgcom {
 namespace fjmpi {
 namespace rpc {
 
-void initialize(fjmpi_interface&, mpi::mpi_interface&);
+void initialize(fjmpi_interface&, mpi::mpi_interface&, rma::allocator&, rma::registrator&);
 
 void finalize();
 

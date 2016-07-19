@@ -11,20 +11,30 @@ namespace mpi {
 
 namespace /*unnamed*/ {
 
-std::string get_state()
+struct get_state
 {
-    static index_t number = 0;
+    get_state(mpi_endpoint& self)
+        : self_(self)
+        , number_{0}
+        { }
     
-    fmt::MemoryWriter w;
-    w.write(
-        "proc:{}\tthread:{:x}\tlog_id:{}\tclock:{}\t"
-    ,   current_process_id()
-    ,   mgbase::this_thread::get_id().to_integer()
-    ,   number++
-    ,   mgbase::get_cpu_clock() // TODO
-    );
-    return w.str();
-}
+    std::string operator() ()
+    {
+        fmt::MemoryWriter w;
+        w.write(
+            "proc:{}\tthread:{:x}\tlog_id:{}\tclock:{}\t"
+        ,   self_.current_process_id()
+        ,   mgbase::this_thread::get_id().to_integer()
+        ,   number_++
+        ,   mgbase::get_cpu_clock() // TODO
+        );
+        return w.str();
+    }
+    
+private:
+    mpi_endpoint& self_;
+    index_t number_;
+};
 
 } // unnamed namespace
 
@@ -42,11 +52,9 @@ mpi_endpoint::mpi_endpoint(int* const argc, char*** const argv)
     this->set_current_process_id(static_cast<process_id_t>(rank));
     this->set_number_of_processes(static_cast<index_t>(size));
     
-    mgbase::logger::set_state_callback(get_state);
+    mgbase::logger::set_state_callback(get_state{*this});
     
     MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN); // DEBUG
-    
-    endpoint::set_instance(*this); // TODO
     
     MGBASE_LOG_DEBUG("msg:Initialized MPI.");
 }

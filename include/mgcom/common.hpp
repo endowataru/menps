@@ -9,6 +9,30 @@
 
 namespace mgcom {
 
+namespace rma {
+
+class requester;
+
+class registrator;
+
+class allocator;
+
+} // namespace rma
+
+namespace rpc {
+
+class requester;
+
+} // namespace rpc
+
+namespace collective {
+
+class requester;
+
+} // namespace collective
+
+
+
 typedef mgcom_index_t                  index_t;
 
 typedef mgcom_process_id_t             process_id_t;
@@ -75,6 +99,10 @@ inline index_t number_of_processes() MGBASE_NOEXCEPT
     return endpoint::get_instance().number_of_processes();
 }
 
+inline bool valid_process_id(endpoint& ep, process_id_t proc) MGBASE_NOEXCEPT
+{
+    return proc < ep.number_of_processes();
+}
 inline bool valid_process_id(process_id_t proc) MGBASE_NOEXCEPT
 {
     return proc < number_of_processes();

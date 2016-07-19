@@ -9,7 +9,7 @@
 namespace mgcom {
 namespace fjmpi {
 
-mgbase::unique_ptr<rpc::requester> make_rpc_requester(fjmpi_interface& fi, mpi::mpi_interface& mi);
+mgbase::unique_ptr<rpc::requester> make_rpc_requester(fjmpi_interface&, mpi::mpi_interface&, rma::allocator&, rma::registrator&);
 
 } // namespace fjmpi
 } // namespace mgcom

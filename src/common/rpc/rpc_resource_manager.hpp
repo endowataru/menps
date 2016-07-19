@@ -17,11 +17,11 @@ class rpc_resource_manager
     static const NicT number_of_nics = NumNics;
     
 public:
-    void initialize(const TicketT max_num_connections)
+    void initialize(endpoint& ep, const TicketT max_num_connections)
     {
-        procs_ = new processor_info[mgcom::number_of_processes()];
+        procs_ = new processor_info[ep.number_of_processes()];
         
-        for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
+        for (process_id_t proc = 0; proc < ep.number_of_processes(); ++proc)
             procs_[proc].counter.initialize(max_num_connections);
     }
     void finalize()

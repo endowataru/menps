@@ -14,12 +14,14 @@ namespace /*unnamed*/ {
 class rpc_client
 {
 public:
-    rpc_client(mpi_interface& mi, const MPI_Comm comm)
-        : mi_(mi), comm_(comm) { }
+    rpc_client(mpi_interface& mi, endpoint& ep, const MPI_Comm comm)
+        : mi_(mi)
+        , ep_(ep)
+        , comm_(comm) { }
     
     bool try_call_async(const untyped::call_params& params)
     {
-        MGBASE_ASSERT(valid_process_id(params.proc));
+        MGBASE_ASSERT(valid_process_id(ep_, params.proc));
         MGBASE_ASSERT(params.handler_id < MGCOM_RPC_MAX_NUM_HANDLERS);
         MGBASE_ASSERT(params.arg_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(params.return_size == 0 || params.return_ptr != MGBASE_NULLPTR);
@@ -77,6 +79,7 @@ private:
     }
     
     mpi_interface& mi_;
+    endpoint& ep_;
     MPI_Comm comm_;
 };
 

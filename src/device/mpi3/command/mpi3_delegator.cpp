@@ -446,7 +446,7 @@ struct ialltoall_closure
 bool mpi3_delegator::try_rget(const rget_params& params)
 {
     MGBASE_ASSERT(params.dest_ptr != MGBASE_NULLPTR);
-    MGBASE_ASSERT(mpi::is_valid_rank(params.src_rank));
+    MGBASE_ASSERT(mpi::is_valid_rank(this->get_endpoint(), params.src_rank));
     MGBASE_ASSERT(params.size_in_bytes > 0);
     
     // TODO: This assertion might not be compliant to the MPI standard,
@@ -474,7 +474,7 @@ bool mpi3_delegator::try_rget(const rget_params& params)
 bool mpi3_delegator::try_rput(const rput_params& params)
 {
     MGBASE_ASSERT(params.src_ptr != MGBASE_NULLPTR);
-    MGBASE_ASSERT(mpi::is_valid_rank(params.dest_rank));
+    MGBASE_ASSERT(mpi::is_valid_rank(this->get_endpoint(), params.dest_rank));
     MGBASE_ASSERT(params.size_in_bytes > 0);
     
     // TODO: This assertion might not be compliant to the MPI standard,
@@ -503,7 +503,7 @@ bool mpi3_delegator::try_rput(const rput_params& params)
 
 bool mpi3_delegator::try_compare_and_swap(const compare_and_swap_params& params)
 {
-    MGBASE_ASSERT(mpi::is_valid_rank(params.dest_rank));
+    MGBASE_ASSERT(mpi::is_valid_rank(this->get_endpoint(), params.dest_rank));
     // TODO: This assertion might not be compliant to the MPI standard,
     //       but it's helpful to check whether the pointer is not null
     MGBASE_ASSERT(params.dest_index != 0);
@@ -531,7 +531,7 @@ bool mpi3_delegator::try_compare_and_swap(const compare_and_swap_params& params)
 
 bool mpi3_delegator::try_fetch_and_op(const fetch_and_op_params& params)
 {
-    MGBASE_ASSERT(mpi::is_valid_rank(params.dest_rank));
+    MGBASE_ASSERT(mpi::is_valid_rank(this->get_endpoint(), params.dest_rank));
     // TODO: This assertion might not be compliant to the MPI standard,
     //       but it's helpful to check whether the pointer is not null
     MGBASE_ASSERT(params.dest_index != 0);

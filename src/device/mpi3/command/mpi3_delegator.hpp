@@ -12,8 +12,10 @@ class mpi3_delegator
     , public virtual mpi3_interface
 {
 public:
-    mpi3_delegator(delegator& del, mpi::mpi_completer_base& comp, MPI_Win win)
-        : mpi::mpi_delegator(del, comp)
+    mpi3_delegator(endpoint& ep, delegator& del, mpi::mpi_completer_base& comp, MPI_Win win)
+        : mpi_interface(ep)
+        , mpi3_interface(ep)
+        , mpi::mpi_delegator(ep, del, comp)
         , win_(win) { }
     
     // mpi3_interface

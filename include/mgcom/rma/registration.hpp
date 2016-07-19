@@ -24,16 +24,26 @@ inline local_region register_region(
  * Prepare a region located on a remote process.
  */
 inline remote_region use_remote_region(
-    const process_id_t  proc_id
+    registrator&        reg
+,   const process_id_t  proc_id
 ,   const region_key&   key
 ) {
     const use_remote_region_params params = { proc_id, key };
-    return registrator::get_instance().use_remote_region(params);
+    return reg.use_remote_region(params);
+}
+inline remote_region use_remote_region(
+    const process_id_t  proc_id
+,   const region_key&   key
+) {
+    return use_remote_region(registrator::get_instance(), proc_id, key);
 }
 
-inline remote_address use_remote_address(process_id_t proc_id, const local_address& addr) {
-    remote_address result = { use_remote_region(proc_id, addr.region.key), addr.offset };
+inline remote_address use_remote_address(registrator& reg, process_id_t proc_id, const local_address& addr) {
+    remote_address result = { use_remote_region(reg, proc_id, addr.region.key), addr.offset };
     return result;
+}
+inline remote_address use_remote_address(process_id_t proc_id, const local_address& addr) {
+    return use_remote_address(registrator::get_instance(), proc_id, addr);
 }
 
 /**
@@ -62,12 +72,20 @@ inline void deallocate_region(const local_region& region)
 
 template <typename T>
 inline remote_ptr<T> use_remote_ptr(
-    const process_id_t  proc_id
+    registrator&        reg
+,   const process_id_t  proc_id
 ,   const local_ptr<T>& ptr
 ) {
     return remote_ptr<T>::cast_from(
-        mgcom::rma::untyped::use_remote_address(proc_id, ptr.to_address())
+        mgcom::rma::untyped::use_remote_address(reg, proc_id, ptr.to_address())
     );
+}
+template <typename T>
+inline remote_ptr<T> use_remote_ptr(
+    const process_id_t  proc_id
+,   const local_ptr<T>& ptr
+) {
+    return use_remote_ptr(registrator::get_instance(), proc_id, ptr);
 }
 
 } // namespace rma

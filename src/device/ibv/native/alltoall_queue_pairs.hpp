@@ -13,7 +13,7 @@ class alltoall_queue_pairs
 public:
     alltoall_queue_pairs() MGBASE_EMPTY_DEFINITION
     
-    void create(ibv_context& ctx, ibv_cq& cq, ibv_pd& pd);
+    void create(mgcom::endpoint&, collective::requester&, ibv_context&, ibv_cq&, ibv_pd&);
     
     void destroy();
     
@@ -28,7 +28,9 @@ public:
     }
 
 private:
-    mgbase::scoped_ptr<queue_pair []> conns_;
+    mgbase::scoped_ptr<queue_pair []>   conns_;
+    endpoint*                           ep_;
+    collective::requester*              coll_;
 };
 
 } // namespace ibv

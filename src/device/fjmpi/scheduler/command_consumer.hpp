@@ -11,7 +11,7 @@ class command_consumer
     : protected virtual command_queue
 {
 public:
-    command_consumer();
+    command_consumer(endpoint&);
     
     virtual ~command_consumer();
     

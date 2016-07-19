@@ -10,7 +10,7 @@ namespace mpi1 {
 class commander
 {
 public:
-    commander();
+    commander(endpoint&);
     ~commander();
     
     mpi::mpi_interface& get_mpi_interface() MGBASE_NOEXCEPT;
@@ -20,7 +20,7 @@ private:
     mgbase::unique_ptr<impl> impl_;
 };
 
-mgbase::unique_ptr<commander> make_commander();
+mgbase::unique_ptr<commander> make_commander(endpoint&);
 
 } // namespace mpi1
 } // namespace mgcom

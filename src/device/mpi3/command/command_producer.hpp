@@ -14,9 +14,9 @@ class command_producer
     : public virtual command_queue
 {
 public:
-    command_producer(mpi::mpi_completer_base& comp, rma_window& win)
+    command_producer(endpoint& ep, mpi::mpi_completer_base& comp, rma_window& win)
         : del_{*this}
-        , mpi_{del_, comp, win.get()} {}
+        , mpi_{ep, del_, comp, win.get()} {}
     
     mpi3_interface& get_mpi_interface() MGBASE_NOEXCEPT {
         return mpi_;

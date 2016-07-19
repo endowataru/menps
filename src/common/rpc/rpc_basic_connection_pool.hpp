@@ -24,43 +24,46 @@ class rpc_basic_connection_pool
     typedef mgcom::rma::remote_ptr<buffer_type>  remote_buffer_ptr_type;
     
 public:
-    void initialize(mpi::mpi_interface& mi)
+    void initialize(mpi::mpi_interface& mi, rma::allocator& alloc, rma::registrator& reg)
     {
-        manager_.initialize(max_num_connections);
+        ep_ = &mi.get_endpoint();
+        alloc_ = &alloc;
         
-        info_by_procs_ = new processor_info[mgcom::number_of_processes()];
+        manager_.initialize(*ep_, max_num_connections);
+        
+        info_by_procs_ = new processor_info[ep_->number_of_processes()];
         
         const mgbase::scoped_ptr<local_buffer_ptr_type []> local_receicer_bufs(
-            new local_buffer_ptr_type[mgcom::number_of_processes()]
+            new local_buffer_ptr_type[ep_->number_of_processes()]
         );
         
-        for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
+        for (process_id_t proc = 0; proc < ep_->number_of_processes(); ++proc)
         {
             // Allocate a sender buffer.
             
             info_by_procs_[proc].sender_local_buf
-                = mgcom::rma::allocate<buffer_type>(number_of_nics * max_num_connections);
+                = rma::allocate<buffer_type>(alloc, number_of_nics * max_num_connections);
             
             // Allocate a receiver buffer.
             
             const local_buffer_ptr_type receiver_buf
-                = mgcom::rma::allocate<buffer_type>(number_of_nics * max_num_connections);
+                = rma::allocate<buffer_type>(alloc, number_of_nics * max_num_connections);
             
             info_by_procs_[proc].receiver_local_buf = receiver_buf;
             local_receicer_bufs[proc] = receiver_buf;
         }
         
         const mgbase::scoped_ptr<local_buffer_ptr_type []> remote_receiver_bufs(
-            new local_buffer_ptr_type[mgcom::number_of_processes()]
+            new local_buffer_ptr_type[ep_->number_of_processes()]
         );
         
         // All-to-all address exchange.
         mpi::native_alltoall(mi, &local_receicer_bufs[0], &remote_receiver_bufs[0], 1);
         
-        for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
+        for (process_id_t proc = 0; proc < ep_->number_of_processes(); ++proc)
         {
             info_by_procs_[proc].sender_remote_buf
-                = mgcom::rma::use_remote_ptr(proc, remote_receiver_bufs[proc]);
+                = mgcom::rma::use_remote_ptr(reg, proc, remote_receiver_bufs[proc]);
         }
         
         MGBASE_LOG_DEBUG("msg:Initialized RPC connection pool.");
@@ -68,10 +71,10 @@ public:
     
     void finalize()
     {
-        for (process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
+        for (process_id_t proc = 0; proc < ep_->number_of_processes(); ++proc)
         {
-            mgcom::rma::deallocate(info_by_procs_[proc].sender_local_buf);
-            mgcom::rma::deallocate(info_by_procs_[proc].receiver_local_buf);
+            rma::deallocate(*alloc_, info_by_procs_[proc].sender_local_buf);
+            rma::deallocate(*alloc_, info_by_procs_[proc].receiver_local_buf);
         }
         
         info_by_procs_.reset();
@@ -241,6 +244,8 @@ private:
         }
     };
     
+    endpoint*                                       ep_;
+    rma::allocator*                                 alloc_;
     rpc_resource_manager<TicketT, NicT, NumNics>    manager_;
     mgbase::scoped_ptr<processor_info []>           info_by_procs_;
 };

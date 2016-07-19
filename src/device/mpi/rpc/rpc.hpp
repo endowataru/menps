@@ -13,7 +13,7 @@ using namespace mgcom::rpc;
 
 namespace untyped = mgcom::rpc::untyped;
 
-mgbase::unique_ptr<requester> make_requester(mpi_interface& mi);
+mgbase::unique_ptr<requester> make_requester(mpi_interface&, endpoint&);
 
 struct message_buffer {
     handler_id_t    id;

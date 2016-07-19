@@ -12,9 +12,9 @@ class mpi_requester
     : public requester
 {
 public:
-    explicit mpi_requester(mpi_interface& mi)
+    explicit mpi_requester(mpi_interface& mi, endpoint& ep)
         : server_(mi)
-        , client_(mi, server_.get_comm()) { }
+        , client_(mi, ep, server_.get_comm()) { }
     
     virtual ~mpi_requester() MGBASE_EMPTY_DEFINITION
     
@@ -36,10 +36,10 @@ private:
 
 } // unnamed namespace
 
-mgbase::unique_ptr<requester> make_requester(mpi_interface& mi)
+mgbase::unique_ptr<requester> make_requester(mpi_interface& mi, endpoint& ep)
 {
     // TODO: replace with make_unique
-    return mgbase::unique_ptr<requester>(new mpi_requester(mi));
+    return mgbase::unique_ptr<requester>(new mpi_requester(mi, ep));
 }
 
 } // namespace rpc

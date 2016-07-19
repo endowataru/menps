@@ -12,7 +12,7 @@ class fjmpi_delegator
     : public virtual fjmpi_interface
 {
 public:
-    fjmpi_delegator(command_producer&);
+    fjmpi_delegator(endpoint&, command_producer&);
     
     fjmpi_delegator(const fjmpi_delegator&) = delete;
     fjmpi_delegator& operator = (const fjmpi_delegator&) = delete;

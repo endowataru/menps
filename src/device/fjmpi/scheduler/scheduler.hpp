@@ -13,7 +13,7 @@ class command_producer;
 class scheduler
 {
 public:
-    scheduler();
+    explicit scheduler(endpoint&);
     ~scheduler();
     
     scheduler(const scheduler&) = delete;
@@ -30,7 +30,7 @@ private:
     mgbase::unique_ptr<impl> impl_;
 };
 
-mgbase::unique_ptr<scheduler> make_scheduler();
+mgbase::unique_ptr<scheduler> make_scheduler(endpoint&);
 
 } // namespace fjmpi
 } // namespace mgcom

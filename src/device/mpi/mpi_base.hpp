@@ -9,9 +9,9 @@
 namespace mgcom {
 namespace mpi {
 
-inline bool is_valid_rank(const int rank)
+inline bool is_valid_rank(endpoint& ep, const int rank)
 {
-    return valid_process_id(static_cast<process_id_t>(rank));
+    return valid_process_id(ep, static_cast<process_id_t>(rank));
 }
 
 std::string get_comm_name(const MPI_Comm comm);

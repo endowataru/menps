@@ -79,6 +79,9 @@ class mpi3_interface
     : public virtual mpi::mpi_interface
 {
 public:
+    mpi3_interface(endpoint& ep)
+        : mpi::mpi_interface(ep) { }
+    
     MGBASE_WARN_UNUSED_RESULT
     virtual bool try_rget(const rget_params&) = 0;
     

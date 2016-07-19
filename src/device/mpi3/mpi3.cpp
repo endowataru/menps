@@ -25,22 +25,17 @@ public:
     {
         endpoint_ = mpi::make_endpoint(argc, argv);
         
-        commander_ = mpi3::make_commander();
+        commander_ = mpi3::make_commander(*endpoint_);
         
         rma_registrator_ = make_rma_registrator(commander_->get_mpi_interface(), commander_->get_win());
-        rma::registrator::set_instance(*rma_registrator_);
         
         rma_requester_ = make_rma_requester(commander_->get_mpi_interface(), commander_->get_win());
-        rma::requester::set_instance(*rma_requester_);
         
         rma_allocator_ = rma::make_default_allocator(*rma_registrator_);
-        rma::allocator::set_instance(*rma_allocator_);
         
-        rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface());
-        rpc::requester::set_instance(*rpc_requester_);
+        rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface(), *endpoint_);
         
         collective_requester_ = make_collective_requester(commander_->get_mpi_interface());
-        collective::requester::set_instance(*collective_requester_);
         
         commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD /*TODO*/ });
         
@@ -49,7 +44,7 @@ public:
     
     virtual ~mpi3_starter()
     {
-        collective::barrier();
+        collective_requester_->barrier();
         
         commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD /*TODO*/ });
         
@@ -70,6 +65,25 @@ public:
         MGBASE_LOG_DEBUG("msg:Finalized.");
     }
     
+    virtual endpoint& get_endpoint() MGBASE_OVERRIDE {
+        return *endpoint_;
+    }
+    virtual rma::requester& get_rma_requester() MGBASE_OVERRIDE {
+        return *rma_requester_;
+    }
+    virtual rma::registrator& get_rma_registrator() MGBASE_OVERRIDE {
+        return *rma_registrator_;
+    }
+    virtual rma::allocator& get_rma_allocator() MGBASE_OVERRIDE {
+        return *rma_allocator_;
+    }
+    virtual rpc::requester& get_rpc_requester() MGBASE_OVERRIDE {
+        return *rpc_requester_;
+    }
+    virtual collective::requester& get_collective_requester() MGBASE_OVERRIDE {
+        return *collective_requester_;
+    }
+    
 private:
     mgbase::unique_ptr<endpoint> endpoint_;
     mgbase::unique_ptr<commander> commander_;
@@ -82,7 +96,6 @@ private:
 };
 
 } // unnamed namespace
-
 
 mgbase::unique_ptr<starter> make_starter(int* const argc, char*** const argv)
 {

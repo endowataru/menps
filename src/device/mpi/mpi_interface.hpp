@@ -82,10 +82,13 @@ class mpi_interface
     : mgbase::noncopyable
 {
 protected:
-    mpi_interface() /*MGBASE_NOEXCEPT*/ = default;
+    explicit mpi_interface(endpoint& ep) MGBASE_NOEXCEPT
+        : ep_(ep) { }
     
 public:
     virtual ~mpi_interface() MGBASE_EMPTY_DEFINITION
+    
+    endpoint& get_endpoint() MGBASE_NOEXCEPT { return ep_; }
     
     // non-blocking functions
     // these might fail
@@ -220,6 +223,9 @@ public:
             mgbase::ult::this_thread::yield();
         }
     }
+    
+private:
+    endpoint& ep_;
 };
 
 template <typename T>
