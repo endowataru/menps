@@ -57,57 +57,57 @@ int main() { return 0; } "
 MGCOM_IBV_MASKED_ATOMICS_SUPPORTED)
 
 
+
+add_library(mgcom-common
+    src/common/rma/default_allocator.cpp
+    src/common/rma/malloc.cpp
+)
+target_link_libraries(mgcom-common mgcom-base mgbase)
+
+add_library(mgcom-mpi
+    src/device/mpi/rpc/rpc.cpp
+    src/device/mpi/rma/contiguous.cpp
+    src/device/mpi/rma/atomic.cpp
+    src/device/mpi/rma/rma.cpp
+    src/device/mpi/rma/registrator.cpp
+    src/device/mpi/collective/barrier.cpp
+    src/device/mpi/mpi_base.cpp
+    src/device/mpi/endpoint.cpp
+    src/device/mpi/command/mpi_delegator.cpp
+    src/device/mpi/mpi_communicator.cpp
+)
+target_link_libraries(mgcom-mpi mgcom-common)
+
+
 # Library for each device
 
 if(${MGCOM_DEVICE_MPI_SUPPORTED})
     add_library(mgcom-dev-mpi1
-        src/common/rma/default_allocator.cpp
-        src/common/rma/malloc.cpp
-        src/device/mpi/rpc/rpc.cpp
-        src/device/mpi/rma/contiguous.cpp
-        src/device/mpi/rma/atomic.cpp
-        src/device/mpi/rma/rma.cpp
-        src/device/mpi/rma/registrator.cpp
-        src/device/mpi/collective/barrier.cpp
-        src/device/mpi/mpi_base.cpp
-        src/device/mpi/endpoint.cpp
-        src/device/mpi/command/mpi_delegator.cpp
         src/device/mpi1/command/commander.cpp
         src/device/mpi1/mpi1.cpp
-        src/device/mpi/mpi_communicator.cpp
     )
-    target_link_libraries(mgcom-dev-mpi1 mgcom-base mgbase)
+    target_link_libraries(mgcom-dev-mpi1 mgcom-mpi)
+    
+    list(APPEND mgcom-devices mpi1)
 endif()
 
 if(${MGCOM_DEVICE_MPI3_SUPPORTED})
     add_library(mgcom-dev-mpi3
-        src/common/rma/default_allocator.cpp
-        src/common/rma/malloc.cpp
-        src/device/mpi/rpc/rpc.cpp
-        src/device/mpi/mpi_base.cpp
-        src/device/mpi/endpoint.cpp
-        src/device/mpi/command/mpi_delegator.cpp
         src/device/mpi3/command/mpi3_delegator.cpp
         src/device/mpi3/rma/rma_window.cpp
         src/device/mpi3/command/commander.cpp
-        src/device/mpi3/mpi3.cpp
         src/device/mpi3/collective/collective.cpp
-        src/device/mpi/mpi_communicator.cpp
         src/device/mpi3/rma/requester.cpp
         src/device/mpi3/rma/registrator.cpp
+        src/device/mpi3/mpi3.cpp
     )
-    target_link_libraries(mgcom-dev-mpi3 mgcom-base mgbase)
+    target_link_libraries(mgcom-dev-mpi3 mgcom-mpi)
+    
+    list(APPEND mgcom-devices mpi3)
 endif()
 
 if (${MGCOM_DEVICE_FJMPI_SUPPORTED})
     add_library(mgcom-dev-fjmpi
-        src/common/rma/default_allocator.cpp
-        src/common/rma/malloc.cpp
-        src/device/mpi/rma/atomic.cpp
-        src/device/mpi/mpi_base.cpp
-        src/device/mpi/endpoint.cpp
-        src/device/mpi/collective/barrier.cpp
-        src/device/mpi/command/mpi_delegator.cpp
         src/device/fjmpi/fjmpi.cpp
         src/device/fjmpi/rma/requester.cpp
         src/device/fjmpi/rma/registrator.cpp
@@ -116,54 +116,44 @@ if (${MGCOM_DEVICE_FJMPI_SUPPORTED})
         src/device/fjmpi/rpc/rpc_receiver.cpp
         src/device/fjmpi/rpc/rpc_connection_pool.cpp
         src/device/fjmpi/endpoint.cpp
-        
         src/device/fjmpi/scheduler/scheduler.cpp
         src/device/fjmpi/scheduler/fjmpi_delegator.cpp
         src/device/fjmpi/scheduler/command_consumer.cpp
     )
-    target_link_libraries(mgcom-dev-fjmpi mgcom-base mgbase)
+    target_link_libraries(mgcom-dev-fjmpi mgcom-mpi)
+    
+    list(APPEND mgcom-devices fjmpi)
 endif()
 
 if (${MGCOM_DEVICE_IBV_SUPPORTED})
     add_library(mgcom-dev-ibv
-        src/device/ibv/ibv.cpp
-        
-        src/common/rma/default_allocator.cpp
-        src/common/rma/malloc.cpp
-        
-        src/device/mpi/rpc/rpc.cpp
-        src/device/mpi/collective/barrier.cpp
-        src/device/mpi/mpi_base.cpp
-        src/device/mpi/endpoint.cpp
-        src/device/mpi1/command/commander.cpp
-        src/device/mpi/command/mpi_delegator.cpp
-        
         src/device/ibv/rma/direct_requester.cpp
         src/device/ibv/rma/rma_comm.cpp
         src/device/ibv/rma/registrator.cpp
         src/device/ibv/command/poll_thread.cpp
         src/device/ibv/native/queue_pair.cpp
         src/device/ibv/native/alltoall_queue_pairs.cpp
-        
         src/device/ibv/scheduler/command_consumer.cpp
         src/device/ibv/scheduler/scheduler.cpp
+        src/device/ibv/ibv.cpp
     )
-    target_link_libraries(mgcom-dev-ibv mgcom-base mgbase
+    target_link_libraries(mgcom-dev-ibv mgcom-dev-mpi1
         ibverbs # libibverbs.so
     )
+    
+    list(APPEND mgcom-devices ibv)
 endif()
 
 
-add_library(mgcom-uni
+add_library(mgcom
     src/common/entrypoint.cpp
 )
-target_link_libraries(mgcom-uni
+target_link_libraries(mgcom
     $<$<BOOL:${MGCOM_DEVICE_MPI_SUPPORTED}>:mgcom-dev-mpi1>
     $<$<BOOL:${MGCOM_DEVICE_MPI3_SUPPORTED}>:mgcom-dev-mpi3>
     $<$<BOOL:${MGCOM_DEVICE_IBV_SUPPORTED}>:mgcom-dev-ibv>
     $<$<BOOL:${MGCOM_DEVICE_FJMPI_SUPPORTED}>:mgcom-dev-fjmpi>
 )
-list(APPEND mgcom-devices uni)
 
 
 
@@ -178,30 +168,24 @@ set(mgcom-devices ${mgcom-devices} PARENT_SCOPE)
 
 # Unit test for each device
 
-foreach(device IN LISTS mgcom-devices)
-    add_executable(mgcom-unittest-${device}
-        ./unittest/unittest.cpp
-        ./unittest/rpc.cpp
-        ./unittest/rma.cpp
-    )
-    target_link_libraries(mgcom-unittest-${device}
-        mgcom-${device}
-        googletest
-    )
-endforeach()
+add_executable(mgcom-unittest
+    ./unittest/unittest.cpp
+    ./unittest/rpc.cpp
+    ./unittest/rma.cpp
+)
+target_link_libraries(mgcom-unittest
+    mgcom
+    googletest
+)
 
 # Benchmark programs
 
-foreach(device IN LISTS mgcom-devices)
-    file(GLOB benchmark_files example/bench/*.cpp)
-    foreach(benchmark_path IN LISTS benchmark_files)
-        get_filename_component(benchmark_name ${benchmark_path} NAME_WE)
-        add_executable(${benchmark_name}-${device}
-            ${benchmark_path}
-        )
-        target_link_libraries(${benchmark_name}-${device}
-            mgcom-${device}
-        )
-    endforeach()
+file(GLOB benchmark_files example/bench/*.cpp)
+foreach(benchmark_path IN LISTS benchmark_files)
+    get_filename_component(benchmark_name ${benchmark_path} NAME_WE)
+    add_executable(${benchmark_name}
+        ${benchmark_path}
+    )
+    target_link_libraries(${benchmark_name} mgcom)
 endforeach()
 
