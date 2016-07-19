@@ -1,6 +1,5 @@
 
 #include "rma.hpp"
-#include "common/rma/region_allocator.hpp"
 #include "common/rma/rma.hpp"
 #include <mgbase/logging/logger.hpp>
 

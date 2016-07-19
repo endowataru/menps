@@ -2,6 +2,7 @@
 #pragma once
 
 #include "completer.hpp"
+#include <mgcom/rma/allocation.hpp>
 
 namespace mgcom {
 namespace ibv {
@@ -11,16 +12,17 @@ class atomic_buffer
     static const mgbase::size_t max_num_completions = completer::max_num_completions;
     
 public:
-    atomic_buffer()
-        : entries_{new entry[max_num_completions]}
-        , buf_{rma::allocate<rma::atomic_default_t>(max_num_completions)}
+    atomic_buffer(rma::allocator& alloc)
+        : alloc_(alloc)
+        , entries_{new entry[max_num_completions]}
+        , buf_{rma::allocate<rma::atomic_default_t>(alloc, max_num_completions)}
     {
         for (mgbase::size_t i = 0; i < max_num_completions; ++i)
             entries_[i].src = &buf_[i];
     }
     
     ~atomic_buffer() {
-        rma::deallocate(buf_);
+        rma::deallocate(alloc_, buf_);
         entries_.reset();
     }
     
@@ -148,6 +150,7 @@ private:
         e.dest = dest_ptr;
     }
     
+    rma::allocator& alloc_;
     mgbase::scoped_ptr<entry []> entries_;
     rma::local_ptr<rma::atomic_default_t> buf_;
 };

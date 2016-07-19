@@ -58,7 +58,7 @@ MGCOM_IBV_MASKED_ATOMICS_SUPPORTED)
 
 if(${is_mpi_available})
     add_library(mgcom-mpi1
-        src/common/rma/region_allocator.cpp
+        src/common/rma/default_allocator.cpp
         src/common/rma/malloc.cpp
         src/device/mpi/rpc/rpc.cpp
         src/device/mpi/rma/contiguous.cpp
@@ -81,7 +81,7 @@ endif()
 
 if(${MGCOM_DEVICE_MPI3_SUPPORTED})
     add_library(mgcom-mpi3
-        src/common/rma/region_allocator.cpp
+        src/common/rma/default_allocator.cpp
         src/common/rma/malloc.cpp
         src/device/mpi/rpc/rpc.cpp
         src/device/mpi/mpi_base.cpp
@@ -104,7 +104,7 @@ endif()
 
 if (${is_fjmpi_available})
     add_library(mgcom-fjmpi
-        src/common/rma/region_allocator.cpp
+        src/common/rma/default_allocator.cpp
         src/common/rma/malloc.cpp
         src/device/mpi/rma/atomic.cpp
         src/device/mpi/mpi_base.cpp
@@ -136,7 +136,7 @@ if (${is_ibv_available})
         src/device/ibv/entrypoint.cpp
         src/device/ibv/ibv.cpp
         
-        src/common/rma/region_allocator.cpp
+        src/common/rma/default_allocator.cpp
         src/common/rma/malloc.cpp
         
         src/device/mpi/rpc/rpc.cpp

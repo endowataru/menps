@@ -28,17 +28,6 @@ typedef mgcom_rma_remote_address           remote_address;
 
 typedef mgcom_rma_registered_buffer   registered_buffer;
 
-/**
- * Allocate a registered buffer from the buffer pool.
- */
-registered_buffer allocate(index_t size_in_bytes);
-
-/**
- * Deallocate a registered buffer allocated from the buffer pool.
- */
-void deallocate(const registered_buffer& buffer);
-
-
 inline region_key to_region_key(const local_region& region) MGBASE_NOEXCEPT {
     return region.key;
 }

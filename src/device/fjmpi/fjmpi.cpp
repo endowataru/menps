@@ -3,7 +3,7 @@
 #include "rma/rma.hpp"
 #include "device/mpi/collective/collective.hpp"
 #include "device/mpi/rma/atomic.hpp"
-#include "common/rma/region_allocator.hpp"
+#include "common/rma/default_allocator.hpp"
 #include "starter.hpp"
 #include "device/fjmpi/rpc/requester.hpp"
 #include "device/fjmpi/rma/rma.hpp"
@@ -31,7 +31,8 @@ public:
         rma_registrator_ = make_rma_registrator(scheduler_->get_fjmpi_interface());
         rma::registrator::set_instance(*rma_registrator_);
         
-        mgcom::rma::initialize_allocator();
+        rma_allocator_ = rma::make_default_allocator(*rma_registrator_);
+        rma::allocator::set_instance(*rma_allocator_);
         
         rpc_requester_ = make_rpc_requester(scheduler_->get_fjmpi_interface(), scheduler_->get_mpi_interface());
         rpc::requester::set_instance(*rpc_requester_);
@@ -57,7 +58,7 @@ public:
         
         rpc_requester_.reset();
         
-        mgcom::rma::finalize_allocator();
+        rma_allocator_.reset();
         
         rma_registrator_.reset();
         
@@ -72,6 +73,7 @@ private:
     mgbase::unique_ptr<endpoint> endpoint_;
     mgbase::unique_ptr<scheduler> scheduler_;
     mgbase::unique_ptr<rma::registrator> rma_registrator_;
+    mgbase::unique_ptr<rma::allocator> rma_allocator_;
     mgbase::unique_ptr<rma::requester> rma_requester_;
     mgbase::unique_ptr<rpc::requester> rpc_requester_;
     mgbase::unique_ptr<collective::requester> collective_requester_;

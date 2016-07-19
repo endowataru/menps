@@ -1,7 +1,5 @@
 
-#pragma once
-
-#include "region_allocator.hpp"
+#include "default_allocator.hpp"
 #include <mgcom/rma/registration.hpp>
 #include "./malloc.h"
 #include <mgbase/memory/aligned_alloc.hpp>
@@ -11,43 +9,47 @@
 
 namespace mgcom {
 namespace rma {
-namespace untyped {
 
 namespace /*unnamed*/ {
 
-class region_allocator
+class default_allocator
+    : public allocator
 {
     // FIXME: adjustable buffer size
     static const index_t total_region_size = 256 << 20;
     
 public:
-    void initialize()
+    explicit default_allocator(registrator& reg)
+        : reg_(reg)
     {
         // Allocate a huge buffer.
         void* const ptr = mgbase::aligned_alloc(buffer_alignment, total_region_size);
         
         // Register it to the RDMA engine.
-        region_ = register_region(ptr, total_region_size);
+        region_ = reg.register_region(untyped::register_region_params{ptr, total_region_size});
         
         // Prepare dlmalloc.
         ms_ = create_mspace_with_base(ptr, total_region_size, 1);
         
-        MGBASE_LOG_DEBUG("msg:Initialized RMA region allocator.");
+        MGBASE_LOG_DEBUG("msg:Initialized default allocator for RMA.");
         
         from_ = reinterpret_cast<mgbase::uintptr_t>(ptr);
         to_ = reinterpret_cast<mgbase::uintptr_t>(ptr) + total_region_size;
     }
     
-    void finalize()
+    virtual ~default_allocator()
     {
-        deregister_region(region_);
+        reg_.deregister_region(untyped::deregister_region_params{region_});
         
         destroy_mspace(ms_);
         
-        MGBASE_LOG_DEBUG("msg:Finalized RMA region allocator.");
+        MGBASE_LOG_DEBUG("msg:Finalized default allocator for RMA.");
     }
     
-    registered_buffer allocate(index_t size_in_bytes)
+    default_allocator(const default_allocator&) = delete;
+    default_allocator& operator = (const default_allocator&) = delete;
+    
+    virtual untyped::registered_buffer allocate(const index_t size_in_bytes) MGBASE_OVERRIDE
     {
         // TODO: reduce multithreading contentions
         mgbase::lock_guard<mgbase::spinlock> lc(lock_);
@@ -55,15 +57,18 @@ public:
         void* const ptr = mspace_malloc(ms_, size_in_bytes);
         
         MGBASE_ASSERT(ptr != MGBASE_NULLPTR);
-        MGBASE_ASSERT(from_ <= reinterpret_cast<mgbase::uintptr_t>(ptr) && reinterpret_cast<mgbase::uintptr_t>(ptr) < to_);
         
-        const local_address base = to_address(region_);
+        MGBASE_ASSERT(from_ <= reinterpret_cast<mgbase::uintptr_t>(ptr));
+        MGBASE_ASSERT(reinterpret_cast<mgbase::uintptr_t>(ptr) < to_);
+        
+        const untyped::local_address base = untyped::to_address(region_);
         const index_t diff = static_cast<index_t>(
-            reinterpret_cast<mgbase::uintptr_t>(ptr) - reinterpret_cast<mgbase::uintptr_t>(to_raw_pointer(base))
+            reinterpret_cast<mgbase::uintptr_t>(ptr) -
+            reinterpret_cast<mgbase::uintptr_t>(untyped::to_raw_pointer(base))
         );
         
-        const local_address addr = advanced(base, diff);
-        const registered_buffer result = { addr };
+        const untyped::local_address addr = untyped::advanced(base, diff);
+        const untyped::registered_buffer result = { addr };
         
         MGBASE_LOG_DEBUG(
             "msg:Allocated from buffer.\t"
@@ -80,11 +85,11 @@ public:
         return result;
     }
     
-    void deallocate(const registered_buffer& buf)
+    virtual void deallocate(const untyped::registered_buffer& buf) MGBASE_OVERRIDE
     {
         mgbase::lock_guard<mgbase::spinlock> lc(lock_);
         
-        void* const ptr = to_raw_pointer(buf);
+        void* const ptr = untyped::to_raw_pointer(buf);
         mspace_free(ms_, ptr);
         
         MGBASE_LOG_DEBUG(
@@ -94,8 +99,10 @@ public:
     }
 
 private:
+    registrator& reg_;
+    
     mgbase::spinlock lock_;
-    local_region region_;
+    untyped::local_region region_;
     mspace ms_;
     mgbase::uintptr_t from_;
     mgbase::uintptr_t to_;
@@ -103,7 +110,11 @@ private:
 
 } // unnamed namespace
 
-} // namespace untyped
+default_allocator_ptr make_default_allocator(registrator& reg)
+{
+    return mgbase::make_unique<default_allocator>(reg);
+}
+
 } // namespace rma
 } // namespace mgcom
 

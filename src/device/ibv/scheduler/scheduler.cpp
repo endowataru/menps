@@ -15,10 +15,10 @@ class scheduled_rma_requester
 public:
     typedef ibv::command_code   command_code_type;
     
-    scheduled_rma_requester(endpoint& ep, completer& comp)
+    scheduled_rma_requester(endpoint& ep, completer& comp, rma::allocator& alloc)
         : ep_(ep)
         , comp_(comp)
-        , atomic_buf_{}
+        , atomic_buf_(alloc)
         , sers_(number_of_processes())
         
     {
@@ -68,9 +68,9 @@ private:
 
 } // unnamed namespace
 
-mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(endpoint& ep, completer& comp)
+mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(endpoint& ep, completer& comp, rma::allocator& alloc)
 {
-    return mgbase::make_unique<scheduled_rma_requester>(ep, comp);
+    return mgbase::make_unique<scheduled_rma_requester>(ep, comp, alloc);
 }
 
 } // namespace ibv

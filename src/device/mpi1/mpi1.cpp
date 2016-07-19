@@ -5,7 +5,7 @@
 #include "device/mpi/rpc/rpc.hpp"
 #include "device/mpi/rma/rma.hpp"
 #include "device/mpi/collective/collective.hpp"
-#include "common/rma/region_allocator.hpp"
+#include "common/rma/default_allocator.hpp"
 #include <mgcom/collective.hpp>
 
 #include "common/starter.hpp"
@@ -36,7 +36,8 @@ public:
         rma_requester_ = mpi::make_rma_requester(*rpc_requester_, commander_->get_mpi_interface());
         rma::requester::set_instance(*rma_requester_);
         
-        mgcom::rma::initialize_allocator();
+        rma_allocator_ = rma::make_default_allocator(*rma_registrator_);
+        rma::allocator::set_instance(*rma_allocator_);
         
         collective_requester_ = mpi::collective::make_requester(commander_->get_mpi_interface());
         collective::requester::set_instance(*collective_requester_);
@@ -56,7 +57,7 @@ public:
         
         collective_requester_.reset();
         
-        mgcom::rma::finalize_allocator();
+        rma_allocator_.reset();
         
         rma_requester_.reset();
         
@@ -76,6 +77,7 @@ private:
     mgbase::unique_ptr<commander> commander_;
     mgbase::unique_ptr<rma::registrator> rma_registrator_;
     mgbase::unique_ptr<rma::requester> rma_requester_;
+    mgbase::unique_ptr<rma::allocator> rma_allocator_;
     mgbase::unique_ptr<rpc::requester> rpc_requester_;
     mgbase::unique_ptr<collective::requester> collective_requester_;
 };

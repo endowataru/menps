@@ -111,28 +111,6 @@ private:
                     buf.link_to(n - 1, link);
                 }
             }
-            
-            /*
-            
-            // Check the queue.
-            if (command* const cmd = queue.peek())
-            {
-                // Call the closure.
-                const bool succeeded = execute(*cmd);
-                
-                if (MGBASE_LIKELY(succeeded)) {
-                    MGBASE_LOG_DEBUG("msg:Operation succeeded.");
-                    queue.pop();
-                }
-                else {
-                    MGBASE_LOG_DEBUG("msg:Operation failed. Postponed.");
-                }
-            }
-            
-            fjmpi_comp_.poll_on_this_thread();
-            
-            // Do polling.
-            completer_.poll_on_this_thread();*/
         }
     }
     

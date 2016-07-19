@@ -6,8 +6,6 @@
 
 #include <mgbase/logging/logger.hpp>
 
-#include "common/rma/region_allocator.hpp"
-
 namespace mgcom {
 namespace mpi {
 

@@ -79,6 +79,8 @@ requester* requester::req_;
 
 registrator* registrator::reg_;
 
+allocator* allocator::alloc_;
+
 } // namespace rma
 
 namespace rpc {

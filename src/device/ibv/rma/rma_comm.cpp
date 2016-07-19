@@ -5,7 +5,7 @@
 #include "requester.hpp"
 #include "registrator.hpp"
 #include "device/ibv/command/poll_thread.hpp"
-#include "common/rma/region_allocator.hpp"
+#include "common/rma/default_allocator.hpp"
 #include "device/ibv/scheduler/scheduler.hpp"
 
 namespace mgcom {
@@ -24,7 +24,8 @@ protected:
         reg_ = make_rma_registrator(ep_);
         rma::registrator::set_instance(*reg_);
         
-        rma::initialize_allocator();
+        alloc_ = rma::make_default_allocator(*reg_);
+        rma::allocator::set_instance(*alloc_);
         
         comp_ = mgbase::make_unique<completer>(); // completer requires allocator
         
@@ -36,8 +37,8 @@ protected:
         poll_.reset();
         
         comp_.reset();
-         
-        rma::finalize_allocator();
+        
+        alloc_.reset();
         
         reg_.reset();
         
@@ -57,10 +58,15 @@ public:
         return *reg_;
     }
     
+    virtual rma::allocator& get_allocator() MGBASE_OVERRIDE {
+        return *alloc_;
+    }
+    
 private:
     endpoint ep_;
     mgbase::unique_ptr<completer> comp_;
     mgbase::unique_ptr<rma::registrator> reg_;
+    mgbase::unique_ptr<rma::allocator> alloc_;
     mgbase::unique_ptr<poll_thread> poll_;
 };
 
@@ -70,7 +76,7 @@ class direct_rma_comm
 public:
     direct_rma_comm()
     {
-        req_ = make_rma_direct_requester(this->get_endpoint(), this->get_completer()); // depends on rma::registrator
+        req_ = make_rma_direct_requester(this->get_endpoint(), this->get_completer(), this->get_allocator()); // depends on rma::registrator
         rma::requester::set_instance(*req_);
     }
     
@@ -88,7 +94,7 @@ class scheduled_rma_comm
 public:
     scheduled_rma_comm()
     {
-        req_ = make_scheduled_rma_requester(this->get_endpoint(), this->get_completer()); // depends on rma::registrator
+        req_ = make_scheduled_rma_requester(this->get_endpoint(), this->get_completer(), this->get_allocator()); // depends on rma::registrator
         rma::requester::set_instance(*req_);
     }
     

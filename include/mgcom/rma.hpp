@@ -5,4 +5,5 @@
 #include <mgcom/rma/blocking.hpp>
 #include <mgcom/rma/cb.hpp>
 #include <mgcom/rma/registration.hpp>
+#include <mgcom/rma/allocation.hpp>
 

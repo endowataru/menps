@@ -142,20 +142,6 @@ private:
     address_type addr_;
 };
 
-
-template <typename T>
-inline local_ptr<T> allocate(std::size_t number_of_elements = 1) {
-    untyped::registered_buffer buf = untyped::allocate(mgbase::runtime_size_of<T>() * number_of_elements);
-    return local_ptr<T>::cast_from(untyped::to_address(buf));
-}
-
-template <typename T>
-inline void deallocate(const local_ptr<T>& ptr) {
-    untyped::registered_buffer buf = { ptr.to_address() }; // TODO
-    untyped::deallocate(buf);
-}
-
-
 template <typename T>
 inline mgbase::uint64_t to_integer(const local_ptr<T>& ptr) MGBASE_NOEXCEPT {
     return mgcom::rma::to_integer(ptr.to_address());
