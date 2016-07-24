@@ -4,7 +4,6 @@
 #include <mgcom/rma/pointer.hpp>
 #include <mgbase/operation.hpp>
 #include <mgbase/type_traits.hpp>
-#include <mgbase/optional.hpp>
 
 namespace mgcom {
 namespace rma {

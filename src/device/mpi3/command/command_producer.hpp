@@ -4,7 +4,6 @@
 #include "command_queue.hpp"
 #include "mpi3_delegator.hpp"
 #include "common/command/queue_delegator.hpp"
-#include <mgbase/implicit_cast.hpp>
 #include "device/mpi3/rma/rma_window.hpp"
 
 namespace mgcom {

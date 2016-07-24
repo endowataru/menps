@@ -12,7 +12,7 @@ class atomic_buffer
     static const mgbase::size_t max_num_completions = completer::max_num_completions;
     
 public:
-    atomic_buffer(rma::allocator& alloc)
+    explicit atomic_buffer(rma::allocator& alloc)
         : alloc_(alloc)
         , entries_{new entry[max_num_completions]}
         , buf_{rma::allocate<rma::atomic_default_t>(alloc, max_num_completions)}

@@ -3,7 +3,6 @@
 
 #include <mgcom/common.hpp>
 #include <mgcom/rpc/call.h>
-#include <mgbase/optional.hpp>
 #include <mgbase/operation.hpp>
 
 namespace mgcom {
