@@ -332,7 +332,8 @@ add_executable(mgbase-unittest
     unittest/mpsc_bounded_blocking_queue.cpp
     unittest/mpsc_blocking_bounded_queue.cpp
     unittest/condition_variable.cpp
-    unittest/optional.cpp
+    #unittest/optional.cpp
+    #unittest/callback.cpp
 )
 
 target_link_libraries(mgbase-unittest mgbase mgbase-options googletest)

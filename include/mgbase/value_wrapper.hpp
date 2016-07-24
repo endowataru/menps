@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgbase/type_traits.hpp>
+#include <mgbase/utility/declval.hpp>
 #include <utility>
 
 namespace mgbase {
@@ -15,10 +16,8 @@ public:
     MGBASE_CONSTEXPR  /*implicit*/ value_wrapper(const T& val)
         : val_(val) { }
     
-    #ifdef MGBASE_CXX11_SUPPORTED
     MGBASE_CONSTEXPR /*implicit*/ value_wrapper(T&& val)
         : val_(std::move(val)) { }
-    #endif
     
     T& get() {
         return val_;

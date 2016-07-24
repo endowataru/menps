@@ -16,12 +16,14 @@ public:
     resumable() MGBASE_NOEXCEPT = default;
     
     resumable(const resumable&) MGBASE_NOEXCEPT = default;
+    resumable(resumable&) MGBASE_NOEXCEPT = default;
     
     /*implicit*/ resumable(const function_type& func) MGBASE_NOEXCEPT
         : func_(func)
         { }
     
     resumable& operator = (const resumable&) MGBASE_NOEXCEPT = default;
+    resumable& operator = (resumable&&) MGBASE_NOEXCEPT = default;
     
     #endif
     

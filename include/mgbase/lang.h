@@ -165,8 +165,10 @@
     
     #ifdef MGBASE_CXX11_NOEXCEPT_SUPPORTED
         #define MGBASE_NOEXCEPT                     noexcept
+        #define MGBASE_NOEXCEPT_IF(x)               noexcept(x)
     #else
         #define MGBASE_NOEXCEPT                     throw()
+        #define MGBASE_NOEXCEPT_IF(x)
     #endif
     
     #ifdef MGBASE_CXX11_NULLPTR_SUPPORTED

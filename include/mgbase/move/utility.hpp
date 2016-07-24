@@ -1,4 +1,8 @@
 
+#error
+
+#if 0
+
 #pragma once
 
 #include "core.hpp"
@@ -43,6 +47,8 @@ forward(const typename mgbase::identity<T>::type& x) MGBASE_NOEXCEPT {
 }
 
 } // namespace mgbase
+
+#endif
 
 #endif
 

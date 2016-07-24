@@ -15,13 +15,15 @@ class callback_function<Result ()>
 
 public:
     #ifdef MGBASE_CXX11_SUPPORTED
-    callback_function() = default;
-    callback_function(const callback_function&) = default;
+    callback_function() MGBASE_NOEXCEPT = default;
+    callback_function(const callback_function&) MGBASE_NOEXCEPT = default;
+    callback_function(callback_function&&) MGBASE_NOEXCEPT = default;
     
-    callback_function(func_type* const func, void* const data)
+    callback_function(func_type* const func, void* const data) MGBASE_NOEXCEPT
         : func_(func), data_(data) { }
     
-    callback_function& operator = (const callback_function&) = default;
+    callback_function& operator = (const callback_function&) MGBASE_NOEXCEPT = default;
+    callback_function& operator = (callback_function&&) MGBASE_NOEXCEPT = default;
     #endif
     
     static callback_function create(func_type* const func, void* const data) MGBASE_NOEXCEPT
@@ -57,13 +59,14 @@ class callback_function<Result (Arg1)>
     
 public:
     #ifdef MGBASE_CXX11_SUPPORTED
-    callback_function() = default;
-    callback_function(const callback_function&) = default;
+    callback_function() MGBASE_NOEXCEPT = default;
+    callback_function(const callback_function&) MGBASE_NOEXCEPT = default;
+    callback_function(callback_function&&) MGBASE_NOEXCEPT = default;
     
-    callback_function(func_type* const func, void* const data)
+    callback_function(func_type* const func, void* const data) MGBASE_NOEXCEPT
         : func_(func), data_(data) { }
     
-    callback_function& operator = (const callback_function&) = default;
+    callback_function& operator = (const callback_function&) MGBASE_NOEXCEPT = default;
     #endif
     
     static callback_function create(func_type* const func, void* const data) MGBASE_NOEXCEPT

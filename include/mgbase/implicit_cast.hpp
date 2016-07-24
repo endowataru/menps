@@ -2,40 +2,30 @@
 #pragma once
 
 #include "type_traits.hpp"
+#include <mgbase/utility/forward.hpp>
 
 namespace mgbase {
-
-#if (__cplusplus < 201103L)
-
-template <typename T>
-inline T implicit_cast(typename identity<T>::type x) {
-    return x;
-}
-
-#else
 
 // Restricted implicit_cast
 // Referred from: http://d.hatena.ne.jp/gintenlabo/20130419/1366378612
 template <typename To,
-    typename = typename std::enable_if<
-        std::is_convertible<To&&, To>::value
+    typename = typename enable_if<
+        is_convertible<To&&, To>::value
     >::type
 >
-To implicit_cast(typename std::enable_if<true, To>&& x) {
-    return std::forward<To>(x);
+To implicit_cast(typename enable_if<true, To>::type&& x) {
+    return forward<To>(x);
 }
 
 template <typename To, typename From,
-    typename = typename std::enable_if<
-        !std::is_reference<To>::value &&
-        std::is_convertible<From, To>::value
-    >
+    typename = typename enable_if<
+        ! is_reference<To>::value &&
+        is_convertible<From, To>::value
+    >::type
 >
-To implicit_cast(From&& x) {
-    return std::forward<From>(x);
+inline To implicit_cast(From&& x) {
+    return forward<From>(x);
 }
 
-#endif
-
-}
+} // namespace mgbase
 

@@ -1,4 +1,8 @@
 
+#error
+
+#if 0
+
 #pragma once
 
 #include <mgbase/type_traits.hpp>
@@ -113,6 +117,8 @@ using std::forward;
 } // namespace mgbase
 
 #define MGBASE_MOVE_RET(type, val)  (val)
+
+#endif
 
 #endif
 

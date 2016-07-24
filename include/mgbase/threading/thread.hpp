@@ -15,8 +15,6 @@ using std::thread;
 
 #else
 
-#include <mgbase/move.hpp>
-
 namespace mgbase {
 
 struct thread_error { };
@@ -38,13 +36,11 @@ class thread
         }
     };
     
-    MGBASE_MOVABLE_BUT_NOT_COPYABLE(thread)
-    
 public:
     thread() MGBASE_NOEXCEPT
         : running_(false) { }
     
-    thread(MGBASE_RV_REF(thread) other) MGBASE_NOEXCEPT
+    thread(thread&& other) MGBASE_NOEXCEPT
     {
         if (other.running_) {
             this->running_ = true;
@@ -60,7 +56,11 @@ public:
         run(func);
     }
     
-    thread& operator = (MGBASE_RV_REF(thread) other) MGBASE_NOEXCEPT {
+    thread(const thread&) = delete;
+    
+    const thread& operator = (const thread&) = delete;
+    
+    thread& operator = (thread&& other) MGBASE_NOEXCEPT {
         if (other.running_) {
             this->running_ = true;
             this->th_ = other.th_;
