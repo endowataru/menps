@@ -17,7 +17,7 @@
 //#include <mgbase/type_traits/is_enum.hpp>
 //#include <mgbase/type_traits/is_union.hpp>
 //#include <mgbase/type_traits/is_class.hpp>
-//#include <mgbase/type_traits/is_function.hpp>
+#include <mgbase/type_traits/is_function.hpp>
 
 // 20.9.4.2, composite type categories:
 #include <mgbase/type_traits/is_reference.hpp>
@@ -32,7 +32,7 @@
 #include <mgbase/type_traits/is_const.hpp>
 //#include <mgbase/type_traits/is_volatile.hpp>
 //#include <mgbase/type_traits/is_trivial.hpp>
-//#include <mgbase/type_traits/is_trivially_copyable.hpp>
+#include <mgbase/type_traits/is_trivially_copyable.hpp>
 //#include <mgbase/type_traits/is_standard_layout.hpp>
 //#include <mgbase/type_traits/is_pod.hpp>
 //#include <mgbase/type_traits/is_literal_type.hpp>
@@ -56,7 +56,7 @@
 //#include <mgbase/type_traits/is_trivially_assignable.hpp>
 //#include <mgbase/type_traits/is_trivially_copy_assignable.hpp>
 //#include <mgbase/type_traits/is_trivially_move_assignable.hpp>
-//#include <mgbase/type_traits/is_trivially_destructible.hpp>
+#include <mgbase/type_traits/is_trivially_destructible.hpp>
 //#include <mgbase/type_traits/is_nothrow_constructible.hpp>
 //#include <mgbase/type_traits/is_nothrow_default_constructible.hpp>
 //#include <mgbase/type_traits/is_nothrow_copy_constructible.hpp>
@@ -86,29 +86,29 @@
 //#include <mgbase/type_traits/add_cv.hpp>
 
 // 20.9.7.2, reference modifications:
-//#include <mgbase/type_traits/remove_reference.hpp>
+#include <mgbase/type_traits/remove_reference.hpp>
 //#include <mgbase/type_traits/add_lvalue_reference.hpp>
 #include <mgbase/type_traits/add_rvalue_reference.hpp>
 
 // 20.9.7.3, sign modifications:
-//#include <mgbase/type_traits/make_signed.hpp>
-//#include <mgbase/type_traits/make_unsigned.hpp>
+#include <mgbase/type_traits/make_signed.hpp>
+#include <mgbase/type_traits/make_unsigned.hpp>
 
 // 20.9.7.4, array modifications:
-//#include <mgbase/type_traits/remove_extent.hpp>
+#include <mgbase/type_traits/remove_extent.hpp>
 //#include <mgbase/type_traits/remove_all_extents.hpp>
 
 // 20.9.7.5, pointer modifications:
 //#include <mgbase/type_traits/remove_pointer.hpp>
-//#include <mgbase/type_traits/add_pointer.hpp>
+#include <mgbase/type_traits/add_pointer.hpp>
 
 // 20.9.7.6, other transformations:
 //#include <mgbase/type_traits/aligned_storage.hpp>
 //#include <mgbase/type_traits/aligned_union.hpp>
 #include <mgbase/type_traits/decay.hpp>
 #include <mgbase/type_traits/enable_if.hpp>
-//#include <mgbase/type_traits/conditional.hpp>
+#include <mgbase/type_traits/conditional.hpp>
 //#include <mgbase/type_traits/common_type.hpp>
 //#include <mgbase/type_traits/underlying_type.hpp>
-//#include <mgbase/type_traits/result_of.hpp> // not defined
+#include <mgbase/type_traits/result_of.hpp>
 

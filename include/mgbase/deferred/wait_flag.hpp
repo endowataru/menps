@@ -4,7 +4,7 @@
 #include "deferred.hpp"
 #include "wait_flag.h"
 #include <mgbase/atomic.hpp>
-#include <mgbase/operation.hpp>
+#include <mgbase/callback.hpp>
 
 namespace mgbase {
 
@@ -17,17 +17,18 @@ void initialize_flag(wait_flag* const wf) MGBASE_NOEXCEPT
 }
 
 MGBASE_ALWAYS_INLINE
-operation make_notification(wait_flag* const wf) MGBASE_NOEXCEPT
+callback<void ()> make_notification(wait_flag* const wf) MGBASE_NOEXCEPT
 {
     MGBASE_ASSERT(!wf->flag.load());
     
-    return mgbase::make_operation_store_release(&wf->flag, true);
+    return mgbase::make_callback_store_release(&wf->flag, MGBASE_NONTYPE(true));
+    //return mgbase::make_operation_store_release(&wf->flag, true);
 }
 
 MGBASE_ALWAYS_INLINE
 void set_notfiied(wait_flag* const wf) MGBASE_NOEXCEPT
 {
-    mgbase::execute(make_notification(wf));
+    (make_notification(wf))();
 }
 
 MGBASE_ALWAYS_INLINE

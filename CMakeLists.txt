@@ -78,6 +78,7 @@ else()
             -Wno-weak-vtables # couldn't find a correct way to suppress this warning
             -Wno-c++98-compat
             -Wno-c++98-compat-pedantic
+            -Wno-abstract-vbase-init # Not approved by C++ standard
             
             # Other options
             -Wno-c++11-long-long # TODO
@@ -273,6 +274,44 @@ int main() {
 " MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED
 )
 
+CHECK_CXX_SOURCE_COMPILES(
+"
+struct X { void f() &; void g() &&; };
+int main() { return 0; }
+" MGBASE_CXX11_REF_QUALIFIERS_SUPPORTED
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+struct X { explicit operator bool(); };
+int main() { return 0; }
+" MGBASE_CXX11_EXPLICIT_CONVERSION_OPERATORS_SUPPORTED
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+template <typename T> T r(T x) { return x; }
+
+template <typename F, typename... T>
+inline auto f(F&& f, T&&... x) -> decltype(r(f)(x...)) { return f(x...); }
+
+int g(int);
+
+decltype(f(&g, 123)) x;
+
+int main() { return 0; }
+"
+MGBASE_CXX_SFINAE_EXPR
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+struct A { A() noexcept = default; };
+int main() { return 0; }
+"
+MGBASE_CXX11_DEFAULT_FUNCTION_NOEXCEPT
+)
+
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc
@@ -322,6 +361,9 @@ endif()
 # Unit tests
 
 add_executable(mgbase-unittest
+    unittest/bind.cpp
+    unittest/tuple.cpp
+    unittest/callback.cpp
     unittest/unittest.cpp
     unittest/deferred.cpp
     unittest/thread.cpp
@@ -333,7 +375,6 @@ add_executable(mgbase-unittest
     unittest/mpsc_blocking_bounded_queue.cpp
     unittest/condition_variable.cpp
     #unittest/optional.cpp
-    #unittest/callback.cpp
 )
 
 target_link_libraries(mgbase-unittest mgbase mgbase-options googletest)

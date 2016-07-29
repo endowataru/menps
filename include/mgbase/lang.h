@@ -262,6 +262,13 @@
         
         #define MGBASE_NORETURN                     __attribute__((noreturn))
     #endif
+    
+    
+    #ifdef MGBASE_CXX11_DEFAULT_FUNCTION_NOEXCEPT_SUPPORTED
+        #define MGBASE_DEFAULT_NOEXCEPT     noexcept
+    #else
+        #define MGBASE_DEFAULT_NOEXCEPT
+    #endif
 
     #if (__cplusplus >= 201403L)
         // For C++14 or later
