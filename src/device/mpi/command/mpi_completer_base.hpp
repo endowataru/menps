@@ -18,9 +18,9 @@ public:
     
     struct complete_params
     {
-        const MPI_Request&          req;
-        MPI_Status*                 status;
-        const mgbase::operation&    on_complete;
+        const MPI_Request&                  req;
+        MPI_Status*                         status;
+        const mgbase::callback<void ()>&    on_complete;
     };
     
     virtual void complete(const complete_params&) = 0;

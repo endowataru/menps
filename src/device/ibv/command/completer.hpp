@@ -5,7 +5,7 @@
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/scoped_ptr.hpp>
-#include <mgbase/operation.hpp>
+#include <mgbase/callback.hpp>
 #include <mgcom/rma/pointer.hpp>
 
 namespace mgcom {
@@ -18,7 +18,7 @@ public:
     
     completer()
     {
-        operations_ = new mgbase::operation[max_num_completions];
+        operations_ = new mgbase::callback<void ()>[max_num_completions];
         
         for (mgbase::uint64_t wr_id = 0; wr_id < max_num_completions; ++wr_id)
             queue_.push_back(wr_id);
@@ -47,7 +47,7 @@ public:
         return true;
     }
     
-    void set_on_complete(const mgbase::uint64_t wr_id, const mgbase::operation& on_complete)
+    void set_on_complete(const mgbase::uint64_t wr_id, const mgbase::callback<void ()>& on_complete)
     {
         operations_[wr_id] = on_complete;
     }
@@ -59,7 +59,8 @@ public:
     
     void notify(const mgbase::uint64_t wr_id)
     {
-        mgbase::execute(operations_[wr_id]);
+        // Execute the callback.
+        operations_[wr_id]();
         
         push_back(wr_id);
     }
@@ -73,7 +74,7 @@ private:
     
     mgbase::spinlock lock_;
     mgbase::static_circular_buffer<mgbase::uint64_t, max_num_completions> queue_;
-    mgbase::scoped_ptr<mgbase::operation []> operations_;
+    mgbase::scoped_ptr<mgbase::callback<void ()> []> operations_;
 };
 
 } // namespace ibv

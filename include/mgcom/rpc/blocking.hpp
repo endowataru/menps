@@ -14,7 +14,7 @@ MGBASE_ALWAYS_INLINE void remote_call_async(
     const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
 ,   typename Handler::return_type* const    return_result
-,   const mgbase::operation&                on_complete
+,   const mgbase::callback<void ()>&        on_complete
 ) {
     while (!try_remote_call_async<Handler>(
         proc
@@ -29,7 +29,7 @@ template <typename Handler>
 MGBASE_ALWAYS_INLINE void remote_call_async(
     const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
-,   const mgbase::operation&                on_complete
+,   const mgbase::callback<void ()>&        on_complete
 ) {
     while (!try_remote_call_async<Handler>(
         proc
@@ -52,7 +52,7 @@ MGBASE_ALWAYS_INLINE void remote_call(
         proc
     ,   arg
     ,   return_result
-    ,   mgbase::make_operation_store_release(&flag, true)
+    ,   mgbase::make_callback_store_release(&flag, MGBASE_NONTYPE(true))
     );
     
     while (!flag.load(mgbase::memory_order_acquire)) {
@@ -71,7 +71,7 @@ MGBASE_ALWAYS_INLINE void remote_call(
     remote_call_async<Handler>(
         proc
     ,   arg
-    ,   mgbase::make_operation_store_release(&flag, true)
+    ,   mgbase::make_callback_store_release(&flag, MGBASE_NONTYPE(true))
     );
     
     while (!flag.load(mgbase::memory_order_acquire)) {

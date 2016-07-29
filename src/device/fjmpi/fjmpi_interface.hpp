@@ -27,7 +27,7 @@ struct MGBASE_ALIGNAS(8) get_params
     mgbase::uint64_t    raddr;
     std::size_t         size_in_bytes;
     int                 flags;
-    mgbase::operation   on_complete;
+    mgbase::callback<void ()> on_complete;
     
     #ifndef MGCOM_FJMPI_DISABLE_COPY
     get_params& operator = (const get_params& params)
@@ -51,7 +51,7 @@ struct MGBASE_ALIGNAS(8) put_params
     mgbase::uint64_t    raddr;
     std::size_t         size_in_bytes;
     int                 flags;
-    mgbase::operation   on_complete;
+    mgbase::callback<void ()> on_complete;
     
     #ifndef MGCOM_FJMPI_DISABLE_COPY
     put_params& operator = (const put_params& params)

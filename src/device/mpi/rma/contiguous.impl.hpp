@@ -52,7 +52,7 @@ private:
         ,   const mgcom::rpc::handler_parameters&   params
         ,   const argument_type&                    arg
         ) {
-            mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
+            mgbase::ult::sync_flag flag;
             
             self.mi_.isend({
                 arg.src_ptr
@@ -60,7 +60,7 @@ private:
             ,   static_cast<int>(params.source)
             ,   arg.tag
             ,   self.get_comm()
-            ,   mgbase::make_operation_store_release(&finished, true)
+            ,   mgbase::make_callback_notify(&flag)
             });
             
             MGBASE_LOG_DEBUG("msg:Started sending data for emulated get."
@@ -71,8 +71,7 @@ private:
             ,   arg.tag
             );
             
-            // TODO: busy loop
-            while (!finished.load(mgbase::memory_order_acquire)) { }
+            flag.wait();
             
             return;
         }
@@ -95,7 +94,7 @@ public:
             req_
         ,   params.src_proc
         ,   arg
-        ,   mgbase::make_no_operation()
+        ,   mgbase::make_callback_empty()
         );
         
         if (ret)
@@ -144,7 +143,7 @@ private:
         ,   const mgcom::rpc::handler_parameters&   params
         ,   const argument_type&                    arg
         ) {
-            mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
+            mgbase::ult::sync_flag flag;
             
             self.mi_.irecv(irecv_params{
                 arg.dest_ptr
@@ -153,7 +152,7 @@ private:
             ,   arg.tag
             ,   self.get_comm()
             ,   MPI_STATUS_IGNORE
-            ,   mgbase::make_operation_store_release(&finished, true)
+            ,   mgbase::make_callback_notify(&flag)
             });
             
             MGBASE_LOG_DEBUG("msg:Start receiving data for emulated put."
@@ -164,8 +163,7 @@ private:
             ,   arg.tag
             );
             
-            // TODO: busy loop
-            while (!finished.load(mgbase::memory_order_acquire)) { }
+            flag.wait();
             
             return;
         }
@@ -199,7 +197,7 @@ public:
             ,   static_cast<int>(params.dest_proc)
             ,   tag
             ,   this->get_comm()
-            ,   mgbase::make_no_operation()
+            ,   mgbase::make_callback_empty()
             });
         }
         

@@ -12,23 +12,23 @@ namespace mpi {
 
 struct irecv_params
 {
-    void*               buf;
-    int                 size_in_bytes;
-    int                 source_rank;
-    int                 tag;
-    MPI_Comm            comm;
-    MPI_Status*         status_result;
-    mgbase::operation   on_complete;
+    void*                       buf;
+    int                         size_in_bytes;
+    int                         source_rank;
+    int                         tag;
+    MPI_Comm                    comm;
+    MPI_Status*                 status_result;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct isend_params
 {
-    const void*         buf;
-    int                 size_in_bytes;
-    int                 dest_rank;
-    int                 tag;
-    MPI_Comm            comm;
-    mgbase::operation   on_complete;
+    const void*                 buf;
+    int                         size_in_bytes;
+    int                         dest_rank;
+    int                         tag;
+    MPI_Comm                    comm;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct barrier_params
@@ -56,26 +56,26 @@ struct alltoall_params
 
 struct ibarrier_params
 {
-    barrier_params      base;
-    mgbase::operation   on_complete;
+    barrier_params              base;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct ibcast_params
 {
-    broadcast_params    base;
-    mgbase::operation   on_complete;
+    broadcast_params            base;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct iallgather_params
 {
-    allgather_params    base;
-    mgbase::operation   on_complete;
+    allgather_params            base;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct ialltoall_params
 {
-    alltoall_params     base;
-    mgbase::operation   on_complete;
+    alltoall_params             base;
+    mgbase::callback<void ()>   on_complete;
 };
 
 class mpi_interface
@@ -182,46 +182,38 @@ public:
     
     void native_barrier(const barrier_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
-        native_barrier_async({ params, mgbase::make_operation_store_release(&flag, true) });
+        native_barrier_async({ params, mgbase::make_callback_notify(&flag) });
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
     void native_broadcast(const broadcast_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
-        native_broadcast_async({ params, mgbase::make_operation_store_release(&flag, true) });
+        native_broadcast_async({ params, mgbase::make_callback_notify(&flag) });
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
     void native_alltoall(const alltoall_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
-        native_alltoall_async({ params, mgbase::make_operation_store_release(&flag, true) });
+        native_alltoall_async({ params, mgbase::make_callback_notify(&flag) });
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
     void native_allgather(const allgather_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
-        native_allgather_async({ params, mgbase::make_operation_store_release(&flag, true) });
+        native_allgather_async({ params, mgbase::make_callback_notify(&flag)  });
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
 private:

@@ -145,7 +145,8 @@ struct compare_and_swap_closure
         
         MPI_Win_flush_all(win); // FIXME
         
-        mgbase::execute(params.on_complete);
+        // Execute the callback.
+        params.on_complete();
         
         return true;
     }
@@ -199,7 +200,8 @@ struct fetch_and_op_closure
         
         MPI_Win_flush_all(win); // FIXME
         
-        mgbase::execute(params.on_complete);
+        // Execute the callback.
+        params.on_complete();
         
         return true;
     }
@@ -234,7 +236,8 @@ struct attach_closure
             MPI_Get_address(p.ptr, params.addr_result)
         );
         
-        mgbase::execute(params.on_complete);
+        // Execute the callback.
+        params.on_complete();
         
         return true;
     }
@@ -259,7 +262,8 @@ struct detach_closure
             MPI_Win_detach(win, params.base.ptr)
         );
         
-        mgbase::execute(params.on_complete);
+        // Execute the callback.
+        params.on_complete();
         
         return true;
     }

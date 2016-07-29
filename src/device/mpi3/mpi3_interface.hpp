@@ -17,7 +17,7 @@ struct rget_params
     int                 src_rank;
     MPI_Aint            src_index;
     int                 size_in_bytes;
-    mgbase::operation   on_complete;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct rput_params
@@ -26,7 +26,7 @@ struct rput_params
     int                 dest_rank;
     MPI_Aint            dest_index;
     int                 size_in_bytes;
-    mgbase::operation   on_complete;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct compare_and_swap_params
@@ -37,7 +37,7 @@ struct compare_and_swap_params
     MPI_Datatype        datatype;
     int                 dest_rank;
     MPI_Aint            dest_index;
-    mgbase::operation   on_complete;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct fetch_and_op_params
@@ -48,7 +48,7 @@ struct fetch_and_op_params
     int                 dest_rank;
     MPI_Aint            dest_index;
     MPI_Op              operation;
-    mgbase::operation   on_complete;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct attach_params
@@ -61,7 +61,7 @@ struct attach_async_params
 {
     attach_params       base;
     MPI_Aint*           addr_result;
-    mgbase::operation   on_complete;
+    mgbase::callback<void ()>   on_complete;
 };
 
 struct detach_params
@@ -72,7 +72,7 @@ struct detach_params
 struct detach_async_params
 {
     detach_params       base;
-    mgbase::operation   on_complete;
+    mgbase::callback<void ()>   on_complete;
 };
 
 class mpi3_interface
@@ -114,36 +114,32 @@ public:
     
     MPI_Aint attach(const attach_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
         MPI_Aint result;
         
         while (MGBASE_UNLIKELY(
-            !try_attach_async({ params, &result, mgbase::make_operation_store_release(&flag, true) })
+            !try_attach_async({ params, &result, mgbase::make_callback_notify(&flag) })
         )) {
             mgbase::ult::this_thread::yield();
         }
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
         
         return result;
     }
     
     void detach(const detach_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
-            !try_detach_async({ params, mgbase::make_operation_store_release(&flag, true) })
+            !try_detach_async({ params, mgbase::make_callback_notify(&flag) })
         )) {
             mgbase::ult::this_thread::yield();
         }
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
 };
 

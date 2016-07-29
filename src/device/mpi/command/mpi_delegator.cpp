@@ -196,7 +196,8 @@ struct barrier_closure
             MPI_Barrier(params.comm)
         );
         
-        mgbase::execute(p.on_complete);
+        // Execute the callback.
+        p.on_complete();
         
         return true;
     }
@@ -229,7 +230,8 @@ struct broadcast_closure
             )
         );
         
-        mgbase::execute(p.on_complete);
+        // Execute the callback.
+        p.on_complete();
         
         return true;
     }
@@ -264,7 +266,8 @@ struct allgather_closure
             )
         );
         
-        mgbase::execute(p.on_complete);
+        // Execute the callback.
+        p.on_complete();
         
         return true;
     }
@@ -299,7 +302,8 @@ struct alltoall_closure
             )
         );
         
-        mgbase::execute(p.on_complete);
+        // Execute the callback.
+        p.on_complete();
         
         return true;
     }

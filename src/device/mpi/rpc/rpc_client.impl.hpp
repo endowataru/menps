@@ -39,16 +39,16 @@ public:
         
         std::memcpy(msg_buf.data, params.arg_ptr, params.arg_size);
         
-        mgbase::atomic<bool> send_finished = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag send_finished;
         
         //mpi::irsend( // TODO: Introduce buffer management
         mi_.isend({
-            &msg_buf                                    // buf
-        ,   static_cast<int>(sizeof(message_buffer))    // size_in_bytes
-        ,   static_cast<int>(params.proc)               // dest_proc
-        ,   send_tag                                    // tag
-        ,   comm_                                       // comm
-        ,   mgbase::make_operation_store_release(&send_finished, true)  // on_complete
+            &msg_buf                                        // buf
+        ,   static_cast<int>(sizeof(message_buffer))        // size_in_bytes
+        ,   static_cast<int>(params.proc)                   // dest_proc
+        ,   send_tag                                        // tag
+        ,   comm_                                           // comm
+        ,   mgbase::make_callback_notify(&send_finished)    // on_complete
         });
         
         mi_.irecv({
@@ -61,10 +61,7 @@ public:
         ,   params.on_complete                      // on_complete
         });
         
-        while (!send_finished.load(mgbase::memory_order_acquire))
-        {
-            mgbase::ult::this_thread::yield();
-        }
+        send_finished.wait();
         
         return true;
     }

@@ -19,7 +19,7 @@ void read_async(
 ,   const remote_ptr<Remote>&   src_rptr
 ,   const local_ptr<Local>&     dest_lptr
 ,   const index_t               number_of_elements
-,   const mgbase::operation&    on_complete
+,   const mgbase::callback<void ()>&    on_complete
 ) {
     while (!try_read_async(
         src_proc
@@ -41,7 +41,7 @@ void write_async(
 ,   const remote_ptr<Remote>&   dest_rptr
 ,   const local_ptr<Local>&     src_lptr
 ,   const index_t               number_of_elements
-,   const mgbase::operation&    on_complete
+,   const mgbase::callback<void ()>&    on_complete
 ) {
     while (!try_write_async(
         dest_proc
@@ -65,19 +65,17 @@ void read(
 ,   const local_ptr<Local>&     dest_lptr
 ,   const index_t               number_of_elements
 ) {
-    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
+    mgbase::ult::sync_flag flag;
     
     read_async(
         src_proc
     ,   src_rptr
     ,   dest_lptr
     ,   number_of_elements
-    ,   mgbase::make_operation_store_release(&finished, true)
+    ,   mgbase::make_callback_notify(&flag)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
-    }
+    flag.wait();
 }
 /**
  * Do contiguous write.
@@ -90,19 +88,17 @@ void write(
 ,   const local_ptr<Local>&     src_lptr
 ,   const index_t               number_of_elements
 ) {
-    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
+    mgbase::ult::sync_flag flag;
     
     write_async(
         dest_proc
     ,   dest_rptr
     ,   src_lptr
     ,   number_of_elements
-    ,   mgbase::make_operation_store_release(&finished, true)
+    ,   mgbase::make_callback_notify(&flag)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
-    }
+    flag.wait();
 }
 
 /**
@@ -113,7 +109,7 @@ void atomic_read_async(
     const process_id_t                          src_proc
 ,   const remote_ptr<const atomic_default_t>&   src_rptr
 ,   atomic_default_t* const                     dest_ptr
-,   const mgbase::operation&                    on_complete
+,   const mgbase::callback<void ()>&                    on_complete
 ) {
     while (!try_atomic_read_async(
         src_proc
@@ -132,7 +128,7 @@ void atomic_write_async(
     const process_id_t                          dest_proc
 ,   const remote_ptr<atomic_default_t>&         dest_rptr
 ,   const atomic_default_t                      value
-,   const mgbase::operation&                    on_complete
+,   const mgbase::callback<void ()>&                    on_complete
 ) {
     while (!try_atomic_write_async(
         dest_proc
@@ -152,7 +148,7 @@ MGBASE_ALWAYS_INLINE void compare_and_swap_async(
 ,   const atomic_default_t                      expected_val
 ,   const atomic_default_t                      desired_val
 ,   atomic_default_t* const                     result_ptr
-,   const mgbase::operation&                    on_complete
+,   const mgbase::callback<void ()>&                    on_complete
 ) {
     while (!try_compare_and_swap_async(
         target_proc
@@ -173,7 +169,7 @@ MGBASE_ALWAYS_INLINE void fetch_and_add_async(
 ,   const remote_ptr<atomic_default_t>&         target_rptr
 ,   const atomic_default_t                      value
 ,   atomic_default_t* const                     result_ptr
-,   const mgbase::operation&                    on_complete
+,   const mgbase::callback<void ()>&                    on_complete
 ) {
     while (!try_fetch_and_add_async(
         target_proc
@@ -195,18 +191,16 @@ void atomic_read(
 ,   const remote_ptr<const atomic_default_t>&   src_rptr
 ,   atomic_default_t* const                     dest_ptr
 ) {
-    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
+    mgbase::ult::sync_flag flag;
     
     atomic_read_async(
         src_proc
     ,   src_rptr
     ,   dest_ptr
-    ,   mgbase::make_operation_store_release(&finished, true)
+    ,   mgbase::make_callback_notify(&flag)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
-    }
+    flag.wait();
 }
 /**
  * Do atomic write.
@@ -217,18 +211,16 @@ void atomic_write(
 ,   const remote_ptr<atomic_default_t>&         dest_rptr
 ,   const atomic_default_t                      value
 ) {
-    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
+    mgbase::ult::sync_flag flag;
     
     atomic_write_async(
         dest_proc
     ,   dest_rptr
     ,   value
-    ,   mgbase::make_operation_store_release(&finished, true)
+    ,   mgbase::make_callback_notify(&flag)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
-    }
+    flag.wait();
 }
 /**
  * Do remote compare-and-swap.
@@ -241,7 +233,7 @@ void compare_and_swap(
 ,   const atomic_default_t                      desired_val
 ,   atomic_default_t* const                     result_ptr
 ) {
-    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
+    mgbase::ult::sync_flag flag;
     
     compare_and_swap_async(
         target_proc
@@ -249,12 +241,10 @@ void compare_and_swap(
     ,   expected_val
     ,   desired_val
     ,   result_ptr
-    ,   mgbase::make_operation_store_release(&finished, true)
+    ,   mgbase::make_callback_notify(&flag)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
-    }
+    flag.wait();
 }
 /**
  * Do remote fetch-and-add.
@@ -266,19 +256,17 @@ void fetch_and_add(
 ,   const atomic_default_t                      value
 ,   atomic_default_t* const                     result_ptr
 ) {
-    mgbase::atomic<bool> finished = MGBASE_ATOMIC_VAR_INIT(false);
+    mgbase::ult::sync_flag flag;
     
     fetch_and_add_async(
         target_proc
     ,   target_rptr
     ,   value
     ,   result_ptr
-    ,   mgbase::make_operation_store_release(&finished, true)
+    ,   mgbase::make_callback_notify(&flag)
     );
     
-    while (!finished.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
-    }
+    flag.wait();
 }
 
 } // namespace rma

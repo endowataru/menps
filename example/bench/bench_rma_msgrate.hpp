@@ -82,7 +82,7 @@ protected:
                 ,   buf_.at_process(proc)
                 ,   lptrs[posted % lptrs.size()]
                 ,   msg_size_
-                ,   mgbase::make_operation_fetch_add_release(&count, static_cast<mgbase::uint64_t>(1))
+                ,   mgbase::make_callback_fetch_add_release(&count, MGBASE_NONTYPE(1))
                 );
                 
                 const auto t1 = mgbase::get_cpu_clock();

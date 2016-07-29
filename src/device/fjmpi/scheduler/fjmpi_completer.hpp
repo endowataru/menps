@@ -57,7 +57,7 @@ public:
         const int                   proc
     ,   const int                   nic
     ,   const int                   tag
-    ,   const mgbase::operation&    on_complete
+    ,   const mgbase::callback<void ()>&    on_complete
     ) MGBASE_NOEXCEPT
     {
         tag_info& info = info_by_procs_[static_cast<mgbase::size_t>(proc)].by_nics[nic].by_tags[tag];
@@ -175,7 +175,9 @@ private:
     {
         nic_info& ninfo = info_by_procs_[static_cast<mgbase::size_t>(pid)].by_nics[nic];
         tag_info& tinfo = ninfo.by_tags[tag];
-        mgbase::execute(tinfo.on_complete);
+        
+        // Execute the callback.
+        tinfo.on_complete();
         
         #ifndef MGCOM_FJMPI_DISABLE_PREDICTION
         outstandings_.remove(&tinfo);
@@ -187,13 +189,13 @@ private:
     
     #ifdef MGCOM_FJMPI_DISABLE_PREDICTION
     struct tag_info {
-        mgbase::operation on_complete;
+        mgbase::callback<void ()> on_complete;
     };
     #else
     struct tag_info
         : fjmpi_outstanding_list::element
     {
-        mgbase::operation   on_complete;
+        mgbase::callback<void ()> on_complete;
         int                 nic; // TODO: Is this necessary?
         int                 tag;
     };

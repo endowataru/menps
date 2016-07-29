@@ -25,15 +25,7 @@ void finalize_sender()
 MGBASE_WARN_UNUSED_RESULT
 bool try_call_async(const untyped::call_params& params)
 {
-    return g_sender.try_call(
-        params.proc
-    ,   params.handler_id
-    ,   params.arg_ptr
-    ,   params.arg_size
-    ,   params.return_ptr
-    ,   params.return_size
-    ,   params.on_complete
-    );
+    return g_sender.try_call(params);
 }
 
 namespace untyped {

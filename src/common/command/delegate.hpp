@@ -67,7 +67,7 @@ class execution
     : private Func
 {
 public:
-    execution(const Func& func, const mgbase::operation& on_comp)
+    execution(const Func& func, const mgbase::callback<void ()>& on_comp)
         : Func(func)
         , on_complete(on_comp) { }
     
@@ -80,20 +80,21 @@ public:
         const bool ret = f();
         
         if (MGBASE_LIKELY(ret)) {
-            mgbase::execute(on_complete);
+            // Execute the callback.
+            on_complete();
         }
         return ret;
     }
     
 private:
-    mgbase::operation on_complete;
+    mgbase::callback<void ()> on_complete;
 };
 
 } // namespace detail
 
 
 template <typename Func>
-inline bool try_execute_async(delegator& del, const Func& func, const mgbase::operation& on_complete)
+inline bool try_execute_async(delegator& del, const Func& func, const mgbase::callback<void ()>& on_complete)
 {
     return try_delegate(
         del
@@ -104,17 +105,15 @@ inline bool try_execute_async(delegator& del, const Func& func, const mgbase::op
 template <typename Func>
 inline void execute(delegator& del, const Func& func)
 {
-    mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+    mgbase::ult::sync_flag flag;
     
     while (MGBASE_UNLIKELY(
-        ! try_execute_async(del, func, mgbase::make_operation_store_release(&flag, true))
+        ! try_execute_async(del, func, mgbase::make_callback_notify(&flag))
     )) {
         mgbase::ult::this_thread::yield();
     }
     
-    while (!flag.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
-    }
+    flag.wait();
 }
 
 } // namespace mgcom

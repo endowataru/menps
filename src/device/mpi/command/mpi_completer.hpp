@@ -4,7 +4,7 @@
 #include "device/mpi/mpi_base.hpp"
 #include <mgbase/scoped_ptr.hpp>
 #include <mgbase/container/circular_buffer.hpp>
-#include <mgbase/operation.hpp>
+#include <mgbase/callback.hpp>
 #include <mgbase/logger.hpp>
 
 #include "mpi_completer_base.hpp"
@@ -25,7 +25,7 @@ public:
         statuses_ = new MPI_Status*[max_completion_count];
         requests_ = new MPI_Request[max_completion_count];
         
-        completions_ = new mgbase::operation[max_completion_count];
+        completions_ = new mgbase::callback<void ()>[max_completion_count];
         
         for (index_t i = 0; i < max_completion_count; ++i) {
             requests_[i] = MPI_REQUEST_NULL;
@@ -119,7 +119,8 @@ public:
             if (status_result != MPI_STATUS_IGNORE)
                 *statuses_[index] = status;
             
-            mgbase::execute(completions_[index]);
+            // Execute the callback.
+            completions_[index]();
             
             MGBASE_LOG_DEBUG(
                 "msg:Completed MPI request.\t"
@@ -143,7 +144,7 @@ private:
     mgbase::scoped_ptr<MPI_Status* []>          statuses_;
     mgbase::scoped_ptr<MPI_Request []>          requests_;
     
-    mgbase::scoped_ptr<mgbase::operation []>    completions_;
+    mgbase::scoped_ptr<mgbase::callback<void ()> []>    completions_;
     
     int established_;
 };

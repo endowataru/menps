@@ -17,27 +17,20 @@ public:
         pool_ = &pool;
     }
     
-    bool try_call(
-        const process_id_t          server_proc
-    ,   const handler_id_t          handler_id
-    ,   const void* const           arg_ptr
-    ,   const index_t               arg_size
-    ,   void* const                 return_ptr
-    ,   const index_t               //return_size
-    ,   const mgbase::operation&    on_complete
-    ) {
+    bool try_call(const untyped::call_params& params)
+     {
         rpc_connection_pool::sender_info info;
-        if (!pool_->try_start_sending(server_proc, &info))
+        if (!pool_->try_start_sending(params.proc, &info))
             return false;
         
         message_buffer& request_buf = *info.local_buf;
         request_buf.is_reply    = false;
-        request_buf.handler_id  = handler_id;
-        request_buf.data_size   = arg_size;
-        request_buf.return_ptr  = return_ptr;
-        request_buf.on_complete = on_complete;
+        request_buf.handler_id  = params.handler_id;
+        request_buf.data_size   = params.arg_size;
+        request_buf.return_ptr  = params.return_ptr;
+        request_buf.on_complete = params.on_complete;
         
-        send(server_proc, info, arg_ptr);
+        send(params.proc, info, params.arg_ptr);
         
         return true;
     }
@@ -82,7 +75,7 @@ private:
         ,   get_absolute_address(info.remote_buf.to_address())
         ,   sizeof(message_buffer)
         ,   flags | FJMPI_RDMA_REMOTE_NOTICE
-        ,   mgbase::make_no_operation()
+        ,   mgbase::make_callback_empty()
         }))
         { }
         

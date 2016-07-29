@@ -3,7 +3,7 @@
 
 #include <mgcom/common.hpp>
 #include <mgcom/rpc/call.h>
-#include <mgbase/operation.hpp>
+#include <mgbase/callback.hpp>
 
 namespace mgcom {
 namespace rpc {
@@ -28,13 +28,13 @@ struct register_handler_params
 
 struct call_params
 {
-    process_id_t        proc;
-    handler_id_t        handler_id;
-    const void*         arg_ptr;
-    index_t             arg_size;
-    void*               return_ptr;
-    index_t             return_size;
-    mgbase::operation   on_complete;
+    process_id_t                proc;
+    handler_id_t                handler_id;
+    const void*                 arg_ptr;
+    index_t                     arg_size;
+    void*                       return_ptr;
+    index_t                     return_size;
+    mgbase::callback<void ()>   on_complete;
 };
 
 } // namespace untyped

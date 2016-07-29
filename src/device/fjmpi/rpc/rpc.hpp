@@ -29,7 +29,7 @@ struct message_buffer {
     ticket_t                tickets[fjmpi::constants::max_nic_count];
     index_t                 data_size;
     void*                   return_ptr;
-    mgbase::operation       on_complete;
+    mgbase::callback<void ()>   on_complete;
     rpc_message_data        data; // TODO
 };
 

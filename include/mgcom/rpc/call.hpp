@@ -49,7 +49,7 @@ inline bool try_remote_call_async(
 ,   const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
 ,   typename Handler::return_type* const    return_result
-,   const mgbase::operation&                on_complete
+,   const mgbase::callback<void ()>&        on_complete
 ) {
     typedef detail::handler_types<Handler>  types;
     typedef typename types::argument_info   argument_info;
@@ -74,7 +74,7 @@ inline bool try_remote_call_async(
     requester&                              req
 ,   const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
-,   const mgbase::operation&                on_complete
+,   const mgbase::callback<void ()>&        on_complete
 ) {
     typedef detail::handler_types<Handler>  types;
     typedef typename types::argument_info   argument_info;
@@ -104,7 +104,7 @@ inline bool try_remote_call_async(
     const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
 ,   typename Handler::return_type* const    return_result
-,   const mgbase::operation&                on_complete
+,   const mgbase::callback<void ()>&        on_complete
 ) {
     return try_remote_call_async<Handler>(
         requester::get_instance()
@@ -120,7 +120,7 @@ MGBASE_WARN_UNUSED_RESULT
 inline bool try_remote_call_async(
     const process_id_t                      proc
 ,   const typename Handler::argument_type&  arg
-,   const mgbase::operation&                on_complete
+,   const mgbase::callback<void ()>&        on_complete
 ) {
     return try_remote_call_async<Handler>(
         requester::get_instance()

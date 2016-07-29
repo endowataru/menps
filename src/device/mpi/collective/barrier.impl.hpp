@@ -90,7 +90,7 @@ public:
             ,   static_cast<int>(dest_proc)
             ,   0
             ,   impl.comm_
-            ,   mgbase::make_no_operation()
+            ,   mgbase::make_callback_empty()
             });
             
             impl.mi_->irecv(irecv_params{
@@ -100,7 +100,7 @@ public:
             ,   0
             ,   impl.comm_
             ,   MPI_STATUS_IGNORE
-            ,   mgbase::make_operation_store_release(&impl.finished_, true)
+            ,   mgbase::make_callback_store_release(&impl.finished_, MGBASE_NONTYPE(true))
             });
             
             return test(cb);

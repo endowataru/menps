@@ -19,74 +19,66 @@ public:
     
     virtual void barrier()
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !mi_.try_ibarrier({
                 { comm_.get() }
-            ,   mgbase::make_operation_store_release(&flag, true)
+            ,   mgbase::make_callback_notify(&flag)
             })
         )) {
             mgbase::ult::this_thread::yield();
         }
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
     virtual void broadcast(const untyped::broadcast_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !mi_.try_ibcast({
                 { params, comm_.get() }
-            ,   mgbase::make_operation_store_release(&flag, true)
+            ,   mgbase::make_callback_notify(&flag)
             })
         )) {
             mgbase::ult::this_thread::yield();
         }
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
     virtual void allgather(const untyped::allgather_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !mi_.try_iallgather({
                 { params, comm_.get() }
-            ,   mgbase::make_operation_store_release(&flag, true)
+            ,   mgbase::make_callback_notify(&flag)
             })
         )) {
             mgbase::ult::this_thread::yield();
         }
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
     virtual void alltoall(const untyped::alltoall_params& params)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !mi_.try_ialltoall({
                 { params, comm_.get() }
-            ,   mgbase::make_operation_store_release(&flag, true)
+            ,   mgbase::make_callback_notify(&flag)
             })
         )) {
             mgbase::ult::this_thread::yield();
         }
         
-        while (!flag.load(mgbase::memory_order_acquire)) {
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
 private:

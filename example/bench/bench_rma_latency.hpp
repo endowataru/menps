@@ -77,7 +77,7 @@ protected:
             ,   buf_.at_process(proc)
             ,   lptr
             ,   msg_size_
-            ,   mgbase::make_operation_store_release(&flag, true)
+            ,   mgbase::make_callback_store_release(&flag, MGBASE_NONTYPE(true))
             );
             
             const auto t1 = mgbase::get_cpu_clock();

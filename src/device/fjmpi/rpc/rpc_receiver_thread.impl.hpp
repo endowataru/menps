@@ -5,6 +5,7 @@
 #include "rpc_notifier.impl.hpp"
 #include "rpc_sender.hpp"
 #include <mgbase/thread.hpp>
+#include <mgbase/ult.hpp>
 
 namespace mgcom {
 namespace fjmpi {
@@ -83,7 +84,8 @@ private:
         {
             std::memcpy(buf.return_ptr, buf.data, buf.data_size);
             
-            mgbase::execute(buf.on_complete);
+            // Execute the callback.
+            buf.on_complete();
         }
         else {
             rpc_message_data data;
@@ -99,7 +101,9 @@ private:
                 );
             
             while (!rpc::untyped::try_send_reply(sender_proc, buf, data, reply_size))
-            { }
+            {
+                mgbase::ult::this_thread::yield();
+            }
         }
     }
     

@@ -7,6 +7,9 @@
 #include <mgbase/thread.hpp>
 #include <mgbase/condition_variable.hpp>
 #include <mgbase/scoped_ptr.hpp>
+#include <mgbase/functional/bind.hpp>
+#include <mgbase/functional/reference_wrapper.hpp>
+#include <mgbase/functional/functional_constant.hpp>
 
 namespace mgcom {
 namespace mpi {
@@ -65,6 +68,15 @@ private:
         }
     }
     
+    struct call_notify
+    {
+        rpc_server_thread*  self;
+        
+        void operator() () const {
+            self->notify();
+        }
+    };
+    
     bool recv_request(
         int* const              client_rank
     ,   message_buffer* const   request_buf
@@ -81,14 +93,7 @@ private:
         ,   this->get_tag()
         ,   comm_
         ,   &status
-        ,   mgbase::make_operation_call(
-                mgbase::make_callback_function(
-                    mgbase::bind1st_of_2(
-                        MGBASE_MAKE_INLINED_FUNCTION(&rpc_server_thread::notify)
-                    ,   mgbase::wrap_reference(*this)
-                    )
-                )
-            )
+        ,   call_notify{ this }
         });
         
         while (!this->ready_)
@@ -133,7 +138,7 @@ private:
     
     void send_reply(const int client_rank, const int reply_tag, const void* const reply_data, const int reply_size)
     {
-        mgbase::atomic<bool> flag = MGBASE_ATOMIC_VAR_INIT(false);
+        mgbase::ult::sync_flag flag;
         
         mi_->isend({
             reply_data
@@ -141,22 +146,16 @@ private:
         ,   client_rank
         ,   reply_tag
         ,   comm_
-        ,   mgbase::make_operation_store_release(&flag, true)
+        ,   mgbase::make_callback_notify(&flag)
         });
         
-        while (!flag.load(mgbase::memory_order_acquire))
-        {
-            if (this->finished_)
-                return;
-            
-            mgbase::ult::this_thread::yield();
-        }
+        flag.wait();
     }
     
-    static void notify(rpc_server_thread& self, const mgbase::operation&) {
-        mgbase::unique_lock<mgbase::mutex> lc(self.mtx_);
-        self.ready_ = true;
-        self.cv_.notify_one();
+    void notify() {
+        mgbase::unique_lock<mgbase::mutex> lc(mtx_);
+        ready_ = true;
+        cv_.notify_one();
     }
     
     int get_tag() const MGBASE_NOEXCEPT {
