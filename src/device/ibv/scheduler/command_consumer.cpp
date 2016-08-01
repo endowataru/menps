@@ -7,6 +7,7 @@
 #include "device/ibv/native/scatter_gather_entry.hpp"
 #include "device/ibv/command/set_command_to.hpp"
 #include <mgbase/ult/this_thread.hpp>
+#include <mgbase/container/index_list.hpp>
 
 namespace mgcom {
 namespace ibv {
@@ -16,10 +17,11 @@ class command_consumer::impl
 public:
     impl(command_queue& queue, const config& conf)
         : queue_(queue)
+        , conf_(conf)
         , finished_{false}
         , wr_bufs_{new send_wr_buffer[conf.num_procs]}
         , sges_(conf.num_procs, std::vector<scatter_gather_entry>(send_wr_buffer::max_size))
-        , conf_(conf)
+        , proc_indexes_(conf.num_procs)
     {
         th_ = mgbase::thread(starter{*this});
     }
@@ -47,80 +49,123 @@ private:
     
     void loop()
     {
-        auto& queue = queue_;
-        
+        while (MGBASE_LIKELY(!finished_))
+        {
+            dequeue_some();
+            
+            post_all();
+        }
+    }
+    
+    void dequeue_some()
+    {
         const auto proc_first = conf_.proc_first;
         const auto num_procs = conf_.num_procs;
         
-        mgbase::scoped_ptr<mgbase::size_t []> num_wrs(new mgbase::size_t[num_procs]);
+        mgbase::size_t num_dequeued = 0;
         
-        for (mgbase::size_t i = 0; i < num_procs; ++i)
-            num_wrs[i] = 0;
+        auto ret = queue_.dequeue(send_wr_buffer::max_size);
         
-        while (MGBASE_LIKELY(!finished_))
+        // TODO: exception safety
+        
+        MGBASE_RANGE_BASED_FOR(auto&& cmd, ret) 
         {
-            auto ret = queue.dequeue(send_wr_buffer::max_size);
+            MGBASE_ASSERT(proc_first <= cmd.proc);
+            MGBASE_ASSERT(cmd.proc < proc_first + num_procs);
             
-            #ifdef MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED
-            for (auto&& cmd : ret) {
-            #else
-            // TODO: Replace with range-based for macro
-            auto first = ret.begin();
-            auto last = ret.end();
-            
-            for ( ; first != last; ++first)
-            {
-                auto&& cmd = *first;
-            #endif
-                
-                MGBASE_ASSERT(cmd.proc >= proc_first);
-                
-                const auto index = cmd.proc - proc_first;
-                
-                auto& buf = wr_bufs_[index];
-                
-                auto& wr = buf.at(num_wrs[index]);
-                auto& sge = sges_[index][num_wrs[index]];
-                
-                set_command_to(cmd, &wr, &sge); // FIXME
-                
-                ++num_wrs[index];
+            const auto proc_index = cmd.proc - proc_first;
+            if (!proc_indexes_.exists(proc_index)) {
+                proc_indexes_.push_back(proc_index);
             }
             
-            for (mgbase::size_t i = 0; i < num_procs; ++i)
+            auto& buf = wr_bufs_[proc_index];
+            
+            mgbase::size_t wr_index = 0;
+            const auto wr = buf.try_enqueue(&wr_index);
+            if (!wr) break;
+            
+            auto& sge = sges_[proc_index][wr_index];
+            
+            set_command_to(cmd, wr, &sge); // FIXME
+            
+            ++num_dequeued;
+        }
+        
+        ret.commit(num_dequeued);
+        
+        if (num_dequeued > 0) {
+            MGBASE_LOG_DEBUG(
+                "msg:Dequeued IBV requests.\t"
+                "num_dequeued:{}"
+            ,    num_dequeued
+            );
+        }
+        else {
+            MGBASE_LOG_VERBOSE(
+                "msg:No IBV requests are dequeued."
+            );
+        }
+    }
+    
+    void post_all()
+    {
+        const auto proc_first = conf_.proc_first;
+        const auto num_procs = conf_.num_procs;
+        
+        for (auto itr = proc_indexes_.begin(); itr != proc_indexes_.end(); )
+        {
+            const auto proc_index = *itr;
+            
+            const auto proc = proc_first + proc_index;
+            
+            auto& buf = wr_bufs_[proc_index];
+            
+            MGBASE_ASSERT(!buf.empty());
+            
+            buf.terminate();
+            
+            ibv_send_wr* bad_wr = MGBASE_NULLPTR;
+            
+            while (MGBASE_UNLIKELY(
+                ! conf_.ep.try_post_send(proc, buf.front(), &bad_wr)
+            ))
             {
-                const process_id_t proc = i + proc_first;
-                
-                const auto n = num_wrs[i];
-                
-                if (n > 0)
-                {
-                    num_wrs[i] = 0;
-                    
-                    auto& buf = wr_bufs_[i];
-                    
-                    auto link = buf.terminate_at(n - 1);
-                    
-                    while (MGBASE_UNLIKELY(
-                        ! conf_.ep.try_post_send(proc, buf.at(0))
-                    ))
-                    {
-                        mgbase::ult::this_thread::yield();
-                    }
-                    
-                    buf.link_to(n - 1, link);
-                }
+                mgbase::ult::this_thread::yield();
             }
+            
+            buf.relink();
+            
+            buf.consume(bad_wr);
+            
+            if (bad_wr == MGBASE_NULLPTR) {
+                // Erase the corresponding process ID from process index list.
+                itr = proc_indexes_.erase(itr);
+            }
+            else {
+                // Increment the iterator
+                // only when there are at least one WR for that process (ID).
+                ++itr;
+            }
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Posted IBV requests.\t"
+                "proc:{}\tbad_wr:{:x}"
+            ,   proc
+            ,   reinterpret_cast<mgbase::uintptr_t>(bad_wr)
+            );
         }
     }
     
 private:
     command_queue& queue_;
+    const config conf_;
+    
     bool finished_;
     mgbase::thread th_;
-    mgbase::scoped_ptr<send_wr_buffer []> wr_bufs_;
-    std::vector<std::vector<scatter_gather_entry>> sges_;
-    const config conf_;
+    
+    mgbase::scoped_ptr<send_wr_buffer []>           wr_bufs_;
+    std::vector<std::vector<scatter_gather_entry>>  sges_;
+    mgbase::index_list<process_id_t>                proc_indexes_;
 };
 
 command_consumer::command_consumer(const config& conf)

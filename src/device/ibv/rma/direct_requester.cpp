@@ -56,7 +56,8 @@ private:
         
         wr.next = MGBASE_NULLPTR;
         
-        return ep_.try_post_send(proc, wr);
+        ibv_send_wr* bad_wr = MGBASE_NULLPTR;
+        return ep_.try_post_send(proc, wr, &bad_wr);
     }
     
     ibv::endpoint& ep_;

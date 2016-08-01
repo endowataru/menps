@@ -23,8 +23,9 @@ public:
     bool try_post_send(
         const process_id_t  proc
     ,   ibv_send_wr&        wr
+    ,   ibv_send_wr** const bad_wr
     ) {
-        return conns_[proc].try_post_send(wr);
+        return conns_[proc].try_post_send(wr, bad_wr);
     }
 
 private:

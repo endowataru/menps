@@ -34,12 +34,11 @@ public:
     );
     
     MGBASE_WARN_UNUSED_RESULT
-    bool try_post_send(ibv_send_wr& wr) const
+    bool try_post_send(ibv_send_wr& wr, ibv_send_wr** const bad_wr) const
     {
         MGBASE_ASSERT(qp_ != MGBASE_NULLPTR);
         
-        ibv_send_wr* bad_wr;
-        const int err = ibv_post_send(qp_, &wr, &bad_wr);
+        const int err = ibv_post_send(qp_, &wr, bad_wr);
         
         if (MGBASE_LIKELY(err == 0)) {
             log_wr("Posted IBV request.", wr);
