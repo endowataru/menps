@@ -86,7 +86,33 @@ public:
         
         increment(&last_);
     }
-
+    
+    void push_back()
+    {
+        MGBASE_ASSERT(!full());
+        ++size_;
+        
+        increment(&last_);
+    }
+    
+    void erase_begin(const size_type n)
+    {
+        for (size_type i = 0; i < n; ++i)
+            pop_front();
+    }
+    void erase_end(const size_type n)
+    {
+        for (size_type i = 0; i < n; ++i)
+            pop_back();
+    }
+    
+    T* raw_data() MGBASE_NOEXCEPT {
+        return data();
+    }
+    const T* raw_data() const MGBASE_NOEXCEPT {
+        return data();
+    }
+    
 protected:
     circular_buffer_base()
         : first_(0), last_(0), size_(0) { }

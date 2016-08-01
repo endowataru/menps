@@ -58,7 +58,7 @@ public:
             return self_.buf_[index_].value;
         }
         
-        // TODO: Remote this
+        // TODO: Remove this
         element& get_element() {
             return self_.buf_[index_];
         }
@@ -191,78 +191,53 @@ public:
             return false;
     }
     
-    #if 0
-    
-public:
-    MGBASE_WARN_UNUSED_RESULT
-    bool try_push(const T& value) {
-        return try_push_with_functor(default_push_closure{*this, value});
-    }
-    
-    template <typename Func>
-    MGBASE_WARN_UNUSED_RESULT
-    bool try_push_with_functor(Func&& func) {
-        return try_multiple_push_with_functor(std::forward<Func>(func), 1);
-    }
-    
-    template <typename Func>
-    MGBASE_WARN_UNUSED_RESULT
-    bool try_multiple_push_with_functor(Func func, const mgbase::size_t number_of_values)
+private:
+    struct dequeue_transaction_info
     {
-        const bool was_empty = counter_.empty();
-        
-        mgbase::size_t tail;
-        if (MGBASE_UNLIKELY(!counter_.try_enqueue(number_of_values, &tail))) {
-            return false;
-        }
-        
-        for (mgbase::size_t i = 0; i < number_of_values; ++i)
-        {
-            const mgbase::size_t index = (tail + i) % counter_.size();
-            element* const elem = &buf_[index];
-            
-            MGBASE_ASSERT(!elem->visible.load());
-            
-            func(&elem->value);
-            
-            if (i == (number_of_values - 1))
-                elem->visible.store(true, mgbase::memory_order_release);
-            else
-                elem->visible.store(true, mgbase::memory_order_relaxed);
-        }
-        
-        if (was_empty) {
-            counter_.notify();
-        }
-        
-        return true;
-    }
-    #endif
+        mgbase::size_t  first;
+        mgbase::size_t  last;
+        mgbase::size_t  popped;
+    };
     
 public:
-    
-    class dequeue_transation
+    class dequeue_transaction
     {
     public:
-        dequeue_transation(
-            self_type&    self
-        ,   const mgbase::size_t            first
-        ,   const mgbase::size_t            last
-        ,   const mgbase::size_t            popped
-        )
+        dequeue_transaction(self_type& self, const dequeue_transaction_info& info)
             : self_(&self)
-            , first_{first}
-            , last_{last}
-            , popped_{popped}
+            , info_(info) { }
+        
+        ~dequeue_transaction()
         {
+            #if 0
+            commit();
+            #endif
+            destroy();
         }
         
-        ~dequeue_transation()
+        void commit(const mgbase::size_t num_popped)
         {
-            commit();
+            MGBASE_ASSERT(self_ != MGBASE_NULLPTR);
+            
+            auto& counter = self_->counter_;
+            const auto size = counter.size();
+            
+            for (mgbase::size_t i = 0; i < num_popped; ++i)
+            {
+                auto& elem = self_->buf_[(info_.first + i) % size];
+                
+                MGBASE_ASSERT(elem.visible.load());
+                
+                elem.visible.store(false, mgbase::memory_order_relaxed);
+            }
+            
+            counter.dequeue(num_popped);
+            
+            self_ = MGBASE_NULLPTR;
         }
         
     private:
+        #if 0
         void commit()
         {
             if (self_ != MGBASE_NULLPTR)
@@ -270,57 +245,59 @@ public:
                 auto& counter = self_->counter_;
                 const auto size = counter.size();
                 
-                for (mgbase::size_t i = 0; i < popped_; ++i)
+                for (mgbase::size_t i = 0; i < info_.popped; ++i)
                 {
-                    auto& elem = self_->buf_[(first_ + i) % size];
+                    auto& elem = self_->buf_[(info_.first + i) % size];
                     
                     MGBASE_ASSERT(elem.visible.load());
                     
                     elem.visible.store(false, mgbase::memory_order_relaxed);
                 }
                 
-                counter.dequeue(popped_);
+                counter.dequeue(info_.popped);
             }
             
             self_ = MGBASE_NULLPTR;
         }
+        #endif
+        
+        void destroy()
+        {
+            MGBASE_ASSERT(self_ == MGBASE_NULLPTR);
+        }
         
     public:
-        dequeue_transation(const dequeue_transation&) = delete;
-        dequeue_transation& operator = (const dequeue_transation&) = delete;
+        dequeue_transaction(const dequeue_transaction&) = delete;
+        dequeue_transaction& operator = (const dequeue_transaction&) = delete;
         
-        dequeue_transation(dequeue_transation&& other)
+        dequeue_transaction(dequeue_transaction&& other)
             : self_{MGBASE_NULLPTR}
         {
             *this = std::move(other);
         }
         
-        dequeue_transation& operator = (dequeue_transation&& other) {
+        dequeue_transaction& operator = (dequeue_transaction&& other) {
             // Destory *this first.
-            commit();
+            destroy();
             
             self_ = other.self_;
-            first_ = other.first_;
-            last_ = other.last_;
-            popped_ = other.popped_;
+            info_ = other.info_;
             
             other.self_ = MGBASE_NULLPTR; // Important
             
             return *this;
         }
         
-        iterator begin() { return {*self_, first_}; }
-        iterator end() { return {*self_, last_}; }
+        iterator begin() { return {*self_, info_.first}; }
+        iterator end() { return {*self_, info_.last}; }
         
     private:
-        self_type* self_;
-        mgbase::size_t first_;
-        mgbase::size_t last_;
-        mgbase::size_t popped_;
+        self_type*                  self_;
+        dequeue_transaction_info    info_;
     };
     
 public:
-    dequeue_transation dequeue(const mgbase::size_t lim)
+    dequeue_transaction dequeue(const mgbase::size_t lim)
     {
         if (counter_.empty())
             counter_.wait();
@@ -342,7 +319,7 @@ public:
             last = (last + 1) % counter_.size();
         }
         
-        MGBASE_LOG_DEBUG(
+        MGBASE_LOG_VERBOSE(
             "msg:Popping elements.\t"
             "first:{:x}\tlast:{:x}\tpopped:{}"
         ,   first
@@ -350,7 +327,7 @@ public:
         ,   popped
         );
         
-        return { *this, first, last, popped };
+        return { *this, { first, last, popped } };
     }
     
     T dequeue()
@@ -368,7 +345,12 @@ public:
                 
                 MGBASE_ASSERT(++first == last);
                 
+                t.commit(1);
+                
                 return r;
+            }
+            else {
+                t.commit(0);
             }
         }
     }

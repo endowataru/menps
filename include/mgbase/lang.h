@@ -269,7 +269,24 @@
     #else
         #define MGBASE_DEFAULT_NOEXCEPT
     #endif
-
+    
+    //#ifdef MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED
+    
+    //#else
+        // Reference:
+        // http://iorate.hatenablog.com/entry/20110412/1302627774
+        
+        #define MGBASE_RANGE_BASED_FOR(decl, ...) \
+            if (bool MGBASE_FOR_1 = true) \
+            for (auto&& MGBASE_FOR_RANGE = __VA_ARGS__; MGBASE_FOR_1; MGBASE_FOR_1 = false) \
+            for (auto&& MGBASE_FOR_BEGIN = MGBASE_FOR_RANGE.begin(), \
+                        MGBASE_FOR_END = MGBASE_FOR_RANGE.end(); \
+                MGBASE_FOR_1 && MGBASE_FOR_BEGIN != MGBASE_FOR_END; \
+                MGBASE_FOR_1 && ((void)++MGBASE_FOR_BEGIN, 0)) \
+                    if (!(MGBASE_FOR_1 = false)) \
+                    for (decl = *MGBASE_FOR_BEGIN; !MGBASE_FOR_1; MGBASE_FOR_1=true)
+    //#endif
+    
     #if (__cplusplus >= 201403L)
         // For C++14 or later
         #define MGBASE_CONSTEXPR_CXX14  constexpr

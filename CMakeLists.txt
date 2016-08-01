@@ -104,7 +104,7 @@ else()
         CHECK_CXX_COMPILER_FLAG("-Wnoexcept" MGBASE_GCC_SUPPORTS_WNOEXCEPT)
         CHECK_CXX_COMPILER_FLAG("-Wsuggest-attribute=format" MGBASE_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE)
         CHECK_CXX_COMPILER_FLAG("-Wsuggest-override" MGBASE_GCC_SUPPORTS_WSUGGEST_OVERRIDE)
-        CHECK_CXX_COMPILER_FLAG("-Wuseless-cast" MGBASE_GCC_SUPPORTS_WUSELESS_CAST)
+        #CHECK_CXX_COMPILER_FLAG("-Wuseless-cast" MGBASE_GCC_SUPPORTS_WUSELESS_CAST)
         CHECK_CXX_COMPILER_FLAG("-Wzero-as-null-pointer-constant" MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT)
         
         target_compile_options(mgbase-options INTERFACE
@@ -164,7 +164,7 @@ else()
             #-Wsystem-headers # Disable warnings from system headers
             -Wundef
             -Wunused-macros
-            $<$<BOOL:${MGBASE_GCC_SUPPORTS_WUSELESS_CAST}>:-Wuseless-cast>
+            #$<$<BOOL:${MGBASE_GCC_SUPPORTS_WUSELESS_CAST}>:-Wuseless-cast>
             -Wwrite-strings
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT}>:-Wzero-as-null-pointer-constant>
             
@@ -312,6 +312,14 @@ int main() { return 0; }
 MGBASE_CXX11_DEFAULT_FUNCTION_NOEXCEPT
 )
 
+CHECK_CXX_SOURCE_COMPILES(
+"
+#include <memory>
+int main() { int x; int* p = std::addressof(x); return 0; }
+"
+MGBASE_CXX11_ADDRESSOF_SUPPORTED
+)
+
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc
@@ -361,6 +369,8 @@ endif()
 # Unit tests
 
 add_executable(mgbase-unittest
+    unittest/intrusive.cpp
+    unittest/index_list.cpp
     unittest/bind.cpp
     unittest/tuple.cpp
     unittest/callback.cpp

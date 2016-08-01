@@ -202,7 +202,7 @@ public:
         MGBASE_UNUSED
         const Index old_con = con_.fetch_add(diff, mgbase::memory_order_release);
         
-        MGBASE_LOG_DEBUG(
+        MGBASE_LOG_VERBOSE(
             "msg:Finished dequeuing.\t"
             "old_con:{:x}\tdiff:{}"
         ,   old_con
