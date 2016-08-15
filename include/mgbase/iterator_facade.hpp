@@ -89,7 +89,7 @@ public:
     
     pointer operator -> () const
     {
-        return mgbase::addressof(*this);
+        return mgbase::addressof(**this);
     }
     
     Derived& operator ++ ()
@@ -166,10 +166,10 @@ private:
     typedef iterator_facade_base<Derived, Value, CategoryOrTraversal, Reference, Difference, true, false>
         base;
     
-    typedef typename base::reference        reference;
-    typedef typename base::difference_type  difference_type;
-    
 public:
+    using typename base::reference;
+    using typename base::difference_type;
+    
     reference operator [] (difference_type n) const
     {
         Derived tmp(this->derived());
@@ -193,6 +193,11 @@ public:
     {
         Derived tmp(this->derived());
         return tmp -= x;
+    }
+    
+    difference_type operator - (const Derived& other) const
+    {
+        return iterator_core_access::distance_from(this->derived(), other);
     }
 };
 
