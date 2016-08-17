@@ -10,7 +10,7 @@ class sync_flag
 {
 public:
     sync_flag()
-        : flag_(MGBASE_ATOMIC_VAR_INIT(false)) { }
+        : flag_{false} { }
     
     sync_flag(const sync_flag&) = delete;
     
@@ -27,8 +27,8 @@ public:
     }
     
 private:
-    mgbase::atomic<bool>        flag_;
-    synchronic<bool>    sync_;
+    mgbase::atomic<bool>    flag_;
+    synchronic<bool>        sync_;
 };
 
 } // namespace ult

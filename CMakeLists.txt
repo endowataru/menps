@@ -320,6 +320,21 @@ int main() { int x; int* p = std::addressof(x); return 0; }
 MGBASE_CXX11_ADDRESSOF_SUPPORTED
 )
 
+CHECK_CXX_SOURCE_COMPILES(
+"
+#include <iterator>
+int main() { int a[1]; std::begin(a); return 0; }
+"
+MGBASE_CXX11_STD_BEGIN_SUPPORTED
+)
+CHECK_CXX_SOURCE_COMPILES(
+"
+#include <iterator>
+int main() { int a[1]; std::end(a); return 0; }
+"
+MGBASE_CXX11_STD_END_SUPPORTED
+)
+
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc
@@ -369,6 +384,7 @@ endif()
 # Unit tests
 
 add_executable(mgbase-unittest
+    unittest/bounded_queue.cpp
     unittest/intrusive.cpp
     unittest/index_list.cpp
     unittest/bind.cpp

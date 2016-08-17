@@ -167,8 +167,8 @@ private:
         base;
     
 public:
-    using typename base::reference;
-    using typename base::difference_type;
+    typedef typename base::reference        reference;
+    typedef typename base::difference_type  difference_type;
     
     reference operator [] (difference_type n) const
     {

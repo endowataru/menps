@@ -21,9 +21,6 @@ namespace mgbase {
 
 template <typename T>
 class atomic
-    #ifdef MGBASE_CXX11_SUPPORTED
-    : noncopyable
-    #endif
 {
     typedef typename detail::atomic_storage<T>::type    storage_type;
     
@@ -35,11 +32,15 @@ public:
     /*implicit*/ atomic(const T val) MGBASE_NOEXCEPT
         : value_(val) { }
     
+    atomic(const atomic&) = delete;
+    
     MGBASE_ALWAYS_INLINE
     volatile atomic& operator = (const T val) volatile MGBASE_NOEXCEPT {
         this->store(val);
         return *this;
     }
+    
+    atomic& operator = (const atomic&) = delete;
     #endif
     
     MGBASE_ALWAYS_INLINE

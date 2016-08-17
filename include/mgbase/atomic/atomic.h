@@ -75,7 +75,11 @@
         namespace mgbase { typedef atomic<T> atomic_##name; } \
         typedef mgbase::atomic_##name mgbase_atomic_##name;
     
-    #define MGBASE_ATOMIC_VAR_INIT(x) { x }
+    /*#ifdef MGBASE_CXX11_SUPPORTED
+        #define MGBASE_ATOMIC_VAR_INIT(x) x
+    #else*/
+        #define MGBASE_ATOMIC_VAR_INIT(x) { x }
+    //#endif
     
 #else
     #error
