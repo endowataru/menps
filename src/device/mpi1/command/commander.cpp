@@ -11,7 +11,7 @@ class commander::impl
     , public command_producer
 {
 public:
-    impl(endpoint& ep)
+    explicit impl(endpoint& ep)
         : command_queue()
         , command_consumer()
         , command_producer(ep, command_consumer::get_completer()) { }

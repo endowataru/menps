@@ -13,7 +13,7 @@ class delegation
     : private Func
 {
 public:
-    delegation(const Func& func)
+    /*implicit*/ delegation(const Func& func)
         : Func(func) { }
     
     static void copy_to(const Func& src, void* const dest)

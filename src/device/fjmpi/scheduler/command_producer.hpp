@@ -10,6 +10,8 @@ namespace fjmpi {
 class command_producer
     : protected virtual command_queue
 {
+    typedef command_queue   base;
+    
 public:
     command_producer()
         : del_{*this} { }
@@ -18,6 +20,23 @@ public:
     MGBASE_WARN_UNUSED_RESULT
     bool try_enqueue(const command_code code, Func&& func)
     {
+        auto t = base::try_enqueue(1);
+        
+        if (t.valid())
+        {
+            auto& dest = *t.begin();
+            
+            dest.code = code;
+            
+            MGBASE_STATIC_ASSERT(sizeof(Params) <= command::params_size);
+            mgbase::forward<Func>(func)(reinterpret_cast<Params*>(dest.arg));
+            
+            return true;
+        }
+        else
+            return false;
+        
+        #if 0
         struct closure
         {
             command_code    code;
@@ -35,6 +54,7 @@ public:
         return this->try_push_with_functor(
             closure{ code, func }
         );
+        #endif
     }
     
     delegator& get_delegator() MGBASE_NOEXCEPT {

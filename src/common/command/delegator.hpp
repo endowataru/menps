@@ -12,7 +12,7 @@ namespace mgcom {
 class delegator
 {
 protected:
-    delegator() /*MGBASE_NOEXCEPT*/ = default;
+    delegator() MGBASE_DEFAULT_NOEXCEPT = default;
 
 public:
     virtual ~delegator() MGBASE_EMPTY_DEFINITION

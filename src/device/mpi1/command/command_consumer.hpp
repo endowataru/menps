@@ -53,17 +53,21 @@ private:
     
     void loop()
     {
-        while (MGBASE_LIKELY((! finished_)))
+        while (MGBASE_LIKELY( !finished_ ))
         {
             // Check the queue.
-            if (command* const cmd = this->peek())
+            auto t = this->try_dequeue(1);
+            
+            if (t.valid())
             {
+                const auto& cmd = *t.begin();
+                
                 // Call the closure.
-                const bool succeeded = execute(*cmd);
+                const bool succeeded = execute(cmd);
                 
                 if (MGBASE_LIKELY(succeeded)) {
                     MGBASE_LOG_DEBUG("msg:Operation succeeded.");
-                    this->pop();
+                    t.commit(1);
                 }
                 else {
                     MGBASE_LOG_DEBUG("msg:Operation failed. Postponed.");

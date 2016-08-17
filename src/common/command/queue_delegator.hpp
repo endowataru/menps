@@ -16,29 +16,28 @@ public:
     MGBASE_WARN_UNUSED_RESULT
     virtual bool try_execute(const delegator::execute_params& params) MGBASE_OVERRIDE
     {
-        return queue_.try_push_with_functor(closure{params});
+        auto t = queue_.try_enqueue(1);
+        
+        if (t.valid())
+        {
+            auto& dest = *t.begin();
+            
+            dest.set_delegated(params);
+            
+            t.commit();
+            
+            return true;
+        }
+        else
+            return false;
     }
     
     virtual mgbase::size_t get_buffer_size() MGBASE_OVERRIDE
     {
-        return sizeof(*queue_.peek());
+        return sizeof(queue_.dequeue());
     }
 
 private:
-    struct closure
-    {
-        explicit closure(const delegator::execute_params& p)
-            : params(p) { }
-        
-        template <typename T>
-        void operator () (T* const dest) const
-        {
-            dest->set_delegated(params); // Use ADL
-        }
-        
-        const delegator::execute_params& params;
-    };
-    
     Queue& queue_;
 };
 

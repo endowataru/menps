@@ -31,8 +31,6 @@ public:
         // Order the running thread to stop.
         finished_ = true;
         
-        queue_.notify();
-        
         // Join the running thread.
         th_.join();
     }
@@ -64,7 +62,10 @@ private:
         
         mgbase::size_t num_dequeued = 0;
         
-        auto ret = queue_.dequeue(send_wr_buffer::max_size);
+        auto ret = queue_.try_dequeue(send_wr_buffer::max_size);
+        
+        if (!ret.valid())
+            return;
         
         // TODO: exception safety
         

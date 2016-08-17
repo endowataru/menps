@@ -10,7 +10,7 @@ namespace mpi1 {
 class commander
 {
 public:
-    commander(endpoint&);
+    explicit commander(endpoint&);
     ~commander();
     
     mpi::mpi_interface& get_mpi_interface() MGBASE_NOEXCEPT;
