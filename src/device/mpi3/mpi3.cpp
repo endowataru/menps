@@ -27,9 +27,9 @@ public:
         
         commander_ = mpi3::make_commander(*endpoint_);
         
-        rma_registrator_ = make_rma_registrator(commander_->get_mpi_interface(), commander_->get_win());
+        rma_registrator_ = make_rma_registrator(commander_->get_mpi_interface());
         
-        rma_requester_ = make_rma_requester(commander_->get_mpi_interface(), commander_->get_win());
+        rma_requester_ = make_rma_requester(commander_->get_mpi_interface());
         
         rma_allocator_ = rma::make_default_allocator(*rma_registrator_);
         

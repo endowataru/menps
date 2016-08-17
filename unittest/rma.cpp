@@ -85,7 +85,7 @@ TEST_F(RmaBasic, ConcurrentGet)
         ,   rptr
         ,   *itr
         ,   1
-        ,   mgbase::make_callback_fetch_add_release(&count, MGBASE_NONTYPE(1))
+        ,   mgbase::make_callback_fetch_add_release(&count, MGBASE_NONTYPE(1u))
         );
     }
     

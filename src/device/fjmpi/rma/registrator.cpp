@@ -15,7 +15,7 @@ public:
     explicit fjmpi_registrator(fjmpi_interface& fi)
         : fi_(fi) { }
     
-    virtual ~fjmpi_registrator() MGBASE_EMPTY_DEFINITION;
+    virtual ~fjmpi_registrator() MGBASE_EMPTY_DEFINITION
     
     virtual untyped::local_region register_region(const untyped::register_region_params& params) MGBASE_OVERRIDE
     {

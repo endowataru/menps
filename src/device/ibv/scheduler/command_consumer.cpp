@@ -58,7 +58,6 @@ private:
     void dequeue_some()
     {
         const auto proc_first = conf_.proc_first;
-        const auto num_procs = conf_.num_procs;
         
         mgbase::size_t num_dequeued = 0;
         
@@ -72,7 +71,7 @@ private:
         MGBASE_RANGE_BASED_FOR(auto&& cmd, ret) 
         {
             MGBASE_ASSERT(proc_first <= cmd.proc);
-            MGBASE_ASSERT(cmd.proc < proc_first + num_procs);
+            MGBASE_ASSERT(cmd.proc < proc_first + conf_.num_procs);
             
             const auto proc_index = cmd.proc - proc_first;
             if (!proc_indexes_.exists(proc_index)) {
@@ -111,13 +110,13 @@ private:
     void post_all()
     {
         const auto proc_first = conf_.proc_first;
-        const auto num_procs = conf_.num_procs;
         
         for (auto itr = proc_indexes_.begin(); itr != proc_indexes_.end(); )
         {
             const auto proc_index = *itr;
             
             const auto proc = proc_first + proc_index;
+            MGBASE_ASSERT(proc < proc_first + conf_.num_procs);
             
             auto& buf = wr_bufs_[proc_index];
             

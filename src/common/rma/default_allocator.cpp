@@ -62,10 +62,9 @@ public:
         MGBASE_ASSERT(reinterpret_cast<mgbase::uintptr_t>(ptr) < to_);
         
         const untyped::local_address base = untyped::to_address(region_);
-        const index_t diff = static_cast<index_t>(
-            reinterpret_cast<mgbase::uintptr_t>(ptr) -
-            reinterpret_cast<mgbase::uintptr_t>(untyped::to_raw_pointer(base))
-        );
+        const intptr_t diff =
+            reinterpret_cast<mgbase::intptr_t>(ptr) -
+            reinterpret_cast<mgbase::intptr_t>(untyped::to_raw_pointer(base));
         
         const untyped::local_address addr = untyped::advanced(base, diff);
         const untyped::registered_buffer result = { addr };

@@ -11,9 +11,8 @@ class mpi3_registrator
     : public registrator
 {
 public:
-    mpi3_registrator(mpi3::mpi3_interface& mi, mpi3::rma_window& win)
-        : mi_(mi)
-        , win_(win) { }
+    explicit mpi3_registrator(mpi3::mpi3_interface& mi)
+        : mi_(mi) { }
     
     MGBASE_WARN_UNUSED_RESULT
     virtual untyped::local_region register_region(const untyped::register_region_params& params) MGBASE_OVERRIDE
@@ -49,7 +48,6 @@ public:
     
 private:
     mpi3::mpi3_interface& mi_;
-    mpi3::rma_window& win_;
 };
 
 } // unnamed namespace
@@ -57,9 +55,9 @@ private:
 
 namespace mpi3 {
 
-mgbase::unique_ptr<rma::registrator> make_rma_registrator(mpi3_interface& mi, rma_window& win)
+mgbase::unique_ptr<rma::registrator> make_rma_registrator(mpi3_interface& mi)
 {
-    return mgbase::make_unique<rma::mpi3_registrator>(mi, win);
+    return mgbase::make_unique<rma::mpi3_registrator>(mi);
 }
 
 } // namespace mpi3

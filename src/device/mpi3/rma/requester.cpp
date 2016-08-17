@@ -12,9 +12,8 @@ class mpi3_requester
     : public requester
 {
 public:
-    mpi3_requester(mpi3::mpi3_interface& mi, mpi3::rma_window& win)
-        : mi_(mi)
-        , win_(win) { }
+    explicit mpi3_requester(mpi3::mpi3_interface& mi)
+        : mi_(mi) { }
     
     MGBASE_WARN_UNUSED_RESULT
     virtual bool try_read_async(const untyped::read_params& params) MGBASE_OVERRIDE
@@ -98,7 +97,6 @@ public:
     
 private:
     mpi3::mpi3_interface& mi_;
-    mpi3::rma_window& win_;
 };
 
 } // unnamed namespace
@@ -106,9 +104,9 @@ private:
 
 namespace mpi3 {
 
-mgbase::unique_ptr<rma::requester> make_rma_requester(mpi3_interface& mi, rma_window& win)
+mgbase::unique_ptr<rma::requester> make_rma_requester(mpi3_interface& mi)
 {
-    return mgbase::make_unique<rma::mpi3_requester>(mi, win);
+    return mgbase::make_unique<rma::mpi3_requester>(mi);
 }
 
 } // namespace mpi3

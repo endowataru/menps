@@ -47,10 +47,12 @@ private:
         {
             ibv_wc wcs[max_num_polled];
             
-            const int num = cq_.poll(wcs, max_num_polled);
+            const int ret = cq_.poll(wcs, max_num_polled);
             
-            if (num > 0)
+            if (ret > 0)
             {
+                const auto num = static_cast<mgbase::size_t>(ret);
+                
                 for (mgbase::size_t i = 0; i < num; ++i)
                 {
                     auto& wc = wcs[i];

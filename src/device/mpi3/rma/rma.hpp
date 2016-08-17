@@ -11,9 +11,9 @@
 namespace mgcom {
 namespace mpi3 {
 
-mgbase::unique_ptr<rma::requester> make_rma_requester(mpi3_interface&, rma_window&);
+mgbase::unique_ptr<rma::requester> make_rma_requester(mpi3_interface&);
 
-mgbase::unique_ptr<rma::registrator> make_rma_registrator(mpi3_interface&, rma_window&);
+mgbase::unique_ptr<rma::registrator> make_rma_registrator(mpi3_interface&);
 
 } // namespace mpi3
 } // namespace mgcom
