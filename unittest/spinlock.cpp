@@ -14,7 +14,7 @@ const mgbase::size_t count = 100000;
 
 void f()
 {
-    for (int i = 0; i < count; ++i)
+    for (mgbase::size_t i = 0; i < count; ++i)
     {
         mgbase::lock_guard<mgbase::spinlock> lc(lock);
         ++val;

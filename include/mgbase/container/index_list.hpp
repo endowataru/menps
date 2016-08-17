@@ -137,7 +137,7 @@ public:
     
     iterator insert(const iterator itr, const T index) // insert_before
     {
-        MGBASE_ASSERT(0 <= index);
+        //MGBASE_ASSERT(0 <= index);
         MGBASE_ASSERT(static_cast<mgbase::size_t>(index) < arr_.size());
         
         auto& curr = arr_[static_cast<mgbase::size_t>(index)];

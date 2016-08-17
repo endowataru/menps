@@ -1,6 +1,8 @@
 
 #pragma once
 
+#error "No longer maintained"
+
 #include <mgbase/atomic.hpp>
 #include <mgbase/assert.hpp>
 #include <mgbase/logger.hpp>

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#error "No longer maintained"
+
 #include <mgbase/lang.hpp>
 #include <mgbase/atomic.hpp>
 #include <cassert>

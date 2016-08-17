@@ -1,4 +1,6 @@
 
+#error "No longer maintained"
+
 #include "unittest.hpp"
 #include <mgbase/lockfree/mpsc_bounded_blocking_queue.hpp>
 #include <mgbase/threading/thread.hpp>

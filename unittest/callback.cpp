@@ -11,10 +11,12 @@ void func1(int& x)
     x = 123;
 }
 
+#if 0
 void func2(int a, int& x)
 {
     x = a;
 }
+#endif
 
 } // unnamed namespace
 

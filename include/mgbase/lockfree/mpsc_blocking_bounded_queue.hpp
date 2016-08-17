@@ -1,6 +1,8 @@
 
 #pragma once
 
+#error "No longer maintained"
+
 #include <mgbase/lockfree/mpsc_blocking_bounded_queue_counter.hpp>
 #include <mgbase/scoped_ptr.hpp>
 #include <mgbase/assert.hpp>

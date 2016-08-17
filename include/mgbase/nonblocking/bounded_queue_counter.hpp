@@ -295,7 +295,7 @@ public:
         auto t_itr = begin(t);
         const auto t_last = end(t);
         
-        MGBASE_ASSERT((t_last - t_itr) <= max_num);
+        MGBASE_ASSERT(static_cast<index_type>(t_last - t_itr) <= max_num);
         
         index_type num_dequeued = 0;
         
