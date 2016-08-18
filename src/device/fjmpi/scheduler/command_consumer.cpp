@@ -69,6 +69,7 @@ private:
                 }
                 else {
                     MGBASE_LOG_DEBUG("msg:Operation failed. Postponed.");
+                    t.commit(0);
                 }
             }
             

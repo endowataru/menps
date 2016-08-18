@@ -31,6 +31,8 @@ public:
             MGBASE_STATIC_ASSERT(sizeof(Params) <= command::params_size);
             mgbase::forward<Func>(func)(reinterpret_cast<Params*>(dest.arg));
             
+            t.commit();
+            
             return true;
         }
         else
