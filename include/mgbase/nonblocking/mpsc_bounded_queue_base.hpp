@@ -149,28 +149,32 @@ public:
         
         void commit(const index_type num)
         {
+            // Important: num might be 0
+            
             MGBASE_ASSERT(this->valid());
             
             MGBASE_ASSERT(num <= (this->data_.to - this->data_.from));
             
             auto itr = this->entry_begin();
-            const auto last = this->entry_end();
+            MGBASE_UNUSED const auto last = this->entry_end();
             
-            for ( ; itr != last; ++itr)
+            for (index_type i = 0; i < num; ++i, ++itr)
             {
+                MGBASE_ASSERT(itr != last);
+                
                 // The memory barrier is done when head_ is replaced.
                 // Hence we use relaxed memory ordering here.
                 itr->state.store(false, mgbase::memory_order_relaxed);
             }
             
-            //MGBASE_ASSERT(diff <= number_of_enqueued());
-            
             auto& self = *this->self_;
+            
+            const auto new_tail = this->data_.from + num;
             
             // Allow producers to use the element at "head".
             // If a producer sees this modification,
             // then processing the element on the current thread must have completed.
-            self.head_.store(this->data_.to, mgbase::memory_order_release);
+            self.head_.store(new_tail, mgbase::memory_order_release);
             
             MGBASE_LOG_VERBOSE(
                 "msg:Finished dequeuing.\t"
