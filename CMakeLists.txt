@@ -386,6 +386,7 @@ endif()
 add_executable(mgbase-unittest
     unittest/mpsc_bounded_queue.cpp
     unittest/spmc_bounded_queue.cpp
+    unittest/spsc_bounded_queue.cpp
     unittest/intrusive.cpp
     unittest/index_list.cpp
     unittest/bind.cpp

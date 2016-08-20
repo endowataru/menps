@@ -202,9 +202,11 @@ private:
         
         index_type size() const MGBASE_NOEXCEPT
         {
-            return static_cast<index_type>(
-                entry_end() - entry_begin()
-            );
+            const auto diff = entry_end() - entry_begin();
+            
+            MGBASE_ASSERT(diff >= 0);
+            
+            return static_cast<index_type>(diff);
         }
         
     protected:
@@ -268,50 +270,6 @@ public:
         
         return first;
     }
-    
-    #if 0
-    template <typename InputIterator>
-    void enqueue(InputIterator first, const InputIterator last)
-    {
-        const auto num_req = mgbase::distance(first, last);
-        MGBASE_ASSERT(num_req >= 0);
-        
-        while (true)
-        {
-            auto t = derived().try_enqueue(static_cast<index_type>(num_req));
-            
-            if (MGBASE_UNLIKELY(!t.valid())) {
-                continue;
-            }
-            
-            using mgbase::begin;
-            using mgbase::end;
-            
-            auto t_itr = begin(t);
-            const auto t_last = end(t);
-            
-            const auto num_enqueued = t_last - t_itr;
-            MGBASE_ASSERT(num_enqueued <= num_req);
-            
-            if (num_enqueued == num_req)
-            {
-                for ( ; t_itr != t_last; ++t_itr, ++first)
-                {
-                    *t_itr = *first;
-                    MGBASE_ASSERT(first != last);
-                }
-                
-                MGBASE_ASSERT(first == last);
-                
-                t.commit();
-                
-                return;
-            }
-            else
-                t.commit();
-        }
-    }
-    #endif
     
     element_type dequeue()
     {

@@ -96,7 +96,7 @@ public:
             self.tail_.store(new_tail, mgbase::memory_order_release);
             
             MGBASE_LOG_VERBOSE(
-                "msg:Finished dequeuing.\t"
+                "msg:Finished enqueuing.\t"
             );
             
             enqueue_transaction_base::commit();
