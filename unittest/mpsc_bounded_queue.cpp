@@ -85,8 +85,8 @@ TEST(MpscBoundedQueue, MpSc)
     for (mgbase::size_t i = 0; i < num_threads; ++i)
         ths[i].join();
     
-    //ASSERT_TRUE(buf.peek() == MGBASE_NULLPTR);
-    //ASSERT_FALSE(buf.peek(&head));
+    const bool valid = buf.try_dequeue(1).valid();
+    ASSERT_FALSE(valid);
     
     ASSERT_EQ(num_threads * N * (N+1) / 2, x);
 }

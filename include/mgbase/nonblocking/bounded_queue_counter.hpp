@@ -221,9 +221,55 @@ private:
 public:
     void enqueue(const element_type& val)
     {
-        this->enqueue(&val, &val + 1);
+        auto first = &val;
+        const auto last = first + 1;
+        
+        do {
+            first = this->enqueue(first, last);
+            // TODO: busy loop
+        }
+        while (first != last);
     }
     
+    template <typename InputIterator>
+    MGBASE_WARN_UNUSED_RESULT
+    InputIterator enqueue(InputIterator first, const InputIterator last)
+    {
+        const auto num_req_signed = mgbase::distance(first, last);
+        MGBASE_ASSERT(num_req_signed >= 0);
+        
+        const auto num_req = static_cast<index_type>(num_req_signed);
+        
+        auto t = derived().try_enqueue(num_req);
+        
+        if (MGBASE_UNLIKELY(!t.valid())) {
+            // Failed to enqueue.
+            return first;
+        }
+        
+        auto t_itr = t.begin();
+        const auto t_last = t.end();
+        
+        MGBASE_ASSERT(static_cast<index_type>(t_last - t_itr) <= num_req);
+        
+        index_type num_enqueued = 0;
+        
+        for ( ; t_itr != t_last; ++t_itr, ++first)
+        {
+            *t_itr = *first;
+            MGBASE_ASSERT(first != last);
+            
+            ++num_enqueued;
+        }
+        
+        MGBASE_ASSERT(num_enqueued <= num_req);
+        
+        t.commit(num_enqueued);
+        
+        return first;
+    }
+    
+    #if 0
     template <typename InputIterator>
     void enqueue(InputIterator first, const InputIterator last)
     {
@@ -265,6 +311,7 @@ public:
                 t.commit();
         }
     }
+    #endif
     
     element_type dequeue()
     {
@@ -299,9 +346,11 @@ public:
         
         index_type num_dequeued = 0;
         
-        for ( ; t_itr != t_last; ++t_itr, ++result, ++num_dequeued)
+        for ( ; t_itr != t_last; ++t_itr, ++result)
         {
             *result = *t_itr;
+            
+            ++num_dequeued;
         }
         
         MGBASE_ASSERT(num_dequeued <= max_num);

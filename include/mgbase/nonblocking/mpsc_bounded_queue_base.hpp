@@ -67,12 +67,14 @@ public:
             : enqueue_transaction_base(mgbase::move(other)) { }
         #endif
         
-        void commit()
+        void commit(MGBASE_UNUSED const index_type num)
         {
             MGBASE_ASSERT(this->valid());
             
             auto itr = this->entry_begin();
             const auto last = this->entry_end();
+            
+            MGBASE_ASSERT(num == static_cast<index_type>(last - itr));
             
             for ( ; itr != last; ++itr)
             {
