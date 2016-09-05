@@ -1,4 +1,6 @@
 
+#include "qp_buffer.hpp"
+
 #include "command_consumer.hpp"
 #include "send_wr_buffer.hpp"
 #include <mgbase/thread.hpp>
@@ -19,10 +21,18 @@ public:
         : queue_(queue)
         , conf_(conf)
         , finished_{false}
+        #if 0
         , wr_bufs_{new send_wr_buffer[conf.num_procs]}
         , sges_(conf.num_procs, std::vector<scatter_gather_entry>(send_wr_buffer::max_size))
+        #endif
+        , qps_(conf.num_procs)
         , proc_indexes_(conf.num_procs)
     {
+        for (process_id_t index = 0; index < conf.num_procs; ++index)
+        {
+            qps_[index] = new qp_buffer(conf.ep, conf.alloc, conf.comp, conf.proc_first + index);
+        }
+        
         th_ = mgbase::thread(starter{*this});
     }
     
@@ -33,6 +43,10 @@ public:
         
         // Join the running thread.
         th_.join();
+        
+        MGBASE_RANGE_BASED_FOR(auto&& qp, qps_) {
+            delete qp;
+        }
     }
     
 private:
@@ -74,10 +88,19 @@ private:
             MGBASE_ASSERT(cmd.proc < proc_first + conf_.num_procs);
             
             const auto proc_index = cmd.proc - proc_first;
-            if (!proc_indexes_.exists(proc_index)) {
+            if (MGBASE_UNLIKELY(
+                ! proc_indexes_.exists(proc_index))
+            ) {
                 proc_indexes_.push_back(proc_index);
             }
             
+            // Convert a command to a WR.
+            if (!qps_[proc_index]->try_enqueue(cmd))
+                break;
+            
+            ++num_dequeued;
+            
+            #if 0
             auto& buf = wr_bufs_[proc_index];
             
             mgbase::size_t wr_index = 0;
@@ -89,6 +112,7 @@ private:
             set_command_to(cmd, wr, &sge); // FIXME
             
             ++num_dequeued;
+            #endif
         }
         
         ret.commit(num_dequeued);
@@ -118,6 +142,17 @@ private:
             const auto proc = proc_first + proc_index;
             MGBASE_ASSERT(proc < proc_first + conf_.num_procs);
             
+            if (qps_[proc_index]->try_post_all()) {
+                // Erase the corresponding process ID from process index list.
+                itr = proc_indexes_.erase(itr);
+            }
+            else {
+                // Increment the iterator
+                // only when there are at least one WR for that process (ID).
+                ++itr;
+            }
+            
+            #if 0
             auto& buf = wr_bufs_[proc_index];
             
             MGBASE_ASSERT(!buf.empty());
@@ -153,6 +188,7 @@ private:
             ,   proc
             ,   reinterpret_cast<mgbase::uintptr_t>(bad_wr)
             );
+            #endif
         }
     }
     
@@ -163,8 +199,11 @@ private:
     bool finished_;
     mgbase::thread th_;
     
+    #if 0
     mgbase::scoped_ptr<send_wr_buffer []>           wr_bufs_;
     std::vector<std::vector<scatter_gather_entry>>  sges_;
+    #endif
+    std::vector<qp_buffer*> qps_;
     mgbase::index_list<process_id_t>                proc_indexes_;
 };
 

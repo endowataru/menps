@@ -5,9 +5,9 @@ project(mgcom)
 # Do not link shared libraries again
 set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
-INCLUDE (CheckIncludeFileCXX)
-INCLUDE (CheckCXXSourceCompiles)
-INCLUDE (CheckSymbolExists)
+include(CheckIncludeFileCXX)
+include(CheckCXXSourceCompiles)
+include(CheckSymbolExists)
 
 add_library(mgcom-header INTERFACE)
 target_include_directories(mgcom-header
@@ -135,7 +135,7 @@ if (${MGCOM_DEVICE_IBV_SUPPORTED})
         src/device/ibv/native/alltoall_queue_pairs.cpp
         src/device/ibv/scheduler/command_consumer.cpp
         src/device/ibv/scheduler/scheduler.cpp
-        src/device/ibv/ibv.cpp
+        src/device/ibv/ibv_starter.cpp
     )
     target_link_libraries(mgcom-dev-ibv mgcom-dev-mpi1
         ibverbs # libibverbs.so

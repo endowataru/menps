@@ -6,45 +6,59 @@
 namespace mgcom {
 namespace ibv {
 
-struct write_params
+struct read_command
 {
-    mgbase::uint64_t    wr_id;
-    mgbase::uint64_t    raddr;
-    mgbase::uint32_t    rkey;
-    mgbase::uint64_t    laddr;
-    mgbase::uint32_t    lkey;
-    std::size_t         size_in_bytes;
+    mgbase::uint64_t            raddr;
+    mgbase::uint32_t            rkey;
+    mgbase::uint64_t            laddr;
+    mgbase::uint32_t            lkey;
+    mgbase::size_t              size_in_bytes;
+    mgbase::callback<void ()>   on_complete;
 };
 
-struct read_params
+struct write_command
 {
-    mgbase::uint64_t    wr_id;
-    mgbase::uint64_t    raddr;
-    mgbase::uint32_t    rkey;
-    mgbase::uint64_t    laddr;
-    mgbase::uint32_t    lkey;
-    std::size_t         size_in_bytes;
+    mgbase::uint64_t            raddr;
+    mgbase::uint32_t            rkey;
+    mgbase::uint64_t            laddr;
+    mgbase::uint32_t            lkey;
+    mgbase::size_t              size_in_bytes;
+    mgbase::callback<void ()>   on_complete;
 };
 
-struct compare_and_swap_params
+struct atomic_read_command
 {
-    mgbase::uint64_t    wr_id;
-    mgbase::uint64_t    raddr;
-    mgbase::uint32_t    rkey;
-    mgbase::uint64_t    laddr;
-    mgbase::uint32_t    lkey;
-    mgbase::uint64_t    expected;
-    mgbase::uint64_t    desired;
+    mgbase::uint64_t            raddr;
+    mgbase::uint32_t            rkey;
+    mgbase::uint64_t*           dest_ptr;
+    mgbase::callback<void ()>   on_complete;
 };
 
-struct fetch_and_add_params
+struct atomic_write_command
 {
-    mgbase::uint64_t    wr_id;
-    mgbase::uint64_t    raddr;
-    mgbase::uint32_t    rkey;
-    mgbase::uint64_t    laddr;
-    mgbase::uint32_t    lkey;
-    mgbase::uint64_t    value;
+    mgbase::uint64_t            raddr;
+    mgbase::uint32_t            rkey;
+    mgbase::uint64_t            value;
+    mgbase::callback<void ()>   on_complete;
+};
+
+struct compare_and_swap_command
+{
+    mgbase::uint64_t            raddr;
+    mgbase::uint32_t            rkey;
+    mgbase::uint64_t            expected;
+    mgbase::uint64_t            desired;
+    mgbase::uint64_t*           result_ptr;
+    mgbase::callback<void ()>   on_complete;
+};
+
+struct fetch_and_add_command
+{
+    mgbase::uint64_t            raddr;
+    mgbase::uint32_t            rkey;
+    mgbase::uint64_t            value;
+    mgbase::uint64_t*           result_ptr;
+    mgbase::callback<void ()>   on_complete;
 };
 
 } // namespace ibv

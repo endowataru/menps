@@ -2,7 +2,7 @@
 #include "device/mpi/mpi_base.hpp"
 #include "device/mpi/rpc/rpc.hpp"
 #include "device/mpi/collective/collective.hpp"
-#include "ibv.hpp"
+#include "ibv_starter.hpp"
 #include "common/starter.hpp"
 #include "device/mpi1/command/commander.hpp"
 #include "rma/rma_comm.hpp"

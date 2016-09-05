@@ -13,7 +13,7 @@
     #include "device/fjmpi/starter.hpp"
 #endif
 #ifdef MGCOM_DEVICE_IBV_SUPPORTED
-    #include "device/ibv/ibv.hpp"
+    #include "device/ibv/ibv_starter.hpp"
 #endif
 
 namespace mgcom {

@@ -9,21 +9,19 @@ namespace ibv {
 
 class atomic_buffer
 {
-    static const mgbase::size_t max_num_completions = completer::max_num_completions;
-    
 public:
-    explicit atomic_buffer(rma::allocator& alloc)
+    atomic_buffer(rma::allocator& alloc, const mgbase::size_t max_num_completions)
         : alloc_(alloc)
-        , entries_{new entry[max_num_completions]}
+        , entries_(max_num_completions)
         , buf_{rma::allocate<rma::atomic_default_t>(alloc, max_num_completions)}
     {
         for (mgbase::size_t i = 0; i < max_num_completions; ++i)
-            entries_[i].src = &buf_[i];
+            entries_[i].src = &buf_[static_cast<mgbase::ptrdiff_t>(i)];
     }
     
-    ~atomic_buffer() {
+    ~atomic_buffer()
+    {
         rma::deallocate(alloc_, buf_);
-        entries_.reset();
     }
     
     atomic_buffer(const atomic_buffer&) = delete;
@@ -44,7 +42,7 @@ public:
         
         return {
             write_callback{ &entries_[wr_id] }
-        ,   buf_ + wr_id
+        ,   buf_at(wr_id)
         };
     }
     
@@ -58,7 +56,7 @@ public:
         
         return {
             read_callback{ &entries_[wr_id] }
-        ,   buf_ + wr_id
+        ,   buf_at(wr_id)
         };
     }
     
@@ -72,7 +70,7 @@ public:
         
         return {
             atomic_callback{ &entries_[wr_id] }
-        ,   buf_ + wr_id
+        ,   buf_at(wr_id)
         };
     }
     
@@ -137,6 +135,11 @@ private:
     };
     
 private:
+    rma::local_ptr<rma::atomic_default_t> buf_at(const mgbase::size_t index)
+    {
+        return buf_ + static_cast<mgbase::ptrdiff_t>(index);
+    }
+    
     void make_notification_base(
         const mgbase::uint64_t              wr_id
     ,   const mgbase::callback<void ()>&    on_complete
@@ -148,7 +151,7 @@ private:
     }
     
     rma::allocator& alloc_;
-    mgbase::scoped_ptr<entry []> entries_;
+    std::vector<entry> entries_;
     rma::local_ptr<rma::atomic_default_t> buf_;
 };
 

@@ -18,26 +18,6 @@ protected:
     
     command_producer() = default;
     
-    #if 0
-private:
-    template <typename Params, typename Func>
-    struct enqueue_closure
-    {
-        process_id_t    proc;
-        command_code    code;
-        const Func&     func;
-        
-        void operator() (command* const dest)
-        {
-            dest->code = code;
-            dest->proc = proc;
-            
-            MGBASE_STATIC_ASSERT(sizeof(Params) <= command::params_size);
-            func(reinterpret_cast<Params*>(dest->arg));
-        }
-    };
-    #endif
-    
 public:
     template <typename Params, typename Func>
     MGBASE_WARN_UNUSED_RESULT
@@ -64,14 +44,6 @@ public:
         }
         else
             return false;
-        
-        #if 0
-        const bool ret = this->try_push_with_functor(
-            enqueue_closure<Params, Func>{ proc, code, func }
-        );
-        
-        return ret;
-        #endif
     }
 };
 

@@ -31,7 +31,7 @@ public:
         return region;
     }
     
-    virtual void deregister_region(const untyped::deregister_region_params& params)
+    virtual void deregister_region(const untyped::deregister_region_params& params) MGBASE_OVERRIDE
     {
         ibv_mr* const mr = ibv::to_mr(params.region);
         ep_.deregister_memory(*mr);

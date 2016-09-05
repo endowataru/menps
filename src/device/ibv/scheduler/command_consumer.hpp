@@ -15,9 +15,11 @@ class command_consumer
 public:
     struct config
     {
-        endpoint&    ep;
-        process_id_t proc_first;
-        process_id_t num_procs;
+        endpoint&       ep;
+        rma::allocator& alloc;
+        completer&      comp;
+        process_id_t    proc_first;
+        process_id_t    num_procs;
     };
     
 protected:
