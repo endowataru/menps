@@ -8,6 +8,7 @@
 #include "device/ibv/command/make_wr_to.hpp"
 #include "device/ibv/native/send_work_request.hpp"
 #include "device/ibv/native/scatter_gather_entry.hpp"
+#include "device/ibv/command/completion_selector.hpp"
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {
@@ -23,25 +24,33 @@ class ibv_direct_requester
 public:
     typedef ibv::command_code   command_code_type;
     
-    ibv_direct_requester(ibv::endpoint& ep, ibv::completer& comp, rma::allocator& alloc)
-        : ep_(ep)
-        , comp_(comp)
-        , atomic_buf_(alloc, max_num_completions) { }
+    ibv_direct_requester(ibv::endpoint& ibv_ep, ibv::completion_selector& sel, rma::allocator& alloc, endpoint& ep)
+        : ep_(ibv_ep)
+        , sel_(sel)
+        , atomic_buf_(alloc, max_num_completions)
+    {
+        qps_.resize(ep.number_of_processes());
+        
+        for (process_id_t proc = 0; proc < ep.number_of_processes(); ++proc)  {
+            qps_[proc] = new qp_info;
+            
+            const auto qp_num = ibv_ep.get_qp_num_of_proc(proc, 0);
+            
+            sel.set(qp_num, qps_[proc]->comp);
+        }
+    }
+    
+    ~ibv_direct_requester() {
+        MGBASE_RANGE_BASED_FOR(auto&& qp, qps_) {
+            delete qp;
+        }
+    }
     
     ibv_direct_requester(const ibv_direct_requester&) = delete;
     ibv_direct_requester& operator = (const ibv_direct_requester&) = delete;
     
 private:
     friend class ibv_requester_base<ibv_direct_requester>;
-    
-    #if 0
-    ibv::completer& get_completer() const MGBASE_NOEXCEPT {
-        return comp_;
-    }
-    ibv::atomic_buffer& get_atomic_buffer() MGBASE_NOEXCEPT {
-        return atomic_buf_;
-    }
-    #endif
     
     template <typename Params, typename Func>
     MGBASE_WARN_UNUSED_RESULT
@@ -50,16 +59,17 @@ private:
     ,   const command_code_type //code
     ,   Func&&                  func
     ) {
-        #if 0
-        mgbase::uint64_t wr_id = 0;
-        if (MGBASE_UNLIKELY(
-            ! comp_.try_complete(&wr_id)
-        )) {
-            return false;
-        }
-        #endif
+        auto& info = *qps_[proc];
         
-        auto t = comp_.try_start();
+        /*const auto qp_num = ep_.get_qp_num_of_proc(proc, 0);
+        
+        auto& comp = sel_.get(qp_num);*/
+        
+        mgbase::lock_guard<mgbase::spinlock> lc(info.lock);
+        
+        auto& comp = info.comp;
+        
+        auto t = comp.try_start();
         
         if (!t.valid())
             return false;
@@ -72,12 +82,12 @@ private:
         ibv::send_work_request wr = ibv::send_work_request();
         ibv::scatter_gather_entry sge = ibv::scatter_gather_entry();
         
-        make_wr_to(params, wr_id, &wr, &sge, comp_, atomic_buf_);
+        make_wr_to(params, wr_id, &wr, &sge, comp, atomic_buf_);
         
         wr.next = MGBASE_NULLPTR;
         
         ibv_send_wr* bad_wr = MGBASE_NULLPTR;
-        const bool success = ep_.try_post_send(proc, wr, &bad_wr);
+        const bool success = ep_.try_post_send(proc, 0, wr, &bad_wr);
         
         if (success) {
             t.commit();
@@ -89,10 +99,16 @@ private:
         }
     }
     
-    mgbase::spinlock comp_lock_;
+    struct qp_info
+    {
+        mgbase::spinlock lock;
+        ibv::completer comp;
+    };
+    
     ibv::endpoint& ep_;
-    ibv::completer& comp_;
+    ibv::completion_selector& sel_;
     ibv::atomic_buffer atomic_buf_;
+    std::vector<qp_info*> qps_;
 };
 
 } // unnamed namespace
@@ -100,9 +116,9 @@ private:
 
 namespace ibv {
 
-mgbase::unique_ptr<rma::requester> make_rma_direct_requester(endpoint& ep, completer& comp, rma::allocator& alloc)
+mgbase::unique_ptr<rma::requester> make_rma_direct_requester(endpoint& ibv_ep, completion_selector& sel, rma::allocator& alloc, mgcom::endpoint& ep)
 {
-    return mgbase::make_unique<rma::ibv_direct_requester>(ep, comp, alloc);
+    return mgbase::make_unique<rma::ibv_direct_requester>(ibv_ep, sel, alloc, ep);
 }
 
 } // namespace ibv

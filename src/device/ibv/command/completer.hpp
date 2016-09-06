@@ -14,7 +14,7 @@ namespace ibv {
 class completer
 {
 public:
-    static const mgbase::size_t max_num_completions = 102400;
+    static const mgbase::size_t max_num_completions = 1 << 17;
     
 private:
     typedef mgbase::uint64_t    wr_id_type;
@@ -24,7 +24,7 @@ private:
     
 public:
     completer()
-        : cbs_(max_num_completions)
+        : cbs_(max_num_completions, callback_type{})
     {
         // TODO: Exactly insert max_num_completions elements
         for (wr_id_type wr_id = 0; wr_id < max_num_completions - 1; ++wr_id)
@@ -88,6 +88,8 @@ public:
     
     void set_on_complete(const wr_id_type wr_id, const callback_type& cb)
     {
+        MGBASE_ASSERT(!cbs_[wr_id]);
+        
         cbs_[wr_id] = cb;
     }
     
@@ -96,56 +98,13 @@ public:
         // Execute the callback.
         cbs_[wr_id]();
         
+        cbs_[wr_id] = callback_type{};
+        
         queue_.enqueue(wr_id);
     }
 
 private:
     queue_type queue_;
-    
-    #if 0
-    bool try_complete(mgbase::uint64_t* const wr_id_result)
-    {
-        mgbase::lock_guard<mgbase::spinlock> lc(lock_);
-        
-        if (queue_.empty()) {
-            return false;
-        }
-        
-        const mgbase::uint64_t wr_id = queue_.front();
-        queue_.pop_front();
-        
-        *wr_id_result = wr_id;
-        return true;
-    }
-    
-    void set_on_complete(const mgbase::uint64_t wr_id, const mgbase::callback<void ()>& on_complete)
-    {
-        cbs_[wr_id] = on_complete;
-    }
-    
-    void failed(const mgbase::uint64_t wr_id)
-    {
-        push_back(wr_id);
-    }
-    
-    void notify(const mgbase::uint64_t wr_id)
-    {
-        // Execute the callback.
-        cbs_[wr_id]();
-        
-        push_back(wr_id);
-    }
-    
-private:
-    void push_back(const mgbase::uint64_t wr_id)
-    {
-        mgbase::lock_guard<mgbase::spinlock> lc(lock_);
-        queue_.push_back(wr_id);
-    }
-    
-    mgbase::spinlock lock_;
-    mgbase::static_circular_buffer<mgbase::uint64_t, max_num_completions> queue_;
-    #endif
     std::vector<callback_type> cbs_;
 };
 

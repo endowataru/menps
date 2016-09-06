@@ -4,6 +4,7 @@
 #include <mgbase/thread.hpp>
 #include <mgbase/logger.hpp>
 #include "device/ibv/native/completion_queue.hpp"
+#include "completion_selector.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -13,10 +14,10 @@ class poll_thread::impl
     static const mgbase::size_t max_num_polled = 1 << 12;
     
 public:
-    impl(completion_queue& cq, completer& comp)
+    impl(completion_queue& cq, completion_selector& comp_sel)
         : finished_{false}
         , cq_(cq)
-        , completer_(comp)
+        , comp_sel_(comp_sel)
     {
         th_ = mgbase::thread(
             mgbase::bind1st_of_1(
@@ -61,7 +62,9 @@ private:
                         throw ibv_error("polling failed", wc.status);
                     }
                     
-                    completer_.notify(wc.wr_id);
+                    auto& comp = comp_sel_.get(wc.qp_num);
+                    
+                    comp.notify(wc.wr_id);
                     
                     MGBASE_LOG_DEBUG(
                         "msg:Polled completion.\t"
@@ -81,12 +84,12 @@ private:
     
     bool finished_;
     completion_queue& cq_;
-    completer& completer_;
+    completion_selector& comp_sel_;
     mgbase::thread th_;
 };
 
-poll_thread::poll_thread(completion_queue& cq, completer& comp)
-    : impl_{ mgbase::make_unique<impl>(cq, comp) }
+poll_thread::poll_thread(completion_queue& cq, completion_selector& comp_sel)
+    : impl_{ mgbase::make_unique<impl>(cq, comp_sel) }
 { }
 
 poll_thread::~poll_thread() = default;

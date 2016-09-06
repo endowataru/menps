@@ -3,6 +3,7 @@
 #include "serializer.hpp"
 #include "device/ibv/rma/requester_base.hpp"
 #include "device/ibv/command/atomic_buffer.hpp"
+#include <mgbase/arithmetic.hpp>
 
 namespace mgcom {
 namespace ibv {
@@ -15,20 +16,34 @@ class scheduled_rma_requester
 public:
     typedef ibv::command_code   command_code_type;
     
-    scheduled_rma_requester(endpoint& ibv_ep, completer& comp, rma::allocator& alloc, mgcom::endpoint& ep)
-        #if 0
-        : ep_(ibv_ep)
-        , comp_(comp)
-        , atomic_buf_(alloc)
-        #endif
-        : sers_(ep.number_of_processes())
+    scheduled_rma_requester(endpoint& ibv_ep, completion_selector& comp_sel, rma::allocator& alloc, mgcom::endpoint& ep)
     {
+        const mgbase::size_t max_num_offload_threads = get_max_num_offload_threads();
+        
+        sers_.resize(max_num_offload_threads);
+        
+        mgbase::size_t qp_per_thread = mgbase::roundup_divide(ep.number_of_processes(), max_num_offload_threads);
+        
+        mgbase::size_t qp_from = 0;
+        
+        for (mgbase::size_t index = 0; index < max_num_offload_threads; ++index)
+        {
+            sers_[index] = new serializer(
+                serializer::config{ ibv_ep, alloc, comp_sel, qp_from, qp_per_thread }
+            );
+            
+            qp_from += qp_per_thread;
+            
+            if (qp_from >= ep.number_of_processes())
+                break;
+        }
+        /*
         for (process_id_t proc = 0; proc < ep.number_of_processes(); ++proc)
         {
             sers_[proc] = new serializer(
-                serializer::config{ ibv_ep, alloc, comp, proc, 1 }
+                serializer::config{ ibv_ep, alloc, comp_sel, proc, 1 }
             );
-        }
+        }*/
     }
     
     ~scheduled_rma_requester()
@@ -43,15 +58,6 @@ public:
 private:
     friend class rma::ibv_requester_base<scheduled_rma_requester>;
     
-    #if 0
-    completer& get_completer() const MGBASE_NOEXCEPT {
-        return comp_;
-    }
-    atomic_buffer& get_atomic_buffer() MGBASE_NOEXCEPT {
-        return atomic_buf_;
-    }
-    #endif
-    
     template <typename Params, typename Func>
     MGBASE_WARN_UNUSED_RESULT
     bool try_enqueue(
@@ -62,20 +68,22 @@ private:
         return sers_[proc]->try_enqueue<Params>(proc, code, std::forward<Func>(func));
     }
     
-private:
-    #if 0
-    ibv::endpoint& ep_;
-    ibv::completer& comp_;
-    ibv::atomic_buffer atomic_buf_;
-    #endif
+    static mgbase::size_t get_max_num_offload_threads() MGBASE_NOEXCEPT
+    {
+        if (const char* const direct = std::getenv("MGCOM_IBV_MAX_NUM_OFFLOAD_THREADS"))
+            return std::atoi(direct);
+        else
+            return 1; // Default
+    }
+    
     std::vector<serializer*> sers_;
 };
 
 } // unnamed namespace
 
-mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(endpoint& ibv_ep, completer& comp, rma::allocator& alloc, mgcom::endpoint& ep)
+mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(endpoint& ibv_ep, completion_selector& comp_sel, rma::allocator& alloc, mgcom::endpoint& ep)
 {
-    return mgbase::make_unique<scheduled_rma_requester>(ibv_ep, comp, alloc, ep);
+    return mgbase::make_unique<scheduled_rma_requester>(ibv_ep, comp_sel, alloc, ep);
 }
 
 } // namespace ibv

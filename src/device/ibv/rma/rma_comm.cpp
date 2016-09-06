@@ -1,7 +1,7 @@
 
 #include "rma_comm.hpp"
 #include "device/ibv/native/endpoint.hpp"
-#include "device/ibv/command/completer.hpp"
+#include "device/ibv/command/completion_selector.hpp"
 #include "requester.hpp"
 #include "registrator.hpp"
 #include "device/ibv/command/poll_thread.hpp"
@@ -18,6 +18,7 @@ class rma_comm_base
 {
 protected:
     rma_comm_base(mgcom::endpoint& ep, collective::requester& coll)
+        : ep_(2)
     {
         ep_.collective_initialize(ep, coll);
         
@@ -27,16 +28,16 @@ protected:
         alloc_ = rma::make_default_allocator(*reg_);
         rma::allocator::set_instance(*alloc_);
         
-        comp_ = mgbase::make_unique<completer>(); // completer requires allocator
+        comp_sel_ = mgbase::make_unique<completion_selector>();
         
-        poll_ = mgbase::make_unique<poll_thread>(ep_.get_cq(), *comp_);
+        poll_ = mgbase::make_unique<poll_thread>(ep_.get_cq(), *comp_sel_);
     }
     
     virtual ~rma_comm_base()
     {
         poll_.reset();
         
-        comp_.reset();
+        comp_sel_.reset();
         
         alloc_.reset();
         
@@ -49,8 +50,8 @@ protected:
         return ep_;
     }
     
-    completer& get_completer() {
-        return *comp_;
+    completion_selector& get_completion_selector() {
+        return *comp_sel_;
     }
     
 public:
@@ -64,7 +65,7 @@ public:
     
 private:
     endpoint ep_;
-    mgbase::unique_ptr<completer> comp_;
+    mgbase::unique_ptr<completion_selector> comp_sel_;
     mgbase::unique_ptr<rma::registrator> reg_;
     mgbase::unique_ptr<rma::allocator> alloc_;
     mgbase::unique_ptr<poll_thread> poll_;
@@ -77,7 +78,7 @@ public:
     direct_rma_comm(mgcom::endpoint& ep, collective::requester& coll)
         : rma_comm_base(ep, coll)
     {
-        req_ = make_rma_direct_requester(this->get_endpoint(), this->get_completer(), this->get_allocator()); // depends on rma::registrator
+        req_ = make_rma_direct_requester(this->get_endpoint(), this->get_completion_selector(), this->get_allocator(), ep); // depends on rma::registrator
         rma::requester::set_instance(*req_);
     }
     
@@ -96,7 +97,7 @@ public:
     scheduled_rma_comm(mgcom::endpoint& ep, collective::requester& coll)
         : rma_comm_base(ep, coll)
     {
-        req_ = make_scheduled_rma_requester(this->get_endpoint(), this->get_completer(), this->get_allocator(), ep); // depends on rma::registrator
+        req_ = make_scheduled_rma_requester(this->get_endpoint(), this->get_completion_selector(), this->get_allocator(), ep); // depends on rma::registrator
         rma::requester::set_instance(*req_);
     }
     

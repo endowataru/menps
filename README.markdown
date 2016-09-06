@@ -104,4 +104,6 @@ Platform-Specific Information
     - Use the command `ibv_devices` to show all available devices on your platform.
 - `MGCOM_IBV_PORT` (default: 1)
     - Sets the port number.
+- `MGCOM_IBV_DIRECT` (default: 0)
+    - If not "0", communication requests are not offloaded (executed directly).
 

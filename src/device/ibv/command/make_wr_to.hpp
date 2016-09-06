@@ -4,6 +4,7 @@
 #include "params.hpp"
 #include "atomic_buffer.hpp"
 #include "device/ibv/rma/address.hpp"
+#include "completer.hpp"
 
 namespace mgcom {
 namespace ibv {

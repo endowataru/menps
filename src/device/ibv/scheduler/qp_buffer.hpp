@@ -14,10 +14,10 @@ namespace ibv {
 class qp_buffer
 {
 public:
-    qp_buffer(ibv::endpoint& ep, rma::allocator& alloc, completer& comp, const process_id_t proc)
+    qp_buffer(ibv::endpoint& ep, rma::allocator& alloc, const process_id_t proc)
         : ep_(ep)
         , proc_(proc)
-        , comp_(comp)
+        , comp_{}
         , sges_(send_wr_buffer::max_size)
         , atomic_buf_(alloc, completer::max_num_completions)
         { }
@@ -49,7 +49,6 @@ public:
         return true;
     }
     
-    
     bool try_post_all()
     {
         MGBASE_ASSERT(!wr_buf_.empty());
@@ -58,12 +57,8 @@ public:
         
         ibv_send_wr* bad_wr = MGBASE_NULLPTR;
         
-        while (MGBASE_UNLIKELY(
-            ! ep_.try_post_send(proc_, wr_buf_.front(), &bad_wr)
-        ))
-        {
-            mgbase::ult::this_thread::yield();
-        }
+        MGBASE_UNUSED
+        const bool success = ep_.try_post_send(proc_, 0, wr_buf_.front(), &bad_wr);
         
         wr_buf_.relink();
         
@@ -79,11 +74,16 @@ public:
         return bad_wr == MGBASE_NULLPTR;
     }
     
+    completer& get_completer() MGBASE_NOEXCEPT
+    {
+        return comp_;
+    }
+    
 private:
     ibv::endpoint& ep_;
     process_id_t proc_;
     
-    completer& comp_;
+    completer comp_;
     send_wr_buffer wr_buf_;
     std::vector<scatter_gather_entry> sges_;
     atomic_buffer atomic_buf_;

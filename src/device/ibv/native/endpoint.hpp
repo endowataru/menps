@@ -18,6 +18,9 @@ class endpoint
     , protected protection_domain
 {
 public:
+    explicit endpoint(const index_t qp_count)
+        : alltoall_queue_pairs(qp_count) { }
+    
     void collective_initialize(mgcom::endpoint& ep, collective::requester& coll)
     {
         device_list devices;
@@ -66,6 +69,8 @@ private:
     
 public:
     using alltoall_queue_pairs::try_post_send;
+    using alltoall_queue_pairs::get_qp_num_of_proc;
+    using alltoall_queue_pairs::get_qp_count;
     
     using protection_domain::register_memory;
     using protection_domain::deregister_memory;

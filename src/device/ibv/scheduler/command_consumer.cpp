@@ -1,6 +1,5 @@
 
 #include "qp_buffer.hpp"
-
 #include "command_consumer.hpp"
 #include "send_wr_buffer.hpp"
 #include <mgbase/thread.hpp>
@@ -10,6 +9,7 @@
 #include "device/ibv/command/set_command_to.hpp"
 #include <mgbase/ult/this_thread.hpp>
 #include <mgbase/container/index_list.hpp>
+#include "device/ibv/command/completion_selector.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -21,17 +21,37 @@ public:
         : queue_(queue)
         , conf_(conf)
         , finished_{false}
-        #if 0
-        , wr_bufs_{new send_wr_buffer[conf.num_procs]}
-        , sges_(conf.num_procs, std::vector<scatter_gather_entry>(send_wr_buffer::max_size))
-        #endif
         , qps_(conf.num_procs)
         , proc_indexes_(conf.num_procs)
     {
         for (process_id_t index = 0; index < conf.num_procs; ++index)
         {
-            qps_[index] = new qp_buffer(conf.ep, conf.alloc, conf.comp, conf.proc_first + index);
+            const process_id_t proc = conf.proc_first + index;
+            
+            qps_[index] = new qp_buffer(conf.ep, conf.alloc, proc);
+            
+            const auto qp_num = conf.ep.get_qp_num_of_proc(proc, 0);
+            
+            conf.comp_sel.set(qp_num, qps_[index]->get_completer());
         }
+        
+        #if 0
+        for (process_id_t proc_index = 0; proc_index < conf.num_procs; ++proc_index)
+        {
+            const process_id_t proc = conf.proc_first + proc_index;
+            
+            for (index_t qp_index = 0; qp_index < conf.ep.get_qp_count(); ++qp_index)
+            {
+                const index_t index = proc_index * conf.ep.get_qp_count() + qp_index;
+                
+                qps_[index] = new qp_buffer(conf.ep, conf.alloc, proc, qp_index);
+                
+                const auto qp_num = conf.ep.get_qp_num_of_proc(proc, qp_index);
+                
+                conf.comp_sel.set(qp_num, qps_[index]->get_completer());
+            }
+        }
+        #endif
         
         th_ = mgbase::thread(starter{*this});
     }
@@ -88,31 +108,18 @@ private:
             MGBASE_ASSERT(cmd.proc < proc_first + conf_.num_procs);
             
             const auto proc_index = cmd.proc - proc_first;
+            
+            // Convert a command to a WR.
+            if (!qps_[proc_index]->try_enqueue(cmd))
+                break;
+            
             if (MGBASE_UNLIKELY(
                 ! proc_indexes_.exists(proc_index))
             ) {
                 proc_indexes_.push_back(proc_index);
             }
             
-            // Convert a command to a WR.
-            if (!qps_[proc_index]->try_enqueue(cmd))
-                break;
-            
             ++num_dequeued;
-            
-            #if 0
-            auto& buf = wr_bufs_[proc_index];
-            
-            mgbase::size_t wr_index = 0;
-            const auto wr = buf.try_enqueue(&wr_index);
-            if (!wr) break;
-            
-            auto& sge = sges_[proc_index][wr_index];
-            
-            set_command_to(cmd, wr, &sge); // FIXME
-            
-            ++num_dequeued;
-            #endif
         }
         
         ret.commit(num_dequeued);
@@ -151,44 +158,6 @@ private:
                 // only when there are at least one WR for that process (ID).
                 ++itr;
             }
-            
-            #if 0
-            auto& buf = wr_bufs_[proc_index];
-            
-            MGBASE_ASSERT(!buf.empty());
-            
-            buf.terminate();
-            
-            ibv_send_wr* bad_wr = MGBASE_NULLPTR;
-            
-            while (MGBASE_UNLIKELY(
-                ! conf_.ep.try_post_send(proc, buf.front(), &bad_wr)
-            ))
-            {
-                mgbase::ult::this_thread::yield();
-            }
-            
-            buf.relink();
-            
-            buf.consume(bad_wr);
-            
-            if (bad_wr == MGBASE_NULLPTR) {
-                // Erase the corresponding process ID from process index list.
-                itr = proc_indexes_.erase(itr);
-            }
-            else {
-                // Increment the iterator
-                // only when there are at least one WR for that process (ID).
-                ++itr;
-            }
-            
-            MGBASE_LOG_DEBUG(
-                "msg:Posted IBV requests.\t"
-                "proc:{}\tbad_wr:{:x}"
-            ,   proc
-            ,   reinterpret_cast<mgbase::uintptr_t>(bad_wr)
-            );
-            #endif
         }
     }
     
@@ -199,12 +168,8 @@ private:
     bool finished_;
     mgbase::thread th_;
     
-    #if 0
-    mgbase::scoped_ptr<send_wr_buffer []>           wr_bufs_;
-    std::vector<std::vector<scatter_gather_entry>>  sges_;
-    #endif
     std::vector<qp_buffer*> qps_;
-    mgbase::index_list<process_id_t>                proc_indexes_;
+    mgbase::index_list<process_id_t> proc_indexes_;
 };
 
 command_consumer::command_consumer(const config& conf)

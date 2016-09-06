@@ -8,6 +8,7 @@ namespace mgcom {
 namespace ibv {
 
 class endpoint;
+class completion_selector;
 
 class command_consumer
     : protected virtual command_queue
@@ -17,9 +18,9 @@ public:
     {
         endpoint&       ep;
         rma::allocator& alloc;
-        completer&      comp;
-        process_id_t    proc_first;
-        process_id_t    num_procs;
+        completion_selector&    comp_sel;
+        mgbase::size_t proc_first;
+        mgbase::size_t num_procs;
     };
     
 protected:

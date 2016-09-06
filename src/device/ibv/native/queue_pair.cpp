@@ -249,8 +249,7 @@ void queue_pair::log_wr_impl(const char* const msg, const ibv_send_wr& wr) const
         }
         case IBV_WR_RDMA_WRITE_WITH_IMM:
         case IBV_WR_SEND:
-        case IBV_WR_SEND_WITH_IMM:
-        default: {
+        case IBV_WR_SEND_WITH_IMM: {
             MGBASE_LOG_DEBUG(
                 "msg:{}\t"
                 "wr_id:{}\topcode:{} (unknown)"
@@ -260,6 +259,8 @@ void queue_pair::log_wr_impl(const char* const msg, const ibv_send_wr& wr) const
             );
             break;
         }
+        
+        MGBASE_COVERED_SWITCH()
     }
 }
 

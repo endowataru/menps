@@ -9,9 +9,9 @@ namespace mgcom {
 namespace ibv {
 
 class endpoint;
-class completer;
+class completion_selector;
 
-mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(endpoint&, completer&, rma::allocator&, mgcom::endpoint&);
+mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(endpoint&, completion_selector&, rma::allocator&, mgcom::endpoint&);
 
 } // namespace ibv
 } // namespace mgcom
