@@ -172,8 +172,6 @@ private:
     derived_type& derived() MGBASE_NOEXCEPT {
         return static_cast<derived_type&>(*this);
     }
-    
-    entry_type* entries_;
 };
 
 } // namespace detail
