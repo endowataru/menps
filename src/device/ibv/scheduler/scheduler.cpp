@@ -23,6 +23,7 @@ public:
         sers_.resize(max_num_offload_threads);
         
         mgbase::size_t qp_per_thread = mgbase::roundup_divide(ep.number_of_processes(), max_num_offload_threads);
+        qp_per_thread_ = qp_per_thread;
         
         mgbase::size_t qp_from = 0;
         
@@ -65,7 +66,13 @@ private:
     ,   const command_code_type code
     ,   Func&&                  func
     ) {
-        return sers_[proc]->try_enqueue<Params>(proc, code, std::forward<Func>(func));
+        MGBASE_ASSERT(valid_process_id(proc));
+        
+        const mgbase::size_t i = proc / qp_per_thread_;
+        
+        MGBASE_ASSERT(i < sers_.size());
+        
+        return sers_[i]->try_enqueue<Params>(proc, code, std::forward<Func>(func));
     }
     
     static mgbase::size_t get_max_num_offload_threads() MGBASE_NOEXCEPT
@@ -77,6 +84,7 @@ private:
     }
     
     std::vector<serializer*> sers_;
+    mgbase::size_t qp_per_thread_;
 };
 
 } // unnamed namespace
