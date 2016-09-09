@@ -40,6 +40,7 @@ public:
 private:
     queue_pair& get_qp(const process_id_t proc, const index_t qp_index)
     {
+        MGBASE_ASSERT(qp_index < qp_count_);
         const auto qp_id = proc * qp_count_ + qp_index;
         return qps_[qp_id];
     }

@@ -4,6 +4,8 @@
 #include "device/ibv/rma/requester_base.hpp"
 #include "device/ibv/command/atomic_buffer.hpp"
 #include <mgbase/arithmetic.hpp>
+#include <mgbase/algorithm.hpp>
+#include <mgbase/logger.hpp>
 
 namespace mgcom {
 namespace ibv {
@@ -29,8 +31,17 @@ public:
         
         for (mgbase::size_t index = 0; index < max_num_offload_threads; ++index)
         {
+            mgbase::size_t num_qps = mgbase::min(qp_from + qp_per_thread, ep.number_of_processes()) - qp_from;
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Initializing serializer.\t"
+                "from:{}\tnum:{}"
+            ,   qp_from
+            ,   num_qps
+            );
+            
             sers_[index] = new serializer(
-                serializer::config{ ibv_ep, alloc, comp_sel, qp_from, qp_per_thread }
+                serializer::config{ ibv_ep, alloc, comp_sel, qp_from, num_qps }
             );
             
             qp_from += qp_per_thread;
