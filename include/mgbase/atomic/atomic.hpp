@@ -12,6 +12,9 @@
 #include <mgbase/atomic/atomic_base.hpp>
 #include <mgbase/atomic/memory_barrier.hpp>
 
+#include <mgbase/type_traits/sized_unsigned_integer.hpp>
+#include <mgbase/force_reinterpret_cast.hpp>
+
 namespace mgbase {
 
 // To force sequential consistency:
@@ -22,7 +25,8 @@ namespace mgbase {
 template <typename T>
 class atomic
 {
-    typedef typename detail::atomic_storage<T>::type    storage_type;
+    typedef typename sized_unsigned_integer<sizeof(T)>::type    uint_type;
+    typedef typename detail::atomic_storage<uint_type>::type    storage_type;
     
 public:
     #ifdef MGBASE_CXX11_SUPPORTED
@@ -30,7 +34,7 @@ public:
     
     MGBASE_ALWAYS_INLINE
     /*implicit*/ atomic(const T val) MGBASE_NOEXCEPT
-        : value_(val) { }
+        : storage_(val) { }
     
     atomic(const atomic&) = delete;
     
@@ -50,7 +54,9 @@ public:
             order = memory_order_seq_cst;
         #endif
         
-        return detail::load<T>(&value_, order);
+        return force_reinterpret_cast<T>(
+            detail::load<uint_type>(&storage_, order)
+        );
     }
     
     MGBASE_ALWAYS_INLINE
@@ -60,7 +66,11 @@ public:
             order = memory_order_seq_cst;
         #endif
         
-        detail::store(&value_, desired, order);
+        detail::store(
+            &storage_
+        ,   force_reinterpret_cast<uint_type>(desired)
+        ,   order
+        );
     }
     
     MGBASE_ALWAYS_INLINE
@@ -70,7 +80,13 @@ public:
             order = memory_order_seq_cst;
         #endif
         
-        return detail::exchange(&value_, desired, order);
+        return force_reinterpret_cast<T>(
+            detail::exchange(
+                &storage_
+            ,   force_reinterpret_cast<uint_type>(desired)
+            ,   order
+            )
+        );
     }
     
     MGBASE_ALWAYS_INLINE
@@ -82,7 +98,13 @@ public:
             failure = memory_order_seq_cst;
         #endif
         
-        return detail::compare_exchange_weak(&value_, &expected, desired, success, failure);
+        return detail::compare_exchange_weak(
+            &storage_
+        ,   reinterpret_cast<uint_type*>(&expected)
+        ,   force_reinterpret_cast<uint_type>(desired)
+        ,   success
+        ,   failure
+        );
     }
     MGBASE_ALWAYS_INLINE
     bool compare_exchange_weak(T& expected, const T desired,
@@ -104,7 +126,13 @@ public:
             failure = memory_order_seq_cst;
         #endif
         
-        return detail::compare_exchange_strong(&value_, &expected, desired, success, failure);
+        return detail::compare_exchange_strong(
+            &storage_
+        ,   reinterpret_cast<uint_type*>(&expected)
+        ,   force_reinterpret_cast<uint_type>(desired)
+        ,   success
+        ,   failure
+        );
     }
     MGBASE_ALWAYS_INLINE
     bool compare_exchange_strong(T& expected, const T desired,
@@ -115,17 +143,30 @@ public:
     
     #ifdef MGBASE_ATOMIC_FORCE_SEQ_CST
         #define DEFINE_FETCH_OP(name, NAME, c_op) \
-        MGBASE_ALWAYS_INLINE \
-        T fetch_##name(const T arg, const memory_order /*order*/ = memory_order_seq_cst) volatile MGBASE_NOEXCEPT { \
-            return detail::fetch_##name(&value_, arg, memory_order_seq_cst); \
-        }
+            MGBASE_ALWAYS_INLINE \
+            T fetch_##name(const T arg, const memory_order order = memory_order_seq_cst) volatile MGBASE_NOEXCEPT { \
+                return force_reinterpret_cast<T>( \
+                    detail::fetch_##name( \
+                        &storage_ \
+                    ,   force_reinterpret_cast<uint_type>(arg) \
+                    ,   memory_order_seq_cst \
+                    ) \
+                ); \
+            }
     #else
         #define DEFINE_FETCH_OP(name, NAME, c_op) \
-        MGBASE_ALWAYS_INLINE \
-        T fetch_##name(const T arg, const memory_order order = memory_order_seq_cst) volatile MGBASE_NOEXCEPT { \
-            return detail::fetch_##name(&value_, arg, order); \
-        }
+            MGBASE_ALWAYS_INLINE \
+            T fetch_##name(const T arg, const memory_order order = memory_order_seq_cst) volatile MGBASE_NOEXCEPT { \
+                return force_reinterpret_cast<T>( \
+                    detail::fetch_##name( \
+                        &storage_ \
+                    ,   force_reinterpret_cast<uint_type>(arg) \
+                    ,   order \
+                    ) \
+                ); \
+            }
     #endif
+    
     MGBASE_FETCH_OP_LIST(DEFINE_FETCH_OP)
     
     #undef DEFINE_FETCH_OP
@@ -136,7 +177,7 @@ private:
 public:
 #endif
     // Exposed in C++03 to use aggregate initialization
-    volatile storage_type value_;
+    volatile storage_type storage_;
 };
 
 } // namespace mgbase
