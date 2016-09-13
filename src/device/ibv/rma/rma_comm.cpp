@@ -25,7 +25,7 @@ protected:
         reg_ = make_rma_registrator(ep_);
         rma::registrator::set_instance(*reg_);
         
-        alloc_ = rma::make_default_allocator(*reg_);
+        alloc_ = rma::make_default_allocator(*reg_, 2ull << 30, 2ull << 30);
         rma::allocator::set_instance(*alloc_);
         
         comp_sel_ = mgbase::make_unique<completion_selector>();

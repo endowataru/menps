@@ -31,7 +31,7 @@ public:
         
         rma_requester_ = make_rma_requester(commander_->get_mpi_interface());
         
-        rma_allocator_ = rma::make_default_allocator(*rma_registrator_);
+        rma_allocator_ = rma::make_default_allocator(*rma_registrator_, 2ull << 30, 2ull << 30);
         
         rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface(), *endpoint_);
         

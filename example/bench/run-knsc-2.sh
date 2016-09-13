@@ -7,7 +7,7 @@ export MGCOM_IBV_DEVICE=mlx5_0
 for t in 1 2 4 8 12 16; do
     for s in \`seq 3 22\`; do
         for j in \`seq 16\`; do
-            mpirun -n $2 $1 -o ${1##*/}.p=$2.t=\$t.offload.yaml -t \$t -d 5 -m 0 -s \$((2**s))
+            mpirun -n $2 $1 -o ${1##*/}.p=$2.t=\$t.offload.yaml -t \$t -d 5 -m 0 -s \$((2**s)) --num_startup_samples=200
         done
     done
 done
@@ -17,7 +17,7 @@ export MGCOM_IBV_DEVICE=mlx5_0
 for t in 1 2 4 8 12 16; do
     for s in \`seq 3 22\`; do
         for j in \`seq 16\`; do
-            mpirun -n $2 $1 -o ${1##*/}.p=$2.t=\$t.direct.yaml -t \$t -d 5 -m 0 -s \$((2**s))
+            mpirun -n $2 $1 -o ${1##*/}.p=$2.t=\$t.direct.yaml -t \$t -d 5 -m 0 -s \$((2**s)) --num_startup_samples=200
         done
     done
 done

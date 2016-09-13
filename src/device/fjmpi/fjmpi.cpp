@@ -30,7 +30,7 @@ public:
         
         rma_registrator_ = make_rma_registrator(scheduler_->get_fjmpi_interface());
         
-        rma_allocator_ = rma::make_default_allocator(*rma_registrator_);
+        rma_allocator_ = rma::make_default_allocator(*rma_registrator_, 2ull << 30, 256ull << 20);
         
         rpc_requester_ = make_rpc_requester(scheduler_->get_fjmpi_interface(), scheduler_->get_mpi_interface(), *rma_allocator_, *rma_registrator_);
         
