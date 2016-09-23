@@ -1,0 +1,9 @@
+[submodule "mgbase"]
+	path = mgbase
+	url = ../mgbase.git
+[submodule "mgcom"]
+	path = mgcom
+	url = ../mgcom.git
+[submodule "mgas2"]
+	path = mgas2
+	url = ../mgas2.git
