@@ -1,9 +1,12 @@
-[submodule "external/gyp"]
-	path = external/gyp
-	url = https://chromium.googlesource.com/external/gyp
-[submodule "external/cppformat"]
-	path = external/cppformat
-	url = https://github.com/cppformat/cppformat.git
 [submodule "external/googletest"]
 	path = external/googletest
 	url = https://github.com/google/googletest.git
+[submodule "external/cmdline"]
+	path = external/cmdline
+	url = https://github.com/tanakh/cmdline
+[submodule "external/massivethreads"]
+	path = external/massivethreads
+	url = https://github.com/massivethreads/massivethreads.git
+[submodule "external/fmt"]
+	path = external/fmt
+	url = https://github.com/fmtlib/fmt.git
