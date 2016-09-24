@@ -109,6 +109,6 @@
 #include <mgbase/type_traits/enable_if.hpp>
 #include <mgbase/type_traits/conditional.hpp>
 //#include <mgbase/type_traits/common_type.hpp>
-//#include <mgbase/type_traits/underlying_type.hpp>
+#include <mgbase/type_traits/underlying_type.hpp>
 #include <mgbase/type_traits/result_of.hpp>
 
