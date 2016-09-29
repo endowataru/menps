@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(mgbase)
+project(mgbase CXX ASM)
 
 find_package(Threads)
 
