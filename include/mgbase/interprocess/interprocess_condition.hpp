@@ -1,5 +1,5 @@
 
-#pragma one
+#pragma once
 
 #include "interprocess_mutex.hpp"
 #include <mgbase/threading/unique_lock.hpp>
