@@ -58,7 +58,7 @@ public:
     
 private:
     template <typename Func>
-    static Result call(const storage_type& storage, Args&&... args)
+    static Result call(const storage_type& storage, Args... args)
     {
         auto& func = reinterpret_cast<const Func&>(storage);
         return func(args...);
