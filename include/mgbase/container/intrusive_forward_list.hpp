@@ -184,8 +184,15 @@ public:
         MGBASE_ASSERT(!empty());
         
         const auto next = get_next(head_);
-        const auto next_next = get_next(next);
+        const auto next_next = get_next(*next);
         set_next(head_, next_next);
+    }
+    
+    reference front() {
+        return *begin();
+    }
+    const reference front() const {
+        return *begin();
     }
     
     iterator before_begin() {
