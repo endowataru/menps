@@ -87,8 +87,10 @@ private:
         ,   &starter<Func>::pass
         ,   func_ptr
         );
-        if (ret != 0)
+        if (ret != 0) {
+            // TODO: leaking func_ptr
             throw thread_error();
+        }
     }
     
     bool running_;
