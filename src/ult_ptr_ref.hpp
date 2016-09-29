@@ -6,8 +6,10 @@
 #include "ult_desc.hpp"
 
 #include <mgbase/threading/unique_lock.hpp>
-
 #include <mgbase/type_traits/underlying_type.hpp>
+
+#include <mgbase/external/fmt.hpp>
+#include <string>
 
 namespace mgult {
 
@@ -155,6 +157,12 @@ public:
         return w.str();
     }
     
+    // Avoid using this if possible
+    ult_desc& get_desc() const MGBASE_NOEXCEPT {
+        MGBASE_ASSERT(is_valid());
+        return *desc_;
+    }
+    
 private:
     void set_invalid() MGBASE_NOEXCEPT {
         set_id(make_invalid_ult_id());
@@ -165,11 +173,6 @@ private:
     
     static ult_id make_desc_id(ult_desc& desc) {
         return { &desc };
-    }
-    
-    ult_desc& get_desc() const MGBASE_NOEXCEPT {
-        MGBASE_ASSERT(is_valid());
-        return *desc_;
     }
     
     ult_desc* desc_;

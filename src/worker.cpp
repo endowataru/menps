@@ -18,6 +18,8 @@
 
 #include <vector>
 
+#include "ult_desc_pool.hpp"
+
 #define MGULT_PROFILE_WORKER
 
 namespace mgult {
@@ -63,7 +65,8 @@ public:
     
     ult_ptr_ref allocate_ult()
     {
-        auto desc = new ult_desc;
+        return desc_pool_.allocate_ult();
+        /*auto desc = new ult_desc;
         
         #ifdef MGULT_PROFILE_WORKER
         mgbase::stopwatch sw;
@@ -97,12 +100,13 @@ public:
         #endif
         
         ult_id id{ desc };
-        return ult_ptr_ref(id);
+        return ult_ptr_ref(id);*/
     }
     
     void deallocate_ult(ult_ptr_ref&& th)
     {
-        #ifdef MGULT_PROFILE_WORKER
+        desc_pool_.deallocate_ult(mgbase::move(th));
+        /*#ifdef MGULT_PROFILE_WORKER
         mgbase::stopwatch sw;
         sw.start();
         #endif
@@ -132,7 +136,7 @@ public:
         
         #ifdef MGULT_PROFILE_WORKER
         dealloc_cycles_ += sw.elapsed();
-        #endif
+        #endif*/
     }
     
     ult_ptr_ref get_ult_ref_from_id(const ult_id& id)
@@ -255,6 +259,8 @@ private:
     
     mgbase::cpu_clock_t alloc_cycles_ = 0;
     mgbase::cpu_clock_t dealloc_cycles_ = 0;
+    
+    ult_desc_pool desc_pool_;
 };
 
 __thread my_worker* my_worker::current_worker_ = MGBASE_NULLPTR;
