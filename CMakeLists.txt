@@ -83,6 +83,10 @@ else()
             # Other options
             -Wno-c++11-long-long # TODO
             -ferror-limit=${error_limit}
+            
+            # Bug 25546 - Bad diagnostic when using -Wunused-macros and building .S files
+            # https://llvm.org/bugs/show_bug.cgi?id=25546
+            $<$<COMPILE_LANGUAGE:ASM>:-Wno-unused-macros>
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         # Get the version
