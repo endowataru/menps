@@ -25,7 +25,6 @@ public:
         {
             auto& desc = l_.front();
             l_.pop_front();
-            //auto desc = static_cast<ult_desc_node&>(p);
             
             desc.state = ult_state::ready;
             desc.detached = false;

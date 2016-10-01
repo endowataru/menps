@@ -187,7 +187,7 @@ private:
         MGBASE_LOG_VERBOSE(
             "msg:Forked a new thread in a child-first manner.\t"
             "{}"
-        ,   self.derived().show_ult_ref(child_th)
+        ,   self.show_ult_ref(child_th)
         );
         
         // Copy the ID to the current stack.
@@ -250,7 +250,7 @@ public:
         MGBASE_LOG_VERBOSE(
             "msg:Parent thread forked in a child-first manner was resumed.\t"
             "{}"
-        ,   self_2.derived().show_ult_ref(self_2.current_th_)
+        ,   self_2.show_ult_ref(self_2.current_th_)
         );
         
         return child_id;
@@ -642,7 +642,7 @@ private:
                 // no other threads will join and manage its resource.
                 
                 // Free the thread descriptor by itself.
-                self.derived().deallocate_ult( mgbase::move(this_th) );
+                self.deallocate_ult( mgbase::move(this_th) );
             }
         }
         

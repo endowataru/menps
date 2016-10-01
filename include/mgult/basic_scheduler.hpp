@@ -4,6 +4,7 @@
 #include "scheduler.hpp"
 #include <mgbase/shared_ptr.hpp>
 #include <mgbase/thread.hpp>
+#include <vector>
 
 namespace mgult {
 
@@ -30,8 +31,6 @@ private:
         // This thread might be stolen by other nodes in distributed work-stealing.
         // Need to renew the scheduler here.
         derived_type::get_current_scheduler().set_finished();
-        
-        //instance_->finished_.store(true, mgbase::memory_order_release);
         
         return MGBASE_NULLPTR;
     }

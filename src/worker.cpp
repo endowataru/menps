@@ -1,5 +1,6 @@
 
 #include <mgult/basic_worker.hpp>
+#include <mgult/thread_local_worker_base.hpp>
 #include <mgult/basic_scheduler.hpp>
 #include "ult_ptr_ref.hpp"
 #include <mgult/locked_worker_deque.hpp>
@@ -8,20 +9,7 @@
 
 #include <mgult/scheduler.hpp>
 
-#include <mgbase/unique_ptr.hpp>
-#include <mgbase/shared_ptr.hpp>
-
-#include <mgbase/threading/spinlock.hpp>
-#include <mgbase/threading/lock_guard.hpp>
-#include <mgbase/threading/thread.hpp>
-
-#include <mgbase/profiling/stopwatch.hpp>
-
-#include <vector>
-
 #include "ult_desc_pool.hpp"
-
-#define MGULT_PROFILE_WORKER
 
 namespace mgult {
 
@@ -57,6 +45,7 @@ class my_scheduler;
 
 class my_worker
     : public basic_worker<my_worker_traits>
+    , public thread_local_worker_base<my_worker_traits>
 {
 public:
     my_worker(my_scheduler& sched, const worker_rank_t rank)
@@ -134,50 +123,6 @@ public:
         return rank_;
     }
     
-    void initialize_on_this_thread()
-    {
-        MGBASE_ASSERT(current_worker_ == MGBASE_NULLPTR);
-        
-        current_worker_ = this;
-        
-        MGBASE_LOG_VERBOSE(
-            "msg:Starting worker.\t"
-            "rank:{}"
-        ,   this->get_rank()
-        );
-    }
-    
-    void finalize_on_this_thread()
-    {
-        MGBASE_ASSERT(current_worker_ != MGBASE_NULLPTR);
-        
-        MGBASE_LOG_VERBOSE(
-            "msg:Finishing worker.\t"
-            "rank:{}\t"
-        ,   this->get_rank()
-        );
-        
-        fmt::print(
-            "rank:{}\t"
-            "alloc:{}\t"
-            "dealloc:{}\n"
-        ,   this->get_rank()
-        ,   alloc_cycles_
-        ,   dealloc_cycles_
-        );
-        
-        current_worker_ = MGBASE_NULLPTR;
-    }
-    
-    static my_worker& get_current_worker() MGBASE_NOEXCEPT {
-        MGBASE_ASSERT(current_worker_ != MGBASE_NULLPTR);
-        return *current_worker_;
-    }
-    
-    void check_current_worker() {
-        MGBASE_ASSERT(this == &get_current_worker());
-    }
-    
     static my_worker& renew_worker(const ult_id /*id*/) {
         return get_current_worker();
     }
@@ -190,15 +135,8 @@ private:
     my_scheduler& sched_;
     worker_rank_t rank_;
     
-    static __thread my_worker* current_worker_;
-    
-    mgbase::cpu_clock_t alloc_cycles_ = 0;
-    mgbase::cpu_clock_t dealloc_cycles_ = 0;
-    
     ult_desc_pool desc_pool_;
 };
-
-__thread my_worker* my_worker::current_worker_ = MGBASE_NULLPTR;
 
 
 class my_scheduler;
