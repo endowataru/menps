@@ -163,7 +163,7 @@ public:
     
     virtual void loop(const loop_func_t func) MGBASE_OVERRIDE
     {
-        base::loop(num_ranks_, func);
+        base::loop_workers(num_ranks_, func);
     }
     
     void set_started()

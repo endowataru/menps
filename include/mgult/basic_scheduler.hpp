@@ -61,7 +61,7 @@ private:
             // FIXME: detach
             const auto t = wk.fork_parent_first(&main_thread_handler, reinterpret_cast<void*>(func));
             
-            //wk.detach(t);
+            wk.detach(t);
             
             wk.loop();
             
@@ -70,7 +70,7 @@ private:
     };
     
 public:
-    void loop(const worker_rank_type num_ranks, const loop_func_t func)
+    void loop_workers(const worker_rank_type num_ranks, const loop_func_t func)
     {
         this->derived().set_started();
         
