@@ -1,5 +1,6 @@
 
 #include <mgult/basic_worker.hpp>
+#include <mgult/basic_scheduler.hpp>
 #include "ult_ptr_ref.hpp"
 #include <mgult/locked_worker_deque.hpp>
 #include <mgult/default_worker_deque.hpp>
@@ -66,77 +67,11 @@ public:
     ult_ptr_ref allocate_ult()
     {
         return desc_pool_.allocate_ult();
-        /*auto desc = new ult_desc;
-        
-        #ifdef MGULT_PROFILE_WORKER
-        mgbase::stopwatch sw;
-        sw.start();
-        #endif
-        
-        desc->state = ult_state::ready;
-        desc->detached = false;
-        
-        const auto stack_size = 2048 * 1024; // TODO
-        
-        const auto sp_start = new mgbase::uint8_t[stack_size];
-        // Set the end of the call stack.
-        desc->stack_ptr = sp_start + stack_size;
-        desc->stack_size = stack_size;
-        
-        desc->joiner = static_cast<ult_desc*>(make_invalid_ult_id().ptr);
-        
-        MGBASE_LOG_VERBOSE(
-            "msg:Allocate a new thread descriptor.\t"
-            "desc:{:x}\t"
-            "stack_ptr:{:x}\t"
-            "stack_size:{}"
-        ,   reinterpret_cast<mgbase::uintptr_t>(desc)
-        ,   reinterpret_cast<mgbase::uintptr_t>(desc->stack_ptr)
-        ,   desc->stack_size
-        );
-        
-        #ifdef MGULT_PROFILE_WORKER
-        alloc_cycles_ += sw.elapsed();
-        #endif
-        
-        ult_id id{ desc };
-        return ult_ptr_ref(id);*/
     }
     
     void deallocate_ult(ult_ptr_ref&& th)
     {
         desc_pool_.deallocate_ult(mgbase::move(th));
-        /*#ifdef MGULT_PROFILE_WORKER
-        mgbase::stopwatch sw;
-        sw.start();
-        #endif
-        
-        const auto id = th.get_id();
-        
-        auto desc = static_cast<ult_desc*>(id.ptr);
-        
-        const auto sp_end = static_cast<mgbase::uint8_t*>(desc->stack_ptr);
-        const auto sp_start = sp_end - desc->stack_size;
-        
-        MGBASE_LOG_VERBOSE(
-            "msg:Deallocate the thread descriptor.\t"
-            "desc:{:x}\t"
-            "stack_ptr:{:x}\t"
-            "stack_size:{}\t"
-            "sp_start:{:x}"
-        ,   reinterpret_cast<mgbase::uintptr_t>(desc)
-        ,   reinterpret_cast<mgbase::uintptr_t>(desc->stack_ptr)
-        ,   desc->stack_size
-        ,   reinterpret_cast<mgbase::uintptr_t>(sp_start)
-        );
-        
-        delete[] sp_start;
-        
-        delete desc;
-        
-        #ifdef MGULT_PROFILE_WORKER
-        dealloc_cycles_ += sw.elapsed();
-        #endif*/
     }
     
     ult_ptr_ref get_ult_ref_from_id(const ult_id& id)
@@ -265,9 +200,21 @@ private:
 
 __thread my_worker* my_worker::current_worker_ = MGBASE_NULLPTR;
 
-class my_scheduler
-    : public scheduler
+
+class my_scheduler;
+
+struct my_scheduler_traits
 {
+    typedef my_scheduler    derived_type;
+    typedef my_worker       worker_type;
+    typedef worker_rank_t   worker_rank_type;
+};
+
+class my_scheduler
+    : public basic_scheduler<my_scheduler_traits>
+{
+    typedef basic_scheduler<my_scheduler_traits>    base;
+    
 public:
     my_scheduler()
     {
@@ -276,125 +223,18 @@ public:
         num_ranks_ = get_num_ranks_from_env();
     }
     
-private:
-    struct main_thread_data
-    {
-        void (*func)();
-    };
-    
-    static void* main_thread_handler(void* const arg)
-    {
-        const auto f = reinterpret_cast<loop_func_t>(arg);
-        
-        f();
-        
-        instance_->finished_.store(true, mgbase::memory_order_release);
-        
-        return MGBASE_NULLPTR;
-    }
-    
-    struct worker_loop_functor
-    {
-        my_worker&  wk;
-        
-        void operator() ()
-        {
-            wk.initialize_on_this_thread();
-            
-            wk.loop();
-            
-            wk.finalize_on_this_thread();
-        }
-    };
-    
-    struct worker_loop_main_functor
-    {
-        my_worker&  wk;
-        loop_func_t func;
-        
-        void operator() ()
-        {
-            wk.initialize_on_this_thread();
-            
-            // FIXME: detach
-            const auto t = wk.fork_parent_first(&main_thread_handler, reinterpret_cast<void*>(func));
-            
-            //wk.detach(t);
-            
-            wk.loop();
-            
-            wk.finalize_on_this_thread();
-        }
-    };
-    
-public:
     virtual void loop(const loop_func_t func) MGBASE_OVERRIDE
     {
-        finished_.store(false);
-        
-        workers_.resize(num_ranks_);
-        
-        for (worker_rank_t rank = 0; rank < get_num_ranks(); ++rank)
-        {
-            auto& info = workers_[rank];
-            info.wk = mgbase::make_shared<my_worker>(*this, rank);
-        }
-        
-        {
-            auto& info0 = workers_[0];
-            info0.real_th = mgbase::make_shared<mgbase::thread>(
-                mgbase::thread(worker_loop_main_functor{ *info0.wk, func })
-            );
-        }
-        
-        for (worker_rank_t rank = 1; rank < get_num_ranks(); ++rank)
-        {
-            auto& info = workers_[rank];
-            info.real_th = mgbase::make_shared<mgbase::thread>(
-                mgbase::thread(worker_loop_functor{ *info.wk })
-            );
-        }
-        
-        MGBASE_LOG_VERBOSE(
-            "msg:Started all workers."
-        );
-        
-        MGBASE_RANGE_BASED_FOR(auto& info, workers_)
-        {
-            info.real_th->join();
-        }
-        
-        MGBASE_LOG_VERBOSE(
-            "msg:All workers finished."
-        );
-        
-        workers_.clear();
+        base::loop(num_ranks_, func);
     }
     
-    virtual ult_id fork(const fork_func_t func, void* const arg) MGBASE_OVERRIDE
+    void set_started()
     {
-        return my_worker::get_current_worker().fork_child_first(func, arg);
+        finished_.store(false, mgbase::memory_order_relaxed);
     }
-    
-    virtual void* join(const ult_id& id) MGBASE_OVERRIDE
+    void set_finished()
     {
-        return my_worker::get_current_worker().join(id);
-    }
-    
-    virtual void detach(const ult_id& id) MGBASE_OVERRIDE
-    {
-        return my_worker::get_current_worker().detach(id);
-    }
-    
-    virtual void yield() MGBASE_OVERRIDE
-    {
-        my_worker::get_current_worker().yield();
-    }
-    
-    MGBASE_NORETURN
-    virtual void exit(void* const ret) MGBASE_OVERRIDE
-    {
-        my_worker::get_current_worker().exit(ret);
+        finished_.store(true, mgbase::memory_order_release);
     }
     
     bool finished() const MGBASE_NOEXCEPT
@@ -419,11 +259,19 @@ public:
         const auto stolen_rank = (current_rank + random_val % (num_ranks - 1) + 1) % num_ranks;
         
         MGBASE_ASSERT(stolen_rank != current_rank);
-        MGBASE_ASSERT(stolen_rank < get_num_ranks());
+        MGBASE_ASSERT(stolen_rank < num_ranks);
         
-        auto& stolen_info = workers_[stolen_rank];
+        auto& stolen_wk = this->get_worker_of_rank(stolen_rank);
         
-        return stolen_info.wk->try_steal();
+        return stolen_wk.try_steal();
+    }
+    
+    static my_worker& get_current_worker() {
+        return my_worker::get_current_worker();
+    }
+    
+    static my_scheduler& get_current_scheduler() {
+        return *instance_;
     }
     
 private:
@@ -448,21 +296,10 @@ private:
     
     mgbase::atomic<bool> finished_;
     
-    struct worker_info {
-        // TODO: Currently shared_ptr is used
-        //       because old libstdc++'s vector doesn't allow move-only types as elements.
-        //       They are unique in fact.
-        mgbase::shared_ptr<mgbase::thread>  real_th;
-        mgbase::shared_ptr<my_worker>       wk;
-    };
-    
-    std::vector<worker_info> workers_;
-    
     worker_rank_t num_ranks_;
     
     static my_scheduler* instance_; // FIXME
 };
-
 
 my_scheduler* my_scheduler::instance_; // FIXME
 

@@ -5,8 +5,6 @@
 #include <mgbase/utility.hpp>
 #include <mgbase/logger.hpp>
 
-#define MGULT_WORKER_DEBUG
-
 namespace mgult {
 
 template <typename Traits>
@@ -266,9 +264,7 @@ private:
         void* (*func)(void*);
         void* ptr;
         
-        #ifdef MGULT_WORKER_DEBUG
         ult_id child_id;
-        #endif
     };
     
     MGBASE_NORETURN
