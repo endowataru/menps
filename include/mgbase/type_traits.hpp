@@ -14,7 +14,7 @@
 #include <mgbase/type_traits/is_rvalue_reference.hpp>
 //#include <mgbase/type_traits/is_member_object_pointer.hpp>
 //#include <mgbase/type_traits/is_member_function_pointer.hpp>
-//#include <mgbase/type_traits/is_enum.hpp>
+#include <mgbase/type_traits/is_enum.hpp>
 //#include <mgbase/type_traits/is_union.hpp>
 //#include <mgbase/type_traits/is_class.hpp>
 #include <mgbase/type_traits/is_function.hpp>

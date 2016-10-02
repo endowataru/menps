@@ -139,6 +139,8 @@ template <template <typename> class Derived, typename T,
     bool HasMembers =
         mgbase::is_compound<typename mgbase::remove_cv<T>::type>::value
         && !mgbase::is_array<typename mgbase::remove_cv<T>::type>::value
+        && !mgbase::is_pointer<typename mgbase::remove_cv<T>::type>::value
+        && !mgbase::is_enum<typename mgbase::remove_cv<T>::type>::value
 >
 class pointer_facade_member { };
 
