@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "scheduler.hpp"
+#include "common.hpp"
 #include <mgbase/shared_ptr.hpp>
 #include <mgbase/thread.hpp>
 #include <mgbase/logger.hpp>
@@ -11,18 +11,14 @@ namespace mgult {
 
 template <typename Traits>
 class basic_scheduler
-    : public scheduler
+    : public Traits::scheduler_base_type
 {
     typedef typename Traits::derived_type       derived_type;
     typedef typename Traits::worker_type        worker_type;
     typedef typename Traits::worker_rank_type   worker_rank_type;
+    typedef typename Traits::ult_id_type        ult_id_type;
     
 private:
-    struct main_thread_data
-    {
-        void (*func)();
-    };
-    
     static void* main_thread_handler(void* const arg)
     {
         const auto f = reinterpret_cast<loop_func_t>(arg);
@@ -120,17 +116,17 @@ public:
         this->workers_.clear();
     }
     
-    virtual ult_id fork(const fork_func_t func, void* const arg) MGBASE_OVERRIDE
+    virtual ult_id_type fork(const fork_func_t func, void* const arg) MGBASE_OVERRIDE
     {
         return this->derived().get_current_worker().fork_child_first(func, arg);
     }
     
-    virtual void* join(const ult_id& id) MGBASE_OVERRIDE
+    virtual void* join(const ult_id_type& id) MGBASE_OVERRIDE
     {
         return this->derived().get_current_worker().join(id);
     }
     
-    virtual void detach(const ult_id& id) MGBASE_OVERRIDE
+    virtual void detach(const ult_id_type& id) MGBASE_OVERRIDE
     {
         this->derived().get_current_worker().detach(id);
     }
@@ -166,7 +162,6 @@ private:
     };
     
     std::vector<worker_info> workers_;
-
 };
 
 } // namespace mgult

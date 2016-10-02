@@ -1,5 +1,5 @@
 
-#include <mgult/scheduler.hpp>
+#include <mgult/sm.hpp>
 #include <mgbase/profiling/stopwatch.hpp>
 #include <iostream>
 
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     
     g_arg_n = static_cast<mgbase::uintptr_t>(std::atoi(argv[1]));
     
-    g_s = mgult::make_scheduler();
+    g_s = mgult::make_sm_scheduler();
     
     mgbase::stopwatch sw;
     sw.start();

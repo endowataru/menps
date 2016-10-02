@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <mgult/ult_id.hpp>
 #include <mgbase/utility.hpp>
 #include <mgbase/logger.hpp>
 
@@ -14,6 +13,7 @@ private:
     typedef typename Traits::derived_type       derived_type;
     typedef typename Traits::ult_ref_type       ult_ref_type;
     typedef typename Traits::worker_deque_type  worker_deque_type;
+    typedef typename Traits::ult_id_type        ult_id_type;
     
     template <typename B, typename A>
     struct context
@@ -212,7 +212,7 @@ private:
     }
     
 public:
-    ult_id fork_child_first(void* (* const func)(void*), void* const arg)
+    ult_id_type fork_child_first(void* (* const func)(void*), void* const arg)
     {
         this->derived().check_current_worker();
         
@@ -264,7 +264,7 @@ private:
         void* (*func)(void*);
         void* ptr;
         
-        ult_id child_id;
+        ult_id_type child_id;
     };
     
     MGBASE_NORETURN
@@ -318,7 +318,7 @@ private:
     }
     
 public:
-    ult_id fork_parent_first(void* (* const func)(void*), void* const arg)
+    ult_id_type fork_parent_first(void* (* const func)(void*), void* const arg)
     {
         this->derived().check_current_worker();
         
@@ -373,7 +373,7 @@ private:
     struct join_data
     {
         derived_type&   self;
-        ult_id          child_id;
+        ult_id_type     child_id;
         
         ult_ref_type    this_th;
         ult_ref_type    child_th;
@@ -424,7 +424,7 @@ private:
     }
     
 public:
-    void* join(const ult_id& id)
+    void* join(const ult_id_type& id)
     {
         this->derived().check_current_worker();
         
@@ -581,7 +581,7 @@ public:
         /*>---resuming context---<*/
     }
     
-    void detach(const ult_id& id)
+    void detach(const ult_id_type& id)
     {
         this->derived().check_current_worker();
         
@@ -819,9 +819,9 @@ private:
         return mgbase::move(current_th_);
     }
     
-    void check_current_ult_id(const ult_id id) {
-        MGBASE_ASSERT(current_th_.is_valid());
-        MGBASE_ASSERT(current_th_.get_id().ptr == id.ptr);
+    void check_current_ult_id(const ult_id_type& id)
+    {
+        Traits::check_ult_id(current_th_, id);
     }
     
     derived_type& derived() MGBASE_NOEXCEPT {

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgult/ult_id.hpp>
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/lock_guard.hpp>
 #include <deque>

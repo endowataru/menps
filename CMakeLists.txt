@@ -11,17 +11,13 @@ target_link_libraries(mgult-header
     mgcom-header
 )
 
-#enable_language(ASM)
-
 add_library(mgult
     ./src/fcontext/jump_x86_64_sysv_macho_gas.S
     ./src/fcontext/make_x86_64_sysv_macho_gas.S
     ./src/fcontext/ontop_x86_64_sysv_macho_gas.S
-    ./src/worker.cpp
+    ./src/sm/sm_scheduler.cpp
 )
 
-#set_source_files_properties(
-#    ./src/fcontext/fcontext.x86_64.S PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 target_include_directories(mgult
     PUBLIC ./include
 )

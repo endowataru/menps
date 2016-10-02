@@ -1,9 +1,9 @@
 
-#include <mgult/scheduler.hpp>
+#include <mgult/sm.hpp>
 
 #include <iostream>
 
-mgbase::unique_ptr<mgult::scheduler> g_s;
+mgult::scheduler_ptr g_s;
 
 void* hoge(void*)
 {
@@ -27,7 +27,7 @@ void f()
 
 int main()
 {
-    g_s = mgult::make_scheduler();
+    g_s = mgult::make_sm_scheduler();
     
     g_s->loop(f);
     

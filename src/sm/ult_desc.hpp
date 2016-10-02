@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "sm_common.hpp"
 #include <mgult/fcontext.hpp>
 #include <mgbase/threading/spinlock.hpp>
 
@@ -14,17 +15,16 @@ enum class ult_state
 ,   finished
 };
 
-class my_worker;
+class sm_worker;
 
 struct ult_desc
 {
     typedef mgbase::spinlock lock_type;
     mgbase::spinlock lock;
     
-    fcontext<my_worker, my_worker> ctx;
+    context_t ctx;
     
     ult_state state;
-    //bool finished;
     
     bool detached;
     ult_desc* joiner;

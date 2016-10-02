@@ -1,9 +1,8 @@
 
 #pragma once
 
-#include <mgult/ult_id.hpp>
-
 #include "ult_desc.hpp"
+#include <mgult/ult_id.hpp>
 
 #include <mgbase/threading/unique_lock.hpp>
 #include <mgbase/type_traits/underlying_type.hpp>
@@ -13,13 +12,10 @@
 
 namespace mgult {
 
-class my_worker;
-
 class ult_ptr_ref
 {
     typedef ult_desc::lock_type     lock_type;
-    
-    typedef fcontext<my_worker, my_worker>  context_type;
+    typedef context_t               context_type;
     
 public:
     ult_ptr_ref() MGBASE_NOEXCEPT {

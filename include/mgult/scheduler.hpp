@@ -1,15 +1,12 @@
 
 #pragma once
 
+#include <mgult/generic/common.hpp>
 #include "ult_id.hpp"
 
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgult {
-
-typedef void* (*fork_func_t)(void*);
-
-typedef void (*loop_func_t)();
 
 class scheduler
 {
@@ -29,10 +26,6 @@ public:
     MGBASE_NORETURN
     virtual void exit(void* ret) = 0;
 };
-
-typedef mgbase::unique_ptr<scheduler>   scheduler_ptr;
-
-scheduler_ptr make_scheduler();
 
 } // namespace mgult
 
