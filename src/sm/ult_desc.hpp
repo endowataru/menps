@@ -15,8 +15,6 @@ enum class ult_state
 ,   finished
 };
 
-class sm_worker;
-
 struct ult_desc
 {
     typedef mgbase::spinlock lock_type;

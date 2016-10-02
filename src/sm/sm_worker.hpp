@@ -15,8 +15,6 @@ namespace mgult {
 
 typedef mgbase::size_t      worker_rank_t;
 
-class sm_worker;
-
 struct sm_worker_traits
     : fcontext_worker_traits_base
     , ult_id_worker_traits_base
