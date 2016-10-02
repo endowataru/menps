@@ -4,6 +4,7 @@
 #include "scheduler.hpp"
 #include <mgbase/shared_ptr.hpp>
 #include <mgbase/thread.hpp>
+#include <mgbase/logger.hpp>
 #include <vector>
 
 namespace mgult {

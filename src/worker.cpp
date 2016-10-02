@@ -1,6 +1,7 @@
 
 #include <mgult/basic_worker.hpp>
 #include <mgult/thread_local_worker_base.hpp>
+#include <mgult/fcontext_worker_base.hpp>
 #include <mgult/basic_scheduler.hpp>
 #include "ult_ptr_ref.hpp"
 #include <mgult/locked_worker_deque.hpp>
@@ -20,6 +21,7 @@ typedef mgbase::size_t      worker_rank_t;
 class my_worker;
 
 struct my_worker_traits
+    : fcontext_worker_traits_base
 {
     typedef my_worker       derived_type;
     typedef ult_ptr_ref     ult_ref_type;
@@ -27,18 +29,6 @@ struct my_worker_traits
     //typedef locked_worker_deque<ult_ref_type>   worker_deque_type;
     typedef ptr_worker_deque<default_worker_deque>  worker_deque_type;
     
-    template <typename B, typename A>
-    struct context {
-        typedef fcontext<B, A>  type;
-    };
-    template <typename B, typename A>
-    struct context_result {
-        typedef fcontext_result<B, A>   type;
-    };
-    template <typename B, typename A>
-    struct context_argument {
-        typedef fcontext_argument<B, A> type;
-    };
 };
 
 class my_scheduler;
@@ -46,6 +36,7 @@ class my_scheduler;
 class my_worker
     : public basic_worker<my_worker_traits>
     , public thread_local_worker_base<my_worker_traits>
+    , public fcontext_worker_base
 {
 public:
     my_worker(my_scheduler& sched, const worker_rank_t rank)
@@ -66,44 +57,6 @@ public:
     ult_ptr_ref get_ult_ref_from_id(const ult_id& id)
     {
         return ult_ptr_ref(id);
-    }
-    
-    template <typename B2, typename A2, typename B1, typename A1>
-    static fcontext<B2, A2> cast_context(
-        const fcontext<B1, A1>  fctx
-    ) {
-        // Ignore types.
-        return { fctx.fctx };
-    }
-    
-    template <typename C, typename B, typename A>
-    static fcontext_result<C, B> jump_context(
-        const fcontext<B, A>    fctx
-    ,   A* const                data
-    ) {
-        return jump_fcontext<C>(fctx, data);
-    }
-    
-    template <typename C, typename B, typename A, typename T>
-    static fcontext_result<C, A> ontop_context(
-        const fcontext<B, A>    fctx
-    ,   T* const                data
-    ,   fcontext_result<C, A>   (* const func)(fcontext_argument<B, T>)
-    ) {
-        return ontop_fcontext(fctx, data, func);
-    }
-    
-    template <typename C, typename B, typename A>
-    static fcontext_result<C, B> jump_new_context(
-        void* const             stack_ptr
-    ,   const mgbase::size_t    stack_size
-    ,   void                    (* const func)(fcontext_argument<B, A>)
-    ,   A* const                data
-    )
-    {
-        const auto ctx = make_fcontext(stack_ptr, stack_size, func);
-        
-        return jump_context<C>(ctx, data);
     }
     
     std::string show_ult_ref(ult_ptr_ref& th)
