@@ -2,7 +2,7 @@
 MGCOM
 =====
 
-Communication Library for MassiveThreads/GAS 2.
+Low-level communication library.
 
 This project is experimental and the API is still unstable.
 
