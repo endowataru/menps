@@ -37,6 +37,8 @@ public:
     
     remote_ptr_type at_process(process_id_t proc_id) const MGBASE_NOEXCEPT
     {
+        MGBASE_ASSERT(valid_process_id(proc_id));
+        
         return remote_ptrs_[proc_id];
     }
 
