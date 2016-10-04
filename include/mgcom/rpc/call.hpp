@@ -14,7 +14,7 @@ struct example_handler {
     typedef int     argument_type;
     typedef double  return_type;
     
-    static return_type on_callback(const mgcom::rpc::handler_paramters& params, const argument_type& arg) {
+    static return_type on_callback(const mgcom::rpc::handler_parameters& params, const argument_type& arg) {
         
     }
 };
