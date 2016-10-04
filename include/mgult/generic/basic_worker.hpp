@@ -10,10 +10,11 @@ template <typename Traits>
 class basic_worker
 {
 private:
-    typedef typename Traits::derived_type       derived_type;
-    typedef typename Traits::ult_ref_type       ult_ref_type;
-    typedef typename Traits::worker_deque_type  worker_deque_type;
-    typedef typename Traits::ult_id_type        ult_id_type;
+    typedef typename Traits::derived_type           derived_type;
+    typedef typename Traits::ult_ref_type           ult_ref_type;
+    typedef typename Traits::worker_deque_type      worker_deque_type;
+    typedef typename Traits::worker_deque_conf_type worker_deque_conf_type;
+    typedef typename Traits::ult_id_type            ult_id_type;
     
     template <typename B, typename A>
     struct context
@@ -57,6 +58,11 @@ private:
         return { {}, &self };
     }
     
+protected:
+    explicit basic_worker(const worker_deque_conf_type& conf)
+        : wd_(conf)
+        { }
+    
 public:
     void loop()
     {
@@ -66,7 +72,7 @@ public:
         
         while (!self.finished())
         {
-            auto th = this->wd_.try_pop_top();
+            auto th = this->try_pop_top();
             
             if (th.is_valid())
             {
@@ -687,8 +693,13 @@ public:
             
             if (d.this_th.has_joiner())
             {
+                // "get_joiner" may return either ult_ref_type or ult_id_type.
+                auto joiner = this->derived().get_ult_ref(
+                    d.this_th.get_joiner()
+                );
+                
                 // Set the joiner thread as the next thread.
-                d.next_th = d.this_th.get_joiner();
+                d.next_th = mgbase::move(joiner);
             }
             
             // Release the lock; this lock is unlocked by the handler.
@@ -731,7 +742,8 @@ public:
     
     ult_ref_type try_steal()
     {
-        auto th = wd_.try_pop_bottom();
+        // "try_pop_bottom" may return either ult_ref_type or ult_id_type.
+        auto th = try_pop_bottom();
         
         if (th.is_valid()) {
             // FIXME : correct to place memory barrier here?
@@ -765,7 +777,7 @@ private:
     
     ult_ref_type pop_top()
     {
-        auto th = wd_.try_pop_top();
+        auto th = this->try_pop_top();
         
         if (th.is_valid())
         {
@@ -791,6 +803,20 @@ private:
         }
         
         return th;
+    }
+    ult_ref_type try_pop_top()
+    {
+        // "try_pop_top" may return either ult_ref_type or ult_id_type.
+        return this->get_ult_ref(
+            wd_.try_pop_top()
+        );
+    }
+    ult_ref_type try_pop_bottom()
+    {
+        // "try_pop_bottom" may return either ult_ref_type or ult_id_type.
+        return this->get_ult_ref(
+            wd_.try_pop_bottom()
+        );
     }
     
     void set_current_ult(ult_ref_type&& th)
@@ -822,6 +848,19 @@ private:
     void check_current_ult_id(const ult_id_type& id)
     {
         Traits::check_ult_id(current_th_, id);
+    }
+    
+    // Overloaded functions to get the descriptor's reference.
+    ult_ref_type get_ult_ref(ult_ref_type ref) {
+        // Return the identical reference.
+        return ref;
+    }
+    ult_ref_type get_ult_ref(const ult_id_type& id) {
+        // Convert to the reference.
+        if (is_invalid_ult_id(id))
+            return {};
+        else
+            return this->derived().get_ult_ref_from_id(id);
     }
     
     derived_type& derived() MGBASE_NOEXCEPT {

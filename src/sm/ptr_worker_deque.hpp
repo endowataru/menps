@@ -5,14 +5,19 @@
 
 namespace mgult {
 
+struct ptr_worker_deque_conf
+{
+    mgbase::size_t deque_size;
+};
+
 template <typename Deque>
 class ptr_worker_deque
 {
     typedef ult_ptr_ref ult_ref_type;
     
 public:
-    ptr_worker_deque()
-        : dq_(1024 * 1024) { }
+    explicit ptr_worker_deque(const ptr_worker_deque_conf& conf)
+        : dq_(conf.deque_size) { }
     
     void push_top(ult_ref_type&& th)
     {

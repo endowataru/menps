@@ -1,3 +1,6 @@
+
+// Modified version of Boost.Context
+
 /*
             Copyright Oliver Kowalke 2009.
    Distributed under the Boost Software License, Version 1.0.
@@ -25,10 +28,10 @@
  ****************************************************************************************/
 
 .text
-.globl ontop_fcontext
-.type ontop_fcontext,@function
+.globl mgult_ontop_fcontext
+.type mgult_ontop_fcontext,@function
 .align 16
-ontop_fcontext:
+mgult_ontop_fcontext:
     pushq  %rbp  /* save RBP */
     pushq  %rbx  /* save RBX */
     pushq  %r15  /* save R15 */
@@ -63,7 +66,7 @@ ontop_fcontext:
 
     /* indirect jump to context */
     jmp  *%r8
-.size ontop_fcontext,.-ontop_fcontext
+.size mgult_ontop_fcontext,.-mgult_ontop_fcontext
 
 /* Mark that we don't need executable stack.  */
 .section .note.GNU-stack,"",%progbits

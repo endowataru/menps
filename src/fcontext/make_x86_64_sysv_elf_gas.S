@@ -1,3 +1,6 @@
+
+// Modified version of Boost.Context
+
 /*
             Copyright Oliver Kowalke 2009.
    Distributed under the Boost Software License, Version 1.0.
@@ -25,10 +28,10 @@
  ****************************************************************************************/
 
 .text
-.globl make_fcontext
-.type make_fcontext,@function
+.globl mgult_make_fcontext
+.type mgult_make_fcontext,@function
 .align 16
-make_fcontext:
+mgult_make_fcontext:
     /* first arg of make_fcontext() == top of context-stack */
     movq  %rdi, %rax
 
@@ -56,7 +59,7 @@ finish:
     /* exit application */
     call  _exit@PLT
     hlt
-.size make_fcontext,.-make_fcontext
+.size mgult_make_fcontext,.-mgult_make_fcontext
 
 /* Mark that we don't need executable stack. */
 .section .note.GNU-stack,"",%progbits

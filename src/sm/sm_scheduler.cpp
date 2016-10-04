@@ -89,6 +89,7 @@ private:
     static worker_rank_t get_num_ranks_from_env()
     {
         const auto s = getenv("MGULT_NUM_WORKERS");
+        
         if (s != MGBASE_NULLPTR) {
             auto num_ranks = static_cast<worker_rank_t>(atoi(s));
             if (num_ranks == 0) {
@@ -105,7 +106,7 @@ private:
     
     worker_rank_t num_ranks_;
     
-    static sm_scheduler* instance_; // FIXME
+    static sm_scheduler* instance_; // TODO: singleton
 };
 
 sm_scheduler* sm_scheduler::instance_; // FIXME

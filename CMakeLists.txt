@@ -12,9 +12,17 @@ target_link_libraries(mgult-header
 )
 
 add_library(mgult
+    $<$<PLATFORM_ID:Linux>:
+    ./src/fcontext/jump_x86_64_sysv_elf_gas.S
+    ./src/fcontext/make_x86_64_sysv_elf_gas.S
+    ./src/fcontext/ontop_x86_64_sysv_elf_gas.S
+    >
+    $<$<PLATFORM_ID:Darwin>:
     ./src/fcontext/jump_x86_64_sysv_macho_gas.S
     ./src/fcontext/make_x86_64_sysv_macho_gas.S
     ./src/fcontext/ontop_x86_64_sysv_macho_gas.S
+    >
+    
     ./src/sm/sm_scheduler.cpp
 )
 

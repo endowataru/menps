@@ -23,6 +23,8 @@ struct sm_worker_traits
     typedef ult_ptr_ref     ult_ref_type;
     
     typedef ptr_worker_deque<default_worker_deque>  worker_deque_type;
+    
+    typedef ptr_worker_deque_conf worker_deque_conf_type;
 };
 
 class sm_scheduler;
@@ -32,9 +34,12 @@ class sm_worker
     , public thread_local_worker_base<sm_worker_traits>
     , public fcontext_worker_base
 {
+    typedef basic_worker<sm_worker_traits>  base;
+    
 public:
     sm_worker(sm_scheduler& sched, const worker_rank_t rank)
-        : sched_(sched)
+        : base({1024 * 1024})
+        , sched_(sched)
         , rank_(rank)
         { }
     

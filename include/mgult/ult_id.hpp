@@ -11,11 +11,12 @@ union ult_id
 {
     void* ptr;
     
-    struct dist
+    struct distributed
     {
         mgcom::process_id_t proc;
         ult_local_id_t      local_id;
-    };
+    }
+    di;
 };
 
 MGBASE_STATIC_ASSERT(mgbase::is_trivially_copyable<ult_id>::value);
