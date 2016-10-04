@@ -2,7 +2,7 @@
 MGBASE
 ======
 
-Base Library for MassiveThread/GAS 2.
+C++ Base Library.
 
 General utilities
 -----------------
