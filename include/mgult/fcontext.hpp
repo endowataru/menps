@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <mgbase/logger.hpp>
 
 namespace mgult {
 
@@ -70,6 +70,16 @@ inline fcontext<B, A> make_fcontext(
 )
 MGBASE_NOEXCEPT
 {
+    MGBASE_LOG_VERBOSE(
+        "msg:Make new context.\t"
+        "sp:{:x}\t"
+        "size:{}\t"
+        "func:{:x}"
+    ,   reinterpret_cast<mgbase::uintptr_t>(sp)
+    ,   size
+    ,   reinterpret_cast<mgbase::uintptr_t>(func)
+    );
+    
     const auto f = reinterpret_cast<make_fcontext_func_t>(func);
     
     return { detail::mgult_make_fcontext(sp, size, f) };
@@ -80,6 +90,14 @@ inline fcontext_result<C, B> jump_fcontext(
     const fcontext<B, A>    fctx
 ,   A* const                data
 ) {
+    MGBASE_LOG_VERBOSE(
+        "msg:Jump to another context.\t"
+        "fctx:{:x}\t"
+        "data:{:x}"
+    ,   reinterpret_cast<mgbase::uintptr_t>(fctx.fctx)
+    ,   reinterpret_cast<mgbase::uintptr_t>(data)
+    );
+    
     const auto r = detail::mgult_jump_fcontext(fctx.fctx, data);
     
     return { { r.fctx }, static_cast<B*>(r.data) };
@@ -91,6 +109,16 @@ inline fcontext_result<C, A> ontop_fcontext(
 ,   T* const                data
 ,   fcontext_result<C, A>   (* const func)(fcontext_argument<B, T>)
 ) {
+    MGBASE_LOG_VERBOSE(
+        "msg:Jump to another context and call function.\t"
+        "fctx:{:x}\t"
+        "data:{:x}\t"
+        "func:{:x}"
+    ,   reinterpret_cast<mgbase::uintptr_t>(fctx.fctx)
+    ,   reinterpret_cast<mgbase::uintptr_t>(data)
+    ,   reinterpret_cast<mgbase::uintptr_t>(func)
+    );
+    
     const auto f = reinterpret_cast<ontop_fcontext_func_t>(func);
     
     const auto r = detail::mgult_ontop_fcontext(fctx.fctx, data, f);
