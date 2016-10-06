@@ -137,13 +137,6 @@ public:
         }
     }
     
-    void loop(ult_ref_type&& th)
-    {
-        push_top(mgbase::move(th));
-        
-        loop();
-    }
-    
 private:
     struct fork_child_first_data
     {
