@@ -200,11 +200,9 @@ public:
                 "msg:Finished dequeuing MPSC queue.\t"
                 "from:{}\t"
                 "to:{}\t"
-                "old_head:{}\t"
                 "new_head:{}"
             ,   this->data_.from
             ,   this->data_.to
-            ,   self.head_
             ,   new_head
             );
             
