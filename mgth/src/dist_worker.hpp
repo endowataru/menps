@@ -10,6 +10,8 @@
 #include <mgult/generic/fcontext_worker_base.hpp>
 #include <mgult/generic/ult_id_worker_traits_base.hpp>
 
+#include <mgdsm/alternate_signal_stack.hpp>
+
 namespace mgth {
 
 class dist_worker;
@@ -31,7 +33,11 @@ class dist_worker
     , public mgult::thread_local_worker_base<dist_worker_traits>
     , public mgult::fcontext_worker_base
 {
-    typedef mgult::basic_worker<dist_worker_traits> base;
+    typedef mgult::basic_worker<dist_worker_traits>         base;
+    
+    typedef thread_local_worker_base<dist_worker_traits>    tls_base;
+    
+    static const mgbase::size_t stack_size = 2048 * 1024;
     
 public:
     dist_worker(dist_scheduler& sched, const worker_rank_t rank);
@@ -67,6 +73,28 @@ public:
         return get_current_worker();
     }
     
+    void initialize_on_this_thread()
+    {
+        stack_area_.reset(
+            new mgbase::uint8_t[stack_size]
+        );
+        alter_stack_ = 
+            mgbase::make_unique<mgdsm::alternate_signal_stack>( 
+                stack_area_.get()
+            ,   stack_size
+            );
+        
+        tls_base::initialize_on_this_thread();
+    }
+    
+    void finalize_on_this_thread()
+    {
+        tls_base::finalize_on_this_thread();
+        
+        alter_stack_.reset();
+        stack_area_.reset();
+    }
+    
     // Other methods.
     
     worker_rank_t get_rank() const MGBASE_NOEXCEPT {
@@ -76,6 +104,9 @@ public:
 private:
     dist_scheduler&         sched_;
     const worker_rank_t     rank_;
+    
+    mgbase::unique_ptr<mgdsm::alternate_signal_stack>   alter_stack_;
+    mgbase::unique_ptr<mgbase::uint8_t []>              stack_area_;
     
     //global_ult_desc_pool    desc_pool_;
 };

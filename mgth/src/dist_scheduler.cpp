@@ -139,5 +139,7 @@ bool dist_worker::finished()
     return sched_.finished();
 }
 
+const mgbase::size_t dist_worker::stack_size;
+
 } // namespace mgth
 
