@@ -83,6 +83,14 @@ public:
             }
             
             enqueue_transaction_base::commit();
+            
+            MGBASE_LOG_DEBUG(
+                "msg:Finished enqueuing entry.\t"
+                "from:{}\t"
+                "to:{}\t"
+            ,   this->data_.from
+            ,   this->data_.to
+            );
         }
     };
     
@@ -124,6 +132,16 @@ public:
             
             if (MGBASE_LIKELY(success))
             {
+                MGBASE_LOG_DEBUG(
+                    "msg:Started enqueuing entry.\t"
+                    "head:{}\t"
+                    "tail:{}\t"
+                    "new_tail:{}"
+                ,   head
+                ,   tail
+                ,   new_tail
+                );
+                
                 return enqueue_transaction(derived(), { tail, new_tail });
             }
         }
@@ -179,7 +197,15 @@ public:
             self.head_.store(new_head, mgbase::memory_order_release);
             
             MGBASE_LOG_VERBOSE(
-                "msg:Finished dequeuing.\t"
+                "msg:Finished dequeuing MPSC queue.\t"
+                "from:{}\t"
+                "to:{}\t"
+                "old_head:{}\t"
+                "new_head:{}"
+            ,   this->data_.from
+            ,   this->data_.to
+            ,   self.head_
+            ,   new_head
             );
             
             dequeue_transaction_base::commit();
@@ -209,8 +235,19 @@ public:
         
         if (num_dequeued == 0)
             return {};
-        else
+        else {
+            MGBASE_LOG_VERBOSE(
+                "msg:Started dequeuing MPSC queue.\t"
+                "head:{}\t"
+                "tail:{}\t"
+                "num:{}"
+            ,   head
+            ,   tail
+            ,   num
+            );
+            
             return dequeue_transaction(derived(), { head, head + num_dequeued });
+        }
     }
     
 private:
