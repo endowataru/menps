@@ -102,6 +102,9 @@ public:
         
         while (true)
         {
+            MGBASE_UNUSED
+            const index_type old_tail = tail;
+            
             const index_type head =
                 this->head_.load(mgbase::memory_order_acquire);
             
@@ -136,13 +139,28 @@ public:
                     "msg:Started enqueuing entry.\t"
                     "head:{}\t"
                     "tail:{}\t"
+                    "old_tail:{}\t"
                     "new_tail:{}"
                 ,   head
                 ,   tail
+                ,   old_tail
                 ,   new_tail
                 );
                 
                 return enqueue_transaction(derived(), { tail, new_tail });
+            }
+            else {
+                MGBASE_LOG_DEBUG(
+                    "msg:Failed CAS to enqueue entry.\t"
+                    "head:{}\t"
+                    "tail:{}\t"
+                    "old_tail:{}\t"
+                    "new_tail:{}"
+                ,   head
+                ,   tail
+                ,   old_tail
+                ,   new_tail
+                );
             }
         }
     }
@@ -196,7 +214,7 @@ public:
             // then processing the element on the current thread must have completed.
             self.head_.store(new_head, mgbase::memory_order_release);
             
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_DEBUG(
                 "msg:Finished dequeuing MPSC queue.\t"
                 "from:{}\t"
                 "to:{}\t"
@@ -234,7 +252,7 @@ public:
         if (num_dequeued == 0)
             return {};
         else {
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_DEBUG(
                 "msg:Started dequeuing MPSC queue.\t"
                 "head:{}\t"
                 "tail:{}\t"
