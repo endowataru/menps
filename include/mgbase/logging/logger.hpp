@@ -5,7 +5,8 @@
 #include <iostream>
 
 #include <mgbase/external/fmt.hpp>
-#include <mgbase/threading/spinlock.hpp>
+//#include <mgbase/threading/spinlock.hpp>
+#include <mgbase/threading/recursive_spinlock.hpp>
 #include <mgbase/threading/lock_guard.hpp>
 
 namespace mgbase {
@@ -17,6 +18,9 @@ namespace mgbase {
 #define MGBASE_LOG_LEVEL_FATAL      1000
 
 class logger {
+private:
+    typedef recursive_spinlock  lock_type;
+    
 public:
     typedef mgbase::uint32_t log_level_t;
     
@@ -177,8 +181,8 @@ private:
     }
     
     // TODO: Singleton
-    static mgbase::spinlock& get_lock() {
-        static mgbase::spinlock lc;
+    static lock_type& get_lock() {
+        static lock_type lc;
         return lc;
     }
 
