@@ -105,6 +105,8 @@
     #define MGBASE_ASM_COMMENT(msg)     
 #endif
 
+#define MGBASE_GET_STACK_POINTER()      (__builtin_frame_address(0))
+
 #ifndef __cplusplus
     #include <stdint.h>
     #include <stdlib.h>
