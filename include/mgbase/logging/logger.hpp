@@ -143,14 +143,18 @@ private:
         if (level < get_log_level())
             return false;
         
+        #ifdef MGBASE_LOGGER_USE_LOCK
         get_lock().lock();
+        #endif
         std::cout << mgbase::logger::get_state();
         return true;
     }
     static void finish_print_log()
     {
         std::cout << std::endl;
+        #ifdef MGBASE_LOGGER_USE_LOCK
         get_lock().unlock();
+        #endif
     }
 
 public:
