@@ -12,7 +12,7 @@ struct command
     // TODO: 
     static const mgbase::size_t params_size = 128 - sizeof(void*); // TODO
     
-    static const index_t queue_size = 4; // TODO
+    static const index_t queue_size = 128; // TODO
     
     bool (*func)(const void*);
     mgbase::uint8_t arg[params_size];
