@@ -64,7 +64,7 @@ public:
         {
             MGBASE_LOG_WARN(
                 "msg:mmap() failed.\t"
-                "addr:{}\t"
+                "addr:{:x}\t"
                 "length:{}\t"
                 "prot:{}\t"
                 "flags:{}\t"
@@ -84,7 +84,7 @@ public:
         MGBASE_LOG_VERBOSE(
             "msg:Called mmap().\t"
             "ret:{:x}\t"
-            "addr:{}\t"
+            "addr:{:x}\t"
             "length:{}\t"
             "prot:{}\t"
             "flags:{}\t"
