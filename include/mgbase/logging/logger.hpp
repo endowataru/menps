@@ -162,12 +162,17 @@ private:
     }
 
 public:
-    static void set_state_callback(state_callback_type callback) {
+    static void set_state_callback(state_callback_type callback)
+    {
+        mgbase::lock_guard<lock_type> lc(get_state_lock());
+        
         get_state_callback() = callback;
     }
     
 private:
     static std::string get_state() {
+        mgbase::lock_guard<lock_type> lc(get_state_lock());
+        
         const state_callback_type& callback = get_state_callback();
         if (callback)
             return callback();
@@ -185,7 +190,13 @@ private:
         static lock_type lc;
         return lc;
     }
-
+    
+    // TODO: Singleton
+    static lock_type& get_state_lock() {
+        static lock_type lc;
+        return lc;
+    }
+    
 private:
     static log_level_t get_log_level_from_env() {
         const char* const value = std::getenv("MGBASE_LOG_LEVEL");
