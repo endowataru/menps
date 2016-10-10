@@ -79,6 +79,13 @@ public:
         return get_current_worker();
     }
     
+    void before_switch_to(ult_ptr_ref& /*th*/)
+    {
+        // Do nothing.
+        
+        // This hook is for distributed work-stealing.
+    }
+    
     bool finished();
     
     ult_ptr_ref try_steal_from_another();

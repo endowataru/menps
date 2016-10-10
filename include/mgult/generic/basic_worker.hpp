@@ -103,9 +103,9 @@ public:
             MGBASE_ASSERT(th.is_valid());
             
             // TODO: reuse the thread descriptor
-            root_th_ = self.allocate_ult();
+            this->root_th_ = self.allocate_ult();
             
-            const auto root_id = root_th_.get_id();
+            const auto root_id = this->root_th_.get_id();
             
             loop_root_data d{ self, mgbase::move(th) };
             
@@ -116,6 +116,9 @@ public:
                 "{}"
             ,   self.show_ult_ref(this->root_th_)
             );
+            
+            // Call the hook.
+            self.before_switch_to(this->root_th_);
             
             // Switch to the context of the next thread.
             auto r = self.ontop_context(ctx, &d, &loop_root_handler);
@@ -228,6 +231,9 @@ public:
         // Copy the ID of the child instead.
         const auto child_id = d.child_th.get_id();
         
+        // Call the hook.
+        self.before_switch_to(d.child_th);
+        
         // Switch to the child's stack
         // and save the context for the parent thread.
         auto r = self.template jump_new_context<derived_type>(
@@ -339,6 +345,9 @@ public:
         //       The pointers of the function and the argument
         //       need to be passed to the child thread,
         //       but I don't want to place them on a new thread descriptor for brevity.
+        
+        // Call the hook.
+        self.before_switch_to(th);
         
         // Switch to the child thread.
         // It will jump back to this thread immediately.
@@ -486,6 +495,9 @@ public:
         // Get the context of the thread executed next.
         const auto ctx = d.next_th.get_context();
         
+        // Call the hook.
+        self.before_switch_to(d.next_th);
+        
         // Switch to the context of the next thread.
         auto r = self.ontop_context(ctx, &d, &join_handler);
         
@@ -568,7 +580,9 @@ private:
 public:
     void yield()
     {
-        this->derived().check_current_worker();
+        auto& self = this->derived();
+        
+        self.check_current_worker();
         
         yield_data d{
             this->derived()
@@ -577,8 +591,11 @@ public:
         
         const auto ctx = d.next_th.get_context();
         
+        // Call the hook.
+        self.before_switch_to(d.next_th);
+        
         // Switch to the context of the next thread.
-        this->derived().ontop_context(ctx, &d, &yield_handler);
+        self.ontop_context(ctx, &d, &yield_handler);
         
         /*>---resuming context---<*/
     }
@@ -728,6 +745,9 @@ public:
         
         // Get the context of the following thread.
         d.next_ctx = d.next_th.get_context();
+        
+        // Call the hook.
+        self.before_switch_to(d.next_th);
         
         // Switch to the context of the following thread.
         self.ontop_context(d.next_ctx, &d, &exit_handler);
