@@ -63,6 +63,8 @@ public:
         return w.str();
     }
     
+    void before_switch_to(global_ult_ref&);
+    
     inline bool finished();
     
     global_ult_ref try_steal_from_another() {

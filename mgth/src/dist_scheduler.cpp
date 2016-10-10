@@ -25,6 +25,7 @@ class dist_scheduler
 public:
     explicit dist_scheduler(mgdsm::dsm_interface& dsm)
         : desc_pool_(dsm)
+        , dsm_(dsm)
     {
         instance_ = this;
         
@@ -81,6 +82,10 @@ public:
         return desc_pool_;
     }
     
+    mgdsm::dsm_interface& get_dsm() const MGBASE_NOEXCEPT {
+        return dsm_;
+    }
+    
 private:
     static worker_rank_t get_num_ranks_from_env()
     {
@@ -101,6 +106,8 @@ private:
     worker_rank_t           num_ranks_;
     
     global_ult_desc_pool    desc_pool_;
+    
+    mgdsm::dsm_interface&   dsm_;
     
     static dist_scheduler* instance_; // TODO: singleton
 };
@@ -137,6 +144,19 @@ global_ult_ref dist_worker::get_ult_ref_from_id(const ult_id& id)
 bool dist_worker::finished()
 {
     return sched_.finished();
+}
+
+void dist_worker::before_switch_to(global_ult_ref& th)
+{
+    auto& dsm = sched_.get_dsm();
+    
+    const auto stack_ptr = th.get_stack_ptr();
+    const auto stack_size = th.get_stack_size();
+    
+    // TODO: portable way for processors with upward call stacks
+    const auto stack_first_ptr = static_cast<mgbase::uint8_t*>(stack_ptr) - stack_size;
+    
+    dsm.fetch_writable_range(stack_first_ptr, stack_size);
 }
 
 const mgbase::size_t dist_worker::stack_size;
