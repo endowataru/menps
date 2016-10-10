@@ -213,12 +213,13 @@ private:
 public:
     ult_id_type fork_child_first(void* (* const func)(void*), void* const arg)
     {
-        this->derived().check_current_worker();
+        auto& self = this->derived();
+        self.check_current_worker();
         
         fork_child_first_data d{
-            this->derived()
-        ,   this->remove_current_ult()
-        ,   this->derived().allocate_ult()
+            self
+        ,   self.remove_current_ult()
+        ,   self.allocate_ult()
         ,   func
         ,   arg
         };
@@ -229,7 +230,7 @@ public:
         
         // Switch to the child's stack
         // and save the context for the parent thread.
-        auto r = this->derived().template jump_new_context<derived_type>(
+        auto r = self.template jump_new_context<derived_type>(
             d.child_th.get_stack_ptr()
         ,   d.child_th.get_stack_size()
         ,   &fork_child_first_handler
@@ -258,7 +259,7 @@ public:
 private:
     struct fork_parent_data
     {
-        basic_worker&   self;
+        derived_type& self;
         
         void* (*func)(void*);
         void* ptr;
@@ -285,7 +286,7 @@ private:
         
         // Jump again to the previous context
         // and save this context for the new thread.
-        auto r = self.derived().template jump_context<derived_type>(arg.fctx, null_void);
+        auto r = self.template jump_context<derived_type>(arg.fctx, null_void);
         
         /*>---resuming context---<*/
         
@@ -319,15 +320,16 @@ private:
 public:
     ult_id_type fork_parent_first(void* (* const func)(void*), void* const arg)
     {
-        this->derived().check_current_worker();
+        auto& self = this->derived();
+        self.check_current_worker();
         
-        auto th = this->derived().allocate_ult();
+        auto th = self.allocate_ult();
         
         // Copy the ID in order to move the thread to the deque.
         const auto id = th.get_id();
         
         fork_parent_data d{
-            *this
+            self
         ,   func
         ,   arg
         ,   id
@@ -341,7 +343,7 @@ public:
         // Switch to the child thread.
         // It will jump back to this thread immediately.
         const auto r =
-            this->derived().template jump_new_context<derived_type>(
+            self.template jump_new_context<derived_type>(
                 th.get_stack_ptr()
             ,   th.get_stack_size()
             ,   &fork_parent_first_handler
@@ -350,7 +352,7 @@ public:
         
         // Set the context.
         th.set_context(
-            this->derived().template cast_context<derived_type, derived_type>(
+            self.template cast_context<derived_type, derived_type>(
                 r.fctx /*>---resuming context---<*/
             )
         );
@@ -358,11 +360,11 @@ public:
         MGBASE_LOG_VERBOSE(
             "msg:Parent thread forked in a parent-first manner is pushed.\t"
             "{}"
-        ,   this->derived().show_ult_ref(th)
+        ,   self.show_ult_ref(th)
         );
         
         // Push the child thread on the top.
-        this->push_top( mgbase::move(th) );
+        self.push_top( mgbase::move(th) );
         
         // Return the thread ID.
         return id;
@@ -425,11 +427,12 @@ private:
 public:
     void* join(const ult_id_type& id)
     {
-        this->derived().check_current_worker();
+        auto& self = this->derived();
+        self.check_current_worker();
         
         // Now this thread is the parent thread.
         
-        auto child_th = this->derived().get_ult_ref_from_id(id);
+        auto child_th = self.get_ult_ref_from_id(id);
         
         {
             // Lock the child thread to examine the state.
@@ -448,7 +451,7 @@ public:
                 MGBASE_LOG_VERBOSE(
                     "msg:Join a thread that already finished.\t"
                     "{}"
-                ,   this->derived().show_ult_ref(child_th)
+                ,   self.show_ult_ref(child_th)
                 );
                 
                 // Unlock the child thread to destroy the thread descriptor.
@@ -456,7 +459,7 @@ public:
                 
                 // Destroy the thread descriptor of the child thread.
                 // The thread is not detached because it is being joined,
-                this->derived().deallocate_ult( mgbase::move(child_th) );
+                self.deallocate_ult( mgbase::move(child_th) );
                 
                 return ret;
             }
@@ -464,7 +467,7 @@ public:
                 MGBASE_LOG_VERBOSE(
                     "msg:Joining a thread that is still running.\t"
                     "{}"
-                ,   this->derived().show_ult_ref(child_th)
+                ,   self.show_ult_ref(child_th)
                 );
             }
             
@@ -473,18 +476,18 @@ public:
         }
         
         join_data d{
-            this->derived()
+            self
         ,   id
-        ,   this->remove_current_ult()
+        ,   self.remove_current_ult()
         ,   mgbase::move(child_th)
-        ,   this->pop_top() // Get the next thread. It might be a root thread.
+        ,   self.pop_top() // Get the next thread. It might be a root thread.
         };
         
         // Get the context of the thread executed next.
         const auto ctx = d.next_th.get_context();
         
         // Switch to the context of the next thread.
-        auto r = this->derived().ontop_context(ctx, &d, &join_handler);
+        auto r = self.ontop_context(ctx, &d, &join_handler);
         
         /*>---resuming context---<*/
         
@@ -582,9 +585,10 @@ public:
     
     void detach(const ult_id_type& id)
     {
-        this->derived().check_current_worker();
+        auto& self = this->derived();
+        self.check_current_worker();
         
-        auto th = this->derived().get_ult_ref_from_id(id);
+        auto th = self.get_ult_ref_from_id(id);
         
         {
             auto lc = th.get_lock();
@@ -602,7 +606,7 @@ public:
         }
         
         // Free the thread descriptor.
-        this->derived().deallocate_ult( mgbase::move(th) );
+        self.deallocate_ult( mgbase::move(th) );
     }
     
 private:
@@ -667,11 +671,12 @@ public:
     MGBASE_NORETURN
     void exit(void* const ret)
     {
-        this->derived().check_current_worker();
+        auto& self = this->derived();
+        self.check_current_worker();
         
         exit_data d{
-            this->derived()
-        ,   this->remove_current_ult()
+            self
+        ,   self.remove_current_ult()
         ,   {} // invalid thread
         ,   {} // invalid context
         };
@@ -687,9 +692,10 @@ public:
             if (d.this_th.has_joiner())
             {
                 // "get_joiner" may return either ult_ref_type or ult_id_type.
-                auto joiner = this->derived().get_ult_ref(
-                    d.this_th.get_joiner()
-                );
+                auto joiner = 
+                    self.get_ult_ref(
+                        d.this_th.get_joiner()
+                    );
                 
                 // Set the joiner thread as the next thread.
                 d.next_th = mgbase::move(joiner);
@@ -711,7 +717,7 @@ public:
         }
         else {
             // Get the next thread. It might be a root thread.
-            d.next_th = this->pop_top();
+            d.next_th = self.pop_top();
             
             MGBASE_LOG_VERBOSE(
                 "msg:Exiting this thread and switching to an unrelated thread.\t"
@@ -724,7 +730,7 @@ public:
         d.next_ctx = d.next_th.get_context();
         
         // Switch to the context of the following thread.
-        this->derived().ontop_context(d.next_ctx, &d, &exit_handler);
+        self.ontop_context(d.next_ctx, &d, &exit_handler);
         
         /*>--- this context is abandoned ---<*/
         
