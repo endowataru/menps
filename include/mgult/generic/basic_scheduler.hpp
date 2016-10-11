@@ -84,9 +84,18 @@ public:
         // and start a loop in the worker.
         {
             auto& info0 = this->workers_[0];
-            info0.real_th = mgbase::make_shared<mgbase::thread>(
-                mgbase::thread(worker_loop_main_functor{ *info0.wk, func })
-            );
+            
+            if (func != MGBASE_NULLPTR)
+            {
+                info0.real_th = mgbase::make_shared<mgbase::thread>(
+                    mgbase::thread(worker_loop_main_functor{ *info0.wk, func })
+                );
+            }
+            else {
+                info0.real_th = mgbase::make_shared<mgbase::thread>(
+                    mgbase::thread(worker_loop_functor{ *info0.wk })
+                );
+            }
         }
         
         // Start a loop in other workers.
