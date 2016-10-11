@@ -3,6 +3,7 @@
 #include "dist_worker.hpp"
 #include <mgult/generic/basic_scheduler.hpp>
 #include "global_ult_desc_pool.hpp"
+#include <mgcom/rpc.hpp>
 
 namespace mgth {
 
@@ -29,12 +30,21 @@ public:
     {
         instance_ = this;
         
+        mgcom::rpc::register_handler<steal_handler>();
+        
         num_ranks_ = get_num_ranks_from_env();
     }
     
     virtual void loop(const loop_func_t func) MGBASE_OVERRIDE
     {
-        base::loop_workers(num_ranks_, func);
+        if (mgcom::current_process_id() == 0) {
+            // Add the main thread.
+            base::loop_workers(num_ranks_, func);
+        }
+        else {
+            // Start as normal workers.
+            base::loop_workers(num_ranks_, MGBASE_NULLPTR);
+        }
     }
     
     inline global_ult_ref allocate_ult()
@@ -52,6 +62,79 @@ public:
         return desc_pool_.get_ult_ref_from_id(id);
     }
     
+    global_ult_ref try_steal_from_another(dist_worker& w)
+    {
+        const auto current_proc = mgcom::current_process_id();
+        const auto num_procs = mgcom::number_of_processes();
+        
+        // TODO: better algorithm
+        const auto random_val = static_cast<mgcom::process_id_t>(std::rand());
+        const auto random_val2 = static_cast<mgcom::process_id_t>(std::rand());
+        
+        const auto stolen_proc =
+            random_val % num_procs;
+            //%(current_proc + random_val % (num_procs - 1) + 1) % num_procs;
+        
+        const auto stolen_wk =
+            random_val2 % num_ranks_;
+        
+        const steal_argument arg{ stolen_wk };
+        
+        auto stolen = mgult::make_invalid_ult_id();
+        
+        mgcom::rpc::remote_call<steal_handler>(
+            stolen_proc
+        ,   arg
+        ,   &stolen
+        );
+        
+        if (is_invalid_ult_id(stolen)) {
+            return {};
+        }
+        else {
+            return this->get_ult_ref_from_id(stolen);
+        }
+    }
+    
+private:
+    struct steal_argument {
+        worker_rank_t   wk_rank;
+    };
+    
+    struct steal_handler
+    {
+        static const mgcom::rpc::handler_id_t handler_id = 500; // TODO
+        
+        typedef steal_argument  argument_type;
+        typedef ult_id          return_type;
+        
+        static return_type on_request(
+            const mgcom::rpc::handler_parameters&   params
+        ,   const argument_type&                    arg
+        ) {
+            const auto wk_rank = arg.wk_rank;
+            
+            MGBASE_LOG_VERBOSE(
+                "msg:Try stealing from this process..."
+            );
+            
+            auto& wk = instance_->get_worker_of_rank(wk_rank);
+            
+            auto th = wk.try_steal();
+            
+            const auto id = th.get_id();
+            
+            MGBASE_LOG_VERBOSE(
+                "msg:Stolen thread.\t"
+                "id:{:x}"
+            ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
+            );
+            
+            return id;
+        }
+    };
+    
+public:
     bool finished() {
         // FIXME
         return false;
@@ -144,6 +227,11 @@ global_ult_ref dist_worker::get_ult_ref_from_id(const ult_id& id)
 bool dist_worker::finished()
 {
     return sched_.finished();
+}
+
+global_ult_ref dist_worker::try_steal_from_another()
+{
+    return sched_.try_steal_from_another(*this);
 }
 
 void dist_worker::before_switch_to(global_ult_ref& th)

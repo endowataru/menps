@@ -67,9 +67,7 @@ public:
     
     inline bool finished();
     
-    global_ult_ref try_steal_from_another() {
-        return global_ult_ref{}; // TODO
-    }
+    global_ult_ref try_steal_from_another();
     
     static dist_worker& renew_worker(const mgult::ult_id& /*id*/) {
         return get_current_worker();
