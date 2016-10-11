@@ -92,6 +92,9 @@ public:
             return {};
         }
         else {
+            // Flush here.
+            dsm_.flush();
+            
             return this->get_ult_ref_from_id(stolen);
         }
     }
@@ -129,6 +132,9 @@ private:
                 "id:{:x}"
             ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
             );
+            
+            // Reconcile here.
+            instance_->dsm_.reconcile();
             
             return id;
         }
