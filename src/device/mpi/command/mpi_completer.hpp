@@ -86,9 +86,9 @@ public:
             // There are no established requests.
             MGBASE_ASSERT(established_ == 0);
             
-            MGBASE_LOG_VERBOSE(
+            /*MGBASE_LOG_VERBOSE(
                 "msg:Free list is full. No request is established.\t"
-            );
+            );*/
                 
             return;
         }
