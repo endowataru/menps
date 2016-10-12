@@ -44,6 +44,10 @@ private:
         auto& self = d->self;
         self.check_current_worker();
         
+        // Call the hook.
+        ult_ref_type dummy_th{};
+        self.on_after_switch(dummy_th, self.root_th_);
+        
         // Set the root context.
         self.root_th_.set_context(
             self.template cast_context<derived_type, derived_type>(
@@ -118,7 +122,8 @@ public:
             );
             
             // Call the hook.
-            self.before_switch_to(this->root_th_);
+            ult_ref_type dummy_th{};
+            self.on_before_switch(dummy_th, this->root_th_);
             
             // Switch to the context of the next thread.
             auto r = self.ontop_context(ctx, &d, &loop_root_handler);
@@ -160,6 +165,9 @@ private:
         
         auto& self = d->self;
         self.check_current_worker();
+        
+        // Call the hook.
+        self.on_after_switch(d->parent_th, d->child_th);
         
         // Move the arguments to the child's stack.
         const auto func = d->func;
@@ -232,7 +240,7 @@ public:
         const auto child_id = d.child_th.get_id();
         
         // Call the hook.
-        self.before_switch_to(d.child_th);
+        self.on_before_switch(d.parent_th, d.child_th);
         
         // Switch to the child's stack
         // and save the context for the parent thread.
@@ -346,8 +354,9 @@ public:
         //       need to be passed to the child thread,
         //       but I don't want to place them on a new thread descriptor for brevity.
         
-        // Call the hook.
-        self.before_switch_to(th);
+        // Call the hook. (TODO: Remove this; we don't call on_after_switch)
+        ult_ref_type from_th{}; // dummy thread
+        self.on_before_switch(from_th, th);
         
         // Switch to the child thread.
         // It will jump back to this thread immediately.
@@ -420,6 +429,9 @@ private:
                 "{}"
             ,   self.show_ult_ref(d->this_th)
             );
+            
+            // Call the hook.
+            self.on_after_switch(d->this_th, next_th);
             
             d->child_th.set_joiner( mgbase::move(d->this_th) );
             
@@ -496,7 +508,7 @@ public:
         const auto ctx = d.next_th.get_context();
         
         // Call the hook.
-        self.before_switch_to(d.next_th);
+        self.on_before_switch(d.this_th, d.next_th);
         
         // Switch to the context of the next thread.
         auto r = self.ontop_context(ctx, &d, &join_handler);
@@ -553,6 +565,9 @@ private:
         
         auto& self = d->self;
         
+        // Call the hook.
+        self.on_after_switch(self.current_th_, d->next_th);
+        
         {
             auto this_th = self.remove_current_ult();
             
@@ -561,6 +576,7 @@ private:
                     arg.fctx /*>---resuming context---<*/
                 )
             );
+            
             
             // Push the parent thread to the bottom.
             // This behavior is still controversial.
@@ -592,7 +608,7 @@ public:
         const auto ctx = d.next_th.get_context();
         
         // Call the hook.
-        self.before_switch_to(d.next_th);
+        self.on_before_switch(self.current_th_, d.next_th);
         
         // Switch to the context of the next thread.
         self.ontop_context(ctx, &d, &yield_handler);
@@ -641,6 +657,9 @@ private:
     {
         const auto d = arg.data;
         auto& self = d->self;
+        
+        // Call the hook.
+        self.on_after_switch(d->this_th, d->next_th);
         
         {
             // Move the previous thread to the current stack
@@ -747,7 +766,7 @@ public:
         d.next_ctx = d.next_th.get_context();
         
         // Call the hook.
-        self.before_switch_to(d.next_th);
+        self.on_before_switch(d.this_th, d.next_th);
         
         // Switch to the context of the following thread.
         self.ontop_context(d.next_ctx, &d, &exit_handler);
@@ -763,11 +782,6 @@ public:
     {
         // "try_pop_bottom" may return either ult_ref_type or ult_id_type.
         auto th = try_pop_bottom();
-        
-        if (th.is_valid()) {
-            // FIXME : correct to place memory barrier here?
-            //asm volatile ("mfence");
-        }
         
         return th;
     }

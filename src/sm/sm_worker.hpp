@@ -79,10 +79,15 @@ public:
         return get_current_worker();
     }
     
-    void before_switch_to(ult_ptr_ref& /*th*/)
+    void on_before_switch(ult_ptr_ref& /*from_th*/, ult_ptr_ref& /*to_th*/)
     {
         // Do nothing.
-        
+        // This hook is for distributed work-stealing.
+    }
+    
+    void on_after_switch(ult_ptr_ref& /*from_th*/, ult_ptr_ref& /*to_th*/)
+    {
+        // Do nothing.
         // This hook is for distributed work-stealing.
     }
     
