@@ -4,6 +4,8 @@
 #include <mgdsm.hpp>
 #include "dist_scheduler.hpp"
 
+//#include "disable_aslr.hpp"
+
 namespace mgth {
 
 namespace /*unnamed*/ {
@@ -57,6 +59,8 @@ void exit(void* const ret) {
 
 int main(int argc, char* argv[])
 {
+    //mgth::disable_aslr(argc, argv);
+    
     // The communication interface is initialized here. (e.g. MPI_Init() is called.)
     mgcom::initialize(&argc, &argv);
     
@@ -89,114 +93,4 @@ int main(int argc, char* argv[])
     
     return mgth::g_ret;
 }
-
-
-
-#if 0
-
-#include <mgas2.hpp>
-
-#include "local_cache.hpp"
-#include "coherence_manager.hpp"
-#include "sigsegv_catcher.hpp"
-
-#include <sstream>
-
-namespace mgdsm {
-
-namespace /*unnamed*/ {
-
-mgbase::unique_ptr<local_cache> cache_;
-
-mgbase::unique_ptr<coherence_manager> man_;
-
-mgbase::unique_ptr<sigsegv_catcher> catcher_;
-
-bool pass_segv(void* const ptr)
-{
-    if (cache_->is_in_range(ptr)) {
-        man_->fetch(ptr);
-        return true;
-    }
-    else
-        return false;
-}
-
-} // unnamed namespace
-
-
-namespace untyped {
-
-void* allocate(std::size_t size_in_bytes, std::size_t page_size_in_bytes)
-{
-    return cache_->pointer();
-}
-
-} // namespace untyped
-
-
-void initialize()
-{
-    const mgbase::size_t size_in_bytes = 128; // FIXME: make it adjustable
-    
-    const auto filename = fmt::format("mgdsm_cache_{}", mgcom::current_process_id());
-    
-    cache_.reset(new local_cache{filename.c_str(), size_in_bytes});
-    
-    man_.reset(new coherence_manager{*cache_});
-    
-    const sigsegv_catcher::config conf{
-        &pass_segv
-    /*,   cache_->pointer()
-    ,   cache_->size_in_bytes()*/
-    };
-    
-    catcher_.reset(new sigsegv_catcher{conf});
-}
-
-void finalize()
-{
-    catcher_.reset();
-    
-    man_.reset();
-}
-
-void reconcile()
-{
-    //man_->reconcile();
-}
-
-void flush()
-{
-    //man_->flush();
-}
-
-} // namespace mgdsm
-
-int mgdsm_main(int argc, char* argv[]);
-
-int main(int argc, char* argv[])
-{
-    // The communication interface is initialized here. (e.g. MPI_Init() is called.)
-    mgcom::initialize(&argc, &argv);
-    
-    // Initialize PGAS.
-    mgas2::initialize();
-    
-    mgdsm::initialize();
-    
-    int ret = mgdsm_main(argc, argv);
-    
-    mgdsm::finalize();
-    
-    // Finalize PGAS.
-    mgas2::finalize();
-    
-    // Finalize the communication interface.
-    mgcom::finalize();
-    
-    return ret;
-}
-
-#endif
 

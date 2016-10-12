@@ -93,7 +93,7 @@ public:
         }
         else {
             // Flush here.
-            dsm_.flush();
+            dsm_.flush_all();
             
             return this->get_ult_ref_from_id(stolen);
         }
@@ -134,7 +134,7 @@ private:
             );
             
             // Reconcile here.
-            instance_->dsm_.reconcile();
+            instance_->dsm_.reconcile_all();
             
             return id;
         }
@@ -240,17 +240,53 @@ global_ult_ref dist_worker::try_steal_from_another()
     return sched_.try_steal_from_another(*this);
 }
 
-void dist_worker::before_switch_to(global_ult_ref& th)
+void dist_worker::on_before_switch(global_ult_ref& /*from_th*/, global_ult_ref& to_th)
 {
+    if (!to_th.is_valid()) {
+        return;
+    }
+    
     auto& dsm = sched_.get_dsm();
     
-    const auto stack_ptr = th.get_stack_ptr();
-    const auto stack_size = th.get_stack_size();
+    const auto stack_ptr = to_th.get_stack_ptr();
+    const auto stack_size = to_th.get_stack_size();
     
     // TODO: portable way for processors with upward call stacks
     const auto stack_first_ptr = static_cast<mgbase::uint8_t*>(stack_ptr) - stack_size;
     
-    dsm.fetch_writable_range(stack_first_ptr, stack_size);
+    MGBASE_LOG_DEBUG(
+        "msg:Pinning call stack before switching to different thread."
+        "stack_ptr:{}\n"
+        "stack_size:{}"
+    ,   reinterpret_cast<mgbase::uintptr_t>(stack_ptr)
+    ,   stack_size
+    );
+    
+    dsm.pin(stack_first_ptr, stack_size);
+}
+void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_th*/)
+{
+    if (!from_th.is_valid()) {
+        return;
+    }
+    
+    auto& dsm = sched_.get_dsm();
+    
+    const auto stack_ptr = from_th.get_stack_ptr();
+    const auto stack_size = from_th.get_stack_size();
+    
+    // TODO: portable way for processors with upward call stacks
+    const auto stack_first_ptr = static_cast<mgbase::uint8_t*>(stack_ptr) - stack_size;
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Unpinning call stack after switching to different thread."
+        "stack_ptr:{}\n"
+        "stack_size:{}"
+    ,   reinterpret_cast<mgbase::uintptr_t>(stack_ptr)
+    ,   stack_size
+    );
+    
+    dsm.unpin(stack_first_ptr, stack_size);
 }
 
 const mgbase::size_t dist_worker::stack_size;
