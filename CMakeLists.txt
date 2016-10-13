@@ -119,6 +119,9 @@ else()
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
             
+            # Disable SSP.
+            -fno-stack-protector
+            
             # Meta warnings
             -Wall
             -Wextra
