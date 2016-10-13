@@ -340,6 +340,14 @@ int main() { int a[1]; std::end(a); return 0; }
 MGBASE_CXX11_STD_END_SUPPORTED
 )
 
+CHECK_CXX_SOURCE_COMPILES(
+"
+thread_local int x;
+int main() { return 0; }
+"
+MGBASE_CXX11_THREAD_LOCAL_SUPPORTED
+)
+
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc

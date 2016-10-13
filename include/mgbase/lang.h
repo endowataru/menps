@@ -289,6 +289,12 @@
                     for (decl = *MGBASE_FOR_BEGIN; !MGBASE_FOR_1; MGBASE_FOR_1=true)
     //#endif
     
+    #ifdef MGBASE_CXX11_THREAD_LOCAL_SUPPORTED
+        #define MGBASE_THREAD_LOCAL     thread_local
+    #else
+        #define MGBASE_THREAD_LOCAL     __thread
+    #endif
+    
     #if (__cplusplus >= 201403L)
         // For C++14 or later
         #define MGBASE_CONSTEXPR_CXX14  constexpr
