@@ -55,11 +55,11 @@ private:
         return static_cast<derived_type&>(*this);
     }
     
-    static __thread derived_type* current_worker_;
+    static MGBASE_THREAD_LOCAL derived_type* current_worker_;
 };
 
 template <typename Traits>
-__thread typename Traits::derived_type*
+MGBASE_THREAD_LOCAL typename Traits::derived_type*
 thread_local_worker_base<Traits>::current_worker_ = MGBASE_NULLPTR;
 
 } // namespace mgult
