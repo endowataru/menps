@@ -77,7 +77,14 @@ int main(int argc, char* argv[])
     mgth::g_sched = mgth::make_dist_scheduler(*mgth::g_dsm);
     
     // Start the scheduler loop.
-    mgth::g_sched->loop(&mgth::main_handler);
+    if (mgcom::current_process_id() == 0) {
+        // Add the main thread.
+        mgth::g_sched->loop(&mgth::main_handler);
+    }
+    else {
+        // Start as normal workers.
+        mgth::g_sched->loop(MGBASE_NULLPTR);
+    }
     
     // Finalize the scheduler.
     mgth::g_sched.reset();

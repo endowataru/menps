@@ -37,14 +37,7 @@ public:
     
     virtual void loop(const loop_func_t func) MGBASE_OVERRIDE
     {
-        if (mgcom::current_process_id() == 0) {
-            // Add the main thread.
-            base::loop_workers(num_ranks_, func);
-        }
-        else {
-            // Start as normal workers.
-            base::loop_workers(num_ranks_, MGBASE_NULLPTR);
-        }
+        base::loop_workers(num_ranks_, func);
     }
     
     inline global_ult_ref allocate_ult()
