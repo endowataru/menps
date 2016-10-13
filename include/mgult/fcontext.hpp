@@ -70,7 +70,7 @@ inline fcontext<B, A> make_fcontext(
 )
 MGBASE_NOEXCEPT
 {
-    MGBASE_LOG_VERBOSE(
+    MGBASE_LOG_INFO(
         "msg:Make new context.\t"
         "sp:{:x}\t"
         "size:{}\t"
@@ -90,7 +90,7 @@ inline fcontext_result<C, B> jump_fcontext(
     const fcontext<B, A>    fctx
 ,   A* const                data
 ) {
-    MGBASE_LOG_VERBOSE(
+    MGBASE_LOG_INFO(
         "msg:Jump to another context.\t"
         "fctx:{:x}\t"
         "data:{:x}"
@@ -109,7 +109,7 @@ inline fcontext_result<C, A> ontop_fcontext(
 ,   T* const                data
 ,   fcontext_result<C, A>   (* const func)(fcontext_argument<B, T>)
 ) {
-    MGBASE_LOG_VERBOSE(
+    MGBASE_LOG_INFO(
         "msg:Jump to another context and call function.\t"
         "fctx:{:x}\t"
         "data:{:x}\t"

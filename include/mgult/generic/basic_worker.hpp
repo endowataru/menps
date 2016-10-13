@@ -79,7 +79,7 @@ public:
             
             if (th.is_valid())
             {
-                MGBASE_LOG_VERBOSE(
+                MGBASE_LOG_INFO(
                     "msg:Popped a thread.\t"
                     "{}"
                 ,   derived().show_ult_ref(th)
@@ -91,14 +91,14 @@ public:
                 
                 if (th.is_valid())
                 {
-                    MGBASE_LOG_VERBOSE(
+                    MGBASE_LOG_INFO(
                         "msg:Stealing succeeded."
                     ,   derived().show_ult_ref(th)
                     );
                 }
                 else
                 {
-                    MGBASE_LOG_VERBOSE("msg:Stealing failed.");
+                    MGBASE_LOG_INFO("msg:Stealing failed.");
                     continue;
                 }
             }
@@ -114,7 +114,7 @@ public:
             
             const auto ctx = d.th.get_context();
             
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_INFO(
                 "msg:Set up a root thread. Resume the thread.\t"
                 "{}"
             ,   self.show_ult_ref(this->root_th_)
@@ -133,7 +133,7 @@ public:
             self.check_current_ult_id(root_id);
             MGBASE_ASSERT(!this->root_th_.is_valid());
             
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_INFO(
                 "msg:The thread finished. Came back to the main loop."
             );
             
@@ -192,7 +192,7 @@ private:
         // d is no longer available
         // because the parent thread might have already started on the other workers.
         
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Forked a new thread in a child-first manner.\t"
             "{}"
         ,   self.show_ult_ref(child_th)
@@ -259,7 +259,7 @@ public:
         
         MGBASE_ASSERT(self_2.current_th_.is_valid());
         
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Parent thread forked in a child-first manner was resumed.\t"
             "{}"
         ,   self_2.show_ult_ref(self_2.current_th_)
@@ -310,7 +310,7 @@ private:
         self_2.check_current_worker();
         self_2.check_current_ult_id(child_id);
         
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Child thread forked in a parent-first manner was resumed.\t"
             "{}"
         ,   self_2.show_ult_ref(self_2.current_th_)
@@ -373,7 +373,7 @@ public:
             )
         );
         
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Parent thread forked in a parent-first manner is pushed.\t"
             "{}"
         ,   self.show_ult_ref(th)
@@ -422,7 +422,7 @@ private:
             // This worker already has a lock of the child thread.
             auto lc = d->child_th.get_lock(mgbase::adopt_lock);
             
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_INFO(
                 "msg:Set the current thread as the joiner thread.\t"
                 "{}"
             ,   self.show_ult_ref(d->this_th)
@@ -467,7 +467,7 @@ public:
                 // Copy the result to destroy the thread descriptor.
                 const auto ret = child_th.get_result();
                 
-                MGBASE_LOG_VERBOSE(
+                MGBASE_LOG_INFO(
                     "msg:Join a thread that already finished.\t"
                     "{}"
                 ,   self.show_ult_ref(child_th)
@@ -483,7 +483,7 @@ public:
                 return ret;
             }
             else {
-                MGBASE_LOG_VERBOSE(
+                MGBASE_LOG_INFO(
                     "msg:Joining a thread that is still running.\t"
                     "{}"
                 ,   self.show_ult_ref(child_th)
@@ -518,7 +518,7 @@ public:
         auto& self_2 = *r.data;
         self_2.check_current_worker();
         
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Resumed the thread blocked to join a child thread that finished now.\t"
             "{}"
         ,   self_2.show_ult_ref(self_2.current_th_)
@@ -683,7 +683,7 @@ private:
             }
         }
         
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Exiting this thread."
         );
         
@@ -743,7 +743,7 @@ public:
             // Change the state of the joiner thread to "ready".
             d.next_th.set_ready();
             
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_INFO(
                 "msg:Exiting this thread and switching to the joiner thread.\t"
                 "{}"
             ,   derived().show_ult_ref(d.next_th)
@@ -753,7 +753,7 @@ public:
             // Get the next thread. It might be a root thread.
             d.next_th = self.pop_top();
             
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_INFO(
                 "msg:Exiting this thread and switching to an unrelated thread.\t"
                 "{}"
             ,   derived().show_ult_ref(d.next_th)
@@ -787,7 +787,7 @@ public:
 private:
     void push_top(ult_ref_type&& th)
     {
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Push a thread on top.\t"
             "{}"
         ,   derived().show_ult_ref(th)
@@ -797,7 +797,7 @@ private:
     }
     void push_bottom(ult_ref_type&& th)
     {
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Push a thread on bottom.\t"
             "{}"
         ,   derived().show_ult_ref(th)
@@ -814,7 +814,7 @@ private:
         {
             // Switch to the parent thread.
             
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_INFO(
                 "msg:Pop a thread.\t"
                 "{}"
             ,   derived().show_ult_ref(th)
@@ -823,7 +823,7 @@ private:
         else {
             // There is no parent thread; switch to the root thread.
             
-            MGBASE_LOG_VERBOSE(
+            MGBASE_LOG_INFO(
                 "msg:Pop a root thread.\t"
                 "{}"
             ,   derived().show_ult_ref(root_th_)
@@ -855,7 +855,7 @@ private:
         MGBASE_ASSERT(th.is_valid());
         MGBASE_ASSERT(!current_th_.is_valid());
         
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Set the current thread.\t"
             "{}"
         ,   derived().show_ult_ref(th)
@@ -867,7 +867,7 @@ private:
     {
         MGBASE_ASSERT(current_th_.is_valid());
         
-        MGBASE_LOG_VERBOSE(
+        MGBASE_LOG_INFO(
             "msg:Remove the current thread.\t"
             "{}"
         ,   derived().show_ult_ref(current_th_)
