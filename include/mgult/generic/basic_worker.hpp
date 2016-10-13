@@ -45,8 +45,7 @@ private:
         self.check_current_worker();
         
         // Call the hook.
-        ult_ref_type dummy_th{};
-        self.on_after_switch(dummy_th, self.root_th_);
+        self.on_after_switch(self.root_th_, d->th);
         
         // Set the root context.
         self.root_th_.set_context(
@@ -122,8 +121,7 @@ public:
             );
             
             // Call the hook.
-            ult_ref_type dummy_th{};
-            self.on_before_switch(dummy_th, this->root_th_);
+            self.on_before_switch(this->root_th_, d.th);
             
             // Switch to the context of the next thread.
             auto r = self.ontop_context(ctx, &d, &loop_root_handler);
