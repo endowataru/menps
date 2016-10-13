@@ -74,27 +74,9 @@ public:
         return get_current_worker();
     }
     
-    void initialize_on_this_thread()
-    {
-        stack_area_.reset(
-            new mgbase::uint8_t[stack_size]
-        );
-        alter_stack_ = 
-            mgbase::make_unique<mgdsm::alternate_signal_stack>( 
-                stack_area_.get()
-            ,   stack_size
-            );
-        
-        tls_base::initialize_on_this_thread();
-    }
+    void initialize_on_this_thread();
     
-    void finalize_on_this_thread()
-    {
-        tls_base::finalize_on_this_thread();
-        
-        alter_stack_.reset();
-        stack_area_.reset();
-    }
+    void finalize_on_this_thread();
     
     // Other methods.
     

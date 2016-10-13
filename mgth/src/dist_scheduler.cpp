@@ -282,6 +282,34 @@ void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_
     dsm.unpin(stack_first_ptr, stack_size);
 }
 
+void dist_worker::initialize_on_this_thread()
+{
+    stack_area_.reset(
+        new mgbase::uint8_t[stack_size]
+    );
+    alter_stack_ = 
+        mgbase::make_unique<mgdsm::alternate_signal_stack>( 
+            stack_area_.get()
+        ,   stack_size
+        );
+    
+    tls_base::initialize_on_this_thread();
+    
+    auto& dsm = sched_.get_dsm();
+    dsm.enable_on_this_thread();
+}
+
+void dist_worker::finalize_on_this_thread()
+{
+    auto& dsm = sched_.get_dsm();
+    dsm.disable_on_this_thread();
+    
+    tls_base::finalize_on_this_thread();
+    
+    alter_stack_.reset();
+    stack_area_.reset();
+}
+
 const mgbase::size_t dist_worker::stack_size;
 
 } // namespace mgth
