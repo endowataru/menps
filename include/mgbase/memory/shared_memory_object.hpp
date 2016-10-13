@@ -20,15 +20,21 @@ public:
     shared_memory_object()
         : fd_{-1} { }
     
-    shared_memory_object(const char* const filename, int oflag, mode_t mode)
+    shared_memory_object(const char* const filename, const int oflag, const mode_t mode)
     {
         fd_ = shm_open(filename, oflag, mode);
         
         if (fd_ < 0) {
             MGBASE_LOG_FATAL(
                 "msg:shm_open() failed.\t"
+                "filename:{}\t"
+                "oflag:{}\t"
+                "mode:{}\t"
                 "fd:{}\t"
                 "errno:{}"
+            ,   filename
+            ,   oflag
+            ,   mode
             ,   fd_
             ,   errno
             );
