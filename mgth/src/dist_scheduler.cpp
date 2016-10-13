@@ -120,14 +120,25 @@ private:
             
             const auto id = th.get_id();
             
-            MGBASE_LOG_VERBOSE(
-                "msg:Stolen thread.\t"
-                "id:{:x}"
-            ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
-            );
-            
-            // Reconcile here.
-            instance_->dsm_.reconcile_all();
+            if (is_invalid_ult_id(id)) {
+                MGBASE_LOG_VERBOSE(
+                    "msg:Stealing failed (no queued thread).\t"
+                    "theif_proc:{}\t"
+                ,   params.source
+                );
+            }
+            else {
+                MGBASE_LOG_VERBOSE(
+                    "msg:Stealing succeeded.\t"
+                    "theif_proc:{}\t"
+                    "id:{:x}"
+                ,   params.source
+                ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
+                );
+                
+                // Reconcile here.
+                instance_->dsm_.reconcile_all();
+            }
             
             return id;
         }
