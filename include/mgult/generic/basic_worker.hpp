@@ -281,53 +281,47 @@ private:
     
     MGBASE_NORETURN
     static void fork_parent_first_handler
-    (const typename context_argument<void, fork_parent_data>::type arg)
+    (const typename context_argument<derived_type, derived_type>::type arg)
     MGBASE_NOEXCEPT
     {
-        const auto d = arg.data;
-        auto& self = d->self;
+        // Get the worker reference passed by the previous thread.
+        auto& self = *arg.data;
         
-        // Copy the pointers to the new stack.
-        const auto func = d->func;
-        const auto ptr = d->ptr;
+        const auto stack_ptr = self.current_th_.get_stack_ptr();
         
-        const auto child_id = d->child_id;
+        // TODO: portability for processors with upward call stacks
+        const auto& d = *(reinterpret_cast<fork_parent_data*>(stack_ptr) - 1);
         
-        // TODO: To help the template argument deduction...
-        void* const null_void = MGBASE_NULLPTR;
+        const auto child_id = d.child_id;
         
-        // Jump again to the previous context
-        // and save this context for the new thread.
-        auto r = self.template jump_context<derived_type>(arg.fctx, null_void);
-        
-        /*>---resuming context---<*/
-        
-        // IMPORTANT: d is no longer available because it points to the parent thread's stack.
-        //            self is also unavailable because the worker might have changed.
-        
-        // Renew the worker.
-        auto& self_2 = *static_cast<derived_type*>(r.data);
-        self_2.check_current_worker();
-        self_2.check_current_ult_id(child_id);
+        self.check_current_worker();
+        self.check_current_ult_id(child_id);
         
         MGBASE_LOG_INFO(
             "msg:Child thread forked in a parent-first manner was resumed.\t"
             "{}"
-        ,   self_2.show_ult_ref(self_2.current_th_)
+        ,   self.show_ult_ref(self.current_th_)
         );
         
+        const auto func = d.func;
+        const auto func_arg = d.ptr;
+        
         // Execute the user-specified function on this stack.
-        const auto ret = func(ptr);
+        const auto ret = func(func_arg);
         
         // Renew the worker again.
-        auto& self_3 = derived_type::renew_worker(d->child_id);
-        self_3.check_current_ult_id(child_id);
+        auto& self_2 = derived_type::renew_worker(child_id);
+        self_2.check_current_ult_id(child_id);
+        
+        // Destruct the data.
+        d.~fork_parent_data();
         
         // Exit this thread.
-        self_3.exit(ret);
+        self_2.exit(ret);
         
         // Be careful that the destructors are not called in this function.
     }
+
     
 public:
     ult_id_type fork_parent_first(void* (* const func)(void*), void* const arg)
@@ -335,52 +329,48 @@ public:
         auto& self = this->derived();
         self.check_current_worker();
         
-        auto th = self.allocate_ult();
+        auto child_th = self.allocate_ult();
         
         // Copy the ID in order to move the thread to the deque.
-        const auto id = th.get_id();
+        const auto id = child_th.get_id();
         
-        fork_parent_data d{
+        const auto stack_ptr = child_th.get_stack_ptr();
+        
+        // TODO: portability for processors with upward call stacks
+        const auto child_data_ptr = 
+            reinterpret_cast<fork_parent_data*>(stack_ptr) - 1;
+        
+        // Place the thread data on the child's stack.
+        new (child_data_ptr) fork_parent_data{
             self
         ,   func
         ,   arg
         ,   id
         };
         
-        // TODO: Remove this context switches for parent-first scheduling.
-        //       The pointers of the function and the argument
-        //       need to be passed to the child thread,
-        //       but I don't want to place them on a new thread descriptor for brevity.
+        const auto stack_size =
+            child_th.get_stack_size() - sizeof(fork_parent_data);
         
-        // Call the hook. (TODO: Remove this; we don't call on_after_switch)
-        ult_ref_type from_th{}; // dummy thread
-        self.on_before_switch(from_th, th);
-        
-        // Switch to the child thread.
-        // It will jump back to this thread immediately.
-        const auto r =
-            self.template jump_new_context<derived_type>(
-                th.get_stack_ptr()
-            ,   th.get_stack_size()
-            ,   &fork_parent_first_handler
-            ,   &d
-            );
+        // Prepare a context.
+        const auto ctx = self.make_context(
+            child_data_ptr // The call stack starts from here.
+        ,   stack_size
+        ,   &fork_parent_first_handler
+        );
         
         // Set the context.
-        th.set_context(
-            self.template cast_context<derived_type, derived_type>(
-                r.fctx /*>---resuming context---<*/
-            )
-        );
+        child_th.set_context(ctx);
         
         MGBASE_LOG_INFO(
             "msg:Parent thread forked in a parent-first manner is pushed.\t"
+            "data_ptr:{:x}\t"
             "{}"
-        ,   self.show_ult_ref(th)
+        ,   reinterpret_cast<mgbase::uintptr_t>(child_data_ptr)
+        ,   self.show_ult_ref(child_th)
         );
         
         // Push the child thread on the top.
-        self.push_top( mgbase::move(th) );
+        self.push_top( mgbase::move(child_th) );
         
         // Return the thread ID.
         return id;

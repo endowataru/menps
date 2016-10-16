@@ -32,6 +32,15 @@ public:
         return { fctx.fctx };
     }
     
+    template <typename B, typename A>
+    static fcontext<B, A> make_context(
+        void* const                 sp
+    ,   const mgbase::size_t        size
+    ,   void (* const func)(fcontext_argument<B, A>)
+    ) {
+        return make_fcontext(sp, size, func);
+    }
+    
     template <typename C, typename B, typename A>
     static fcontext_result<C, B> jump_context(
         const fcontext<B, A>    fctx
