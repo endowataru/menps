@@ -1,3 +1,6 @@
+
+// Modified version of Boost.Context
+
 /*
             Copyright Oliver Kowalke 2009.
    Distributed under the Boost Software License, Version 1.0.
@@ -40,23 +43,36 @@ _mgult_ontop_fcontext:
 
     /* restore RSP (pointing to context-data) from RDI */
     movq  %rdi, %rsp
-
+    
     popq  %r12  /* restrore R12 */
     popq  %r13  /* restrore R13 */
     popq  %r14  /* restrore R14 */
     popq  %r15  /* restrore R15 */
     popq  %rbx  /* restrore RBX */
     popq  %rbp  /* restrore RBP */
+    
+    movq    %rax, %rdi
+    
+    pushq   $0 //dummy for alignment
+    
+    callq  *%rdx // added
+    
+    popq    %r8  //dummy for alignment
 
     /* preserve ontop-function in R8 */
-    movq  %rdx, %r8
-
+    //movq  %rdx, %r8
+    /* restore return-address */
+    popq  %r8 // changed
+    
     /* return transfer_t from jump */
     /* RAX == fctx, RDX == data */
-    movq  %rsi, %rdx
+    /*movq  %rsi, %rdx*/
     /* pass transfer_t as first arg in context function */
     /* RDI == fctx, RSI == data */
-    movq  %rax, %rdi
+    /*movq  %rax, %rdi*/
+    
+    movq    %rax, %rdi
+    movq    %rdx, %rsi
 
     /* keep return-address on stack */
 
