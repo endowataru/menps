@@ -44,7 +44,15 @@ mgult_ontop_fcontext:
 
     /* restore RSP (pointing to context-data) from RDI */
     movq  %rdi, %rsp
-
+    
+    // Call the function as workaround.
+    movq  %rax, %rdi
+    movq  %rsp, %rbp
+    andq  $-16, %rsp // Force aligned
+    callq  *%rdx 
+    movq  %rbp, %rsp
+    // Workaround ends.
+    
     popq  %r12  /* restrore R12 */
     popq  %r13  /* restrore R13 */
     popq  %r14  /* restrore R14 */
@@ -52,33 +60,16 @@ mgult_ontop_fcontext:
     popq  %rbx  /* restrore RBX */
     popq  %rbp  /* restrore RBP */
     
-    movq    %rax, %rdi
-    
-    pushq   $0 //dummy for alignment
-    
-    callq  *%rdx // added
-    
-    popq    %r8  //dummy for alignment
-
-    /* preserve ontop-function in R8 */
-    /*movq  %rdx, %r8*/
     /* restore return-address */
-    popq  %r8 // changed
-
-    /* return transfer_t from jump */
-    /* RAX == fctx, RDX == data */
-    /*movq  %rsi, %rdx*/
-    /* pass transfer_t as first arg in context function */
-    /* RDI == fctx, RSI == data */
-    /*movq  %rax, %rdi*/
-    
+    popq  %r8
     
     movq    %rax, %rdi
     movq    %rdx, %rsi
     
     /* keep return-address on stack */
-
+    
     /* indirect jump to context */
+    // returned: (RAX, RDX)
     jmp  *%r8
 .size mgult_ontop_fcontext,.-mgult_ontop_fcontext
 
