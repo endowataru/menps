@@ -27,7 +27,9 @@ public:
     global_ult_ref(const ult_id& id, const desc_remote_ptr& desc_rptr)
         : id_(id)
         , desc_rptr_(desc_rptr)
-        { }
+    {
+        MGBASE_ASSERT(mgcom::valid_process_id(id.di.proc));
+    }
     
     ~global_ult_ref() = default;
     
@@ -196,6 +198,7 @@ public:
     std::string to_string()
     {
         MGBASE_ASSERT(is_valid());
+        MGBASE_ASSERT(mgcom::valid_process_id(id_.di.proc));
         
         fmt::MemoryWriter w;
         w.write(
@@ -205,7 +208,8 @@ public:
             "detached:{}\t"
             "result:{:x}\t"
             "stack_ptr:{:x}\t"
-            "stack_size:{:x}"
+            "stack_size:{:x}\t"
+            "ctx:{:x}\t"
         ,   reinterpret_cast<mgbase::uintptr_t>(id_.ptr)
         ,   static_cast<typename mgbase::underlying_type<global_ult_state>::type>(get_state())
         ,   reinterpret_cast<mgbase::uintptr_t>(get_joiner().ptr)
@@ -213,6 +217,7 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(load_result())
         ,   reinterpret_cast<mgbase::uintptr_t>(get_stack_ptr())
         ,   get_stack_size()
+        ,   reinterpret_cast<mgbase::uintptr_t>(get_context().fctx)
         );
         return w.str();
     }

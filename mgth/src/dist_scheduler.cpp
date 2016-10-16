@@ -4,6 +4,7 @@
 #include <mgult/generic/basic_scheduler.hpp>
 #include "global_ult_desc_pool.hpp"
 #include <mgcom/rpc.hpp>
+#include <mgcom/collective.hpp>
 
 namespace mgth {
 
@@ -37,7 +38,7 @@ public:
     
     virtual void loop(const loop_func_t func) MGBASE_OVERRIDE
     {
-        base::loop_workers(num_ranks_, func);
+        base::loop_workers(num_ranks_, func, &mgcom::collective::barrier);
     }
     
     inline global_ult_ref allocate_ult()
@@ -121,14 +122,14 @@ private:
             const auto id = th.get_id();
             
             if (is_invalid_ult_id(id)) {
-                MGBASE_LOG_VERBOSE(
+                MGBASE_LOG_INFO(
                     "msg:Stealing failed (no queued thread).\t"
                     "theif_proc:{}\t"
                 ,   params.source
                 );
             }
             else {
-                MGBASE_LOG_VERBOSE(
+                MGBASE_LOG_INFO(
                     "msg:Stealing succeeded.\t"
                     "theif_proc:{}\t"
                     "id:{:x}"
@@ -291,6 +292,15 @@ void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_
     );
     
     dsm.unpin(stack_first_ptr, stack_size);
+}
+
+void dist_worker::on_join_blocked()
+{
+    sched_.get_dsm().reconcile_all();
+}
+void dist_worker::on_join_resume()
+{
+    sched_.get_dsm().flush_all();
 }
 
 void dist_worker::initialize_on_this_thread()
