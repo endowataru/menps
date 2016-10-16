@@ -67,7 +67,12 @@ private:
     };
     
 public:
-    void loop_workers(const worker_rank_type num_ranks, const loop_func_t func)
+    template <typename BarrierFunc>
+    void loop_workers(
+        const worker_rank_type  num_ranks
+    ,   const loop_func_t       func
+    ,   BarrierFunc             barrier_func
+    )
     {
         this->derived().set_started();
         
@@ -79,6 +84,11 @@ public:
             auto& info = this->workers_[rank];
             info.wk = mgbase::make_shared<worker_type>(this->derived(), rank);
         }
+        
+        // Insert a global barrier for distributed work-stealing.
+        // Initialization on all the processes must be completed
+        // before stealing occurs.
+        barrier_func();
         
         // Push a main thread to the first worker (rank 0)
         // and start a loop in the worker.
@@ -154,7 +164,9 @@ public:
     worker_type& get_worker_of_rank(const worker_rank_type rank)
     {
         MGBASE_ASSERT(rank < workers_.size());
-        return *workers_[rank].wk;
+        const auto& wk = workers_[rank].wk;
+        MGBASE_ASSERT(wk != MGBASE_NULLPTR);
+        return *wk;
     }
     
 private:

@@ -32,7 +32,13 @@ public:
     
     virtual void loop(const loop_func_t func) MGBASE_OVERRIDE
     {
-        base::loop_workers(num_ranks_, func);
+        struct empty_barrier {
+            void operator() () {
+                // do nothing
+            }
+        };
+        
+        base::loop_workers(num_ranks_, func, empty_barrier{});
     }
     
     void set_started()

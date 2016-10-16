@@ -90,6 +90,8 @@ public:
         // Do nothing.
         // This hook is for distributed work-stealing.
     }
+    void on_join_blocked() { } // This hook is for distributed work-stealing.
+    void on_join_resume() { } // This hook is for distributed work-stealing.
     
     bool finished();
     

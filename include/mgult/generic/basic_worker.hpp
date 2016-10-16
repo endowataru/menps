@@ -398,6 +398,11 @@ private:
         // Move the arguments to the child's stack.
         auto next_th = mgbase::move(d->next_th);
         
+        // Call the hook.
+        self.on_after_switch(d->this_th, next_th);
+        
+        self.on_join_blocked(); // TODO
+        
         {
             // Set this thread as blocked.
             d->this_th.set_blocked();
@@ -417,9 +422,6 @@ private:
                 "{}"
             ,   self.show_ult_ref(d->this_th)
             );
-            
-            // Call the hook.
-            self.on_after_switch(d->this_th, next_th);
             
             d->child_th.set_joiner( mgbase::move(d->this_th) );
             
@@ -687,6 +689,28 @@ private:
         d->next_th.~ult_ref_type();
         d->next_ctx.~ult_context_type();
         
+        #if 0
+        MGBASE_LOG_INFO(
+            "msg:Switching from exiting thread.\t"
+            "return0:{:x}\t"
+            "frame0:{:x}\t"
+            "return1:{:x}\t"
+            "frame1:{:x}\t"
+            "return2:{:x}\t"
+            "frame2:{:x}\t"
+            /*"return3:{:x}\t"
+            "frame3:{:x}\t"*/
+        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_return_address(0))
+        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_frame_address(0))
+        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_return_address(1))
+        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_frame_address(1))
+        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_return_address(2))
+        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_frame_address(2))
+        /*,   reinterpret_cast<mgbase::uintptr_t>(__builtin_return_address(3))
+        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_frame_address(3))*/
+        );
+        #endif
+        
         // Switch to the resumed context of the following thread.
         return { { }, &self };
     }
@@ -732,6 +756,8 @@ public:
         if (d.next_th.is_valid()) {
             // Change the state of the joiner thread to "ready".
             d.next_th.set_ready();
+            
+            self.on_join_resume(); // TODO
             
             MGBASE_LOG_INFO(
                 "msg:Exiting this thread and switching to the joiner thread.\t"
