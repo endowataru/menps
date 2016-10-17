@@ -6,7 +6,7 @@ add_library(mgth STATIC
     ./src/dist_scheduler.cpp
     ./src/entrypoint.cpp
     ./src/global_ult_desc_pool.cpp
-    #./src/disable_aslr.cpp
+    ./src/disable_aslr.cpp
 )
 
 target_include_directories(mgth

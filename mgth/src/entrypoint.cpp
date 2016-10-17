@@ -4,7 +4,7 @@
 #include <mgdsm.hpp>
 #include "dist_scheduler.hpp"
 
-//#include "disable_aslr.hpp"
+#include "disable_aslr.hpp"
 
 namespace mgth {
 
@@ -59,7 +59,7 @@ void exit(void* const ret) {
 
 int main(int argc, char* argv[])
 {
-    //mgth::disable_aslr(argc, argv);
+    mgth::disable_aslr(argc, argv);
     
     // The communication interface is initialized here. (e.g. MPI_Init() is called.)
     mgcom::initialize(&argc, &argv);
