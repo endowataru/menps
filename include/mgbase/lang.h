@@ -272,9 +272,10 @@
         #define MGBASE_DEFAULT_NOEXCEPT
     #endif
     
-    //#ifdef MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED
-    
-    //#else
+    #ifdef MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED
+        #define MGBASE_RANGE_BASED_FOR(decl, ...) \
+            for (decl : __VA_ARGS__)
+    #else
         // Reference:
         // http://iorate.hatenablog.com/entry/20110412/1302627774
         
@@ -287,7 +288,7 @@
                 MGBASE_FOR_1 && ((void)++MGBASE_FOR_BEGIN, 0)) \
                     if (!(MGBASE_FOR_1 = false)) \
                     for (decl = *MGBASE_FOR_BEGIN; !MGBASE_FOR_1; MGBASE_FOR_1=true)
-    //#endif
+    #endif
     
     #ifdef MGBASE_CXX11_THREAD_LOCAL_SUPPORTED
         #define MGBASE_THREAD_LOCAL     thread_local
