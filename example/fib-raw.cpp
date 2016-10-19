@@ -11,37 +11,52 @@ mgult::scheduler_ptr g_s;
 
 typedef mgbase::uint64_t    fib_int_t;
 
-struct fib_func
+struct fib_data
 {
     fib_int_t*  ret;
-    fib_int_t   n;
-    
-    void operator () ()
-    {
-        if (n == 0 || n == 1) {
-            *ret = n;
-            return;
-        }
-        
-        fib_int_t r1{};
-        fib_int_t r2{};
-        
-        mgult::sm::thread th{ *g_s, fib_func{ &r1, n-1 } };
-        
-        fib_func{ &r2, n-2 }();
-        
-        th.join();
-        
-        *ret = r1 + r2;
-    }
+    fib_int_t   arg;
 };
+
+void fib(void* const arg)
+{
+    const auto& d = *static_cast<fib_data*>(arg);
+    
+    const auto n = d.arg;
+    
+    if (n == 0 || n == 1) {
+        *d.ret = n;
+        return;
+    }
+    
+    auto t1 = g_s->allocate(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
+    auto t2 = g_s->allocate(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
+    
+    auto& d1 = *static_cast<fib_data*>(t1.ptr);
+    auto& d2 = *static_cast<fib_data*>(t2.ptr);
+    
+    fib_int_t r1{};
+    fib_int_t r2{};
+    
+    d1 = { &r1, n-1 };
+    d2 = { &r2, n-2 };
+    
+    g_s->fork(t1, &fib);
+    g_s->fork(t2, &fib);
+    
+    g_s->join(t1.id);
+    g_s->join(t2.id);
+    
+    *d.ret = r1 + r2;
+}
 
 fib_int_t g_result = 0;
 fib_int_t g_arg_n = 0;
 
 void start_fib()
 {
-    fib_func{ &g_result, g_arg_n }();
+    fib_data d{ &g_result, g_arg_n };
+    
+    fib(&d);
 }
 
 } // unnamed namespace

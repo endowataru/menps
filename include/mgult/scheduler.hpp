@@ -8,6 +8,12 @@ namespace mgult {
 
 class scheduler
 {
+protected:
+    scheduler() MGBASE_DEFAULT_NOEXCEPT = default;
+    
+    scheduler(const scheduler&) MGBASE_DEFAULT_NOEXCEPT = default;
+    scheduler& operator = (const scheduler&) MGBASE_DEFAULT_NOEXCEPT = default;
+    
 public:
     virtual ~scheduler() = default;
     

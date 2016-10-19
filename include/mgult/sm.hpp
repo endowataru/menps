@@ -3,6 +3,7 @@
 
 #include <mgult/scheduler.hpp>
 #include <mgbase/unique_ptr.hpp>
+#include <mgult/sm/thread.hpp>
 
 namespace mgult {
 
