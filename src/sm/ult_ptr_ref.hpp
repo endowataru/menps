@@ -130,14 +130,12 @@ public:
             "state:{}\t"
             "joiner:{:x}\t"
             "detached:{}\t"
-            "result:{:x}\t"
             "stack_ptr:{:x}\t"
             "stack_size:{:x}"
         ,   reinterpret_cast<mgbase::uintptr_t>(desc_)
         ,   static_cast<typename mgbase::underlying_type<ult_state>::type>(desc_->state)
         ,   reinterpret_cast<mgbase::uintptr_t>(desc_->joiner)
         ,   desc_->detached
-        ,   reinterpret_cast<mgbase::uintptr_t>(desc_->result)
         ,   reinterpret_cast<mgbase::uintptr_t>(desc_->stack_ptr)
         ,   desc_->stack_size
         );
