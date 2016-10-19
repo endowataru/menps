@@ -9,34 +9,54 @@ mgult::scheduler_ptr g_s;
 
 /* Fibonacci with stack variables */
 
-void* fib(void* const arg)
+typedef mgbase::uint64_t    fib_int_t;
+
+struct fib_data
 {
-    const auto n = reinterpret_cast<mgbase::uintptr_t>(arg);
+    fib_int_t*  ret;
+    fib_int_t   arg;
+};
+
+void fib(void* const arg)
+{
+    const auto& d = *static_cast<fib_data*>(arg);
+    
+    const auto n = d.arg;
     
     if (n == 0 || n == 1) {
-        return reinterpret_cast<void*>(n);
+        *d.ret = n;
+        return;
     }
     
-    const auto t1 = g_s->fork(&fib, reinterpret_cast<void*>(n - 1));
-    const auto t2 = g_s->fork(&fib, reinterpret_cast<void*>(n - 2));
+    auto t1 = g_s->allocate(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
+    auto t2 = g_s->allocate(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
     
-    const auto r1 = g_s->join(t1);
-    const auto r2 = g_s->join(t2);
+    auto& d1 = *static_cast<fib_data*>(t1.ptr);
+    auto& d2 = *static_cast<fib_data*>(t2.ptr);
     
-    const auto ri1 = reinterpret_cast<mgbase::uintptr_t>(r1);
-    const auto ri2 = reinterpret_cast<mgbase::uintptr_t>(r2);
+    fib_int_t r1{};
+    fib_int_t r2{};
     
-    return reinterpret_cast<void*>(ri1 + ri2);
+    d1 = { &r1, n-1 };
+    d2 = { &r2, n-2 };
+    
+    g_s->fork(t1, &fib);
+    g_s->fork(t2, &fib);
+    
+    g_s->join(t1.id);
+    g_s->join(t2.id);
+    
+    *d.ret = r1 + r2;
 }
 
-mgbase::uintptr_t g_result = 0;
-mgbase::uintptr_t g_arg_n = 0;
+fib_int_t g_result = 0;
+fib_int_t g_arg_n = 0;
 
 void start_fib()
 {
-    const auto r = fib(reinterpret_cast<void*>(g_arg_n));
+    fib_data d{ &g_result, g_arg_n };
     
-    g_result = reinterpret_cast<mgbase::uintptr_t>(r);
+    fib(&d);
 }
 
 } // unnamed namespace

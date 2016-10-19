@@ -4,8 +4,6 @@
 #include <mgult/generic/common.hpp>
 #include "ult_id.hpp"
 
-#include <mgbase/unique_ptr.hpp>
-
 namespace mgult {
 
 class scheduler
@@ -15,16 +13,29 @@ public:
     
     virtual void loop(loop_func_t) = 0;
     
-    virtual ult_id fork(fork_func_t func, void* arg) = 0;
+    struct allocated_ult {
+        ult_id  id;
+        void*   ptr;
+    };
     
-    virtual void* join(const ult_id&) = 0;
+    virtual allocated_ult allocate(
+        mgbase::size_t  alignment
+    ,   mgbase::size_t  size
+    ) = 0;
     
-    virtual void detach(const ult_id&) = 0;
+    virtual void fork(
+        allocated_ult   th
+    ,   fork_func_t     func
+    ) = 0;
+    
+    virtual void join(ult_id) = 0;
+    
+    virtual void detach(ult_id) = 0;
     
     virtual void yield() = 0;
     
     MGBASE_NORETURN
-    virtual void exit(void* ret) = 0;
+    virtual void exit() = 0;
 };
 
 } // namespace mgult

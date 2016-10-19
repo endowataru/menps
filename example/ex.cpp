@@ -5,23 +5,22 @@
 
 mgult::scheduler_ptr g_s;
 
-void* hoge(void*)
+void hoge(void*)
 {
     std::cout << "hoge" << std::endl;
-    return reinterpret_cast<void*>(1);
 }
 
 void f()
 {
     std::cout << "f()" << std::endl;
     
-    auto t = g_s->fork(hoge, MGBASE_NULLPTR);
+    auto t = g_s->allocate(0, 0);
+    
+    g_s->fork(t, hoge);
     
     std::cout << "f().parent " << std::endl;
     
-    auto x = g_s->join(t);
-    
-    std::cout << reinterpret_cast<mgbase::uintptr_t>(x) << std::endl;
+    g_s->join(t.id);
     
 }
 

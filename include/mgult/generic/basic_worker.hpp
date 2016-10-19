@@ -3,6 +3,8 @@
 
 #include <mgbase/utility.hpp>
 #include <mgbase/logger.hpp>
+#include <mgbase/memory/align.hpp>
+#include <mgbase/memory/distance_in_bytes.hpp>
 
 namespace mgult {
 
@@ -15,6 +17,8 @@ private:
     typedef typename Traits::worker_deque_type      worker_deque_type;
     typedef typename Traits::worker_deque_conf_type worker_deque_conf_type;
     typedef typename Traits::ult_id_type            ult_id_type;
+    
+    typedef void (*fork_func_type)(void*);
     
     template <typename B, typename A>
     struct context
@@ -146,34 +150,153 @@ public:
 private:
     struct fork_child_first_data
     {
+        fork_func_type  func;
+        void*           ptr;
+        
         derived_type&   self;
         ult_ref_type    parent_th;
         ult_ref_type    child_th;
-        
-        void* (*func)(void*);
-        void* arg;
     };
     
+    struct fork_parent_first_data
+    {
+        fork_func_type  func;
+        void*           ptr;
+        
+        ult_id_type     child_id;
+    };
+    
+    union fork_data
+    {
+        fork_child_first_data   child_first;
+        fork_parent_first_data  parent_first;
+    };
+    
+public:
+    struct allocated_ult
+    {
+        ult_id_type id;
+        void*       ptr;
+    };
+    
+    MGBASE_WARN_UNUSED_RESULT
+    allocated_ult allocate(
+        const mgbase::size_t    alignment
+    ,   const mgbase::size_t    size
+    )
+    {
+        auto& self = this->derived();
+        self.check_current_worker();
+        
+        // Allocate a new thread descriptor.
+        auto th = self.allocate_ult();
+        
+        const auto id = th.get_id();
+        
+        // Although these two are modified by align_call_stack,
+        // the modifications are discarded.
+        void* stack_ptr = th.get_stack_ptr();
+        mgbase::size_t stack_size = th.get_stack_size();
+        
+        // Allocate a space for fork data.
+        mgbase::align_call_stack(
+            MGBASE_ALIGNOF(fork_data)
+        ,   sizeof(fork_data)
+        ,   stack_ptr
+        ,   stack_size
+        );
+        
+        if (size > 0)
+        {
+            // Allocate a space for user-defined data.
+            const auto ptr =
+                mgbase::align_call_stack(
+                    alignment
+                ,   size
+                ,   stack_ptr
+                ,   stack_size
+                );
+            
+            if (ptr == MGBASE_NULLPTR)
+            {
+                // The required size by the user is too big
+                // to place on the call stack.
+                throw std::bad_alloc{};
+            }
+        }
+        
+        return { id, stack_ptr };
+    }
+    
+private:
+    struct fork_stack_info
+    {
+        ult_ref_type    child_th;
+        void*           stack_ptr;
+        mgbase::size_t  stack_size;
+        fork_data&      data;
+    };
+    
+    static fork_data& get_fork_data(void* stack_ptr, mgbase::size_t stack_size)
+    {
+        auto p =
+            static_cast<fork_data*>(
+                mgbase::align_call_stack(
+                    MGBASE_ALIGNOF(fork_data)
+                ,   sizeof(fork_data)
+                ,   stack_ptr
+                ,   stack_size
+                )
+            );
+        
+        return *p;
+    }
+    
+    fork_stack_info calc_fork_stack_info(const allocated_ult& child)
+    {
+        auto& self = this->derived();
+        self.check_current_worker();
+        
+        // Get the reference to the child thread again.
+        // (allocate() had it once.)
+        // TODO: Reduce two look-ups for the child thread.
+        auto child_th = self.get_ult_ref_from_id(child.id);
+        
+        auto orig_stack_ptr   = child_th.get_stack_ptr();
+        auto orig_stack_size  = child_th.get_stack_size();
+        
+        const auto stack_ptr = child.ptr;
+        
+        const auto used_size =
+            static_cast<mgbase::size_t>(
+                mgbase::distance_in_bytes(stack_ptr, orig_stack_ptr)
+                * MGBASE_CALL_STACK_GROW_DIR
+            );
+        
+        return {
+            mgbase::move(child_th)
+        ,   stack_ptr
+        ,   orig_stack_size - used_size
+        ,   get_fork_data(orig_stack_ptr, orig_stack_size)
+        };
+    }
+    
+private:
     MGBASE_NORETURN
     static void fork_child_first_handler
     (const typename context_argument<derived_type, fork_child_first_data>::type arg)
     MGBASE_NOEXCEPT
     {
-        auto& d = arg.data;
+        auto& d = *arg.data;
         
-        auto& self = d->self;
+        auto& self = d.self;
         self.check_current_worker();
         
         // Call the hook.
-        self.on_after_switch(d->parent_th, d->child_th);
-        
-        // Move the arguments to the child's stack.
-        const auto func = d->func;
-        const auto func_arg = d->arg;
-        auto child_th = mgbase::move(d->child_th);
+        self.on_after_switch(d.parent_th, d.child_th);
         
         {
-            auto& parent_th = d->parent_th;
+            auto& parent_th = d.parent_th;
             
             // Set the context to the parent thread.
             parent_th.set_context(
@@ -189,23 +312,23 @@ private:
             self.push_top( mgbase::move(parent_th) );
         }
         
-        // d is no longer available
-        // because the parent thread might have already started on the other workers.
+        // The parent's call stack is no longer accessible from the current context
+        // because the parent thread might have already started on another worker.
         
         MGBASE_LOG_INFO(
             "msg:Forked a new thread in a child-first manner.\t"
             "{}"
-        ,   self.show_ult_ref(child_th)
+        ,   self.show_ult_ref(d.child_th)
         );
         
         // Copy the ID to the current stack.
-        const auto child_id = child_th.get_id();
+        const auto child_id = d.child_th.get_id();
         
         // Change this thread to the child thread.
-        self.set_current_ult(mgbase::move(child_th));
+        self.set_current_ult(mgbase::move(d.child_th));
         
         // Execute the user-defined function.
-        void* const ret = func(func_arg);
+        d.func(d.ptr);
         
         // Renew a worker to the child continuation's one.
         auto& self_2 = derived_type::renew_worker(child_id);
@@ -214,28 +337,28 @@ private:
         self_2.check_current_ult_id(child_id);
         
         // Exit this thread.
-        self_2.exit(ret);
+        self_2.exit();
         
         // Be careful that the destructors are not called in this function.
     }
     
 public:
-    ult_id_type fork_child_first(void* (* const func)(void*), void* const arg)
+    void fork_child_first(const allocated_ult& child, const fork_func_type func)
     {
         auto& self = this->derived();
         self.check_current_worker();
         
-        fork_child_first_data d{
-            self
-        ,   self.remove_current_ult()
-        ,   self.allocate_ult()
-        ,   func
-        ,   arg
-        };
+        auto info = self.calc_fork_stack_info(child);
         
-        // d.child_th will be moved when the context is resumed.
-        // Copy the ID of the child instead.
-        const auto child_id = d.child_th.get_id();
+        // Place the thread data on the child's stack.
+        auto& d =
+            * new (&info.data.child_first) fork_child_first_data{
+                func
+            ,   child.ptr
+            ,   self
+            ,   self.remove_current_ult()
+            ,   mgbase::move(info.child_th)
+            };
         
         // Call the hook.
         self.on_before_switch(d.parent_th, d.child_th);
@@ -243,8 +366,8 @@ public:
         // Switch to the child's stack
         // and save the context for the parent thread.
         auto r = self.template jump_new_context<derived_type>(
-            d.child_th.get_stack_ptr()
-        ,   d.child_th.get_stack_size()
+            info.stack_ptr
+        ,   info.stack_size
         ,   &fork_child_first_handler
         ,   &d
         );
@@ -264,21 +387,9 @@ public:
             "{}"
         ,   self_2.show_ult_ref(self_2.current_th_)
         );
-        
-        return child_id;
     }
     
 private:
-    struct fork_parent_data
-    {
-        derived_type& self;
-        
-        void* (*func)(void*);
-        void* ptr;
-        
-        ult_id_type child_id;
-    };
-    
     MGBASE_NORETURN
     static void fork_parent_first_handler
     (const typename context_argument<derived_type, derived_type>::type arg)
@@ -287,10 +398,11 @@ private:
         // Get the worker reference passed by the previous thread.
         auto& self = *arg.data;
         
-        const auto stack_ptr = self.current_th_.get_stack_ptr();
+        const auto orig_stack_ptr = self.current_th_.get_stack_ptr();
+        const auto orig_stack_size = self.current_th_.get_stack_size();
         
-        // TODO: portability for processors with upward call stacks
-        const auto& d = *(reinterpret_cast<fork_parent_data*>(stack_ptr) - 1);
+        // Get the reference to the fork data.
+        auto& d = get_fork_data(orig_stack_ptr, orig_stack_size).parent_first;
         
         const auto child_id = d.child_id;
         
@@ -303,77 +415,59 @@ private:
         ,   self.show_ult_ref(self.current_th_)
         );
         
-        const auto func = d.func;
-        const auto func_arg = d.ptr;
-        
         // Execute the user-specified function on this stack.
-        const auto ret = func(func_arg);
+        d.func(d.ptr);
         
         // Renew the worker again.
         auto& self_2 = derived_type::renew_worker(child_id);
         self_2.check_current_ult_id(child_id);
         
         // Destruct the data.
-        d.~fork_parent_data();
+        d.~fork_parent_first_data();
         
         // Exit this thread.
-        self_2.exit(ret);
+        self_2.exit();
         
         // Be careful that the destructors are not called in this function.
     }
-
     
 public:
-    ult_id_type fork_parent_first(void* (* const func)(void*), void* const arg)
+    void fork_parent_first(const allocated_ult& child, const fork_func_type func)
     {
         auto& self = this->derived();
         self.check_current_worker();
         
-        auto child_th = self.allocate_ult();
-        
-        // Copy the ID in order to move the thread to the deque.
-        const auto id = child_th.get_id();
-        
-        const auto stack_ptr = child_th.get_stack_ptr();
-        
-        // TODO: portability for processors with upward call stacks
-        const auto child_data_ptr = 
-            reinterpret_cast<fork_parent_data*>(stack_ptr) - 1;
+        auto info = self.calc_fork_stack_info(child);
         
         // Place the thread data on the child's stack.
-        new (child_data_ptr) fork_parent_data{
-            self
-        ,   func
-        ,   arg
-        ,   id
-        };
-        
-        const auto stack_size =
-            child_th.get_stack_size() - sizeof(fork_parent_data);
+        auto& d =
+            * new (&info.data.parent_first) fork_parent_first_data{
+                func
+            ,   child.ptr
+            ,   child.id
+            };
         
         // Prepare a context.
-        const auto ctx = self.make_context(
-            child_data_ptr // The call stack starts from here.
-        ,   stack_size
-        ,   &fork_parent_first_handler
-        );
+        const auto ctx =
+            self.make_context(
+                info.stack_ptr // The call stack starts from here.
+            ,   info.stack_size
+            ,   &fork_parent_first_handler
+            );
         
         // Set the context.
-        child_th.set_context(ctx);
+        info.child_th.set_context(ctx);
         
         MGBASE_LOG_INFO(
             "msg:Parent thread forked in a parent-first manner is pushed.\t"
             "data_ptr:{:x}\t"
             "{}"
-        ,   reinterpret_cast<mgbase::uintptr_t>(child_data_ptr)
-        ,   self.show_ult_ref(child_th)
+        ,   reinterpret_cast<mgbase::uintptr_t>(&d)
+        ,   self.show_ult_ref(info.child_th)
         );
         
         // Push the child thread on the top.
-        self.push_top( mgbase::move(child_th) );
-        
-        // Return the thread ID.
-        return id;
+        self.push_top( mgbase::move(info.child_th) );
     }
     
 private:
@@ -436,7 +530,7 @@ private:
     }
     
 public:
-    void* join(const ult_id_type& id)
+    void join(const ult_id_type& id)
     {
         auto& self = this->derived();
         self.check_current_worker();
@@ -456,9 +550,6 @@ public:
             if (child_th.is_finished()) {
                 // The child thread has already finished.
                 
-                // Copy the result to destroy the thread descriptor.
-                const auto ret = child_th.get_result();
-                
                 MGBASE_LOG_INFO(
                     "msg:Join a thread that already finished.\t"
                     "{}"
@@ -472,7 +563,7 @@ public:
                 // The thread is not detached because it is being joined,
                 self.deallocate_ult( mgbase::move(child_th) );
                 
-                return ret;
+                return;
             }
             else {
                 MGBASE_LOG_INFO(
@@ -532,12 +623,8 @@ public:
         // If the other threads are joining this child thread,
         // it's just a mistake of user programs.
         
-        const auto ret = child_th_2.get_result();
-        
         // Destroy the thread descriptor of the child thread.
         self_2.deallocate_ult( mgbase::move(child_th_2) );
-        
-        return ret;
     }
     
 private:
@@ -717,7 +804,7 @@ private:
     
 public:
     MGBASE_NORETURN
-    void exit(void* const ret)
+    void exit()
     {
         auto& self = this->derived();
         self.check_current_worker();
@@ -733,9 +820,8 @@ public:
             // Lock this thread; a joiner thread may modify this thread.
             auto lc = d.this_th.get_lock();
             
-            // Set the result of this thread.
-            // set_result is called only at this place.
-            d.this_th.set_result(ret);
+            // Change the state of this thread.
+            d.this_th.set_finished();
             
             if (d.this_th.has_joiner())
             {

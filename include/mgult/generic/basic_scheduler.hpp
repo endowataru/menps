@@ -18,18 +18,24 @@ class basic_scheduler
     typedef typename Traits::worker_rank_type   worker_rank_type;
     typedef typename Traits::ult_id_type        ult_id_type;
     
+    typedef typename Traits::scheduler_base_type::allocated_ult allocated_ult_type;
+
+    
 private:
-    static void* main_thread_handler(void* const arg)
+    struct main_thread_data
     {
-        const auto f = reinterpret_cast<loop_func_t>(arg);
+        loop_func_t func;
+    };
+    
+    static void main_thread_handler(void* const arg)
+    {
+        const auto d = *static_cast<main_thread_data*>(arg);
         
-        f();
+        d.func();
         
         // This thread might be stolen by other nodes in distributed work-stealing.
         // Need to renew the scheduler here.
         derived_type::get_current_scheduler().set_finished();
-        
-        return MGBASE_NULLPTR;
     }
     
     struct worker_loop_functor
@@ -55,10 +61,18 @@ private:
         {
             wk.initialize_on_this_thread();
             
-            // FIXME: detach
-            const auto t = wk.fork_parent_first(&main_thread_handler, reinterpret_cast<void*>(func));
+            auto t = wk.allocate(
+                MGBASE_ALIGNOF(main_thread_data)
+            ,   sizeof(main_thread_data)
+            );
             
-            wk.detach(t);
+            auto& d = *static_cast<main_thread_data*>(t.ptr);
+            
+            d.func = func;
+            
+            wk.fork_parent_first(t, &main_thread_handler);
+            
+            wk.detach(t.id);
             
             wk.loop();
             
@@ -135,35 +149,64 @@ public:
         this->workers_.clear();
     }
     
-    virtual ult_id_type fork(const fork_func_t func, void* const arg) MGBASE_OVERRIDE
+    virtual allocated_ult_type allocate(
+        const mgbase::size_t alignment
+    ,   const mgbase::size_t size
+    )
+    MGBASE_OVERRIDE
     {
-        return this->derived().get_current_worker().fork_child_first(func, arg);
+        auto& wk = this->derived().get_current_worker();
+        
+        auto ret = wk.allocate(alignment, size);
+        
+        return { ret.id, ret.ptr };
     }
     
-    virtual void* join(const ult_id_type& id) MGBASE_OVERRIDE
+    virtual void fork(
+        const allocated_ult_type    th
+    ,   const fork_func_t           func
+    ) MGBASE_OVERRIDE
     {
-        return this->derived().get_current_worker().join(id);
+        auto& wk = this->derived().get_current_worker();
+        
+        const typename worker_type::allocated_ult th_{ th.id, th.ptr };
+        
+        return wk.fork_child_first(th_, func);
     }
     
-    virtual void detach(const ult_id_type& id) MGBASE_OVERRIDE
+    virtual void join(ult_id_type id) MGBASE_OVERRIDE
     {
-        this->derived().get_current_worker().detach(id);
+        auto& wk = this->derived().get_current_worker();
+        
+        wk.join(id);
+    }
+    
+    virtual void detach(ult_id_type id) MGBASE_OVERRIDE
+    {
+        auto& wk = this->derived().get_current_worker();
+        
+        wk.detach(id);
     }
     
     virtual void yield() MGBASE_OVERRIDE
     {
-        this->derived().get_current_worker().yield();
+        auto& wk = this->derived().get_current_worker();
+        
+        wk.yield();
     }
     
     MGBASE_NORETURN
-    virtual void exit(void* const ret) MGBASE_OVERRIDE
+    virtual void exit() MGBASE_OVERRIDE
     {
-        this->derived().get_current_worker().exit(ret);
+        auto& wk = this->derived().get_current_worker();
+        
+        wk.exit();
     }
     
     worker_type& get_worker_of_rank(const worker_rank_type rank)
     {
         MGBASE_ASSERT(rank < workers_.size());
+        
         const auto& wk = workers_[rank].wk;
         MGBASE_ASSERT(wk != MGBASE_NULLPTR);
         return *wk;

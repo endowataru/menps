@@ -67,22 +67,6 @@ public:
         return lc;
     }
     
-    void* get_result()
-    {
-        MGBASE_ASSERT(is_valid());
-        MGBASE_ASSERT(is_finished());
-        
-        return desc_->result;
-    }
-    void set_result(void* const r)
-    {
-        MGBASE_ASSERT(is_valid());
-        MGBASE_ASSERT(!is_finished());
-        
-        desc_->result = r;
-        desc_->state = ult_state::finished;
-    }
-    
     void set_blocked()
     {
         MGBASE_ASSERT(is_valid());
@@ -96,6 +80,13 @@ public:
         MGBASE_ASSERT(desc_->state == ult_state::blocked);
         
         desc_->state = ult_state::ready;
+    }
+    void set_finished()
+    {
+        MGBASE_ASSERT(is_valid());
+        MGBASE_ASSERT(desc_->state == ult_state::ready);
+        
+        desc_->state = ult_state::finished;
     }
     
     bool is_finished() const MGBASE_NOEXCEPT {
