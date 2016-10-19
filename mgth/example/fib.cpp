@@ -5,26 +5,48 @@
 
 namespace /*unnamed*/ {
 
-/* Fibonacci with stack variables */
+// Fibonacci
 
-void* fib(void* const arg)
+typedef mgbase::uint64_t    fib_int_t;
+
+struct fib_data
 {
-    const auto n = reinterpret_cast<mgbase::uintptr_t>(arg);
+    fib_int_t*  ret;
+    fib_int_t   arg;
+};
+
+void fib(void* const arg)
+{
+    namespace sched = mgth::sched;
+    
+    const auto& d = *static_cast<fib_data*>(arg);
+    
+    const auto n = d.arg;
     
     if (n == 0 || n == 1) {
-        return reinterpret_cast<void*>(n);
+        *d.ret = n;
+        return;
     }
     
-    const auto t1 = mgth::fork(&fib, reinterpret_cast<void*>(n - 1));
-    const auto t2 = mgth::fork(&fib, reinterpret_cast<void*>(n - 2));
+    auto t1 = sched::allocate_thread(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
+    auto t2 = sched::allocate_thread(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
     
-    const auto r1 = mgth::join(t1);
-    const auto r2 = mgth::join(t2);
+    auto& d1 = *static_cast<fib_data*>(t1.ptr);
+    auto& d2 = *static_cast<fib_data*>(t2.ptr);
     
-    const auto ri1 = reinterpret_cast<mgbase::uintptr_t>(r1);
-    const auto ri2 = reinterpret_cast<mgbase::uintptr_t>(r2);
+    fib_int_t r1{};
+    fib_int_t r2{};
     
-    return reinterpret_cast<void*>(ri1 + ri2);
+    d1 = { &r1, n-1 };
+    d2 = { &r2, n-2 };
+    
+    sched::fork(t1, &fib);
+    sched::fork(t2, &fib);
+    
+    sched::join(t1.id);
+    sched::join(t2.id);
+    
+    *d.ret = r1 + r2;
 }
 
 } // unnamed namespace
@@ -41,9 +63,13 @@ int mgth_main(const int argc, char** const argv)
     mgbase::stopwatch sw;
     sw.start();
     
-    const auto r = fib(reinterpret_cast<void*>(arg_n));
+    fib_int_t result{};
     
-    std::cout << "fib(" << arg_n << ") = " << r
+    fib_data d{ &result, arg_n };
+    
+    fib(&d);
+    
+    std::cout << "fib(" << arg_n << ") = " << result
         << ", took " << sw.elapsed() << " cycles" << std::endl;
     
     return 0;

@@ -24,20 +24,30 @@ void main_handler()
     int ret = mgth_main(g_argc, g_argv);
 }
 
-inline thread_id_t to_thread_id(const mgult::ult_id& id) {
-    return reinterpret_cast<thread_id_t>(id.ptr);
+inline sched::thread_id_t to_thread_id(const mgult::ult_id& id) {
+    return reinterpret_cast<sched::thread_id_t>(id.ptr);
 }
-inline mgult::ult_id to_ult_id(const thread_id_t& id) {
+inline mgult::ult_id to_ult_id(const sched::thread_id_t& id) {
     return { reinterpret_cast<void*>(id) };
 }
 
 } // unnamed namespace
 
-thread_id_t fork(const fork_func_t func, void* const arg) {
-    return to_thread_id(g_sched->fork(func, arg));
+namespace sched {
+
+allocated_ult allocate_thread(const mgbase::size_t alignment, const mgbase::size_t size)
+{
+    auto r = g_sched->allocate(alignment, size);
+    
+    return { to_thread_id(r.id), r.ptr };
 }
 
-void* join(const thread_id_t id) {
+void fork(const allocated_ult th, fork_func_t func)
+{
+    g_sched->fork({ to_ult_id(th.id), th.ptr }, func);
+}
+
+void join(const thread_id_t id) {
     return g_sched->join(to_ult_id(id));
 }
 
@@ -50,9 +60,11 @@ void yield() {
 }
 
 MGBASE_NORETURN
-void exit(void* const ret) {
-    g_sched->exit(ret);
+void exit() {
+    g_sched->exit();
 }
+
+} // namespace sched
 
 } // namespace mgth
 

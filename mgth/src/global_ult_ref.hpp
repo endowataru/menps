@@ -132,22 +132,6 @@ public:
         );
     }
     
-    void* get_result()
-    {
-        MGBASE_ASSERT(is_valid());
-        MGBASE_ASSERT(is_finished());
-        
-        return load_result();
-    }
-    void set_result(void* const r)
-    {
-        MGBASE_ASSERT(is_valid());
-        MGBASE_ASSERT(!is_finished());
-        
-        store_desc_member(&global_ult_desc::result, r);
-        store_desc_member(&global_ult_desc::state, global_ult_state::finished);
-    }
-    
     void set_blocked()
     {
         MGBASE_ASSERT(is_valid());
@@ -161,6 +145,13 @@ public:
         MGBASE_ASSERT(get_state() == global_ult_state::blocked);
         
         store_desc_member(&global_ult_desc::state, global_ult_state::ready);
+    }
+    void set_finished()
+    {
+        MGBASE_ASSERT(is_valid());
+        MGBASE_ASSERT(get_state() == global_ult_state::ready);
+        
+        store_desc_member(&global_ult_desc::state, global_ult_state::finished);
     }
     
     bool is_finished() const MGBASE_NOEXCEPT {
@@ -206,7 +197,6 @@ public:
             "state:{}\t"
             "joiner:{:x}\t"
             "detached:{}\t"
-            "result:{:x}\t"
             "stack_ptr:{:x}\t"
             "stack_size:{:x}\t"
             "ctx:{:x}\t"
@@ -214,7 +204,6 @@ public:
         ,   static_cast<typename mgbase::underlying_type<global_ult_state>::type>(get_state())
         ,   reinterpret_cast<mgbase::uintptr_t>(get_joiner().ptr)
         ,   is_detached()
-        ,   reinterpret_cast<mgbase::uintptr_t>(load_result())
         ,   reinterpret_cast<mgbase::uintptr_t>(get_stack_ptr())
         ,   get_stack_size()
         ,   reinterpret_cast<mgbase::uintptr_t>(get_context().fctx)
@@ -223,11 +212,6 @@ public:
     }
     
 private:
-    void* load_result()
-    {
-        return load_desc_member(&global_ult_desc::result);
-    }
-    
     global_ult_state get_state() const
     {
         return load_desc_member(&global_ult_desc::state);

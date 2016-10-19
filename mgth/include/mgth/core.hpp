@@ -5,25 +5,39 @@
 
 namespace mgth {
 
+namespace dsm {
+
 void* allocate(mgbase::size_t size);
 
 void deallocate(void*);
 
+} // namespace dsm
+
+namespace sched {
 
 typedef void*   thread_id_t;
 
-typedef void* (*fork_func_t)(void*);
+typedef void (*fork_func_t)(void*);
 
-thread_id_t fork(fork_func_t func, void* arg);
+struct allocated_ult {
+    thread_id_t id;
+    void*       ptr;
+};
 
-void* join(thread_id_t);
+allocated_ult allocate_thread(mgbase::size_t alignment, mgbase::size_t size);
 
-void detach(thread_id_t);
+void fork(allocated_ult th, fork_func_t func);
+
+void join(thread_id_t id);
+
+void detach(thread_id_t id);
 
 void yield();
 
 MGBASE_NORETURN
-void exit(void* ret);
+void exit();
+
+} // namespace sched
 
 } // namespace mgth
 

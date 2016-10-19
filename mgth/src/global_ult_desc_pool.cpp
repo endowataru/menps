@@ -70,7 +70,6 @@ public:
         desc.ctx = context_t{};
         desc.state = global_ult_state::ready;
         desc.joiner = mgult::make_invalid_ult_id();
-        desc.result = MGBASE_NULLPTR;
         
         MGBASE_ASSERT(index < num_descs);
         

@@ -27,8 +27,6 @@ struct global_ult_desc
     
     void* stack_ptr;
     mgbase::size_t stack_size;
-    
-    void* result;
 };
 
 } // namespace mgth
