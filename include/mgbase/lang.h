@@ -8,11 +8,13 @@
 #if (defined(__i386__) || defined(__x86_64__))
     #define MGBASE_ARCH_INTEL
     #define MGBASE_CACHE_LINE_SIZE  64
+    #define MGBASE_CALL_STACK_GROW_DIR  -1
 #endif
 
 #if (defined(__sparc))
     #define MGBASE_ARCH_SPARC
     #define MGBASE_CACHE_LINE_SIZE  64
+    #define MGBASE_CALL_STACK_GROW_DIR  -1
 #endif
 
 #if (defined(__sparc))
@@ -307,7 +309,9 @@
         
         #define MGBASE_DEPRECATED       __attribute__((deprecated))
     #endif
-
+    
+    #define MGBASE_ALIGNOF(x)   alignof(x)
+    
     namespace mgbase {
         using ::uint8_t;
         using ::int8_t;
