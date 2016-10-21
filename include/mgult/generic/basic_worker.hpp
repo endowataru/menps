@@ -206,7 +206,7 @@ public:
         ,   stack_size
         );
         
-        if (size > 0)
+        if (MGBASE_LIKELY(size > 0))
         {
             // Allocate a space for user-defined data.
             const auto ptr =
@@ -217,7 +217,7 @@ public:
                 ,   stack_size
                 );
             
-            if (ptr == MGBASE_NULLPTR)
+            if (MGBASE_UNLIKELY(ptr == MGBASE_NULLPTR))
             {
                 // The required size by the user is too big
                 // to place on the call stack.

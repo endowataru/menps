@@ -73,7 +73,7 @@ public:
         const auto t = top_.load(mgbase::memory_order_acquire);
         const auto a = array_.get();
         
-        if (b - t > size_ - 1) {
+        if (MGBASE_UNLIKELY( b - t > size_ - 1 )) {
             throw worker_deque_error{};
         }
         
