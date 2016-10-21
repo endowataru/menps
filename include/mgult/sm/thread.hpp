@@ -53,6 +53,18 @@ private:
     scheduler* sched_;
 };
 
+class sm_thread
+    : public thread
+{
+    typedef thread  base;
+    
+public:
+    template <typename F, typename... Args>
+    explicit sm_thread(F&& f, Args&&... args)
+        : base{ get_global_scheduler(), mgbase::forward<F>(f), mgbase::forward<Args>(args)... }
+    { }
+};
+
 } // namespace sm
 
 } // namespace mgult
