@@ -1,5 +1,6 @@
 
 #pragma once
 
-#include <mgth/core.hpp>
+#include <mgth/dsm.hpp>
+#include <mgth/sched.hpp>
 

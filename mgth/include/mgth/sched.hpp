@@ -5,14 +5,6 @@
 
 namespace mgth {
 
-namespace dsm {
-
-void* allocate(mgbase::size_t size);
-
-void deallocate(void*);
-
-} // namespace dsm
-
 namespace sched {
 
 typedef void*   thread_id_t;
