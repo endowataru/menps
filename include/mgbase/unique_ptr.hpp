@@ -322,15 +322,62 @@ private:
 
 #endif
 
+
+#include <mgbase/type_traits/remove_extent.hpp>
+
+// make_unique
+
 namespace mgbase {
 
+namespace detail {
+
+template <typename T>
+struct make_unique_helper
+{
+    typedef unique_ptr<T>       single_type;
+};
+template <typename T>
+struct make_unique_helper<T []>
+{
+    typedef unique_ptr<T []>    array_type;
+};
+template <typename T, mgbase::size_t Size>
+struct make_unique_helper<T [Size]>
+{
+    struct invalid_type;
+};
+
+} // namespace detail
+
+// Single-object
+
 template <typename T, typename... Args>
-inline unique_ptr<T> make_unique(Args&&... args)
+inline typename detail::make_unique_helper<T>::single_type
+make_unique(Args&&... args)
 {
     return unique_ptr<T>(
         new T(std::forward<Args>(args)...)
     );
 }
+
+// Array (variable-length)
+
+template <typename T>
+inline typename detail::make_unique_helper<T>::array_type
+make_unique(const mgbase::size_t size)
+{
+    typedef typename remove_extent<T>::type element_type;
+    
+    return unique_ptr<T>(
+        new element_type[size]()
+    );
+}
+
+// Array (fixed-size)
+
+template <typename T, typename... Args>
+inline typename detail::make_unique_helper<T>::invalid_type
+make_unique(Args&&...) = delete;
 
 } // namespace mgbase
 
