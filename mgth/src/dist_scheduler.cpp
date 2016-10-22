@@ -13,7 +13,7 @@ class dist_scheduler;
 struct dist_scheduler_traits
 {
     typedef dist_scheduler      derived_type;
-    typedef scheduler           scheduler_base_type;
+    typedef root_scheduler      scheduler_base_type;
     typedef dist_worker         worker_type;
     typedef worker_rank_t       worker_rank_type;
     typedef ult_id              ult_id_type;
@@ -36,7 +36,7 @@ public:
         num_ranks_ = get_num_ranks_from_env();
     }
     
-    virtual void loop(const loop_func_t func) MGBASE_OVERRIDE
+    virtual void loop(const loop_func_type& func) MGBASE_OVERRIDE
     {
         base::loop_workers(num_ranks_, func, &mgcom::collective::barrier);
     }

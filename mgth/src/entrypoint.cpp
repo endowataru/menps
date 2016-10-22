@@ -66,6 +66,15 @@ void exit() {
 
 } // namespace sched
 
+namespace ult {
+
+scheduler& get_scheduler()
+{
+    return *g_sched;
+}
+
+} // namespace ult
+
 } // namespace mgth
 
 
