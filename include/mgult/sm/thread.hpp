@@ -17,8 +17,11 @@ struct thread_traits
     typedef scheduler   scheduler_type;
     typedef ult_id      thread_id_type;
     
-    static bool is_invalid_thread_id(const thread_id_type id) {
+    static bool is_invalid_thread_id(const thread_id_type id) MGBASE_NOEXCEPT {
         return is_invalid_ult_id(id);
+    }
+    static ult_id make_invalid_thread_id() MGBASE_NOEXCEPT {
+        return make_invalid_ult_id();
     }
 };
 

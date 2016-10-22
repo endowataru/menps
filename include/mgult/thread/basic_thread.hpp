@@ -101,18 +101,27 @@ public:
         auto& sched = this->derived().get_scheduler();
         
         sched.join(id_);
+        
+        id_ = Traits::make_invalid_thread_id();
     }
     void detach()
     {
         auto& sched = this->derived().get_scheduler();
         
         sched.detach(id_);
+        
+        id_ = Traits::make_invalid_thread_id();
+    }
+    
+    bool joinable() const MGBASE_NOEXCEPT
+    {
+        return ! Traits::is_invalid_thread_id(id_);
     }
     
 private:
     void destroy_this() MGBASE_NOEXCEPT
     {
-        if (Traits::is_invalid_thread_id(id_))
+        if (joinable())
         {
             MGBASE_LOG_FATAL(
                 "msg:Thread was neither joined nor detached."
