@@ -29,7 +29,12 @@ struct apply_result_helper;
 template <typename F, typename Tuple, mgbase::size_t... Indexes>
 struct apply_result_helper<F, Tuple, mgbase::integer_sequence<mgbase::size_t, Indexes...>>
     : mgbase::result_of<
-        F (typename mgbase::tuple_element<Indexes, Tuple>::type...)
+        F (
+            typename mgbase::tuple_element<
+                Indexes
+            ,   typename mgbase::decay<Tuple>::type
+            >::type...
+        )
     >
     { };
 
