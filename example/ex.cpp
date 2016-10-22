@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-mgult::scheduler_ptr g_s;
+namespace /*unnamed*/ {
 
 void hoge(void*)
 {
@@ -14,24 +14,25 @@ void f()
 {
     std::cout << "f()" << std::endl;
     
-    auto t = g_s->allocate(0, 0);
+    auto& s = mgult::sm::get_scheduler();
     
-    g_s->fork(t, hoge);
+    auto t = s.allocate(0, 0);
+    
+    s.fork(t, hoge);
     
     std::cout << "f().parent " << std::endl;
     
-    g_s->join(t.id);
-    
+    s.join(t.id);
 }
+
+} // unnamed namespace
 
 int main()
 {
-    g_s = mgult::make_sm_scheduler();
+    mgult::sm::initializer init;
     
-    g_s->loop(f);
+    f();
     
-    g_s.reset();
-    
-    //s->fork(&hoge, MGBASE_NULLPTR);
+    return 0;
 }
 

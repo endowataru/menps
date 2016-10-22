@@ -5,8 +5,6 @@
 
 namespace /*unnamed*/ {
 
-mgult::scheduler_ptr g_s;
-
 // Fibonacci
 
 typedef mgbase::uint64_t    fib_int_t;
@@ -28,8 +26,10 @@ void fib(void* const arg)
         return;
     }
     
-    auto t1 = g_s->allocate(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
-    auto t2 = g_s->allocate(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
+    auto& s = mgult::sm::get_scheduler();
+    
+    auto t1 = s.allocate(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
+    auto t2 = s.allocate(MGBASE_ALIGNOF(fib_data), sizeof(fib_data));
     
     auto& d1 = *static_cast<fib_data*>(t1.ptr);
     auto& d2 = *static_cast<fib_data*>(t2.ptr);
@@ -40,11 +40,11 @@ void fib(void* const arg)
     d1 = { &r1, n-1 };
     d2 = { &r2, n-2 };
     
-    g_s->fork(t1, &fib);
-    g_s->fork(t2, &fib);
+    s.fork(t1, &fib);
+    s.fork(t2, &fib);
     
-    g_s->join(t1.id);
-    g_s->join(t2.id);
+    s.join(t1.id);
+    s.join(t2.id);
     
     *d.ret = r1 + r2;
 }
@@ -63,6 +63,8 @@ void start_fib()
 
 int main(int argc, char** argv)
 {
+    mgult::sm::initializer init;
+    
     if (argc != 2) {
         std::cerr << argv[0] << " [n]" << std::endl;
         return EXIT_FAILURE;
@@ -70,17 +72,13 @@ int main(int argc, char** argv)
     
     g_arg_n = static_cast<mgbase::uintptr_t>(std::atoi(argv[1]));
     
-    g_s = mgult::make_sm_scheduler();
-    
     mgbase::stopwatch sw;
     sw.start();
     
-    g_s->loop(start_fib);
+    start_fib();
     
     std::cout << "fib(" << g_arg_n << ") = " << g_result
         << ", took " << sw.elapsed() << " cycles" << std::endl;
-    
-    g_s.reset();
     
     return 0;
 }

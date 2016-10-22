@@ -2,16 +2,16 @@
 #pragma once
 
 #include <mgult/scheduler.hpp>
+#include <mgbase/shared_ptr.hpp>
 
 namespace mgult {
-
 namespace sm {
 
-typedef mgbase::unique_ptr<scheduler>   scheduler_ptr;
+typedef mgbase::shared_ptr<scheduler>   scheduler_ptr;
 
 namespace detail {
 
-inline scheduler_ptr& get_global_scheduler_ptr()
+inline scheduler_ptr& get_scheduler_ptr()
 {
     static scheduler_ptr ptr;
     return ptr;
@@ -19,20 +19,19 @@ inline scheduler_ptr& get_global_scheduler_ptr()
 
 } // namespace detail
 
-inline void set_global_scheduler(scheduler_ptr s)
+inline void set_scheduler(const scheduler_ptr& p)
 {
-    auto& sched = detail::get_global_scheduler_ptr();
-    sched = mgbase::move(s);
+    auto& ptr = detail::get_scheduler_ptr();
+    ptr = p;
 }
 
-inline scheduler& get_global_scheduler()
+inline scheduler& get_scheduler()
 {
-    auto& sched = detail::get_global_scheduler_ptr();
-    MGBASE_ASSERT(sched != MGBASE_NULLPTR);
-    return *sched;
+    auto& ptr = detail::get_scheduler_ptr();
+    MGBASE_ASSERT(ptr != MGBASE_NULLPTR);
+    return *ptr;
 }
 
 } // namespace sm
-
 } // namespace mgult
 

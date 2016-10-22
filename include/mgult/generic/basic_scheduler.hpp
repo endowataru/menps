@@ -27,17 +27,6 @@ private:
         loop_func_t func;
     };
     
-    static void main_thread_handler(void* const arg)
-    {
-        const auto d = *static_cast<main_thread_data*>(arg);
-        
-        d.func();
-        
-        // This thread might be stolen by other nodes in distributed work-stealing.
-        // Need to renew the scheduler here.
-        derived_type::get_current_scheduler().set_finished();
-    }
-    
     struct worker_loop_functor
     {
         worker_type& wk;
@@ -52,23 +41,24 @@ private:
         }
     };
     
+    template <typename Func>
     struct worker_loop_main_functor
     {
         worker_type&    wk;
-        loop_func_t     func;
+        Func            func;
         
         void operator() ()
         {
             wk.initialize_on_this_thread();
             
             auto t = wk.allocate(
-                MGBASE_ALIGNOF(main_thread_data)
-            ,   sizeof(main_thread_data)
+                MGBASE_ALIGNOF(Func)
+            ,   sizeof(Func)
             );
             
-            auto& d = *static_cast<main_thread_data*>(t.ptr);
+            auto& f = *static_cast<Func*>(t.ptr);
             
-            d.func = func;
+            f = mgbase::move(func);
             
             wk.fork_parent_first(t, &main_thread_handler);
             
@@ -78,13 +68,24 @@ private:
             
             wk.finalize_on_this_thread();
         }
+        
+        static void main_thread_handler(void* const arg)
+        {
+            const auto& f = *static_cast<Func*>(arg);
+            
+            f();
+            
+            // This thread might be stolen by other nodes in distributed work-stealing.
+            // Need to renew the scheduler here.
+            derived_type::get_current_scheduler().set_finished();
+        }
     };
     
 public:
-    template <typename BarrierFunc>
+    template <typename Func, typename BarrierFunc>
     void loop_workers(
         const worker_rank_type  num_ranks
-    ,   const loop_func_t       func
+    ,   Func&&                  func
     ,   BarrierFunc             barrier_func
     )
     {
@@ -111,8 +112,15 @@ public:
             
             if (func != MGBASE_NULLPTR)
             {
+                typedef typename mgbase::decay<Func>::type  func_type;
+                
                 info0.real_th = mgbase::make_shared<mgbase::thread>(
-                    mgbase::thread(worker_loop_main_functor{ *info0.wk, func })
+                    mgbase::thread(
+                        worker_loop_main_functor<func_type>{
+                            *info0.wk
+                        ,   mgbase::forward<Func>(func)
+                        }
+                    )
                 );
             }
             else {

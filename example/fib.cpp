@@ -5,8 +5,6 @@
 
 namespace /*unnamed*/ {
 
-mgult::scheduler_ptr g_s;
-
 // Fibonacci
 
 typedef mgbase::uint64_t    fib_int_t;
@@ -26,7 +24,7 @@ struct fib_func
         fib_int_t r1{};
         fib_int_t r2{};
         
-        mgult::sm::thread th{ *g_s, fib_func{ &r1, n-1 } };
+        mgult::sm::thread th{ fib_func{ &r1, n-1 } };
         
         fib_func{ &r2, n-2 }();
         
@@ -36,36 +34,36 @@ struct fib_func
     }
 };
 
-fib_int_t g_result = 0;
-fib_int_t g_arg_n = 0;
-
-void start_fib()
+fib_int_t start_fib(const fib_int_t n)
 {
-    fib_func{ &g_result, g_arg_n }();
+    fib_int_t result = 0;
+    
+    fib_func{ &result, n }();
+    
+    return result;
 }
 
 } // unnamed namespace
 
-int main(int argc, char** argv)
+int main(const int argc, char** const argv)
 {
+    mgult::sm::initializer init;
+    
     if (argc != 2) {
         std::cerr << argv[0] << " [n]" << std::endl;
         return EXIT_FAILURE;
     }
     
-    g_arg_n = static_cast<mgbase::uintptr_t>(std::atoi(argv[1]));
-    
-    g_s = mgult::make_sm_scheduler();
+    const auto n = 
+        static_cast<mgbase::uintptr_t>(std::atoi(argv[1]));
     
     mgbase::stopwatch sw;
     sw.start();
     
-    g_s->loop(start_fib);
+    const auto result = start_fib(n);
     
-    std::cout << "fib(" << g_arg_n << ") = " << g_result
+    std::cout << "fib(" << n << ") = " << result
         << ", took " << sw.elapsed() << " cycles" << std::endl;
-    
-    g_s.reset();
     
     return 0;
 }

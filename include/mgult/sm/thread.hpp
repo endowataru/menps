@@ -5,7 +5,6 @@
 #include <mgult/thread/basic_thread.hpp>
 
 namespace mgult {
-
 namespace sm {
 
 class thread;
@@ -38,34 +37,17 @@ public:
     thread(thread&&) MGBASE_NOEXCEPT = default;
     
     template <typename F, typename... Args>
-    explicit thread(scheduler& sched, F&& f, Args&&... args)
-        : base{ sched, mgbase::forward<F>(f), mgbase::forward<Args>(args)... }
-        , sched_{&sched}
+    explicit thread(F&& f, Args&&... args)
+        : base{ sm::get_scheduler(), mgbase::forward<F>(f), mgbase::forward<Args>(args)... }
     { }
     
     thread& operator = (const thread&) = delete;
     
     thread& operator = (thread&&) MGBASE_NOEXCEPT = default;
     
-    scheduler& get_scheduler() { return *sched_; }
-    
-private:
-    scheduler* sched_;
-};
-
-class sm_thread
-    : public thread
-{
-    typedef thread  base;
-    
-public:
-    template <typename F, typename... Args>
-    explicit sm_thread(F&& f, Args&&... args)
-        : base{ get_global_scheduler(), mgbase::forward<F>(f), mgbase::forward<Args>(args)... }
-    { }
+    scheduler& get_scheduler() { return sm::get_scheduler(); }
 };
 
 } // namespace sm
-
 } // namespace mgult
 

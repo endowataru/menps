@@ -17,8 +17,6 @@ protected:
 public:
     virtual ~scheduler() = default;
     
-    virtual void loop(loop_func_t) = 0;
-    
     struct allocated_ult {
         ult_id  id;
         void*   ptr;

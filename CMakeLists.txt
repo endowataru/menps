@@ -24,6 +24,8 @@ add_library(mgult
     >
     
     ./src/sm/sm_scheduler.cpp
+    ./src/sm/initializer.cpp
+    ./src/scheduler_initializer.cpp
 )
 
 target_include_directories(mgult

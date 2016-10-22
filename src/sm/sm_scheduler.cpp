@@ -3,6 +3,7 @@
 
 #include <mgult/generic/basic_scheduler.hpp>
 #include <mgult/sm.hpp>
+#include <mgult/root_scheduler.hpp>
 
 namespace mgult {
 
@@ -11,7 +12,7 @@ class sm_scheduler;
 struct sm_scheduler_traits
 {
     typedef sm_scheduler    derived_type;
-    typedef scheduler       scheduler_base_type;
+    typedef root_scheduler  scheduler_base_type;
     typedef sm_worker       worker_type;
     typedef worker_rank_t   worker_rank_type;
     typedef ult_id          ult_id_type;
@@ -30,7 +31,7 @@ public:
         num_ranks_ = get_num_ranks_from_env();
     }
     
-    virtual void loop(const loop_func_t func) MGBASE_OVERRIDE
+    virtual void loop(const mgbase::function<void ()>& func) MGBASE_OVERRIDE
     {
         struct empty_barrier {
             void operator() () {
@@ -127,11 +128,14 @@ ult_ptr_ref sm_worker::try_steal_from_another()
     return sched_.try_steal_from_another(*this);
 }
 
+namespace sm {
 
-mgbase::unique_ptr<scheduler> make_sm_scheduler()
+mgbase::unique_ptr<root_scheduler> make_scheduler()
 {
     return mgbase::make_unique<sm_scheduler>();
 }
+
+} // namespace sm
 
 } // namespace mgult
 
