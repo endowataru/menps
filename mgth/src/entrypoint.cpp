@@ -75,6 +75,24 @@ scheduler& get_scheduler()
 
 } // namespace ult
 
+namespace dsm {
+
+namespace untyped {
+
+void* allocate(mgbase::size_t alignment, mgbase::size_t size_in_bytes)
+{
+    return g_dsm->allocate(size_in_bytes, 4096 /*TODO*/);
+}
+
+void deallocate(void* p)
+{
+    g_dsm->deallocate(p);
+}
+
+} // namespace untyped
+
+} // namespace dsm
+
 } // namespace mgth
 
 

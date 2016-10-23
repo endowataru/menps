@@ -22,6 +22,9 @@ struct thread_traits
     static bool is_invalid_thread_id(const thread_id_type id) {
         return mgult::is_invalid_ult_id(id);
     }
+    static ult_id make_invalid_thread_id() MGBASE_NOEXCEPT {
+        return mgult::make_invalid_ult_id();
+    }
 };
 
 } // namespace detail
