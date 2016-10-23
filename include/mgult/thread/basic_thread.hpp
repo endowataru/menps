@@ -63,7 +63,9 @@ public:
         
         new (desc.ptr) functor_type{
             mgbase::forward<F>(f)
-        ,   { mgbase::forward<Args>(args)... }
+        ,   mgbase::make_tuple(
+                mgbase::forward<Args>(args)...
+            )
         };
         
         id_ = desc.id;
