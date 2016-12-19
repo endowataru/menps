@@ -12,8 +12,41 @@ namespace mgcom {
 namespace rma {
 
 template <typename T>
+class local_ptr;
+
+namespace detail {
+
+template <
+    typename T
+,   bool Dereferencable = ! mgbase::is_void<T>::value
+>
+class local_ptr_deref { };
+
+template <typename T>
+class local_ptr_deref<T, true>
+{
+    typedef local_ptr<T>    derived_type;
+    
+public:
+    T* operator -> () const MGBASE_NOEXCEPT {
+        return derived().raw();
+    }
+    T& operator * () const MGBASE_NOEXCEPT {
+        return *derived().raw();
+    }
+    
+private:
+    const derived_type& derived() const MGBASE_NOEXCEPT {
+        return static_cast<const derived_type&>(*this);
+    }
+};
+
+} // namespace detail
+
+template <typename T>
 class local_ptr
     : public mgbase::pointer_facade<rma::local_ptr, T>
+    , public detail::local_ptr_deref<T>
 {
     typedef mgbase::pointer_facade<rma::local_ptr, T>   base;
 
@@ -30,13 +63,13 @@ public:
         return raw();
     }
     
-    T* operator -> () const MGBASE_NOEXCEPT {
+    /*T* operator -> () const MGBASE_NOEXCEPT {
         return raw();
     }
     
     T& operator * () const MGBASE_NOEXCEPT {
         return *raw();
-    }
+    }*/
     
     T* raw() const MGBASE_NOEXCEPT { return static_cast<T*>(untyped::to_raw_pointer(addr_)); }
     
