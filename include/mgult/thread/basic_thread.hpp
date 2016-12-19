@@ -100,6 +100,8 @@ public:
     
     void join()
     {
+        MGBASE_ASSERT(joinable());
+        
         auto& sched = this->derived().get_scheduler();
         
         sched.join(id_);
@@ -108,6 +110,8 @@ public:
     }
     void detach()
     {
+        MGBASE_ASSERT(joinable());
+        
         auto& sched = this->derived().get_scheduler();
         
         sched.detach(id_);
@@ -126,7 +130,9 @@ private:
         if (joinable())
         {
             MGBASE_LOG_FATAL(
-                "msg:Thread was neither joined nor detached."
+                "msg:Thread was neither joined nor detached.\t"
+                "id:{:x}"
+            ,   reinterpret_cast<mgbase::uintptr_t>(id_.ptr)
             );
             
             // Terminate this program.
