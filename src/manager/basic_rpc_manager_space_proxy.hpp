@@ -20,6 +20,8 @@ class basic_rpc_manager_space_proxy
     
     typedef typename Policy::handler_id_type    handler_id_type;
     
+    typedef typename Policy::process_id_type    process_id_type;
+    
 public:
     static void register_handlers()
     {
@@ -32,18 +34,21 @@ public:
         
         auto& sp = self.get_space();
         
-        typename create_segment_handler::request_type req{
-            &sp
-        ,   seg_id
-        ,   conf
-        };
-        
-        const auto man_proc = self.get_manager_proc(seg_id);
-        
-        Policy::template call<create_segment_handler>(
-            man_proc
-        ,   req
-        );
+        for (process_id_type proc = 0; proc < Policy::number_of_processes(); ++proc)
+        {
+            auto* man_sp = self.get_manager_space_at_proc(proc);
+            
+            typename create_segment_handler::request_type req{
+                man_sp
+            ,   seg_id
+            ,   conf
+            };
+            
+            Policy::template call<create_segment_handler>(
+                proc
+            ,   req
+            );
+        }
     }
     
 private:

@@ -18,12 +18,18 @@ struct rpc_manager_space_proxy_policy
     
     typedef segment_id_t                    segment_id_type;
     
+    typedef mgcom::process_id_t             process_id_type;
+    
     struct create_conf_type {
         mgbase::size_t  num_pages;
         mgbase::size_t  page_size;
     };
     
     static const mgcom::rpc::handler_id_t create_segment_handler_id = 301;
+    
+    static mgbase::size_t number_of_processes() MGBASE_NOEXCEPT {
+        return mgcom::number_of_processes();
+    }
 };
 
 class rpc_manager_space::proxy
@@ -51,6 +57,10 @@ public:
     {
         const auto index = seg_id / mgcom::number_of_processes();
         return this->a2a_.at_process(index);
+    }
+    rpc_manager_space* get_manager_space_at_proc(const mgcom::process_id_t proc) const MGBASE_NOEXCEPT
+    {
+        return this->a2a_.at_process(proc);
     }
     
 private:

@@ -16,6 +16,14 @@ class basic_rpc_manager_space_shard
     
     typedef typename Policy::segment_id_type        segment_id_type;
     
+protected:
+    template <typename Conf>
+    explicit basic_rpc_manager_space_shard(const Conf& conf)
+        : segs_(
+            mgbase::make_unique<mgbase::unique_ptr<segment_shard_type> []>(conf.num_segments)
+        )
+    { }
+    
 public:
     segment_shard_type& get_segment(const segment_id_t seg_id)
     {

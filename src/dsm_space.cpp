@@ -20,6 +20,8 @@ space_ref make_space()
 {
     static initializer i;
     
+    mgcom::collective::barrier();
+    
     return space_ref(new dsm_space);
 }
 

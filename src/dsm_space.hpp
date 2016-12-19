@@ -16,6 +16,11 @@ class dsm_space
     : public space
     , public segment_locator
 {
+    struct manager_space_conf
+    {
+        mgbase::size_t      num_segments;
+    };
+    
     struct sharer_space_conf
     {
         mgbase::size_t      num_segments;
@@ -26,7 +31,11 @@ public:
     dsm_space()
         : reg_name_(get_reg_name())
         , reg_(get_region_config())
-        , manager_(mgbase::make_unique<rpc_manager_space>())
+        , manager_(
+            mgbase::make_unique<rpc_manager_space>(
+                manager_space_conf{ get_num_segments() }
+            )
+        )
         , manager_pr_(manager_->make_proxy_collective())
         , sharer_(
             mgbase::make_unique<sharer_space>(

@@ -28,7 +28,14 @@ struct rpc_manager_space_policy
 class rpc_manager_space
     : public basic_rpc_manager_space_shard<rpc_manager_space_policy>
 {
+    typedef basic_rpc_manager_space_shard<rpc_manager_space_policy> base;
+    
 public:
+    template <typename Conf>
+    explicit rpc_manager_space(const Conf& conf)
+        : base(conf)
+    { }
+    
     inline rpc_manager_segment::accessor get_segment_accessor(segment_id_t);
     
     class proxy;
