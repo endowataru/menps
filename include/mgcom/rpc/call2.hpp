@@ -121,11 +121,11 @@ make_request(Args&&... args)
 {
     const auto size = sizeof(T);
     
-    const auto req = allocate_request(MGBASE_ALIGNOF(T), size);
+    auto req = allocate_request(MGBASE_ALIGNOF(T), size);
     
     // Do placement new.
     const auto ptr =
-        new (req.get()) T(mgbase::forward<Args>(args)...);
+        new (req.release()) T(mgbase::forward<Args>(args)...);
     
     return { ptr, size };
 }
