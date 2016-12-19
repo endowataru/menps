@@ -133,7 +133,7 @@ private:
             ,   MGCOM_RPC_MAX_DATA_SIZE
             );
         
-        MGBASE_ASSERT(request_buf.reply_size == static_cast<int>(reply_size));
+        MGBASE_ASSERT(request_buf.reply_size >= static_cast<int>(reply_size));
     }
     
     void send_reply(const int client_rank, const int reply_tag, const void* const reply_data, const int reply_size)
