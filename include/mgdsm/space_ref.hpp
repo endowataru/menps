@@ -20,6 +20,15 @@ public:
         return sp_->make_segment(size_in_bytes, page_size_in_bytes);
     }
     
+    void enable_on_this_thread()
+    {
+        sp_->enable_on_this_thread();
+    }
+    void disable_on_this_thread()
+    {
+        sp_->disable_on_this_thread();
+    }
+    
 private:
     mgbase::unique_ptr<space> sp_;
 };

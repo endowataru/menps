@@ -9,6 +9,8 @@ class segment
 {
 public:
     virtual ~segment() /*noexcept*/ = default;
+    
+    virtual void* get_ptr() const MGBASE_NOEXCEPT = 0;
 };
 
 /*

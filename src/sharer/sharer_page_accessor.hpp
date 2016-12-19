@@ -52,7 +52,7 @@ private:
         return pg_id_;
     }
     
-    sharer_segment::accessor&              seg_pr_;
+    sharer_segment::accessor&           seg_pr_;
     
     page_id_t                           pg_id_;
     sharer_page&                        pg_;

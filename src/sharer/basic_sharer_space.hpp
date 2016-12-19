@@ -9,14 +9,14 @@ namespace mgdsm {
 template <typename Traits>
 class basic_sharer_space
 {
-    typedef typename Traits::derived_type       derived_type;
+    typedef typename Traits::derived_type           derived_type;
     
-    typedef typename Traits::segment_type       segment_type;
-    typedef typename Traits::segment_ptr_type   segment_ptr_type;
-    typedef typename Traits::segment_id_type    segment_id_type;
-    typedef typename Traits::segment_accessor_type segment_accessor_type;
+    typedef typename Traits::segment_type           segment_type;
+    typedef typename Traits::segment_ptr_type       segment_ptr_type;
+    typedef typename Traits::segment_id_type        segment_id_type;
+    typedef typename Traits::segment_accessor_type  segment_accessor_type;
     
-    typedef typename Traits::lock_type          lock_type;
+    typedef typename Traits::lock_type              lock_type;
     
     // TODO : reduce dependency
     typedef typename Traits::manager_segment_ptr_type   manager_segment_ptr_type;

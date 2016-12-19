@@ -66,18 +66,22 @@ public:
     ) MGBASE_OVERRIDE
     {
         struct conf {
-            rpc_manager_space::proxy& manager;
-            segment_id_t        seg_id;
-            mgbase::size_t num_pages;
-            mgbase::size_t page_size;
+            rpc_manager_space::proxy&   manager;
+            segment_id_t                seg_id;
+            mgbase::size_t              num_pages;
+            mgbase::size_t              page_size;
+            void*                       app_ptr;
         };
+        
+        const auto seg_id = make_new_segment_id();
         
         return segment_ref(new dsm_segment(
             conf{
                 manager_pr_
-            ,   make_new_segment_id()
+            ,   seg_id
             ,   mgbase::roundup_divide(size_in_bytes, page_size_in_bytes)
             ,   page_size_in_bytes
+            ,   get_segment_app_ptr(seg_id)
             }
         ));
     }
@@ -93,18 +97,25 @@ public:
     
     virtual void* get_segment_sys_ptr(const segment_id_t seg_id) MGBASE_NOEXCEPT MGBASE_OVERRIDE
     {
-        const auto seg_size = get_address_space_size() / get_num_segments();
+        const auto seg_size = get_max_segment_size();
         
         return mgbase::next_in_bytes(get_sys_ptr(), seg_id * seg_size);
     }
     
 private:
+    void* get_segment_app_ptr(const segment_id_t seg_id) MGBASE_NOEXCEPT
+    {
+        const auto seg_size = get_max_segment_size();
+        
+        return mgbase::next_in_bytes(get_app_ptr(), seg_id * seg_size);
+    }
+    
     aliasing_mapped_region::config get_region_config() {
         return {
             reg_name_.c_str()
         ,   get_address_space_size()
+        ,   get_app_ptr() // Be careful for this order
         ,   get_sys_ptr()
-        ,   get_app_ptr()
         };
     }
     
@@ -122,6 +133,10 @@ private:
     
     segment_id_t make_new_segment_id() {
         return new_seg_id_++; // TODO
+    }
+    
+    mgbase::size_t get_max_segment_size() MGBASE_NOEXCEPT {
+        return get_address_space_size() / get_num_segments();
     }
     
     mgbase::size_t get_address_space_size() MGBASE_NOEXCEPT {
