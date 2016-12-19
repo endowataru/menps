@@ -13,3 +13,6 @@
 [submodule "mgult"]
 	path = mgult
 	url = ../mgult.git
+[submodule "mgdsm2"]
+	path = mgdsm2
+	url = ../mgdsm2.git
