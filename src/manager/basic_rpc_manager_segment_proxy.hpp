@@ -29,7 +29,7 @@ class basic_rpc_manager_segment_proxy
 public:
     // local operations
     
-    virtual mgbase::size_t get_page_size() const
+    virtual mgbase::size_t get_page_size() const MGBASE_OVERRIDE
     {
         auto& self = this->derived();
         
@@ -38,7 +38,7 @@ public:
         return sg_ac.get_page_size();
     }
     
-    virtual mgbase::size_t get_num_pages() const
+    virtual mgbase::size_t get_num_pages() const MGBASE_OVERRIDE
     {
         auto& self = this->derived();
         

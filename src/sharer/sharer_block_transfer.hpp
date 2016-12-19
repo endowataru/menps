@@ -123,7 +123,7 @@ public:
             // Copy the twin to the destination.
             mgcom::rma::write(
                 dest_prptr.proc
-            ,   dest_rptr + from
+            ,   dest_rptr + static_cast<mgbase::ptrdiff_t>(from)
             ,   twin_lptr_byte + from
             ,   len
             );

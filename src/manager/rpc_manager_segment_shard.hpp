@@ -29,6 +29,13 @@ struct rpc_manager_segment_shard_policy
 class rpc_manager_segment_shard
     : public basic_rpc_manager_segment_shard<rpc_manager_segment_shard_policy>
 {
+    typedef basic_rpc_manager_segment_shard<rpc_manager_segment_shard_policy>   base;
+    
+public:
+    template <typename Conf>
+    explicit rpc_manager_segment_shard(const Conf& conf)
+        : base(conf)
+    { }
 };
 
 } // namespace mgdsm

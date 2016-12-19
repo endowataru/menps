@@ -79,37 +79,6 @@ public:
         return invalidator_type(conf{this->readers_, this->writers_});
     }
     
-    #if 0
-    
-    bool is_flush_needed(const process_id_type reader_proc) const MGBASE_NOEXCEPT
-    {
-        return !(
-            // Flush is not necessary when:
-            
-            // If there is no writer
-            this->writers_.empty()
-            // or
-            || (
-                // there is a writer
-                this->writers_.size() == 1
-                // but it is the same process as the new reader.
-                && *this->writers_.begin() == reader_proc
-            )
-        );
-    }
-    
-    bool is_diff_needed(const process_id_type writer_proc) const MGBASE_NOEXCEPT
-    {
-        // FIXME
-        return writers_.size() > 1;
-    }
-    
-    bool was_single_writer(const process_id_type writer_proc) const MGBASE_NOEXCEPT
-    {
-        return writers_.size() == 1 && *writers_.begin() != writer_proc;
-    }
-    #endif
-    
 private:
     bool is_migrating()
     {

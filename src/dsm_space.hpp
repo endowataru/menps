@@ -105,10 +105,10 @@ private:
     }
     
     void* get_sys_ptr() {
-        return reg_.get_sys_ptr();
+        return reinterpret_cast<void*>(0x30000000000);
     }
     void* get_app_ptr() {
-        return reg_.get_app_ptr();
+        return mgbase::next_in_bytes(this->get_sys_ptr(), get_address_space_size());
     }
     
     segment_id_t make_new_segment_id() {

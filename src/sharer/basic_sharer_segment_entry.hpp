@@ -58,12 +58,12 @@ private:
     }
     
     manager_ptr_type                    manager_;
+    void*                               sys_ptr_;
     
     mgbase::size_t                      pg_size_;
     mgbase::size_t                      num_pgs_;
-    mgbase::unique_ptr<page_type []>    pgs_;
     
-    void*                               sys_ptr_;
+    mgbase::unique_ptr<page_type []>    pgs_;
 };
 
 } // namespace mgdsm

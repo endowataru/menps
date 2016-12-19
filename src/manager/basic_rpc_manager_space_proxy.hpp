@@ -64,10 +64,10 @@ private:
             auto& rqst = sc.request();
             
             auto& sp = *rqst.sp;
-            const auto seg_id = rqst->seg_id;
-            const auto& conf = rqst->conf;
+            const auto seg_id = rqst.seg_id;
+            const auto& conf = rqst.conf;
             
-            sp.make_segment(seg_id, rqst->conf);
+            sp.make_segment(seg_id, conf);
             
             return sc.make_reply();
         }
