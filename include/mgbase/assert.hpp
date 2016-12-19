@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <mgbase/lang.hpp>
+
 #undef NDEBUG
 
 #include <cassert>
