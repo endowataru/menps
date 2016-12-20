@@ -30,6 +30,7 @@ public:
     )
         : seg_ac_(seg_ac)
         , pg_(pg)
+        , lk_(pg_.get_lock())
     { }
     
 private:
