@@ -10,7 +10,7 @@ struct initializer
 {
     initializer() {
         rpc_manager_space::proxy::register_handlers();
-        rpc_manager_space::proxy::register_handlers();
+        rpc_manager_segment::proxy::register_handlers();
     }
 };
 

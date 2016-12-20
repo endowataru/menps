@@ -15,7 +15,7 @@ public:
         , seg_id_(conf.seg_id)
         , app_ptr_(conf.app_ptr)
     {
-        manager_->create_segment(seg_id_, { conf.num_pages, conf.page_size });
+        manager_->create_segment(seg_id_, { conf.num_pages, conf.page_size, conf.block_size });
     }
     
     ~dsm_segment()

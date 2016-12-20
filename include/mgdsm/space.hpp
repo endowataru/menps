@@ -13,6 +13,7 @@ public:
     virtual segment_ref make_segment(
         mgbase::size_t  size_in_bytes
     ,   mgbase::size_t  page_size_in_bytes
+    ,   mgbase::size_t  block_size_in_bytes
     ) = 0;
     
     #if 0

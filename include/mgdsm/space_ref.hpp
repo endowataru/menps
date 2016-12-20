@@ -16,8 +16,9 @@ public:
     segment_ref make_segment(
         const mgbase::size_t    size_in_bytes
     ,   const mgbase::size_t    page_size_in_bytes
+    ,   const mgbase::size_t    block_size_in_bytes
     ) {
-        return sp_->make_segment(size_in_bytes, page_size_in_bytes);
+        return sp_->make_segment(size_in_bytes, page_size_in_bytes, block_size_in_bytes);
     }
     
     void enable_on_this_thread()

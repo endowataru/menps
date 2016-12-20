@@ -32,7 +32,6 @@ public:
     virtual mgbase::size_t get_page_size() const MGBASE_OVERRIDE
     {
         auto& self = this->derived();
-        
         auto sg_ac = self.get_accessor();
         
         return sg_ac.get_page_size();
@@ -41,10 +40,17 @@ public:
     virtual mgbase::size_t get_num_pages() const MGBASE_OVERRIDE
     {
         auto& self = this->derived();
-        
         auto sg_ac = self.get_accessor();
         
         return sg_ac.get_num_pages();
+    }
+    
+    virtual mgbase::size_t get_block_size() const MGBASE_OVERRIDE
+    {
+        auto& self = this->derived();
+        auto sg_ac = self.get_accessor();
+        
+        return sg_ac.get_block_size();
     }
     
 public:

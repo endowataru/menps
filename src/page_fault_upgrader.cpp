@@ -34,24 +34,33 @@ private:
                 return false;
             }
             
-            auto& space = self.conf_.space;
             auto& indexer = self.conf_.indexer;
             
             if (!indexer.in_range(ptr)) {
                 return false;
             }
             
-            auto blk_pr = indexer.get_block_accessor_at(ptr);
+            indexer.do_for_block_at(upgrade_callback{self}, ptr);
+            
+            return true;
+        }
+    };
+    
+    struct upgrade_callback
+    {
+        impl& self;
+        
+        void operator() (sharer_block::accessor& blk_ac)
+        {
+            auto& space = self.conf_.space;
             
             // Fetch the block first.
-            if (! space.fetch(blk_pr))
+            if (! space.fetch(blk_ac))
             {
                 // If the block is already readable,
                 // then try to make it writable.
-                space.touch(blk_pr);
+                space.touch(blk_ac);
             }
-            
-            return true;
         }
     };
     

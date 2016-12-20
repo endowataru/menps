@@ -17,7 +17,6 @@ public:
     mgbase::size_t get_page_size()
     {
         auto& self = this->derived();
-        
         auto& seg = self.get_segment_shard();
         
         return seg.get_page_size();
@@ -26,10 +25,17 @@ public:
     mgbase::size_t get_num_pages()
     {
         auto& self = this->derived();
-        
         auto& seg = self.get_segment_shard();
         
         return seg.get_num_pages();
+    }
+    
+    mgbase::size_t get_block_size()
+    {
+        auto& self = this->derived();
+        auto& seg = self.get_segment_shard();
+        
+        return seg.get_block_size();
     }
     
     void enable_flush(const process_id_type proc, const page_id_type pg_id)

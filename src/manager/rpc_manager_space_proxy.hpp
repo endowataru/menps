@@ -23,6 +23,7 @@ struct rpc_manager_space_proxy_policy
     struct create_conf_type {
         mgbase::size_t  num_pages;
         mgbase::size_t  page_size;
+        mgbase::size_t  block_size;
     };
     
     static const mgcom::rpc::handler_id_t create_segment_handler_id = 301;

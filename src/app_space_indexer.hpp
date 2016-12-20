@@ -48,7 +48,8 @@ public:
         }
     }*/
     
-    sharer_block::accessor get_block_accessor_at(void* const ptr)
+    template <typename Func>
+    void do_for_block_at(Func&& func, void* ptr)
     {
         // Find a segment.
         
@@ -81,7 +82,9 @@ public:
         const auto blk_id =
             static_cast<block_id_t>(idx_in_pg / blk_size);
         
-        return pg_pr.get_block_accessor(blk_id);
+        auto blk_ac = pg_pr.get_block_accessor(blk_id);
+        
+        mgbase::forward<Func>(func)(blk_ac);
     }
     
     bool in_range(void* const ptr)

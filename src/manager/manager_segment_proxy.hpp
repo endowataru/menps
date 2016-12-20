@@ -19,6 +19,8 @@ public:
     
     virtual mgbase::size_t get_num_pages() const = 0;
     
+    virtual mgbase::size_t get_block_size() const = 0;
+    
     struct acquire_read_result
     {
         plptr_type  owner_plptr;

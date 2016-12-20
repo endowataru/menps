@@ -20,14 +20,45 @@ class basic_sharer_page_entry
     typedef typename Traits::prptr_type         prptr_type;
     
 public:
+    basic_sharer_page_entry()
+        : blk_size_(0)
+        , num_blks_(0)
+        , blks_{}
+        , owner_{}
+        , num_read_blks_(0)
+        , num_write_blks_(0)
+        , is_diff_needed_(false)
+        , is_flush_needed_(false)
+    { }
+    
+    void set_block_size(const mgbase::size_t blk_size) {
+        MGBASE_ASSERT(blk_size > 0);
+        this->blk_size_ = blk_size;
+    }
+    void set_num_blocks(const mgbase::size_t num_blks) {
+        MGBASE_ASSERT(num_blks > 0);
+        this->num_blks_ = num_blks;
+    }
+    
     block_type& get_block(const block_id_type blk_id)
     {
         MGBASE_ASSERT(blk_id < this->get_num_blocks());
+        
+        if (! blks_)
+        {
+            // Initialize the blocks lazily.
+            // TODO: How this affects the performance?A
+            
+            blks_ = mgbase::make_unique<block_type []>(this->get_num_blocks());
+        }
+        
         return blks_[blk_id];
     }
     
-    mgbase::size_t get_block_size() const MGBASE_NOEXCEPT {
-        return blk_size_;
+    mgbase::size_t get_block_size() const MGBASE_NOEXCEPT
+    {
+        MGBASE_ASSERT(this->blk_size_ > 0);
+        return this->blk_size_;
     }
     
     bool add_read_block() MGBASE_NOEXCEPT

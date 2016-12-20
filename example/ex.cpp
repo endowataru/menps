@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
     {
         auto sp = mgdsm::make_space();
         
-        auto seg = sp.make_segment(1ull << 20, 100);
+        auto seg = sp.make_segment(1ull << 20, 100, 10);
         
         auto p = seg.get_ptr();
         

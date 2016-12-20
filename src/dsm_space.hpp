@@ -63,6 +63,7 @@ public:
     virtual segment_ref make_segment(
         mgbase::size_t  size_in_bytes
     ,   mgbase::size_t  page_size_in_bytes
+    ,   mgbase::size_t  block_size_in_bytes
     ) MGBASE_OVERRIDE
     {
         struct conf {
@@ -70,6 +71,7 @@ public:
             segment_id_t                seg_id;
             mgbase::size_t              num_pages;
             mgbase::size_t              page_size;
+            mgbase::size_t              block_size;
             void*                       app_ptr;
         };
         
@@ -81,6 +83,7 @@ public:
             ,   seg_id
             ,   mgbase::roundup_divide(size_in_bytes, page_size_in_bytes)
             ,   page_size_in_bytes
+            ,   block_size_in_bytes
             ,   get_segment_app_ptr(seg_id)
             }
         ));

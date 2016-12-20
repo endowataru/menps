@@ -4,6 +4,7 @@
 #include <mgbase/unique_ptr.hpp>
 #include <mgbase/assert.hpp>
 #include <mgbase/utility/move.hpp>
+#include <mgbase/arithmetic.hpp>
 
 namespace mgdsm {
 
@@ -31,7 +32,17 @@ public:
         
         // Create sharer page entries.
         , pgs_(mgbase::make_unique<page_type []>(num_pgs_))
-    { }
+    {
+        // Load the default block size.
+        const auto blk_size = manager_->get_block_size();
+        const auto num_blks = mgbase::roundup_divide(pg_size_, blk_size);
+        
+        for (page_id_type pg_id = 0; pg_id < num_pgs_; ++pg_id) {
+            auto& pg = pgs_[pg_id];
+            pg.set_block_size(blk_size);
+            pg.set_num_blocks(num_blks);
+        }
+    }
     
     page_type& get_page(const page_id_type pg_id) const MGBASE_NOEXCEPT
     {

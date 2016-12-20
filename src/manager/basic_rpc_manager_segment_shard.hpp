@@ -18,6 +18,7 @@ protected:
     explicit basic_rpc_manager_segment_shard(const Conf& conf)
         : page_size_(conf.page_size)
         , num_pages_(conf.num_pages)
+        , block_size_(conf.block_size)
         , pgs_(new page_type[num_pages_])
     { }
     
@@ -30,6 +31,10 @@ public:
     {
         return num_pages_;
     }
+    mgbase::size_t get_block_size() const MGBASE_NOEXCEPT
+    {
+        return block_size_;
+    }
     
     page_type& get_page(const page_id_type pg_id)
     {
@@ -41,6 +46,8 @@ public:
 private:
     mgbase::size_t page_size_;
     mgbase::size_t num_pages_;
+    
+    mgbase::size_t block_size_;
     
     mgbase::unique_ptr<page_type []>    pgs_;
 };
