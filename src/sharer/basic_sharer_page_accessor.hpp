@@ -11,13 +11,14 @@ template <typename Policy>
 class basic_sharer_page_accessor
     : public mgbase::crtp_base<Policy>
 {
-    typedef typename Policy::derived_type       derived_type;
-    typedef typename Policy::segment_accessor_type segment_accessor_type;
-    typedef typename Policy::page_entry_type    page_entry_type;
-    typedef typename Policy::block_id_type      block_id_type;
-    typedef typename Policy::prptr_type         prptr_type;
-    typedef typename Policy::difference_type    difference_type;
-    typedef typename Policy::index_type         index_type;
+    typedef typename Policy::derived_type           derived_type;
+    typedef typename Policy::segment_accessor_type  segment_accessor_type;
+    typedef typename Policy::page_entry_type        page_entry_type;
+    typedef typename Policy::block_id_type          block_id_type;
+    typedef typename Policy::prptr_type             prptr_type;
+    typedef typename Policy::plptr_type             plptr_type;
+    typedef typename Policy::difference_type        difference_type;
+    typedef typename Policy::index_type             index_type;
     
 public:
     // Transfer functions
@@ -75,6 +76,13 @@ public:
             // Acquire the read privilege.
             auto ret = seg_pr.acquire_read_page(pg_id);
             
+            // Allocate a new region if this is the first touch.
+            if (this->create_page_if_invalid(seg_pr, &ret.owner_plptr))
+            {
+                // Set the new page location on the manager.
+                seg_pr.assign_reader_page(pg_id, ret.owner_plptr);
+            }
+            
             // Update the owner with the lookup result from the manager.
             pg_ent.update_owner_for_read(mgbase::move(ret));
         }
@@ -115,6 +123,13 @@ public:
             
             // Acquire the write privilege.
             auto ret = seg_pr.acquire_write_page(pg_id);
+            
+            // Allocate a new region if this is the first touch or started migrating.
+            if (this->create_page_if_invalid(seg_pr, &ret.owner_plptr))
+            {
+                // Set the new page location on the manager.
+                seg_pr.assign_writer_page(pg_id, ret.owner_plptr);
+            }
             
             // Update the owner with the lookup result from the manager.
             pg_ent.update_owner_for_write(mgbase::move(ret));
@@ -184,6 +199,21 @@ public:
     }
     
 private:
+    bool create_page_if_invalid(segment_accessor_type& seg_ac, plptr_type* const owner_result)
+    {
+        if (Policy::is_invalid_plptr(*owner_result))
+        {
+            const auto pg_size = seg_ac.get_page_size();
+            
+            // Allocate a new page.
+            *owner_result = Policy::allocate_page(pg_size);
+            
+            return true;
+        }
+        else
+            return false;
+    }
+    
     prptr_type get_owner_prptr(const block_id_type blk_id)
     {
         auto& self = this->derived();

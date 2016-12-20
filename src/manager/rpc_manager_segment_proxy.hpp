@@ -22,10 +22,14 @@ struct rpc_manager_segment_proxy_policy
     typedef page_id_t                       page_id_type;
     typedef segment_id_t                    segment_id_type;
     
+    typedef mgcom::rma::paired_local_ptr<void>  plptr_type;
+    
     static const mgcom::rpc::handler_id_t acquire_read_handler_id = 401;
     static const mgcom::rpc::handler_id_t release_read_handler_id = 402;
     static const mgcom::rpc::handler_id_t acquire_write_handler_id = 403;
     static const mgcom::rpc::handler_id_t release_write_handler_id = 404;
+    static const mgcom::rpc::handler_id_t assign_reader_handler_id = 403;
+    static const mgcom::rpc::handler_id_t assign_writer_handler_id = 404;
 };
 
 class rpc_manager_segment::proxy

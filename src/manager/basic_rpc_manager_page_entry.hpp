@@ -39,6 +39,17 @@ public:
             this->migrate_cv_.wait(lk);
         }
     }
+    void notify_migrated(MGBASE_UNUSED unique_lock_type& lk)
+    {
+        MGBASE_ASSERT(lk.owns_lock());
+        
+        this->migrate_cv_.notify_all();
+    }
+    
+    void set_owner(const owner_plptr_type& plptr)
+    {
+        this->owner_plptr_ = plptr;
+    }
     
     owner_plptr_type get_owner_plptr() const MGBASE_NOEXCEPT {
         return this->owner_plptr_;

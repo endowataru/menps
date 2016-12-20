@@ -42,6 +42,9 @@ private:
     void wait_if_migrating() {
         pg_.wait_if_migrating(lk_);
     }
+    void notify_migrated() {
+        pg_.notify_migrated(lk_);
+    }
     
     rpc_manager_segment::accessor& seg_ac_;
     rpc_manager_page& pg_;

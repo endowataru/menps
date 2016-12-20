@@ -20,10 +20,23 @@ struct sharer_page_accessor_traits
     
     typedef block_id_t                              block_id_type;
     typedef mgcom::rma::paired_remote_ptr<void>     prptr_type;
+    typedef mgcom::rma::paired_local_ptr<void>      plptr_type;
     
     typedef mgbase::ptrdiff_t                       difference_type;
     
     typedef mgbase::uintptr_t                       index_type;
+    
+    static bool is_invalid_plptr(const plptr_type& plptr) MGBASE_NOEXCEPT {
+        return plptr.ptr != MGBASE_NULLPTR;
+    }
+    
+    static plptr_type allocate_page(const mgbase::size_t size_in_bytes) {
+        return {
+            mgcom::current_process_id()
+        ,   mgcom::rma::local_ptr<void>::cast_from(mgcom::rma::untyped::to_address(mgcom::rma::untyped::allocate(size_in_bytes)))
+                // TODO: very ugly...
+        };
+    }
 };
 
 class sharer_page::accessor

@@ -16,6 +16,8 @@ struct sharer_segment_accessor_policy
     
     typedef manager_segment_proxy::acquire_read_result  acquire_read_result_type;
     typedef manager_segment_proxy::acquire_write_result acquire_write_result_type;
+    
+    typedef mgcom::rma::paired_local_ptr<void>  plptr_type;
 };
 
 class sharer_segment::accessor

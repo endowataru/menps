@@ -17,6 +17,8 @@ class basic_sharer_segment_accessor
     typedef typename Traits::acquire_read_result_type   acquire_read_result_type;
     typedef typename Traits::acquire_write_result_type  acquire_write_result_type;
     
+    typedef typename Traits::plptr_type                 plptr_type;
+    
 public:
     acquire_read_result_type acquire_read_page(const page_id_type pg_id)
     {
@@ -48,10 +50,24 @@ public:
     void release_write_page(const page_id_type pg_id)
     {
         auto& self = this->derived();
-        
         auto& manager = self.get_manager();
         
         manager.release_write(pg_id);
+    }
+    
+    void assign_reader_page(const page_id_type pg_id, const plptr_type& owner)
+    {
+        auto& self = this->derived();
+        auto& manager = self.get_manager();
+        
+        manager.assign_reader(pg_id, owner);
+    }
+    void assign_writer_page(const page_id_type pg_id, const plptr_type& owner)
+    {
+        auto& self = this->derived();
+        auto& manager = self.get_manager();
+        
+        manager.assign_writer(pg_id, owner);
     }
     
     mgbase::size_t get_page_size() const MGBASE_NOEXCEPT

@@ -18,12 +18,20 @@ class basic_rpc_manager_page_accessor
     
     
 public:
-    void update(const owner_plptr_type owner)
+    // TODO: Are these functions correct?
+    void assign_reader(const owner_plptr_type& owner) {
+        update(owner);
+    }
+    void assign_writer(const owner_plptr_type& owner)
+    {
+        //MGBASE_ASSERT(pg_ent.is_migrating());
+        update(owner);
+    }
+    
+    void update(const owner_plptr_type& owner)
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
-        
-        MGBASE_ASSERT(pg_ent.is_migrating());
         
         // Update the owner process and address.
         pg_ent.set_owner(owner);

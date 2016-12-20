@@ -26,6 +26,8 @@ class basic_rpc_manager_segment_proxy
     
     typedef typename Policy::handler_id_type    handler_id_type;
     
+    typedef typename Policy::plptr_type             plptr_type;
+    
 public:
     // local operations
     
@@ -62,6 +64,8 @@ public:
         Policy::template register_handler<release_read_handler>();
         Policy::template register_handler<acquire_write_handler>();
         Policy::template register_handler<release_write_handler>();
+        Policy::template register_handler<assign_reader_handler>();
+        Policy::template register_handler<assign_writer_handler>();
     }
     
     MGBASE_WARN_UNUSED_RESULT
@@ -139,6 +143,42 @@ public:
         const argument arg{ man_sp, seg_id, pg_id };
         
         Policy::template call<release_write_handler>(
+            man_proc
+        ,   arg
+        );
+    }
+    
+    virtual void assign_reader(const page_id_type pg_id, const plptr_type& owner) MGBASE_OVERRIDE
+    {
+        auto& self = this->derived();
+        auto& sp = self.get_space_proxy();
+        
+        const auto seg_id = self.get_segment_id();
+        
+        const auto man_proc = sp.get_manager_proc(seg_id);
+        auto* man_sp = sp.get_manager_space(seg_id);
+        
+        const assign_argument arg{ man_sp, seg_id, pg_id, owner };
+        
+        Policy::template call<assign_reader_handler>(
+            man_proc
+        ,   arg
+        );
+    }
+    
+    virtual void assign_writer(const page_id_type pg_id, const plptr_type& owner) MGBASE_OVERRIDE
+    {
+        auto& self = this->derived();
+        auto& sp = self.get_space_proxy();
+        
+        const auto seg_id = self.get_segment_id();
+        
+        const auto man_proc = sp.get_manager_proc(seg_id);
+        auto* man_sp = sp.get_manager_space(seg_id);
+        
+        const assign_argument arg{ man_sp, seg_id, pg_id, owner };
+        
+        Policy::template call<assign_writer_handler>(
             man_proc
         ,   arg
         );
@@ -278,6 +318,75 @@ private:
             auto pg_ac = sp_ac.get_page_accessor(pg_id);
             
             pg_ac.release_write(src_proc);
+            
+            return sc.make_reply();
+        }
+    };
+    
+    struct assign_argument {
+        space_type*         sp;
+        segment_id_type     seg_id;
+        page_id_type        pg_id;
+        plptr_type          owner;
+    };
+    
+    struct assign_reader_handler
+    {
+        static const handler_id_type handler_id = Policy::assign_reader_handler_id;
+        
+        typedef assign_argument request_type;
+        typedef void            reply_type;
+        
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        {
+            auto& rqst = sc.request();
+            
+            auto& sp = *rqst.sp;
+            const auto seg_id = rqst.seg_id;
+            const auto pg_id = rqst.pg_id;
+            const auto& owner = rqst.owner;
+            
+            MGBASE_ASSERT(owner.proc == sc.src_proc());
+            
+            // Look up the segment.
+            auto sp_ac = sp.get_segment_accessor(seg_id);
+            
+            // Look up the page.
+            auto pg_ac = sp_ac.get_page_accessor(pg_id);
+            
+            pg_ac.assign_reader(owner);
+            
+            return sc.make_reply();
+        }
+    };
+    
+    struct assign_writer_handler
+    {
+        static const handler_id_type handler_id = Policy::assign_writer_handler_id;
+        
+        typedef assign_argument request_type;
+        typedef void            reply_type;
+        
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        {
+            auto& rqst = sc.request();
+            
+            auto& sp = *rqst.sp;
+            const auto seg_id = rqst.seg_id;
+            const auto pg_id = rqst.pg_id;
+            const auto& owner = rqst.owner;
+            
+            MGBASE_ASSERT(owner.proc == sc.src_proc());
+            
+            // Look up the segment.
+            auto sp_ac = sp.get_segment_accessor(seg_id);
+            
+            // Look up the page.
+            auto pg_ac = sp_ac.get_page_accessor(pg_id);
+            
+            pg_ac.assign_writer(owner);
             
             return sc.make_reply();
         }

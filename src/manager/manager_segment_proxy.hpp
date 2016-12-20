@@ -42,6 +42,10 @@ public:
     virtual acquire_write_result acquire_write(page_id_type) = 0;
     
     virtual void release_write(page_id_type) = 0;
+    
+    virtual void assign_reader(page_id_type, const plptr_type&) = 0;
+    
+    virtual void assign_writer(page_id_type, const plptr_type&) = 0;
 };
 
 typedef mgbase::unique_ptr<manager_segment_proxy>   manager_segment_proxy_ptr;
