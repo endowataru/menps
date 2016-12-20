@@ -27,7 +27,7 @@ struct sharer_page_accessor_traits
     typedef mgbase::uintptr_t                       index_type;
     
     static bool is_invalid_plptr(const plptr_type& plptr) MGBASE_NOEXCEPT {
-        return plptr.ptr != MGBASE_NULLPTR;
+        return plptr.ptr == MGBASE_NULLPTR;
     }
     
     static plptr_type allocate_page(const mgbase::size_t size_in_bytes) {

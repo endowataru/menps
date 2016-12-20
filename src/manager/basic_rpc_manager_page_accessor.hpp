@@ -87,7 +87,8 @@ public:
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
         
-        MGBASE_ASSERT(pg_ent.is_written_by(proc));
+        // The new writer must not be already a writer.
+        MGBASE_ASSERT(! pg_ent.is_written_by(proc));
         
         // Publish the owner ID and address.
         const auto owner_plptr = pg_ent.get_owner_plptr();

@@ -23,7 +23,7 @@ public:
         // manager_->destroy_segment();
     }
     
-    virtual void* get_ptr() const MGBASE_NOEXCEPT
+    virtual void* get_ptr() const MGBASE_NOEXCEPT MGBASE_OVERRIDE
     {
         return app_ptr_;
     }

@@ -51,7 +51,7 @@ public:
         const auto src_prptr = pg.get_read_owner_prptr(blk_id);
         
         // Get the local address of the twin.
-        const auto twin_lptr = blk.get_twin_lptr();
+        const auto twin_lptr = blk.get_twin_lptr(blk_size);
         
         // Get the pointer to the local cache block for the system (not for the application).
         const auto dest_ptr = pg.get_block_sys_ptr(blk_id);
@@ -139,7 +139,7 @@ public:
         const auto src_ptr = pg.get_block_sys_ptr(blk_id);
         
         // Get the local address of the twin.
-        const auto twin_lptr = blk.get_twin_lptr();
+        const auto twin_lptr = blk.get_twin_lptr(blk_size);
         
         // Get the address of the owner's block.
         const auto dest_prptr = pg.get_write_owner_prptr(blk_id);

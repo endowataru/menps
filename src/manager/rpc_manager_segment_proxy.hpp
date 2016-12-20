@@ -28,8 +28,8 @@ struct rpc_manager_segment_proxy_policy
     static const mgcom::rpc::handler_id_t release_read_handler_id = 402;
     static const mgcom::rpc::handler_id_t acquire_write_handler_id = 403;
     static const mgcom::rpc::handler_id_t release_write_handler_id = 404;
-    static const mgcom::rpc::handler_id_t assign_reader_handler_id = 403;
-    static const mgcom::rpc::handler_id_t assign_writer_handler_id = 404;
+    static const mgcom::rpc::handler_id_t assign_reader_handler_id = 405;
+    static const mgcom::rpc::handler_id_t assign_writer_handler_id = 406;
 };
 
 class rpc_manager_segment::proxy

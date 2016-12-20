@@ -17,12 +17,15 @@ public:
     template <typename Seg>
     void send_to_all(Seg& seg, const page_id_t pg_id) const
     {
+        // FIXME
+        #if 0
         for (const auto proc : this->readers_) {
             seg.enable_flush(proc, pg_id);
         }
         for (const auto proc : this->writers_) {
             seg.enable_diff(proc, pg_id);
         }
+        #endif
     }
     
 private:
