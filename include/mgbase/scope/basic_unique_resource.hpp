@@ -44,10 +44,13 @@ template <
             typename mgbase::remove_pointer<typename Traits::resource_type>::type
         >::value
 >
-class basic_unique_resource_deref { };
+class basic_unique_resource_deref
+    : public mgbase::crtp_base<Traits>
+{ };
 
 template <typename Traits>
 class basic_unique_resource_deref<Traits, true>
+    : public mgbase::crtp_base<Traits>
 {
     typedef typename Traits::derived_type   derived_type;
     typedef typename Traits::resource_type  resource_type;
@@ -59,7 +62,7 @@ class basic_unique_resource_deref<Traits, true>
     
 public:
     lv_ref_resource_type operator * () const MGBASE_NOEXCEPT {
-        return *static_cast<const derived_type&>(*this).get();
+        return * this->derived().get();
     }
 };
 
@@ -217,10 +220,6 @@ protected:
     }
     
 private:
-    derived_type& derived() MGBASE_NOEXCEPT {
-        return static_cast<derived_type&>(*this);
-    }
-    
     mgbase::tuple<resource_type, deleter_type> t_;
 };
 
