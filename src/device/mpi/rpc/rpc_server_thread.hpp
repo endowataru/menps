@@ -10,7 +10,9 @@ namespace mpi {
 
 class rpc_server_thread
 {
-    typedef ult::mutex      mutex_type;
+    typedef ult::mutex                          mutex_type;
+    typedef rpc::message_buffer                 buffer_type;
+    typedef mgbase::unique_ptr<buffer_type>     buffer_ptr_type;
     
 public:
     struct conf
@@ -58,17 +60,17 @@ private:
     {
         while (!is_finished())
         {
-            rpc::message_buffer buf;
+            auto buf_ptr = mgbase::make_unique<buffer_type>();
             
-            const auto ret = this->recv_request(&buf);
+            const auto ret = this->recv_request(*buf_ptr);
             
             if (ret.valid)
             {
-                mgbase::uint8_t reply_data[MGCOM_RPC_MAX_DATA_SIZE];
+                ult::thread th(
+                    call_functor{ *this, ret.cli_rank, mgbase::move(buf_ptr) }
+                );
                 
-                this->call(ret.client_rank, buf, reply_data);
-                
-                this->send_reply(ret.client_rank, buf.reply_tag, reply_data, buf.reply_size);
+                th.detach();
             }
         }
     }
@@ -99,10 +101,10 @@ private:
     struct recv_result
     {
         bool valid;
-        int  client_rank;
+        int  cli_rank;
     };
     
-    recv_result recv_request(rpc::message_buffer* const buf)
+    recv_result recv_request(rpc::message_buffer& buf)
     {
         ult::unique_lock<ult::mutex> lc(this->mtx_);
         
@@ -111,7 +113,7 @@ private:
         MPI_Status status;
         
         this->conf_.mi->irecv({
-            buf
+            &buf
         ,   sizeof(rpc::message_buffer)
         ,   MPI_ANY_SOURCE
         ,   this->conf_.tag
@@ -133,25 +135,43 @@ private:
             return { false, MPI_PROC_NULL };
         }
         
-        const int client_rank = status.MPI_SOURCE;
+        const int cli_rank = status.MPI_SOURCE;
         
         MGBASE_LOG_DEBUG(
             "msg:Received RPC request.\t"
-            "client_rank:{}"
-        ,   client_rank
+            "cli_rank:{}"
+        ,   cli_rank
         );
         
-        return { true, client_rank };
+        return { true, cli_rank };
     }
     
+    struct call_functor
+    {
+        rpc_server_thread&  self;
+        int                 cli_rank;
+        buffer_ptr_type     buf_ptr;
+        
+        void operator() ()
+        {
+            auto& buf = *buf_ptr;
+            
+            mgbase::uint8_t reply_data[MGCOM_RPC_MAX_DATA_SIZE];
+            
+            self.call(cli_rank, buf, reply_data);
+            
+            self.send_reply(cli_rank, buf.reply_tag, reply_data, buf.reply_size);
+        }
+    };
+    
     void call(
-        const int                   client_rank
-    ,   const rpc::message_buffer&  buf
-    ,   void* const                 reply_data
+        const int           cli_rank
+    ,   const buffer_type&  buf
+    ,   void* const         reply_data
     ) {
         const auto reply_size
             = this->conf_.invoker->call(
-                static_cast<process_id_t>(client_rank)
+                static_cast<process_id_t>(cli_rank)
             ,   buf.id
             ,   buf.data
             ,   buf.size
@@ -163,7 +183,7 @@ private:
     }
     
     void send_reply(
-        const int           client_rank
+        const int           cli_rank
     ,   const int           reply_tag
     ,   const void* const   reply_data
     ,   const int           reply_size
@@ -174,7 +194,7 @@ private:
         this->conf_.mi->isend({
             reply_data
         ,   reply_size
-        ,   client_rank
+        ,   cli_rank
         ,   reply_tag
         ,   this->conf_.comm
         ,   mgbase::make_callback_notify(&flag)
