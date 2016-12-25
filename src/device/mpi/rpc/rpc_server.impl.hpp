@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "rpc_server_thread.impl.hpp"
+#include "rpc_server_thread.hpp"
 
 namespace mgcom {
 namespace mpi {
@@ -14,25 +14,32 @@ class rpc_server
 {
     static const index_t num_threads = 1;
     
+    static const int tag = 100/*FIXME*/;
+    
+    typedef mgbase::unique_ptr<rpc_server_thread>   server_thread_ptr;
+    
 public:
     explicit rpc_server(mpi_interface& mi)
         : invoker_{}
     {
         comm_ = mi.comm_dup(MPI_COMM_WORLD, "MGCOM_COMM_RPC");
         
-        ths_ = new rpc_server_thread[num_threads];
+        ths_ = mgbase::make_unique<server_thread_ptr []>(num_threads);
         
-        for (index_t i = 0; i < num_threads; ++i)
-            ths_[i].initialize(mi, invoker_, comm_, 100/*FIXME*/);
+        for (index_t i = 0; i < num_threads; ++i) {
+            ths_[i] =
+                mgbase::make_unique<rpc_server_thread>(
+                    rpc_server_thread::conf{
+                        &mi
+                    ,   &invoker_
+                    ,   comm_
+                    ,   tag
+                    }
+                );
+        }
     }
     
-    ~rpc_server()
-    {
-        for (index_t i = 0; i < num_threads; ++i)
-            ths_[i].finalize();
-        
-        ths_.reset();
-    }
+    ~rpc_server() = default;
     
     MPI_Comm get_comm() const MGBASE_NOEXCEPT {
         return comm_;
@@ -44,9 +51,10 @@ public:
     }
     
 private:
-    MPI_Comm comm_;
+    MPI_Comm    comm_;
     rpc_invoker invoker_;
-    mgbase::scoped_ptr<rpc_server_thread []> ths_;
+    
+    mgbase::unique_ptr<server_thread_ptr []> ths_;
 };
 
 } // unnamed namespace
