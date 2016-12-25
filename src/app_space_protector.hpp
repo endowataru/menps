@@ -9,6 +9,8 @@ namespace mgdsm {
 
 class app_space_protector
 {
+    static const mgbase::size_t os_page_size = 4096;
+    
 public:
     explicit app_space_protector(void* const app_ptr)
         : app_ptr_(app_ptr)
@@ -39,6 +41,9 @@ private:
         const auto size = blk_pr.get_block_size();
         
         const auto ptr = mgbase::next_in_bytes(this->app_ptr_, index);
+        
+        MGBASE_ASSERT(reinterpret_cast<mgbase::uintptr_t>(ptr) % os_page_size == 0);
+        MGBASE_ASSERT(size % os_page_size == 0);
         
         mprotect(ptr, size, prot);
     }
