@@ -35,6 +35,10 @@ struct rpc_manager_page_entry_traits
     static bool is_invalid_plptr(const owner_plptr_type& plptr) MGBASE_NOEXCEPT {
         return plptr.ptr != MGBASE_NULLPTR;
     }
+    
+    static owner_plptr_type make_invalid_plptr() MGBASE_NOEXCEPT {
+        return owner_plptr_type{};
+    }
 };
 
 class rpc_manager_page_entry

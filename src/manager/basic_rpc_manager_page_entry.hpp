@@ -22,6 +22,10 @@ class basic_rpc_manager_page_entry
     typedef typename Policy::invalidator_type       invalidator_type;
     
 public:
+    basic_rpc_manager_page_entry()
+        : owner_plptr_(Policy::make_invalid_plptr())
+    { }
+    
     // unique_lock_type is used in rpc_manager_page_accessor.
     typedef typename Policy::unique_lock_type       unique_lock_type;
     
