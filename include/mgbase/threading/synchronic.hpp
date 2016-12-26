@@ -5,7 +5,6 @@
 #include "this_thread.hpp"
 
 namespace mgbase {
-namespace ult {
 
 template <typename T>
 class synchronic
@@ -26,11 +25,10 @@ public:
     void expect(const atomic_type& obj, T desired)
     {
         while (obj.load(mgbase::memory_order_acquire) != desired) {
-            mgbase::ult::this_thread::yield();
+            this_thread::yield();
         }
     }
 };
 
-} // namespace ult
 } // namespace mgbase
 

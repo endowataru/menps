@@ -4,7 +4,7 @@
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/this_thread.hpp>
 #include <mgbase/threading/lock_guard.hpp>
-#include <mgbase/ult/this_thread.hpp>
+#include <mgbase/threading/this_thread.hpp>
 
 namespace mgbase {
 
@@ -45,8 +45,9 @@ public:
     
     void lock()
     {
-        while (!try_lock()) {
-            mgbase::ult::this_thread::yield();
+        while (!try_lock())
+        {
+            mgbase::this_thread::yield();
         }
     }
     

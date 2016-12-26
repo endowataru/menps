@@ -4,7 +4,6 @@
 #include "synchronic.hpp"
 
 namespace mgbase {
-namespace ult {
 
 class sync_flag
 {
@@ -31,6 +30,5 @@ private:
     synchronic<bool>        sync_;
 };
 
-} // namespace ult
 } // namespace mgbase
 
