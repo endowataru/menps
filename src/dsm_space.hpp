@@ -9,6 +9,7 @@
 #include <mgbase/external/fmt.hpp>
 #include "dsm_segment.hpp"
 #include <mgbase/arithmetic.hpp>
+#include <mgbase/logger.hpp>
 
 namespace mgdsm {
 
@@ -58,6 +59,15 @@ public:
         , new_seg_id_(100 * mgcom::current_process_id())
     {
         this->sharer_->set_manager_proxy(this->manager_pr_);
+
+        MGBASE_LOG_DEBUG("msg:Initialize DSM space.");
+    }
+    
+    ~dsm_space()
+    {
+        MGBASE_LOG_DEBUG("msg:Finalize DSM space.");
+        
+        mgcom::collective::barrier();
     }
     
     virtual segment_ref make_segment(
