@@ -3,7 +3,7 @@
 
 #include <mgcom/rpc/requester.hpp>
 #include <mgbase/scope/basic_unique_resource.hpp>
-#include <mgbase/ult.hpp>
+#include <mgcom/ult.hpp>
 #include <mgbase/type_traits/is_void.hpp>
 
 namespace mgcom {
@@ -313,7 +313,7 @@ inline void call2_async(
     };
     
     while (!req.try_call_async(params)) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
     
     *rply_out = mgbase::move(rply_msg);
@@ -340,7 +340,7 @@ inline reply_message<typename Handler::reply_type> call2(
     );
     
     while (!flag.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
     
     return rply_msg;

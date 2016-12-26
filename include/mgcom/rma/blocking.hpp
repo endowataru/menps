@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgcom/rma/try_rma.hpp>
-#include <mgbase/ult.hpp>
+#include <mgcom/ult.hpp>
 
 namespace mgcom {
 namespace rma {
@@ -28,7 +28,7 @@ void read_async(
     ,   number_of_elements
     ,   on_complete
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 /**
@@ -50,7 +50,7 @@ void write_async(
     ,   number_of_elements
     ,   on_complete
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 
@@ -65,7 +65,7 @@ void read(
 ,   const local_ptr<Local>&     dest_lptr
 ,   const index_t               number_of_elements
 ) {
-    mgbase::ult::sync_flag flag;
+    ult::sync_flag flag;
     
     read_async(
         src_proc
@@ -88,7 +88,7 @@ void write(
 ,   const local_ptr<Local>&     src_lptr
 ,   const index_t               number_of_elements
 ) {
-    mgbase::ult::sync_flag flag;
+    ult::sync_flag flag;
     
     write_async(
         dest_proc
@@ -117,7 +117,7 @@ void atomic_read_async(
     ,   dest_ptr
     ,   on_complete
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 /**
@@ -136,7 +136,7 @@ void atomic_write_async(
     ,   value
     ,   on_complete
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 /**
@@ -158,7 +158,7 @@ MGBASE_ALWAYS_INLINE void compare_and_swap_async(
     ,   result_ptr
     ,   on_complete
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 /**
@@ -178,7 +178,7 @@ MGBASE_ALWAYS_INLINE void fetch_and_add_async(
     ,   result_ptr
     ,   on_complete
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 
@@ -191,7 +191,7 @@ void atomic_read(
 ,   const remote_ptr<const atomic_default_t>&   src_rptr
 ,   atomic_default_t* const                     dest_ptr
 ) {
-    mgbase::ult::sync_flag flag;
+    ult::sync_flag flag;
     
     atomic_read_async(
         src_proc
@@ -211,7 +211,7 @@ void atomic_write(
 ,   const remote_ptr<atomic_default_t>&         dest_rptr
 ,   const atomic_default_t                      value
 ) {
-    mgbase::ult::sync_flag flag;
+    ult::sync_flag flag;
     
     atomic_write_async(
         dest_proc
@@ -233,7 +233,7 @@ void compare_and_swap(
 ,   const atomic_default_t                      desired_val
 ,   atomic_default_t* const                     result_ptr
 ) {
-    mgbase::ult::sync_flag flag;
+    ult::sync_flag flag;
     
     compare_and_swap_async(
         target_proc
@@ -256,7 +256,7 @@ void fetch_and_add(
 ,   const atomic_default_t                      value
 ,   atomic_default_t* const                     result_ptr
 ) {
-    mgbase::ult::sync_flag flag;
+    ult::sync_flag flag;
     
     fetch_and_add_async(
         target_proc

@@ -114,14 +114,14 @@ public:
     
     MPI_Aint attach(const attach_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         MPI_Aint result;
         
         while (MGBASE_UNLIKELY(
             !try_attach_async({ params, &result, mgbase::make_callback_notify(&flag) })
         )) {
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
         }
         
         flag.wait();
@@ -131,12 +131,12 @@ public:
     
     void detach(const detach_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !try_detach_async({ params, mgbase::make_callback_notify(&flag) })
         )) {
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
         }
         
         flag.wait();

@@ -19,7 +19,7 @@ public:
     
     virtual void barrier()
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !mi_.try_ibarrier({
@@ -27,7 +27,7 @@ public:
             ,   mgbase::make_callback_notify(&flag)
             })
         )) {
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
         }
         
         flag.wait();
@@ -35,7 +35,7 @@ public:
     
     virtual void broadcast(const untyped::broadcast_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !mi_.try_ibcast({
@@ -43,7 +43,7 @@ public:
             ,   mgbase::make_callback_notify(&flag)
             })
         )) {
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
         }
         
         flag.wait();
@@ -51,7 +51,7 @@ public:
     
     virtual void allgather(const untyped::allgather_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !mi_.try_iallgather({
@@ -59,7 +59,7 @@ public:
             ,   mgbase::make_callback_notify(&flag)
             })
         )) {
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
         }
         
         flag.wait();
@@ -67,7 +67,7 @@ public:
     
     virtual void alltoall(const untyped::alltoall_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         while (MGBASE_UNLIKELY(
             !mi_.try_ialltoall({
@@ -75,7 +75,7 @@ public:
             ,   mgbase::make_callback_notify(&flag)
             })
         )) {
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
         }
         
         flag.wait();

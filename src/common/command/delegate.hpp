@@ -2,6 +2,7 @@
 #pragma once
 
 #include "delegator.hpp"
+#include <mgcom/ult.hpp>
 #include <mgbase/value_wrapper.hpp>
 
 namespace mgcom {
@@ -55,7 +56,7 @@ inline void delegate(delegator& del, const Func& func)
     while (MGBASE_UNLIKELY(
         ! try_delegate(del, func)
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 
@@ -105,12 +106,12 @@ inline bool try_execute_async(delegator& del, const Func& func, const mgbase::ca
 template <typename Func>
 inline void execute(delegator& del, const Func& func)
 {
-    mgbase::ult::sync_flag flag;
+    ult::sync_flag flag;
     
     while (MGBASE_UNLIKELY(
         ! try_execute_async(del, func, mgbase::make_callback_notify(&flag))
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
     
     flag.wait();

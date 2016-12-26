@@ -52,7 +52,7 @@ private:
         ,   const mgcom::rpc::handler_parameters&   params
         ,   const argument_type&                    arg
         ) {
-            mgbase::ult::sync_flag flag;
+            ult::sync_flag flag;
             
             self.mi_.isend({
                 arg.src_ptr
@@ -143,7 +143,7 @@ private:
         ,   const mgcom::rpc::handler_parameters&   params
         ,   const argument_type&                    arg
         ) {
-            mgbase::ult::sync_flag flag;
+            ult::sync_flag flag;
             
             self.mi_.irecv(irecv_params{
                 arg.dest_ptr

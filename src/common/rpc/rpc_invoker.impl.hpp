@@ -9,8 +9,6 @@
 namespace mgcom {
 namespace rpc {
 
-namespace /*unnamed*/ {
-
 class rpc_invoker
 {
     struct handler
@@ -80,8 +78,6 @@ public:
 private:
     std::vector<handler> handlers_;
 };
-
-} // unnamed namespace
 
 } // namespace rpc
 } // namespace mgcom

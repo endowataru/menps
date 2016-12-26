@@ -6,6 +6,10 @@
 #include <mgbase/scoped_ptr.hpp>
 #include <mgbase/assert.hpp>
 
+#include <mgcom/ult.hpp>
+
+namespace ult = mgcom::ult;
+
 class bench_master
 {
 public:

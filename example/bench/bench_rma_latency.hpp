@@ -83,7 +83,7 @@ protected:
             const auto t1 = mgbase::get_cpu_clock();
             
             while (!flag.load(mgbase::memory_order_acquire)) {
-                mgbase::ult::this_thread::yield();
+                ult::this_thread::yield();
             }
             
             const auto t2 = mgbase::get_cpu_clock();

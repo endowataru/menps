@@ -10,19 +10,13 @@ include(CheckCXXSourceCompiles)
 include(CheckSymbolExists)
 
 add_library(mgcom-header INTERFACE)
-target_include_directories(mgcom-header
-    INTERFACE ./include
-    INTERFACE ${CMAKE_CURRENT_BINARY_DIR}
+target_include_directories(mgcom-header INTERFACE
+    ./include
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
-target_link_libraries(mgcom-header
-    INTERFACE mgbase-header
+target_link_libraries(mgcom-header INTERFACE
+    mgult-header
 )
-
-add_library(mgcom-base INTERFACE)
-target_include_directories(mgcom-base
-    INTERFACE ./src
-)
-target_link_libraries(mgcom-base INTERFACE mgcom-header mgbase-options)
 
 # Platform Checks
 
@@ -62,7 +56,14 @@ add_library(mgcom-common
     src/common/rma/default_allocator.cpp
     src/common/rma/malloc.cpp
 )
-target_link_libraries(mgcom-common mgcom-base mgbase)
+target_include_directories(mgcom-common PRIVATE
+    ./src
+)
+target_link_libraries(mgcom-common
+    mgcom-header
+    mgbase
+    mgbase-options
+)
 
 add_library(mgcom-mpi
     src/device/mpi/rpc/rpc.cpp
@@ -76,6 +77,9 @@ add_library(mgcom-mpi
     src/device/mpi/command/mpi_delegator.cpp
     src/device/mpi/mpi_communicator.cpp
 )
+target_include_directories(mgcom-mpi PRIVATE
+    ./src
+)
 target_link_libraries(mgcom-mpi mgcom-common)
 
 
@@ -85,6 +89,9 @@ if(${MGCOM_DEVICE_MPI_SUPPORTED})
     add_library(mgcom-dev-mpi1
         src/device/mpi1/command/commander.cpp
         src/device/mpi1/mpi1.cpp
+    )
+    target_include_directories(mgcom-dev-mpi1 PRIVATE
+        ./src
     )
     target_link_libraries(mgcom-dev-mpi1 mgcom-mpi)
     
@@ -100,6 +107,9 @@ if(${MGCOM_DEVICE_MPI3_SUPPORTED})
         src/device/mpi3/rma/requester.cpp
         src/device/mpi3/rma/registrator.cpp
         src/device/mpi3/mpi3.cpp
+    )
+    target_include_directories(mgcom-dev-mpi3 PRIVATE
+        ./src
     )
     target_link_libraries(mgcom-dev-mpi3 mgcom-mpi)
     
@@ -120,6 +130,9 @@ if (${MGCOM_DEVICE_FJMPI_SUPPORTED})
         src/device/fjmpi/scheduler/fjmpi_delegator.cpp
         src/device/fjmpi/scheduler/command_consumer.cpp
     )
+    target_include_directories(mgcom-dev-fjmpi PRIVATE
+        ./src
+    )
     target_link_libraries(mgcom-dev-fjmpi mgcom-mpi)
     
     list(APPEND mgcom-devices fjmpi)
@@ -137,6 +150,9 @@ if (${MGCOM_DEVICE_IBV_SUPPORTED})
         src/device/ibv/scheduler/scheduler.cpp
         src/device/ibv/ibv_starter.cpp
     )
+    target_include_directories(mgcom-dev-ibv PRIVATE
+        ./src
+    )
     target_link_libraries(mgcom-dev-ibv mgcom-dev-mpi1
         ibverbs # libibverbs.so
     )
@@ -147,6 +163,9 @@ endif()
 
 add_library(mgcom
     src/common/entrypoint.cpp
+)
+target_include_directories(mgcom PRIVATE
+    ./src
 )
 target_link_libraries(mgcom
     $<$<BOOL:${MGCOM_DEVICE_MPI_SUPPORTED}>:mgcom-dev-mpi1>

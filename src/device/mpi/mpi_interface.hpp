@@ -5,7 +5,7 @@
 #include <mgcom/collective/requester.hpp>
 #include "mpi.hpp"
 
-#include <mgbase/ult.hpp>
+#include <mgcom/ult.hpp>
 
 namespace mgcom {
 namespace mpi {
@@ -107,19 +107,19 @@ public:
     void irecv(const irecv_params& params)
     {
         while (MGBASE_UNLIKELY(!try_irecv(params)))
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
     }
     
     void isend(const isend_params& params)
     {
         while (MGBASE_UNLIKELY(!try_isend(params)))
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
     }
     
     void irsend(const isend_params& params)
     {
         while (MGBASE_UNLIKELY(!try_irsend(params)))
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
     }
     
     // communicator
@@ -159,30 +159,30 @@ public:
     void native_barrier_async(const ibarrier_params& params)
     {
         while (MGBASE_UNLIKELY(!try_native_barrier_async(params)))
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
     }
     
     void native_broadcast_async(const ibcast_params& params)
     {
         while (MGBASE_UNLIKELY(!try_native_broadcast_async(params)))
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
     }
     
     void native_allgather_async(const iallgather_params& params)
     {
         while (MGBASE_UNLIKELY(!try_native_allgather_async(params)))
-            mgbase::ult::this_thread::yield();
+            ult::this_thread::yield();
     }
     
     void native_alltoall_async(const ialltoall_params& params)
     {
         while (MGBASE_UNLIKELY(!try_native_alltoall_async(params)))
-            mgbase::ult::this_thread::yield();  
+            ult::this_thread::yield();  
     }
     
     void native_barrier(const barrier_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         native_barrier_async({ params, mgbase::make_callback_notify(&flag) });
         
@@ -191,7 +191,7 @@ public:
     
     void native_broadcast(const broadcast_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         native_broadcast_async({ params, mgbase::make_callback_notify(&flag) });
         
@@ -200,7 +200,7 @@ public:
     
     void native_alltoall(const alltoall_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         native_alltoall_async({ params, mgbase::make_callback_notify(&flag) });
         
@@ -209,7 +209,7 @@ public:
     
     void native_allgather(const allgather_params& params)
     {
-        mgbase::ult::sync_flag flag;
+        ult::sync_flag flag;
         
         native_allgather_async({ params, mgbase::make_callback_notify(&flag)  });
         

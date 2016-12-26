@@ -39,7 +39,7 @@ public:
         
         std::memcpy(msg_buf.data, params.arg_ptr, params.arg_size);
         
-        mgbase::ult::sync_flag send_finished;
+        ult::sync_flag send_finished;
         
         //mpi::irsend( // TODO: Introduce buffer management
         mi_.isend({

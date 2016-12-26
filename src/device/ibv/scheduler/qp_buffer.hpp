@@ -5,7 +5,6 @@
 #include "send_wr_buffer.hpp"
 #include "device/ibv/command/set_command_to.hpp"
 #include "device/ibv/native/scatter_gather_entry.hpp"
-#include <mgbase/ult/this_thread.hpp>
 #include "device/ibv/native/endpoint.hpp"
 
 namespace mgcom {

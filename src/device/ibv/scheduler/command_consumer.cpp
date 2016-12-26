@@ -7,7 +7,6 @@
 #include "device/ibv/native/endpoint.hpp"
 #include "device/ibv/native/scatter_gather_entry.hpp"
 #include "device/ibv/command/set_command_to.hpp"
-#include <mgbase/ult/this_thread.hpp>
 #include <mgbase/container/index_list.hpp>
 #include "device/ibv/command/completion_selector.hpp"
 

@@ -1,13 +1,11 @@
 
 #pragma once
 
-#include <mgbase/ult.hpp>
-//#include <mgult/sm.hpp>
+#include <mgult/klt.hpp>
 
 namespace mgcom {
 
-//namespace ult = mgult::sm;
-namespace ult = mgbase::ult;
+namespace ult = mgult::klt;
 
 } // namespace mgcom
 

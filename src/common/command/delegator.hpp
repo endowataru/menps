@@ -2,7 +2,6 @@
 #pragma once
 
 #include <mgbase/callback_function.hpp>
-#include <mgbase/ult.hpp>
 #include <mgcom/common.hpp>
 
 #include <mgbase/logger.hpp>

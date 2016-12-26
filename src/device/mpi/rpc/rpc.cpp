@@ -18,13 +18,13 @@ public:
     
     virtual ~mpi_requester() MGBASE_EMPTY_DEFINITION
     
-    virtual void register_handler(const untyped::register_handler_params& params)
+    virtual void register_handler(const untyped::register_handler_params& params) MGBASE_OVERRIDE
     {
         server_.register_handler(params);
     }
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_call_async(const untyped::call_params& params)
+    virtual bool try_call_async(const untyped::call_params& params) MGBASE_OVERRIDE
     {
         return client_.try_call_async(params);
     }

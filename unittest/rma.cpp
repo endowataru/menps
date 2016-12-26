@@ -2,6 +2,8 @@
 #include "unittest.hpp"
 #include <vector>
 
+namespace ult = mgcom::ult;
+
 class RmaBasic
     : public ::testing::Test
 {
@@ -94,7 +96,7 @@ TEST_F(RmaBasic, ConcurrentGet)
         if (x == ptrs.size())
             break;
         
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
     
     for (vec_type::iterator itr = ptrs.begin(); itr != ptrs.end(); ++itr) {

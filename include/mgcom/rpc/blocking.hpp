@@ -2,7 +2,7 @@
 #pragma once
 
 #include "call.hpp"
-#include <mgbase/ult.hpp>
+#include <mgcom/ult.hpp>
 
 namespace mgcom {
 namespace rpc {
@@ -22,7 +22,7 @@ MGBASE_ALWAYS_INLINE void remote_call_async(
     ,   return_result
     ,   on_complete
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 template <typename Handler>
@@ -36,7 +36,7 @@ MGBASE_ALWAYS_INLINE void remote_call_async(
     ,   arg
     ,   on_complete
     )) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 
@@ -56,7 +56,7 @@ MGBASE_ALWAYS_INLINE void remote_call(
     );
     
     while (!flag.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
     
     //mgbase::atomic_thread_fence(mgbase::memory_order_seq_cst); // for debugging
@@ -75,7 +75,7 @@ MGBASE_ALWAYS_INLINE void remote_call(
     );
     
     while (!flag.load(mgbase::memory_order_acquire)) {
-        mgbase::ult::this_thread::yield();
+        ult::this_thread::yield();
     }
 }
 
