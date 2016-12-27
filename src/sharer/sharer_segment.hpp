@@ -18,8 +18,6 @@ public:
     { }
     
     class accessor;
-    
-    inline accessor get_accessor() MGBASE_NOEXCEPT;
 };
 
 } // namespace mgdsm

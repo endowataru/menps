@@ -54,12 +54,25 @@ private:
         {
             auto& space = self.conf_.space;
             
+            const access_history::abs_block_id ablk_id{
+                blk_ac.get_segment_id()
+            ,   blk_ac.get_page_id()
+            ,   blk_ac.get_block_id()
+            };
+            
             // Fetch the block first.
-            if (! space.fetch(blk_ac))
+            if (space.fetch(blk_ac))
             {
+                // Add this block as a flushed page.
+                self.conf_.hist.add_new_read(ablk_id);
+            }
+            else {
                 // If the block is already readable,
                 // then try to make it writable.
                 space.touch(blk_ac);
+                
+                // Add this block as a reconciled page.
+                self.conf_.hist.add_new_write(ablk_id);
             }
         }
     };

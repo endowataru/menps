@@ -27,7 +27,7 @@ public:
         : segs_(conf.num_segments)
     { }
     
-private:
+protected:
     segment_type& get_segment(const segment_id_type seg_id)
     {
         auto& self = this->derived();
@@ -49,14 +49,6 @@ private:
         }
         
         return *seg_ptr;
-    }
-    
-public:
-    segment_accessor_type get_segment_accessor(const segment_id_type seg_id)
-    {
-        auto& seg = this->get_segment(seg_id);
-        
-        return seg.get_accessor();
     }
     
 private:

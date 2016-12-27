@@ -19,9 +19,9 @@ class sharer_block::accessor
     : public basic_sharer_block_accessor<sharer_block_accessor_traits>
     , public sharer_block_transfer
 {
-    typedef sharer_page::accessor  page_accessor_type;
-    typedef sharer_block_entry  block_entry_type;
-    typedef block_id_t          block_id_type;
+    typedef sharer_page::accessor   page_accessor_type;
+    typedef sharer_block_entry      block_entry_type;
+    typedef block_id_t              block_id_type;
     
 public:
     accessor(sharer_page::accessor& pg_pr, const block_id_t blk_id, sharer_block& blk)
@@ -35,6 +35,14 @@ public:
     }
     block_id_type get_block_id() const MGBASE_NOEXCEPT {
         return blk_id_;
+    }
+    
+    // Transfer functions
+    page_id_t get_page_id() const MGBASE_NOEXCEPT {
+        return this->get_page_accessor().get_page_id();
+    }
+    page_id_t get_segment_id() const MGBASE_NOEXCEPT {
+        return this->get_page_accessor().get_segment_accessor().get_segment_id();
     }
     
 private:

@@ -35,6 +35,7 @@ public:
     struct acquire_write_result
     {
         plptr_type  owner_plptr;
+        bool        needs_flush;
         bool        needs_diff;
     };
     

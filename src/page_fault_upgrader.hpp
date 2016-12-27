@@ -3,6 +3,7 @@
 
 #include "app_space.hpp"
 #include "app_space_indexer.hpp"
+#include "access_history.hpp"
 
 namespace mgdsm {
 
@@ -12,6 +13,7 @@ public:
     struct config {
         app_space&          space;
         app_space_indexer&  indexer;
+        access_history&     hist;
     };
     
     explicit page_fault_upgrader(const config&);

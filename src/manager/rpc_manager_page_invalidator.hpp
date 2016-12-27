@@ -15,17 +15,30 @@ public:
     { }
     
     template <typename Seg>
-    void send_to_all(Seg& seg, const page_id_t pg_id) const
+    void send_to_all(const mgcom::process_id_t src_proc, Seg& seg, const page_id_t pg_id) const
     {
-        // FIXME
-        #if 0
-        for (const auto proc : this->readers_) {
-            seg.enable_flush(proc, pg_id);
+        for (const auto proc : this->readers_)
+        {
+            // A new writer must be different from the existing readers.
+            //MGBASE_ASSERT(proc != src_proc);
+            
+            if (proc == src_proc)
+            {
+                // The existing reader is the same as the new writer.
+                // The coherence information is sent via "acquire_write"'s RPC.
+            }
+            else
+            {
+                seg.enable_flush(proc, pg_id);
+            }
         }
-        for (const auto proc : this->writers_) {
+        for (const auto proc : this->writers_)
+        {
+            // A new writer must be different from the existing writers.
+            MGBASE_ASSERT(proc != src_proc);
+            
             seg.enable_diff(proc, pg_id);
         }
-        #endif
     }
     
 private:

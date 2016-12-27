@@ -52,17 +52,18 @@ public:
     
     inline sharer_block::accessor get_block_accessor(block_id_t) MGBASE_NOEXCEPT;
     
-private:
-    friend class basic_sharer_page_accessor<sharer_page_accessor_traits>;
-    
     sharer_segment::accessor& get_segment_accessor() const MGBASE_NOEXCEPT {
         return seg_pr_;
     }
-    sharer_page_entry& get_page_entry() const MGBASE_NOEXCEPT {
-        return pg_;
-    }
     page_id_t get_page_id() const MGBASE_NOEXCEPT {
         return pg_id_;
+    }
+    
+private:
+    friend class basic_sharer_page_accessor<sharer_page_accessor_traits>;
+    
+    sharer_page_entry& get_page_entry() const MGBASE_NOEXCEPT {
+        return pg_;
     }
     
     sharer_segment::accessor&           seg_pr_;

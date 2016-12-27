@@ -119,6 +119,7 @@ public:
     void update_owner_for_write(const Data& data)
     {
         this->owner_            = Traits::use_remote_ptr(data.owner_plptr);
+        this->is_flush_needed_  = data.needs_flush;
         this->is_diff_needed_   = data.needs_diff;
     }
     

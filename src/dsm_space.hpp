@@ -1,7 +1,7 @@
 
 #include "app_space.hpp"
 #include "manager/rpc_manager_segment_proxy.hpp"
-#include "sharer/sharer_space.hpp"
+#include "sharer/sharer_space_proxy.hpp"
 #include "page_fault_upgrader.hpp"
 #include "aliasing_mapped_region.hpp"
 #include <mgdsm/space.hpp>
@@ -10,6 +10,7 @@
 #include "dsm_segment.hpp"
 #include <mgbase/arithmetic.hpp>
 #include <mgbase/logger.hpp>
+#include "access_history.hpp"
 
 namespace mgdsm {
 
@@ -43,6 +44,7 @@ public:
                 sharer_space_conf{ get_num_segments(), *this }
             )
         )
+        , sharer_pr_(sharer_->make_proxy_collective())
         , app_prot_(reg_.get_app_ptr())
         , app_sp_(app_prot_)
         , app_idx_(
@@ -53,13 +55,21 @@ public:
             ,   get_address_space_size() / get_num_segments()
             }
         )
+        , hist_(
+            {
+                *sharer_
+            ,   app_sp_
+            }
+        )
         , fault_upgrader_(
-            page_fault_upgrader::config{ app_sp_, app_idx_ }
+            page_fault_upgrader::config{ app_sp_, app_idx_, hist_ }
         )
         , new_seg_id_(100 * mgcom::current_process_id())
     {
+        this->manager_->set_activater(this->sharer_pr_);
+        
         this->sharer_->set_manager_proxy(this->manager_pr_);
-
+        
         MGBASE_LOG_DEBUG("msg:Initialize DSM space.");
     }
     
@@ -97,6 +107,15 @@ public:
             ,   get_segment_app_ptr(seg_id)
             }
         ));
+    }
+    
+    virtual void read_barrier() MGBASE_OVERRIDE
+    {
+        this->hist_.read_barrier();
+    }
+    virtual void write_barrier() MGBASE_OVERRIDE
+    {
+        this->hist_.write_barrier();
     }
     
     virtual void enable_on_this_thread() MGBASE_OVERRIDE
@@ -165,9 +184,11 @@ private:
     mgbase::unique_ptr<rpc_manager_space>   manager_;
     rpc_manager_space::proxy            manager_pr_;
     mgbase::unique_ptr<sharer_space>    sharer_;
+    sharer_space::proxy                 sharer_pr_;
     app_space_protector                 app_prot_;
     app_space                           app_sp_;
     app_space_indexer                   app_idx_;
+    access_history                      hist_;
     page_fault_upgrader                 fault_upgrader_;
     segment_id_t                        new_seg_id_;
 };

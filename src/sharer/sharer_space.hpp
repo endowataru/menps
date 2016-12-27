@@ -38,6 +38,7 @@ class sharer_space
     
     typedef sharer_space_policy::segment_ptr_type   segment_ptr_type;
     
+    
 public:
     template <typename Conf>
     explicit sharer_space(const Conf& conf)
@@ -55,6 +56,8 @@ public:
         MGBASE_ASSERT(this->manager_ == MGBASE_NULLPTR);
         this->manager_ = &manager;
     }
+    
+    inline sharer_segment::accessor get_segment_accessor(segment_id_t);
     
 private:
     friend class basic_sharer_space<sharer_space_policy>;

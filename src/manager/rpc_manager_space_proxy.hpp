@@ -50,6 +50,8 @@ public:
         return sp_;
     }
     
+    // TODO: make these members private
+    
     mgcom::process_id_t get_manager_proc(const segment_id_t seg_id) const MGBASE_NOEXCEPT
     {
         return seg_id % mgcom::number_of_processes();

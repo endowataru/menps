@@ -30,6 +30,10 @@ public:
     virtual void read_barrier() = 0;
     #endif
     
+    virtual void read_barrier() = 0;
+    
+    virtual void write_barrier() = 0;
+    
     virtual void enable_on_this_thread() = 0;
     
     virtual void disable_on_this_thread() = 0;

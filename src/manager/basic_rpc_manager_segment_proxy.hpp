@@ -210,16 +210,16 @@ private:
             const auto src_proc = sc.src_proc();
             
             // Look up the segment.
-            auto sp_ac = sp.get_segment_accessor(seg_id);
+            auto seg_ac = sp.get_segment_accessor(seg_id);
             
             // Look up the page.
-            auto pg_ac = sp_ac.get_page_accessor(pg_id);
+            auto pg_ac = seg_ac.get_page_accessor(pg_id);
             
             auto rep = sc.make_reply();
             
+            // Call acquire_read() on the manager process.
             auto ret = pg_ac.acquire_read(src_proc);
             
-            // Call acquire_read() on the manager process.
             *rep = acquire_read_result_type{ ret.owner_plptr, ret.needs_flush };
             
             return rep;
@@ -245,11 +245,12 @@ private:
             const auto src_proc = sc.src_proc();
             
             // Look up the segment.
-            auto sp_ac = sp.get_segment_accessor(seg_id);
+            auto seg_ac = sp.get_segment_accessor(seg_id);
             
             // Look up the page.
-            auto pg_ac = sp_ac.get_page_accessor(pg_id);
+            auto pg_ac = seg_ac.get_page_accessor(pg_id);
             
+            // Call release_read() on the manager process.
             pg_ac.release_read(src_proc);
             
             return sc.make_reply();
@@ -275,19 +276,20 @@ private:
             const auto src_proc = sc.src_proc();
             
             // Look up the segment.
-            auto sp_ac = sp.get_segment_accessor(seg_id);
+            auto seg_ac = sp.get_segment_accessor(seg_id);
             
             // Look up the page.
-            auto pg_ac = sp_ac.get_page_accessor(pg_id);
+            auto pg_ac = seg_ac.get_page_accessor(pg_id);
             
             auto rep = sc.make_reply();
             
+            // Call acquire_write() on the manager process.
             auto ret = pg_ac.acquire_write(src_proc);
             
-            ret.inv.send_to_all(sp_ac, pg_id);
+            // Send invalidation messages to the sharer processes.
+            ret.inv.send_to_all(src_proc, seg_ac, pg_id);
             
-            // Call acquire_write() on the manager process.
-            *rep = acquire_write_result_type{ ret.owner_plptr, ret.needs_diff };
+            *rep = acquire_write_result_type{ ret.owner_plptr, ret.needs_flush, ret.needs_diff };
             
             return rep;
         }
@@ -312,10 +314,10 @@ private:
             const auto src_proc = sc.src_proc();
             
             // Look up the segment.
-            auto sp_ac = sp.get_segment_accessor(seg_id);
+            auto seg_ac = sp.get_segment_accessor(seg_id);
             
             // Look up the page.
-            auto pg_ac = sp_ac.get_page_accessor(pg_id);
+            auto pg_ac = seg_ac.get_page_accessor(pg_id);
             
             pg_ac.release_write(src_proc);
             
@@ -350,11 +352,12 @@ private:
             MGBASE_ASSERT(owner.proc == sc.src_proc());
             
             // Look up the segment.
-            auto sp_ac = sp.get_segment_accessor(seg_id);
+            auto seg_ac = sp.get_segment_accessor(seg_id);
             
             // Look up the page.
-            auto pg_ac = sp_ac.get_page_accessor(pg_id);
+            auto pg_ac = seg_ac.get_page_accessor(pg_id);
             
+            // Call assign_reader() on the manager process.
             pg_ac.assign_reader(owner);
             
             return sc.make_reply();
@@ -381,11 +384,12 @@ private:
             MGBASE_ASSERT(owner.proc == sc.src_proc());
             
             // Look up the segment.
-            auto sp_ac = sp.get_segment_accessor(seg_id);
+            auto seg_ac = sp.get_segment_accessor(seg_id);
             
             // Look up the page.
-            auto pg_ac = sp_ac.get_page_accessor(pg_id);
+            auto pg_ac = seg_ac.get_page_accessor(pg_id);
             
+            // Call assign_writer() on the manager process.
             pg_ac.assign_writer(owner);
             
             return sc.make_reply();

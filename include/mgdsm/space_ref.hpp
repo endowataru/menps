@@ -21,6 +21,13 @@ public:
         return sp_->make_segment(size_in_bytes, page_size_in_bytes, block_size_in_bytes);
     }
     
+    void read_barrier() {
+        sp_->read_barrier();
+    }
+    void write_barrier() {
+        sp_->write_barrier();
+    }
+    
     void enable_on_this_thread()
     {
         sp_->enable_on_this_thread();
@@ -29,6 +36,7 @@ public:
     {
         sp_->disable_on_this_thread();
     }
+    
     
 private:
     mgbase::unique_ptr<space> sp_;

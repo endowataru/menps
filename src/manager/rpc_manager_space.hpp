@@ -34,6 +34,7 @@ public:
     template <typename Conf>
     explicit rpc_manager_space(const Conf& conf)
         : base(conf)
+        , activater_(MGBASE_NULLPTR)
     { }
     
     inline rpc_manager_segment::accessor get_segment_accessor(segment_id_t);
