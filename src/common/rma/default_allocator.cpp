@@ -1,7 +1,7 @@
 
 #include "default_allocator.hpp"
 #include <mgcom/rma/registration.hpp>
-#include "./malloc.h"
+#include <mgbase/external/malloc.h>
 #include <mgbase/memory/aligned_alloc.hpp>
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/lock_guard.hpp>

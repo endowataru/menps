@@ -54,7 +54,7 @@ MGCOM_IBV_MASKED_ATOMICS_SUPPORTED)
 
 add_library(mgcom-common
     src/common/rma/default_allocator.cpp
-    src/common/rma/malloc.cpp
+    #src/common/rma/malloc.cpp
 )
 target_include_directories(mgcom-common PRIVATE
     ./src
