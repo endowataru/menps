@@ -6,8 +6,6 @@
 
 #include <mgcom/rpc.hpp>
 
-#include <mgdsm/dsm_interface.hpp>
-
 namespace mgth {
 
 class global_ult_desc_pool_error
@@ -17,19 +15,21 @@ class global_ult_desc_pool::impl
 {
     static const mgbase::size_t num_descs = 1 << 8;
     
-    static const mgbase::size_t stack_size = 2048 * 1024; // TODO: adjustable
-    static const mgbase::size_t stack_block_size = 4096; // TODO: adjustable
-    
 public:
-    explicit impl(mgdsm::dsm_interface& dsm)
+    explicit impl(const config& conf)
         : local_descs_{ mgcom::rma::allocate<global_ult_desc>(num_descs) }
     {
         for (mgbase::size_t i = 0; i < num_descs; ++i)
         {
             auto& desc = local_descs_[i];
             
-            const auto stack_first_ptr = dsm.allocate(stack_size, stack_block_size);
-            const auto stack_last_ptr = static_cast<mgbase::uint8_t*>(stack_first_ptr) + stack_size;
+            auto& alloc = conf.alloc;
+            
+            const auto stack_first_ptr
+                = alloc.aligned_alloc(16/*TODO*/, stack_size);
+            
+            const auto stack_last_ptr
+                = static_cast<mgbase::uint8_t*>(stack_first_ptr) + stack_size;
             
             desc.stack_ptr = stack_last_ptr;
             desc.stack_size = stack_size;
@@ -130,8 +130,8 @@ private:
 
 global_ult_desc_pool::impl* global_ult_desc_pool::impl::instance_ = MGBASE_NULLPTR; // TODO
 
-global_ult_desc_pool::global_ult_desc_pool(mgdsm::dsm_interface& dsm)
-    : impl_{new impl{dsm}}
+global_ult_desc_pool::global_ult_desc_pool(const config& conf)
+    : impl_{new impl{conf}}
     {}
 
 global_ult_desc_pool::~global_ult_desc_pool() = default;

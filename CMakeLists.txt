@@ -6,5 +6,5 @@ add_subdirectory(./mgult)
 add_subdirectory(./mgdsm2)
 #add_subdirectory(./mgas2)
 #add_subdirectory(./mgdsm)
-#add_subdirectory(./mgth)
+add_subdirectory(./mgth)
 #

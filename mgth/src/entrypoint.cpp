@@ -1,16 +1,21 @@
 
 #include <mgth.hpp>
-#include <mgas2.hpp>
+//#include <mgas2.hpp>
 #include <mgdsm.hpp>
 #include "dist_scheduler.hpp"
 
 #include "disable_aslr.hpp"
 
+#include <mgbase/external/malloc.h>
+
 namespace mgth {
 
 namespace /*unnamed*/ {
 
+mgdsm::space_ref g_dsm;
+#if 0
 mgdsm::dsm_interface_ptr g_dsm;
+#endif
 
 dist_scheduler_ptr g_sched;
 
@@ -75,6 +80,7 @@ scheduler& get_scheduler()
 
 } // namespace ult
 
+#if 0
 namespace dsm {
 
 namespace untyped {
@@ -92,6 +98,42 @@ void deallocate(void* p)
 } // namespace untyped
 
 } // namespace dsm
+#endif
+
+namespace dsm {
+
+class segment_allocator
+    : public mgbase::allocatable
+{
+public:
+    segment_allocator(void* const ptr, const mgbase::size_t size)
+        : ms_(::create_mspace_with_base(ptr, size, 1))
+    { }
+    
+    ~segment_allocator()
+    {
+        ::destroy_mspace(this->ms_);
+    }
+    
+    virtual void* aligned_alloc(
+        const mgbase::size_t //alignment // TODO
+    ,   const mgbase::size_t size_in_bytes
+    )
+    MGBASE_OVERRIDE
+    {
+        return ::mspace_malloc(this->ms_, size_in_bytes);
+    }
+    
+    virtual void free(void* const ptr) MGBASE_OVERRIDE
+    {
+        ::mspace_free(this->ms_, ptr);
+    }
+    
+private:
+    ::mspace ms_;
+};
+
+} // namespace dsm
 
 } // namespace mgth
 
@@ -106,33 +148,37 @@ int main(int argc, char* argv[])
     mgth::g_argc = argc;
     mgth::g_argv = argv;
     
-    // Initialize PGAS.
-    mgas2::initialize();
-    
     // Initialize DSM.
-    mgth::g_dsm = mgdsm::make_auto_fetch_dsm();
+    mgth::g_dsm = mgdsm::make_space();
     
-    // Initialize a scheduler.
-    mgth::g_sched = mgth::make_dist_scheduler(*mgth::g_dsm);
-    
-    // Start the scheduler loop.
-    if (mgcom::current_process_id() == 0) {
-        // Add the main thread.
-        mgth::g_sched->loop(&mgth::main_handler);
+    {
+        auto stack_seg = mgth::g_dsm.make_segment(64ull << 20, 16ull << 10, 4096 /*4KB*/);
+        
+        mgth::g_dsm.enable_on_this_thread();
+        
+        mgth::dsm::segment_allocator stack_alloc(stack_seg.get_ptr(), stack_seg.get_size_in_bytes());
+        
+        // Initialize a scheduler.
+        mgth::g_sched = mgth::make_dist_scheduler({ mgth::g_dsm, stack_alloc });
+        
+        // Start the scheduler loop.
+        if (mgcom::current_process_id() == 0) {
+            // Add the main thread.
+            mgth::g_sched->loop(&mgth::main_handler);
+        }
+        else {
+            // Start as normal workers.
+            mgth::g_sched->loop(MGBASE_NULLPTR);
+        }
+        
+        // Finalize the scheduler.
+        mgth::g_sched.reset();
+        
+        mgth::g_dsm.disable_on_this_thread();
     }
-    else {
-        // Start as normal workers.
-        mgth::g_sched->loop(MGBASE_NULLPTR);
-    }
-    
-    // Finalize the scheduler.
-    mgth::g_sched.reset();
     
     // Finalize DSM.
-    mgth::g_dsm.reset();
-    
-    // Finalize PGAS.
-    mgas2::finalize();
+    mgth::g_dsm = mgdsm::space_ref{};
     
     // Finalize the communication interface.
     mgcom::finalize();

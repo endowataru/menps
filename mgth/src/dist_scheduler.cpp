@@ -25,9 +25,9 @@ class dist_scheduler
     typedef mgult::basic_scheduler<dist_scheduler_traits>   base;
     
 public:
-    explicit dist_scheduler(mgdsm::dsm_interface& dsm)
-        : desc_pool_(dsm)
-        , dsm_(dsm)
+    explicit dist_scheduler(const dist_scheduler_config& conf)
+        : desc_pool_({ conf.alloc })
+        , dsm_(conf.space)
     {
         instance_ = this;
         
@@ -87,7 +87,7 @@ public:
         }
         else {
             // Flush here.
-            dsm_.flush_all();
+            dsm_.read_barrier();
             
             return this->get_ult_ref_from_id(stolen);
         }
@@ -138,7 +138,7 @@ private:
                 );
                 
                 // Reconcile here.
-                instance_->dsm_.reconcile_all();
+                instance_->dsm_.write_barrier();
             }
             
             return id;
@@ -176,7 +176,7 @@ public:
         return desc_pool_;
     }
     
-    mgdsm::dsm_interface& get_dsm() const MGBASE_NOEXCEPT {
+    mgdsm::space_ref& get_dsm() const MGBASE_NOEXCEPT {
         return dsm_;
     }
     
@@ -201,16 +201,16 @@ private:
     
     global_ult_desc_pool    desc_pool_;
     
-    mgdsm::dsm_interface&   dsm_;
+    mgdsm::space_ref&       dsm_;
     
     static dist_scheduler* instance_; // TODO: singleton
 };
 
 dist_scheduler* dist_scheduler::instance_ = MGBASE_NULLPTR;
 
-dist_scheduler_ptr make_dist_scheduler(mgdsm::dsm_interface& dsm)
+dist_scheduler_ptr make_dist_scheduler(const dist_scheduler_config& conf)
 {
-    return mgbase::make_unique<dist_scheduler>(dsm);
+    return mgbase::make_unique<dist_scheduler>(conf);
 }
 
 
@@ -296,11 +296,11 @@ void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_
 
 void dist_worker::on_join_blocked()
 {
-    sched_.get_dsm().reconcile_all();
+    sched_.get_dsm().write_barrier();
 }
 void dist_worker::on_join_resume()
 {
-    sched_.get_dsm().flush_all();
+    sched_.get_dsm().read_barrier();
 }
 
 void dist_worker::initialize_on_this_thread()
@@ -309,7 +309,7 @@ void dist_worker::initialize_on_this_thread()
         new mgbase::uint8_t[stack_size]
     );
     alter_stack_ = 
-        mgbase::make_unique<mgdsm::alternate_signal_stack>( 
+        mgbase::make_unique<alternate_signal_stack>( 
             stack_area_.get()
         ,   stack_size
         );

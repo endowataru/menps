@@ -2,16 +2,25 @@
 #pragma once
 
 #include "global_ult_ref.hpp"
-#include <mgbase/unique_ptr.hpp>
 
-#include <mgdsm/dsm_interface.hpp>
+#include <mgdsm/space_ref.hpp>
+
+#include <mgbase/unique_ptr.hpp>
+#include <mgbase/memory/allocatable.hpp>
 
 namespace mgth {
 
 class global_ult_desc_pool
 {
 public:
-    explicit global_ult_desc_pool(mgdsm::dsm_interface& dsm);
+    static const mgbase::size_t stack_size = 16 << 10; // TODO: adjustable
+    
+    struct config
+    {
+        mgbase::allocatable& alloc;
+    };
+    
+    explicit global_ult_desc_pool(const config&);
     
     ~global_ult_desc_pool();
     

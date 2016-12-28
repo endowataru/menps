@@ -3,9 +3,10 @@ cmake_minimum_required(VERSION 3.0)
 project(mgth CXX)
 
 add_library(mgth STATIC
+    ./src/alternate_signal_stack.cpp
     ./src/dist_scheduler.cpp
-    ./src/entrypoint.cpp
     ./src/global_ult_desc_pool.cpp
+    ./src/entrypoint.cpp
     ./src/disable_aslr.cpp
 )
 

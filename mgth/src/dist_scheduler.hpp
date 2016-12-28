@@ -2,7 +2,8 @@
 #pragma once
 
 #include <mgult/root_scheduler.hpp>
-#include <mgdsm/dsm_interface.hpp>
+#include <mgdsm/space_ref.hpp>
+#include <mgbase/memory/allocatable.hpp>
 
 namespace mgth {
 
@@ -13,7 +14,13 @@ using mgult::loop_func_type;
 
 typedef mgbase::unique_ptr<root_scheduler>  dist_scheduler_ptr;
 
-dist_scheduler_ptr make_dist_scheduler(mgdsm::dsm_interface&);
+struct dist_scheduler_config
+{
+    mgdsm::space_ref& space;
+    mgbase::allocatable& alloc;
+};
+
+dist_scheduler_ptr make_dist_scheduler(const dist_scheduler_config&);
 
 } // namespace mgth
 

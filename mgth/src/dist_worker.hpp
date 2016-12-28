@@ -10,7 +10,7 @@
 #include <mgult/generic/fcontext_worker_base.hpp>
 #include <mgult/generic/ult_id_worker_traits_base.hpp>
 
-#include <mgdsm/alternate_signal_stack.hpp>
+#include "alternate_signal_stack.hpp"
 
 namespace mgth {
 
@@ -37,9 +37,9 @@ class dist_worker
     
     typedef thread_local_worker_base<dist_worker_traits>    tls_base;
     
-    static const mgbase::size_t stack_size = 2048 * 1024;
-    
 public:
+    static const mgbase::size_t stack_size = global_ult_desc_pool::stack_size;
+    
     dist_worker(dist_scheduler& sched, const worker_rank_t rank);
     
     // Methods required by basic_worker.
@@ -90,8 +90,8 @@ private:
     dist_scheduler&         sched_;
     const worker_rank_t     rank_;
     
-    mgbase::unique_ptr<mgdsm::alternate_signal_stack>   alter_stack_;
-    mgbase::unique_ptr<mgbase::uint8_t []>              stack_area_;
+    mgbase::unique_ptr<alternate_signal_stack>  alter_stack_;
+    mgbase::unique_ptr<mgbase::uint8_t []>      stack_area_;
     
     //global_ult_desc_pool    desc_pool_;
 };
