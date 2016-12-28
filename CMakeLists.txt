@@ -354,7 +354,8 @@ MGBASE_CXX11_THREAD_LOCAL_SUPPORTED
 add_library(mgbase
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc
-    )
+    ./src/malloc.cpp
+)
 
 target_link_libraries(mgbase mgbase-header 
     pthread # TODO: Use ${CMAKE_THREAD_LIBS_INIT} ?
