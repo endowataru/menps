@@ -60,6 +60,9 @@ public:
         MGBASE_ASSERT(this->blk_size_ > 0);
         return this->blk_size_;
     }
+    mgbase::size_t get_num_blocks() const MGBASE_NOEXCEPT {
+        return this->num_blks_;
+    }
     
     bool add_read_block() MGBASE_NOEXCEPT
     {
@@ -128,10 +131,6 @@ public:
     }
     
 private:
-    mgbase::size_t get_num_blocks() const MGBASE_NOEXCEPT {
-        return num_blks_;
-    }
-    
     derived_type& derived() MGBASE_NOEXCEPT {
         return static_cast<derived_type&>(*this);
     }

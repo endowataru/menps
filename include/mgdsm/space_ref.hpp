@@ -9,6 +9,8 @@ namespace mgdsm {
 class space_ref
 {
 public:
+    space_ref() = default;
+    
     explicit space_ref(space* const sp)
         : sp_(sp)
     { }
@@ -37,6 +39,14 @@ public:
         sp_->disable_on_this_thread();
     }
     
+    void pin(void* const ptr, const mgbase::size_t size_in_bytes)
+    {
+        sp_->pin(ptr, size_in_bytes);
+    }
+    void unpin(void* const ptr, const mgbase::size_t size_in_bytes)
+    {
+        sp_->unpin(ptr, size_in_bytes);
+    }
     
 private:
     mgbase::unique_ptr<space> sp_;

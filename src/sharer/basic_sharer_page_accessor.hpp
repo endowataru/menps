@@ -30,6 +30,14 @@ public:
         // Load the block size from the page entry.
         return pg_ent.get_block_size();
     }
+    mgbase::size_t get_num_blocks() const MGBASE_NOEXCEPT
+    {
+        auto& self = this->derived();
+        auto& pg_ent = self.get_page_entry();
+        
+        return pg_ent.get_num_blocks();
+    }
+    
     bool is_diff_needed()
     {
         auto& self = this->derived();

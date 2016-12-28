@@ -118,6 +118,36 @@ public:
         this->hist_.write_barrier();
     }
     
+    virtual void pin(void* const ptr, const mgbase::size_t size_in_bytes) MGBASE_OVERRIDE
+    {
+        this->app_idx_.do_for_all_blocks_in(ptr, size_in_bytes, pin_callback{*this});
+    }
+    virtual void unpin(void* const ptr, const mgbase::size_t size_in_bytes) MGBASE_OVERRIDE
+    {
+        this->app_idx_.do_for_all_blocks_in(ptr, size_in_bytes, unpin_callback{*this});
+    }
+    
+private:
+    struct pin_callback
+    {
+        dsm_space& self;
+        
+        void operator() (sharer_block::accessor& blk_ac)
+        {
+            self.app_sp_.pin(blk_ac);
+        }
+    };
+    struct unpin_callback
+    {
+        dsm_space& self;
+        
+        void operator() (sharer_block::accessor& blk_ac)
+        {
+            self.app_sp_.unpin(blk_ac);
+        }
+    };
+    
+public:
     virtual void enable_on_this_thread() MGBASE_OVERRIDE
     {
         this->fault_upgrader_.enable_on_this_thread();

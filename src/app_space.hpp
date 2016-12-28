@@ -13,15 +13,15 @@ public:
         : protector_(protector)
     { }
     
-    bool fetch(sharer_block::accessor& blk_pr)
+    bool fetch(sharer_block::accessor& blk_ac)
     {
         // Try to fetch the block.
-        if (blk_pr.fetch())
+        if (blk_ac.fetch())
         {
             // The block was marked as PROT_NONE.
             
             // Make the block readable.
-            protector_.set_readonly(blk_pr);
+            protector_.set_readonly(blk_ac);
             
             return true;
         }
@@ -29,15 +29,15 @@ public:
             return false;
     }
     
-    bool touch(sharer_block::accessor& blk_pr)
+    bool touch(sharer_block::accessor& blk_ac)
     {
         // Try to touch the block.
-        if (blk_pr.touch())
+        if (blk_ac.touch())
         {
             // The block was not marked as PROT_WRITE.
             
             // Make the block writable.
-            protector_.set_writable(blk_pr);
+            protector_.set_writable(blk_ac);
             
             return true;
         }
@@ -45,16 +45,16 @@ public:
             return false;
     }
     
-    bool reconcile(sharer_block::accessor& blk_pr)
+    bool reconcile(sharer_block::accessor& blk_ac)
     {
         // Check whether the block is dirty.
-        if (blk_pr.is_reconcile_needed())
+        if (blk_ac.is_reconcile_needed())
         {
             // Prohibit the block from being written by the other threads first.
-            protector_.set_readonly(blk_pr);
+            protector_.set_readonly(blk_ac);
             
             // Write back the dirty block to the backing store.
-            blk_pr.reconcile();
+            blk_ac.reconcile();
             
             return true;
         }
@@ -62,20 +62,29 @@ public:
             return false;
     }
     
-    bool flush(sharer_block::accessor& blk_pr)
+    bool flush(sharer_block::accessor& blk_ac)
     {
-        if (blk_pr.is_flush_needed())
+        if (blk_ac.is_flush_needed())
         {
             // Prohibit the block from being read by the other threads first.
-            protector_.set_invalid(blk_pr);
+            protector_.set_invalid(blk_ac);
             
             // Remove the cached block.
-            blk_pr.flush();
+            blk_ac.flush();
             
             return true;
         }
         else
             return false;
+    }
+    
+    void pin(sharer_block::accessor& blk_ac)
+    {
+        blk_ac.pin();
+    }
+    void unpin(sharer_block::accessor& blk_ac)
+    {
+        blk_ac.unpin();
     }
     
 private:
