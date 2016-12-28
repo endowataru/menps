@@ -14,6 +14,7 @@ public:
         : manager_(&conf.manager)
         , seg_id_(conf.seg_id)
         , app_ptr_(conf.app_ptr)
+        , size_(conf.page_size * conf.num_pages)
     {
         manager_->create_segment(seg_id_, { conf.num_pages, conf.page_size, conf.block_size });
     }
@@ -28,10 +29,15 @@ public:
         return app_ptr_;
     }
     
+    virtual mgbase::size_t get_size_in_bytes() const MGBASE_NOEXCEPT MGBASE_OVERRIDE {
+        return size_;
+    }
+    
 private:
     rpc_manager_space::proxy*   manager_;
     segment_id_t                seg_id_;
     void*                       app_ptr_;
+    mgbase::size_t              size_;
 };
 
 } // namespace mgdsm

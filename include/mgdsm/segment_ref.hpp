@@ -18,13 +18,10 @@ public:
         return seg_->get_ptr();
     }
     
-    /*virtual void fetch(mgbase::size_t, mgbase::size_t) = 0;
-    
-    virtual void touch(mgbase::size_t, mgbase::size_t) = 0;
-    
-    virtual void reconcile_all() = ();
-    
-    virtual void flush_all() = ();*/
+    mgbase::size_t get_size_in_bytes() const MGBASE_NOEXCEPT
+    {
+        return seg_->get_size_in_bytes();
+    }
     
 private:
     mgbase::unique_ptr<segment> seg_;
