@@ -139,11 +139,23 @@ private:
         
         void operator() (sharer_block::accessor& blk_ac)
         {
+            const access_history::abs_block_id ablk_id{
+                blk_ac.get_segment_id()
+            ,   blk_ac.get_page_id()
+            ,   blk_ac.get_block_id()
+            };
+            
             // If the block is "invalid", upgrade to "clean".
-            self.app_sp_.fetch(blk_ac);
+            if (self.app_sp_.fetch(blk_ac)) {
+                // Add this block as a flushed page.
+                self.hist_.add_new_read(ablk_id);
+            }
             
             // If the block is "clean", upgrade to "dirty".
-            self.app_sp_.touch(blk_ac);
+            if (self.app_sp_.touch(blk_ac)) {
+                // Add this block as a reconciled page.
+                self.hist_.add_new_write(ablk_id);
+            }
             
             // Pin the block.
             self.app_sp_.pin(blk_ac);

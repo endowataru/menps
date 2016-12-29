@@ -5,6 +5,7 @@
 #include <mgbase/assert.hpp>
 #include <cstring>
 #include <stdexcept>
+#include <mgbase/logger.hpp>
 
 namespace mgdsm {
 
@@ -64,6 +65,12 @@ public:
         // It is still disabled to write on this page.
         blk.change_invalid_to_clean();
         
+        MGBASE_LOG_INFO(
+            "msg:Fetched block.\t"
+            "{}"
+        ,   self.to_string()
+        );
+        
         // The data transfer happened.
         // Call mprotect(PROT_READ) later.
         return true;
@@ -100,6 +107,12 @@ public:
         
         // Mark this page as "dirty".
         blk.change_clean_to_dirty();
+        
+        MGBASE_LOG_INFO(
+            "msg:Touched block.\t"
+            "{}"
+        ,   self.to_string()
+        );
         
         // Call mprotect(PROT_WRITE) later.
         return true;
@@ -162,6 +175,12 @@ public:
         // Decrement the count of writing blocks for this page.
         // If it becomes 0, then a message will be sent to the manager process.
         pg.release_write_block(blk_id);
+        
+        MGBASE_LOG_INFO(
+            "msg:Reconciled block.\t"
+            "{}"
+        ,   self.to_string()
+        );
     }
     
     bool is_flush_needed()
@@ -197,6 +216,12 @@ public:
         // If necessary, it will tell the manager process
         // to abandon the privilege as a reader process.
         pg.release_read_block(blk_id);
+        
+        MGBASE_LOG_INFO(
+            "msg:Flushed block.\t"
+            "{}"
+        ,   self.to_string()
+        );
     }
     
     void pin()

@@ -45,6 +45,16 @@ public:
         return this->get_page_accessor().get_segment_accessor().get_segment_id();
     }
     
+    std::string to_string() const
+    {
+        return fmt::format(
+            "{}\t"
+            "blk_id:{}"
+        ,   pg_pr_.to_string()
+        ,   blk_id_
+        );
+    }
+    
 private:
     friend class basic_sharer_block_accessor<sharer_block_accessor_traits>;
     
@@ -52,7 +62,7 @@ private:
         return blk_;
     }
     
-    page_accessor_type&    pg_pr_;
+    page_accessor_type& pg_pr_;
     block_id_type       blk_id_;
     block_entry_type&   blk_;
 };

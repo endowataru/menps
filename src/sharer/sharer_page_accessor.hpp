@@ -59,6 +59,16 @@ public:
         return pg_id_;
     }
     
+    std::string to_string() const
+    {
+        return fmt::format(
+            "{}\t"
+            "pg_id:{}"
+        ,   seg_pr_.to_string()
+        ,   pg_id_
+        );
+    }
+    
 private:
     friend class basic_sharer_page_accessor<sharer_page_accessor_traits>;
     

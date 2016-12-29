@@ -54,7 +54,7 @@ public:
             auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
             
             // If flush is not needed, do nothing.
-            if (blk_ac.is_reconcile_needed())
+            if (blk_ac.is_flush_needed())
             {
                 this->conf_.app_sp.flush(blk_ac);
             }

@@ -37,6 +37,14 @@ public:
         return this->seg_id_;
     }
     
+    std::string to_string() const
+    {
+        return fmt::format(
+            "seg_id:{}"
+        ,   seg_id_
+        );
+    }
+    
 private:
     friend class basic_sharer_segment_accessor<sharer_segment_accessor_policy>;
     
