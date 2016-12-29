@@ -53,7 +53,11 @@ public:
             
             auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
             
-            blk_ac.flush();
+            // If flush is not needed, do nothing.
+            if (blk_ac.is_reconcile_needed())
+            {
+                this->conf_.app_sp.flush(blk_ac);
+            }
         }
         
         this->read_ids_.clear();
@@ -71,7 +75,11 @@ public:
             
             auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
             
-            blk_ac.reconcile();
+            // If reconcile is not needed, do nothing.
+            if (blk_ac.is_reconcile_needed())
+            {
+                this->conf_.app_sp.reconcile(blk_ac);
+            }
         }
         
         this->write_ids_.clear();

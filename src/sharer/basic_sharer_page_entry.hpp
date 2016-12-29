@@ -97,18 +97,20 @@ public:
     }
     
     bool is_diff_needed() const MGBASE_NOEXCEPT {
-        return this->is_diff_needed_;
+        //return this->is_diff_needed_;
+        return true; // FIXME: broken?
     }
     bool is_flush_needed() const MGBASE_NOEXCEPT {
-        return this->is_flush_needed_;
+        //return this->is_flush_needed_;
+        return true; // FIXME: broken?
     }
     
     void enable_diff() MGBASE_NOEXCEPT {
-        MGBASE_ASSERT(!is_diff_needed());
+        MGBASE_ASSERT(!this->is_diff_needed_);
         this->is_diff_needed_ = true;
     }
     void enable_flush() MGBASE_NOEXCEPT {
-        MGBASE_ASSERT(!is_flush_needed());
+        MGBASE_ASSERT(!this->is_flush_needed_);
         this->is_flush_needed_ = true;
     }
     
