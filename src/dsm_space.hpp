@@ -45,14 +45,19 @@ public:
             )
         )
         , sharer_pr_(sharer_->make_proxy_collective())
-        , app_prot_(reg_.get_app_ptr())
+        , app_prot_(
+            {
+                reg_.get_app_ptr()
+            ,   get_max_segment_size()
+            }
+        )
         , app_sp_(app_prot_)
         , app_idx_(
             {
                 *sharer_
             ,   reg_.get_app_ptr()
             ,   get_address_space_size()
-            ,   get_address_space_size() / get_num_segments()
+            ,   get_max_segment_size()
             }
         )
         , hist_(
@@ -134,6 +139,13 @@ private:
         
         void operator() (sharer_block::accessor& blk_ac)
         {
+            // If the block is "invalid", upgrade to "clean".
+            self.app_sp_.fetch(blk_ac);
+            
+            // If the block is "clean", upgrade to "dirty".
+            self.app_sp_.touch(blk_ac);
+            
+            // Pin the block.
             self.app_sp_.pin(blk_ac);
         }
     };
@@ -143,6 +155,7 @@ private:
         
         void operator() (sharer_block::accessor& blk_ac)
         {
+            // Unpin the block.
             self.app_sp_.unpin(blk_ac);
         }
     };

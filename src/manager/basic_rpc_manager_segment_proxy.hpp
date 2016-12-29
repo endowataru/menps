@@ -77,7 +77,7 @@ public:
         const auto seg_id = self.get_segment_id();
         
         const auto man_proc = sp.get_manager_proc(seg_id);
-        auto* man_sp = sp.get_manager_space(seg_id);
+        const auto man_sp = sp.get_manager_space_at_proc(man_proc);
         
         const argument arg{ man_sp, seg_id, pg_id };
         
@@ -98,7 +98,7 @@ public:
         const auto seg_id = self.get_segment_id();
         
         const auto man_proc = sp.get_manager_proc(seg_id);
-        auto* man_sp = sp.get_manager_space(seg_id);
+        const auto man_sp = sp.get_manager_space_at_proc(man_proc);
         
         const argument arg{ man_sp, seg_id, pg_id };
         
@@ -117,7 +117,7 @@ public:
         const auto seg_id = self.get_segment_id();
         
         const auto man_proc = sp.get_manager_proc(seg_id);
-        auto* man_sp = sp.get_manager_space(seg_id);
+        const auto man_sp = sp.get_manager_space_at_proc(man_proc);
         
         const argument arg{ man_sp, seg_id, pg_id };
         
@@ -138,7 +138,7 @@ public:
         const auto seg_id = self.get_segment_id();
         
         const auto man_proc = sp.get_manager_proc(seg_id);
-        auto* man_sp = sp.get_manager_space(seg_id);
+        const auto man_sp = sp.get_manager_space_at_proc(man_proc);
         
         const argument arg{ man_sp, seg_id, pg_id };
         
@@ -156,7 +156,7 @@ public:
         const auto seg_id = self.get_segment_id();
         
         const auto man_proc = sp.get_manager_proc(seg_id);
-        auto* man_sp = sp.get_manager_space(seg_id);
+        const auto man_sp = sp.get_manager_space_at_proc(man_proc);
         
         const assign_argument arg{ man_sp, seg_id, pg_id, owner };
         
@@ -174,7 +174,7 @@ public:
         const auto seg_id = self.get_segment_id();
         
         const auto man_proc = sp.get_manager_proc(seg_id);
-        auto* man_sp = sp.get_manager_space(seg_id);
+        const auto man_sp = sp.get_manager_space_at_proc(man_proc);
         
         const assign_argument arg{ man_sp, seg_id, pg_id, owner };
         

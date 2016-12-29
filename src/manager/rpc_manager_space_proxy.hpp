@@ -56,11 +56,6 @@ public:
     {
         return seg_id % mgcom::number_of_processes();
     }
-    rpc_manager_space* get_manager_space(const segment_id_t seg_id) const MGBASE_NOEXCEPT
-    {
-        const auto index = seg_id / mgcom::number_of_processes();
-        return this->a2a_.at_process(index);
-    }
     rpc_manager_space* get_manager_space_at_proc(const mgcom::process_id_t proc) const MGBASE_NOEXCEPT
     {
         return this->a2a_.at_process(proc);

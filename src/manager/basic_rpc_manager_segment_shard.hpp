@@ -19,7 +19,7 @@ protected:
         : page_size_(conf.page_size)
         , num_pages_(conf.num_pages)
         , block_size_(conf.block_size)
-        , pgs_(new page_type[num_pages_])
+        , pgs_(new page_type[num_pages_ / Policy::number_of_processes()])
     { }
     
 public:
@@ -38,7 +38,11 @@ public:
     
     page_type& get_page(const page_id_type pg_id)
     {
+        MGBASE_ASSERT(pg_id < num_pages_);
+        
         const auto index = pg_id / Policy::number_of_processes();
+        
+        MGBASE_ASSERT(index < num_pages_ / Policy::number_of_processes());
         
         return pgs_[index];
     }

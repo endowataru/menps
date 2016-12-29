@@ -46,6 +46,8 @@ private:
         }
     };
     
+    struct upgrade_error : std::exception { };
+    
     struct upgrade_callback
     {
         impl& self;
@@ -69,7 +71,17 @@ private:
             else {
                 // If the block is already readable,
                 // then try to make it writable.
-                space.touch(blk_ac);
+                if (! space.touch(blk_ac))
+                {
+                    // If the block is already touched,
+                    // it's OS page must not be protected.
+                    MGBASE_ASSERT(false);
+                    
+                    // The program should abort instead of an exception
+                    // because this is in a signal handler.
+                    // TODO: Really?
+                    abort();
+                }
                 
                 // Add this block as a reconciled page.
                 self.conf_.hist.add_new_write(ablk_id);

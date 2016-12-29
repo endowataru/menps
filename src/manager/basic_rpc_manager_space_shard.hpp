@@ -25,11 +25,11 @@ protected:
     { }
     
 public:
-    segment_shard_type& get_segment(const segment_id_t seg_id)
+    segment_shard_type& get_segment(const segment_id_type seg_id)
     {
-        const auto index = seg_id / Policy::number_of_processes();
+        MGBASE_ASSERT(segs_[seg_id] != MGBASE_NULLPTR);
         
-        return *segs_[index];
+        return *segs_[seg_id];
     }
     
     template <typename Conf>
@@ -41,7 +41,6 @@ public:
     }
     
 private:
-    
     mgbase::unique_ptr<mgbase::unique_ptr<segment_shard_type> []>   segs_;
 };
 

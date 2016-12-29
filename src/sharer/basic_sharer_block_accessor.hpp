@@ -112,7 +112,9 @@ public:
         auto& blk = self.get_block_entry();
         
         // The current implementation always requires reconcile for all of dirty pages.
-        return blk.is_writable();
+        return blk.is_writable()
+        // Pinned pages must not be reconciled (= mprotect(PROT_READ).)
+            && ! blk.is_pinned();
         
         // TODO: Should private pages be reconciled?
     }
@@ -168,8 +170,10 @@ public:
         
         auto& blk = self.get_block_entry();
         
-        // Invalid blocks are not needed to be flushed.
-        return blk.is_readable();
+        // Invalid blocks need not to be flushed.
+        return blk.is_readable()
+        // Pinned block must not be flushed (= mprotect(PROT_NONE).)
+            && ! blk.is_pinned();
     }
     
     void flush()
@@ -195,16 +199,32 @@ public:
         pg.release_read_block(blk_id);
     }
     
-    struct unimplemented_error : std::exception { };
-    
     void pin()
     {
-        throw unimplemented_error{};
+        auto& self = this->derived();
+        
+        auto& blk = self.get_block_entry();
+        
+        // Only unpinned blocks are pinned.
+        if (! blk.is_pinned())
+        {
+            // Mark this block as pinned.
+            blk.set_pinned();
+        }
     }
     
     void unpin()
     {
-        throw unimplemented_error{};
+        auto& self = this->derived();
+        
+        auto& blk = self.get_block_entry();
+        
+        // Only pinned blocks are pinned.
+        if (blk.is_pinned())
+        {
+            // Mark this block as dirty (not pinned).
+            blk.set_unpinned();
+        }
     }
     
     mgbase::size_t get_block_size() MGBASE_NOEXCEPT
