@@ -6,6 +6,8 @@
 
 #include <mgcom/rpc.hpp>
 
+#include <mgbase/memory/next_in_bytes.hpp>
+
 namespace mgth {
 
 class global_ult_desc_pool_error
@@ -23,10 +25,12 @@ public:
         {
             auto& desc = local_descs_[i];
             
-            auto& alloc = conf.alloc;
-            
+            // Allocate a stack region.
             const auto stack_first_ptr
-                = alloc.aligned_alloc(16/*TODO*/, stack_size);
+                = mgbase::next_in_bytes(
+                    conf.stack_segment_ptr
+                ,   i * stack_size
+                );
             
             const auto stack_last_ptr
                 = static_cast<mgbase::uint8_t*>(stack_first_ptr) + stack_size;

@@ -154,12 +154,12 @@ int main(int argc, char* argv[])
     {
         auto stack_seg = mgth::g_dsm.make_segment(64ull << 20, 16ull << 10, 4096 /*4KB*/);
         
-        mgth::g_dsm.enable_on_this_thread();
+        //mgth::g_dsm.enable_on_this_thread();
         
-        mgth::dsm::segment_allocator stack_alloc(stack_seg.get_ptr(), stack_seg.get_size_in_bytes());
+        //mgth::dsm::segment_allocator stack_alloc(stack_seg.get_ptr(), stack_seg.get_size_in_bytes());
         
         // Initialize a scheduler.
-        mgth::g_sched = mgth::make_dist_scheduler({ mgth::g_dsm, stack_alloc });
+        mgth::g_sched = mgth::make_dist_scheduler({ mgth::g_dsm, stack_seg.get_ptr() });
         
         // Start the scheduler loop.
         if (mgcom::current_process_id() == 0) {
@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
         // Finalize the scheduler.
         mgth::g_sched.reset();
         
-        mgth::g_dsm.disable_on_this_thread();
+        //mgth::g_dsm.disable_on_this_thread();
     }
     
     // Finalize DSM.

@@ -17,7 +17,7 @@ typedef mgbase::unique_ptr<root_scheduler>  dist_scheduler_ptr;
 struct dist_scheduler_config
 {
     mgdsm::space_ref& space;
-    mgbase::allocatable& alloc;
+    void* stack_segment_ptr;
 };
 
 dist_scheduler_ptr make_dist_scheduler(const dist_scheduler_config&);

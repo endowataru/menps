@@ -17,7 +17,7 @@ public:
     
     struct config
     {
-        mgbase::allocatable& alloc;
+        void* stack_segment_ptr;
     };
     
     explicit global_ult_desc_pool(const config&);
