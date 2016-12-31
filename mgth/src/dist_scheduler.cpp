@@ -122,7 +122,7 @@ private:
             const auto id = th.get_id();
             
             if (is_invalid_ult_id(id)) {
-                MGBASE_LOG_INFO(
+                MGBASE_LOG_DEBUG(
                     "msg:Stealing failed (no queued thread).\t"
                     "theif_proc:{}\t"
                 ,   params.source
