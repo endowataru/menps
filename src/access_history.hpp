@@ -43,46 +43,66 @@ public:
     
     void read_barrier()
     {
-        mgbase::lock_guard<mutex_type> lk(this->read_mtx_);
+        MGBASE_LOG_INFO("msg:Started read barrier.");
         
-        for (const auto& id : read_ids_)
         {
-            auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
+            mgbase::lock_guard<mutex_type> lk(this->read_mtx_);
             
-            auto pg_ac = seg_ac.get_page_accessor(id.pg_id);
-            
-            auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
-            
-            // If flush is not needed, do nothing.
-            if (blk_ac.is_flush_needed())
+            for (const auto& id : read_ids_)
             {
-                this->conf_.app_sp.flush(blk_ac);
+                auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
+                
+                auto pg_ac = seg_ac.get_page_accessor(id.pg_id);
+                
+                auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
+                
+                // Reconcile the page first, then flush it.
+                
+                // If reconcile is not needed, do nothing.
+                if (blk_ac.is_reconcile_needed())
+                {
+                    this->conf_.app_sp.reconcile(blk_ac);
+                }
+                
+                // If flush is not needed, do nothing.
+                if (blk_ac.is_flush_needed())
+                {
+                    this->conf_.app_sp.flush(blk_ac);
+                }
             }
+            
+            this->read_ids_.clear();
         }
         
-        this->read_ids_.clear();
+        MGBASE_LOG_INFO("msg:Finished read barrier.");
     }
     
     void write_barrier()
     {
-        mgbase::lock_guard<mutex_type> lk(this->write_mtx_);
+        MGBASE_LOG_INFO("msg:Started write barrier.");
         
-        for (const auto& id : this->write_ids_)
         {
-            auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
+            mgbase::lock_guard<mutex_type> lk(this->write_mtx_);
             
-            auto pg_ac = seg_ac.get_page_accessor(id.pg_id);
-            
-            auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
-            
-            // If reconcile is not needed, do nothing.
-            if (blk_ac.is_reconcile_needed())
+            for (const auto& id : this->write_ids_)
             {
-                this->conf_.app_sp.reconcile(blk_ac);
+                auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
+                
+                auto pg_ac = seg_ac.get_page_accessor(id.pg_id);
+                
+                auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
+                
+                // If reconcile is not needed, do nothing.
+                if (blk_ac.is_reconcile_needed())
+                {
+                    this->conf_.app_sp.reconcile(blk_ac);
+                }
             }
+            
+            this->write_ids_.clear();
         }
         
-        this->write_ids_.clear();
+        MGBASE_LOG_INFO("msg:Finished write barrier.");
     }
     
 private:

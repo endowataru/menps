@@ -144,9 +144,7 @@ public:
         const auto blk_id = self.get_block_id();
         
         // The page must be being written.
-        MGBASE_ASSERT(is_reconcile_needed());
-        
-        //MGBASE_ASSERT(pg.is_reconcile_needed());
+        MGBASE_ASSERT(this->is_reconcile_needed());
         
         const auto blk_size = pg.get_block_size();
         
