@@ -24,6 +24,9 @@ struct rpc_manager_segment_shard_policy
     static mgbase::size_t number_of_processes() MGBASE_NOEXCEPT {
         return mgcom::number_of_processes();
     }
+    static mgbase::size_t current_process_id() MGBASE_NOEXCEPT {
+        return mgcom::current_process_id();
+    }
 };
 
 class rpc_manager_segment_shard

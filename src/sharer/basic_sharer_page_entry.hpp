@@ -74,7 +74,7 @@ public:
     {
         MGBASE_ASSERT(num_read_blks_ > 0);
         
-        return ++num_read_blks_ == 0;
+        return --num_read_blks_ == 0;
     }
     bool add_write_block() MGBASE_NOEXCEPT
     {

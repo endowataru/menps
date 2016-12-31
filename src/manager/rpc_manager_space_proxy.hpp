@@ -52,9 +52,9 @@ public:
     
     // TODO: make these members private
     
-    mgcom::process_id_t get_manager_proc(const segment_id_t seg_id) const MGBASE_NOEXCEPT
+    mgcom::process_id_t get_manager_proc(const page_id_t pg_id) const MGBASE_NOEXCEPT
     {
-        return seg_id % mgcom::number_of_processes();
+        return pg_id % mgcom::number_of_processes();
     }
     rpc_manager_space* get_manager_space_at_proc(const mgcom::process_id_t proc) const MGBASE_NOEXCEPT
     {

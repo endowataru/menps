@@ -44,6 +44,8 @@ public:
         
         MGBASE_ASSERT(index < num_pages_ / Policy::number_of_processes());
         
+        MGBASE_ASSERT(pg_id % Policy::number_of_processes() == Policy::current_process_id());
+        
         return pgs_[index];
     }
     
