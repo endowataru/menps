@@ -102,7 +102,7 @@ public:
                 }
                 else
                 {
-                    MGBASE_LOG_INFO("msg:Stealing failed.");
+                    MGBASE_LOG_DEBUG("msg:Stealing failed.");
                     continue;
                 }
             }
@@ -194,7 +194,7 @@ public:
         const auto id = th.get_id();
         
         // Although these two are modified by align_call_stack,
-        // the modifications are discarded.
+        // those modifications are discarded.
         void* stack_ptr = th.get_stack_ptr();
         mgbase::size_t stack_size = th.get_stack_size();
         
@@ -771,7 +771,7 @@ private:
         
         // Explicitly call the destructors
         // because the previous context will be abandoned.
-        // These destructors do nothing in a ordinary implementation.
+        // These destructors do nothing in an ordinary implementation.
         d->this_th.~ult_ref_type();
         d->next_th.~ult_ref_type();
         d->next_ctx.~ult_context_type();
@@ -854,6 +854,13 @@ public:
         else {
             // Get the next thread. It might be a root thread.
             d.next_th = self.pop_top();
+            
+            // If the queue is empty, this thread is the last.
+            if (! root_th_.is_valid())
+            {
+                // TODO: This method name is not precise.
+                self.on_join_resume();
+            }
             
             MGBASE_LOG_INFO(
                 "msg:Exiting this thread and switching to an unrelated thread.\t"
