@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgbase/crtp_base.hpp>
 #include <mgbase/tuple/tuple.hpp>
 #include <mgbase/type_traits/conditional.hpp>
 #include <mgbase/type_traits/is_reference.hpp>
