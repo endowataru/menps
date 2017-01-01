@@ -287,6 +287,9 @@ void dist_worker::on_before_switch(global_ult_ref& /*from_th*/, global_ult_ref& 
         return;
     }
     
+    // Set the owner.
+    to_th.set_owner_proc(mgcom::current_process_id());
+    
     auto& dsm = sched_.get_dsm();
     
     const auto stack_ptr = to_th.get_stack_ptr();
