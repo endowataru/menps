@@ -495,8 +495,6 @@ private:
         // Call the hook.
         self.on_after_switch(d->this_th, next_th);
         
-        self.on_join_blocked(); // TODO
-        
         {
             // Set this thread as blocked.
             d->this_th.set_blocked();
@@ -555,6 +553,10 @@ public:
                     "{}"
                 ,   self.show_ult_ref(child_th)
                 );
+                
+                // Call the hook to issue write/read barriers.
+                // The joined thread may have modified data.
+                self.on_join_acquire(child_th);
                 
                 // Unlock the child thread to destroy the thread descriptor.
                 lc.unlock();
@@ -843,7 +845,9 @@ public:
             // Change the state of the joiner thread to "ready".
             d.next_th.set_ready();
             
-            self.on_join_resume(); // TODO
+            // Call the hook to issue write/read barriers.
+            // The joiner thread may have modified data.
+            self.on_join_acquire(d.next_th);
             
             MGBASE_LOG_INFO(
                 "msg:Exiting this thread and switching to the joiner thread.\t"
@@ -854,13 +858,6 @@ public:
         else {
             // Get the next thread. It might be a root thread.
             d.next_th = self.pop_top();
-            
-            // If the queue is empty, this thread is the last.
-            if (! root_th_.is_valid())
-            {
-                // TODO: This method name is not precise.
-                self.on_join_resume();
-            }
             
             MGBASE_LOG_INFO(
                 "msg:Exiting this thread and switching to an unrelated thread.\t"
