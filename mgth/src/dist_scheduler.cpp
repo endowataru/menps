@@ -4,6 +4,7 @@
 #include <mgult/generic/basic_scheduler.hpp>
 #include "global_ult_desc_pool.hpp"
 #include <mgcom/rpc.hpp>
+#include <mgcom/rpc/call2.hpp>
 #include <mgcom/collective.hpp>
 
 namespace mgth {
@@ -32,6 +33,10 @@ public:
         instance_ = this;
         
         mgcom::rpc::register_handler<steal_handler>();
+        mgcom::rpc::register_handler2<write_barrier_handler>(
+            mgcom::rpc::requester::get_instance()
+        ,   write_barrier_handler{}
+        );
         
         num_ranks_ = get_num_ranks_from_env();
     }
@@ -142,6 +147,37 @@ private:
             }
             
             return id;
+        }
+    };
+    
+public:
+    void do_write_barrier_at(const mgcom::process_id_t proc)
+    {
+        mgcom::rpc::call2<write_barrier_handler>(
+            mgcom::rpc::requester::get_instance()
+        ,   proc
+        ,   write_barrier_request{}
+        );
+    }
+    
+private:
+    struct write_barrier_request {
+        // nothing
+    };
+    
+    struct write_barrier_handler
+    {
+        static const mgcom::rpc::handler_id_t handler_id = 501;
+        
+        typedef write_barrier_request       request_type;
+        typedef void                        reply_type;
+        
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        {
+            instance_->dsm_.write_barrier();
+            
+            return sc.make_reply();
         }
     };
     
@@ -294,13 +330,16 @@ void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_
     dsm.unpin(stack_first_ptr, stack_size);
 }
 
-void dist_worker::on_join_blocked()
+void dist_worker::on_join_acquire(global_ult_ref& th)
 {
-    sched_.get_dsm().write_barrier();
-}
-void dist_worker::on_join_resume()
-{
-    sched_.get_dsm().read_barrier();
+    const auto owner_proc = th.get_owner_proc();
+    
+    if (owner_proc != mgcom::current_process_id())
+    {
+        sched_.do_write_barrier_at(owner_proc);
+        
+        sched_.get_dsm().read_barrier();
+    }
 }
 
 void dist_worker::initialize_on_this_thread()

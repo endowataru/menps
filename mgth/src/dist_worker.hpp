@@ -65,8 +65,7 @@ public:
     
     void on_before_switch(global_ult_ref&, global_ult_ref&);
     void on_after_switch(global_ult_ref&, global_ult_ref&);
-    void on_join_blocked();
-    void on_join_resume();
+    void on_join_acquire(global_ult_ref&);
     
     inline bool finished();
     

@@ -2,7 +2,6 @@
 #pragma once
 
 #include "global_ult_desc.hpp"
-//#include "global_ult_desc_lock.hpp"
 #include <mgult/fcontext.hpp>
 
 #include <mgbase/threading/unique_lock.hpp>
@@ -59,7 +58,7 @@ public:
     {
         return load_desc_member(&global_ult_desc::stack_ptr);
     }
-    mgbase::size_t get_stack_size()
+    mgbase::size_t get_stack_size() const MGBASE_NOEXCEPT
     {
         return load_desc_member(&global_ult_desc::stack_size);
     }
@@ -130,6 +129,15 @@ public:
             "{}"
         ,   to_string()
         );
+    }
+    
+    mgcom::process_id_t get_owner_proc()
+    {
+        return load_desc_member(&global_ult_desc::owner);
+    }
+    void set_owner_proc(const mgcom::process_id_t proc)
+    {
+        store_desc_member(&global_ult_desc::owner, proc);
     }
     
     void set_blocked()

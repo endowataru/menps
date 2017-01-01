@@ -27,6 +27,8 @@ struct global_ult_desc
     
     void* stack_ptr;
     mgbase::size_t stack_size;
+    
+    mgcom::process_id_t owner;
 };
 
 } // namespace mgth
