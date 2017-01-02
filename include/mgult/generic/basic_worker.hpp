@@ -765,7 +765,9 @@ private:
         }
         
         MGBASE_LOG_INFO(
-            "msg:Exiting this thread."
+            "msg:Exiting this thread.\t"
+            "sp:{:x}"
+        ,   reinterpret_cast<mgbase::uintptr_t>(MGBASE_GET_STACK_POINTER())
         );
         
         // Set the following thread as the current thread.
