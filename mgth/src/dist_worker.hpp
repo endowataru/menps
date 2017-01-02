@@ -89,8 +89,8 @@ private:
     dist_scheduler&         sched_;
     const worker_rank_t     rank_;
     
-    mgbase::unique_ptr<alternate_signal_stack>  alter_stack_;
     mgbase::unique_ptr<mgbase::uint8_t []>      stack_area_;
+    mgbase::unique_ptr<alternate_signal_stack>  alter_stack_;
     
     //global_ult_desc_pool    desc_pool_;
 };

@@ -71,6 +71,7 @@ public:
         auto& desc = local_descs_[index];
         
         // Initialize the thread descriptor.
+        desc.owner = -1;
         desc.ctx = context_t{};
         desc.state = global_ult_state::ready;
         desc.joiner = mgult::make_invalid_ult_id();
@@ -102,7 +103,7 @@ public:
     
     struct deallocate_handler
     {
-        static const mgcom::rpc::handler_id_t handler_id = 400; // TODO
+        static const mgcom::rpc::handler_id_t handler_id = 1100; // TODO
         
         typedef ult_id  argument_type;
         typedef void    return_type;

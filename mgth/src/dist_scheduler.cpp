@@ -105,7 +105,7 @@ private:
     
     struct steal_handler
     {
-        static const mgcom::rpc::handler_id_t handler_id = 500; // TODO
+        static const mgcom::rpc::handler_id_t handler_id = 1000; // TODO
         
         typedef steal_argument  argument_type;
         typedef ult_id          return_type;
@@ -151,23 +151,23 @@ private:
     };
     
 public:
-    void do_write_barrier_at(const mgcom::process_id_t proc)
+    void do_write_barrier_at(const mgcom::process_id_t proc, const ult_id th_id)
     {
         mgcom::rpc::call2<write_barrier_handler>(
             mgcom::rpc::requester::get_instance()
         ,   proc
-        ,   write_barrier_request{}
+        ,   write_barrier_request{ th_id }
         );
     }
     
 private:
     struct write_barrier_request {
-        // nothing
+        ult_id th_id;
     };
     
     struct write_barrier_handler
     {
-        static const mgcom::rpc::handler_id_t handler_id = 501;
+        static const mgcom::rpc::handler_id_t handler_id = 1001;
         
         typedef write_barrier_request       request_type;
         typedef void                        reply_type;
@@ -176,6 +176,14 @@ private:
         typename ServerCtx::return_type operator() (ServerCtx& sc)
         {
             instance_->dsm_.write_barrier();
+            
+            auto& rqst = sc.request();
+            
+            MGBASE_LOG_INFO(
+                "msg:Done write barrier.\t"
+                "th_id:0x{:x}"
+            ,   reinterpret_cast<mgbase::uintptr_t>(rqst.th_id.ptr)
+            );
             
             return sc.make_reply();
         }
@@ -337,9 +345,11 @@ void dist_worker::on_join_acquire(global_ult_ref& th)
 {
     const auto owner_proc = th.get_owner_proc();
     
+    MGBASE_ASSERT(mgcom::valid_process_id(owner_proc));
+    
     if (owner_proc != mgcom::current_process_id())
     {
-        sched_.do_write_barrier_at(owner_proc);
+        sched_.do_write_barrier_at(owner_proc, th.get_id());
         
         sched_.get_dsm().read_barrier();
     }

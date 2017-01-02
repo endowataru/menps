@@ -133,10 +133,12 @@ public:
     
     mgcom::process_id_t get_owner_proc()
     {
-        return load_desc_member(&global_ult_desc::owner);
+        const auto proc = load_desc_member(&global_ult_desc::owner);
+        return proc;
     }
     void set_owner_proc(const mgcom::process_id_t proc)
     {
+        MGBASE_ASSERT(mgcom::valid_process_id(proc));
         store_desc_member(&global_ult_desc::owner, proc);
     }
     
@@ -208,6 +210,7 @@ public:
             "stack_ptr:{:x}\t"
             "stack_size:{:x}\t"
             "ctx:{:x}\t"
+            "owner:{}"
         ,   reinterpret_cast<mgbase::uintptr_t>(id_.ptr)
         ,   static_cast<typename mgbase::underlying_type<global_ult_state>::type>(get_state())
         ,   reinterpret_cast<mgbase::uintptr_t>(get_joiner().ptr)
@@ -215,6 +218,7 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(get_stack_ptr())
         ,   get_stack_size()
         ,   reinterpret_cast<mgbase::uintptr_t>(get_context().fctx)
+        ,   get_owner_proc()
         );
         return w.str();
     }
