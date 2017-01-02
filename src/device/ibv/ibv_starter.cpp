@@ -22,7 +22,7 @@ public:
     {
         endpoint_ = mpi::make_endpoint(argc, argv);
         
-        commander_ = mgcom::mpi1::make_commander(*endpoint_);
+        commander_ = mgcom::mpi1::make_commander();
         
         rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface(), *endpoint_);
         
@@ -33,7 +33,7 @@ public:
         else
             rma_ = make_direct_rma_comm(*endpoint_, *collective_requester_);
         
-        commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
+        commander_->get_mpi_interface().barrier({ MPI_COMM_WORLD });
         
         MGBASE_LOG_DEBUG("msg:Initialized.");
     }
@@ -42,7 +42,7 @@ public:
     {
         collective::barrier();
         
-        commander_->get_mpi_interface().native_barrier({ MPI_COMM_WORLD });
+        commander_->get_mpi_interface().barrier({ MPI_COMM_WORLD });
         
         rma_.reset();
         
