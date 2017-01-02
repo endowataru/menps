@@ -80,7 +80,10 @@ add_library(mgcom-mpi
 target_include_directories(mgcom-mpi PRIVATE
     ./src
 )
-target_link_libraries(mgcom-mpi mgcom-common)
+target_link_libraries(mgcom-mpi
+    mgcom-common
+    mgdev-mpi
+)
 
 
 # Library for each device

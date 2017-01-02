@@ -39,8 +39,10 @@ public:
         // do barrier to avoid deadlocking
         barrier();
         
-        mi_.native_broadcast({
-            params
+        mi_.broadcast({
+            process_id_to_rank(params.root)
+        ,   params.ptr
+        ,   static_cast<int>(params.num_bytes)
         ,   g_impl.get_communicator()
         });
     }
@@ -50,8 +52,10 @@ public:
         // do barrier to avoid deadlocking
         barrier();
         
-        mi_.native_allgather({
-            params
+        mi_.allgather({
+            params.src
+        ,   params.dest
+        ,   static_cast<int>(params.num_bytes)
         ,   g_impl.get_communicator()
         });
     }
@@ -61,8 +65,10 @@ public:
         // do barrier to avoid deadlocking
         barrier();
         
-        mi_.native_alltoall({
-            params
+        mi_.alltoall({
+            params.src
+        ,   params.dest
+        ,   static_cast<int>(params.num_bytes)
         ,   g_impl.get_communicator()
         });
     }

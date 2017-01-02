@@ -35,11 +35,11 @@ public:
     {
         mi_ = &mi;
         
-        required_rounds_ = static_cast<index_t>(
-            mgbase::ceil_log2(mi.get_endpoint().number_of_processes())
-        );
-        
         comm_ = mi.comm_dup(MPI_COMM_WORLD, "MGCOM_COMM_COLLECTIVE");
+        
+        required_rounds_ = static_cast<index_t>(
+            mgbase::ceil_log2(mi_->get_num_ranks(comm_))
+        );
         
         initialized_ = true;
         
@@ -70,10 +70,8 @@ public:
             
             impl.finished_.store(false, mgbase::memory_order_relaxed);
             
-            auto& ep = impl.mi_->get_endpoint();
-            
-            const mgcom::process_id_t current_proc = ep.current_process_id();
-            const index_t num_procs = ep.number_of_processes();
+            const auto current_proc = impl.mi_->get_current_rank(impl.comm_);
+            const auto num_procs = impl.mi_->get_num_ranks(impl.comm_);
             
             const mgcom::process_id_t diff = 1 << impl.round_;
             
@@ -84,22 +82,26 @@ public:
             const mgcom::process_id_t src_proc
                 = static_cast<process_id_t>((current_proc + num_procs - diff) % num_procs);
             
-            impl.mi_->isend(isend_params{
-                MGBASE_NULLPTR
-            ,   0
-            ,   static_cast<int>(dest_proc)
-            ,   0
-            ,   impl.comm_
+            impl.mi_->send_async({
+                {
+                    MGBASE_NULLPTR
+                ,   0
+                ,   static_cast<int>(dest_proc)
+                ,   0
+                ,   impl.comm_
+                }
             ,   mgbase::make_callback_empty()
             });
             
-            impl.mi_->irecv(irecv_params{
-                MGBASE_NULLPTR
-            ,   0
-            ,   static_cast<int>(src_proc)
-            ,   0
-            ,   impl.comm_
-            ,   MPI_STATUS_IGNORE
+            impl.mi_->recv_async({
+                {
+                    MGBASE_NULLPTR
+                ,   0
+                ,   static_cast<int>(src_proc)
+                ,   0
+                ,   impl.comm_
+                ,   MPI_STATUS_IGNORE
+                }
             ,   mgbase::make_callback_store_release(&impl.finished_, MGBASE_NONTYPE(true))
             });
             

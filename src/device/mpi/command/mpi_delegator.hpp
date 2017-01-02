@@ -8,38 +8,49 @@
 namespace mgcom {
 namespace mpi {
 
+using mgdev::mpi::recv_async_params;
+using mgdev::mpi::send_async_params;
+
+using mgdev::mpi::barrier_async_params;
+using mgdev::mpi::broadcast_async_params;
+using mgdev::mpi::allgather_async_params;
+using mgdev::mpi::alltoall_async_params;
+
 class mpi_delegator
     : public virtual mpi_interface
 {
 public:
-    mpi_delegator(endpoint& ep, delegator& del, mpi_completer_base& comp)
-        : mpi_interface(ep)
-        , del_(del)
+    mpi_delegator(delegator& del, mpi_completer_base& comp)
+        : del_(del)
         , comp_(comp)
-        { }
+    { }
     
     mpi_delegator(const mpi_delegator&) = delete;
     mpi_delegator& operator = (const mpi_delegator&) = delete;
     
-    virtual bool try_irecv(const irecv_params& params) MGBASE_OVERRIDE;
+    // Point-to-point communication
     
-    virtual bool try_isend(const isend_params& params) MGBASE_OVERRIDE;
+    virtual void recv_async(recv_async_params) MGBASE_OVERRIDE;
     
-    virtual bool try_irsend(const isend_params& params) MGBASE_OVERRIDE;
+    virtual void send_async(send_async_params) MGBASE_OVERRIDE;
     
-    virtual MPI_Comm comm_dup(MPI_Comm comm) MGBASE_OVERRIDE;
+    // Collective communication
     
-    virtual void comm_free(MPI_Comm* comm) MGBASE_OVERRIDE;
+    virtual void barrier_async(barrier_async_params) MGBASE_OVERRIDE;
     
-    virtual void comm_set_name(MPI_Comm comm, const char* comm_name) MGBASE_OVERRIDE;
+    virtual void broadcast_async(broadcast_async_params) MGBASE_OVERRIDE;
     
-    virtual bool try_native_barrier_async(const ibarrier_params& params) MGBASE_OVERRIDE;
+    virtual void allgather_async(allgather_async_params) MGBASE_OVERRIDE;
     
-    virtual bool try_native_broadcast_async(const ibcast_params& params) MGBASE_OVERRIDE;
+    virtual void alltoall_async(alltoall_async_params) MGBASE_OVERRIDE;
     
-    virtual bool try_native_allgather_async(const iallgather_params& params) MGBASE_OVERRIDE;
+    // Communicators
     
-    virtual bool try_native_alltoall_async(const ialltoall_params& params) MGBASE_OVERRIDE;
+    virtual MPI_Comm comm_dup(MPI_Comm) MGBASE_OVERRIDE;
+    
+    virtual void comm_free(MPI_Comm*) MGBASE_OVERRIDE;
+    
+    virtual void comm_set_name(MPI_Comm, const char*) MGBASE_OVERRIDE;
     
 protected:
     delegator& get_delegator() const MGBASE_NOEXCEPT {

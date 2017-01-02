@@ -2,7 +2,8 @@
 #include "device/mpi3/mpi3_interface.hpp"
 #include <mgcom/collective/requester.hpp>
 #include "collective.hpp"
-#include "device/mpi/mpi_communicator.hpp"
+#include <mgdev/mpi/communicator.hpp>
+#include <mgcom/ult.hpp>
 
 namespace mgcom {
 
@@ -15,75 +16,53 @@ class mpi3_requester
 public:
     explicit mpi3_requester(mpi3::mpi3_interface& mi)
         : mi_(mi)
-        , comm_(mi, MPI_COMM_WORLD /*TODO*/, "MGCOM_MPI3_COLLECTIVE") { }
+        , comm_(
+            mgdev::mpi::communicator::duplicate(
+                mi
+            ,   MPI_COMM_WORLD /*TODO*/
+            ,   "MGCOM_MPI3_COLLECTIVE"
+            )
+        )
+    { }
     
     virtual void barrier()
     {
-        ult::sync_flag flag;
-        
-        while (MGBASE_UNLIKELY(
-            !mi_.try_ibarrier({
-                { comm_.get() }
-            ,   mgbase::make_callback_notify(&flag)
-            })
-        )) {
-            ult::this_thread::yield();
-        }
-        
-        flag.wait();
+        mi_.barrier({ comm_.get() });
     }
     
     virtual void broadcast(const untyped::broadcast_params& params)
     {
-        ult::sync_flag flag;
-        
-        while (MGBASE_UNLIKELY(
-            !mi_.try_ibcast({
-                { params, comm_.get() }
-            ,   mgbase::make_callback_notify(&flag)
-            })
-        )) {
-            ult::this_thread::yield();
-        }
-        
-        flag.wait();
+        mi_.broadcast({
+            static_cast<int>(params.root)
+        ,   params.ptr
+        ,   static_cast<int>(params.num_bytes)
+        ,   comm_.get()
+        });
     }
     
     virtual void allgather(const untyped::allgather_params& params)
     {
-        ult::sync_flag flag;
-        
-        while (MGBASE_UNLIKELY(
-            !mi_.try_iallgather({
-                { params, comm_.get() }
-            ,   mgbase::make_callback_notify(&flag)
-            })
-        )) {
-            ult::this_thread::yield();
-        }
-        
-        flag.wait();
+        mi_.allgather({
+            params.src
+        ,   params.dest
+        ,   static_cast<int>(params.num_bytes)
+        ,   comm_.get()
+        });
     }
     
     virtual void alltoall(const untyped::alltoall_params& params)
     {
-        ult::sync_flag flag;
-        
-        while (MGBASE_UNLIKELY(
-            !mi_.try_ialltoall({
-                { params, comm_.get() }
-            ,   mgbase::make_callback_notify(&flag)
-            })
-        )) {
-            ult::this_thread::yield();
-        }
-        
-        flag.wait();
+        mi_.alltoall({
+            params.src
+        ,   params.dest
+        ,   static_cast<int>(params.num_bytes)
+        ,   comm_.get()
+        });
     }
     
 private:
-    mpi3::mpi3_interface& mi_;
-    mpi::mpi_communicator comm_;
+    mpi3::mpi3_interface&       mi_;
+    mgdev::mpi::communicator    comm_;
 };
 
 } // unnamed namespace

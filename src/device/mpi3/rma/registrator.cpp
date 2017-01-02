@@ -11,8 +11,10 @@ class mpi3_registrator
     : public registrator
 {
 public:
-    explicit mpi3_registrator(mpi3::mpi3_interface& mi)
-        : mi_(mi) { }
+    /*implicit*/ mpi3_registrator(mpi3::mpi3_interface& mi, const MPI_Win win)
+        : mi_(mi)
+        , win_(win)
+    { }
     
     MGBASE_WARN_UNUSED_RESULT
     virtual untyped::local_region register_region(const untyped::register_region_params& params) MGBASE_OVERRIDE
@@ -20,6 +22,7 @@ public:
         const MPI_Aint addr = mi_.attach({
             params.local_ptr
         ,   static_cast<MPI_Aint>(params.size_in_bytes)
+        ,   this->win_
         });
         
         MGBASE_LOG_DEBUG(
@@ -43,11 +46,15 @@ public:
     
     virtual void deregister_region(const untyped::deregister_region_params& params) MGBASE_OVERRIDE
     {
-        mi_.detach({ untyped::to_raw_pointer(params.region) });
+        mi_.detach({
+            untyped::to_raw_pointer(params.region)
+        ,   this->win_
+        });
     }
     
 private:
-    mpi3::mpi3_interface& mi_;
+    mpi3::mpi3_interface&   mi_;
+    const MPI_Win           win_;
 };
 
 } // unnamed namespace
@@ -55,9 +62,9 @@ private:
 
 namespace mpi3 {
 
-mgbase::unique_ptr<rma::registrator> make_rma_registrator(mpi3_interface& mi)
+mgbase::unique_ptr<rma::registrator> make_rma_registrator(mpi3_interface& mi, const MPI_Win win)
 {
-    return mgbase::make_unique<rma::mpi3_registrator>(mi);
+    return mgbase::make_unique<rma::mpi3_registrator>(mi, win);
 }
 
 } // namespace mpi3

@@ -50,7 +50,7 @@ inline bool try_delegate(delegator& del, const Func& func)
     });
 }
 
-template <typename Func, typename T>
+template <typename Func>
 inline void delegate(delegator& del, const Func& func)
 {
     while (MGBASE_UNLIKELY(

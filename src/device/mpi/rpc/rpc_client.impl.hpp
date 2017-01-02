@@ -42,22 +42,26 @@ public:
         ult::sync_flag send_finished;
         
         //mpi::irsend( // TODO: Introduce buffer management
-        mi_.isend({
-            &msg_buf                                        // buf
-        ,   static_cast<int>(sizeof(message_buffer))        // size_in_bytes
-        ,   static_cast<int>(params.proc)                   // dest_proc
-        ,   send_tag                                        // tag
-        ,   comm_                                           // comm
+        mi_.send_async({
+            {
+                &msg_buf                                        // buf
+            ,   static_cast<int>(sizeof(message_buffer))        // size_in_bytes
+            ,   static_cast<int>(params.proc)                   // dest_proc
+            ,   send_tag                                        // tag
+            ,   comm_                                           // comm
+            }
         ,   mgbase::make_callback_notify(&send_finished)    // on_complete
         });
         
-        mi_.irecv({
-            params.return_ptr                       // buf
-        ,   static_cast<int>(params.return_size)    // size_in_bytes
-        ,   static_cast<int>(params.proc)           // dest_proc
-        ,   recv_tag                                // tag
-        ,   comm_                                   // comm
-        ,   MPI_STATUS_IGNORE                       // status_result
+        mi_.recv_async({
+            {
+                params.return_ptr                       // buf
+            ,   static_cast<int>(params.return_size)    // size_in_bytes
+            ,   static_cast<int>(params.proc)           // dest_proc
+            ,   recv_tag                                // tag
+            ,   comm_                                   // comm
+            ,   MPI_STATUS_IGNORE                       // status_result
+            }
         ,   params.on_complete                      // on_complete
         });
         

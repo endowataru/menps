@@ -112,13 +112,15 @@ private:
         
         MPI_Status status;
         
-        this->conf_.mi->irecv({
-            &buf
-        ,   sizeof(rpc::message_buffer)
-        ,   MPI_ANY_SOURCE
-        ,   this->conf_.tag
-        ,   this->conf_.comm
-        ,   &status
+        this->conf_.mi->recv_async({
+            {
+                &buf
+            ,   sizeof(rpc::message_buffer)
+            ,   MPI_ANY_SOURCE
+            ,   this->conf_.tag
+            ,   this->conf_.comm
+            ,   &status
+            }
         ,   call_notify{ *this }
         });
         
@@ -191,12 +193,14 @@ private:
     {
         ult::sync_flag flag;
         
-        this->conf_.mi->isend({
-            reply_data
-        ,   reply_size
-        ,   cli_rank
-        ,   reply_tag
-        ,   this->conf_.comm
+        this->conf_.mi->send_async({
+            {
+                reply_data
+            ,   reply_size
+            ,   cli_rank
+            ,   reply_tag
+            ,   this->conf_.comm
+            }
         ,   mgbase::make_callback_notify(&flag)
         });
         

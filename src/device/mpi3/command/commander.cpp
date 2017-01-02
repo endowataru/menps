@@ -14,7 +14,8 @@ public:
     explicit impl(endpoint& ep)
         : command_queue()
         , command_consumer()
-        , command_producer(ep, command_consumer::get_completer(), this->get_win()) { }
+        , command_producer(ep, command_consumer::get_completer())
+    { }
     
     impl(const impl&) = delete;
     

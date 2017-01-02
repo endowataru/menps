@@ -54,7 +54,7 @@ private:
         ) {
             ult::sync_flag flag;
             
-            self.mi_.isend({
+            self.mi_.send_async({
                 arg.src_ptr
             ,   static_cast<int>(arg.size_in_bytes)
             ,   static_cast<int>(params.source)
@@ -101,7 +101,7 @@ public:
         {
             // Wait for the local completion of MPI_Irecv().
             
-            this->mi_.irecv(irecv_params{
+            this->mi_.recv_async({
                 rma::untyped::to_raw_pointer(params.dest_laddr)
             ,   static_cast<int>(params.size_in_bytes)
             ,   static_cast<int>(params.src_proc)
@@ -145,7 +145,7 @@ private:
         ) {
             ult::sync_flag flag;
             
-            self.mi_.irecv(irecv_params{
+            self.mi_.recv_async({
                 arg.dest_ptr
             ,   static_cast<int>(arg.size_in_bytes)
             ,   static_cast<int>(params.source)
@@ -191,7 +191,7 @@ public:
         
         if (MGBASE_LIKELY(ret))
         {
-            this->mi_.isend(isend_params{
+            this->mi_.send_async({
                 rma::untyped::to_raw_pointer(params.src_laddr)
             ,   static_cast<int>(params.size_in_bytes)
             ,   static_cast<int>(params.dest_proc)

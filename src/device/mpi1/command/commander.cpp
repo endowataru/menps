@@ -11,10 +11,10 @@ class commander::impl
     , public command_producer
 {
 public:
-    explicit impl(endpoint& ep)
+    impl()
         : command_queue()
         , command_consumer()
-        , command_producer(ep, command_consumer::get_completer()) { }
+        , command_producer(command_consumer::get_completer()) { }
     
     impl(const impl&) = delete;
     
@@ -23,14 +23,14 @@ private:
 };
 
 
-commander::commander(endpoint& ep)
-    : impl_{mgbase::make_unique<impl>(ep)} { }
+commander::commander()
+    : impl_{mgbase::make_unique<impl>()} { }
 
 commander::~commander() = default;
 
-mgbase::unique_ptr<commander> make_commander(endpoint& ep)
+mgbase::unique_ptr<commander> make_commander()
 {
-    return mgbase::make_unique<commander>(ep);
+    return mgbase::make_unique<commander>();
 }
 
 mpi::mpi_interface& commander::get_mpi_interface() MGBASE_NOEXCEPT

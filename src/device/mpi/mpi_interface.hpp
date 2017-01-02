@@ -1,6 +1,17 @@
 
 #pragma once
 
+#include <mgdev/mpi/mpi1_requester.hpp>
+
+namespace mgcom {
+namespace mpi {
+
+typedef mgdev::mpi::mpi1_requester  mpi_interface;
+
+} // namespace mpi
+} // namespace mgcom
+#if 0
+
 #include <mgcom/common.hpp>
 #include <mgcom/collective/requester.hpp>
 #include "mpi.hpp"
@@ -232,4 +243,6 @@ inline void native_alltoall(
 
 } // namespace mpi
 } // namespace mgcom
+
+#endif
 

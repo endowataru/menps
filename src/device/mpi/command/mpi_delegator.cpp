@@ -12,9 +12,9 @@ namespace mpi {
 
 namespace /*unnamed*/ {
 
-struct irecv_closure
+struct recv_async_closure
 {
-    irecv_params        params;
+    recv_async_params   params;
     mpi_completer_base* comp;
     
     MGBASE_WARN_UNUSED_RESULT
@@ -22,34 +22,36 @@ struct irecv_closure
     {
         if (MGBASE_UNLIKELY(comp->full()))
             return false;
+        
+        const auto& pb = params.base;
         
         MPI_Request request;
         
         mpi_error::check(
             MPI_Irecv(
-                params.buf              // buf
-            ,   params.size_in_bytes    // count
-            ,   MPI_BYTE                // datatype
-            ,   params.source_rank      // source
-            ,   params.tag              // tag
-            ,   params.comm             // comm
-            ,   &request                // request
+                pb.buf          // buf
+            ,   pb.num_bytes    // count
+            ,   MPI_BYTE        // datatype
+            ,   pb.src_rank     // source
+            ,   pb.tag          // tag
+            ,   pb.comm         // comm
+            ,   &request        // request
             )
         );
         
         MGBASE_LOG_DEBUG(
             "msg:Executed MPI_Irecv.\t"
-            "buf:{:x}\tsize_in_bytes:{}\tsrc_rank:{}\ttag:{}\tcomm:{}"
-        ,   reinterpret_cast<mgbase::intptr_t>(params.buf)
-        ,   params.size_in_bytes
-        ,   params.source_rank
-        ,   params.tag
-        ,   get_comm_name(params.comm)
+            "buf:{:x}\tnum_bytes:{}\tsrc_rank:{}\ttag:{}\tcomm:{}"
+        ,   reinterpret_cast<mgbase::intptr_t>(pb.buf)
+        ,   pb.num_bytes
+        ,   pb.src_rank
+        ,   pb.tag
+        ,   get_comm_name(pb.comm)
         );
         
         comp->complete({
             request
-        ,   params.status_result
+        ,   pb.status_result
         ,   params.on_complete
         });
         
@@ -57,9 +59,9 @@ struct irecv_closure
     }
 };
 
-struct isend_closure
+struct send_async_closure
 {
-    isend_params        params;
+    send_async_params   params;
     mpi_completer_base* comp;
     
     MGBASE_WARN_UNUSED_RESULT
@@ -67,30 +69,32 @@ struct isend_closure
     {
         if (MGBASE_UNLIKELY(comp->full()))
             return false;
+        
+        const auto& pb = params.base;
         
         MPI_Request request;
         
         mpi_error::check(
             MPI_Isend(
-                const_cast<void*>(params.buf)   // buf
+                const_cast<void*>(pb.buf)   // buf
                 //  Note: const_cast is required for old MPI libraries
-            ,   params.size_in_bytes            // count
-            ,   MPI_BYTE                        // datatype
-            ,   params.dest_rank                // dest
-            ,   params.tag                      // tag
-            ,   params.comm                     // comm
-            ,   &request                        // request
+            ,   pb.num_bytes                // count
+            ,   MPI_BYTE                    // datatype
+            ,   pb.dest_rank                // dest
+            ,   pb.tag                      // tag
+            ,   pb.comm                     // comm
+            ,   &request                    // request
             )
         );
         
         MGBASE_LOG_DEBUG(
             "msg:Executed MPI_Isend.\t"
-            "buf:{:x}\tsize_in_bytes:{}\tdest_rank:{}\ttag:{}\tcomm:{}"
-        ,   reinterpret_cast<mgbase::intptr_t>(params.buf)
-        ,   params.size_in_bytes
-        ,   params.dest_rank
-        ,   params.tag
-        ,   get_comm_name(params.comm)
+            "buf:{:x}\tnum_bytes:{}\tdest_rank:{}\ttag:{}\tcomm:{}"
+        ,   reinterpret_cast<mgbase::intptr_t>(pb.buf)
+        ,   pb.num_bytes
+        ,   pb.dest_rank
+        ,   pb.tag
+        ,   get_comm_name(pb.comm)
         );
         
         comp->complete({
@@ -102,77 +106,22 @@ struct isend_closure
         return true;
     }
 };
-
-struct irsend_closure
-{
-    isend_params        params;
-    mpi_completer_base* comp;
-    
-    MGBASE_WARN_UNUSED_RESULT
-    bool operator() () const
-    {
-        if (MGBASE_UNLIKELY(comp->full()))
-            return false;
-        
-        MPI_Request request;
-        
-        mpi_error::check(
-            MPI_Irsend(
-                const_cast<void*>(params.buf)   // buf
-                // Note: const_cast is required for old MPI libraries
-            ,   params.size_in_bytes            // count
-            ,   MPI_BYTE                        // datatype
-            ,   params.dest_rank                // dest
-            ,   params.tag                      // tag
-            ,   params.comm                     // comm
-            ,   &request                        // request
-            )
-        );
-        
-        MGBASE_LOG_DEBUG(
-            "msg:Executed MPI_Irsend.\t"
-            "buf:{:x}\tsize_in_bytes:{}\tdest_rank:{}\ttag:{}\tcomm:{}"
-        ,   reinterpret_cast<mgbase::intptr_t>(params.buf)
-        ,   params.size_in_bytes
-        ,   params.dest_rank
-        ,   params.tag
-        ,   get_comm_name(params.comm)
-        );
-        
-        comp->complete({
-            request
-        ,   MPI_STATUS_IGNORE
-        ,   params.on_complete
-        });
-        
-        return true;
-    }
-};
-
 
 } // namespace unnamed
 
-bool mpi_delegator::try_irecv(const irecv_params& params)
+void mpi_delegator::recv_async(const recv_async_params params)
 {
-    return try_delegate(
+    delegate(
         del_
-    ,   irecv_closure{ params, &comp_ }
+    ,   recv_async_closure{ params, &comp_ }
     );
 }
 
-bool mpi_delegator::try_isend(const isend_params& params)
+void mpi_delegator::send_async(const send_async_params params)
 {
-    return try_delegate(
+    delegate(
         del_
-    ,   isend_closure{ params, &comp_ }
-    );
-}
-
-bool mpi_delegator::try_irsend(const isend_params& params)
-{
-    return try_delegate(
-        del_
-    ,   irsend_closure{ params, &comp_ }
+    ,   send_async_closure{ params, &comp_ }
     );
 }
 
@@ -183,21 +132,21 @@ namespace /*unnamed*/ {
 
 struct barrier_closure
 {
-    ibarrier_params p;
+    barrier_async_params params;
     
     MGBASE_WARN_UNUSED_RESULT
     bool operator() () const
     {
         MGBASE_LOG_DEBUG("msg:Executing MPI_Barrier.");
         
-        const auto& params = p.base;
+        const auto& pb = params.base;
         
         mpi_error::check(
-            MPI_Barrier(params.comm)
+            MPI_Barrier(pb.comm)
         );
         
         // Execute the callback.
-        p.on_complete();
+        params.on_complete();
         
         return true;
     }
@@ -205,33 +154,33 @@ struct barrier_closure
 
 struct broadcast_closure
 {
-    ibcast_params p;
+    broadcast_async_params params;
     
     MGBASE_WARN_UNUSED_RESULT
     bool operator() () const
     {
-        const auto& params = p.base.coll;
+        const auto& pb = params.base;
         
         MGBASE_LOG_DEBUG(
             "msg:Executing MPI_Bcast.\t"
             "root:{}\tptr:{:x}\tnumber_of_bytes:{}"
-        ,   params.root
-        ,   reinterpret_cast<mgbase::intptr_t>(params.ptr)
-        ,   params.num_bytes
+        ,   pb.root
+        ,   reinterpret_cast<mgbase::intptr_t>(pb.ptr)
+        ,   pb.num_bytes
         );
         
         mpi_error::check(
             MPI_Bcast(
-                params.ptr // TODO
-            ,   static_cast<int>(params.num_bytes)
+                pb.ptr // TODO
+            ,   static_cast<int>(pb.num_bytes)
             ,   MPI_BYTE
-            ,   static_cast<int>(params.root)
-            ,   p.base.comm
+            ,   static_cast<int>(pb.root)
+            ,   pb.comm
             )
         );
         
         // Execute the callback.
-        p.on_complete();
+        params.on_complete();
         
         return true;
     }
@@ -239,35 +188,35 @@ struct broadcast_closure
 
 struct allgather_closure
 {
-    iallgather_params p;
+    allgather_async_params params;
     
     MGBASE_WARN_UNUSED_RESULT
     bool operator() () const
     {
-        const auto& params = p.base.coll;
+        const auto& pb = params.base;
         
         MGBASE_LOG_DEBUG(
             "msg:Executing MPI_Allgather.\t"
             "src:{:x}\tdest:{:x}\tnumber_of_bytes:{}"
-        ,   reinterpret_cast<mgbase::intptr_t>(params.src)
-        ,   reinterpret_cast<mgbase::intptr_t>(params.dest)
-        ,   params.num_bytes
+        ,   reinterpret_cast<mgbase::intptr_t>(pb.src)
+        ,   reinterpret_cast<mgbase::intptr_t>(pb.dest)
+        ,   pb.num_bytes
         );
         
         mpi_error::check(
             MPI_Allgather(
-                const_cast<void*>(params.src) // TODO: Only old versions of OpenMPI require
-            ,   static_cast<int>(params.num_bytes)
+                const_cast<void*>(pb.src) // TODO: Only old versions of OpenMPI require
+            ,   static_cast<int>(pb.num_bytes)
             ,   MPI_BYTE
-            ,   params.dest
-            ,   static_cast<int>(params.num_bytes)
+            ,   pb.dest
+            ,   static_cast<int>(pb.num_bytes)
             ,   MPI_BYTE
-            ,   p.base.comm
+            ,   pb.comm
             )
         );
         
         // Execute the callback.
-        p.on_complete();
+        params.on_complete();
         
         return true;
     }
@@ -275,35 +224,35 @@ struct allgather_closure
 
 struct alltoall_closure
 {
-    ialltoall_params p;
+    alltoall_async_params params;
     
     MGBASE_WARN_UNUSED_RESULT
     bool operator() () const
     {
-        const auto& params = p.base.coll;
+        const auto& pb = params.base;
         
         MGBASE_LOG_DEBUG(
             "msg:Executing MPI_Alltoall.\t"
             "src:{:x}\tdest:{:x}\tnumber_of_bytes:{}"
-        ,   reinterpret_cast<mgbase::intptr_t>(params.src)
-        ,   reinterpret_cast<mgbase::intptr_t>(params.dest)
-        ,   params.num_bytes
+        ,   reinterpret_cast<mgbase::intptr_t>(pb.src)
+        ,   reinterpret_cast<mgbase::intptr_t>(pb.dest)
+        ,   pb.num_bytes
         );
         
         mpi_error::check(
             MPI_Alltoall(
-                const_cast<void*>(params.src) // TODO: Only old versions of OpenMPI require
-            ,   static_cast<int>(params.num_bytes)
+                const_cast<void*>(pb.src) // TODO: Only old versions of OpenMPI require
+            ,   static_cast<int>(pb.num_bytes)
             ,   MPI_BYTE
-            ,   params.dest
-            ,   static_cast<int>(params.num_bytes)
+            ,   pb.dest
+            ,   static_cast<int>(pb.num_bytes)
             ,   MPI_BYTE
-            ,   p.base.comm
+            ,   pb.comm
             )
         );
         
         // Execute the callback.
-        p.on_complete();
+        params.on_complete();
         
         return true;
     }
@@ -311,33 +260,33 @@ struct alltoall_closure
 
 } // unnamed namespace
 
-bool mpi_delegator::try_native_barrier_async(const ibarrier_params& params)
+void mpi_delegator::barrier_async(const barrier_async_params params)
 {
-    return try_delegate(
+    delegate(
         del_
     ,   barrier_closure{ params }
     );
 }
 
-bool mpi_delegator::try_native_broadcast_async(const ibcast_params& params)
+void mpi_delegator::broadcast_async(const broadcast_async_params params)
 {
-    return try_delegate(
+    delegate(
         del_
     ,   broadcast_closure{ params }
     );
 }
 
-bool mpi_delegator::try_native_allgather_async(const iallgather_params& params)
+void mpi_delegator::allgather_async(const allgather_async_params params)
 {
-    return try_delegate(
+    delegate(
         del_
     ,   allgather_closure{ params }
     );
 }
 
-bool mpi_delegator::try_native_alltoall_async(const ialltoall_params& params)
+void mpi_delegator::alltoall_async(const alltoall_async_params params)
 {
-    return try_delegate(
+    delegate(
         del_
     ,   alltoall_closure{ params }
     );
