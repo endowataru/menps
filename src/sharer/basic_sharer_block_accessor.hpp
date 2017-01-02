@@ -159,12 +159,12 @@ public:
         
         // Check whether the page is only written by this process.
         if (pg.is_diff_needed()) {
-            // Write the whole page.
-            self.write_whole(src_ptr, twin_lptr, dest_prptr, blk_size);
-        }
-        else {
             // Write diffs because there are multiple writers.
             self.write_diffs(src_ptr, twin_lptr, dest_prptr, blk_size);
+        }
+        else {
+            // Write the whole page.
+            self.write_whole(src_ptr, twin_lptr, dest_prptr, blk_size);
         }
         
         // Mark this block as clean.
@@ -233,6 +233,12 @@ public:
         {
             // Mark this block as pinned.
             blk.set_pinned();
+            
+            MGBASE_LOG_INFO(
+                "msg:Pinned block.\t"
+                "{}"
+            ,   self.to_string()
+            );
         }
     }
     
@@ -247,6 +253,12 @@ public:
         {
             // Mark this block as dirty (not pinned).
             blk.set_unpinned();
+            
+            MGBASE_LOG_INFO(
+                "msg:Unpinned block.\t"
+                "{}"
+            ,   self.to_string()
+            );
         }
     }
     

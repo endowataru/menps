@@ -110,7 +110,7 @@ public:
         this->is_diff_needed_ = true;
     }
     void enable_flush() MGBASE_NOEXCEPT {
-        MGBASE_ASSERT(!this->is_flush_needed_);
+        //MGBASE_ASSERT(!this->is_flush_needed_); // FIXME
         this->is_flush_needed_ = true;
     }
     

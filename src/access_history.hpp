@@ -3,6 +3,7 @@
 
 #include "sharer/sharer_space.hpp"
 #include "app_space.hpp"
+#include <vector>
 
 namespace mgdsm {
 
@@ -45,33 +46,35 @@ public:
     {
         MGBASE_LOG_INFO("msg:Started read barrier.");
         
+        std::vector<abs_block_id> ids;
+        
         {
             mgbase::lock_guard<mutex_type> lk(this->read_mtx_);
             
-            for (const auto& id : read_ids_)
+            ids = mgbase::move(this->read_ids_);
+        }
+        
+        MGBASE_RANGE_BASED_FOR(const auto& id, ids)
+        {
+            auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
+            
+            auto pg_ac = seg_ac.get_page_accessor(id.pg_id);
+            
+            auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
+            
+            // Reconcile the page first, then flush it.
+            
+            // If reconcile is not needed, do nothing.
+            if (blk_ac.is_reconcile_needed())
             {
-                auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
-                
-                auto pg_ac = seg_ac.get_page_accessor(id.pg_id);
-                
-                auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
-                
-                // Reconcile the page first, then flush it.
-                
-                // If reconcile is not needed, do nothing.
-                if (blk_ac.is_reconcile_needed())
-                {
-                    this->conf_.app_sp.reconcile(blk_ac);
-                }
-                
-                // If flush is not needed, do nothing.
-                if (blk_ac.is_flush_needed())
-                {
-                    this->conf_.app_sp.flush(blk_ac);
-                }
+                this->conf_.app_sp.reconcile(blk_ac);
             }
             
-            this->read_ids_.clear();
+            // If flush is not needed, do nothing.
+            if (blk_ac.is_flush_needed())
+            {
+                this->conf_.app_sp.flush(blk_ac);
+            }
         }
         
         MGBASE_LOG_INFO("msg:Finished read barrier.");
@@ -81,25 +84,26 @@ public:
     {
         MGBASE_LOG_INFO("msg:Started write barrier.");
         
+        std::vector<abs_block_id> ids;
         {
-            mgbase::lock_guard<mutex_type> lk(this->write_mtx_);
+            mgbase::unique_lock<mutex_type> lk(this->write_mtx_);
             
-            for (const auto& id : this->write_ids_)
+            ids = mgbase::move(this->write_ids_);
+        }
+        
+        MGBASE_RANGE_BASED_FOR(const auto& id, ids)
+        {
+            auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
+            
+            auto pg_ac = seg_ac.get_page_accessor(id.pg_id);
+            
+            auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
+            
+            // If reconcile is not needed, do nothing.
+            if (blk_ac.is_reconcile_needed())
             {
-                auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
-                
-                auto pg_ac = seg_ac.get_page_accessor(id.pg_id);
-                
-                auto blk_ac = pg_ac.get_block_accessor(id.blk_id);
-                
-                // If reconcile is not needed, do nothing.
-                if (blk_ac.is_reconcile_needed())
-                {
-                    this->conf_.app_sp.reconcile(blk_ac);
-                }
+                this->conf_.app_sp.reconcile(blk_ac);
             }
-            
-            this->write_ids_.clear();
         }
         
         MGBASE_LOG_INFO("msg:Finished write barrier.");
