@@ -19,7 +19,8 @@ class rpc_client
     
 public:
     rpc_client(mpi_interface& mi, endpoint& ep)
-        : mi_(mi)
+        : rpc_base(mi)
+        , mi_(mi)
         , ep_(ep)
         , tags_(mgbase::make_unique<tag_info []>(num_tags))
     {

@@ -16,7 +16,8 @@ class rpc_server
     
 public:
     explicit rpc_server(mpi_interface& mi)
-        : invoker_{}
+        : rpc_base(mi)
+        , invoker_{}
     {
         ths_ = mgbase::make_unique<server_thread_ptr []>(num_threads);
         
