@@ -31,7 +31,8 @@ class basic_scoped_task
 public:
     template <typename Func, typename... Args>
     explicit basic_scoped_task(Func&& func, Args&&... args)
-        : th_(
+        : result_{}
+        , th_(
             detail::scoped_task_functor<T>{ &result_ }
         ,   mgbase::forward<Func>(func)
         ,   mgbase::forward<Args>(args)...
@@ -56,8 +57,8 @@ public:
     }
     
 private:
-    thread_type th_;
     T           result_;
+    thread_type th_;
 };
 
 } // namespace mgult
