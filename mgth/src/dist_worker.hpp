@@ -37,6 +37,8 @@ class dist_worker
     
     typedef thread_local_worker_base<dist_worker_traits>    tls_base;
     
+    static const mgbase::size_t join_stack_size = 2 << 20;
+    
 public:
     static const mgbase::size_t stack_size = global_ult_desc_pool::stack_size;
     
@@ -65,7 +67,8 @@ public:
     
     void on_before_switch(global_ult_ref&, global_ult_ref&);
     void on_after_switch(global_ult_ref&, global_ult_ref&);
-    void on_join_acquire(global_ult_ref&);
+    void on_join_already(global_ult_ref&, global_ult_ref&);
+    void on_exit_resume(global_ult_ref&);
     
     inline bool finished();
     
@@ -86,11 +89,15 @@ public:
     }
     
 private:
+    struct join_already_data;
+    
     dist_scheduler&         sched_;
     const worker_rank_t     rank_;
     
-    mgbase::unique_ptr<mgbase::uint8_t []>      stack_area_;
-    mgbase::unique_ptr<alternate_signal_stack>  alter_stack_;
+    //mgbase::unique_ptr<mgbase::uint8_t []>      stack_area_;
+    //mgbase::unique_ptr<alternate_signal_stack>  alter_stack_;
+    
+    mgbase::unique_ptr<mgbase::uint8_t []> join_stack_area_;
     
     //global_ult_desc_pool    desc_pool_;
 };

@@ -262,6 +262,7 @@ dist_worker::dist_worker(dist_scheduler& sched, const worker_rank_t rank)
     : base({ 1024 * 1024 }) // TODO
     , sched_(sched)
     , rank_(rank)
+    , join_stack_area_(mgbase::make_unique<mgbase::uint8_t []>(join_stack_size))
     { }
 
 global_ult_ref dist_worker::allocate_ult()
@@ -341,7 +342,63 @@ void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_
     dsm.unpin(stack_first_ptr, stack_size);
 }
 
-void dist_worker::on_join_acquire(global_ult_ref& th)
+struct dist_worker::join_already_data
+{
+    dist_worker&    self;
+    void*           stack_ptr;
+    mgbase::size_t  stack_size;
+    
+    MGBASE_NORETURN
+    static void handler(const mgult::fcontext_argument<void, join_already_data> arg)
+    {
+        auto& d = *arg.data;
+        auto& self = d.self;
+        
+        auto& dsm = self.sched_.get_dsm();
+        
+        dsm.unpin(d.stack_ptr, d.stack_size);
+        
+        dsm.read_barrier();
+        
+        dsm.pin(d.stack_ptr, d.stack_size);
+        
+        void* const null = MGBASE_NULLPTR;
+        mgult::jump_fcontext<void>(arg.fctx, null);
+    }
+};
+
+void dist_worker::on_join_already(global_ult_ref& current_th, global_ult_ref& joinee_th)
+{
+    const auto owner_proc = joinee_th.get_owner_proc();
+    
+    MGBASE_ASSERT(mgcom::valid_process_id(owner_proc));
+    
+    if (owner_proc != mgcom::current_process_id())
+    {
+        sched_.do_write_barrier_at(owner_proc, joinee_th.get_id());
+        
+        // Do read barrier on a different stack to unpin the current stack.
+        
+        const auto stack_ptr = current_th.get_stack_ptr();
+        const auto stack_size = current_th.get_stack_size();
+        
+        join_already_data data{
+            *this
+        ,   static_cast<mgbase::uint8_t*>(current_th.get_stack_ptr()) - stack_size
+        ,   stack_size
+        };
+        
+        const auto ctx =
+            mgult::make_fcontext(
+                join_stack_area_.get() + join_stack_size
+            ,   join_stack_size
+            ,   &join_already_data::handler
+            );
+        
+        mgult::jump_fcontext<void>(ctx, &data);
+    }
+}
+void dist_worker::on_exit_resume(global_ult_ref& th)
 {
     const auto owner_proc = th.get_owner_proc();
     
@@ -351,20 +408,23 @@ void dist_worker::on_join_acquire(global_ult_ref& th)
     {
         sched_.do_write_barrier_at(owner_proc, th.get_id());
         
+        // Do a read barrier directly on the current stack.
+        // The current stack is deallocated
+        // after switching to the continuation.
         sched_.get_dsm().read_barrier();
     }
 }
 
 void dist_worker::initialize_on_this_thread()
 {
-    stack_area_.reset(
+    /*stack_area_.reset(
         new mgbase::uint8_t[stack_size]
     );
     alter_stack_ = 
         mgbase::make_unique<alternate_signal_stack>( 
             stack_area_.get()
         ,   stack_size
-        );
+        );*/
     
     tls_base::initialize_on_this_thread();
     
@@ -379,8 +439,8 @@ void dist_worker::finalize_on_this_thread()
     
     tls_base::finalize_on_this_thread();
     
-    alter_stack_.reset();
-    stack_area_.reset();
+    /*alter_stack_.reset();
+    stack_area_.reset();*/
 }
 
 const mgbase::size_t dist_worker::stack_size;

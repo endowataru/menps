@@ -21,6 +21,8 @@ fib_int_t fib(const fib_int_t n)
     
     const auto r1 = t.get();
     
+    std::cout << n << " : " << r1 << " " << r2 << std::endl;
+    
     return r1 + r2;
 }
 
