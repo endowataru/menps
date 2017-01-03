@@ -16,10 +16,12 @@ class basic_sharer_segment_accessor
     
     typedef typename Traits::acquire_read_result_type   acquire_read_result_type;
     typedef typename Traits::acquire_write_result_type  acquire_write_result_type;
+    typedef typename Traits::release_write_result_type  release_write_result_type;
     
     typedef typename Traits::plptr_type                 plptr_type;
     
 public:
+    MGBASE_WARN_UNUSED_RESULT
     acquire_read_result_type acquire_read_page(const page_id_type pg_id)
     {
         auto& self = this->derived();
@@ -38,6 +40,7 @@ public:
         manager.release_read(pg_id);
     }
     
+    MGBASE_WARN_UNUSED_RESULT
     acquire_write_result_type acquire_write_page(const page_id_type pg_id)
     {
         auto& self = this->derived();
@@ -47,12 +50,13 @@ public:
         return manager.acquire_write(pg_id);
     }
     
-    void release_write_page(const page_id_type pg_id)
+    MGBASE_WARN_UNUSED_RESULT
+    release_write_result_type release_write_page(const page_id_type pg_id)
     {
         auto& self = this->derived();
         auto& manager = self.get_manager();
         
-        manager.release_write(pg_id);
+        return manager.release_write(pg_id);
     }
     
     void assign_reader_page(const page_id_type pg_id, const plptr_type& owner)
@@ -88,6 +92,24 @@ public:
         const auto pg_offset = this->get_page_offset(pg_id);
         
         return mgbase::next_in_bytes(seg_ptr, pg_offset);
+    }
+    
+    // Coherence activations don't require coherence operations.
+    void enable_flush(const page_id_type pg_id)
+    {
+        auto& self = this->derived();
+        auto& seg_ent = self.get_segment_entry();
+        auto& pg = seg_ent.get_page(pg_id);
+        
+        pg.enable_flush(); // Not locked
+    }
+    void enable_diff(const page_id_type pg_id)
+    {
+        auto& self = this->derived();
+        auto& seg_ent = self.get_segment_entry();
+        auto& pg = seg_ent.get_page(pg_id);
+        
+        pg.enable_diff(); // Not locked
     }
     
 private:

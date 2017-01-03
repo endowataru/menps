@@ -159,7 +159,10 @@ public:
             const auto pg_id = self.get_page_id();
             
             // Release the write privilege.
-            seg_pr.release_write_page(pg_id);
+            auto ret = seg_pr.release_write_page(pg_id);
+            
+            // Update "needs_flush".
+            pg_ent.update_for_release_write(mgbase::move(ret));
         }
     }
     

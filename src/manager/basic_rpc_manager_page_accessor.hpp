@@ -44,6 +44,7 @@ public:
         bool                needs_flush;
     };
     
+    MGBASE_WARN_UNUSED_RESULT
     acquire_read_result acquire_read(const process_id_type proc)
     {
         auto& self = this->derived();
@@ -81,6 +82,7 @@ public:
         invalidator_type    inv;
     };
     
+    MGBASE_WARN_UNUSED_RESULT
     acquire_write_result acquire_write(const process_id_type proc)
     {
         auto& self = this->derived();
@@ -112,13 +114,24 @@ public:
         };
     }
     
-    void release_write(const process_id_type proc)
+    struct release_write_result
+    {
+        bool needs_flush;
+    };
+    
+    MGBASE_WARN_UNUSED_RESULT
+    release_write_result release_write(const process_id_type proc)
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
         
         // Remove the process as a writer.
         pg_ent.remove_writer(proc);
+        
+        // Determine whether the downgrading reader needs to write via "flush".
+        const bool needs_flush = self.is_flush_needed(proc);
+        
+        return { needs_flush };
     }
     
 private:

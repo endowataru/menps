@@ -139,23 +139,15 @@ private:
         
         void operator() (sharer_block::accessor& blk_ac)
         {
-            const access_history::abs_block_id ablk_id{
-                blk_ac.get_segment_id()
-            ,   blk_ac.get_page_id()
-            ,   blk_ac.get_block_id()
-            };
-            
             // If the block is "invalid", upgrade to "clean".
-            if (self.app_sp_.fetch(blk_ac)) {
-                // Add this block as a flushed page.
-                self.hist_.add_new_read(ablk_id);
-            }
+            self.app_sp_.fetch(blk_ac);
             
             // If the block is "clean", upgrade to "dirty".
-            if (self.app_sp_.touch(blk_ac)) {
-                // Add this block as a reconciled page.
-                self.hist_.add_new_write(ablk_id);
-            }
+            self.app_sp_.touch(blk_ac);
+            
+            // Although pinned pages are fetched/touched here,
+            // they are not marked as reconciled/flushed pages
+            // because they cannot be until they are unpinned.
             
             // Pin the block.
             self.app_sp_.pin(blk_ac);
@@ -167,8 +159,23 @@ private:
         
         void operator() (sharer_block::accessor& blk_ac)
         {
+            const access_history::abs_block_id ablk_id{
+                blk_ac.get_segment_id()
+            ,   blk_ac.get_page_id()
+            ,   blk_ac.get_block_id()
+            };
+            
             // Unpin the block.
             self.app_sp_.unpin(blk_ac);
+            
+            // This block must be marked as a candidate
+            // for both flushed and reconciled pages
+            // because it is now in the "dirty" state.
+            
+            // Add this block as a flushed page.
+            self.hist_.add_new_read(ablk_id);
+            // Add this block as a reconciled page.
+            self.hist_.add_new_write(ablk_id);
         }
     };
     

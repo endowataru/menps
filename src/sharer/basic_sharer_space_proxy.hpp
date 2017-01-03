@@ -92,9 +92,8 @@ private:
             
             auto seg_ac = sp.get_segment_accessor(seg_id);
             
-            auto pg_ac = seg_ac.get_page_accessor(pg_id);
-            
-            pg_ac.enable_flush();
+            // Directly access the page entry to avoid deadlocking.
+            seg_ac.enable_flush(pg_id);
             
             return sc.make_reply();
         }
@@ -118,9 +117,8 @@ private:
             
             auto seg_ac = sp.get_segment_accessor(seg_id);
             
-            auto pg_ac = seg_ac.get_page_accessor(pg_id);
-            
-            pg_ac.enable_diff();
+            // Directly access the page entry to avoid deadlocking.
+            seg_ac.enable_diff(pg_id);
             
             return sc.make_reply();
         }

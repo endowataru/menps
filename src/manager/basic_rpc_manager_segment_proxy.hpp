@@ -23,6 +23,7 @@ class basic_rpc_manager_segment_proxy
     
     typedef typename interface_type::acquire_read_result    acquire_read_result_type;
     typedef typename interface_type::acquire_write_result   acquire_write_result_type;
+    typedef typename interface_type::release_write_result   release_write_result_type;
     
     typedef typename Policy::handler_id_type    handler_id_type;
     
@@ -132,7 +133,8 @@ public:
         return *ret_msg;
     }
     
-    virtual void release_write(const page_id_type pg_id) MGBASE_OVERRIDE
+    MGBASE_WARN_UNUSED_RESULT
+    virtual release_write_result_type release_write(const page_id_type pg_id) MGBASE_OVERRIDE
     {
         auto& self = this->derived();
         auto& sp = self.get_space_proxy();
@@ -144,10 +146,13 @@ public:
         
         const argument arg{ man_sp, seg_id, pg_id };
         
-        Policy::template call<release_write_handler>(
-            man_proc
-        ,   arg
-        );
+        const auto ret_msg =
+            Policy::template call<release_write_handler>(
+                man_proc
+            ,   arg
+            );
+        
+        return *ret_msg;
     }
     
     virtual void assign_reader(const page_id_type pg_id, const plptr_type& owner) MGBASE_OVERRIDE
@@ -314,8 +319,8 @@ private:
     {
         static const handler_id_type handler_id = Policy::release_write_handler_id;
         
-        typedef argument    request_type;
-        typedef void        reply_type;
+        typedef argument                    request_type;
+        typedef release_write_result_type   reply_type;
         
         template <typename ServerCtx>
         typename ServerCtx::return_type operator() (ServerCtx& sc)
@@ -334,9 +339,13 @@ private:
             // Look up the page.
             auto pg_ac = seg_ac.get_page_accessor(pg_id);
             
-            pg_ac.release_write(src_proc);
+            auto ret = pg_ac.release_write(src_proc);
             
-            return sc.make_reply();
+            auto rply = sc.make_reply();
+            
+            *rply = { ret.needs_flush };
+            
+            return rply;
         }
     };
     

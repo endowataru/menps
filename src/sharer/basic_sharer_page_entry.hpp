@@ -4,6 +4,7 @@
 #include <mgbase/assert.hpp>
 #include <mgbase/unique_ptr.hpp>
 #include <vector>
+#include <mgbase/atomic.hpp>
 
 namespace mgdsm {
 
@@ -105,27 +106,41 @@ public:
         return true; // FIXME: broken?
     }
     
-    void enable_diff() MGBASE_NOEXCEPT {
-        MGBASE_ASSERT(!this->is_diff_needed_);
-        this->is_diff_needed_ = true;
+    void enable_diff() MGBASE_NOEXCEPT
+    {
+        // Ignore redundant enable_diff()
+        // even if is_flush_needed_ is already true.
+        
+        this->is_diff_needed_.store(true, mgbase::memory_order_release);
     }
-    void enable_flush() MGBASE_NOEXCEPT {
-        //MGBASE_ASSERT(!this->is_flush_needed_); // FIXME
-        this->is_flush_needed_ = true;
+    void enable_flush() MGBASE_NOEXCEPT
+    {
+        // Ignore redundant enable_flush()
+        // even if is_flush_needed_ is already true.
+        
+        this->is_flush_needed_.store(true, mgbase::memory_order_release);
     }
     
     template <typename Data>
     void update_owner_for_read(const Data& data)
     {
-        this->owner_            = Traits::use_remote_ptr(data.owner_plptr);
-        this->is_flush_needed_  = data.needs_flush;
+        this->owner_ = Traits::use_remote_ptr(data.owner_plptr);
+        this->is_flush_needed_.store(data.needs_flush, mgbase::memory_order_release);
+        
+        // is_diff_needed_ is not updated
+        // because the reader doesn't need that flag.
     }
     template <typename Data>
     void update_owner_for_write(const Data& data)
     {
-        this->owner_            = Traits::use_remote_ptr(data.owner_plptr);
-        this->is_flush_needed_  = data.needs_flush;
-        this->is_diff_needed_   = data.needs_diff;
+        this->owner_ = Traits::use_remote_ptr(data.owner_plptr);
+        this->is_flush_needed_.store(data.needs_flush, mgbase::memory_order_release);
+        this->is_diff_needed_.store(data.needs_diff, mgbase::memory_order_release);
+    }
+    template <typename Data>
+    void update_for_release_write(const Data& data)
+    {
+        this->is_flush_needed_.store(data.needs_flush, mgbase::memory_order_release);
     }
     
     const prptr_type& get_owner_prptr() const MGBASE_NOEXCEPT {
@@ -146,8 +161,9 @@ private:
     block_count_type        num_read_blks_;
     block_count_type        num_write_blks_;
     
-    bool                    is_diff_needed_;
-    bool                    is_flush_needed_;
+    // These members are not locked.
+    mgbase::atomic<bool>                is_diff_needed_;
+    mgbase::atomic<bool>                is_flush_needed_;
 };
 
 } // namespace mgdsm

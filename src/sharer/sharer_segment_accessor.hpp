@@ -17,6 +17,7 @@ struct sharer_segment_accessor_policy
     
     typedef manager_segment_proxy::acquire_read_result  acquire_read_result_type;
     typedef manager_segment_proxy::acquire_write_result acquire_write_result_type;
+    typedef manager_segment_proxy::release_write_result release_write_result_type;
     
     typedef mgcom::rma::paired_local_ptr<void>  plptr_type;
 };
@@ -28,7 +29,10 @@ public:
     explicit accessor(sharer_segment& seg, const segment_id_t seg_id)
         : seg_(seg)
         , seg_id_(seg_id)
-        , seg_lk_(seg.get_lock())
+        // TODO: Segments are not locked.
+        //       Although this doesn't cause problems in the current implementation,
+        //       it disallows modifications on segments.
+        //, seg_lk_(seg.get_lock())
     { }
     
     inline sharer_page::accessor get_page_accessor(const page_id_t pg_id) MGBASE_NOEXCEPT;
@@ -57,7 +61,7 @@ private:
     
     sharer_segment&                     seg_;
     const segment_id_t                  seg_id_;
-    sharer_segment::unique_lock_type    seg_lk_;
+    //sharer_segment::unique_lock_type    seg_lk_;
 };
 
 sharer_segment::accessor sharer_space::get_segment_accessor(const segment_id_t seg_id)

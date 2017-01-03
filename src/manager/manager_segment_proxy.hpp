@@ -42,7 +42,13 @@ public:
     MGBASE_WARN_UNUSED_RESULT
     virtual acquire_write_result acquire_write(page_id_type) = 0;
     
-    virtual void release_write(page_id_type) = 0;
+    struct release_write_result
+    {
+        bool        needs_flush;
+    };
+    
+    MGBASE_WARN_UNUSED_RESULT
+    virtual release_write_result release_write(page_id_type) = 0;
     
     virtual void assign_reader(page_id_type, const plptr_type&) = 0;
     

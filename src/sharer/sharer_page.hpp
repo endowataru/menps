@@ -11,6 +11,10 @@ class sharer_page
 public:
     class accessor;
     
+    // Allowing accesses for coherence activations without locks.
+    using sharer_page_entry::enable_flush;
+    using sharer_page_entry::enable_diff;
+    
     // TODO: breaking the safety
     //  This "friend" is needed for set_block_size and set_num_blocks.
     //  Both members are called before accessor classes can be constructed.
