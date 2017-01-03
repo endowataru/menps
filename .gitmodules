@@ -4,9 +4,6 @@
 [submodule "mgcom"]
 	path = mgcom
 	url = ../mgcom.git
-[submodule "mgdsm"]
-	path = mgdsm
-	url = ../mgdsm.git
 [submodule "mgult"]
 	path = mgult
 	url = ../mgult.git
