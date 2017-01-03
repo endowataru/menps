@@ -556,7 +556,7 @@ public:
                 
                 // Call the hook to issue write/read barriers.
                 // The joined thread may have modified data.
-                self.on_join_acquire(child_th);
+                self.on_join_already(self.current_th_, child_th);
                 
                 // Unlock the child thread to destroy the thread descriptor.
                 lc.unlock();
@@ -849,7 +849,7 @@ public:
             
             // Call the hook to issue write/read barriers.
             // The joiner thread may have modified data.
-            self.on_join_acquire(d.next_th);
+            self.on_exit_resume(d.next_th);
             
             MGBASE_LOG_INFO(
                 "msg:Exiting this thread and switching to the joiner thread.\t"

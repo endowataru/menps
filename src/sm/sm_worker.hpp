@@ -90,7 +90,11 @@ public:
         // Do nothing.
         // This hook is for distributed work-stealing.
     }
-    void on_join_acquire(ult_ptr_ref& /*th*/) {
+    void on_join_already(ult_ptr_ref& /*current_th*/, ult_ptr_ref& /*joinee_th*/) {
+        // Do nothing.
+        // This hook is for distributed work-stealing.
+    }
+    void on_exit_resume(ult_ptr_ref& /*th*/) {
         // Do nothing.
         // This hook is for distributed work-stealing.
     }
