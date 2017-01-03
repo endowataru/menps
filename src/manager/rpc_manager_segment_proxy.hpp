@@ -24,6 +24,8 @@ struct rpc_manager_segment_proxy_policy
     
     typedef mgcom::rma::paired_local_ptr<void>  plptr_type;
     
+    typedef rpc_manager_page_invalidator    invalidator_type;
+    
     static const mgcom::rpc::handler_id_t acquire_read_handler_id = 401;
     static const mgcom::rpc::handler_id_t release_read_handler_id = 402;
     static const mgcom::rpc::handler_id_t acquire_write_handler_id = 403;

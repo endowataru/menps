@@ -37,30 +37,6 @@ public:
         
         return seg.get_block_size();
     }
-    
-    void enable_flush(const process_id_type proc, const page_id_type pg_id)
-    {
-        auto& self = this->derived();
-        
-        const auto seg_id = self.get_segment_id();
-        auto& sp = self.get_space();
-        
-        auto& actv = sp.get_activater();
-        
-        actv.enable_flush(proc, seg_id, pg_id);
-    }
-    
-    void enable_diff(const process_id_type proc, const page_id_type pg_id)
-    {
-        auto& self = this->derived();
-        
-        const auto seg_id = self.get_segment_id();
-        auto& sp = self.get_space();
-        
-        auto& actv = sp.get_activater();
-        
-        actv.enable_diff(proc, seg_id, pg_id);
-    }
 };
 
 } // namespace mgdsm

@@ -28,6 +28,8 @@ class basic_rpc_manager_segment_proxy
     
     typedef typename Policy::plptr_type             plptr_type;
     
+    typedef typename Policy::invalidator_type   invalidator_type;
+    
 public:
     // local operations
     
@@ -275,21 +277,34 @@ private:
             
             const auto src_proc = sc.src_proc();
             
-            // Look up the segment.
-            auto seg_ac = sp.get_segment_accessor(seg_id);
-            
-            // Look up the page.
-            auto pg_ac = seg_ac.get_page_accessor(pg_id);
-            
             auto rep = sc.make_reply();
             
-            // Call acquire_write() on the manager process.
-            auto ret = pg_ac.acquire_write(src_proc);
+            invalidator_type inv;
+            
+            {
+                // Look up the segment.
+                auto seg_ac = sp.get_segment_accessor(seg_id);
+                
+                // Look up the page.
+                auto pg_ac = seg_ac.get_page_accessor(pg_id);
+                
+                // Call acquire_write() on the manager process.
+                auto ret = pg_ac.acquire_write(src_proc);
+                
+                *rep = acquire_write_result_type{
+                    ret.owner_plptr
+                ,   ret.needs_flush
+                ,   ret.needs_diff
+                };
+                
+                inv = mgbase::move(ret.inv);
+                
+                // This is important to unlock these manager entries
+                // in order to avoid deadlocking.
+            }
             
             // Send invalidation messages to the sharer processes.
-            ret.inv.send_to_all(src_proc, seg_ac, pg_id);
-            
-            *rep = acquire_write_result_type{ ret.owner_plptr, ret.needs_flush, ret.needs_diff };
+            inv.send_to_all(sp.get_activater(), src_proc, seg_id, pg_id);
             
             return rep;
         }

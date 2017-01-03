@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "space_coherence_activater.hpp"
 #include "process_id_set.hpp"
 
 namespace mgdsm {
@@ -8,14 +9,20 @@ namespace mgdsm {
 class rpc_manager_page_invalidator
 {
 public:
+    rpc_manager_page_invalidator() = default;
+    
     template <typename Conf>
     rpc_manager_page_invalidator(const Conf& conf)
         : readers_(conf.readers)
         , writers_(conf.writers)
     { }
     
-    template <typename Seg>
-    void send_to_all(const mgcom::process_id_t src_proc, Seg& seg, const page_id_t pg_id) const
+    void send_to_all(
+        space_coherence_activater&  actv
+    ,   const mgcom::process_id_t   src_proc
+    ,   const segment_id_t          seg_id
+    ,   const page_id_t             pg_id
+    ) const
     {
         for (const auto proc : this->readers_)
         {
@@ -29,7 +36,7 @@ public:
             }
             else
             {
-                seg.enable_flush(proc, pg_id);
+                actv.enable_flush(proc, seg_id, pg_id);
             }
         }
         for (const auto proc : this->writers_)
@@ -37,7 +44,7 @@ public:
             // A new writer must be different from the existing writers.
             MGBASE_ASSERT(proc != src_proc);
             
-            seg.enable_diff(proc, pg_id);
+            actv.enable_diff(proc, seg_id, pg_id);
         }
     }
     
