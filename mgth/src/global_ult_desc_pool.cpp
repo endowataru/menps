@@ -5,6 +5,7 @@
 #include <mgbase/container/circular_buffer.hpp>
 
 #include <mgcom/rpc.hpp>
+#include <mgcom/rpc/call2.hpp>
 
 #include <mgbase/memory/next_in_bytes.hpp>
 
@@ -17,10 +18,19 @@ class global_ult_desc_pool::impl
 {
     static const mgbase::size_t num_descs = 1 << 8;
     
+    typedef mgbase::mutex                   mutex_type;
+    typedef mgbase::condition_variable      cv_type;
+    typedef mgbase::unique_lock<mutex_type> unique_lock_type;
+    
 public:
     explicit impl(const config& conf)
         : local_descs_{ mgcom::rma::allocate<global_ult_desc>(num_descs) }
     {
+        mgcom::rpc::register_handler2<deallocate_handler>(
+            mgcom::rpc::requester::get_instance()
+        ,   deallocate_handler{}
+        );
+        
         for (mgbase::size_t i = 0; i < num_descs; ++i)
         {
             auto& desc = local_descs_[i];
@@ -61,12 +71,7 @@ public:
     
     global_ult_ref allocate_ult()
     {
-        if (indexes_.empty()) {
-            throw global_ult_desc_pool_error{};
-        }
-        
-        const auto index = indexes_.front();
-        indexes_.pop_front();
+        const auto index = this->allocate_ult_index();
         
         auto& desc = local_descs_[index];
         
@@ -87,6 +92,22 @@ public:
         return get_ult_ref_from_id(id);
     }
     
+private:
+    mgbase::size_t allocate_ult_index()
+    {
+        unique_lock_type lk(this->mtx_);
+        
+        while (this->indexes_.empty()) {
+            cv_.wait(lk);
+        }
+        
+        const auto index = this->indexes_.front();
+        this->indexes_.pop_front();
+        
+        return index;
+    }
+    
+public:
     global_ult_ref get_ult_ref_from_id(const ult_id& id)
     {
         auto desc_rptr_first = bufs_.at_process(id.di.proc);
@@ -98,36 +119,57 @@ public:
     
     void deallocate_ult(global_ult_ref&& th)
     {
-        // FIXME
+        const auto th_id = th.get_id();
+        
+        const auto proc = th_id.di.proc;
+        
+        mgcom::rpc::call2<deallocate_handler>(
+            mgcom::rpc::requester::get_instance()
+        ,   proc
+        ,   th_id
+        );
     }
     
+private:
     struct deallocate_handler
     {
-        static const mgcom::rpc::handler_id_t handler_id = 1100; // TODO
+        static const mgcom::rpc::handler_id_t handler_id = 1010;
         
-        typedef ult_id  argument_type;
-        typedef void    return_type;
+        typedef ult_id      request_type;
+        typedef void        reply_type;
         
-        static return_type on_callback(const mgcom::rpc::handler_parameters& params, const argument_type& arg)
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
         {
-            instance_->deallocate_on_this_process(arg);
+            auto& rqst = sc.request();
+            
+            instance_->deallocate_on_this_process(rqst);
+            
+            return sc.make_reply();
         }
     };
     
-private:
     void deallocate_on_this_process(const ult_id& id)
     {
         auto& di = id.di;
         
         MGBASE_ASSERT(di.proc == mgcom::current_process_id());
         
+        
+        unique_lock_type lk(this->mtx_);
+        
+        // Return the ID.
         indexes_.push_back(di.local_id);
+        
+        cv_.notify_one();
     }
     
     mgcom::rma::local_ptr<global_ult_desc> local_descs_;
     
     mgcom::structure::alltoall_buffer<global_ult_desc> bufs_;
     
+    mutex_type mtx_;
+    cv_type cv_;
     mgbase::circular_buffer<mgbase::size_t> indexes_;
     
     static impl* instance_; // TODO
