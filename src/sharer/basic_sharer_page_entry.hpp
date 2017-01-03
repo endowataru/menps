@@ -11,8 +11,6 @@ namespace mgdsm {
 template <typename Traits>
 class basic_sharer_page_entry
 {
-    typedef typename Traits::derived_type       derived_type;
-    
     typedef typename Traits::block_type         block_type;
     typedef typename Traits::block_entry_type   block_entry_type;
     typedef typename Traits::block_id_type      block_id_type;
@@ -98,11 +96,11 @@ public:
     }
     
     bool is_diff_needed() const MGBASE_NOEXCEPT {
-        //return this->is_diff_needed_;
-        return true; // FIXME: broken?
+        return this->is_diff_needed_.load(mgbase::memory_order_acquire);
+        //return true; // FIXME: broken?
     }
     bool is_flush_needed() const MGBASE_NOEXCEPT {
-        //return this->is_flush_needed_;
+        //return this->is_flush_needed_.load(mgbase::memory_order_acquire);
         return true; // FIXME: broken?
     }
     
@@ -148,10 +146,6 @@ public:
     }
     
 private:
-    derived_type& derived() MGBASE_NOEXCEPT {
-        return static_cast<derived_type&>(*this);
-    }
-    
     mgbase::size_t                      blk_size_;
     mgbase::size_t                      num_blks_;
     mgbase::unique_ptr<block_type []>   blks_;
