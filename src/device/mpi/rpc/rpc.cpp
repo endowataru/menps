@@ -1,47 +1,27 @@
 
-#include "rpc_server.impl.hpp"
-#include "rpc_client.impl.hpp"
+#include "rpc_server.hpp"
+#include "rpc_client.hpp"
+#include <mgdev/mpi/communicator.hpp>
 
 namespace mgcom {
 namespace mpi {
-namespace rpc {
 
-namespace /*unnamed*/ {
-
-class mpi_requester
-    : public requester
+class rpc_requester
+    : public rpc_server
+    , public rpc_client
 {
 public:
-    explicit mpi_requester(mpi_interface& mi, endpoint& ep)
-        : server_(mi)
-        , client_(mi, ep, server_.get_comm()) { }
-    
-    virtual ~mpi_requester() MGBASE_EMPTY_DEFINITION
-    
-    virtual void register_handler(const untyped::register_handler_params& params) MGBASE_OVERRIDE
-    {
-        server_.register_handler(params);
-    }
-    
-    MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_call_async(const untyped::call_params& params) MGBASE_OVERRIDE
-    {
-        return client_.try_call_async(params);
-    }
-
-private:
-    rpc_server server_;
-    rpc_client client_;
+    explicit rpc_requester(mpi_interface& mi, endpoint& ep)
+        : rpc_base(mi)
+        , rpc_server(mi)
+        , rpc_client(mi, ep)
+    { }
 };
 
-} // unnamed namespace
-
-mgbase::unique_ptr<requester> make_requester(mpi_interface& mi, endpoint& ep)
+mgbase::unique_ptr<rpc::requester> make_rpc_requester(mpi_interface& mi, endpoint& ep)
 {
-    // TODO: replace with make_unique
-    return mgbase::unique_ptr<requester>(new mpi_requester(mi, ep));
+    return mgbase::make_unique<rpc_requester>(mi, ep);
 }
 
-} // namespace rpc
 } // namespace mpi
 } // namespace mgcom

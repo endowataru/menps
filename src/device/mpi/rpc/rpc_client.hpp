@@ -1,35 +1,35 @@
 
 #pragma once
 
-#include "rpc.hpp"
-#include <mgbase/thread.hpp>
-#include "device/mpi/mpi_interface.hpp"
+#include "rpc_base.hpp"
 
 namespace mgcom {
 namespace mpi {
-namespace rpc {
-
-namespace /*unnamed*/ {
 
 class rpc_client
+    : public virtual rpc_base
 {
+    typedef rpc_message_buffer  buffer_type;
+    
 public:
-    rpc_client(mpi_interface& mi, endpoint& ep, const MPI_Comm comm)
+    rpc_client(mpi_interface& mi, endpoint& ep)
         : mi_(mi)
         , ep_(ep)
-        , comm_(comm) { }
+    { }
     
-    bool try_call_async(const untyped::call_params& params)
+    virtual bool try_call_async(const rpc::untyped::call_params& params) MGBASE_OVERRIDE
     {
         MGBASE_ASSERT(valid_process_id(ep_, params.proc));
         MGBASE_ASSERT(params.handler_id < MGCOM_RPC_MAX_NUM_HANDLERS);
         MGBASE_ASSERT(params.arg_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(params.return_size == 0 || params.return_ptr != MGBASE_NULLPTR);
         
-        const int send_tag = get_send_tag();
-        const int recv_tag = get_recv_tag();
+        const auto send_tag = get_send_tag();
+        const auto recv_tag = get_recv_tag();
         
-        message_buffer msg_buf;
+        const auto comm = this->get_comm();
+        
+        buffer_type msg_buf;
         
         msg_buf.id      = params.handler_id;
         msg_buf.size    = params.arg_size;
@@ -44,11 +44,11 @@ public:
         //mpi::irsend( // TODO: Introduce buffer management
         mi_.send_async({
             {
-                &msg_buf                                        // buf
-            ,   static_cast<int>(sizeof(message_buffer))        // size_in_bytes
-            ,   static_cast<int>(params.proc)                   // dest_proc
-            ,   send_tag                                        // tag
-            ,   comm_                                           // comm
+                &msg_buf                                    // buf
+            ,   static_cast<int>(sizeof(buffer_type))       // size_in_bytes
+            ,   static_cast<int>(params.proc)               // dest_proc
+            ,   send_tag                                    // tag
+            ,   comm                                        // comm
             }
         ,   mgbase::make_callback_notify(&send_finished)    // on_complete
         });
@@ -59,7 +59,7 @@ public:
             ,   static_cast<int>(params.return_size)    // size_in_bytes
             ,   static_cast<int>(params.proc)           // dest_proc
             ,   recv_tag                                // tag
-            ,   comm_                                   // comm
+            ,   comm                                    // comm
             ,   MPI_STATUS_IGNORE                       // status_result
             }
         ,   params.on_complete                      // on_complete
@@ -81,12 +81,8 @@ private:
     
     mpi_interface& mi_;
     endpoint& ep_;
-    MPI_Comm comm_;
 };
 
-} // unnamed namespace
-
-} // namespace rpc
 } // namespace mpi
 } // namespace mgcom
 

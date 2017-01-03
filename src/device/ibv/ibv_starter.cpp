@@ -24,7 +24,7 @@ public:
         
         commander_ = mgcom::mpi1::make_commander();
         
-        rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface(), *endpoint_);
+        rpc_requester_ = mpi::make_rpc_requester(commander_->get_mpi_interface(), *endpoint_);
         
         collective_requester_ = mpi::collective::make_requester(commander_->get_mpi_interface());
         

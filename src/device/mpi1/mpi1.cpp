@@ -29,7 +29,7 @@ public:
         
         commander_ = mgcom::mpi1::make_commander();
         
-        rpc_requester_ = mpi::rpc::make_requester(commander_->get_mpi_interface(), *endpoint_);
+        rpc_requester_ = mpi::make_rpc_requester(commander_->get_mpi_interface(), *endpoint_);
         
         rma_requester_ = mpi::make_rma_requester(*rpc_requester_, commander_->get_mpi_interface());
         

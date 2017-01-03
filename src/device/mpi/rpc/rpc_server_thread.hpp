@@ -11,21 +11,21 @@ namespace mpi {
 class rpc_server_thread
 {
     typedef ult::mutex                          mutex_type;
-    typedef rpc::message_buffer                 buffer_type;
+    typedef rpc_message_buffer                  buffer_type;
     typedef mgbase::unique_ptr<buffer_type>     buffer_ptr_type;
     
 public:
-    struct conf
+    struct config
     {
-        mpi_interface*              mi;
-        rpc::rpc_invoker*           invoker;
+        mpi_interface*      mi;
+        rpc::rpc_invoker*   invoker;
         
-        MPI_Comm                    comm;
-        int                         tag;
+        MPI_Comm            comm;
+        int                 tag;
     };
     
-    explicit rpc_server_thread(const conf& c)
-        : conf_(c)
+    explicit rpc_server_thread(const config& conf)
+        : conf_(conf)
         , finished_{false}
         , mtx_{}
         , cv_{}
@@ -104,7 +104,7 @@ private:
         int  cli_rank;
     };
     
-    recv_result recv_request(rpc::message_buffer& buf)
+    recv_result recv_request(buffer_type& buf)
     {
         ult::unique_lock<ult::mutex> lc(this->mtx_);
         
@@ -115,7 +115,7 @@ private:
         this->conf_.mi->recv_async({
             {
                 &buf
-            ,   sizeof(rpc::message_buffer)
+            ,   sizeof(buffer_type)
             ,   MPI_ANY_SOURCE
             ,   this->conf_.tag
             ,   this->conf_.comm
@@ -212,7 +212,7 @@ private:
         return this->finished_.load(mgbase::memory_order_relaxed);
     }
     
-    const conf conf_;
+    const config conf_;
     
     mgbase::atomic<bool>    finished_;
     

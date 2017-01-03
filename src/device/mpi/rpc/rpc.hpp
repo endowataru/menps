@@ -7,23 +7,17 @@
 
 namespace mgcom {
 namespace mpi {
-namespace rpc {
 
-using namespace mgcom::rpc;
+mgbase::unique_ptr<rpc::requester> make_rpc_requester(mpi_interface&, endpoint&);
 
-namespace untyped = mgcom::rpc::untyped;
-
-mgbase::unique_ptr<requester> make_requester(mpi_interface&, endpoint&);
-
-struct message_buffer {
-    handler_id_t    id;
-    index_t         size;
-    int             reply_tag;
-    int             reply_size;
-    uint8_t         data[MGCOM_RPC_MAX_DATA_SIZE]; // TODO
+struct rpc_message_buffer {
+    rpc::handler_id_t   id;
+    index_t             size;
+    int                 reply_tag;
+    int                 reply_size;
+    uint8_t             data[MGCOM_RPC_MAX_DATA_SIZE]; // TODO
 };
 
-} // namespace rpc
 } // namespace mpi
 } // namespace mgcom
 
