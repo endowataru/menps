@@ -30,6 +30,11 @@ protected:
         return comm_.get();
     }
     
+    int get_server_tag() const MGBASE_NOEXCEPT
+    {
+        return 100; // TODO: adjustable
+    }
+    
 private:
     mgdev::mpi::communicator comm_;
 };

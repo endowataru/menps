@@ -15,15 +15,14 @@ class rpc_server
     typedef mgbase::unique_ptr<rpc_server_thread>   server_thread_ptr;
     
 public:
-    // TODO: adjustable (?)
-    static const int request_tag = 100;
-    
     explicit rpc_server(mpi_interface& mi)
         : invoker_{}
     {
         ths_ = mgbase::make_unique<server_thread_ptr []>(num_threads);
         
         const auto comm = this->get_comm();
+        
+        const auto tag = this->get_server_tag();
         
         for (index_t i = 0; i < num_threads; ++i) {
             ths_[i] =
@@ -32,13 +31,11 @@ public:
                         &mi
                     ,   &invoker_
                     ,   comm
-                    ,   request_tag
+                    ,   tag
                     }
                 );
         }
     }
-    
-    ~rpc_server() = default;
     
     virtual void register_handler(const rpc::untyped::register_handler_params& params) MGBASE_OVERRIDE
     {

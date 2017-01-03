@@ -2,6 +2,8 @@
 #pragma once
 
 #include "rpc_base.hpp"
+#include <mgcom/ult.hpp>
+#include <mgbase/container/circular_buffer.hpp>
 
 namespace mgcom {
 namespace mpi {
@@ -9,13 +11,22 @@ namespace mpi {
 class rpc_client
     : public virtual rpc_base
 {
+    typedef ult::mutex          mutex_type;
     typedef rpc_message_buffer  buffer_type;
+    
+    static const int tag_start = 1000;
+    static const mgbase::size_t num_tags = 1000;
     
 public:
     rpc_client(mpi_interface& mi, endpoint& ep)
         : mi_(mi)
         , ep_(ep)
-    { }
+        , tags_(mgbase::make_unique<tag_info []>(num_tags))
+    {
+        for (mgbase::size_t i = 0; i < num_tags; ++i) {
+            free_ids_.push_back(i);
+        }
+    }
     
     virtual bool try_call_async(const rpc::untyped::call_params& params) MGBASE_OVERRIDE
     {
@@ -24,8 +35,13 @@ public:
         MGBASE_ASSERT(params.arg_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(params.return_size == 0 || params.return_ptr != MGBASE_NULLPTR);
         
-        const auto send_tag = get_send_tag();
-        const auto recv_tag = get_recv_tag();
+        const auto id = this->allocate_id();
+        
+        // Set the callback.
+        this->tags_[id].on_complete = params.on_complete;
+        
+        const auto send_tag = this->get_server_tag();
+        const auto recv_tag = tag_start + static_cast<int>(id);
         
         const auto comm = this->get_comm();
         
@@ -62,7 +78,7 @@ public:
             ,   comm                                    // comm
             ,   MPI_STATUS_IGNORE                       // status_result
             }
-        ,   params.on_complete                      // on_complete
+        ,   recv_reply{ *this, id }                     // on_complete
         });
         
         send_finished.wait();
@@ -71,7 +87,50 @@ public:
     }
     
 private:
-    int get_send_tag() {
+    mgbase::size_t allocate_id()
+    {
+        while (true)
+        {
+            {
+                ult::lock_guard<mutex_type> lk(this->mtx_);
+                
+                if (! this->free_ids_.empty())
+                {
+                    // Dequeue from the free list.
+                    const auto id = this->free_ids_.front();
+                    this->free_ids_.pop_front();
+                    
+                    return id;
+                }
+            }
+            
+            ult::yield();
+        }
+    }
+    
+    void return_id(const mgbase::size_t id)
+    {
+        ult::lock_guard<mutex_type> lk(this->mtx_);
+        
+        MGBASE_ASSERT(!this->free_ids_.full());
+        
+        this->free_ids_.push_back(id);
+    }
+    
+    struct recv_reply
+    {
+        rpc_client&     self;
+        mgbase::size_t  id;
+        
+        void operator() () const
+        {
+            self.return_id(id);
+            
+            self.tags_[id].on_complete();
+        }
+    };
+    
+    int get_send_tag() {    
         return 100; // FIXME
     }
     
@@ -79,8 +138,17 @@ private:
         return 200; // FIXME
     }
     
-    mpi_interface& mi_;
-    endpoint& ep_;
+    struct tag_info
+    {
+        mgbase::callback<void ()> on_complete;
+    };
+    
+    mpi_interface&  mi_;
+    endpoint&       ep_;
+    
+    mutex_type mtx_;
+    mgbase::static_circular_buffer<mgbase::size_t, num_tags> free_ids_;
+    mgbase::unique_ptr<tag_info []> tags_;
 };
 
 } // namespace mpi
