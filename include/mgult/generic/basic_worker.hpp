@@ -96,13 +96,14 @@ public:
                 if (th.is_valid())
                 {
                     MGBASE_LOG_INFO(
-                        "msg:Stealing succeeded."
+                        "msg:Stole thread in worker loop.\t"
+                        "{}"
                     ,   derived().show_ult_ref(th)
                     );
                 }
                 else
                 {
-                    MGBASE_LOG_DEBUG("msg:Stealing failed.");
+                    MGBASE_LOG_DEBUG("msg:Failed to steal in worker loop.");
                     continue;
                 }
             }
@@ -138,7 +139,7 @@ public:
             MGBASE_ASSERT(!this->root_th_.is_valid());
             
             MGBASE_LOG_INFO(
-                "msg:The thread finished. Came back to the main loop."
+                "msg:The thread finished. Came back to worker loop."
             );
             
             auto root_th = this->remove_current_ult();
