@@ -130,14 +130,16 @@ private:
                 MGBASE_LOG_DEBUG(
                     "msg:Stealing failed (no queued thread).\t"
                     "theif_proc:{}\t"
+                    "id:0x{:x}"
                 ,   params.source
+                ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
                 );
             }
             else {
                 MGBASE_LOG_INFO(
                     "msg:Stealing succeeded.\t"
                     "theif_proc:{}\t"
-                    "id:{:x}"
+                    "id:0x{:x}"
                 ,   params.source
                 ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
                 );
