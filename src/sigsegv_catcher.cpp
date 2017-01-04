@@ -72,7 +72,12 @@ public:
         );
         
         if (!ret) {
+            // Send an another signal.
+            raise(SIGUSR2);
+            
+            #if 0
             self_->restore_old();
+            #endif
         }
     }
     
