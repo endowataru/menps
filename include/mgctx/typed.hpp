@@ -8,83 +8,26 @@ namespace mgctx {
 
 // make_context
 
-namespace detail {
-
-template <typename T, void (*Func)(transfer<T>)>
-inline void on_start(const untyped::transfer_t tr)
-{
-    Func({ static_cast<T>(tr.p0) });
-}
-
-} // namespace detail
-
-template <typename T, void (*Func)(transfer<T>)>
-inline context<T> make_context(
-    void* const             sp
-,   const mgbase::size_t    size
-) {
-    const auto ctx =
-        untyped::make_context<&detail::on_start<T, Func>>(
-            sp
-        ,   size
-        );
-    
-    return { ctx.p };
-}
-
-template <typename T, void (*Func)(transfer<T>)>
-inline context<T> make_context(
+template <typename T, void (*Func)(transfer<T*>)>
+inline context<T*> make_context(
     void* const             sp
 ,   const mgbase::size_t    size
 ,   mgbase::nontype<
-        void (*)(transfer<T>)
+        void (*)(transfer<T*>)
     ,   Func
     >                       /*func*/
 ) {
     return make_context<T, Func>(sp, size);
 }
 
-
 // save_context
 
-namespace detail {
-
-template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
-inline untyped::transfer_t on_saved(
-    const untyped::context_t    ctx
-,   void* const                 arg
-)
-{
-    const auto r =
-        Func({ ctx.p }, static_cast<Arg*>(arg));
-    
-    return { r.p0 };
-}
-
-} // namespace detail
-
-template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
-inline transfer<T> save_context(
-    void* const             sp
-,   const mgbase::size_t    size
-,   Arg* const              arg
-)
-{
-    const auto r =
-        untyped::save_context<&detail::on_saved<T, Arg, Func>>(
-            sp
-        ,   size
-        ,   arg
-        );
-    
-    return { static_cast<T>(r.p0) };
-}
-template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
-inline transfer<T> save_context(
+template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
+inline transfer<T*> save_context(
     void* const             sp
 ,   const mgbase::size_t    size
 ,   mgbase::nontype<
-        transfer<T> (*)(context<T>, Arg*)
+        transfer<T*> (*)(context<T*>, Arg*)
     ,   Func
     >                       /*func*/
 ,   Arg* const              arg
@@ -93,41 +36,13 @@ inline transfer<T> save_context(
     return save_context<T, Arg, Func>(sp, size, arg);
 }
 
-
 // swap_context
 
-namespace detail {
-
-template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
-inline untyped::transfer_t on_swap(const untyped::context_t ctx, void* const arg)
-{
-    const auto r = Func({ ctx.p }, static_cast<Arg*>(arg));
-    
-    return { r.p0 };
-}
-
-} // namespace detail
-
-template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
-inline transfer<T> swap_context(
-    const context<T>    ctx
-,   Arg* const          arg
-)
-{
-    const auto tr =
-        untyped::swap_context<&detail::on_swap<T, Arg, Func>>(
-            { ctx.p }
-        ,   arg
-        );
-    
-    return { static_cast<T>(tr.p0) };
-}
-
-template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
-inline transfer<T> swap_context(
-    const context<T>        ctx
+template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
+inline transfer<T*> swap_context(
+    const context<T*>       ctx
 ,   mgbase::nontype<
-        transfer<T> (*)(context<T>, Arg*)
+        transfer<T*> (*)(context<T*>, Arg*)
     ,   Func
     >                       /*func*/
 ,   Arg* const              arg
@@ -138,34 +53,12 @@ inline transfer<T> swap_context(
 
 // restore_context
 
-namespace detail {
-
-template <typename T, typename Arg, transfer<T> (*Func)(Arg*)>
-inline untyped::transfer_t on_restored(void* const arg)
-{
-    const auto r = Func(static_cast<Arg*>(arg));
-    
-    return { r.p0 };
-}
-
-} // namespace detail
-
-template <typename T, typename Arg, transfer<T> (*Func)(Arg*)>
+template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
 MGBASE_NORETURN
-inline void restore_context(const context<T> ctx, Arg* const arg)
-{
-    untyped::restore_context<&detail::on_restored<T, Arg, Func>>(
-        { ctx.p }
-    ,   arg
-    );
-}
-
-template <typename T, typename Arg, transfer<T> (*Func)(Arg*)>
-MGBASE_NORETURN
-inline transfer<T> restore_context(
-    const context<T>        ctx
+inline transfer<T*> restore_context(
+    const context<T*>        ctx
 ,   mgbase::nontype<
-        transfer<T> (*)(Arg*)
+        transfer<T*> (*)(Arg*)
     ,   Func
     >                       /*func*/
 ,   Arg* const              arg

@@ -25,39 +25,32 @@ struct transfer<T*>
     T*  p0;
 };
 
-namespace untyped {
 
-typedef context<void*>  context_t;
-
-typedef transfer<void*> transfer_t;
-
-template <void (*Func)(transfer_t)>
-inline context_t make_context(
+template <typename T, void (*Func)(transfer<T*>)>
+inline context<T*> make_context(
     void*           sp
 ,   mgbase::size_t  size
 );
 
-template <transfer_t (*Func)(context_t, void*)>
-inline transfer_t save_context(
+template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
+inline transfer<T*> save_context(
     void*           sp
 ,   mgbase::size_t  size
-,   void*           arg
+,   Arg*            arg
 );
 
-template <transfer_t (*Func)(context_t, void*)>
-inline transfer_t swap_context(
-    context_t   ctx
-,   void*       arg
+template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
+inline transfer<T*> swap_context(
+    context<T*>     ctx
+,   Arg*            arg
 );
 
-template <transfer_t (*Func)(void*)>
+template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
 MGBASE_NORETURN
 inline void restore_context(
-    context_t   ctx
-,   void*       arg
+    context<T*>     ctx
+,   Arg*            arg
 );
-
-} // namespace untyped
 
 } // namespace mgctx
 

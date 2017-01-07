@@ -7,14 +7,12 @@
 // Implementation on System V x86-64 ABI
 
 namespace mgctx {
-namespace untyped {
 
-template <void (*Func)(transfer_t)>
-inline context_t make_context(
+template <typename T, void (*Func)(transfer<T*>)>
+inline context<T*> make_context(
     void* const             sp
-,   const mgbase::size_t    //size
-)
-{
+,   const mgbase::size_t    /*size*/
+) {
     typedef mgbase::int64_t i64;
     const auto mask = ~i64{0xF};
     
@@ -88,13 +86,12 @@ inline context_t make_context(
         //  RAX      : Returned value.
         //  RSP, RBP : Saved & restored.
 
-template <transfer_t (*Func)(context_t, void*)>
-inline transfer_t save_context(
-    void* const     sp
-,   mgbase::size_t  //size
-,   void* const     arg
-)
-{
+template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
+inline transfer<T*> save_context(
+    void* const             sp
+,   const mgbase::size_t    /*size*/
+,   Arg* const              arg
+) {
     typedef mgbase::int64_t i64;
     const auto mask = ~i64{0xF};
     
@@ -103,7 +100,7 @@ inline transfer_t save_context(
         reinterpret_cast<i64>(sp) & mask
     );
     
-    void* result;
+    transfer<T*> result;
     
     // Note: 128-byte red zone is also (implicitly) saved.
     
@@ -143,7 +140,7 @@ inline transfer_t save_context(
         // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
         "+D" (new_sp) ,
         // RAX | Output: User-defined value from Func or the previous context.
-        "=a" (result)
+        "=a" (result.p0)
         
     :   // Input constraints
         // RSI | Input: User-defined value
@@ -154,16 +151,15 @@ inline transfer_t save_context(
         CLOBBER_REGISTERS
     );
     
-    return { result };
+    return result;
 }
 
-template <transfer_t (*Func)(context_t, void*)>
-inline transfer_t swap_context(
-    context_t   ctx
-,   void*       arg
-)
-{
-    void* result;
+template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
+inline transfer<T*> swap_context(
+    context<T*>     ctx
+,   Arg* const      arg
+) {
+    transfer<T*> result;
     
     // Note: 128-byte red zone is also (implicitly) saved.
     
@@ -193,9 +189,9 @@ inline transfer_t swap_context(
         
     :   // Output constraints
         // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
-        "+D" (ctx) ,
+        "+D" (ctx.p),
         // RAX | Output: User-defined value from Func or the previous context.
-        "=a" (result)
+        "=a" (result.p0)
         
     :   // Input constraints
         // RSI | Input: User-defined value
@@ -206,13 +202,15 @@ inline transfer_t swap_context(
         CLOBBER_REGISTERS
     );
     
-    return { result };
+    return result;
 }
 
-template <transfer_t (*Func)(void*)>
+template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
 MGBASE_NORETURN
-inline void restore_context(const context_t ctx, void* const arg)
-{
+inline void restore_context(
+    const context<T*>   ctx
+,   Arg* const          arg
+) {
     asm volatile (
         // Restore RSP.
         "movq   %[ctx], %%rsp\n\t"
@@ -231,8 +229,9 @@ inline void restore_context(const context_t ctx, void* const arg)
     :   // Input constraints
         
         // Allow any register or memory operand.
-        [ctx] "g" (ctx),
-        "D" (arg) /* RDI */ ,
+        [ctx] "g" (ctx.p),
+        // RDI | Input: User-defined value
+        "D" (arg),
         
         [func] "i" (Func)
         
@@ -245,6 +244,5 @@ inline void restore_context(const context_t ctx, void* const arg)
 #undef SWAP_CTX_RDI
 #undef CLOBBER_REGISTERS
 
-} // namespace untyped
 } // namespace mgctx
 
