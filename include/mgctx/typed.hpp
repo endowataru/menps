@@ -81,11 +81,40 @@ inline transfer<T> save_context(
 
 // restore_context
 
-template <typename T>
-MGBASE_NORETURN
-inline void restore_context(const context<T> ctx, const transfer<T> tr)
+namespace detail {
+
+template <typename T, typename Arg, transfer<T> (*Func)(Arg*)>
+inline untyped::transfer_t on_restored(void* const arg)
 {
-    untyped::restore_context({ ctx.p }, { tr.p0 });
+    const auto r = Func(static_cast<Arg*>(arg));
+    
+    return { r.p0 };
+}
+
+} // namespace detail
+
+template <typename T, typename Arg, transfer<T> (*Func)(Arg*)>
+MGBASE_NORETURN
+inline void restore_context(const context<T> ctx, Arg* const arg)
+{
+    untyped::restore_context<&detail::on_restored<T, Arg, Func>>(
+        { ctx.p }
+    ,   arg
+    );
+}
+
+template <typename T, typename Arg, transfer<T> (*Func)(Arg*)>
+MGBASE_NORETURN
+inline transfer<T> restore_context(
+    const context<T>        ctx
+,   mgbase::nontype<
+        transfer<T> (*)(Arg*)
+    ,   Func
+    >                       /*func*/
+,   Arg* const              arg
+)
+{
+    restore_context<T, Arg, Func>(ctx, arg);
 }
 
 } // namespace mgctx

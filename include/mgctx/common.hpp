@@ -44,8 +44,19 @@ inline transfer_t save_context(
 ,   void*           arg
 );
 
+template <transfer_t (*Func)(context_t, void*)>
 MGBASE_NORETURN
-inline void restore_context(context_t ctx, transfer_t tr);
+inline transfer_t swap_context(
+    context_t   ctx
+,   void*       arg
+);
+
+template <transfer_t (*Func)(void*)>
+MGBASE_NORETURN
+inline void restore_context(
+    context_t   ctx
+,   void*       arg
+);
 
 } // namespace untyped
 

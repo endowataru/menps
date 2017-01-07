@@ -9,59 +9,53 @@
 namespace mgctx {
 namespace untyped {
 
-namespace detail {
-
-template <void (*Func)(transfer_t)>
-MGBASE_NORETURN
-inline void on_start(void* const sp, void* data)
-{
-    asm volatile (
-        // A new context is restored.
-        
-        // Set the stack pointer and the stack base pointer.
-        "movq   %%rdi, %%rsp\n\t"
-        "movq   %%rdi, %%rbp\n\t"
-        
-    :   // Output constraints
-        "+S" (data) /* RSI */
-            // Because RBP is modified,
-            // it must be reloaded from the register.
-        
-    :   // Input constraints
-        "D"(sp) /* RDI */
-        
-    :   // No clobbers
-    );
-    
-    Func({ data });
-    
-    abort();
-}
-
-} // namespace detail
-
 template <void (*Func)(transfer_t)>
 inline context_t make_context(
     void* const             sp
 ,   const mgbase::size_t    size
 )
 {
-    typedef mgbase::int64_t    i64;
-    
-    const i64 mask = ~0xF;
+    typedef mgbase::int64_t i64;
+    const auto mask = ~i64{0xF};
     
     const auto ctx =
         reinterpret_cast<i64*>(
             (reinterpret_cast<i64>(sp) & mask) - 16
         );
     
-    const auto new_ip =
-        reinterpret_cast<i64>(
-            &detail::on_start<Func>
-        );
+    // Set the restored RBP to zero.
+    // This is just for debugging.
+    *ctx = 0;
     
-    // Assign the label.
-    *ctx = new_ip;
+    i64 tmp;
+    
+    asm volatile (
+        "leaq   1f(%%rip), %[tmp]"
+        "movq   %[tmp], %[label]"
+        
+        "jmp    2f\n\t"
+        
+    "1:\n\t"
+        // Pass the result as a parameter.
+        "movq   %%rax, %%rdi\n\t"
+        
+        // Call the user-defined function.
+        "call   %P[func]\n\t"
+        
+        "call   _abort"
+        
+    "2:\n\t"
+        
+    :   // Output constraints
+        [label] "+m" (*(ctx+1)),
+        
+        [tmp] "=r" (tmp)
+        
+    :   // Input constraints
+        [func] "i" (Func)
+        
+    :   "cc"
+    );
     
     return { reinterpret_cast<context_frame*>(ctx) };
 }
@@ -73,13 +67,12 @@ inline transfer_t save_context(
 ,   void* const     arg
 )
 {
-    typedef mgbase::uintptr_t   uip;
-    
-    const auto mask = ~uip{0xF};
+    typedef mgbase::int64_t i64;
+    const auto mask = ~i64{0xF};
     
     // Align the stack pointer.
     auto new_sp = reinterpret_cast<void*>(
-        reinterpret_cast<uip>(sp) & mask
+        reinterpret_cast<i64>(sp) & mask
     );
     
     void* result;
@@ -90,97 +83,100 @@ inline transfer_t save_context(
         // RDI = new_sp;
         // RSI = arg;
         
-        // Save RBP at the location which is not in the red zone.
-        "movq   %%rbp, -0x88(%%rsp)\n\t"
+        // Save RSP to a certain callee-saved register (R15).
+        "movq   %%rsp, %%r15\n\t"
         
-        // Save RSP to a callee-saved register (RBP).
-        "movq   %%rsp, %%rbp\n\t"
+        // Save the continuation's RIP using RAX.
+        "leaq   1f(%%rip), %%rax\n\t"
+        "movq   %%rax, -0x88(%%rsp)\n\t"
         
-        // Move to a new call stack.
+        // Load the new stack pointer.
         "movq   %%rdi, %%rsp\n\t"
         
-        // Calculate the address of the saved context.
-        "leaq   -0x90(%%rbp), %%rdi\n\t"
+        // Create the address of the saved context.
+        "leaq   -0x90(%%r15), %%rdi\n\t"
         
-        // Save the old context's RIP using RAX.
-        //  There is no special meaning to use RAX.
-        //  Both callee- or caller-saved registers are OK.
-        "leaq   1f(%%rip), %%rax\n\t"
-        "movq   %%rax, (%%rdi)\n\t"
+        // Save RBP to the saved context.
+        "movq   %%rbp, (%%rdi)\n\t"
         
-        // Place the return address.
-        "leaq   2f(%%rip), %%rdx\n\t"
-        "movq   %%rdx, (%%rsp)\n\t"
+        // RBP is still preserved.
         
         // Call the user-defined function here.
         //  (RAX, RDX) = func(RDI, RSI);
-        "jmp    %P[func]\n\t"
+        "callq  %P[func]\n\t"
         // "P" removes dollar ($) for an immediate.
         //  - https://gcc.gnu.org/ml/gcc-help/2010-08/msg00102.html
         //  - http://stackoverflow.com/questions/3467180/direct-call-using-gccs-inline-assembly
         
+        // The function ordinarily finished.
+        
+        // Restore RSP from R15.
+        // Subtract 0x80 to counteract the next instruction.
+        "leaq   -0x80(%%r15), %%rsp\n\t"
+        
     "1:\n\t"
-        // Saved context is restored.
-        
-        // Restore RBP from RDI.
-        "leaq   0x90(%%rdi), %%rbp\n\t"
-        
-        // Get an user-defined result from RSI.
-        "movq   %%rsi, %%rax\n\t"
-        
-    "2:\n\t"
         // Continuation starts here.
         
-        // Restore RSP.
-        "movq   %%rbp, %%rsp\n\t"
+        // RSP is (new_sp - 0x80).
+        // RBP is already restored.
         
-        // Restore RBP.
-        "movq   -0x88(%%rbp), %%rbp\n\t"
+        // Fix RSP.
+        "addq   $0x80, %%rsp"
+        
+        // RAX is the result from the function.
         
     :   // Output constraints
-        // Input: Restored RSP. / Output: Overwritten (but discarded).
-        "+D" (new_sp) /* RDI */ ,
-        // Output: User-defined value from Func or the previous context.
-        "=a" (result) /* RAX */
+        // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
+        "+D" (new_sp) ,
+        // RAX | Output: User-defined value from Func or the previous context.
+        "=a" (result)
         
     :   // Input constraints
-        "S" (arg) /* RSI */ ,
+        // RSI | Input: User-defined value
+        "S" (arg),
         [func] "i" (Func)
         
     :   "cc", "memory",
         // Caller-saved registers
         "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11",
-        // Callee-saved registers except for EBP
+        // Callee-saved registers except for RBP
         "%rbx", "%r12", "%r13", "%r14", "%15"
         
         // Not listed in clobbers:
         //  RSI, RDI : Inputs.
-        //  RAX : Returned value.
-        //  RSP & RBP: Saved & restored.
+        //  RAX      : Returned value.
+        //  RSP, RBP : Saved & restored.
     );
     
     return { result };
 }
 
+template <transfer_t (*Func)(void*)>
 MGBASE_NORETURN
-inline void restore_context(const context_t ctx, const transfer_t data)
+inline void restore_context(const context_t ctx, void* const arg)
 {
     asm volatile (
-        // RDI and RSI are passed to the resumed context.
+        // Restore RSP.
+        "movq   %[ctx], %%rsp\n\t"
         
-        // Both arguments should be passed as an ordinary function parameters
-        // because the handler of make_context has function prologue.
+        // Restore RBP (May be pushed by the callee again.)
+        "popq   %%rbp\n\t"
         
-        "movq   (%%rdi), %%rax\n\t"
+        // Call the user-defined function.
+        // The return address is the continuation.
+        "jmp    %P[func]\n\t"
         
-        // Jump to a continuation or a new context.
-        "jmp    *%%rax\n\t"
-    
+        // RAX is passed to the continuation.
+        
     :   // No output constraints
         
     :   // Input constraints
-        "D" (ctx) /* RDI */,
-        "S" (data.p0) /* RSI */
+        
+        // Allow any register or memory operand.
+        [ctx] "g" (ctx),
+        "D" (arg) /* RDI */ ,
+        
+        [func] "i" (Func)
         
     :   // No clobbers
     );
