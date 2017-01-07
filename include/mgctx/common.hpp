@@ -45,7 +45,6 @@ inline transfer_t save_context(
 );
 
 template <transfer_t (*Func)(context_t, void*)>
-MGBASE_NORETURN
 inline transfer_t swap_context(
     context_t   ctx
 ,   void*       arg

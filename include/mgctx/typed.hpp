@@ -11,9 +11,9 @@ namespace mgctx {
 namespace detail {
 
 template <typename T, void (*Func)(transfer<T>)>
-inline void on_start(void* const data)
+inline void on_start(const untyped::transfer_t tr)
 {
-    Func({ static_cast<T*>(data) });
+    Func({ static_cast<T>(tr.p0) });
 }
 
 } // namespace detail
@@ -23,10 +23,25 @@ inline context<T> make_context(
     void* const             sp
 ,   const mgbase::size_t    size
 ) {
-    return untyped::make_context<&detail::on_start<T, Func>>(
-        sp
-    ,   size
-    );
+    const auto ctx =
+        untyped::make_context<&detail::on_start<T, Func>>(
+            sp
+        ,   size
+        );
+    
+    return { ctx.p };
+}
+
+template <typename T, void (*Func)(transfer<T>)>
+inline context<T> make_context(
+    void* const             sp
+,   const mgbase::size_t    size
+,   mgbase::nontype<
+        void (*)(transfer<T>)
+    ,   Func
+    >                       /*func*/
+) {
+    return make_context<T, Func>(sp, size);
 }
 
 
@@ -78,6 +93,48 @@ inline transfer<T> save_context(
     return save_context<T, Arg, Func>(sp, size, arg);
 }
 
+
+// swap_context
+
+namespace detail {
+
+template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
+inline untyped::transfer_t on_swap(const untyped::context_t ctx, void* const arg)
+{
+    const auto r = Func({ ctx.p }, static_cast<Arg*>(arg));
+    
+    return { r.p0 };
+}
+
+} // namespace detail
+
+template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
+inline transfer<T> swap_context(
+    const context<T>    ctx
+,   Arg* const          arg
+)
+{
+    const auto tr =
+        untyped::swap_context<&detail::on_swap<T, Arg, Func>>(
+            { ctx.p }
+        ,   arg
+        );
+    
+    return { static_cast<T>(tr.p0) };
+}
+
+template <typename T, typename Arg, transfer<T> (*Func)(context<T>, Arg*)>
+inline transfer<T> swap_context(
+    const context<T>        ctx
+,   mgbase::nontype<
+        transfer<T> (*)(context<T>, Arg*)
+    ,   Func
+    >                       /*func*/
+,   Arg* const              arg
+)
+{
+    return swap_context<T, Arg, Func>(ctx, arg);
+}
 
 // restore_context
 

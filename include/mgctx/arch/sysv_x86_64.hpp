@@ -12,7 +12,7 @@ namespace untyped {
 template <void (*Func)(transfer_t)>
 inline context_t make_context(
     void* const             sp
-,   const mgbase::size_t    size
+,   const mgbase::size_t    //size
 )
 {
     typedef mgbase::int64_t i64;
@@ -30,10 +30,10 @@ inline context_t make_context(
     i64 tmp;
     
     asm volatile (
-        "leaq   1f(%%rip), %[tmp]"
-        "movq   %[tmp], %[label]"
+        "leaq   1f(%%rip), %[tmp]\n\t"
+        "movq   %[tmp], %[label]\n\t"
         
-        "jmp    2f\n\t"
+        "jmp    2f\n\t\n\t"
         
     "1:\n\t"
         // Pass the result as a parameter.
@@ -42,7 +42,7 @@ inline context_t make_context(
         // Call the user-defined function.
         "call   %P[func]\n\t"
         
-        "call   _abort"
+        "call   abort\n\t"
         
     "2:\n\t"
         
@@ -59,6 +59,34 @@ inline context_t make_context(
     
     return { reinterpret_cast<context_frame*>(ctx) };
 }
+
+#define SWAP_CTX_RDI(saved_rsp) \
+        /* Save RSP to a certain callee-saved register (R15). */ \
+        "movq   %%rsp, %%" saved_rsp "\n\t" \
+        \
+        /* Save the continuation's RIP using RAX. */ \
+        "leaq   1f(%%rip), %%rax\n\t" \
+        "movq   %%rax, -0x88(%%rsp)\n\t" \
+        \
+        /* Load the new stack pointer. */ \
+        "movq   %%rdi, %%rsp\n\t" \
+        \
+        /* Create the address of the saved context. */ \
+        "leaq   -0x90(%%" saved_rsp "), %%rdi \n\t" \
+        \
+        /* Save RBP to the saved context. */ \
+        "movq   %%rbp, (%%rdi)\n\t"
+
+#define CLOBBER_REGISTERS \
+        /* Caller-saved registers */ \
+        "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11", \
+        /* Callee-saved registers except for RBP */ \
+        "%rbx", "%r12", "%r13", "%r14", "%15"
+        
+        // Not listed in clobbers:
+        //  RSI, RDI : Inputs.
+        //  RAX      : Returned value.
+        //  RSP, RBP : Saved & restored.
 
 template <transfer_t (*Func)(context_t, void*)>
 inline transfer_t save_context(
@@ -83,21 +111,7 @@ inline transfer_t save_context(
         // RDI = new_sp;
         // RSI = arg;
         
-        // Save RSP to a certain callee-saved register (R15).
-        "movq   %%rsp, %%r15\n\t"
-        
-        // Save the continuation's RIP using RAX.
-        "leaq   1f(%%rip), %%rax\n\t"
-        "movq   %%rax, -0x88(%%rsp)\n\t"
-        
-        // Load the new stack pointer.
-        "movq   %%rdi, %%rsp\n\t"
-        
-        // Create the address of the saved context.
-        "leaq   -0x90(%%r15), %%rdi\n\t"
-        
-        // Save RBP to the saved context.
-        "movq   %%rbp, (%%rdi)\n\t"
+        SWAP_CTX_RDI("r15")
         
         // RBP is still preserved.
         
@@ -123,7 +137,7 @@ inline transfer_t save_context(
         // Fix RSP.
         "addq   $0x80, %%rsp"
         
-        // RAX is the result from the function.
+        // result = RAX;
         
     :   // Output constraints
         // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
@@ -137,15 +151,59 @@ inline transfer_t save_context(
         [func] "i" (Func)
         
     :   "cc", "memory",
-        // Caller-saved registers
-        "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11",
-        // Callee-saved registers except for RBP
-        "%rbx", "%r12", "%r13", "%r14", "%15"
+        CLOBBER_REGISTERS
+    );
+    
+    return { result };
+}
+
+template <transfer_t (*Func)(context_t, void*)>
+inline transfer_t swap_context(
+    context_t   ctx
+,   void*       arg
+)
+{
+    void* result;
+    
+    // Note: 128-byte red zone is also (implicitly) saved.
+    
+    asm volatile (
+        // RDI = ctx;
+        // RSI = arg;
         
-        // Not listed in clobbers:
-        //  RSI, RDI : Inputs.
-        //  RAX      : Returned value.
-        //  RSP, RBP : Saved & restored.
+        SWAP_CTX_RDI("r15")
+        
+        // Restore RBP (May be pushed by the callee again.)
+        "popq   %%rbp\n\t"
+        
+        // Call the user-defined function here.
+        //  (RAX, RDX) = func(RDI, RSI);
+        "jmp    %P[func]\n\t"
+        
+    "1:\n\t"
+        // Continuation starts here.
+        
+        // RSP is (new_sp - 0x80).
+        // RBP is already restored.
+        
+        // Fix RSP.
+        "addq   $0x80, %%rsp\n\t"
+        
+        // result = RAX;
+        
+    :   // Output constraints
+        // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
+        "+D" (ctx) ,
+        // RAX | Output: User-defined value from Func or the previous context.
+        "=a" (result)
+        
+    :   // Input constraints
+        // RSI | Input: User-defined value
+        "S" (arg),
+        [func] "i" (Func)
+        
+    :   "cc", "memory",
+        CLOBBER_REGISTERS
     );
     
     return { result };
@@ -183,6 +241,9 @@ inline void restore_context(const context_t ctx, void* const arg)
     
     MGBASE_UNREACHABLE();
 }
+
+#undef SWAP_CTX_RDI
+#undef CLOBBER_REGISTERS
 
 } // namespace untyped
 } // namespace mgctx
