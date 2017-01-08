@@ -25,12 +25,15 @@ inline context<T*> make_context(
     
     const auto ctx =
         reinterpret_cast<i64*>(
-            (reinterpret_cast<i64>(sp) & mask) - 16
+            (reinterpret_cast<i64>(sp) & mask) - 32
         );
     
     // Set the restored RBP to zero.
     // This is just for debugging.
     *ctx = 0;
+    
+    // Save the function pointer.
+    *(ctx+2) = reinterpret_cast<i64>(Func);
     
     i64 tmp;
     
@@ -46,8 +49,11 @@ inline context<T*> make_context(
         // Pass the result as a parameter.
         "movq   %%rax, %%rdi\n\t"
         
+        // Restore the function pointer.
+        "movq   (%%rsp), %%rax\n\t"
+        
         // Call the user-defined function.
-        "call   %P[func]\n\t"
+        "call   *%%rax\n\t"
         
         #ifdef MGBASE_OS_MAC_OS_X
         "call   _abort\n\t"
@@ -62,8 +68,7 @@ inline context<T*> make_context(
         
         [tmp] "=r" (tmp)
         
-    :   // Input constraints
-        [func] "i" (Func)
+    :   // No input constraints
         
     :   "cc"
     );
@@ -92,12 +97,13 @@ inline context<T*> make_context(
         /* Caller-saved registers */ \
         "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11", \
         /* Callee-saved registers except for RBP */ \
-        "%rbx", "%r12", "%r13", "%r14", "%15"
+        "%r12", "%r13", "%r14", "%r15"
         
         // Not listed in clobbers:
         //  RSI, RDI : Inputs.
         //  RAX      : Returned value.
         //  RSP, RBP : Saved & restored.
+        //  RBX      : Function pointer.
 
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> save_context(
@@ -127,7 +133,7 @@ inline transfer<T*> save_context(
         
         // Call the user-defined function here.
         //  (RAX, RDX) = func(RDI, RSI);
-        "callq  %P[func]\n\t"
+        "call   *%[func]\n\t"
         // "P" removes dollar ($) for an immediate.
         //  - https://gcc.gnu.org/ml/gcc-help/2010-08/msg00102.html
         //  - http://stackoverflow.com/questions/3467180/direct-call-using-gccs-inline-assembly
@@ -159,7 +165,7 @@ inline transfer<T*> save_context(
         // RSI | Input: User-defined value
         "S" (arg),
         
-        [func] "i" (Func)
+        [func] "b" (Func)
         
     :   "cc", "memory",
         CLOBBER_REGISTERS
@@ -188,7 +194,7 @@ inline transfer<T*> swap_context(
         
         // Call the user-defined function here.
         //  (RAX, RDX) = func(RDI, RSI);
-        "jmp    %P[func]\n\t"
+        "jmp    *%[func]\n\t"
         
     "1:\n\t"
         // Continuation starts here.
@@ -211,7 +217,7 @@ inline transfer<T*> swap_context(
         // RSI | Input: User-defined value
         "S" (arg),
         
-        [func] "i" (Func)
+        [func] "b" (Func)
         
     :   "cc", "memory",
         CLOBBER_REGISTERS
@@ -235,7 +241,7 @@ inline void restore_context(
         
         // Call the user-defined function.
         // The return address is the continuation.
-        "jmp    %P[func]\n\t"
+        "jmp    *%[func]\n\t"
         
         // RAX is passed to the continuation.
         
@@ -248,7 +254,7 @@ inline void restore_context(
         // RDI | Input: User-defined value
         "D" (arg),
         
-        [func] "i" (Func)
+        [func] "b" (Func)
         
     :   // No clobbers
     );
