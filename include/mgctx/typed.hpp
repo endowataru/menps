@@ -55,7 +55,7 @@ inline transfer<T*> swap_context(
 
 template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
 MGBASE_NORETURN
-inline transfer<T*> restore_context(
+inline void restore_context(
     const context<T*>        ctx
 ,   mgbase::nontype<
         transfer<T*> (*)(Arg*)

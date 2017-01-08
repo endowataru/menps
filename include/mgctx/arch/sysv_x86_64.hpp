@@ -3,10 +3,17 @@
 
 #include <mgctx/common.hpp>
 #include <mgbase/logger.hpp>
+#include <cstdlib>
 
 // Implementation on System V x86-64 ABI
 
 namespace mgctx {
+
+struct context_frame
+{
+    void*   rbp;
+    void*   rip;
+};
 
 template <typename T, void (*Func)(transfer<T*>)>
 inline context<T*> make_context(
@@ -31,6 +38,8 @@ inline context<T*> make_context(
         "leaq   1f(%%rip), %[tmp]\n\t"
         "movq   %[tmp], %[label]\n\t"
         
+        // Jump to the exit of this assembly.
+        // TODO: Reduce this jump.
         "jmp    2f\n\t\n\t"
         
     "1:\n\t"
@@ -40,7 +49,11 @@ inline context<T*> make_context(
         // Call the user-defined function.
         "call   %P[func]\n\t"
         
-        "call   abort\n\t"
+        #ifdef MGBASE_OS_MAC_OS_X
+        "call   _abort\n\t"
+        #else
+        "call   abort@PLT\n\t"
+        #endif
         
     "2:\n\t"
         
@@ -145,6 +158,7 @@ inline transfer<T*> save_context(
     :   // Input constraints
         // RSI | Input: User-defined value
         "S" (arg),
+        
         [func] "i" (Func)
         
     :   "cc", "memory",
@@ -196,6 +210,7 @@ inline transfer<T*> swap_context(
     :   // Input constraints
         // RSI | Input: User-defined value
         "S" (arg),
+        
         [func] "i" (Func)
         
     :   "cc", "memory",

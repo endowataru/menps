@@ -25,7 +25,6 @@ struct transfer<T*>
     T*  p0;
 };
 
-
 template <typename T, void (*Func)(transfer<T*>)>
 inline context<T*> make_context(
     void*           sp
