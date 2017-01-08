@@ -68,7 +68,7 @@ public:
         );
         
         if (!ret) {
-            // Send an another signal.
+            // Send another signal.
             raise(SIGUSR2);
             
             #if 0
