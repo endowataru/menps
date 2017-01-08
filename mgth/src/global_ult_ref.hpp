@@ -217,7 +217,7 @@ public:
         ,   is_detached()
         ,   reinterpret_cast<mgbase::uintptr_t>(get_stack_ptr())
         ,   get_stack_size()
-        ,   reinterpret_cast<mgbase::uintptr_t>(get_context().fctx)
+        ,   reinterpret_cast<mgbase::uintptr_t>(get_context().p)
         ,   get_owner_proc()
         );
         return w.str();

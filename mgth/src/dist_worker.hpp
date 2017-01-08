@@ -9,6 +9,7 @@
 #include <mgult/generic/thread_local_worker_base.hpp>
 #include <mgult/generic/fcontext_worker_base.hpp>
 #include <mgult/generic/ult_id_worker_traits_base.hpp>
+#include <mgctx/context_policy.hpp>
 
 #include "alternate_signal_stack.hpp"
 
@@ -17,13 +18,15 @@ namespace mgth {
 class dist_worker;
 
 struct dist_worker_traits
-    : mgult::fcontext_worker_traits_base
-    , mgult::ult_id_worker_traits_base
+    : mgult::ult_id_worker_traits_base
 {
     typedef dist_worker                 derived_type;
     typedef global_ult_ref              ult_ref_type;
     typedef dist_worker_deque           worker_deque_type;
     typedef dist_worker_deque_conf      worker_deque_conf_type;
+    
+    typedef mgctx::context<derived_type*>   context_type;
+    typedef mgctx::transfer<derived_type*>  transfer_type;
 };
 
 class dist_scheduler;
@@ -31,7 +34,7 @@ class dist_scheduler;
 class dist_worker
     : public mgult::basic_worker<dist_worker_traits>
     , public mgult::thread_local_worker_base<dist_worker_traits>
-    , public mgult::fcontext_worker_base
+    , public mgctx::context_policy
 {
     typedef mgult::basic_worker<dist_worker_traits>         base;
     
