@@ -8,14 +8,15 @@ namespace mgbase {
 template <typename T, T Value>
 struct nontype
 {
-    static const T value = Value;
+    // TODO: function pointers cannot be "static const" members
+    //static const T value = Value;
     
     T operator() () const volatile {
-        return value;
+        return Value;
     }
 };
 
-#define MGBASE_NONTYPE(v)   (::mgbase::nontype<decltype(v), (v)>{})
+#define MGBASE_NONTYPE(v)   (::mgbase::nontype<decltype(v), v>{})
 
 } // namespace mgbase
 
