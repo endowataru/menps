@@ -5,6 +5,7 @@
 #include <mgbase/logger.hpp>
 #include <mgbase/memory/align.hpp>
 #include <mgbase/memory/distance_in_bytes.hpp>
+#include <mgbase/nontype.hpp>
 
 namespace mgult {
 
@@ -20,31 +21,19 @@ private:
     
     typedef void (*fork_func_type)(void*);
     
-    template <typename B, typename A>
-    struct context
-        : Traits::template context<B, A> { };
-    
-    template <typename B, typename A>
-    struct context_result
-        : Traits::template context_result<B, A> { };
-    
-    template <typename B, typename A>
-    struct context_argument
-        : Traits::template context_argument<B, A> { };
-    
-    typedef typename context<derived_type, derived_type>::type  ult_context_type;
+    typedef typename Traits::context_type   context_type;
+    typedef typename Traits::transfer_type  transfer_type;
     
     struct loop_root_data {
         derived_type&   self;
         ult_ref_type    th;
     };
     
-    static typename context_result<derived_type, derived_type>::type
-    loop_root_handler(typename context_argument<derived_type, loop_root_data>::type arg)
-    MGBASE_NOEXCEPT
+    static transfer_type loop_root_handler(
+        const context_type      ctx
+    ,   loop_root_data* const   d
+    ) MGBASE_NOEXCEPT
     {
-        const auto d = arg.data;
-        
         auto& self = d->self;
         self.check_current_worker();
         
@@ -53,16 +42,14 @@ private:
         
         // Set the root context.
         self.root_th_.set_context(
-            self.template cast_context<derived_type, derived_type>(
-                arg.fctx /*>---resuming context---<*/
-            )
+            ctx /*>---resuming context---<*/
         );
         
         // Set the executed thread as the current one.
         self.set_current_ult(mgbase::move(d->th));
         
         // Switch to the resumed context of the following thread.
-        return { {}, &self };
+        return { &self };
     }
     
 protected:
@@ -129,11 +116,16 @@ public:
             self.on_before_switch(this->root_th_, d.th);
             
             // Switch to the context of the next thread.
-            auto r = self.ontop_context(ctx, &d, &loop_root_handler);
+            const auto tr =
+                self.swap_context(
+                    ctx
+                ,   MGBASE_NONTYPE(&basic_worker::loop_root_handler)
+                ,   &d
+                );
             
             /*>---resuming context---<*/
             
-            MGBASE_ASSERT(&self == r.data);
+            MGBASE_ASSERT(&self == tr.p0);
             self.check_current_worker();
             self.check_current_ult_id(root_id);
             MGBASE_ASSERT(!this->root_th_.is_valid());
@@ -282,28 +274,24 @@ private:
         };
     }
     
-private:
     MGBASE_NORETURN
-    static void fork_child_first_handler
-    (const typename context_argument<derived_type, fork_child_first_data>::type arg)
-    MGBASE_NOEXCEPT
+    static transfer_type fork_child_first_handler(
+        const context_type              ctx
+    ,   fork_child_first_data* const    d
+    ) MGBASE_NOEXCEPT
     {
-        auto& d = *arg.data;
-        
-        auto& self = d.self;
+        auto& self = d->self;
         self.check_current_worker();
         
         // Call the hook.
-        self.on_after_switch(d.parent_th, d.child_th);
+        self.on_after_switch(d->parent_th, d->child_th);
         
         {
-            auto& parent_th = d.parent_th;
+            auto& parent_th = d->parent_th;
             
             // Set the context to the parent thread.
             parent_th.set_context(
-                self.template cast_context<derived_type, derived_type>(
-                    arg.fctx /*>---resuming context---<*/
-                )
+                ctx /*>---resuming context---<*/
             );
             
             // Push the parent thread to the top.
@@ -319,17 +307,17 @@ private:
         MGBASE_LOG_INFO(
             "msg:Forked a new thread in a child-first manner.\t"
             "{}"
-        ,   self.show_ult_ref(d.child_th)
+        ,   self.show_ult_ref(d->child_th)
         );
         
         // Copy the ID to the current stack.
-        const auto child_id = d.child_th.get_id();
+        const auto child_id = d->child_th.get_id();
         
         // Change this thread to the child thread.
-        self.set_current_ult(mgbase::move(d.child_th));
+        self.set_current_ult(mgbase::move(d->child_th));
         
         // Execute the user-defined function.
-        d.func(d.ptr);
+        d->func(d->ptr);
         
         // Renew a worker to the child continuation's one.
         auto& self_2 = derived_type::renew_worker(child_id);
@@ -366,19 +354,20 @@ public:
         
         // Switch to the child's stack
         // and save the context for the parent thread.
-        auto r = self.template jump_new_context<derived_type>(
-            info.stack_ptr
-        ,   info.stack_size
-        ,   &fork_child_first_handler
-        ,   &d
-        );
+        const auto tr =
+            self.save_context(
+                info.stack_ptr
+            ,   info.stack_size
+            ,   MGBASE_NONTYPE(&basic_worker::fork_child_first_handler)
+            ,   &d
+            );
         
         /*>---resuming context---<*/
         
         // this pointer is no longer available.
         
         // Renew the worker.
-        auto& self_2 = *r.data;
+        auto& self_2 = *tr.p0;
         self_2.check_current_worker();
         
         MGBASE_ASSERT(self_2.current_th_.is_valid());
@@ -392,12 +381,11 @@ public:
     
 private:
     MGBASE_NORETURN
-    static void fork_parent_first_handler
-    (const typename context_argument<derived_type, derived_type>::type arg)
+    static void fork_parent_first_handler(const transfer_type tr)
     MGBASE_NOEXCEPT
     {
         // Get the worker reference passed by the previous thread.
-        auto& self = *arg.data;
+        auto& self = *tr.p0;
         
         const auto orig_stack_ptr = self.current_th_.get_stack_ptr();
         const auto orig_stack_size = self.current_th_.get_stack_size();
@@ -453,7 +441,7 @@ public:
             self.make_context(
                 info.stack_ptr // The call stack starts from here.
             ,   info.stack_size
-            ,   &fork_parent_first_handler
+            ,   MGBASE_NONTYPE(&basic_worker::fork_parent_first_handler)
             );
         
         // Set the context.
@@ -482,12 +470,11 @@ private:
         ult_ref_type    next_th;
     };
     
-    static typename context_result<derived_type, derived_type>::type
-    join_handler(const typename context_argument<derived_type, join_data>::type arg)
-    MGBASE_NOEXCEPT
+    static transfer_type join_handler(
+        const context_type  ctx
+    ,   join_data* const    d
+    ) MGBASE_NOEXCEPT
     {
-        const auto d = arg.data;
-        
         auto& self = d->self;
         
         // Move the arguments to the child's stack.
@@ -502,9 +489,7 @@ private:
             
             // Assign the previous context.
             d->this_th.set_context(
-                self.template cast_context<derived_type, derived_type>(
-                    arg.fctx /*>---resuming context---<*/
-                )
+                ctx /*>---resuming context---<*/
             );
             
             // This worker already has a lock of the child thread.
@@ -525,7 +510,7 @@ private:
         self.set_current_ult( mgbase::move(next_th) );
         
         // Switch to the resumed context of the following thread.
-        return { { }, &self };
+        return { &self };
     }
     
 public:
@@ -595,13 +580,18 @@ public:
         self.on_before_switch(d.this_th, d.next_th);
         
         // Switch to the context of the next thread.
-        auto r = self.ontop_context(ctx, &d, &join_handler);
+        const auto r =
+            self.swap_context(
+                ctx
+            ,   MGBASE_NONTYPE(&basic_worker::join_handler)
+            ,   &d
+            );
         
         /*>---resuming context---<*/
         
         // this pointer is no longer available.
         
-        auto& self_2 = *r.data;
+        auto& self_2 = *r.p0;
         self_2.check_current_worker();
         
         MGBASE_LOG_INFO(
@@ -637,12 +627,11 @@ private:
         ult_ref_type    next_th;
     };
     
-    static typename context_result<derived_type, derived_type>::type
-    yield_handler(const typename context_argument<derived_type, yield_data>::type arg)
-    MGBASE_NOEXCEPT
+    static transfer_type yield_handler(
+        const context_type  ctx
+    ,   yield_data* const   d
+    ) MGBASE_NOEXCEPT
     {
-        const auto d = arg.data;
-        
         auto& self = d->self;
         
         // Call the hook.
@@ -652,11 +641,8 @@ private:
             auto this_th = self.remove_current_ult();
             
             this_th.set_context(
-                self.template cast_context<derived_type, derived_type>(
-                    arg.fctx /*>---resuming context---<*/
-                )
+                ctx /*>---resuming context---<*/
             );
-            
             
             // Push the parent thread to the bottom.
             // This behavior is still controversial.
@@ -670,7 +656,7 @@ private:
         
         // Switch to the resumed context of the following thread.
         // No parameters are passed to the resumed context.
-        return { {}, &self };
+        return { &self };
     }
     
 public:
@@ -691,7 +677,11 @@ public:
         self.on_before_switch(self.current_th_, d.next_th);
         
         // Switch to the context of the next thread.
-        self.ontop_context(ctx, &d, &yield_handler);
+        self.swap_context(
+            ctx
+        ,   MGBASE_NONTYPE(&basic_worker::yield_handler)
+        ,   &d
+        );
         
         /*>---resuming context---<*/
     }
@@ -725,17 +715,14 @@ public:
 private:
     struct exit_data
     {
-        derived_type&       self;
-        ult_ref_type        this_th;
-        ult_ref_type        next_th;
-        ult_context_type    next_ctx;
+        derived_type&   self;
+        ult_ref_type    this_th;
+        ult_ref_type    next_th;
+        context_type    next_ctx;
     };
     
-    static typename context_result<derived_type, derived_type>::type
-    exit_handler(const typename context_argument<derived_type, exit_data>::type arg)
-    MGBASE_NOEXCEPT
+    static transfer_type exit_handler(exit_data* const d) MGBASE_NOEXCEPT
     {
-        const auto d = arg.data;
         auto& self = d->self;
         
         // Call the hook.
@@ -779,7 +766,7 @@ private:
         // These destructors do nothing in an ordinary implementation.
         d->this_th.~ult_ref_type();
         d->next_th.~ult_ref_type();
-        d->next_ctx.~ult_context_type();
+        d->next_ctx.~context_type();
         
         #if 0
         MGBASE_LOG_INFO(
@@ -804,7 +791,7 @@ private:
         #endif
         
         // Switch to the resumed context of the following thread.
-        return { { }, &self };
+        return { &self };
     }
     
 public:
@@ -876,7 +863,11 @@ public:
         self.on_before_switch(d.this_th, d.next_th);
         
         // Switch to the context of the following thread.
-        self.ontop_context(d.next_ctx, &d, &exit_handler);
+        self.restore_context(
+            d.next_ctx
+        ,   MGBASE_NONTYPE(&basic_worker::exit_handler)
+        ,   &d
+        );
         
         /*>--- this context is abandoned ---<*/
         

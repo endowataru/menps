@@ -9,6 +9,7 @@ target_include_directories(mgult-header
 target_link_libraries(mgult-header
     INTERFACE mgbase-header
     mgcom-header
+    mgctx
 )
 
 add_library(mgult
@@ -31,7 +32,7 @@ add_library(mgult
 target_include_directories(mgult
     PUBLIC ./include
 )
-target_link_libraries(mgult mgult-header mgbase-options mgbase)
+target_link_libraries(mgult mgult-header mgbase-options mgbase mgctx)
 
 add_executable(mgult-unittest
     unittest/unittest.cpp

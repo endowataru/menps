@@ -10,14 +10,15 @@
 #include "ult_ptr_ref.hpp"
 #include "ptr_worker_deque.hpp"
 #include "ult_desc_pool.hpp"
+#include <mgctx/context_policy.hpp>
 
 namespace mgult {
 
 typedef mgbase::size_t      worker_rank_t;
 
 struct sm_worker_traits
-    : fcontext_worker_traits_base
-    , ult_id_worker_traits_base
+    : //fcontext_worker_traits_base
+    /*,*/ ult_id_worker_traits_base
 {
     typedef sm_worker       derived_type;
     typedef ult_ptr_ref     ult_ref_type;
@@ -25,6 +26,9 @@ struct sm_worker_traits
     typedef ptr_worker_deque<default_worker_deque>  worker_deque_type;
     
     typedef ptr_worker_deque_conf worker_deque_conf_type;
+    
+    typedef mgctx::context<sm_worker*>  context_type;
+    typedef mgctx::transfer<sm_worker*> transfer_type;
 };
 
 class sm_scheduler;
@@ -32,7 +36,8 @@ class sm_scheduler;
 class sm_worker
     : public basic_worker<sm_worker_traits>
     , public thread_local_worker_base<sm_worker_traits>
-    , public fcontext_worker_base
+    //, public fcontext_worker_base
+    , public mgctx::context_policy
 {
     typedef basic_worker<sm_worker_traits>  base;
     
