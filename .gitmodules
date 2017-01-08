@@ -13,3 +13,6 @@
 [submodule "mgdev"]
 	path = mgdev
 	url = git@gitlab.eidos.ic.i.u-tokyo.ac.jp:wendo/mgdev.git
+[submodule "mgctx"]
+	path = mgctx
+	url = git@gitlab.eidos.ic.i.u-tokyo.ac.jp:wendo/mgctx.git
