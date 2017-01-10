@@ -104,6 +104,10 @@ struct put_async_closure
         ,   params.on_complete
         });
         
+        // TODO: To complete RMA, we need to flush this.
+        //       This operation is very expensive.
+        MPI_Win_flush_all(pb.win);
+        
         return true;
     }
 };
@@ -519,7 +523,7 @@ void mpi3_delegator::compare_and_swap_async(const compare_and_swap_async_params 
     );
     
     MGBASE_LOG_DEBUG(
-        "msg:Delegated MPI_Compare_and_swap.{}\t"
+        "msg:Delegated MPI_Compare_and_swap.\t"
         "desired:{}\texpected:{}\tresult_ptr:{:x}\t"
         "datatype:{}\tdest_rank:{}\tdest_index:{:x}"
     ,   pb.desired
