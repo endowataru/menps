@@ -116,7 +116,7 @@ inline transfer<T*> save_context(
     
     // Align the stack pointer.
     auto new_sp = reinterpret_cast<void*>(
-        reinterpret_cast<i64>(sp) & mask
+        (reinterpret_cast<i64>(sp) & mask) - 0x10
     );
     
     transfer<T*> result;
