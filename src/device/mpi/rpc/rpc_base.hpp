@@ -6,6 +6,7 @@
 #include "device/mpi/mpi_interface.hpp"
 #include <mgdev/mpi/communicator.hpp>
 #include "rpc.hpp"
+#include "common/rpc/rpc_invoker.impl.hpp"
 
 namespace mgcom {
 namespace mpi {
@@ -35,7 +36,14 @@ protected:
         return 100; // TODO: adjustable
     }
     
+    rpc::rpc_invoker& get_invoker() MGBASE_NOEXCEPT
+    {
+        return invoker_;
+    }
+    
 private:
+    rpc::rpc_invoker    invoker_;
+    
     mgdev::mpi::communicator comm_;
 };
 

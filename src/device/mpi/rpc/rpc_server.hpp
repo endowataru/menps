@@ -17,7 +17,6 @@ class rpc_server
 public:
     explicit rpc_server(mpi_interface& mi)
         : rpc_base(mi)
-        , invoker_{}
     {
         ths_ = mgbase::make_unique<server_thread_ptr []>(num_threads);
         
@@ -30,7 +29,7 @@ public:
                 mgbase::make_unique<rpc_server_thread>(
                     rpc_server_thread::config{
                         &mi
-                    ,   &invoker_
+                    ,   &this->get_invoker()
                     ,   comm
                     ,   tag
                     }
@@ -40,11 +39,10 @@ public:
     
     virtual void register_handler(const rpc::untyped::register_handler_params& params) MGBASE_OVERRIDE
     {
-        invoker_.register_handler(params);
+        this->get_invoker().register_handler(params);
     }
     
 private:
-    rpc::rpc_invoker    invoker_;
     
     mgbase::unique_ptr<server_thread_ptr []> ths_;
 };

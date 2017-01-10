@@ -36,6 +36,26 @@ public:
         MGBASE_ASSERT(params.arg_ptr != MGBASE_NULLPTR);
         MGBASE_ASSERT(params.return_size == 0 || params.return_ptr != MGBASE_NULLPTR);
         
+        // Avoid loopback and deadlocking.
+        if (params.proc == mgcom::current_process_id())
+        {
+            const auto reply_size = 
+                this->get_invoker().call(
+                    params.proc
+                ,   params.handler_id
+                ,   params.arg_ptr
+                ,   params.arg_size
+                ,   params.return_ptr
+                ,   params.return_size
+                );
+            
+            MGBASE_ASSERT(reply_size <= params.return_size);
+            
+            params.on_complete();
+            
+            return true;
+        }
+        
         const auto id = this->allocate_id();
         
         // Set the callback.

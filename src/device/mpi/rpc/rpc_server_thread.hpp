@@ -66,11 +66,11 @@ private:
             
             if (ret.valid)
             {
-                ult::thread th(
-                    call_functor{ *this, ret.cli_rank, mgbase::move(buf_ptr) }
-                );
+                //ult::thread th(
+                    call_functor{ *this, ret.cli_rank, mgbase::move(buf_ptr) }();
+                //);
                 
-                th.detach();
+                //th.detach();
             }
         }
     }
