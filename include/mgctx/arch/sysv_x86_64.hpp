@@ -13,6 +13,7 @@ struct context_frame
 {
     void*   rbp;
     void*   rip;
+    void*   rsp;
 };
 
 template <typename T, void (*Func)(transfer<T*>)>
@@ -80,18 +81,27 @@ inline context<T*> make_context(
         /* Save RSP to a certain callee-saved register (R15). */ \
         "movq   %%rsp, %%" saved_rsp "\n\t" \
         \
+        /* Align RSP to follow 16-byte stack alignment. */ \
+        /* The compiler doesn't guarantee the alignment of RSP at a certain code point. */ \
+        /* restore_context's handler is executed on the top of this stack. */ \
+        "andq   $-0x10, %%rsp\n\t" \
+        \
+        /* Save the red zone. */ \
+        /* Preserve the alignment by subtracting additional 8-bytes. */ \
+        "subq   $0x88, %%rsp\n\t" \
+        \
+        /* Save the original RSP. */ \
+        "pushq  %%" saved_rsp "\n\t" \
+        \
         /* Save the continuation's RIP using RAX. */ \
         "leaq   1f(%%rip), %%rax\n\t" \
-        "movq   %%rax, -0x88(%%rsp)\n\t" \
-        \
-        /* Load the new stack pointer. */ \
-        "movq   %%rdi, %%rsp\n\t" \
-        \
-        /* Create the address of the saved context. */ \
-        "leaq   -0x90(%%" saved_rsp "), %%rdi \n\t" \
+        "pushq  %%rax\n\t" \
         \
         /* Save RBP to the saved context. */ \
-        "movq   %%rbp, (%%rdi)\n\t"
+        "pushq  %%rbp\n\t" \
+        \
+        /* Swap the stack pointers. */ \
+        "xchg   %%rdi, %%rsp\n\t"
 
 #define CLOBBER_REGISTERS \
         /* Caller-saved registers */ \
@@ -105,6 +115,7 @@ inline context<T*> make_context(
         //  RSP, RBP : Saved & restored.
         //  RBX      : Function pointer.
 
+
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> save_context(
     void* const             sp
@@ -116,7 +127,7 @@ inline transfer<T*> save_context(
     
     // Align the stack pointer.
     auto new_sp = reinterpret_cast<void*>(
-        (reinterpret_cast<i64>(sp) & mask) - 0x10
+        (reinterpret_cast<i64>(sp) & mask) - 0x8
     );
     
     transfer<T*> result;
@@ -129,6 +140,9 @@ inline transfer<T*> save_context(
         
         SWAP_CTX_RDI("r15")
         
+        // Push the old RSP to the new context's stack.
+        "pushq  %%r15\n\t"
+        
         // RBP is still preserved.
         
         // Call the user-defined function here.
@@ -140,18 +154,15 @@ inline transfer<T*> save_context(
         
         // The function ordinarily finished.
         
-        // Restore RSP from R15.
-        // Subtract 0x80 to counteract the next instruction.
-        "leaq   -0x80(%%r15), %%rsp\n\t"
-        
     "1:\n\t"
         // Continuation starts here.
         
-        // RSP is (new_sp - 0x80).
+        // RSP is pointing to the saved RSP.
         // RBP is already restored.
         
-        // Fix RSP.
-        "addq   $0x80, %%rsp"
+        // Restore RSP from the stack.
+        // It also skips the red zone.
+        "popq   %%rsp"
         
         // result = RAX;
         
@@ -199,11 +210,12 @@ inline transfer<T*> swap_context(
     "1:\n\t"
         // Continuation starts here.
         
-        // RSP is (new_sp - 0x80).
+        // RSP is pointing to the saved RSP.
         // RBP is already restored.
         
-        // Fix RSP.
-        "addq   $0x80, %%rsp\n\t"
+        // Restore RSP from the stack.
+        // It also skips the red zone.
+        "popq   %%rsp"
         
         // result = RAX;
         
@@ -232,6 +244,8 @@ inline void restore_context(
     const context<T*>   ctx
 ,   Arg* const          arg
 ) {
+    MGBASE_ASSERT(reinterpret_cast<mgbase::int64_t>(ctx.p) % 0x10 == 0);
+    
     asm volatile (
         // Restore RSP.
         "movq   %[ctx], %%rsp\n\t"
