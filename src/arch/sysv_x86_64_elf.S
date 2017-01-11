@@ -3,6 +3,18 @@
 .type mgctx_entrypoint,@function
 .align 16
 mgctx_entrypoint:
+    // Pass the result as a parameter.
+    movq    %rax, %rdi
+    
+    // Restore the function pointer.
+    movq    (%rsp), %rax
+    
+    // Call the user-defined function.
+    call    *%rax
+    
+    // Terminate because of unintended return
+    // from the user-defined function.
+    call    abort@PLT
     
 .size mgctx_entrypoint,.-mgctx_entrypoint
 

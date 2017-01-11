@@ -79,7 +79,7 @@ inline context<T*> make_context(
 #define CLOBBER_REGISTERS \
         /* Caller-saved registers */ \
         "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11", \
-        /* Callee-saved registers except for RBP */ \
+        /* Callee-saved registers */ \
         "%r12", "%r13", "%r14", "%r15"
         
         // Not listed in clobbers:
@@ -121,9 +121,6 @@ inline transfer<T*> save_context(
         // Call the user-defined function here.
         //  (RAX, RDX) = func(RDI, RSI);
         "call   *%[func]\n\t"
-        // "P" removes dollar ($) for an immediate.
-        //  - https://gcc.gnu.org/ml/gcc-help/2010-08/msg00102.html
-        //  - http://stackoverflow.com/questions/3467180/direct-call-using-gccs-inline-assembly
         
         // The function ordinarily finished.
         
