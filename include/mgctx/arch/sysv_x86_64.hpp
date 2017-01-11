@@ -105,8 +105,6 @@ inline transfer<T*> save_context(
     
     transfer<T*> result;
     
-    // Note: 128-byte red zone is also (implicitly) saved.
-    
     asm volatile (
         // RDI = new_sp;
         // RSI = arg;
@@ -164,8 +162,6 @@ inline transfer<T*> swap_context(
     
     transfer<T*> result;
     
-    // Note: 128-byte red zone is also (implicitly) saved.
-    
     asm volatile (
         // RDI = ctx;
         // RSI = arg;
@@ -216,6 +212,7 @@ inline void restore_context(
     const context<T*>   ctx
 ,   Arg* const          arg
 ) {
+    // The pointer to the context must be 16-byte aligned.
     MGBASE_ASSERT(reinterpret_cast<mgbase::int64_t>(ctx.p) % 0x10 == 0);
     
     asm volatile (
