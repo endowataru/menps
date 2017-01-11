@@ -16,6 +16,14 @@ struct context_frame
     void*   rsp;
 };
 
+namespace detail {
+
+// Separated to assembly
+extern "C"
+void mgctx_entrypoint();
+
+} // namespace detail
+
 template <typename T, void (*Func)(transfer<T*>)>
 inline context<T*> make_context(
     void* const             sp
@@ -33,51 +41,16 @@ inline context<T*> make_context(
     // This is just for debugging.
     *ctx = 0;
     
+    // Set the entrypoint function.
+    *(ctx+1) = reinterpret_cast<i64>(&detail::mgctx_entrypoint);
+    
     // Save the function pointer.
     *(ctx+2) = reinterpret_cast<i64>(Func);
-    
-    i64 tmp;
-    
-    asm volatile (
-        "leaq   1f(%%rip), %[tmp]\n\t"
-        "movq   %[tmp], %[label]\n\t"
-        
-        // Jump to the exit of this assembly.
-        // TODO: Reduce this jump.
-        "jmp    2f\n\t\n\t"
-        
-    "1:\n\t"
-        // Pass the result as a parameter.
-        "movq   %%rax, %%rdi\n\t"
-        
-        // Restore the function pointer.
-        "movq   (%%rsp), %%rax\n\t"
-        
-        // Call the user-defined function.
-        "call   *%%rax\n\t"
-        
-        #ifdef MGBASE_OS_MAC_OS_X
-        "call   _abort\n\t"
-        #else
-        "call   abort@PLT\n\t"
-        #endif
-        
-    "2:\n\t"
-        
-    :   // Output constraints
-        [label] "+m" (*(ctx+1)),
-        
-        [tmp] "=r" (tmp)
-        
-    :   // No input constraints
-        
-    :   "cc"
-    );
     
     return { reinterpret_cast<context_frame*>(ctx) };
 }
 
-#define SWAP_CTX_RDI(saved_rsp) \
+#define SAVE_CONTEXT(saved_rsp) \
         /* Save RSP to a certain callee-saved register (R15). */ \
         "movq   %%rsp, %%" saved_rsp "\n\t" \
         \
@@ -120,15 +93,15 @@ template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> save_context(
     void* const             sp
 ,   const mgbase::size_t    /*size*/
-,   Arg* const              arg
+,   Arg*                    arg
 ) {
     typedef mgbase::int64_t i64;
     const auto mask = ~i64{0xF};
     
     // Align the stack pointer.
-    auto new_sp = reinterpret_cast<void*>(
-        (reinterpret_cast<i64>(sp) & mask) - 0x8
-    );
+    auto new_sp = (reinterpret_cast<i64>(sp) & mask) - 0x8;
+    
+    auto func = Func;
     
     transfer<T*> result;
     
@@ -138,7 +111,7 @@ inline transfer<T*> save_context(
         // RDI = new_sp;
         // RSI = arg;
         
-        SWAP_CTX_RDI("r15")
+        SAVE_CONTEXT("r15")
         
         // Push the old RSP to the new context's stack.
         "pushq  %%r15\n\t"
@@ -168,15 +141,15 @@ inline transfer<T*> save_context(
         
     :   // Output constraints
         // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
-        "+D" (new_sp) ,
+        "+D" (new_sp),
         // RAX | Output: User-defined value from Func or the previous context.
-        "=a" (result.p0)
+        "=a" (result.p0),
+        // RSI | Input: User-defined value. / Output: Overwritten (but discarded).
+        "+S" (arg),
+        // RBX | Input: User-defined function. / Output: Overwritten (but discarded).
+        [func] "+b" (func)
         
-    :   // Input constraints
-        // RSI | Input: User-defined value
-        "S" (arg),
-        
-        [func] "b" (Func)
+    :   // No input constraints
         
     :   "cc", "memory",
         CLOBBER_REGISTERS
@@ -187,9 +160,11 @@ inline transfer<T*> save_context(
 
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> swap_context(
-    context<T*>     ctx
-,   Arg* const      arg
+    context<T*> ctx
+,   Arg*        arg
 ) {
+    auto func = Func;
+    
     transfer<T*> result;
     
     // Note: 128-byte red zone is also (implicitly) saved.
@@ -198,7 +173,7 @@ inline transfer<T*> swap_context(
         // RDI = ctx;
         // RSI = arg;
         
-        SWAP_CTX_RDI("r15")
+        SAVE_CONTEXT("r15")
         
         // Restore RBP (May be pushed by the callee again.)
         "popq   %%rbp\n\t"
@@ -223,13 +198,13 @@ inline transfer<T*> swap_context(
         // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
         "+D" (ctx.p),
         // RAX | Output: User-defined value from Func or the previous context.
-        "=a" (result.p0)
+        "=a" (result.p0),
+        // RSI | Input: User-defined value / Output: Overwritten (but discarded).
+        "+S" (arg),
+        // RBX | Input: User-defined function. / Output: Overwritten (but discarded).
+        [func] "+b" (func)
         
-    :   // Input constraints
-        // RSI | Input: User-defined value
-        "S" (arg),
-        
-        [func] "b" (Func)
+    :   // No input constraints
         
     :   "cc", "memory",
         CLOBBER_REGISTERS
@@ -276,7 +251,7 @@ inline void restore_context(
     MGBASE_UNREACHABLE();
 }
 
-#undef SWAP_CTX_RDI
+#undef SAVE_CONTEXT
 #undef CLOBBER_REGISTERS
 
 } // namespace mgctx

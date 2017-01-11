@@ -75,7 +75,9 @@ mgctx::transfer<int*> f_swap_3(int* d)
     return { d };
 }
 
-//MGBASE_NORETURN
+#ifdef MGBASE_COMPILER_CLANG
+MGBASE_NORETURN
+#endif
 void f_swap_2(mgctx::transfer<int*> tr)
 {
     mgctx::restore_context(
