@@ -3,30 +3,36 @@ Components
 ----------
 
 - mgth
-    - DSM + work-stealing scheduler
+    - DSM + distributed work-stealing scheduler
 - mgdsm
     - Distributed Shared Memory (DSM)
-- mgas2
-    - Partitioned Global Address Space (PGAS) library with dynamic page migration
 - mgcom
-    - Low-level communication library
+    - Portable low-level communication library
+- mgdev
+    - Communication device wrapper library
 - mgult
-    - Work-stealing scheduler
+    - Customizable work-stealing scheduler
+- mgctx
+    - Context switching library
 - mgbase
     - C++ base library
 
 ```
-+-----------------------+
-|         mgth          |
-+-----------+-+---------+
-|   mgdsm   | |         |
-+-----------+ |         |
-|   mgas2   | |  mgult  |
-+-----------+ |         |
-|   mgcom   | |         |
-+-----------+-+---------+
-|         mgbase        |
-+-----------------------+
++---------------+
+|      mgth     |
++---------+     |
+|  mgdsm  |     |
++---------+     |
+|  mgcom  |     |
++---------+     |
+|  mgdev  |     |
++---------+-----+
+|     mgult     |
++---------------+
+|     mgctx     |
++---------------+
+|     mgbase    |
++---------------+
 ```
 
 
@@ -41,4 +47,6 @@ cd [directory]
 ```
 
 CMake 3.0 or higher is required.
+
+
 
