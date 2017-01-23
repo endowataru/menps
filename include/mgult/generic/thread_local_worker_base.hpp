@@ -60,7 +60,7 @@ private:
 
 template <typename Traits>
 MGBASE_THREAD_LOCAL typename Traits::derived_type*
-thread_local_worker_base<Traits>::current_worker_ = MGBASE_NULLPTR;
+thread_local_worker_base<Traits>::current_worker_{};
 
 } // namespace mgult
 

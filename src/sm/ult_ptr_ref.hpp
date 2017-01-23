@@ -133,7 +133,7 @@ public:
             "stack_ptr:{:x}\t"
             "stack_size:{:x}"
         ,   reinterpret_cast<mgbase::uintptr_t>(desc_)
-        ,   static_cast<typename mgbase::underlying_type<ult_state>::type>(desc_->state)
+        ,   static_cast<ult_state_underlying_t>(desc_->state)
         ,   reinterpret_cast<mgbase::uintptr_t>(desc_->joiner)
         ,   desc_->detached
         ,   reinterpret_cast<mgbase::uintptr_t>(desc_->stack_ptr)

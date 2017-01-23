@@ -6,6 +6,7 @@
 #include <mgbase/memory/align.hpp>
 #include <mgbase/memory/distance_in_bytes.hpp>
 #include <mgbase/nontype.hpp>
+#include <algorithm>
 
 namespace mgult {
 
@@ -119,7 +120,7 @@ public:
             const auto tr =
                 self.swap_context(
                     ctx
-                ,   MGBASE_NONTYPE(&basic_worker::loop_root_handler)
+                ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::loop_root_handler)
                 ,   &d
                 );
             
@@ -146,7 +147,7 @@ private:
         fork_func_type  func;
         void*           ptr;
         
-        derived_type&   self;
+        derived_type*   self;
         ult_ref_type    parent_th;
         ult_ref_type    child_th;
     };
@@ -159,11 +160,14 @@ private:
         ult_id_type     child_id;
     };
     
+    #if 0
+    // Using union is simpler, but not working on old GCC.
     union fork_data
     {
         fork_child_first_data   child_first;
         fork_parent_first_data  parent_first;
     };
+    #endif
     
 public:
     struct allocated_ult
@@ -171,6 +175,16 @@ public:
         ult_id_type id;
         void*       ptr;
     };
+    
+    static void* align_fork_data(void*& stack_ptr, mgbase::size_t& stack_size)
+    {
+        return mgbase::align_call_stack(
+            std::max(MGBASE_ALIGNOF(fork_child_first_data), MGBASE_ALIGNOF(fork_parent_first_data))
+        ,   std::max(sizeof(fork_child_first_data), sizeof(fork_parent_first_data))
+        ,   stack_ptr
+        ,   stack_size
+        );
+    }
     
     MGBASE_WARN_UNUSED_RESULT
     allocated_ult allocate(
@@ -192,12 +206,13 @@ public:
         mgbase::size_t stack_size = th.get_stack_size();
         
         // Allocate a space for fork data.
-        mgbase::align_call_stack(
-            MGBASE_ALIGNOF(fork_data)
-        ,   sizeof(fork_data)
+        align_fork_data(stack_ptr, stack_size);
+        /*mgbase::align_call_stack(
+            std::max(MGBASE_ALIGNOF(fork_child_first_data), MGBASE_ALIGNOF(fork_parent_first_data))
+        ,   std::max(sizeof(fork_child_first_data), sizeof(fork_parent_first_data))
         ,   stack_ptr
         ,   stack_size
-        );
+        );*/
         
         if (MGBASE_LIKELY(size > 0))
         {
@@ -224,12 +239,17 @@ public:
 private:
     struct fork_stack_info
     {
+        // Explicitly delete copying for old compilers.
+        //fork_stack_info(const fork_stack_info&) = delete;
+        //fork_stack_info& operator = (const fork_stack_info&) = delete;
+        
         ult_ref_type    child_th;
         void*           stack_ptr;
         mgbase::size_t  stack_size;
-        fork_data&      data;
+        void*           data;
     };
     
+    #if 0
     static fork_data& get_fork_data(void* stack_ptr, mgbase::size_t stack_size)
     {
         auto p =
@@ -244,8 +264,9 @@ private:
         
         return *p;
     }
+    #endif
     
-    fork_stack_info calc_fork_stack_info(const allocated_ult& child)
+    void calc_fork_stack_info(const allocated_ult& child, fork_stack_info* const out)
     {
         auto& self = this->derived();
         self.check_current_worker();
@@ -266,12 +287,10 @@ private:
                 * MGBASE_CALL_STACK_GROW_DIR
             );
         
-        return {
-            mgbase::move(child_th)
-        ,   stack_ptr
-        ,   orig_stack_size - used_size
-        ,   get_fork_data(orig_stack_ptr, orig_stack_size)
-        };
+        out->child_th   = mgbase::move(child_th);
+        out->stack_ptr  = stack_ptr;
+        out->stack_size = orig_stack_size - used_size;
+        out->data       = align_fork_data(orig_stack_ptr, orig_stack_size);
     }
     
     MGBASE_NORETURN
@@ -280,7 +299,7 @@ private:
     ,   fork_child_first_data* const    d
     ) MGBASE_NOEXCEPT
     {
-        auto& self = d->self;
+        auto& self = * d->self;
         self.check_current_worker();
         
         // Call the hook.
@@ -337,17 +356,18 @@ public:
         auto& self = this->derived();
         self.check_current_worker();
         
-        auto info = self.calc_fork_stack_info(child);
+        fork_stack_info info;
+        
+        self.calc_fork_stack_info(child, &info);
         
         // Place the thread data on the child's stack.
-        auto& d =
-            * new (&info.data.child_first) fork_child_first_data{
-                func
-            ,   child.ptr
-            ,   self
-            ,   self.remove_current_ult()
-            ,   mgbase::move(info.child_th)
-            };
+        auto& d = * new (info.data) fork_child_first_data;
+        
+        d.func      = func;
+        d.ptr       = child.ptr;
+        d.self      = & self;
+        d.parent_th = self.remove_current_ult();
+        d.child_th  = mgbase::move(info.child_th);
         
         // Call the hook.
         self.on_before_switch(d.parent_th, d.child_th);
@@ -358,7 +378,7 @@ public:
             self.save_context(
                 info.stack_ptr
             ,   info.stack_size
-            ,   MGBASE_NONTYPE(&basic_worker::fork_child_first_handler)
+            ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::fork_child_first_handler)
             ,   &d
             );
         
@@ -387,11 +407,13 @@ private:
         // Get the worker reference passed by the previous thread.
         auto& self = *tr.p0;
         
-        const auto orig_stack_ptr = self.current_th_.get_stack_ptr();
-        const auto orig_stack_size = self.current_th_.get_stack_size();
+        auto orig_stack_ptr = self.current_th_.get_stack_ptr();
+        auto orig_stack_size = self.current_th_.get_stack_size();
         
         // Get the reference to the fork data.
-        auto& d = get_fork_data(orig_stack_ptr, orig_stack_size).parent_first;
+        auto& d = * static_cast<fork_parent_first_data*>(
+            align_fork_data(orig_stack_ptr, orig_stack_size)
+        );
         
         const auto child_id = d.child_id;
         
@@ -426,11 +448,13 @@ public:
         auto& self = this->derived();
         self.check_current_worker();
         
-        auto info = self.calc_fork_stack_info(child);
+        fork_stack_info info;
+        
+        self.calc_fork_stack_info(child, &info);
         
         // Place the thread data on the child's stack.
         auto& d =
-            * new (&info.data.parent_first) fork_parent_first_data{
+            * new (info.data) fork_parent_first_data{
                 func
             ,   child.ptr
             ,   child.id
@@ -441,7 +465,7 @@ public:
             self.make_context(
                 info.stack_ptr // The call stack starts from here.
             ,   info.stack_size
-            ,   MGBASE_NONTYPE(&basic_worker::fork_parent_first_handler)
+            ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::fork_parent_first_handler)
             );
         
         // Set the context.
@@ -583,7 +607,7 @@ public:
         const auto r =
             self.swap_context(
                 ctx
-            ,   MGBASE_NONTYPE(&basic_worker::join_handler)
+            ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::join_handler)
             ,   &d
             );
         
@@ -679,7 +703,7 @@ public:
         // Switch to the context of the next thread.
         self.swap_context(
             ctx
-        ,   MGBASE_NONTYPE(&basic_worker::yield_handler)
+        ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::yield_handler)
         ,   &d
         );
         
@@ -805,7 +829,8 @@ public:
             self
         ,   self.remove_current_ult()
         ,   {} // invalid thread
-        ,   {} // invalid context
+        ,   { MGBASE_NULLPTR } // invalid context 
+            // TODO: create function make_invalid_context()
         };
         
         {
@@ -865,7 +890,7 @@ public:
         // Switch to the context of the following thread.
         self.restore_context(
             d.next_ctx
-        ,   MGBASE_NONTYPE(&basic_worker::exit_handler)
+        ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::exit_handler)
         ,   &d
         );
         
@@ -984,7 +1009,12 @@ private:
     // Overloaded functions to get the descriptor's reference.
     ult_ref_type get_ult_ref(ult_ref_type ref) {
         // Return the identical reference.
-        return ref;
+        #ifdef MGBASE_CXX11_RETURN_MOVE_ONLY_ARGUMENT_SUPPORTED
+            return ref;
+        #else
+            // This move is only necessary for old GCC
+            return mgbase::move(ref);
+        #endif
     }
     ult_ref_type get_ult_ref(const ult_id_type& id) {
         // Convert to the reference.

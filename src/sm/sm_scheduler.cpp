@@ -31,14 +31,17 @@ public:
         num_ranks_ = get_num_ranks_from_env();
     }
     
+private:
+    // GCC 4.4 requires template parameters are in external linkage.
+    struct empty_barrier {
+        void operator() () {
+            // do nothing
+        }
+    };
+    
+public:
     virtual void loop(const mgbase::function<void ()>& func) MGBASE_OVERRIDE
     {
-        struct empty_barrier {
-            void operator() () {
-                // do nothing
-            }
-        };
-        
         base::loop_workers(num_ranks_, func, empty_barrier{});
     }
     

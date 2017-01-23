@@ -12,6 +12,13 @@ namespace detail {
 template <typename F, typename... Args>
 struct thread_functor
 {
+    // Note: This constructor is for old compilers.
+    template <typename F2, typename A2>
+    thread_functor(F2&& f, A2&& a)
+        : func(mgbase::forward<F2>(f))
+        , args(mgbase::forward<A2>(a))
+    { }
+    
     F                       func;
     mgbase::tuple<Args...>  args;
     

@@ -7,8 +7,10 @@
 
 namespace mgult {
 
+typedef mgbase::uint64_t    ult_state_underlying_t;
+
 enum class ult_state
-    : mgbase::uint64_t
+    : ult_state_underlying_t
 {
     ready
 ,   blocked

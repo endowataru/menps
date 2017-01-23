@@ -23,7 +23,7 @@ public:
     {
         init_.reset();
         
-        sm::set_scheduler(MGBASE_NULLPTR);
+        sm::set_scheduler(scheduler_ptr{});
         
         MGBASE_ASSERT(sched_.unique());
         
