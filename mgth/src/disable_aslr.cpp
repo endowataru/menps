@@ -106,7 +106,7 @@ void disable_aslr(const int /*argc*/, char** const argv)
 {
     const auto val = getenv("MGTH_ASLR_DISABLED");
     
-    if (! (val != MGBASE_NULLPTR && strcmp(val, "1") == 0))
+    if (! ((val != MGBASE_NULLPTR) && strcmp(val, "1") == 0))
     {
         std::vector<char*> envv;
         for (char** p = ::environ; *p != MGBASE_NULLPTR; ++p) {

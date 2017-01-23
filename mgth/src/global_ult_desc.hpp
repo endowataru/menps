@@ -6,8 +6,10 @@
 
 namespace mgth {
 
+typedef mgcom::rma::atomic_default_t    global_ult_state_underlying_t;
+
 enum class global_ult_state
-    : mgcom::rma::atomic_default_t
+    : global_ult_state_underlying_t
 {
     ready
 ,   blocked

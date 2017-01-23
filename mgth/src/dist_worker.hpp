@@ -38,7 +38,7 @@ class dist_worker
 {
     typedef mgult::basic_worker<dist_worker_traits>         base;
     
-    typedef thread_local_worker_base<dist_worker_traits>    tls_base;
+    typedef mgult::thread_local_worker_base<dist_worker_traits> tls_base;
     
     static const mgbase::size_t join_stack_size = 2 << 20;
     

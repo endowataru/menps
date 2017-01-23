@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
         }
         else {
             // Start as normal workers.
-            mgth::g_sched->loop(MGBASE_NULLPTR);
+            mgth::g_sched->loop(mgth::loop_func_type{});
         }
         
         // Finalize the scheduler.

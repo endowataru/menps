@@ -172,7 +172,7 @@ public:
         return load_desc_member(&global_ult_desc::detached) == 1;
     }
     void set_detached() const MGBASE_NOEXCEPT {
-        const decltype(global_ult_desc::detached) one = 1;
+        const decltype(load_desc_member(&global_ult_desc::detached)) one = 1;
         store_desc_member(&global_ult_desc::detached, one);
     }
     
@@ -212,7 +212,7 @@ public:
             "ctx:{:x}\t"
             "owner:{}"
         ,   reinterpret_cast<mgbase::uintptr_t>(id_.ptr)
-        ,   static_cast<typename mgbase::underlying_type<global_ult_state>::type>(get_state())
+        ,   static_cast<global_ult_state_underlying_t>(get_state())
         ,   reinterpret_cast<mgbase::uintptr_t>(get_joiner().ptr)
         ,   is_detached()
         ,   reinterpret_cast<mgbase::uintptr_t>(get_stack_ptr())
