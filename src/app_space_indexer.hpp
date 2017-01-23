@@ -4,6 +4,7 @@
 #include "app_space.hpp"
 #include "sharer/sharer_space.hpp"
 #include <mgbase/memory/distance_in_bytes.hpp>
+#include <mgbase/type_traits/result_of.hpp>
 
 namespace mgdsm {
 
@@ -56,7 +57,8 @@ public:
     }
     
     template <typename Func>
-    void do_for_block_at(Func&& func, void* ptr)
+    typename mgbase::result_of<Func (sharer_block::accessor&)>::type
+    do_for_block_at(Func&& func, void* ptr)
     {
         // Find a segment.
         
@@ -76,7 +78,7 @@ public:
         
         auto blk_ac = pg_ac.get_block_accessor(blk_info.blk_id);
         
-        mgbase::forward<Func>(func)(blk_ac);
+        return mgbase::forward<Func>(func)(blk_ac);
     }
     
     bool in_range(void* const ptr)

@@ -129,7 +129,18 @@ public:
     }
     virtual void unpin(void* const ptr, const mgbase::size_t size_in_bytes) MGBASE_OVERRIDE
     {
-        this->app_idx_.do_for_all_blocks_in(ptr, size_in_bytes, unpin_callback{*this});
+        // TODO: remove dynamic allocation
+        std::vector<access_history::abs_block_id> ids;
+        
+        this->app_idx_.do_for_all_blocks_in(ptr, size_in_bytes, unpin_callback{*this, ids});
+        
+        MGBASE_RANGE_BASED_FOR(auto&& ablk_id, ids)
+        {
+            // Add this block as a flushed page.
+            this->hist_.add_new_read(ablk_id);
+            // Add this block as a reconciled page.
+            this->hist_.add_new_write(ablk_id);
+        }
     }
     
 private:
@@ -156,6 +167,7 @@ private:
     struct unpin_callback
     {
         dsm_space& self;
+        std::vector<access_history::abs_block_id>& ids;
         
         void operator() (sharer_block::accessor& blk_ac)
         {
@@ -172,10 +184,7 @@ private:
             // for both flushed and reconciled pages
             // because it is now in the "dirty" state.
             
-            // Add this block as a flushed page.
-            self.hist_.add_new_read(ablk_id);
-            // Add this block as a reconciled page.
-            self.hist_.add_new_write(ablk_id);
+            ids.push_back(ablk_id);
         }
     };
     

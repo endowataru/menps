@@ -40,7 +40,20 @@ private:
                 return false;
             }
             
-            indexer.do_for_block_at(upgrade_callback{self}, ptr);
+            const auto r =
+                indexer.do_for_block_at(upgrade_callback{self}, ptr);
+            
+            // Note: Histories must be modified after unlocking sharer entries
+            //       in order to avoid deadlocking.
+            
+            if (r.add_read) {
+                // Add this block as a flushed page.
+                self.conf_.hist.add_new_read(r.ablk_id); 
+            }
+            if (r.add_write) {
+                // Add this block as a reconciled page.
+                self.conf_.hist.add_new_write(r.ablk_id);
+            }
             
             return true;
         }
@@ -48,11 +61,18 @@ private:
     
     struct upgrade_error : std::exception { };
     
+    struct upgrade_result
+    {
+        access_history::abs_block_id    ablk_id;
+        bool                            add_read;
+        bool                            add_write;
+    };
+    
     struct upgrade_callback
     {
         impl& self;
         
-        void operator() (sharer_block::accessor& blk_ac)
+        upgrade_result operator() (sharer_block::accessor& blk_ac)
         {
             auto& space = self.conf_.space;
             
@@ -65,8 +85,8 @@ private:
             // Fetch the block first.
             if (space.fetch(blk_ac))
             {
-                // Add this block as a flushed page.
-                self.conf_.hist.add_new_read(ablk_id);
+                // Call add_new_read() later.
+                return { ablk_id, true, false };
             }
             else {
                 // If the block is already readable,
@@ -83,8 +103,8 @@ private:
                     abort();
                 }
                 
-                // Add this block as a reconciled page.
-                self.conf_.hist.add_new_write(ablk_id);
+                // Call add_new_write() later.
+                return { ablk_id, false, true };
             }
         }
     };

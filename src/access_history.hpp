@@ -46,15 +46,9 @@ public:
     {
         MGBASE_LOG_INFO("msg:Started read barrier.");
         
-        std::vector<abs_block_id> ids;
+        mgbase::lock_guard<mutex_type> lk(this->read_mtx_);
         
-        {
-            mgbase::lock_guard<mutex_type> lk(this->read_mtx_);
-            
-            ids = mgbase::move(this->read_ids_);
-        }
-        
-        MGBASE_RANGE_BASED_FOR(const auto& id, ids)
+        MGBASE_RANGE_BASED_FOR(const auto& id, this->read_ids_)
         {
             auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
             
@@ -84,14 +78,9 @@ public:
     {
         MGBASE_LOG_INFO("msg:Started write barrier.");
         
-        std::vector<abs_block_id> ids;
-        {
-            mgbase::unique_lock<mutex_type> lk(this->write_mtx_);
-            
-            ids = mgbase::move(this->write_ids_);
-        }
+        mgbase::lock_guard<mutex_type> lk(this->write_mtx_);
         
-        MGBASE_RANGE_BASED_FOR(const auto& id, ids)
+        MGBASE_RANGE_BASED_FOR(const auto& id, this->write_ids_)
         {
             auto seg_ac = this->conf_.sp.get_segment_accessor(id.seg_id);
             
@@ -120,4 +109,3 @@ private:
 };
 
 } // namespace mgdsm
-
