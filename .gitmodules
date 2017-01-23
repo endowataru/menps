@@ -1,0 +1,3 @@
+[submodule "external/ucx"]
+	path = external/ucx
+	url = https://github.com/openucx/ucx.git

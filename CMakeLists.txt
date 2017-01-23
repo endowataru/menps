@@ -38,6 +38,10 @@ int x = IBV_EXP_DEVICE_ATTR_EXT_ATOMIC_ARGS;
 int main() { return 0; } "
 MGDEV_IBV_MASKED_ATOMICS_SUPPORTED)
 
+option(MGDEV_DEVICE_UCX_ENABLED "Enable UCX" FALSE)
+#set(MGDEV_DEVICE_UCX_ENABLED TRUE) # Comment out to use
+
+
 # Generate config.h
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
@@ -62,7 +66,7 @@ if(${MGDEV_DEVICE_MPI_SUPPORTED})
     )
 endif()
 
-if(${MGDEV_DEVICE_MPI_SUPPORTED})
+if(${MGDEV_DEVICE_IBV_SUPPORTED})
     add_library(mgdev-ibv
         ./src/ibv/queue_pair.cpp
     )
@@ -75,4 +79,9 @@ if(${MGDEV_DEVICE_MPI_SUPPORTED})
         mgult
     )
 endif()
+
+if(${MGDEV_DEVICE_UCX_ENABLED})
+    include(cmake/ucx.cmake)
+endif()
+
 
