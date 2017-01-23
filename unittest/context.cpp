@@ -31,6 +31,9 @@ TEST(Context, Return)
     ASSERT_EQ(111, reinterpret_cast<uip>(x.p0));
 }
 
+#if ! (MGBASE_COMPILER_GCC_VERSION < 40500)
+// ICE on GCC 4.4
+
 namespace /*unnamed*/ {
 
 mgctx::transfer<int*> f_restore_2(int* d)
@@ -65,6 +68,8 @@ TEST(Context, Restore)
     
     ASSERT_EQ(111, reinterpret_cast<uip>(x.p0));
 }
+
+#endif
 
 namespace /*unnamed*/ {
 
