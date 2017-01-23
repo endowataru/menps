@@ -54,12 +54,14 @@ private:
         ) {
             ult::sync_flag flag;
             
-            self.mi_.send_async({
-                arg.src_ptr
-            ,   static_cast<int>(arg.size_in_bytes)
-            ,   static_cast<int>(params.source)
-            ,   arg.tag
-            ,   self.get_comm()
+            self.mi_.send_async(mgdev::mpi::send_async_params{
+                mgdev::mpi::send_params{
+                    arg.src_ptr
+                ,   static_cast<int>(arg.size_in_bytes)
+                ,   static_cast<int>(params.source)
+                ,   arg.tag
+                ,   self.get_comm()
+                }
             ,   mgbase::make_callback_notify(&flag)
             });
             
@@ -101,13 +103,15 @@ public:
         {
             // Wait for the local completion of MPI_Irecv().
             
-            this->mi_.recv_async({
-                rma::untyped::to_raw_pointer(params.dest_laddr)
-            ,   static_cast<int>(params.size_in_bytes)
-            ,   static_cast<int>(params.src_proc)
-            ,   tag
-            ,   this->get_comm()
-            ,   MPI_STATUS_IGNORE
+            this->mi_.recv_async(mgdev::mpi::recv_async_params{
+                mgdev::mpi::recv_params{
+                    rma::untyped::to_raw_pointer(params.dest_laddr)
+                ,   static_cast<int>(params.size_in_bytes)
+                ,   static_cast<int>(params.src_proc)
+                ,   tag
+                ,   this->get_comm()
+                ,   MPI_STATUS_IGNORE
+                }
             ,   params.on_complete
             });
         }
@@ -145,13 +149,15 @@ private:
         ) {
             ult::sync_flag flag;
             
-            self.mi_.recv_async({
-                arg.dest_ptr
-            ,   static_cast<int>(arg.size_in_bytes)
-            ,   static_cast<int>(params.source)
-            ,   arg.tag
-            ,   self.get_comm()
-            ,   MPI_STATUS_IGNORE
+            self.mi_.recv_async(mgdev::mpi::recv_async_params{
+                mgdev::mpi::recv_params{
+                    arg.dest_ptr
+                ,   static_cast<int>(arg.size_in_bytes)
+                ,   static_cast<int>(params.source)
+                ,   arg.tag
+                ,   self.get_comm()
+                ,   MPI_STATUS_IGNORE
+                }
             ,   mgbase::make_callback_notify(&flag)
             });
             
@@ -191,12 +197,14 @@ public:
         
         if (MGBASE_LIKELY(ret))
         {
-            this->mi_.send_async({
-                rma::untyped::to_raw_pointer(params.src_laddr)
-            ,   static_cast<int>(params.size_in_bytes)
-            ,   static_cast<int>(params.dest_proc)
-            ,   tag
-            ,   this->get_comm()
+            this->mi_.send_async(mgdev::mpi::send_async_params{
+                mgdev::mpi::send_params{
+                    rma::untyped::to_raw_pointer(params.src_laddr)
+                ,   static_cast<int>(params.size_in_bytes)
+                ,   static_cast<int>(params.dest_proc)
+                ,   tag
+                ,   this->get_comm()
+                }
             ,   mgbase::make_callback_empty()
             });
         }

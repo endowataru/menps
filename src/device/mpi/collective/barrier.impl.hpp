@@ -82,28 +82,24 @@ public:
             const mgcom::process_id_t src_proc
                 = static_cast<process_id_t>((current_proc + num_procs - diff) % num_procs);
             
-            impl.mi_->send_async({
-                {
-                    MGBASE_NULLPTR
-                ,   0
-                ,   static_cast<int>(dest_proc)
-                ,   0
-                ,   impl.comm_
-                }
+            impl.mi_->send_async(
+                MGBASE_NULLPTR
+            ,   0
+            ,   static_cast<int>(dest_proc)
+            ,   0
+            ,   impl.comm_
             ,   mgbase::make_callback_empty()
-            });
+            );
             
-            impl.mi_->recv_async({
-                {
-                    MGBASE_NULLPTR
-                ,   0
-                ,   static_cast<int>(src_proc)
-                ,   0
-                ,   impl.comm_
-                ,   MPI_STATUS_IGNORE
-                }
+            impl.mi_->recv_async(
+                MGBASE_NULLPTR
+            ,   0
+            ,   static_cast<int>(src_proc)
+            ,   0
+            ,   impl.comm_
+            ,   MPI_STATUS_IGNORE
             ,   mgbase::make_callback_store_release(&impl.finished_, MGBASE_NONTYPE(true))
-            });
+            );
             
             return test(cb);
         }
