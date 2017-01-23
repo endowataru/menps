@@ -3,11 +3,14 @@
 #include "completer.hpp"
 #include <mgbase/thread.hpp>
 #include <mgbase/logger.hpp>
-#include "device/ibv/native/completion_queue.hpp"
 #include "completion_selector.hpp"
+#include <mgdev/ibv/ibv_error.hpp>
 
 namespace mgcom {
 namespace ibv {
+
+using mgdev::ibv::completion_queue;
+using mgdev::ibv::ibv_error;
 
 class poll_thread::impl
 {

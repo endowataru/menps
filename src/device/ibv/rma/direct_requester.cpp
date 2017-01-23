@@ -6,9 +6,8 @@
 #include "device/ibv/command/code.hpp"
 #include "device/ibv/native/endpoint.hpp"
 #include "device/ibv/command/make_wr_to.hpp"
-#include "device/ibv/native/send_work_request.hpp"
-#include "device/ibv/native/scatter_gather_entry.hpp"
 #include "device/ibv/command/completion_selector.hpp"
+#include <mgdev/ibv/verbs.hpp>
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {
@@ -79,8 +78,8 @@ private:
         Params params = Params();
         std::forward<Func>(func)(&params);
         
-        ibv::send_work_request wr = ibv::send_work_request();
-        ibv::scatter_gather_entry sge = ibv::scatter_gather_entry();
+        ibv_send_wr wr = ibv_send_wr();
+        ibv_sge sge = ibv_sge();
         
         make_wr_to(params, wr_id, &wr, &sge, comp, atomic_buf_);
         

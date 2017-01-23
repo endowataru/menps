@@ -1,18 +1,18 @@
 
 #pragma once
 
+#include <mgdev/ibv/completion_queue.hpp>
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {
 namespace ibv {
 
-class completion_queue;
 class completion_selector;
 
 class poll_thread
 {
 public:
-    poll_thread(completion_queue&, completion_selector&);
+    poll_thread(mgdev::ibv::completion_queue&, completion_selector&);
     ~poll_thread();
     
 private:

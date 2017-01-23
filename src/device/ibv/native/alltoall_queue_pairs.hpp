@@ -2,11 +2,13 @@
 #pragma once
 
 #include <mgcom/common.hpp>
-#include "queue_pair.hpp"
+#include <mgdev/ibv/queue_pair.hpp>
 #include <mgbase/scoped_ptr.hpp>
 
 namespace mgcom {
 namespace ibv {
+
+using mgdev::ibv::queue_pair;
 
 class alltoall_queue_pairs
 {

@@ -4,7 +4,6 @@
 #include "device/ibv/command/completer.hpp"
 #include "send_wr_buffer.hpp"
 #include "device/ibv/command/set_command_to.hpp"
-#include "device/ibv/native/scatter_gather_entry.hpp"
 #include "device/ibv/native/endpoint.hpp"
 
 namespace mgcom {
@@ -84,7 +83,7 @@ private:
     
     completer comp_;
     send_wr_buffer wr_buf_;
-    std::vector<scatter_gather_entry> sges_;
+    std::vector<ibv_sge> sges_;
     atomic_buffer atomic_buf_;
 };
 

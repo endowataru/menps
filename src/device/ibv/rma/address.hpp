@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgcom/rma/pointer.hpp>
-#include "device/ibv/native/verbs.hpp"
+#include <mgdev/ibv/verbs.hpp>
 
 namespace mgcom {
 namespace ibv {

@@ -2,16 +2,18 @@
 #pragma once
 
 #include "alltoall_queue_pairs.hpp"
-#include "completion_queue.hpp"
-#include "device_list.hpp"
-#include "protection_domain.hpp"
-#include "context.hpp"
-#include "attributes.hpp"
+#include <mgdev/ibv/completion_queue.hpp>
+#include <mgdev/ibv/device_list.hpp>
+#include <mgdev/ibv/protection_domain.hpp>
+#include <mgdev/ibv/context.hpp>
+#include <mgdev/ibv/attributes.hpp>
 
 namespace mgcom {
 namespace ibv {
 
 // TODO: conflicting names (mgcom::endpoint)
+
+using namespace mgdev::ibv;
 
 class endpoint
     : protected alltoall_queue_pairs

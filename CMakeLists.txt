@@ -54,7 +54,6 @@ MGCOM_IBV_MASKED_ATOMICS_SUPPORTED)
 
 add_library(mgcom-common
     src/common/rma/default_allocator.cpp
-    #src/common/rma/malloc.cpp
 )
 target_include_directories(mgcom-common PRIVATE
     ./src
@@ -147,7 +146,6 @@ if (${MGCOM_DEVICE_IBV_SUPPORTED})
         src/device/ibv/rma/rma_comm.cpp
         src/device/ibv/rma/registrator.cpp
         src/device/ibv/command/poll_thread.cpp
-        src/device/ibv/native/queue_pair.cpp
         src/device/ibv/native/alltoall_queue_pairs.cpp
         src/device/ibv/scheduler/command_consumer.cpp
         src/device/ibv/scheduler/scheduler.cpp
@@ -158,6 +156,7 @@ if (${MGCOM_DEVICE_IBV_SUPPORTED})
     )
     target_link_libraries(mgcom-dev-ibv mgcom-dev-mpi1
         ibverbs # libibverbs.so
+        mgdev-ibv
     )
     
     list(APPEND mgcom-devices ibv)
@@ -183,10 +182,6 @@ target_link_libraries(mgcom
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/mgcom/config.h)
-
-# Publish the device list
-
-set(mgcom-devices ${mgcom-devices} PARENT_SCOPE)
 
 # Unit test for each device
 
