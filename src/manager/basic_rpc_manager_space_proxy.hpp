@@ -32,8 +32,6 @@ public:
     {
         auto& self = this->derived();
         
-        auto& sp = self.get_space();
-        
         for (process_id_type proc = 0; proc < Policy::number_of_processes(); ++proc)
         {
             auto* man_sp = self.get_manager_space_at_proc(proc);

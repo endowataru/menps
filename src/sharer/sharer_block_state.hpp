@@ -8,13 +8,24 @@ namespace mgdsm {
 
 class sharer_block_state
 {
+    typedef mgbase::uint32_t integer_type;
+    
     enum class state
+        : integer_type
     {
         invalid = 0
     ,   clean
     ,   dirty
     ,   pinned
     };
+    
+    // Old GCC cannot compare scoped enums directly.
+    static bool is_equal(const state a, const state b) {
+        return static_cast<integer_type>(a) == static_cast<integer_type>(b);
+    }
+    static bool is_greater_than_or_equal(const state a, const state b) {
+        return static_cast<integer_type>(a) >= static_cast<integer_type>(b);
+    }
     
 public:
     sharer_block_state() MGBASE_NOEXCEPT
@@ -26,34 +37,34 @@ public:
     
     bool is_readable() const MGBASE_NOEXCEPT
     {
-        return get_state() >= state::clean;
+        return is_greater_than_or_equal(get_state(), state::clean);
     }
     void change_clean_to_invalid() MGBASE_NOEXCEPT
     {
-        MGBASE_ASSERT(get_state() == state::clean);
+        MGBASE_ASSERT(is_equal(get_state(), state::clean));
         
         set_state(state::invalid);
     }
     void change_invalid_to_clean() MGBASE_NOEXCEPT
     {
-        MGBASE_ASSERT(get_state() == state::invalid);
+        MGBASE_ASSERT(is_equal(get_state(), state::invalid));
         
         set_state(state::clean);
     }
     void change_dirty_to_clean() MGBASE_NOEXCEPT
     {
-        MGBASE_ASSERT(get_state() == state::dirty);
+        MGBASE_ASSERT(is_equal(get_state(), state::dirty));
         
         set_state(state::clean);
     }
     
     bool is_writable() const MGBASE_NOEXCEPT
     {
-        return get_state() >= state::dirty;
+        return is_greater_than_or_equal(get_state(), state::dirty);
     }
     void change_clean_to_dirty() MGBASE_NOEXCEPT
     {
-        MGBASE_ASSERT(get_state() == state::clean);
+        MGBASE_ASSERT(is_equal(get_state(), state::clean));
         
         set_state(state::dirty);
     }
@@ -66,11 +77,11 @@ public:
     
     bool is_pinned() const MGBASE_NOEXCEPT
     {
-        return get_state() == state::pinned;
+        return is_equal(get_state(), state::pinned);
     }
     void set_pinned() MGBASE_NOEXCEPT
     {
-        MGBASE_ASSERT(get_state() == state::dirty);
+        MGBASE_ASSERT(is_equal(get_state(), state::dirty));
         
         set_state(state::pinned);
     }

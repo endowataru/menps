@@ -23,11 +23,11 @@ public:
         : blk_size_(0)
         , num_blks_(0)
         , blks_{}
-        , owner_{}
+        , owner_()
         , num_read_blks_(0)
         , num_write_blks_(0)
-        , is_diff_needed_(false)
-        , is_flush_needed_(false)
+        , is_diff_needed_{false}
+        , is_flush_needed_{false}
     { }
     
     void set_block_size(const mgbase::size_t blk_size) {

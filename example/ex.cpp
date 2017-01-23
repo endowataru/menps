@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
         
         sp.enable_on_this_thread();
         
-        int* pi = nullptr;
+        int* pi = MGBASE_NULLPTR;
         
         if (mgcom::current_process_id() == 0)
         {

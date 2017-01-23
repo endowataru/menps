@@ -114,7 +114,7 @@ private:
     sigsegv_catcher segv_catch_;
     sigbus_catcher bus_catch_;
     
-    MGBASE_THREAD_LOCAL static bool is_upgrade_enabled_;
+    static MGBASE_THREAD_LOCAL bool is_upgrade_enabled_;
 };
 
 MGBASE_THREAD_LOCAL bool page_fault_upgrader::impl::is_upgrade_enabled_ = false;

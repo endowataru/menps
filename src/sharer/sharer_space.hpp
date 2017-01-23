@@ -68,15 +68,16 @@ private:
         return locator_.get_segment_sys_ptr(seg_id);
     }
     
+    // Note: Old GCC cannot use internal linkage class for template argument
+    struct info {
+        manager_segment_proxy_ptr   manager;
+        void*                       sys_ptr;
+    };
+    
     segment_ptr_type create_sharer_segment(
         const segment_id_t          seg_id
     ,   manager_segment_proxy_ptr&& seg_ptr
     ) {
-        struct info {
-            manager_segment_proxy_ptr   manager;
-            void*                       sys_ptr;
-        };
-        
         return mgbase::make_unique<sharer_segment>(
             info{ mgbase::move(seg_ptr), get_segment_sys_ptr(seg_id) }
         );

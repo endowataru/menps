@@ -33,6 +33,18 @@ public:
         , a2a_(&sp)
     { }
     
+    proxy(const proxy&) = delete;
+    proxy& operator = (const proxy&) = delete;
+    
+    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
+    proxy(proxy&&) MGBASE_NOEXCEPT_DEFAULT = default;
+    #else
+    proxy(proxy&& other) MGBASE_NOEXCEPT
+        : sp_(other.sp_)
+        , a2a_(mgbase::move(other.a2a_))
+    { }
+    #endif
+    
 private:
     friend class basic_sharer_space_proxy<sharer_space_proxy_policy>;
     

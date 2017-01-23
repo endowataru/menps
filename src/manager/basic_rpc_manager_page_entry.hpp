@@ -109,13 +109,17 @@ public:
         return this->writers_.is_only(proc);
     }
     
+private:
+    // Old GCC cannot use local class for template argument
+    struct invalidator_conf {
+        const process_id_set_type&  readers;
+        const process_id_set_type&  writers;
+    };
+    
+public:
     invalidator_type make_invalidator()
     {
-        struct conf {
-            const process_id_set_type&  readers;
-            const process_id_set_type&  writers;
-        };
-        return invalidator_type(conf{this->readers_, this->writers_});
+        return invalidator_type(invalidator_conf{this->readers_, this->writers_});
     }
     
 private:

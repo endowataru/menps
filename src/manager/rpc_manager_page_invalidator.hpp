@@ -24,7 +24,7 @@ public:
     ,   const page_id_t             pg_id
     ) const
     {
-        for (const auto proc : this->readers_)
+        MGBASE_RANGE_BASED_FOR(const auto proc, this->readers_)
         {
             // A new writer must be different from the existing readers.
             //MGBASE_ASSERT(proc != src_proc);
@@ -39,7 +39,7 @@ public:
                 actv.enable_flush(proc, seg_id, pg_id);
             }
         }
-        for (const auto proc : this->writers_)
+        MGBASE_RANGE_BASED_FOR(const auto proc, this->writers_)
         {
             // A new writer must be different from the existing writers.
             MGBASE_ASSERT(proc != src_proc);

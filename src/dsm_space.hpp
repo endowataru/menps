@@ -85,25 +85,28 @@ public:
         mgcom::collective::barrier();
     }
     
+private:
+    // Note: Old GCC doesn't allow to use local class for template arguments.
+    struct segment_conf {
+        rpc_manager_space::proxy&   manager;
+        segment_id_t                seg_id;
+        mgbase::size_t              num_pages;
+        mgbase::size_t              page_size;
+        mgbase::size_t              block_size;
+        void*                       app_ptr;
+    };
+    
+public:
     virtual segment_ref make_segment(
         mgbase::size_t  size_in_bytes
     ,   mgbase::size_t  page_size_in_bytes
     ,   mgbase::size_t  block_size_in_bytes
     ) MGBASE_OVERRIDE
     {
-        struct conf {
-            rpc_manager_space::proxy&   manager;
-            segment_id_t                seg_id;
-            mgbase::size_t              num_pages;
-            mgbase::size_t              page_size;
-            mgbase::size_t              block_size;
-            void*                       app_ptr;
-        };
-        
         const auto seg_id = make_new_segment_id();
         
         return segment_ref(new dsm_segment(
-            conf{
+            segment_conf{
                 manager_pr_
             ,   seg_id
             ,   mgbase::roundup_divide(size_in_bytes, page_size_in_bytes)

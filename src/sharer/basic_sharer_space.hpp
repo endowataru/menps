@@ -24,7 +24,7 @@ class basic_sharer_space
 public:
     template <typename Conf>
     explicit basic_sharer_space(const Conf& conf)
-        : segs_(conf.num_segments)
+        : segs_(mgbase::make_unique<segment_ptr_type []>(conf.num_segments))
     { }
     
 protected:
@@ -56,8 +56,8 @@ private:
         return static_cast<derived_type&>(*this);
     }
     
-    lock_type                       lock_;
-    std::vector<segment_ptr_type>   segs_;
+    lock_type                                   lock_;
+    mgbase::unique_ptr<segment_ptr_type []>     segs_;
 };
 
 } // namespace mgdsm
