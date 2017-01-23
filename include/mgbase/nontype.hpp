@@ -16,7 +16,31 @@ struct nontype
     }
 };
 
+#if 1
+
+namespace detail {
+
+template <typename T>
+struct nontype_deducer {
+    template <T Value>
+    nontype<T, Value> make() {
+        return nontype<T, Value>();
+    }
+};
+
+template <typename T>
+inline nontype_deducer<T> make_nontype_deducer(T /*ignored*/) {
+    return nontype_deducer<T>();
+}
+
+} // namespace detail
+
+#define MGBASE_NONTYPE(v)           (::mgbase::detail::make_nontype_deducer(v).make<v>())
+#define MGBASE_NONTYPE_TEMPLATE(v)  (::mgbase::detail::make_nontype_deducer(v).template make<v>())
+
+#else
 #define MGBASE_NONTYPE(v)   (::mgbase::nontype<decltype(v), v>{})
+#endif
 
 } // namespace mgbase
 

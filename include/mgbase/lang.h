@@ -310,7 +310,11 @@
         #define MGBASE_DEPRECATED       __attribute__((deprecated))
     #endif
     
-    #define MGBASE_ALIGNOF(x)   alignof(x)
+    #ifdef  MGBASE_CXX11_ALIGNOF_SUPPORTED
+        #define MGBASE_ALIGNOF(x)   alignof(x)
+    #else
+        #define MGBASE_ALIGNOF(x)   __alignof(x)
+    #endif
     
     namespace mgbase {
         using ::uint8_t;

@@ -8,6 +8,7 @@
 #include <mgbase/type_traits/is_trivially_destructible.hpp>
 #include <mgbase/assert.hpp>
 #include <array>
+#include <new> // for placement new
 
 namespace mgbase {
 

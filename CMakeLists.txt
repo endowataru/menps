@@ -181,6 +181,10 @@ else()
             
             # Disabled on old versions
             $<$<VERSION_LESS:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wno-logical-op>
+            
+            # Prevent too many errors
+            #-fmax-errors=${error_limit}
+            -Wfatal-errors
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         target_compile_options(mgbase-options INTERFACE
@@ -349,6 +353,28 @@ thread_local int x;
 int main() { return 0; }
 "
 MGBASE_CXX11_THREAD_LOCAL_SUPPORTED
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+int main() { alignof(int); return 0; }
+"
+MGBASE_CXX11_ALIGNOF_SUPPORTED
+)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+struct A {
+    A() { }
+    A(const A&) = delete;
+    A(A&&) { }
+    A& operator = (const A&) = delete;
+    A& operator = (A&) { return *this; }
+};
+A f(A a) { return a; };
+int main() { return 0; }
+"
+MGBASE_CXX11_RETURN_MOVE_ONLY_ARGUMENT_SUPPORTED
 )
 
 add_library(mgbase
