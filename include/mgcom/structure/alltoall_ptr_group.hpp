@@ -17,6 +17,9 @@ public:
         mgcom::collective::allgather(&ptr, &ptrs_[0], 1);
     }
     
+    alltoall_ptr_group(const alltoall_ptr_group&) = delete;
+    alltoall_ptr_group& operator = (const alltoall_ptr_group&) = delete;
+    
     T* at_process(const process_id_t proc) const MGBASE_NOEXCEPT
     {
         MGBASE_ASSERT(valid_process_id(proc));
