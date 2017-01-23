@@ -106,6 +106,48 @@ public:
     
     virtual void send_async(send_async_params) = 0;
     
+    void recv_async(
+        void* const                     buf
+    ,   const int                       num_bytes
+    ,   const int                       src_rank
+    ,   const int                       tag
+    ,   const MPI_Comm                  comm
+    ,   MPI_Status* const               status_result
+    ,   const mgbase::callback<void ()> on_complete
+    ) {
+        this->recv_async(recv_async_params{
+            recv_params{
+                buf
+            ,   num_bytes
+            ,   src_rank
+            ,   tag
+            ,   comm
+            ,   status_result
+            }
+        ,   on_complete
+        });
+    }
+    
+    void send_async(
+        const void* const               buf
+    ,   const int                       num_bytes
+    ,   const int                       dest_rank
+    ,   const int                       tag
+    ,   const MPI_Comm                  comm
+    ,   const mgbase::callback<void ()> on_complete
+    ) {
+        this->send_async(send_async_params{
+            send_params{
+                buf
+            ,   num_bytes
+            ,   dest_rank
+            ,   tag
+            ,   comm
+            }
+        ,   on_complete
+        });
+    }
+    
     // Collective communication
     
     virtual void barrier(barrier_params);
