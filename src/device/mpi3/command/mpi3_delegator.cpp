@@ -106,7 +106,7 @@ struct put_async_closure
         
         // TODO: To complete RMA, we need to flush this.
         //       This operation is very expensive.
-        MPI_Win_flush_all(pb.win);
+        MPI_Win_flush(pb.dest_rank, pb.win);
         
         return true;
     }
