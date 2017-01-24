@@ -274,6 +274,69 @@
         #define MGBASE_DEFAULT_NOEXCEPT
     #endif
     
+    // TODO: separate constructor and assignment
+    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT(T) \
+            T(T&&) MGBASE_DEFAULT_NOEXCEPT = default; \
+            T& operator = (T&&) MGBASE_DEFAULT_NOEXCEPT = default;
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_1(T, m0) \
+            MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT(T)
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(T, base) \
+            MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT(T)
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(T, base, m0) \
+            MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT(T)
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_2(T, base, m0, m1) \
+            MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT(T)
+        
+    #else
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_1(T, m0) \
+            T(T&& other) MGBASE_NOEXCEPT \
+                : m0(::mgbase::move(other.m0)) \
+            { } \
+            T& operator = (T&& other) MGBASE_NOEXCEPT { \
+                this->m0 = ::mgbase::move(other.m0); \
+                return *this; \
+            }
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(T, base) \
+            T(T&& other) MGBASE_NOEXCEPT \
+                : base(::mgbase::move(other)) \
+            { } \
+            T& operator = (T&& other) MGBASE_NOEXCEPT { \
+                base::operator=(mgbase::move(other)); \
+                return *this; \
+            }
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(T, base, m0) \
+            T(T&& other) MGBASE_NOEXCEPT \
+                : base(::mgbase::move(other)) \
+                , m0(::mgbase::move(other.m0)) \
+            { } \
+            T& operator = (T&& other) MGBASE_NOEXCEPT { \
+                base::operator=(::mgbase::move(other)); \
+                this->m0 = ::mgbase::move(other.m0); \
+                return *this; \
+            }
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_2(T, base, m0, m1) \
+            T(T&& other) MGBASE_NOEXCEPT \
+                : base(::mgbase::move(other)) \
+                , m0(::mgbase::move(other.m0)) \
+                , m1(::mgbase::move(other.m1)) \
+            { } \
+            T& operator = (T&& other) MGBASE_NOEXCEPT { \
+                base::operator=(::mgbase::move(other)); \
+                this->m0 = ::mgbase::move(other.m0); \
+                this->m1 = ::mgbase::move(other.m1); \
+                return *this; \
+            }
+    #endif
+    
+    
     #ifdef MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED
         #define MGBASE_RANGE_BASED_FOR(decl, ...) \
             for (decl : __VA_ARGS__)
