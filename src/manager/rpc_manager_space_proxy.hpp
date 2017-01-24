@@ -37,29 +37,25 @@ class rpc_manager_space::proxy
     : public basic_rpc_manager_space_proxy<rpc_manager_space_proxy_policy>
     , public manager_space_proxy
 {
+    typedef basic_rpc_manager_space_proxy<rpc_manager_space_proxy_policy>   base;
+    
 public:
     explicit proxy(rpc_manager_space& sp)
-        : sp_(sp)
+        : sp_(&sp)
         , a2a_(&sp)
     { }
     
     proxy(const proxy&) = delete;
     proxy& operator = (const proxy&) = delete;
     
-    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    proxy(proxy&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    proxy(proxy&& other) MGBASE_NOEXCEPT
-        : sp_(other.sp_)
-        , a2a_(mgbase::move(other.a2a_))
-    { }
-    #endif
+    // Note: precisely, there are two base classes
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_2(proxy, base, sp_, a2a_)
     
     virtual manager_segment_proxy_ptr make_segment_proxy(segment_id_t) MGBASE_OVERRIDE;
         // defined in rpc_manager_segment_proxy.hpp
     
     rpc_manager_space& get_space() const MGBASE_NOEXCEPT {
-        return sp_;
+        return *sp_;
     }
     
     // TODO: make these members private
@@ -74,7 +70,7 @@ public:
     }
     
 private:
-    rpc_manager_space& sp_;
+    rpc_manager_space* sp_;
     
     mgcom::structure::alltoall_ptr_group<rpc_manager_space> a2a_;
 };

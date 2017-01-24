@@ -27,23 +27,18 @@ struct sharer_space_proxy_policy
 class sharer_space::proxy
     : public basic_sharer_space_proxy<sharer_space_proxy_policy>
 {
+    typedef basic_sharer_space_proxy<sharer_space_proxy_policy> base;
+    
 public:
     explicit proxy(sharer_space& sp)
-        : sp_(sp)
-        , a2a_(&sp)
+        //: sp_(&sp)
+        : a2a_(&sp)
     { }
     
     proxy(const proxy&) = delete;
     proxy& operator = (const proxy&) = delete;
     
-    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    proxy(proxy&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    proxy(proxy&& other) MGBASE_NOEXCEPT
-        : sp_(other.sp_)
-        , a2a_(mgbase::move(other.a2a_))
-    { }
-    #endif
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(proxy, base, a2a_)
     
 private:
     friend class basic_sharer_space_proxy<sharer_space_proxy_policy>;
@@ -53,7 +48,7 @@ private:
         return this->a2a_.at_process(proc);
     }
     
-    sharer_space& sp_;
+    //sharer_space* sp_;
     
     mgcom::structure::alltoall_ptr_group<sharer_space> a2a_;
 };

@@ -18,23 +18,7 @@ public:
     space_ref(const space_ref&) = delete;
     space_ref& operator = (const space_ref&) = delete;
     
-    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    space_ref(space_ref&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    space_ref(space_ref&& other) MGBASE_NOEXCEPT
-        : sp_(mgbase::move(other.sp_))
-    { }
-    #endif
-    
-    #ifdef MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
-    space_ref& operator = (space_ref&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    space_ref& operator = (space_ref&& other) MGBASE_NOEXCEPT
-    {
-        this->sp_ = mgbase::move(other.sp_);
-        return *this;
-    }
-    #endif
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_1(space_ref, sp_)
     
     segment_ref make_segment(
         const mgbase::size_t    size_in_bytes
