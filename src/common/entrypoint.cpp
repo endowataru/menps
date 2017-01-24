@@ -92,7 +92,6 @@ void finalize()
     g_starter.reset();
 }
 
-endpoint* endpoint::endpoint_;
 
 namespace rma {
 

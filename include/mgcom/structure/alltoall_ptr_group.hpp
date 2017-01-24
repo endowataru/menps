@@ -20,23 +20,7 @@ public:
     alltoall_ptr_group(const alltoall_ptr_group&) = delete;
     alltoall_ptr_group& operator = (const alltoall_ptr_group&) = delete;
     
-    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    alltoall_ptr_group(alltoall_ptr_group&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    alltoall_ptr_group(alltoall_ptr_group&& other) MGBASE_NOEXCEPT
-        : ptrs_(mgbase::move(other.ptrs_))
-    { }
-    #endif
-    
-    #ifdef MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
-    alltoall_ptr_group& operator = (alltoall_ptr_group&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    alltoall_ptr_group& operator = (alltoall_ptr_group&& other) MGBASE_NOEXCEPT
-    {
-        this->ptrs_ = mgbase::move(other.ptrs_);
-        return *this;
-    }
-    #endif
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_1(alltoall_ptr_group, ptrs_)
     
     T* at_process(const process_id_t proc) const MGBASE_NOEXCEPT
     {

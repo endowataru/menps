@@ -55,22 +55,7 @@ public:
     message(const message&) = delete;
     message& operator = (const message&) = delete;
     
-    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    message(message&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    message(message&& other) MGBASE_NOEXCEPT
-        : base(mgbase::move(other))
-    { }
-    #endif
-    
-    #ifdef MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
-    message& operator = (message&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    message& operator = (message&& other) MGBASE_NOEXCEPT {
-        base::operator = (mgbase::move(other));
-        return *this;
-    }
-    #endif
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(message, base)
     
     mgbase::size_t size_in_bytes() const MGBASE_NOEXCEPT {
         return size_;
@@ -107,22 +92,7 @@ public:
     request_message(const request_message&) = delete;
     request_message& operator = (const request_message&) = delete;
     
-    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    request_message(request_message&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    request_message(request_message&& other) MGBASE_NOEXCEPT
-        : base(mgbase::move(other))
-    { }
-    #endif
-    
-    #ifdef MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
-    request_message& operator = (request_message&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    request_message& operator = (request_message&& other) MGBASE_NOEXCEPT {
-        base::operator = (mgbase::move(other));
-        return *this;
-    }
-    #endif
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(request_message, base)
     
     request_message(T* ptr, const mgbase::size_t size)
         : base(ptr, size)
@@ -141,22 +111,7 @@ public:
     reply_message(const reply_message&) = delete;
     reply_message& operator = (const reply_message&) = delete;
     
-    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    reply_message(reply_message&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    reply_message(reply_message&& other) MGBASE_NOEXCEPT
-        : base(mgbase::move(other))
-    { }
-    #endif
-    
-    #ifdef MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
-    reply_message& operator = (reply_message&&) MGBASE_NOEXCEPT_DEFAULT = default;
-    #else
-    reply_message& operator = (reply_message&& other) MGBASE_NOEXCEPT {
-        base::operator = (mgbase::move(other));
-        return *this;
-    }
-    #endif
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(reply_message, base)
     
     reply_message(T* ptr, const mgbase::size_t size)
         : base(ptr, size)

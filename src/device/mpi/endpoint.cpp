@@ -72,5 +72,8 @@ mgbase::unique_ptr<mpi_endpoint> make_endpoint(int* const argc, char*** const ar
 }
 
 } // namespace mpi
+
+endpoint* endpoint::endpoint_; // TODO
+
 } // namespace mgcom
 
