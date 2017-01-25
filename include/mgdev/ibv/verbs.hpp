@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <mgdev/common.hpp>
 
 #include "infiniband/verbs.h"
 

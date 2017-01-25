@@ -58,6 +58,7 @@ if(${MGDEV_DEVICE_MPI_SUPPORTED})
     )
     target_include_directories(mgdev-mpi
         PUBLIC  ./include
+                ${CMAKE_CURRENT_BINARY_DIR}
         PRIVATE ./src
     )
     target_link_libraries(mgdev-mpi
@@ -72,6 +73,7 @@ if(${MGDEV_DEVICE_IBV_SUPPORTED})
     )
     target_include_directories(mgdev-ibv
         PUBLIC  ./include
+                ${CMAKE_CURRENT_BINARY_DIR}
         PRIVATE ./src
     )
     target_link_libraries(mgdev-ibv
