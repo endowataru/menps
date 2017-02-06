@@ -112,6 +112,12 @@ private:
         
         MPI_Status status;
         
+        MGBASE_LOG_VERBOSE(
+            "msg:Waiting for RPC request...\t"
+            "tag:{}"
+        ,   this->conf_.tag
+        );
+        
         this->conf_.mi->recv_async({
             {
                 &buf
@@ -141,8 +147,10 @@ private:
         
         MGBASE_LOG_DEBUG(
             "msg:Received RPC request.\t"
-            "cli_rank:{}"
+            "cli_rank:{}\t"
+            "tag:{}"
         ,   cli_rank
+        ,   this->conf_.tag
         );
         
         return { true, cli_rank };

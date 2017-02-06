@@ -16,7 +16,8 @@ class rpc_base
 {
 public:
     explicit rpc_base(mpi_interface& mi)
-        : comm_(
+        : mi_(mi)
+        , comm_(
             mgdev::mpi::communicator::duplicate(
                 mi
             ,   MPI_COMM_WORLD // TODO
@@ -26,14 +27,22 @@ public:
     { }
     
 protected:
+    mpi_interface& get_mpi_interface() {
+        return mi_;
+    }
+    
     MPI_Comm get_comm() const MGBASE_NOEXCEPT
     {
         return comm_.get();
     }
     
-    int get_server_tag() const MGBASE_NOEXCEPT
+    int get_send_tag(const rpc::handler_id_t handler_id) const MGBASE_NOEXCEPT
     {
-        return 100; // TODO: adjustable
+        return handler_id;
+    }
+    int get_recv_tag(const mgbase::size_t reply_id) const MGBASE_NOEXCEPT
+    {
+        return rpc::constants::max_num_handlers + reply_id;
     }
     
     rpc::rpc_invoker& get_invoker() MGBASE_NOEXCEPT
@@ -42,6 +51,7 @@ protected:
     }
     
 private:
+    mpi_interface&      mi_;
     rpc::rpc_invoker    invoker_;
     
     mgdev::mpi::communicator comm_;

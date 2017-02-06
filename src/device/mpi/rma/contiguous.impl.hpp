@@ -84,7 +84,21 @@ public:
     {
         const int tag = this->new_tag();
         
-        const am_read::argument_type arg = {
+        // Wait for the local completion of MPI_Irecv().
+        
+        this->mi_.recv_async(mgdev::mpi::recv_async_params{
+            mgdev::mpi::recv_params{
+                rma::untyped::to_raw_pointer(params.dest_laddr)
+            ,   static_cast<int>(params.size_in_bytes)
+            ,   static_cast<int>(params.src_proc)
+            ,   tag
+            ,   this->get_comm()
+            ,   MPI_STATUS_IGNORE
+            }
+        ,   params.on_complete
+        });
+        
+        const am_read::argument_type arg{
             tag
         ,   rma::untyped::to_raw_pointer(params.src_raddr)
         ,   params.size_in_bytes
@@ -92,33 +106,22 @@ public:
         
         // The completion of RPC is ignored.
         
-        const bool ret = rpc::try_remote_call_async<am_read>(
+        while (! rpc::try_remote_call_async<am_read>(
             req_
         ,   params.src_proc
         ,   arg
         ,   mgbase::make_callback_empty()
-        );
-        
-        if (ret)
-        {
-            // Wait for the local completion of MPI_Irecv().
-            
-            this->mi_.recv_async(mgdev::mpi::recv_async_params{
-                mgdev::mpi::recv_params{
-                    rma::untyped::to_raw_pointer(params.dest_laddr)
-                ,   static_cast<int>(params.size_in_bytes)
-                ,   static_cast<int>(params.src_proc)
-                ,   tag
-                ,   this->get_comm()
-                ,   MPI_STATUS_IGNORE
-                }
-            ,   params.on_complete
-            });
+        )) {
+            ult::yield(); // will be removed
         }
         
-        MGBASE_LOG_DEBUG("msg:{}"
-            "\tsrc_proc:{}\tremote:{:x}\tlocal:{:x}\tsize_in_bytes:{}\ttag:{}"
-        ,   (ret ? "Started emulated get." : "Failed to start emulated get.")
+        MGBASE_LOG_DEBUG(
+            "msg:Started emulated get.\t"
+            "src_proc:{}\t"
+            "remote:{:x}\t"
+            "local:{:x}\t"
+            "size_in_bytes:{}\t"
+            "tag:{}"
         ,   params.src_proc
         ,   static_cast<mgbase::intptr_t>(rma::to_integer(params.src_raddr))
         ,   static_cast<mgbase::intptr_t>(rma::to_integer(params.dest_laddr))
@@ -126,7 +129,7 @@ public:
         ,   arg.tag
         );
         
-        return ret;
+        return true;
     }
     
 private:
@@ -180,7 +183,18 @@ public:
     {
         const int tag = this->new_tag();
         
-        const am_write::argument_type arg = {
+        this->mi_.send_async(mgdev::mpi::send_async_params{
+            mgdev::mpi::send_params{
+                rma::untyped::to_raw_pointer(params.src_laddr)
+            ,   static_cast<int>(params.size_in_bytes)
+            ,   static_cast<int>(params.dest_proc)
+            ,   tag
+            ,   this->get_comm()
+            }
+        ,   mgbase::make_callback_empty()
+        });
+        
+        const am_write::argument_type arg{
             tag
         ,   rma::untyped::to_raw_pointer(params.dest_raddr)
         ,   params.size_in_bytes
@@ -188,30 +202,20 @@ public:
         
         // Wait for the completion of MPI_Irecv() at the destination node.
         
-        const bool ret = rpc::try_remote_call_async<am_write>(
+        while (! rpc::try_remote_call_async<am_write>(
             req_
         ,   params.dest_proc
         ,   arg
         ,   params.on_complete
-        );
-        
-        if (MGBASE_LIKELY(ret))
-        {
-            this->mi_.send_async(mgdev::mpi::send_async_params{
-                mgdev::mpi::send_params{
-                    rma::untyped::to_raw_pointer(params.src_laddr)
-                ,   static_cast<int>(params.size_in_bytes)
-                ,   static_cast<int>(params.dest_proc)
-                ,   tag
-                ,   this->get_comm()
-                }
-            ,   mgbase::make_callback_empty()
-            });
+        )) {
+            ult::yield(); // will be removed
         }
         
-        MGBASE_LOG_DEBUG("msg:{}"
-            "\tdest_proc:{}\tremote:{:x}\tlocal:{:x}\tsize_in_bytes:{}\ttag:{}"
-        ,   (ret ? "Started emulated put." : "Failed to start emulated put.")
+        MGBASE_LOG_DEBUG("msg:Started emulated put.\t"
+            "dest_proc:{}\t"
+            "remote:{:x}\t"
+            "local:{:x}\t"
+            "size_in_bytes:{}\ttag:{}"
         ,   params.dest_proc
         ,   static_cast<mgbase::intptr_t>(rma::to_integer(params.dest_raddr))
         ,   static_cast<mgbase::intptr_t>(rma::to_integer(params.src_laddr))
@@ -219,7 +223,7 @@ public:
         ,   arg.tag
         );
         
-        return ret;
+        return true;
     }
     
 private:

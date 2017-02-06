@@ -14,13 +14,11 @@ class rpc_client
     typedef ult::mutex          mutex_type;
     typedef rpc_message_buffer  buffer_type;
     
-    static const int tag_start = 1000;
     static const mgbase::size_t num_tags = 1000;
     
 public:
     rpc_client(mpi_interface& mi, endpoint& ep)
         : rpc_base(mi)
-        , mi_(mi)
         , ep_(ep)
         , tags_(mgbase::make_unique<tag_info []>(num_tags))
     {
@@ -61,8 +59,8 @@ public:
         // Set the callback.
         this->tags_[id].on_complete = params.on_complete;
         
-        const auto send_tag = this->get_server_tag();
-        const auto recv_tag = tag_start + static_cast<int>(id);
+        const auto send_tag = this->get_send_tag(params.handler_id);
+        const auto recv_tag = this->get_recv_tag(id);
         
         const auto comm = this->get_comm();
         
@@ -78,8 +76,10 @@ public:
         
         ult::sync_flag send_finished;
         
+        auto& mi = this->get_mpi_interface();
+        
         //mpi::irsend( // TODO: Introduce buffer management
-        mi_.send_async({
+        mi.send_async({
             {
                 &msg_buf                                    // buf
             ,   static_cast<int>(sizeof(buffer_type))       // size_in_bytes
@@ -90,7 +90,7 @@ public:
         ,   mgbase::make_callback_notify(&send_finished)    // on_complete
         });
         
-        mi_.recv_async({
+        mi.recv_async({
             {
                 params.return_ptr                       // buf
             ,   static_cast<int>(params.return_size)    // size_in_bytes
@@ -151,20 +151,11 @@ private:
         }
     };
     
-    int get_send_tag() {    
-        return 100; // FIXME
-    }
-    
-    int get_recv_tag() {
-        return 200; // FIXME
-    }
-    
     struct tag_info
     {
         mgbase::callback<void ()> on_complete;
     };
     
-    mpi_interface&  mi_;
     endpoint&       ep_;
     
     mutex_type mtx_;
