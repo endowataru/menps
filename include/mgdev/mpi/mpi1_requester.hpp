@@ -106,6 +106,40 @@ public:
     
     virtual void send_async(send_async_params) = 0;
     
+    void recv(
+        void* const                     buf
+    ,   const int                       num_bytes
+    ,   const int                       src_rank
+    ,   const int                       tag
+    ,   const MPI_Comm                  comm
+    ,   MPI_Status* const               status_result
+    ) {
+        this->recv(recv_params{
+            buf
+        ,   num_bytes
+        ,   src_rank
+        ,   tag
+        ,   comm
+        ,   status_result
+        });
+    }
+    
+    void send(
+        const void* const               buf
+    ,   const int                       num_bytes
+    ,   const int                       dest_rank
+    ,   const int                       tag
+    ,   const MPI_Comm                  comm
+    ) {
+        this->send(send_params{
+            buf
+        ,   num_bytes
+        ,   dest_rank
+        ,   tag
+        ,   comm
+        });
+    }
+    
     void recv_async(
         void* const                     buf
     ,   const int                       num_bytes
