@@ -199,20 +199,13 @@ private:
     ,   const int           reply_size
     )
     {
-        ult::sync_flag flag;
-        
-        this->conf_.mi->send_async({
-            {
-                reply_data
-            ,   reply_size
-            ,   cli_rank
-            ,   reply_tag
-            ,   this->conf_.comm
-            }
-        ,   mgbase::make_callback_notify(&flag)
-        });
-        
-        flag.wait();
+        this->conf_.mi->send(
+            reply_data
+        ,   reply_size
+        ,   cli_rank
+        ,   reply_tag
+        ,   this->conf_.comm
+        );
     }
     
     bool is_finished() const MGBASE_NOEXCEPT

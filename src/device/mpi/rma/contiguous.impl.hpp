@@ -65,8 +65,12 @@ private:
             ,   mgbase::make_callback_notify(&flag)
             });
             
-            MGBASE_LOG_DEBUG("msg:Started sending data for emulated get."
-                "\tsrc_proc:{}\taddr:{:x}\tsize_in_bytes:{}\ttag:{}"
+            MGBASE_LOG_DEBUG(
+                "msg:Started sending data for emulated get.\t"
+                "src_proc:{}\t"
+                "addr:{:x}\t"
+                "size_in_bytes:{}\t"
+                "tag:{}"
             ,   params.source
             ,   reinterpret_cast<mgbase::intptr_t>(arg.src_ptr)
             ,   arg.size_in_bytes
@@ -164,7 +168,8 @@ private:
             ,   mgbase::make_callback_notify(&flag)
             });
             
-            MGBASE_LOG_DEBUG("msg:Start receiving data for emulated put."
+            MGBASE_LOG_DEBUG(
+                "msg:Start receiving data for emulated put."
                 "\tsrc_proc:{}\taddr:{:x}\tsize_in_bytes:{}\ttag:{}"
             ,   params.source
             ,   reinterpret_cast<mgbase::intptr_t>(arg.dest_ptr)
@@ -211,7 +216,8 @@ public:
             ult::yield(); // will be removed
         }
         
-        MGBASE_LOG_DEBUG("msg:Started emulated put.\t"
+        MGBASE_LOG_DEBUG(
+            "msg:Started emulated put.\t"
             "dest_proc:{}\t"
             "remote:{:x}\t"
             "local:{:x}\t"
