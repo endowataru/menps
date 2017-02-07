@@ -47,6 +47,16 @@ public:
             
             desc.stack_ptr = stack_last_ptr;
             desc.stack_size = stack_size;
+            
+            MGBASE_LOG_VERBOSE(
+                "msg:Prepare thread descriptor.\t"
+                "i:{}\t"
+                "stack_ptr:0x{:x}\t"
+                //"stack_size:0x{:x}"
+            ,   i
+            ,   reinterpret_cast<mgbase::uintptr_t>(stack_last_ptr)
+            //,   stack_size
+            );
         }
         
         bufs_.collective_initialize(local_descs_);
