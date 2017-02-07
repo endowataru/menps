@@ -8,7 +8,9 @@ namespace mgdsm {
 
 class segment_ref
 {
-public:
+public: 
+    segment_ref() MGBASE_DEFAULT_NOEXCEPT = default;
+
     explicit segment_ref(segment* const seg)
         : seg_(seg)
     { }
