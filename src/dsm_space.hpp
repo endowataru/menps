@@ -69,7 +69,7 @@ public:
         , fault_upgrader_(
             page_fault_upgrader::config{ app_sp_, app_idx_, hist_ }
         )
-        , new_seg_id_(100 * mgcom::current_process_id())
+        , new_seg_id_offset_(0)
     {
         this->manager_->set_activater(this->sharer_pr_);
         
@@ -103,6 +103,8 @@ public:
     ,   mgbase::size_t  block_size_in_bytes
     ) MGBASE_OVERRIDE
     {
+        MGBASE_ASSERT(size_in_bytes <= get_max_segment_size());
+        
         const auto seg_id = make_new_segment_id();
         
         return segment_ref(new dsm_segment(
@@ -237,8 +239,15 @@ private:
         return mgbase::next_in_bytes(this->get_sys_ptr(), get_address_space_size());
     }
     
-    segment_id_t make_new_segment_id() {
-        return new_seg_id_++; // TODO
+    segment_id_t make_new_segment_id()
+    {
+        MGBASE_ASSERT(new_seg_id_offset_ < get_num_segments_per_proc());
+        const segment_id_t seg_id =
+            mgcom::current_process_id() * get_num_segments_per_proc() + new_seg_id_offset_++;
+        
+        MGBASE_ASSERT(seg_id < get_num_segments());
+        
+        return seg_id;
     }
     
     mgbase::size_t get_max_segment_size() MGBASE_NOEXCEPT {
@@ -252,6 +261,9 @@ private:
     mgbase::size_t get_num_segments() MGBASE_NOEXCEPT {
         return 1ull << 10;
     }
+    mgbase::size_t get_num_segments_per_proc() MGBASE_NOEXCEPT {
+        return 4;
+    }
     
     const std::string                   reg_name_;
     aliasing_mapped_region              reg_;
@@ -264,7 +276,7 @@ private:
     app_space_indexer                   app_idx_;
     access_history                      hist_;
     page_fault_upgrader                 fault_upgrader_;
-    segment_id_t                        new_seg_id_;
+    segment_id_t                        new_seg_id_offset_;
 };
 
 } // namespace mgdsm
