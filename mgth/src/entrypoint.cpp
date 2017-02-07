@@ -13,9 +13,40 @@ namespace mgth {
 namespace /*unnamed*/ {
 
 mgdsm::space_ref g_dsm;
-#if 0
-mgdsm::dsm_interface_ptr g_dsm;
-#endif
+mgdsm::segment_ref g_seg_heap;
+
+class contiguous_allocator
+    : public mgbase::allocatable
+{
+public:
+    contiguous_allocator(void* const ptr, const mgbase::size_t size)
+        : ms_(::create_mspace_with_base(ptr, size, 1))
+    { }
+    
+    contiguous_allocator()
+    {
+        ::destroy_mspace(this->ms_);
+    }
+    
+    virtual void* aligned_alloc(
+        const mgbase::size_t //alignment // TODO
+    ,   const mgbase::size_t size_in_bytes
+    )
+    MGBASE_OVERRIDE
+    {
+        return ::mspace_malloc(this->ms_, size_in_bytes);
+    }
+    
+    virtual void free(void* const ptr) MGBASE_OVERRIDE
+    {
+        ::mspace_free(this->ms_, ptr);
+    }
+    
+private:
+    ::mspace ms_;
+};
+
+mgbase::unique_ptr<contiguous_allocator> g_heap_alloc;
 
 dist_scheduler_ptr g_sched;
 
@@ -80,58 +111,21 @@ scheduler& get_scheduler()
 
 } // namespace ult
 
-#if 0
 namespace dsm {
 
 namespace untyped {
 
-void* allocate(mgbase::size_t alignment, mgbase::size_t size_in_bytes)
+void* allocate(const mgbase::size_t alignment, const mgbase::size_t size_in_bytes)
 {
-    return g_dsm->allocate(size_in_bytes, 4096 /*TODO*/);
+    return g_heap_alloc->aligned_alloc(alignment, size_in_bytes);
 }
 
-void deallocate(void* p)
+void deallocate(void* const p)
 {
-    g_dsm->deallocate(p);
+    g_heap_alloc->free(p);
 }
 
 } // namespace untyped
-
-} // namespace dsm
-#endif
-
-namespace dsm {
-
-class segment_allocator
-    : public mgbase::allocatable
-{
-public:
-    segment_allocator(void* const ptr, const mgbase::size_t size)
-        : ms_(::create_mspace_with_base(ptr, size, 1))
-    { }
-    
-    ~segment_allocator()
-    {
-        ::destroy_mspace(this->ms_);
-    }
-    
-    virtual void* aligned_alloc(
-        const mgbase::size_t //alignment // TODO
-    ,   const mgbase::size_t size_in_bytes
-    )
-    MGBASE_OVERRIDE
-    {
-        return ::mspace_malloc(this->ms_, size_in_bytes);
-    }
-    
-    virtual void free(void* const ptr) MGBASE_OVERRIDE
-    {
-        ::mspace_free(this->ms_, ptr);
-    }
-    
-private:
-    ::mspace ms_;
-};
 
 } // namespace dsm
 
@@ -154,7 +148,14 @@ int main(int argc, char* argv[])
     {
         auto stack_seg = mgth::g_dsm.make_segment(64ull << 20, 16ull << 10, 4096 /*4KB*/);
         
-        //mgth::g_dsm.enable_on_this_thread();
+        // Enable SEGV handler temporarily to allocate the heap.
+        mgth::g_dsm.enable_on_this_thread();
+        
+        mgth::g_seg_heap = mgth::g_dsm.make_segment(64ull << 20, 16ull << 10, 4096 /*4KB*/);
+        mgth::g_heap_alloc = mgbase::make_unique<mgth::contiguous_allocator>(mgth::g_seg_heap.get_ptr(), mgth::g_seg_heap.get_size_in_bytes());
+        
+        // Disable SEGV handler again.
+        mgth::g_dsm.disable_on_this_thread();
         
         //mgth::dsm::segment_allocator stack_alloc(stack_seg.get_ptr(), stack_seg.get_size_in_bytes());
         
@@ -174,7 +175,6 @@ int main(int argc, char* argv[])
         // Finalize the scheduler.
         mgth::g_sched.reset();
         
-        //mgth::g_dsm.disable_on_this_thread();
     }
     
     // Finalize DSM.
