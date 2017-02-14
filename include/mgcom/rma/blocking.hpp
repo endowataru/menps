@@ -86,7 +86,7 @@ inline write_params<Remote> make_write_params(
         dest_proc
     ,   dest_rptr
     ,   mgbase::reinterpret_pointer_cast<Remote>(src_lptr)
-    ,   num_elems * mgbase::runtime_size_of<Remote>()
+    ,   num_elems
     };
 }
 
