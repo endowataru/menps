@@ -20,7 +20,7 @@ protected:
         : page_size_(conf.page_size)
         , num_pages_(conf.num_pages)
         , block_size_(conf.block_size)
-        , pgs_(new page_type[num_pages_ / Policy::number_of_processes()])
+        , pgs_(new page_type[num_pages_per_proc()])
     { }
     
 public:
@@ -43,7 +43,7 @@ public:
         
         const auto index = pg_id / Policy::number_of_processes();
         
-        MGBASE_ASSERT(index < mgbase::roundup_divide(num_pages_, Policy::number_of_processes()));
+        MGBASE_ASSERT(index < num_pages_per_proc());
         
         MGBASE_ASSERT(pg_id % Policy::number_of_processes() == Policy::current_process_id());
         
@@ -51,6 +51,10 @@ public:
     }
     
 private:
+    mgbase::size_t num_pages_per_proc() {
+        return mgbase::roundup_divide(num_pages_, Policy::number_of_processes());
+    }
+    
     mgbase::size_t page_size_;
     mgbase::size_t num_pages_;
     
