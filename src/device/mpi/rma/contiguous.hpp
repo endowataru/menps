@@ -2,7 +2,7 @@
 #pragma once
 
 #include "rma.hpp"
-#include <mgcom/rpc/requester.hpp>
+#include <mgcom/rma/requester.hpp>
 #include "device/mpi/mpi_interface.hpp"
 
 namespace mgcom {
@@ -18,10 +18,10 @@ public:
     virtual ~emulated_contiguous_requester();
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_read_async(const rma::untyped::read_params&) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> async_read(const rma::untyped::read_params&) MGBASE_OVERRIDE;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_write_async(const rma::untyped::write_params&) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> async_write(const rma::untyped::write_params&) MGBASE_OVERRIDE;
     
 private:
     class impl;

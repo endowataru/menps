@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
             mgbase::stopwatch sw;
             sw.start();
             
-            mgcom::rma::fetch_and_add(
+            mgcom::rma::fetch_and_add<mgcom::rma::atomic_default_t>(
                 root_proc
             ,   remote_ptr
             ,   *value_ptr

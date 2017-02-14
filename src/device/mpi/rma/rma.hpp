@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgcom/rma.hpp>
+#include <mgcom/rma/requester.hpp>
 #include <mgcom/rpc/requester.hpp>
 #include <mgbase/unique_ptr.hpp>
 #include "device/mpi/mpi_interface.hpp"

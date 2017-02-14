@@ -104,44 +104,28 @@ protected:
             flags[pos].store(false);
             ++count;
             
-            while (!this->finished())
+            const auto t0 = mgbase::get_cpu_clock();
+            
+            mgcom::rma::async_read(
+                proc
+            ,   buf_.at_process(proc)
+            ,   lptrs[pos]
+            ,   msg_size_
+            ,   mgbase::make_callback_store_release(&flags[pos], MGBASE_NONTYPE(true))
+            );
+            /*const bool ret = mgcom::rma::try_read_async(
+                proc
+            ,   buf_.at_process(proc)
+            ,   lptrs[posted % lptrs.size()]
+            ,   msg_size_
+            ,   mgbase::make_callback_fetch_add_release(&count, MGBASE_NONTYPE(1))
+            );*/
+            
+            const auto t1 = mgbase::get_cpu_clock();
+            
+            if (count > num_startup_samples_)
             {
-                const auto t0 = mgbase::get_cpu_clock();
-                
-                const bool ret = mgcom::rma::try_read_async(
-                    proc
-                ,   buf_.at_process(proc)
-                ,   lptrs[pos]
-                ,   msg_size_
-                ,   mgbase::make_callback_store_release(&flags[pos], MGBASE_NONTYPE(true))
-                );
-                /*const bool ret = mgcom::rma::try_read_async(
-                    proc
-                ,   buf_.at_process(proc)
-                ,   lptrs[posted % lptrs.size()]
-                ,   msg_size_
-                ,   mgbase::make_callback_fetch_add_release(&count, MGBASE_NONTYPE(1))
-                );*/
-                
-                const auto t1 = mgbase::get_cpu_clock();
-                
-                if (ret)
-                {
-                    if (count > num_startup_samples_)
-                    {
-                        info.overhead.add(t1 - t0);
-                    }
-                    
-                    /*if (++posted > num_startup_samples_)
-                    {
-                        info.overhead.add(t1 - t0);
-                    }*/
-                    break;
-                }
-                else {
-                    // busy loop
-                    //mgbase::ult::this_thread::yield();
-                }
+                info.overhead.add(t1 - t0);
             }
             
             pos = (pos + 1) % num_local_bufs;

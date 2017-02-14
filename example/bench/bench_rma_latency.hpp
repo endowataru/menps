@@ -72,7 +72,7 @@ protected:
             
             const auto t0 = mgbase::get_cpu_clock();
             
-            mgcom::rma::read_async(
+            mgcom::rma::async_read(
                 proc
             ,   buf_.at_process(proc)
             ,   lptr

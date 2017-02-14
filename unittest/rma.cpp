@@ -82,7 +82,7 @@ TEST_F(RmaBasic, ConcurrentGet)
     }
     
     for (vec_type::iterator itr = ptrs.begin(); itr != ptrs.end(); ++itr) {
-        mgcom::rma::read_async(
+        mgcom::rma::async_read(
             0
         ,   rptr
         ,   *itr
@@ -160,7 +160,7 @@ TEST_F(RmaAtomic, FetchAndAdd)
     
     const mgcom::rma::atomic_default_t diff = 100;
     
-    mgcom::rma::fetch_and_add(
+    mgcom::rma::fetch_and_add<mgcom::rma::atomic_default_t>(
         0
     ,   rptr
     ,   diff
@@ -196,7 +196,7 @@ TEST_F(RmaAtomic, CompareAndSwap)
     {
         if (mgcom::current_process_id() == proc)
         {
-            mgcom::rma::compare_and_swap(
+            mgcom::rma::compare_and_swap<mgcom::rma::atomic_default_t>(
                 0
             ,   rptr
             ,   *buf

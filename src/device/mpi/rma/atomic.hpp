@@ -2,7 +2,7 @@
 #pragma once
 
 #include "rma.hpp"
-#include <mgcom/rpc/requester.hpp>
+#include <mgcom/rma/requester.hpp>
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {
@@ -18,16 +18,24 @@ public:
     virtual ~emulated_atomic_requester();
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_atomic_read_async(const rma::atomic_read_params<rma::atomic_default_t>&) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> async_atomic_read(
+        const rma::async_atomic_read_params<rma::atomic_default_t>&
+    ) MGBASE_OVERRIDE;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_atomic_write_async(const rma::atomic_write_params<rma::atomic_default_t>&) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> async_atomic_write(
+        const rma::async_atomic_write_params<rma::atomic_default_t>&
+    ) MGBASE_OVERRIDE;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_compare_and_swap_async(const rma::compare_and_swap_params<rma::atomic_default_t>&) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> async_compare_and_swap(
+        const rma::async_compare_and_swap_params<rma::atomic_default_t>&
+    ) MGBASE_OVERRIDE;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_fetch_and_add_async(const rma::fetch_and_add_params<rma::atomic_default_t>&) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> async_fetch_and_add(
+        const rma::async_fetch_and_add_params<rma::atomic_default_t>&
+    ) MGBASE_OVERRIDE;
     
 private:
     class impl;

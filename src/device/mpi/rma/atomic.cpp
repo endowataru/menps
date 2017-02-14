@@ -20,20 +20,20 @@ emulated_atomic_requester::emulated_atomic_requester(rpc::requester& req)
 emulated_atomic_requester::~emulated_atomic_requester() = default;
 
 
-bool emulated_atomic_requester::try_atomic_read_async(const rma::atomic_read_params<rma::atomic_default_t>& params) {
-    return impl_->try_read(params);
+ult::async_status<void> emulated_atomic_requester::async_atomic_read(const rma::async_atomic_read_params<rma::atomic_default_t>& params) {
+    return impl_->atomic_read(params);
 }
 
-bool emulated_atomic_requester::try_atomic_write_async(const rma::atomic_write_params<rma::atomic_default_t>& params) {
-    return impl_->try_write(params);
+ult::async_status<void> emulated_atomic_requester::async_atomic_write(const rma::async_atomic_write_params<rma::atomic_default_t>& params) {
+    return impl_->atomic_write(params);
 }
 
-bool emulated_atomic_requester::try_compare_and_swap_async(const rma::compare_and_swap_params<rma::atomic_default_t>& params) {
-    return impl_->try_compare_and_swap(params);
+ult::async_status<void> emulated_atomic_requester::async_compare_and_swap(const rma::async_compare_and_swap_params<rma::atomic_default_t>& params) {
+    return impl_->compare_and_swap(params);
 }
 
-bool emulated_atomic_requester::try_fetch_and_add_async(const rma::fetch_and_add_params<rma::atomic_default_t>& params) {
-    return impl_->try_fetch_and_add(params);
+ult::async_status<void> emulated_atomic_requester::async_fetch_and_add(const rma::async_fetch_and_add_params<rma::atomic_default_t>& params) {
+    return impl_->fetch_and_add(params);
 }
 
 } // namespace mpi

@@ -18,9 +18,11 @@ public:
     { }
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_read_async(const untyped::read_params& params) MGBASE_OVERRIDE
+    virtual ult::async_status<void> async_read(
+        const untyped::read_params& params
+    ) MGBASE_OVERRIDE
     {
-        mi_.get_async({
+        return mi_.get_async({
             {
                 untyped::to_raw_pointer(params.dest_laddr)
             ,   static_cast<int>(params.src_proc)
@@ -30,14 +32,14 @@ public:
             }
         ,   params.on_complete
         });
-        
-        return true;
     }
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_write_async(const untyped::write_params& params) MGBASE_OVERRIDE
+    virtual ult::async_status<void> async_write(
+        const untyped::write_params& params
+    ) MGBASE_OVERRIDE
     {
-        mi_.put_async({
+        return mi_.put_async({
             {
                 untyped::to_raw_pointer(params.src_laddr)
             ,   static_cast<int>(params.dest_proc)
@@ -47,14 +49,14 @@ public:
             }
         ,   params.on_complete
         });
-        
-        return true;
     }
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_atomic_read_async(const atomic_read_params<atomic_default_t>& params) MGBASE_OVERRIDE
+    virtual ult::async_status<void> async_atomic_read(
+        const async_atomic_read_params<atomic_default_t>& params
+    ) MGBASE_OVERRIDE
     {
-        mi_.fetch_and_op_async({
+        return mi_.fetch_and_op_async({
             {
                 0 // parameter "value" is unused
             ,   params.dest_ptr
@@ -66,14 +68,14 @@ public:
             }
         ,   params.on_complete
         });
-        
-        return true;
     }
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_atomic_write_async(const atomic_write_params<atomic_default_t>& params) MGBASE_OVERRIDE
+    virtual ult::async_status<void> async_atomic_write(
+        const async_atomic_write_params<atomic_default_t>& params
+    ) MGBASE_OVERRIDE
     {
-        mi_.fetch_and_op_async({
+        return mi_.fetch_and_op_async({
             {
                 params.value
             ,   MGBASE_NULLPTR
@@ -85,14 +87,14 @@ public:
             }
         ,   params.on_complete
         });
-        
-        return true;
     }
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_compare_and_swap_async(const compare_and_swap_params<atomic_default_t>& params) MGBASE_OVERRIDE
+    virtual ult::async_status<void> async_compare_and_swap(
+        const async_compare_and_swap_params<atomic_default_t>& params
+    ) MGBASE_OVERRIDE
     {
-        mi_.compare_and_swap_async({
+        return mi_.compare_and_swap_async({
             {
                 params.expected
             ,   params.desired
@@ -104,14 +106,14 @@ public:
             }
         ,   params.on_complete
         });
-        
-        return true;
     }
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual bool try_fetch_and_add_async(const fetch_and_add_params<atomic_default_t>& params) MGBASE_OVERRIDE
+    virtual ult::async_status<void> async_fetch_and_add(
+        const async_fetch_and_add_params<atomic_default_t>& params
+    ) MGBASE_OVERRIDE
     {
-        mi_.fetch_and_op_async({
+        return mi_.fetch_and_op_async({
             {
                 params.value
             ,   params.result_ptr
@@ -123,8 +125,6 @@ public:
             }
         ,   params.on_complete
         });
-        
-        return true;
     }
     
 private:

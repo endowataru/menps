@@ -84,7 +84,7 @@ private:
     };
     
 public:
-    bool try_read_async(const rma::untyped::read_params& params)
+    ult::async_status<void> read_async(const rma::untyped::read_params& params)
     {
         const int tag = this->new_tag();
         
@@ -133,7 +133,7 @@ public:
         ,   arg.tag
         );
         
-        return true;
+        return ult::make_async_deferred<void>();
     }
     
 private:
@@ -184,7 +184,7 @@ private:
     };
     
 public:
-    bool try_write_async(const rma::untyped::write_params& params)
+    ult::async_status<void> write_async(const rma::untyped::write_params& params)
     {
         const int tag = this->new_tag();
         
@@ -229,7 +229,7 @@ public:
         ,   arg.tag
         );
         
-        return true;
+        return ult::make_async_deferred<void>();
     }
     
 private:

@@ -19,12 +19,12 @@ emulated_contiguous_requester::emulated_contiguous_requester(rpc::requester& req
 
 emulated_contiguous_requester::~emulated_contiguous_requester() = default;
 
-bool emulated_contiguous_requester::try_read_async(const rma::untyped::read_params& params) {
-    return impl_->try_read_async(params);
+ult::async_status<void> emulated_contiguous_requester::async_read(const rma::untyped::read_params& params) {
+    return impl_->read_async(params);
 }
 
-bool emulated_contiguous_requester::try_write_async(const rma::untyped::write_params& params) {
-    return impl_->try_write_async(params);
+ult::async_status<void> emulated_contiguous_requester::async_write(const rma::untyped::write_params& params) {
+    return impl_->write_async(params);
 }
 
 } // namespace mpi

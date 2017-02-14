@@ -20,12 +20,14 @@ class remote_ptr
 public:
     typedef untyped::remote_address     address_type;
     
+    #if 0
 #ifdef MGBASE_CXX11_SUPPORTED
     remote_ptr() MGBASE_NOEXCEPT MGBASE_EMPTY_DEFINITION
     
     template <typename U>
     /*implicit*/ remote_ptr(const remote_ptr<U>&) MGBASE_NOEXCEPT;
 #endif
+    #endif
     
     address_type to_address() const MGBASE_NOEXCEPT {
         return addr_;
@@ -37,11 +39,17 @@ public:
         return result;
     }
     
+    operator remote_ptr<const T>() const {
+        return this->template cast_to<const T>();
+    }
+    
 private:
+    #if 0
 #ifdef MGBASE_CXX11_SUPPORTED
     explicit remote_ptr(address_type addr)
         : addr_(addr) { }
 #endif
+    #endif
     
     friend class mgbase::pointer_core_access;
     

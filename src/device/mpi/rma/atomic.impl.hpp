@@ -57,7 +57,7 @@ private:
     };
     
 public:
-    bool try_read(const rma::atomic_read_params<T>& params)
+    ult::async_status<void> atomic_read(const rma::async_atomic_read_params<T>& params)
     {
         const typename am_read::argument_type arg = { to_raw_pointer(params.src_rptr) };
         
@@ -68,14 +68,17 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
         );
         
-        using rpc::try_remote_call_async;
-        return try_remote_call_async<am_read>(
+        while (! rpc::try_remote_call_async<am_read>(
             req_
         ,   params.src_proc
         ,   arg
         ,   params.dest_ptr
         ,   params.on_complete
-        );
+        )) {
+            ult::yield();
+        }
+        
+        return ult::make_async_deferred<void>();
     }
     
 private:
@@ -111,7 +114,7 @@ private:
     };
     
 public:
-    bool try_write(const rma::atomic_write_params<T>& params)
+    ult::async_status<void> atomic_write(const rma::async_atomic_write_params<T>& params)
     {
         const typename am_write::argument_type arg = {
             to_raw_pointer(params.dest_rptr)
@@ -126,13 +129,16 @@ public:
         ,   arg.value
         );
         
-        using rpc::try_remote_call_async;
-        return try_remote_call_async<am_write>(
+        while (! rpc::try_remote_call_async<am_write>(
             req_
         ,   params.dest_proc
         ,   arg
         ,   params.on_complete
-        );
+        )) {
+            ult::yield();
+        }
+        
+        return ult::make_async_deferred<void>();
     }
     
 private:
@@ -173,7 +179,7 @@ private:
     };
     
 public:
-    bool try_compare_and_swap(const rma::compare_and_swap_params<T>& params)
+    ult::async_status<void> compare_and_swap(const rma::async_compare_and_swap_params<T>& params)
     {
         const typename am_compare_and_swap::argument_type arg = {
             to_raw_pointer(params.target_rptr)
@@ -191,14 +197,17 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(params.result_ptr)
         );
         
-        using rpc::try_remote_call_async;
-        return try_remote_call_async<am_compare_and_swap>(
+        while (! rpc::try_remote_call_async<am_compare_and_swap>(
             req_
         ,   params.target_proc
         ,   arg
         ,   params.result_ptr
         ,   params.on_complete
-        );
+        )) {
+            ult::yield();
+        }
+        
+        return ult::make_async_deferred<void>();
     }
     
 private:
@@ -235,7 +244,7 @@ private:
     };
     
 public:
-    bool try_fetch_and_add(const rma::fetch_and_add_params<T>& params)
+    ult::async_status<void> fetch_and_add(const rma::async_fetch_and_add_params<T>& params)
     {
         const typename am_fetch_and_add::argument_type arg = {
             to_raw_pointer(params.target_rptr)
@@ -251,14 +260,17 @@ public:
         ,   reinterpret_cast<mgbase::uintptr_t>(params.result_ptr)
         );
         
-        using rpc::try_remote_call_async;
-        return try_remote_call_async<am_fetch_and_add>(
+        while (! rpc::try_remote_call_async<am_fetch_and_add>(
             req_
         ,   params.target_proc
         ,   arg
         ,   params.result_ptr
         ,   params.on_complete
-        );
+        )) {
+            ult::yield();
+        }
+        
+        return ult::make_async_deferred<void>();
     }
     
 private:
