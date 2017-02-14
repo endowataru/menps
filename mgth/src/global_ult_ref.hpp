@@ -93,7 +93,7 @@ public:
         
         mgcom::rma::atomic_default_t result{};
         
-        compare_and_swap(
+        mgcom::rma::compare_and_swap<mgcom::rma::atomic_default_t>(
             target_proc
         ,   lock_rptr
         ,   0
@@ -118,7 +118,7 @@ public:
         const auto target_proc = get_target_proc();
         const auto lock_rptr = desc_rptr_.member(&global_ult_desc::lock);
         
-        atomic_write(
+        mgcom::rma::atomic_write<mgcom::rma::atomic_default_t>(
             target_proc
         ,   lock_rptr
         ,   0
