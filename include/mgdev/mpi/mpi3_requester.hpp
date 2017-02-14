@@ -95,13 +95,17 @@ public:
     
     virtual void fetch_and_op(fetch_and_op_params);
     
-    virtual void get_async(get_async_params) = 0;
+    virtual ult::async_status<void> get_async(get_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
-    virtual void put_async(put_async_params) = 0;
+    virtual ult::async_status<void> put_async(put_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
-    virtual void compare_and_swap_async(compare_and_swap_async_params) = 0;
+    virtual ult::async_status<void> compare_and_swap_async(compare_and_swap_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
-    virtual void fetch_and_op_async(fetch_and_op_async_params) = 0;
+    virtual ult::async_status<void> fetch_and_op_async(fetch_and_op_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
     virtual MPI_Aint attach(attach_params) = 0;
     

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgdev/mpi/mpi.hpp>
+#include <mgdev/ult.hpp>
 #include <mgbase/callback.hpp>
 
 namespace mgdev {
@@ -102,9 +103,11 @@ public:
     
     virtual void send(send_params);
     
-    virtual void recv_async(recv_async_params) = 0;
+    virtual ult::async_status<void> recv_async(recv_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
-    virtual void send_async(send_async_params) = 0;
+    virtual ult::async_status<void> send_async(send_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
     void recv(
         void* const                     buf
@@ -140,7 +143,7 @@ public:
         });
     }
     
-    void recv_async(
+    ult::async_status<void> recv_async(
         void* const                     buf
     ,   const int                       num_bytes
     ,   const int                       src_rank
@@ -148,8 +151,9 @@ public:
     ,   const MPI_Comm                  comm
     ,   MPI_Status* const               status_result
     ,   const mgbase::callback<void ()> on_complete
-    ) {
-        this->recv_async(recv_async_params{
+    ) MGBASE_WARN_UNUSED_RESULT
+    {
+        return this->recv_async(recv_async_params{
             recv_params{
                 buf
             ,   num_bytes
@@ -162,15 +166,16 @@ public:
         });
     }
     
-    void send_async(
+    ult::async_status<void> send_async(
         const void* const               buf
     ,   const int                       num_bytes
     ,   const int                       dest_rank
     ,   const int                       tag
     ,   const MPI_Comm                  comm
     ,   const mgbase::callback<void ()> on_complete
-    ) {
-        this->send_async(send_async_params{
+    ) MGBASE_WARN_UNUSED_RESULT
+    {
+        return this->send_async(send_async_params{
             send_params{
                 buf
             ,   num_bytes
@@ -192,13 +197,17 @@ public:
     
     virtual void alltoall(alltoall_params);
     
-    virtual void barrier_async(barrier_async_params) = 0;
+    virtual ult::async_status<void> barrier_async(barrier_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
-    virtual void broadcast_async(broadcast_async_params) = 0;
+    virtual ult::async_status<void> broadcast_async(broadcast_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
-    virtual void allgather_async(allgather_async_params) = 0;
+    virtual ult::async_status<void> allgather_async(allgather_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
-    virtual void alltoall_async(alltoall_async_params) = 0;
+    virtual ult::async_status<void> alltoall_async(alltoall_async_params)
+        MGBASE_WARN_UNUSED_RESULT = 0;
     
     // Communicators
     
