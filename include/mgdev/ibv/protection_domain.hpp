@@ -8,7 +8,6 @@ namespace mgdev {
 namespace ibv {
 
 class protection_domain
-    : mgbase::noncopyable
 {
 public:
     protection_domain()
@@ -19,6 +18,9 @@ public:
         if (pd_ != MGBASE_NULLPTR)
             dealloc();
     }
+    
+    protection_domain(const protection_domain&) = delete;
+    protection_domain& operator =  (const protection_domain&) = delete;
     
     void alloc(ibv_context& ctx)
     {

@@ -9,7 +9,6 @@ namespace mgdev {
 namespace ibv {
 
 class context
-    : mgbase::noncopyable
 {
 public:
     context()
@@ -20,6 +19,9 @@ public:
         if (ctx_ != MGBASE_NULLPTR)
             close();
     }
+    
+    context(const context&) = delete;
+    context& operator =  (const context&) = delete;
     
     void open(ibv_device& dev)
     {

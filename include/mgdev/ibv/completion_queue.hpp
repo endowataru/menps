@@ -9,7 +9,6 @@ namespace mgdev {
 namespace ibv {
 
 class completion_queue
-    : mgbase::noncopyable
 {
     static const mgbase::uint32_t num_cqe = 1 << 18;
     
@@ -21,6 +20,9 @@ public:
         if (cq_ != MGBASE_NULLPTR)
             destroy();
     }
+    
+    completion_queue(const completion_queue&) = delete;
+    completion_queue& operator =  (const completion_queue&) = delete;
     
     void create(ibv_context& ctx)
     {

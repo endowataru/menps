@@ -9,7 +9,6 @@ namespace mgdev {
 namespace ibv {
 
 class device_list
-    : mgbase::noncopyable
 {
 public:
     device_list()
@@ -20,6 +19,9 @@ public:
         if (dev_list_ != MGBASE_NULLPTR)
             free_list();
     }
+    
+    device_list(const device_list&) = delete;
+    device_list& operator =  (const device_list&) = delete;
     
     void get_list()
     {

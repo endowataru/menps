@@ -9,7 +9,6 @@ namespace mgdev {
 namespace ibv {
 
 class queue_pair
-    : mgbase::noncopyable
 {
     static const mgbase::uint32_t max_send_wr = 1 << 14;
     static const mgbase::uint32_t max_recv_wr = 1 << 14;
@@ -20,6 +19,9 @@ public:
     queue_pair();
     
     ~queue_pair();
+    
+    queue_pair(const queue_pair&) = delete;
+    queue_pair& operator =  (const queue_pair&) = delete;
     
     mgbase::uint32_t get_qp_num() const MGBASE_NOEXCEPT {
         return qp_->qp_num;
