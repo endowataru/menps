@@ -22,7 +22,7 @@ public:
     }
     
     completion_queue(const completion_queue&) = delete;
-    completion_queue& operator =  (const completion_queue&) = delete;
+    completion_queue& operator = (const completion_queue&) = delete;
     
     void create(ibv_context& ctx)
     {

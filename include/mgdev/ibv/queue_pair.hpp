@@ -21,7 +21,7 @@ public:
     ~queue_pair();
     
     queue_pair(const queue_pair&) = delete;
-    queue_pair& operator =  (const queue_pair&) = delete;
+    queue_pair& operator = (const queue_pair&) = delete;
     
     mgbase::uint32_t get_qp_num() const MGBASE_NOEXCEPT {
         return qp_->qp_num;

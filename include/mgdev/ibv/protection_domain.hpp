@@ -20,7 +20,7 @@ public:
     }
     
     protection_domain(const protection_domain&) = delete;
-    protection_domain& operator =  (const protection_domain&) = delete;
+    protection_domain& operator = (const protection_domain&) = delete;
     
     void alloc(ibv_context& ctx)
     {

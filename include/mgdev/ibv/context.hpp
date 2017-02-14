@@ -21,7 +21,7 @@ public:
     }
     
     context(const context&) = delete;
-    context& operator =  (const context&) = delete;
+    context& operator = (const context&) = delete;
     
     void open(ibv_device& dev)
     {

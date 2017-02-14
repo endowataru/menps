@@ -21,7 +21,7 @@ public:
     }
     
     device_list(const device_list&) = delete;
-    device_list& operator =  (const device_list&) = delete;
+    device_list& operator = (const device_list&) = delete;
     
     void get_list()
     {
