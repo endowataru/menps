@@ -7,6 +7,11 @@
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/sync_flag.hpp>
 
+#include <mgbase/type_traits/decay.hpp>
+
+#include <mgult/async/async_status.hpp>
+#include <mgult/async/async_atomic_channel.hpp>
+
 namespace mgult {
 namespace klt {
 
@@ -27,6 +32,54 @@ inline void yield() MGBASE_NOEXCEPT { }
 #else
 using mgbase::this_thread::yield;
 #endif
+
+using mgult::async_status;
+using mgult::make_async_ready;
+using mgult::make_async_deferred;
+
+namespace detail {
+
+template <typename T>
+struct notify_channel
+{
+    async_atomic_channel<T>*    ch;
+    
+    void operator() (const T& val) const /*may throw*/ {
+        ch->set_value(val);
+    }
+};
+template <>
+struct notify_channel<void>
+{
+    async_atomic_channel<void>* ch;
+    
+    void operator() () const MGBASE_NOEXCEPT {
+        ch->set_value();
+    }
+};
+
+} // namespace detail
+
+template <typename T, typename Func, typename... Args>
+inline T suspend_and_call(Func&& func, Args&&... args)
+{
+    async_atomic_channel<T> ch;
+    
+    detail::notify_channel<T> cont{ &ch };
+    
+    auto&& d =
+        mgbase::forward<Func>(func)(
+            mgbase::forward<Args>(args)...
+        ,   cont
+        );
+    
+    if (d.is_ready()) {
+        return d.get();
+    }
+    else {
+        return ch.get(klt::yield);
+    }
+}
 
 using mgbase::sync_flag;
 
