@@ -2,7 +2,6 @@
 #pragma once
 
 #include <mgcom/common.hpp>
-#include "collective.h"
 
 namespace mgcom {
 namespace collective {
