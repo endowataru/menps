@@ -3,6 +3,7 @@
 
 #include <mgbase/crtp_base.hpp>
 #include <mgbase/unique_ptr.hpp>
+#include <mgbase/arithmetic.hpp>
 
 namespace mgdsm {
 
@@ -42,7 +43,7 @@ public:
         
         const auto index = pg_id / Policy::number_of_processes();
         
-        MGBASE_ASSERT(index < num_pages_ / Policy::number_of_processes());
+        MGBASE_ASSERT(index < mgbase::roundup_divide(num_pages_, Policy::number_of_processes()));
         
         MGBASE_ASSERT(pg_id % Policy::number_of_processes() == Policy::current_process_id());
         
