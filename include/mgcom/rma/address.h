@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgcom/rma/common.h>
+#include <mgbase/lang.hpp>
 
 MGBASE_EXTERN_C_BEGIN
 

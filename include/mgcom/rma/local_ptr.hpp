@@ -2,7 +2,6 @@
 #pragma once
 
 #include <mgcom/rma/address.hpp>
-#include <mgcom/rma/pointer.h>
 
 #include <mgbase/type_traits.hpp>
 #include <mgbase/pointer_facade.hpp>
