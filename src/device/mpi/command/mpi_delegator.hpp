@@ -4,6 +4,7 @@
 #include "device/mpi/mpi_interface.hpp"
 #include "common/command/delegator.hpp"
 #include "mpi_completer_base.hpp"
+#include <mgcom/ult.hpp>
 
 namespace mgcom {
 namespace mpi {
@@ -30,19 +31,25 @@ public:
     
     // Point-to-point communication
     
-    virtual void recv_async(recv_async_params) MGBASE_OVERRIDE;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> recv_async(recv_async_params) MGBASE_OVERRIDE;
     
-    virtual void send_async(send_async_params) MGBASE_OVERRIDE;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> send_async(send_async_params) MGBASE_OVERRIDE;
     
     // Collective communication
     
-    virtual void barrier_async(barrier_async_params) MGBASE_OVERRIDE;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> barrier_async(barrier_async_params) MGBASE_OVERRIDE;
     
-    virtual void broadcast_async(broadcast_async_params) MGBASE_OVERRIDE;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> broadcast_async(broadcast_async_params) MGBASE_OVERRIDE;
     
-    virtual void allgather_async(allgather_async_params) MGBASE_OVERRIDE;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> allgather_async(allgather_async_params) MGBASE_OVERRIDE;
     
-    virtual void alltoall_async(alltoall_async_params) MGBASE_OVERRIDE;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> alltoall_async(alltoall_async_params) MGBASE_OVERRIDE;
     
     // Communicators
     

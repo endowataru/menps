@@ -452,7 +452,7 @@ struct alltoall_async_closure
 
 // point-to-point communication
 
-void mpi3_delegator::get_async(const get_async_params params)
+ult::async_status<void> mpi3_delegator::get_async(const get_async_params params)
 {
     const auto pb = params.base;
     
@@ -477,9 +477,11 @@ void mpi3_delegator::get_async(const get_async_params params)
     ,   reinterpret_cast<mgbase::intptr_t>(pb.dest_ptr)
     ,   pb.num_bytes
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi3_delegator::put_async(const put_async_params params)
+ult::async_status<void> mpi3_delegator::put_async(const put_async_params params)
 {
     const auto pb = params.base;
     
@@ -504,11 +506,13 @@ void mpi3_delegator::put_async(const put_async_params params)
     ,   pb.dest_index
     ,   pb.num_bytes
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
 // atomic operations
 
-void mpi3_delegator::compare_and_swap_async(const compare_and_swap_async_params params)
+ult::async_status<void> mpi3_delegator::compare_and_swap_async(const compare_and_swap_async_params params)
 {
     const auto pb = params.base;
     
@@ -533,9 +537,11 @@ void mpi3_delegator::compare_and_swap_async(const compare_and_swap_async_params 
     ,   pb.dest_rank
     ,   pb.dest_index
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi3_delegator::fetch_and_op_async(const fetch_and_op_async_params params)
+ult::async_status<void> mpi3_delegator::fetch_and_op_async(const fetch_and_op_async_params params)
 {
     const auto pb = params.base;
     
@@ -560,6 +566,8 @@ void mpi3_delegator::fetch_and_op_async(const fetch_and_op_async_params params)
     ,   get_datatype_name(pb.datatype)
     ,   mgbase::force_integer_cast<mgbase::intptr_t>(pb.operation)
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
 // registration
@@ -586,7 +594,7 @@ void mpi3_delegator::detach(const detach_params params)
 
 // collective operations
 
-void mpi3_delegator::barrier_async(const barrier_async_params params)
+ult::async_status<void> mpi3_delegator::barrier_async(const barrier_async_params params)
 {
     delegate(
         this->get_delegator()
@@ -596,9 +604,11 @@ void mpi3_delegator::barrier_async(const barrier_async_params params)
     MGBASE_LOG_DEBUG(
         "msg:Delegated MPI_Ibarrier."
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi3_delegator::broadcast_async(const broadcast_async_params params)
+ult::async_status<void> mpi3_delegator::broadcast_async(const broadcast_async_params params)
 {
     delegate(
         this->get_delegator()
@@ -614,9 +624,11 @@ void mpi3_delegator::broadcast_async(const broadcast_async_params params)
     ,   reinterpret_cast<mgbase::intptr_t>(pb.ptr)
     ,   pb.num_bytes
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi3_delegator::allgather_async(const allgather_async_params params)
+ult::async_status<void> mpi3_delegator::allgather_async(const allgather_async_params params)
 {
     delegate(
         this->get_delegator()
@@ -632,9 +644,11 @@ void mpi3_delegator::allgather_async(const allgather_async_params params)
     ,   reinterpret_cast<mgbase::intptr_t>(pb.dest)
     ,   pb.num_bytes
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi3_delegator::alltoall_async(const alltoall_async_params params)
+ult::async_status<void> mpi3_delegator::alltoall_async(const alltoall_async_params params)
 {
     delegate(
         this->get_delegator()
@@ -650,6 +664,8 @@ void mpi3_delegator::alltoall_async(const alltoall_async_params params)
     ,   reinterpret_cast<mgbase::intptr_t>(pb.dest)
     ,   pb.num_bytes
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
 } // namespace mpi3

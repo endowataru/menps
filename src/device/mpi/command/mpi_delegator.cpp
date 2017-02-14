@@ -109,20 +109,24 @@ struct send_async_closure
 
 } // namespace unnamed
 
-void mpi_delegator::recv_async(const recv_async_params params)
+ult::async_status<void> mpi_delegator::recv_async(const recv_async_params params)
 {
     delegate(
         del_
     ,   recv_async_closure{ params, &comp_ }
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi_delegator::send_async(const send_async_params params)
+ult::async_status<void> mpi_delegator::send_async(const send_async_params params)
 {
     delegate(
         del_
     ,   send_async_closure{ params, &comp_ }
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
 
@@ -260,36 +264,44 @@ struct alltoall_closure
 
 } // unnamed namespace
 
-void mpi_delegator::barrier_async(const barrier_async_params params)
+ult::async_status<void> mpi_delegator::barrier_async(const barrier_async_params params)
 {
     delegate(
         del_
     ,   barrier_closure{ params }
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi_delegator::broadcast_async(const broadcast_async_params params)
+ult::async_status<void> mpi_delegator::broadcast_async(const broadcast_async_params params)
 {
     delegate(
         del_
     ,   broadcast_closure{ params }
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi_delegator::allgather_async(const allgather_async_params params)
+ult::async_status<void> mpi_delegator::allgather_async(const allgather_async_params params)
 {
     delegate(
         del_
     ,   allgather_closure{ params }
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
-void mpi_delegator::alltoall_async(const alltoall_async_params params)
+ult::async_status<void> mpi_delegator::alltoall_async(const alltoall_async_params params)
 {
     delegate(
         del_
     ,   alltoall_closure{ params }
     );
+    
+    return ult::make_async_deferred<void>();
 }
 
 

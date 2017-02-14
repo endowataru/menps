@@ -25,12 +25,12 @@ public:
         )
     { }
     
-    virtual void barrier()
+    virtual void barrier() MGBASE_OVERRIDE
     {
         mi_.barrier({ comm_.get() });
     }
     
-    virtual void broadcast(const untyped::broadcast_params& params)
+    virtual void broadcast(const untyped::broadcast_params& params) MGBASE_OVERRIDE
     {
         mi_.broadcast({
             static_cast<int>(params.root)
@@ -40,7 +40,7 @@ public:
         });
     }
     
-    virtual void allgather(const untyped::allgather_params& params)
+    virtual void allgather(const untyped::allgather_params& params) MGBASE_OVERRIDE
     {
         mi_.allgather({
             params.src
@@ -50,7 +50,7 @@ public:
         });
     }
     
-    virtual void alltoall(const untyped::alltoall_params& params)
+    virtual void alltoall(const untyped::alltoall_params& params) MGBASE_OVERRIDE
     {
         mi_.alltoall({
             params.src

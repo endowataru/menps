@@ -30,13 +30,17 @@ public:
     
     // mpi3_interface
     
-    virtual void get_async(get_async_params) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> get_async(get_async_params)
+        MGBASE_OVERRIDE MGBASE_WARN_UNUSED_RESULT;
     
-    virtual void put_async(put_async_params) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> put_async(put_async_params)
+        MGBASE_OVERRIDE MGBASE_WARN_UNUSED_RESULT;
     
-    virtual void compare_and_swap_async(compare_and_swap_async_params) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> compare_and_swap_async(compare_and_swap_async_params)
+        MGBASE_OVERRIDE MGBASE_WARN_UNUSED_RESULT;
     
-    virtual void fetch_and_op_async(fetch_and_op_async_params) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> fetch_and_op_async(fetch_and_op_async_params)
+        MGBASE_OVERRIDE MGBASE_WARN_UNUSED_RESULT;
     
     virtual MPI_Aint attach(attach_params) MGBASE_OVERRIDE;
     
@@ -44,13 +48,17 @@ public:
     
     // mpi1_interface
     
-    virtual void barrier_async(barrier_async_params) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> barrier_async(barrier_async_params)
+        MGBASE_OVERRIDE MGBASE_WARN_UNUSED_RESULT;
     
-    virtual void broadcast_async(broadcast_async_params) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> broadcast_async(broadcast_async_params)
+        MGBASE_OVERRIDE MGBASE_WARN_UNUSED_RESULT;
     
-    virtual void allgather_async(allgather_async_params) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> allgather_async(allgather_async_params)
+        MGBASE_OVERRIDE MGBASE_WARN_UNUSED_RESULT;
     
-    virtual void alltoall_async(alltoall_async_params) MGBASE_OVERRIDE;
+    virtual ult::async_status<void> alltoall_async(alltoall_async_params)
+        MGBASE_OVERRIDE MGBASE_WARN_UNUSED_RESULT;
 };
 
 } // namespace mpi3
