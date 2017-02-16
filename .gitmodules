@@ -4,9 +4,6 @@
 [submodule "external/cmdline"]
 	path = external/cmdline
 	url = https://github.com/tanakh/cmdline
-[submodule "external/massivethreads"]
-	path = external/massivethreads
-	url = https://github.com/massivethreads/massivethreads.git
 [submodule "external/fmt"]
 	path = external/fmt
 	url = https://github.com/fmtlib/fmt.git
