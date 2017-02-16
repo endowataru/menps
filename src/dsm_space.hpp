@@ -233,7 +233,8 @@ private:
     }
     
     void* get_sys_ptr() {
-        return reinterpret_cast<void*>(0x30000000000);
+        return reinterpret_cast<void*>(0x100000000000);
+        //return reinterpret_cast<void*>(0x30000000000);
     }
     void* get_app_ptr() {
         return mgbase::next_in_bytes(this->get_sys_ptr(), get_address_space_size());
@@ -255,7 +256,8 @@ private:
     }
     
     mgbase::size_t get_address_space_size() MGBASE_NOEXCEPT {
-        return 1ull << 36;
+        return 0x300000000000;
+        //return 1ull << 36;
     }
     
     mgbase::size_t get_num_segments() MGBASE_NOEXCEPT {
