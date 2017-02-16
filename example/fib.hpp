@@ -23,6 +23,20 @@ fib_int_t fib(const fib_int_t n)
     return r1 + r2;
 }
 
+fib_int_t fib_seq(const fib_int_t n)
+{
+    fib_int_t r1 = 0;
+    fib_int_t r2 = 1;
+    
+    for (fib_int_t i = 1; i <= n; ++i) {
+        const auto r = r2;
+        r2 += r1;
+        r1 = r;
+    }
+    
+    return r1;
+}
+
 int fib_main(const int argc, char** const argv)
 {
     if (argc != 2) {
@@ -42,12 +56,13 @@ int fib_main(const int argc, char** const argv)
     
     using fmt::print;
     
-    print("fib({}) = {}, took {} cycles", n, result, elapsed);
+    print("fib({}) = {}, took {} cycles\n", n, result, elapsed);
     
-    /*std::cout << "fib(" << n << ") = " << result
-        << ", took " << elapsed << " cycles" << std::endl;*/
+    const auto ans = fib_seq(n);
+    const bool ok = ans == result;
+    print("{}. fib({}) is expected to be {}.\n", ok ? "OK" : "Fail", n, ans);
     
-    return 0;
+    return !ok;
 }
 
 } // namespace example
