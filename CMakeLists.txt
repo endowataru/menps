@@ -27,7 +27,6 @@ target_include_directories(mgbase-header
 )
 target_compile_definitions(mgbase-header
     INTERFACE "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
-    INTERFACE "$<$<CONFIG:RelWithDebInfo>:MGBASE_DEBUG>"
 )
 
 set(error_limit 3)
@@ -41,7 +40,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
         --diag_suppress 111,161,236,1290,1406
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Release>:-Kfast -O3 -x50>
-        $<$<CONFIG:RelWithDebInfo>:-g -Kfast>
+        $<$<CONFIG:OptDebug>:-g -Kfast>
     )
     # warning #111-D: statement is unreachable
     #   (fmt)
@@ -66,6 +65,7 @@ else()
             
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
+            $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
             
             # Enable -Weverything
             -Weverything
@@ -118,6 +118,7 @@ else()
             
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
+            $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
             
             # Disable SSP.
             -fno-stack-protector
@@ -193,6 +194,7 @@ else()
             
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
+            $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
             
             # Enable -Wall
             -Wall
