@@ -13,6 +13,7 @@ target_link_libraries(mgdsm-header
     INTERFACE mgbase-header
 )
 
+
 add_library(mgdsm
     ./src/sigbus_catcher.cpp
     ./src/sigsegv_catcher.cpp
@@ -29,6 +30,13 @@ target_link_libraries(mgdsm
     mgbase-options
     mgult
 )
+
+# Used for shm_open()
+# See also: https://bugs.freedesktop.org/show_bug.cgi?id=94096
+find_library(LIBRT rt)
+if(LIBRT)
+    target_link_libraries(mgdsm ${LIBRT})
+endif()
 
 file(GLOB example_files example/*.cpp)
 foreach(example_path IN LISTS example_files)
