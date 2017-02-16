@@ -7,6 +7,8 @@
 #include "disable_aslr.hpp"
 
 #include <mgbase/external/malloc.h>
+#include <mgbase/arithmetic.hpp>
+#include <mgbase/memory/next_in_bytes.hpp>
 
 namespace mgth {
 
@@ -15,6 +17,7 @@ namespace /*unnamed*/ {
 mgdsm::space_ref g_dsm;
 mgdsm::segment_ref g_seg_heap;
 
+#if 0
 class contiguous_allocator
     : public mgbase::allocatable
 {
@@ -47,6 +50,63 @@ private:
 };
 
 mgbase::unique_ptr<contiguous_allocator> g_heap_alloc;
+#endif
+
+class count_allocator
+    : public mgbase::allocatable
+{
+public:
+    count_allocator(void* const ptr, const mgbase::size_t size)
+        : ptr_(ptr)
+        , current_(0)
+        , size_(size)
+    { }
+    
+    virtual void* aligned_alloc(
+        const mgbase::size_t alignment // TODO
+    ,   const mgbase::size_t size_in_bytes
+    )
+    MGBASE_OVERRIDE
+    {
+        MGBASE_LOG_VERBOSE(
+            "msg:Allocate DSM heap.\t"
+            "alignment:{}\t"
+            "requested:{}\t"
+            "ptr:0x{:x}\t"
+            "current:{}\t"
+            "size:{}"
+        ,   alignment
+        ,   size_in_bytes
+        ,   reinterpret_cast<mgbase::uintptr_t>(ptr_)
+        ,   current_
+        ,   size_
+        );
+        
+        MGBASE_ASSERT(alignment > 0);
+        
+        const auto allocated_size =
+            mgbase::roundup_divide(size_in_bytes, alignment) * alignment;
+        
+        MGBASE_ASSERT(this->current_ + size_in_bytes < this->size_);
+        
+        const auto ret = mgbase::next_in_bytes(ptr_, this->current_);
+        this->current_ += size_in_bytes;
+        
+        return ret;
+    }
+    
+    virtual void free(void* const ptr) MGBASE_OVERRIDE
+    {
+        MGBASE_LOG_VERBOSE("msg:Free is not implemented.");
+    }
+    
+private:
+    void* ptr_;
+    mgbase::size_t current_;
+    mgbase::size_t size_;
+};
+
+mgbase::unique_ptr<count_allocator> g_heap_alloc;
 
 dist_scheduler_ptr g_sched;
 
@@ -149,13 +209,14 @@ int main(int argc, char* argv[])
         auto stack_seg = mgth::g_dsm.make_segment(64ull << 20, 16ull << 10, 4096 /*4KB*/);
         
         // Enable SEGV handler temporarily to allocate the heap.
-        mgth::g_dsm.enable_on_this_thread();
+        //mgth::g_dsm.enable_on_this_thread();
         
-        mgth::g_seg_heap = mgth::g_dsm.make_segment(64ull << 20, 16ull << 10, 4096 /*4KB*/);
-        mgth::g_heap_alloc = mgbase::make_unique<mgth::contiguous_allocator>(mgth::g_seg_heap.get_ptr(), mgth::g_seg_heap.get_size_in_bytes());
+        mgth::g_seg_heap = mgth::g_dsm.make_segment(0x300000000000 / 1024, 16ull << 10, 4096 /*4KB*/);
+        //mgth::g_heap_alloc = mgbase::make_unique<mgth::contiguous_allocator>(mgth::g_seg_heap.get_ptr(), mgth::g_seg_heap.get_size_in_bytes());
+        mgth::g_heap_alloc = mgbase::make_unique<mgth::count_allocator>(mgth::g_seg_heap.get_ptr(), mgth::g_seg_heap.get_size_in_bytes());
         
         // Disable SEGV handler again.
-        mgth::g_dsm.disable_on_this_thread();
+        //mgth::g_dsm.disable_on_this_thread();
         
         //mgth::dsm::segment_allocator stack_alloc(stack_seg.get_ptr(), stack_seg.get_size_in_bytes());
         
