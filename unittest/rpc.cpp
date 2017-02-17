@@ -8,7 +8,7 @@ struct test_handler {
     typedef int     reply_type;
     
     template <typename ServerCtx>
-    typename ServerCtx::return_type operator() (ServerCtx& sc)
+    typename ServerCtx::return_type operator() (ServerCtx& sc) const
     {
         const auto src_proc = sc.src_proc();
         const auto& rqst = sc.request();

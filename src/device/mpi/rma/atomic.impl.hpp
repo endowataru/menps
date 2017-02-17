@@ -46,7 +46,7 @@ private:
         typedef atomic_value_type    reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             const auto& rqst = sc.request();
             
@@ -112,7 +112,7 @@ private:
         typedef void    reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             const auto& req = sc.request();
             
@@ -174,7 +174,7 @@ private:
         typedef atomic_value_type    reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             const auto& rqst = sc.request();
             
@@ -254,7 +254,7 @@ private:
         typedef atomic_value_type    reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             const auto& rqst = sc.request();
             

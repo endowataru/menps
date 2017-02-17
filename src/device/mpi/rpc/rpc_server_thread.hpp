@@ -14,6 +14,9 @@ class rpc_server_thread
     typedef rpc_message_buffer                  buffer_type;
     typedef mgbase::unique_ptr<buffer_type>     buffer_ptr_type;
     
+    typedef rpc::server_request_message<void>   request_message_type;
+    typedef rpc::server_reply_message<void>     reply_message_type;
+    
 public:
     struct config
     {
@@ -168,28 +171,33 @@ private:
             
             mgbase::uint8_t reply_data[MGCOM_RPC_MAX_DATA_SIZE];
             
-            self.call(cli_rank, buf, reply_data);
+            auto rply_msg = self.call(cli_rank, buf, reply_data);
             
-            self.send_reply(cli_rank, buf.reply_tag, reply_data, buf.reply_size);
+            self.send_reply(cli_rank, buf.reply_tag, rply_msg.get(), rply_msg.size_in_bytes());
         }
     };
     
-    void call(
+    reply_message_type call(
         const int           cli_rank
     ,   const buffer_type&  buf
     ,   void* const         reply_data
     ) {
-        const auto reply_size
-            = this->conf_.invoker->call(
-                static_cast<process_id_t>(cli_rank)
-            ,   buf.id
-            ,   buf.data
-            ,   buf.size
-            ,   reply_data
-            ,   MGCOM_RPC_MAX_DATA_SIZE
+        auto rqst_msg =
+            request_message_type::convert_from(
+                rpc::detail::allocate_message(16 /*TODO*/, buf.size)
             );
         
-        MGBASE_ASSERT(buf.reply_size >= static_cast<int>(reply_size));
+        memcpy(rqst_msg.get(), buf.data, buf.size);
+        
+        auto ret =
+            this->conf_.invoker->call(
+                buf.id
+            ,   static_cast<process_id_t>(cli_rank)
+            ,   mgbase::move(rqst_msg)
+            );
+        
+        return mgbase::move(ret.rply_msg);
+        //MGBASE_ASSERT(buf.reply_size >= static_cast<int>(reply_size));
     }
     
     void send_reply(
@@ -197,8 +205,7 @@ private:
     ,   const int           reply_tag
     ,   const void* const   reply_data
     ,   const int           reply_size
-    )
-    {
+    ) {
         this->conf_.mi->send(
             reply_data
         ,   reply_size

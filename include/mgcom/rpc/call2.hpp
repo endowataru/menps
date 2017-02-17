@@ -1,161 +1,14 @@
 
 #pragma once
 
-#include <mgcom/rpc/requester.hpp>
-#include <mgbase/scope/basic_unique_resource.hpp>
+#include <mgcom/rpc/client.hpp>
+#include <mgcom/rpc/server.hpp>
+#include <mgcom/rpc/message.hpp>
 #include <mgcom/ult.hpp>
 #include <mgbase/type_traits/is_void.hpp>
 
 namespace mgcom {
 namespace rpc {
-
-template <typename T>
-class request_message;
-
-template <typename T>
-class reply_message;
-
-namespace detail {
-
-struct message_deleter
-{
-    void operator() (void* const ptr)
-    {
-        const auto p = static_cast<mgbase::uint8_t*>(ptr);
-        
-        delete[] p;
-    }
-};
-
-template <typename T>
-class message;
-
-template <typename T>
-struct message_traits
-{
-    typedef message<T>      derived_type;
-    typedef T*              resource_type;
-    typedef message_deleter deleter_type;
-};
-
-template <typename T>
-class message
-    : public mgbase::basic_unique_resource<detail::message_traits<T>>
-{
-    typedef mgbase::basic_unique_resource<detail::message_traits<T>>   base;
-    
-public:
-    message() /*MGBASE_NOEXCEPT (TODO)*/ = default;
-    
-    message(T* ptr, const mgbase::size_t size) MGBASE_NOEXCEPT
-        : base(mgbase::move(ptr))
-        , size_(size)
-    { }
-    
-    message(const message&) = delete;
-    message& operator = (const message&) = delete;
-    
-    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(message, base)
-    
-    mgbase::size_t size_in_bytes() const MGBASE_NOEXCEPT {
-        return size_;
-    }
-    
-private:
-    friend class mgbase::basic_unique_resource_access;
-    
-    bool is_owned() const MGBASE_NOEXCEPT {
-        return this->get_resource();
-    }
-    
-    void set_unowned() MGBASE_NOEXCEPT {
-        this->get_resource() = MGBASE_NULLPTR;
-    }
-    void set_owned() MGBASE_NOEXCEPT {
-        // do nothing
-    }
-    
-    mgbase::size_t size_;
-};
-
-} // namespace detail
-
-template <typename T>
-class request_message
-    : public detail::message<T>
-{
-    typedef detail::message<T>  base;
-    
-public:
-    request_message() /*MGBASE_NOEXCEPT (TODO)*/ = default;
-    
-    request_message(const request_message&) = delete;
-    request_message& operator = (const request_message&) = delete;
-    
-    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(request_message, base)
-    
-    request_message(T* ptr, const mgbase::size_t size)
-        : base(ptr, size)
-    { }
-};
-
-template <typename T>
-class reply_message
-    : public detail::message<T>
-{
-    typedef detail::message<T>  base;
-    
-public:
-    reply_message() /*MGBASE_NOEXCEPT (TODO)*/ = default;
-    
-    reply_message(const reply_message&) = delete;
-    reply_message& operator = (const reply_message&) = delete;
-    
-    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(reply_message, base)
-    
-    reply_message(T* ptr, const mgbase::size_t size)
-        : base(ptr, size)
-    { }
-};
-
-inline request_message<void> allocate_request(mgbase::size_t /*alignment*/, mgbase::size_t size)
-{
-    const auto ptr = new mgbase::uint8_t[size];
-    
-    return { ptr, size };
-}
-
-// if T != void
-template <typename T, typename... Args>
-inline
-typename mgbase::enable_if<
-    ! mgbase::is_void<T>::value
-,   request_message<T>
->::type
-make_request(Args&&... args)
-{
-    const auto size = sizeof(T);
-    
-    auto req = allocate_request(MGBASE_ALIGNOF(T), size);
-    
-    // Do placement new.
-    const auto ptr =
-        new (req.release()) T(mgbase::forward<Args>(args)...);
-    
-    return { ptr, size };
-}
-
-// if T == void
-template <typename T>
-inline
-typename mgbase::enable_if<
-    mgbase::is_void<T>::value
-,   request_message<T>
->::type
-make_request()
-{
-    return allocate_request(0, 0);
-}
 
 /*
     struct example_fixed_sized_handler
@@ -220,94 +73,145 @@ class server_context
     typedef typename Handler::reply_type    reply_type;
     
 public:
-    typedef request_message<reply_type>     return_type;
+    typedef server_reply_message<reply_type>  return_type;
     
     server_context(
-        const process_id_t          src_proc
-    ,   const request_type* const   data
-    ,   const mgbase::size_t        size
+        const process_id_t                      src_proc
+    ,   server_request_message<request_type>    rqst_msg
     )
         : src_proc_(src_proc)
-        , data_(data)
-        , size_(size)
+        , rqst_msg_(mgbase::move(rqst_msg))
     { }
     
     // getter functions
     
     const request_type& request() const MGBASE_NOEXCEPT {
-        return *data_;
+        return *this->request_ptr();
     }
     const request_type* request_ptr() const MGBASE_NOEXCEPT {
-        return data_;
+        return this->rqst_msg_.get();
     }
     
     mgbase::size_t size_in_bytes() const MGBASE_NOEXCEPT {
-        return size_;
+        return this->rqst_msg_.size_in_bytes();
     }
     
     process_id_t src_proc() const MGBASE_NOEXCEPT {
-        return src_proc_;
+        return this->src_proc_;
     }
     
     // helper functions
     
     template <typename... Args>
     return_type make_reply(Args&&... args) const {
-        return make_request<reply_type>(mgbase::forward<Args>(args)...);
+        return return_type::convert_from(
+            detail::make_message<reply_type>(mgbase::forward<Args>(args)...)
+        );
     }
     
 private:
-    process_id_t        src_proc_;
-    const request_type* data_;
-    mgbase::size_t      size_;
+    process_id_t                            src_proc_;
+    server_request_message<request_type>    rqst_msg_;
 };
 
 template <typename Handler>
-inline index_t handler_pass(void* const ptr, const handler_parameters* const params)
+struct handler_pass
 {
-    typedef typename Handler::request_type request_type;
+    Handler h;
     
-    const server_context<Handler> p{
-        params->source
-    ,   static_cast<const request_type*>(params->data)
-    ,   params->size
-    };
-    
-    auto& handler = *static_cast<Handler*>(ptr);
-    
-    auto ret_msg = handler(p);
-    
-    const auto size = ret_msg.size_in_bytes();
-    
-    memcpy(params->result, ret_msg.get(), size);
-    
-    return size;
-}
+    untyped::handler_result operator() (untyped::handler_context_t hc) const
+    {
+        typedef typename Handler::request_type request_type;
+        
+        auto rqst_msg =
+            server_request_message<request_type>::convert_from(
+                mgbase::move(hc.rqst_msg)
+            );
+        
+        server_context<Handler> sc{
+            hc.src_proc
+        ,   mgbase::move(rqst_msg)
+        };
+        
+        auto ret_msg = (this->h)(sc);
+        
+        return untyped::handler_result{
+            server_reply_message<void>::convert_from(
+                mgbase::move(ret_msg)
+            )
+        };
+    }
+};
 
 } // namespace detail
 
 template <typename Handler>
-void register_handler2(requester& req, Handler h)
+void register_handler2(server& sv, Handler h)
 {
-    // TODO
-    static Handler handler(mgbase::move(h));
-    
-    req.register_handler({
+    sv.add_handler({
         Handler::handler_id
-    ,   & detail::handler_pass<Handler>
-    ,   &handler
+    ,   detail::handler_pass<Handler>{ h }
     });
 }
 
 
-template <typename Handler>
-inline void call2_async(
-    requester&                                              req
-,   const process_id_t                                      target_proc
-,   const request_message<typename Handler::request_type>   rqst_msg
-,   reply_message<typename Handler::reply_type>* const      rply_out
-,   const mgbase::callback<void ()>                         on_complete
+namespace detail {
+
+template <typename Handler, typename Func>
+struct call_complete_pass
+{
+    Func func;
+    
+    void operator() (client_reply_message<void>&& msg) const
+    {
+        typedef typename Handler::reply_type    reply_type;
+        
+        func(
+            client_reply_message<reply_type>::convert_from(
+                mgbase::move(msg)
+            )
+        );
+    }
+};
+
+} // namespace detail
+
+template <typename Handler, typename OnComplete>
+inline ult::async_status<client_reply_message<typename Handler::reply_type>>
+async_call(
+    client&                                                 cli
+,   const process_id_t                                      server_proc
+,   client_request_message<typename Handler::request_type>  rqst_msg
+,   OnComplete                                              on_complete
 ) {
+    auto untyped_rqst_msg =
+        client_request_message<void>::convert_from(
+            mgbase::move(rqst_msg)
+        );
+    
+    auto r =
+        cli.async_call(untyped::async_call_params{
+            server_proc
+        ,   Handler::handler_id
+        ,   mgbase::move(untyped_rqst_msg)
+        ,   detail::call_complete_pass<Handler, OnComplete>{ on_complete }
+        });
+    
+    // TODO: a bit ugly...
+    if (r.is_ready()) {
+        return ult::make_async_ready(
+            client_reply_message<typename Handler::reply_type>::convert_from(
+                mgbase::move(r.get())
+            )
+        );
+    }
+    else {
+        return ult::make_async_deferred<
+            client_reply_message<typename Handler::reply_type>
+        >();
+    }
+    
+    #if 0
     typedef typename Handler::reply_type   reply_type;
     
     reply_message<reply_type> rply_msg(
@@ -332,37 +236,54 @@ inline void call2_async(
     }
     
     *rply_out = mgbase::move(rply_msg);
+    #endif
 }
 
+namespace detail {
+
 template <typename Handler>
-inline reply_message<typename Handler::reply_type> call2(
-    requester&                                      rqstr
-,   const process_id_t                              target_proc
-,   request_message<typename Handler::request_type> rqst_msg
-) {
-    typedef typename Handler::reply_type   reply_type;
+struct async_call_functor
+{
+    requester&                                              rqstr;
+    const process_id_t                                      target_proc;
+    client_request_message<typename Handler::request_type>  rqst_msg;
     
-    reply_message<reply_type> rply_msg;
-    
-    mgbase::atomic<bool> flag{false};
-    
-    call2_async<Handler>(
-        rqstr
-    ,   target_proc
-    ,   mgbase::move(rqst_msg)
-    ,   &rply_msg
-    ,   mgbase::make_callback_store_release(&flag, MGBASE_NONTYPE(true))
-    );
-    
-    while (!flag.load(mgbase::memory_order_acquire)) {
-        ult::this_thread::yield();
+    template <typename Cont>
+    MGBASE_WARN_UNUSED_RESULT
+    ult::async_status<client_reply_message<typename Handler::reply_type>>
+    operator() (Cont& cont)
+    {
+        return async_call<Handler>(
+            rqstr
+        ,   target_proc
+        ,   mgbase::move(rqst_msg)
+        ,   cont
+        );
     }
+};
+
+} // namespace detail
+
+template <typename Handler>
+inline client_reply_message<typename Handler::reply_type>
+call2(
+    requester&                                              rqstr
+,   const process_id_t                                      target_proc
+,   client_request_message<typename Handler::request_type>  rqst_msg
+) {
+    typedef client_reply_message<typename Handler::reply_type>  reply_msg_type;
     
-    return rply_msg;
+    return ult::suspend_and_call<reply_msg_type>(
+        detail::async_call_functor<Handler>{
+            rqstr
+        ,   target_proc
+        ,   mgbase::move(rqst_msg)
+        }
+    );
 }
 
 template <typename Handler>
-inline reply_message<typename Handler::reply_type> call2(
+inline client_reply_message<typename Handler::reply_type> call2(
     requester&                              rqstr
 ,   const process_id_t                      target_proc
 ,   const typename Handler::request_type&   rqst_data
@@ -370,7 +291,9 @@ inline reply_message<typename Handler::reply_type> call2(
     return call2<Handler>(
         rqstr
     ,   target_proc
-    ,   make_request<typename Handler::request_type>(rqst_data)
+    ,   client_request_message<typename Handler::request_type>::convert_from(
+            detail::make_message<typename Handler::request_type>(rqst_data)
+        )
     );
 }
 

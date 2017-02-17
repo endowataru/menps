@@ -89,17 +89,22 @@ struct async_fetch_and_add_params : fetch_and_add_params<T>
 
 namespace untyped {
 
-// TODO : Remote these.
+// TODO : Remove these.
 typedef async_untyped_read_params   read_params;
 typedef async_untyped_write_params  write_params;
 
 } // namespace untyped
 
 class requester
-    : mgbase::noncopyable
 {
+protected:
+    requester() MGBASE_DEFAULT_NOEXCEPT = default;
+    
 public:
-    virtual ~requester() MGBASE_EMPTY_DEFINITION
+    virtual ~requester() /*noexcept*/ = default;
+    
+    requester(const requester&) = delete;
+    requester& operator = (const requester&) = delete;
     
     MGBASE_WARN_UNUSED_RESULT
     virtual ult::async_status<void> async_read(const async_untyped_read_params&)= 0;
@@ -108,16 +113,24 @@ public:
     virtual ult::async_status<void> async_write(const async_untyped_write_params&) = 0;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual ult::async_status<void> async_atomic_read(const async_atomic_read_params<atomic_default_t>&) = 0;
+    virtual ult::async_status<void> async_atomic_read(
+        const async_atomic_read_params<atomic_default_t>&
+    ) = 0;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual ult::async_status<void> async_atomic_write(const async_atomic_write_params<atomic_default_t>&) = 0;
+    virtual ult::async_status<void> async_atomic_write(
+        const async_atomic_write_params<atomic_default_t>&
+    ) = 0;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual ult::async_status<void> async_compare_and_swap(const async_compare_and_swap_params<atomic_default_t>&) = 0;
+    virtual ult::async_status<void> async_compare_and_swap(
+        const async_compare_and_swap_params<atomic_default_t>&
+    ) = 0;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual ult::async_status<void> async_fetch_and_add(const async_fetch_and_add_params<atomic_default_t>&) = 0;
+    virtual ult::async_status<void> async_fetch_and_add(
+        const async_fetch_and_add_params<atomic_default_t>&
+    ) = 0;
     
     static requester& get_instance() MGBASE_NOEXCEPT {
         MGBASE_ASSERT(req_ != MGBASE_NULLPTR);

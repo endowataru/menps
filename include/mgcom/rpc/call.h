@@ -5,8 +5,6 @@
 
 MGBASE_EXTERN_C_BEGIN
 
-#define MGCOM_RPC_MAX_DATA_SIZE         1024
-#define MGCOM_RPC_MAX_NUM_HANDLERS      10000
 
 typedef mgcom_index_t  mgcom_rpc_handler_id_t;
 

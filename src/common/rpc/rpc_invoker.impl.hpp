@@ -13,8 +13,7 @@ class rpc_invoker
 {
     struct handler
     {
-        handler_function_t  callback;
-        void*               ptr;
+        untyped::handler_callback_t  cb;
     };
     
 public:
@@ -25,54 +24,52 @@ public:
         handlers_ = new handler[]{};*/
     }
     
-    void register_handler(const untyped::register_handler_params& params)
+    void add_handler(const untyped::add_handler_params& params)
     {
         MGBASE_ASSERT(params.id < constants::max_num_handlers);
-        MGBASE_ASSERT(params.callback != MGBASE_NULLPTR);
+        MGBASE_ASSERT(params.cb);
         
-        handlers_[params.id] = handler{ params.callback, params.ptr };
+        handlers_[params.id] = handler{ params.cb };
         
         MGBASE_LOG_DEBUG(
             "msg:Registered a handler.\t"
-            "src:{}\tcallback:{:x}\tptr:{:x}"
+            "handler_id:{}"
         ,   params.id
-        ,   reinterpret_cast<mgbase::uintptr_t>(params.callback)
-        ,   reinterpret_cast<mgbase::uintptr_t>(params.ptr)
         );
     }
     
-    index_t call(
+    /*index_t call(
         const process_id_t          src_proc
     ,   const handler_id_t          handler_id
     ,   const void* const           arg_data
     ,   const index_t               arg_size
     ,   void* const                 result_data
     ,   const index_t               result_capacity
+    )*/
+    untyped::handler_result
+    call(
+        handler_id_t                    handler_id
+    ,   process_id_t                    src_proc
+    ,   server_request_message<void>    rqst_msg
     ) {
-        const handler_parameters params = {
-            src_proc
-        ,   arg_data
-        ,   arg_size
-        ,   result_data
-        };
+        const untyped::handler_context hc{ src_proc, mgbase::move(rqst_msg) };
         
         MGBASE_LOG_DEBUG(
             "msg:Invoking callback.\t"
-            "src:{}\tid:{}"
-        ,   src_proc
+            "handler_id:{}\t"
+            "src:{}"
         ,   handler_id
+        ,   src_proc
         );
         
         const auto& h = handlers_[handler_id];
-        MGBASE_ASSERT(h.callback != MGBASE_NULLPTR);
+        MGBASE_ASSERT(h.cb);
         
-        const index_t reply_size = h.callback(h.ptr, &params);
-        
-        MGBASE_ASSERT(reply_size <= result_capacity);
+        untyped::handler_result r{ h.cb(hc) };
         
         MGBASE_LOG_DEBUG("msg:Finished callback.");
         
-        return reply_size;
+        return r;
     }
     
 private:

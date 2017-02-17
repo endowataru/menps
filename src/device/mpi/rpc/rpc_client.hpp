@@ -16,6 +16,11 @@ class rpc_client
     
     static const mgbase::size_t num_tags = 1000;
     
+    typedef rpc::server_request_message<void>   server_request_message_type;
+    typedef rpc::server_reply_message<void>     server_reply_message_type;
+    typedef rpc::client_request_message<void>   request_message_type;
+    typedef rpc::client_reply_message<void>     reply_message_type;
+    
 public:
     rpc_client(mpi_interface& mi, endpoint& ep)
         : rpc_base(mi)
@@ -27,31 +32,32 @@ public:
         }
     }
     
-    virtual bool try_call_async(const rpc::untyped::call_params& params) MGBASE_OVERRIDE
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<rpc::client_reply_message<void>>
+    async_call(const rpc::untyped::async_call_params& params) MGBASE_OVERRIDE
     {
-        MGBASE_ASSERT(valid_process_id(ep_, params.proc));
+        MGBASE_ASSERT(valid_process_id(ep_, params.server_proc));
         MGBASE_ASSERT(params.handler_id < MGCOM_RPC_MAX_NUM_HANDLERS);
-        MGBASE_ASSERT(params.arg_ptr != MGBASE_NULLPTR);
-        MGBASE_ASSERT(params.return_size == 0 || params.return_ptr != MGBASE_NULLPTR);
+        //MGBASE_ASSERT(params.arg_ptr != MGBASE_NULLPTR);
+        //MGBASE_ASSERT(params.return_size == 0 || params.return_ptr != MGBASE_NULLPTR);
         
         // Avoid loopback and deadlocking.
-        if (params.proc == mgcom::current_process_id())
+        if (params.server_proc == mgcom::current_process_id())
         {
-            const auto reply_size = 
+            auto ret =
                 this->get_invoker().call(
-                    params.proc
-                ,   params.handler_id
-                ,   params.arg_ptr
-                ,   params.arg_size
-                ,   params.return_ptr
-                ,   params.return_size
+                    params.handler_id
+                ,   params.server_proc
+                ,   server_request_message_type::convert_from(
+                        mgbase::move(params.rqst_msg)
+                    )
                 );
             
-            MGBASE_ASSERT(reply_size <= params.return_size);
-            
-            params.on_complete();
-            
-            return true;
+            return ult::make_async_ready(
+                reply_message_type::convert_from(
+                    mgbase::move(ret.rply_msg)
+                )
+            );
         }
         
         const auto id = this->allocate_id();
@@ -64,47 +70,57 @@ public:
         
         const auto comm = this->get_comm();
         
-        buffer_type msg_buf;
-        
-        msg_buf.id      = params.handler_id;
-        msg_buf.size    = params.arg_size;
-        
-        msg_buf.reply_size  = static_cast<int>(params.return_size);
-        msg_buf.reply_tag   = recv_tag;
-        
-        std::memcpy(msg_buf.data, params.arg_ptr, params.arg_size);
-        
-        ult::sync_flag send_finished;
-        
         auto& mi = this->get_mpi_interface();
         
-        //mpi::irsend( // TODO: Introduce buffer management
-        mi.send_async({
-            {
+        {
+            auto rply_msg =
+                reply_message_type::convert_from(
+                    rpc::detail::allocate_message(16 /*TODO*/, MGCOM_RPC_MAX_DATA_SIZE)
+                );
+            
+            mi.recv_async(
+                rply_msg.get()                              // buf
+            ,   static_cast<int>(rply_msg.size_in_bytes())  // size_in_bytes
+            ,   static_cast<int>(params.server_proc)        // src_proc
+            ,   recv_tag                                    // tag
+            ,   comm                                        // comm
+            ,   MPI_STATUS_IGNORE                           // status_result
+            ,   recv_reply{ *this, id }                     // on_complete
+            );
+            
+            this->tags_[id].rply_msg = mgbase::move(rply_msg);
+        }
+        
+        {
+            buffer_type msg_buf;
+            
+            const auto ptr = params.rqst_msg.get();
+            const auto size = params.rqst_msg.size_in_bytes();
+            
+            msg_buf.id      = params.handler_id;
+            msg_buf.size    = size;
+            
+            msg_buf.reply_size  = MGCOM_RPC_MAX_DATA_SIZE;
+            msg_buf.reply_tag   = recv_tag;
+            
+            std::memcpy(msg_buf.data, ptr, size);
+            
+            //mpi::irsend( // TODO: Introduce buffer management
+            mi.send(
                 &msg_buf                                    // buf
             ,   static_cast<int>(sizeof(buffer_type))       // size_in_bytes
-            ,   static_cast<int>(params.proc)               // dest_proc
+            ,   static_cast<int>(params.server_proc)        // dest_proc
             ,   send_tag                                    // tag
             ,   comm                                        // comm
-            }
-        ,   mgbase::make_callback_notify(&send_finished)    // on_complete
-        });
+            );
+            
+            // TODO: Change send to send_async.
+            //       The buffer must be preserved until "send" is being processed.
+            
+            // msg_buf is deallocated here.
+        }
         
-        mi.recv_async({
-            {
-                params.return_ptr                       // buf
-            ,   static_cast<int>(params.return_size)    // size_in_bytes
-            ,   static_cast<int>(params.proc)           // dest_proc
-            ,   recv_tag                                // tag
-            ,   comm                                    // comm
-            ,   MPI_STATUS_IGNORE                       // status_result
-            }
-        ,   recv_reply{ *this, id }                     // on_complete
-        });
-        
-        send_finished.wait();
-        
-        return true;
+        return ult::make_async_deferred<rpc::client_reply_message<void>>();
     }
     
 private:
@@ -147,13 +163,16 @@ private:
         {
             self.return_id(id);
             
-            self.tags_[id].on_complete();
+            self.tags_[id].on_complete(
+                mgbase::move(self.tags_[id].rply_msg)
+            );
         }
     };
     
     struct tag_info
     {
-        mgbase::callback<void ()> on_complete;
+        rpc::untyped::call_callback_t   on_complete;
+        reply_message_type              rply_msg;
     };
     
     endpoint&       ep_;

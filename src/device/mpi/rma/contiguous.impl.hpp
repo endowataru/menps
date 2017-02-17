@@ -55,7 +55,7 @@ private:
         typedef void    reply_type;
 
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& self = *slf;
             
@@ -147,7 +147,7 @@ private:
         typedef void    reply_type;
 
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& self = *slf;
             

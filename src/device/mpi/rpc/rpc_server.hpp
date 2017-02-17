@@ -21,9 +21,9 @@ public:
     {
     }
     
-    virtual void register_handler(const rpc::untyped::register_handler_params& params) MGBASE_OVERRIDE
+    virtual void add_handler(const rpc::untyped::add_handler_params& params) MGBASE_OVERRIDE
     {
-        this->get_invoker().register_handler(params);
+        this->get_invoker().add_handler(params);
         
         ths_[params.id] =
             mgbase::make_unique<rpc_server_thread>(
