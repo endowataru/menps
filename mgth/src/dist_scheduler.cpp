@@ -6,6 +6,7 @@
 #include <mgcom/rpc.hpp>
 #include <mgcom/rpc/call2.hpp>
 #include <mgcom/collective.hpp>
+#include "dist_exit_status.hpp"
 
 namespace mgth {
 
@@ -193,22 +194,17 @@ private:
     
 public:
     bool finished() {
-        // FIXME
-        return false;
+        return exit_st_.is_ready();
     }
     
-    void set_started() {
-        // FIXME
+    void set_started()
+    {
+        exit_st_.clear();
     }
-    /*{
-        finished_.store(false, mgbase::memory_order_relaxed);
-    }*/
-    void set_finished() {
-        // FIXME
+    void set_finished()
+    {
+        exit_st_.set_finished(0); // TODO: pass exit code
     }
-    /*{
-        finished_.store(true, mgbase::memory_order_release);
-    }*/
     
     static dist_worker& get_current_worker() {
         return dist_worker::get_current_worker();
@@ -248,6 +244,8 @@ private:
     global_ult_desc_pool    desc_pool_;
     
     mgdsm::space_ref&       dsm_;
+    
+    dist_exit_status        exit_st_;
     
     static dist_scheduler* instance_; // TODO: singleton
 };
