@@ -44,8 +44,9 @@ struct notify_channel
 {
     async_atomic_channel<T>*    ch;
     
-    void operator() (const T& val) const /*may throw*/ {
-        ch->set_value(val);
+    template <typename U>
+    void operator() (U&& val) const /*may throw*/ {
+        ch->set_value(mgbase::forward<U>(val));
     }
 };
 template <>
@@ -74,10 +75,10 @@ inline T suspend_and_call(Func&& func, Args&&... args)
         );
     
     if (d.is_ready()) {
-        return d.get();
+        return async_get(mgbase::move(d));
     }
     else {
-        return ch.get(klt::yield);
+        return async_get(mgbase::move(ch), klt::yield);
     }
 }
 

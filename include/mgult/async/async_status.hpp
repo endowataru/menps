@@ -1,7 +1,8 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <mgbase/utility/move.hpp>
+#include <mgbase/assert.hpp>
 
 namespace mgult {
 
@@ -12,6 +13,9 @@ public:
     async_status(const async_status&) /*may throw*/ = default;
     async_status& operator = (const async_status&) /*may throw*/ = default;
     
+    async_status(async_status&&) /*may throw*/ = default;
+    async_status& operator = (async_status&&) /*may throw*/ = default;
+    
     bool is_ready() const {
         return this->ready_;
     }
@@ -21,8 +25,9 @@ public:
         return this->val_;
     }
     
-    static async_status make_ready(const T& val) {
-        return { val };
+    template <typename U>
+    static async_status make_ready(U&& val) {
+        return { mgbase::forward<U>(val) };
     }
     static async_status make_deferred() {
         return { };
@@ -37,6 +42,10 @@ private:
     async_status(const T& val)
         : ready_{true}
         , val_(val)
+    { }
+    async_status(T&& val)
+        : ready_{true}
+        , val_(mgbase::move(val))
     { }
     
     bool    ready_;
@@ -71,8 +80,8 @@ private:
 };
 
 template <typename T>
-inline async_status<T> make_async_ready(const T& val) {
-    return async_status<T>::make_ready(val);
+inline async_status<T> make_async_ready(T&& val) {
+    return async_status<T>::make_ready(mgbase::forward<T>(val));
 }
 inline async_status<void> make_async_ready() {
     return async_status<void>::make_ready();
@@ -81,6 +90,20 @@ inline async_status<void> make_async_ready() {
 template <typename T>
 inline async_status<T> make_async_deferred() {
     return async_status<T>::make_deferred();
+}
+
+// For old GCC, we cannot put these functions
+// as member functions in async_status<t>.
+template <typename T>
+inline T& async_get(async_status<T>& s) {
+    return s.get();
+}
+template <typename T>
+inline T&& async_get(async_status<T>&& s) {
+    return mgbase::move(s.get());
+}
+inline void async_get(const async_status<void>& s) {
+    return s.get();
 }
 
 } // namespace mgult

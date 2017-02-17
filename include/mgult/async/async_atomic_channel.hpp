@@ -13,9 +13,10 @@ public:
         : ready_{false}
     { }
     
-    void set_value(const T& val)
+    template <typename U>
+    void set_value(U&& val)
     {
-        this->val_ = val;
+        this->val_ = mgbase::forward<U>(val);
         
         this->ready_.store(true, mgbase::memory_order_release);
     }
@@ -50,7 +51,7 @@ public:
     }
     
     template <typename Func>
-    void get(Func func)
+    void get(Func func) const
     {
         while (! this->ready_.load(mgbase::memory_order_acquire))
         {
@@ -61,6 +62,21 @@ public:
 private:
     mgbase::atomic<bool>    ready_;
 };
+
+// For old GCC, we cannot put these functions
+// as member functions in async_atomic_channel<t>.
+template <typename T, typename Func>
+inline T& async_get(async_atomic_channel<T>& ch, Func&& func) {
+    return ch.get(mgbase::forward<Func>(func));
+}
+template <typename T, typename Func>
+inline T&& async_get(async_atomic_channel<T>&& ch, Func&& func) {
+    return mgbase::move(ch.get(mgbase::forward<Func>(func)));
+}
+template <typename Func>
+inline void async_get(const async_atomic_channel<void>& ch, Func&& func) {
+    return ch.get(mgbase::forward<Func>(func));
+}
 
 } // namespace mgult
 
