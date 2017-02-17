@@ -5,7 +5,6 @@
 #include <mgbase/container/circular_buffer.hpp>
 
 #include <mgcom/rpc.hpp>
-#include <mgcom/rpc/call2.hpp>
 
 #include <mgbase/memory/next_in_bytes.hpp>
 
@@ -133,7 +132,7 @@ public:
         
         const auto proc = th_id.di.proc;
         
-        mgcom::rpc::call2<deallocate_handler>(
+        mgcom::rpc::call<deallocate_handler>(
             mgcom::rpc::requester::get_instance()
         ,   proc
         ,   th_id

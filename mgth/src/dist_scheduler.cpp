@@ -4,7 +4,6 @@
 #include <mgult/generic/basic_scheduler.hpp>
 #include "global_ult_desc_pool.hpp"
 #include <mgcom/rpc.hpp>
-#include <mgcom/rpc/call2.hpp>
 #include <mgcom/collective.hpp>
 #include "dist_exit_status.hpp"
 
@@ -87,7 +86,7 @@ public:
         
         {
             const auto rply_msg =
-                mgcom::rpc::call2<steal_handler>(
+                mgcom::rpc::call<steal_handler>(
                     mgcom::rpc::requester::get_instance()
                 ,   stolen_proc
                 ,   arg
@@ -168,7 +167,7 @@ private:
 public:
     void do_write_barrier_at(const mgcom::process_id_t proc, const ult_id th_id)
     {
-        mgcom::rpc::call2<write_barrier_handler>(
+        mgcom::rpc::call<write_barrier_handler>(
             mgcom::rpc::requester::get_instance()
         ,   proc
         ,   write_barrier_request{ th_id }
