@@ -33,8 +33,11 @@ public:
     {
         instance_ = this;
         
-        mgcom::rpc::register_handler<steal_handler>();
-        mgcom::rpc::register_handler2<write_barrier_handler>(
+        mgcom::rpc::register_handler2(
+            mgcom::rpc::requester::get_instance()
+        ,   steal_handler{}
+        );
+        mgcom::rpc::register_handler2(
             mgcom::rpc::requester::get_instance()
         ,   write_barrier_handler{}
         );
@@ -82,11 +85,16 @@ public:
         
         auto stolen = mgult::make_invalid_ult_id();
         
-        mgcom::rpc::remote_call<steal_handler>(
-            stolen_proc
-        ,   arg
-        ,   &stolen
-        );
+        {
+            const auto rply_msg =
+                mgcom::rpc::call2<steal_handler>(
+                    mgcom::rpc::requester::get_instance()
+                ,   stolen_proc
+                ,   arg
+                );
+            
+            stolen = *rply_msg;
+        }
         
         if (is_invalid_ult_id(stolen)) {
             return {};
@@ -108,14 +116,16 @@ private:
     {
         static const mgcom::rpc::handler_id_t handler_id = 1000; // TODO
         
-        typedef steal_argument  argument_type;
-        typedef ult_id          return_type;
+        typedef steal_argument  request_type;
+        typedef ult_id          reply_type;
         
-        static return_type on_request(
-            const mgcom::rpc::handler_parameters&   params
-        ,   const argument_type&                    arg
-        ) {
-            const auto wk_rank = arg.wk_rank;
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        {
+            auto& rqst = sc.request();
+            const auto src_proc = sc.src_proc();
+            
+            const auto wk_rank = rqst.wk_rank;
             
             MGBASE_LOG_VERBOSE(
                 "msg:Try stealing from this process..."
@@ -132,7 +142,7 @@ private:
                     "msg:Stealing failed (no queued thread).\t"
                     "theif_proc:{}\t"
                     "id:0x{:x}"
-                ,   params.source
+                ,   src_proc
                 ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
                 );
             }
@@ -141,7 +151,7 @@ private:
                     "msg:Stealing succeeded.\t"
                     "theif_proc:{}\t"
                     "id:0x{:x}"
-                ,   params.source
+                ,   src_proc
                 ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
                 );
                 
@@ -149,7 +159,9 @@ private:
                 instance_->dsm_.write_barrier();
             }
             
-            return id;
+            auto rply = sc.make_reply();
+            *rply = id;
+            return rply;
         }
     };
     
