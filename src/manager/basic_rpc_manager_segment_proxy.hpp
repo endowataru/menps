@@ -206,7 +206,7 @@ private:
         typedef acquire_read_result_type    reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             
@@ -241,7 +241,7 @@ private:
         typedef void        reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             
@@ -272,7 +272,7 @@ private:
         typedef acquire_write_result_type   reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             
@@ -323,7 +323,7 @@ private:
         typedef release_write_result_type   reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             
@@ -364,7 +364,7 @@ private:
         typedef void            reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             
@@ -396,7 +396,7 @@ private:
         typedef void            reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             

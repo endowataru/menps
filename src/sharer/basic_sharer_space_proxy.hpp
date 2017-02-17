@@ -82,7 +82,7 @@ private:
         typedef void    reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             
@@ -107,7 +107,7 @@ private:
         typedef void    reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             
