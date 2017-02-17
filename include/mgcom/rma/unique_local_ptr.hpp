@@ -36,6 +36,22 @@ template <typename T, typename TD>
 class unique_local_ptr
     : public mgbase::basic_unique_resource<detail::unique_local_ptr_traits<T, TD>>
 {
+    typedef detail::unique_local_ptr_traits<T, TD>  policy;
+    typedef mgbase::basic_unique_resource<policy>   base;
+    typedef typename policy::resource_type          resource_type;
+    
+public:
+    unique_local_ptr() MGBASE_DEFAULT_NOEXCEPT = default;
+    
+    unique_local_ptr(resource_type ptr) MGBASE_NOEXCEPT
+        : base(mgbase::move(ptr))
+    { }
+    
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(unique_local_ptr, base)
+    
+    unique_local_ptr(const unique_local_ptr&) = delete;
+    unique_local_ptr& operator = (const unique_local_ptr&) = delete;
+    
 private:
     friend class mgbase::basic_unique_resource_access;
     
