@@ -62,7 +62,12 @@ private:
     static Result call(const storage_type& storage, Args... args)
     {
         auto& func = reinterpret_cast<const Func&>(storage);
-        return func(args...);
+        
+        // Explicitly cast to the original type
+        // to pass the rvalue reference.
+        // TODO: This is not the fundamental solution
+        //       because move-only non-reference types cannot be passed.
+        return func(static_cast<Args>(args)...);
     }
     
     func_type*      func_;

@@ -9,6 +9,8 @@
 #include <mgbase/type_traits/remove_reference.hpp>
 #include <mgbase/type_traits/remove_pointer.hpp>
 #include <mgbase/type_traits/add_lvalue_reference.hpp>
+#include <mgbase/type_traits/is_void.hpp>
+#include <mgbase/utility/move.hpp>
 #include <mgbase/explicit_operator_bool.hpp>
 
 namespace mgbase {
