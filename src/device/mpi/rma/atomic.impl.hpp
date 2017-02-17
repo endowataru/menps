@@ -4,119 +4,140 @@
 #include <mgcom/rma.hpp>
 #include <mgcom/rpc.hpp>
 #include <common/rma/rma.hpp>
-#include "atomic.hpp"
 #include <mgbase/logging/logger.hpp>
 
 namespace mgcom {
 namespace mpi {
 
-namespace /*unnamed*/ {
+template <typename Policy>
+class emulated_atomic
+    : public virtual Policy::requester_interface_type
+{
+    typedef typename Policy::derived_type       derived_type;
+    typedef typename Policy::atomic_value_type  atomic_value_type;
+    typedef typename Policy::handler_id_type    handler_id_type;
 
-template <typename T>
-class emulated_atomic {
 public:
-    explicit emulated_atomic(rpc::requester& req)
-        : req_(req)
+    emulated_atomic()
     {
-        using rpc::register_handler;
-        register_handler<am_read>(req_);
-        register_handler<am_write>(req_);
-        register_handler<am_fetch_and_add>(req_);
-        register_handler<am_compare_and_swap>(req_);
+    }
+    
+protected:
+    void setup()
+    {
+        auto& self = this->derived();
+        auto& rpc_rqstr = self.get_rpc_requester();
+        
+        Policy::register_handler(rpc_rqstr, atomic_read_handler{ });
+        Policy::register_handler(rpc_rqstr, atomic_write_handler{ });
+        Policy::register_handler(rpc_rqstr, fetch_and_add_handler{ });
+        Policy::register_handler(rpc_rqstr, compare_and_swap_handler{ });
     }
 
 private:
-    class am_read
+    class atomic_read_handler
     {
     public:
-        static const mgcom::rpc::handler_id_t handler_id = 2000; // TODO: remove magic numbers
+        static const handler_id_type handler_id = 2000; // TODO: remove magic numbers
         
-        struct argument_type {
-            const T* ptr;
+        struct request_type {
+            const atomic_value_type* ptr;
         };
-        typedef T    return_type;
+        typedef atomic_value_type    reply_type;
         
-        static return_type on_request(
-            const mgcom::rpc::handler_parameters& /*params*/
-        ,   const argument_type& arg
-        ) {
-            // TODO
-            const mgbase::atomic<T>* const ptr = reinterpret_cast<const mgbase::atomic<T>*>(arg.ptr);
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        {
+            const auto& rqst = sc.request();
             
-            const T result = ptr->load();
+            // TODO : memory ordering
+            const auto result = *rqst.ptr;
             
             MGBASE_LOG_DEBUG(
                 "msg:Emulated remote read.\t"
                 "src_ptr:{:x}\tresult:{}"
-            ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+            ,   reinterpret_cast<mgbase::uintptr_t>(rqst.ptr)
             ,   result
             );
             
-            return result;
+            auto rply = sc.make_reply();
+            *rply = result;
+            
+            return rply;
         }
     };
     
 public:
-    ult::async_status<void> atomic_read(const rma::async_atomic_read_params<T>& params)
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> async_atomic_read(
+        const typename Policy::async_atomic_read_params_type&   params
+    ) MGBASE_OVERRIDE
     {
-        const typename am_read::argument_type arg = { to_raw_pointer(params.src_rptr) };
+        auto& self = this->derived();
+        
+        const typename atomic_read_handler::request_type rqst{
+            to_raw_pointer(params.src_rptr)
+        };
         
         MGBASE_LOG_DEBUG(
             "msg:Send message of emulated remote read.\t"
             "src_proc:{}\tsrc_rptr:{:x}"
         ,   params.src_proc
-        ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+        ,   reinterpret_cast<mgbase::uintptr_t>(rqst.ptr)
         );
         
-        while (! rpc::try_remote_call_async<am_read>(
-            req_
-        ,   params.src_proc
-        ,   arg
-        ,   params.dest_ptr
-        ,   params.on_complete
-        )) {
-            ult::yield();
-        }
+        // TODO: make this async
+        const auto rply_msg =
+            Policy::template call<atomic_read_handler>(
+                self.get_rpc_requester()
+            ,   params.src_proc
+            ,   rqst
+            );
         
-        return ult::make_async_deferred<void>();
+        *params.dest_ptr = *rply_msg;
+        
+        return ult::make_async_ready(); // TODO
     }
     
 private:
-    class am_write
+    class atomic_write_handler
     {
     public:
-        static const mgcom::rpc::handler_id_t handler_id = 2002;
+        static const handler_id_type handler_id = 2002;
         
-        struct argument_type {
-            T*   ptr;
-            T    value;
+        struct request_type {
+            atomic_value_type*   ptr;
+            atomic_value_type    value;
         };
-        typedef void    return_type;
+        typedef void    reply_type;
         
-        static return_type on_request(
-            const mgcom::rpc::handler_parameters& /*params*/
-        ,   const argument_type& arg
-        ) {
-            // TODO
-            mgbase::atomic<T>* const ptr = reinterpret_cast<mgbase::atomic<T>*>(arg.ptr);
-            
-            ptr->store(arg.value);
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        {
+            const auto& req = sc.request();
             
             MGBASE_LOG_DEBUG(
                 "msg:Emulated remote write.\t"
                 "value:{}\tdest_ptr:{:x}"
-            ,   arg.value
-            ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
+            ,   req.value
+            ,   reinterpret_cast<mgbase::uintptr_t>(req.ptr)
             );
             
-            return;
+            *req.ptr = req.value;
+            
+            return sc.make_reply();
         }
     };
     
 public:
-    ult::async_status<void> atomic_write(const rma::async_atomic_write_params<T>& params)
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> async_atomic_write(
+        const typename Policy::async_atomic_write_params_type& params
+    ) MGBASE_OVERRIDE
     {
-        const typename am_write::argument_type arg = {
+        auto& self = this->derived();
+        
+        const typename atomic_write_handler::request_type rqst{
             to_raw_pointer(params.dest_rptr)
         ,   params.value
         };
@@ -125,63 +146,73 @@ public:
             "msg:Send message of emulated remote write.\t"
             "dest_proc:{}\tdest_rptr:{:x}\tvalue:{}"
         ,   params.dest_proc
-        ,   reinterpret_cast<mgbase::uintptr_t>(arg.ptr)
-        ,   arg.value
+        ,   reinterpret_cast<mgbase::uintptr_t>(rqst.ptr)
+        ,   rqst.value
         );
         
-        while (! rpc::try_remote_call_async<am_write>(
-            req_
+        // TODO: make this async
+        Policy::template call<atomic_write_handler>(
+            self.get_rpc_requester()
         ,   params.dest_proc
-        ,   arg
-        ,   params.on_complete
-        )) {
-            ult::yield();
-        }
+        ,   rqst
+        );
         
-        return ult::make_async_deferred<void>();
+        return ult::make_async_ready(); // TODO
     }
     
 private:
-    class am_compare_and_swap
+    class compare_and_swap_handler
     {
     public:
-        static const mgcom::rpc::handler_id_t handler_id = 2004;
+        static const handler_id_type handler_id = 2004;
         
-        struct argument_type {
-            T*  target;
-            T   expected;
-            T   desired;
+        struct request_type {
+            atomic_value_type*  target;
+            atomic_value_type   expected;
+            atomic_value_type   desired;
         };
-        typedef T    return_type;
+        typedef atomic_value_type    reply_type;
         
-        static return_type on_request(
-            const mgcom::rpc::handler_parameters& /*params*/
-        ,   const argument_type& arg
-        ) {
-            // TODO
-            mgbase::atomic<T>* const target = reinterpret_cast<mgbase::atomic<T>*>(arg.target);
-            T expected = arg.expected;
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        {
+            const auto& rqst = sc.request();
             
-            target->compare_exchange_strong(expected, arg.desired);
+            // TODO
+            const auto target =
+                reinterpret_cast<mgbase::atomic<atomic_value_type>*>(rqst.target);
+            
+            auto expected = rqst.expected;
+            
+            target->compare_exchange_strong(expected, rqst.desired);
             
             MGBASE_LOG_DEBUG(
                 "msg:Emulated remote compare and swap.\t"
                 "target_addr:{:x}\texpected:{}\tdesired:{}\tresult:{}"
-            ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
-            ,   arg.expected
-            ,   arg.desired
+            ,   reinterpret_cast<mgbase::uintptr_t>(rqst.target)
+            ,   rqst.expected
+            ,   rqst.desired
             ,   expected
             );
             
+            auto rply = sc.make_reply();
+            
             // Return the old value.
-            return expected;
+            *rply = expected;
+            
+            return rply;
         }
     };
     
 public:
-    ult::async_status<void> compare_and_swap(const rma::async_compare_and_swap_params<T>& params)
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> async_compare_and_swap(
+        const typename Policy::async_compare_and_swap_params_type&  params
+    ) MGBASE_OVERRIDE
     {
-        const typename am_compare_and_swap::argument_type arg = {
+        auto& self = this->derived();
+        
+        const typename compare_and_swap_handler::request_type rqst{
             to_raw_pointer(params.target_rptr)
         ,   params.expected
         ,   params.desired
@@ -191,62 +222,74 @@ public:
             "msg:Send message of emulated remote compare and swap.\t"
             "proc:{:x}\ttarget:{:x}\texpected:{}\tdesired:{}\tresult_ptr:{:x}"
         ,   params.target_proc
-        ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
-        ,   arg.expected
-        ,   arg.desired
+        ,   reinterpret_cast<mgbase::uintptr_t>(rqst.target)
+        ,   rqst.expected
+        ,   rqst.desired
         ,   reinterpret_cast<mgbase::uintptr_t>(params.result_ptr)
         );
         
-        while (! rpc::try_remote_call_async<am_compare_and_swap>(
-            req_
-        ,   params.target_proc
-        ,   arg
-        ,   params.result_ptr
-        ,   params.on_complete
-        )) {
-            ult::yield();
-        }
+        // TODO: make this async
+        auto rply_msg =
+            Policy::template call<compare_and_swap_handler>(
+                self.get_rpc_requester()
+            ,   params.target_proc
+            ,   rqst
+            );
         
-        return ult::make_async_deferred<void>();
+        *params.result_ptr = *rply_msg;
+        
+        return ult::make_async_ready();
     }
     
 private:
-    class am_fetch_and_add
+    class fetch_and_add_handler
     {
     public:
-        static const mgcom::rpc::handler_id_t handler_id = 2006;
+        static const handler_id_type handler_id = 2006;
         
-        struct argument_type {
-            T*   target;
-            T    diff;
+        struct request_type {
+            atomic_value_type*   target;
+            atomic_value_type    diff;
         };
-        typedef T    return_type;
+        typedef atomic_value_type    reply_type;
         
-        static return_type on_request(
-            const mgcom::rpc::handler_parameters& /*params*/
-        ,   const argument_type& arg
-        ) {
-            mgbase::atomic<T>* const target = reinterpret_cast<mgbase::atomic<T>*>(arg.target);
+        template <typename ServerCtx>
+        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        {
+            const auto& rqst = sc.request();
+            
+            const auto target =
+                reinterpret_cast<mgbase::atomic<atomic_value_type>*>(rqst.target);
             
             // Returns the old value.
-            const T result = target->fetch_add(arg.diff);
+            const auto result = target->fetch_add(rqst.diff);
             
             MGBASE_LOG_DEBUG(
                 "msg:Emulated remote fetch and add.\t"
                 "target_addr:{:x}\tdiff:{}\tresult:{}"
-            ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
-            ,   arg.diff
+            ,   reinterpret_cast<mgbase::uintptr_t>(rqst.target)
+            ,   rqst.diff
             ,   result
             );
             
-            return result;
+            auto rply = sc.make_reply();
+            
+            // Return the old value.
+            *rply = result;
+            
+            return rply;
         }
     };
     
 public:
-    ult::async_status<void> fetch_and_add(const rma::async_fetch_and_add_params<T>& params)
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> async_fetch_and_add(
+        const typename Policy::async_fetch_and_add_params_type& params
+    ) MGBASE_OVERRIDE
     {
-        const typename am_fetch_and_add::argument_type arg = {
+        auto& self = this->derived();
+        
+        const typename fetch_and_add_handler::request_type rqst{
             to_raw_pointer(params.target_rptr)
         ,   params.value
         };
@@ -255,29 +298,29 @@ public:
             "msg:Send message of emulated remote fetch and add.\t"
             "proc:{:x}\ttarget_addr:{:x}\tdiff:{}\tresult_ptr:{:x}"
         ,   params.target_proc
-        ,   reinterpret_cast<mgbase::uintptr_t>(arg.target)
-        ,   arg.diff
+        ,   reinterpret_cast<mgbase::uintptr_t>(rqst.target)
+        ,   rqst.diff
         ,   reinterpret_cast<mgbase::uintptr_t>(params.result_ptr)
         );
         
-        while (! rpc::try_remote_call_async<am_fetch_and_add>(
-            req_
-        ,   params.target_proc
-        ,   arg
-        ,   params.result_ptr
-        ,   params.on_complete
-        )) {
-            ult::yield();
-        }
+        // TODO: make this async
+        auto rply_msg =
+            Policy::template call<fetch_and_add_handler>(
+                self.get_rpc_requester()
+            ,   params.target_proc
+            ,   rqst
+            );
         
-        return ult::make_async_deferred<void>();
+        *params.result_ptr = *rply_msg;
+        
+        return ult::make_async_ready();
     }
     
 private:
-    mgcom::rpc::requester& req_;
+    derived_type& derived() MGBASE_NOEXCEPT {
+        return static_cast<derived_type&>(*this);
+    }
 };
-
-} // unnamed namespace
 
 } // namespace mpi
 } // namespace mgcom

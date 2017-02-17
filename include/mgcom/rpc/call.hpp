@@ -3,6 +3,8 @@
 
 #include "requester.hpp"
 
+#if 0
+
 namespace mgcom {
 namespace rpc {
 
@@ -214,4 +216,6 @@ inline void register_handler()
 
 } // namespace rpc
 } // namespace mgcom
+
+#endif
 

@@ -4,18 +4,25 @@
 struct test_handler {
     static const mgcom::rpc::handler_id_t handler_id = 1;
     
-    typedef int*    argument_type;
-    typedef int     return_type;
+    typedef int*    request_type;
+    typedef int     reply_type;
     
-    static return_type on_request(const mgcom::rpc::handler_parameters& params, const argument_type& arg) {
-        *arg += 10;
-        return static_cast<int>(params.source);
+    template <typename ServerCtx>
+    typename ServerCtx::return_type operator() (ServerCtx& sc)
+    {
+        const auto src_proc = sc.src_proc();
+        const auto& rqst = sc.request();
+        *rqst += 10;
+        
+        auto rply = sc.make_reply();
+        *rply = static_cast<int>(src_proc);
+        return rply;
     }
 };
 
 TEST(Rpc, Roundtrip)
 {
-    mgcom::rpc::register_handler<test_handler>();
+    mgcom::rpc::register_handler2(mgcom::rpc::requester::get_instance(), test_handler{});
     
     int x = 0;
     int* dest = &x;
@@ -23,11 +30,16 @@ TEST(Rpc, Roundtrip)
     
     int result = -1;
     
-    mgcom::rpc::remote_call<test_handler>(
-        0
-    ,   dest
-    ,   &result
-    );
+    {
+        const auto rply_msg =
+            mgcom::rpc::call2<test_handler>(
+                mgcom::rpc::requester::get_instance()
+            ,   0
+            ,   dest
+            );
+        
+        result = *rply_msg;
+    }
     
     mgcom::collective::barrier();
     

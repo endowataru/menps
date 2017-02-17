@@ -4,6 +4,8 @@
 #include "call.hpp"
 #include <mgcom/ult.hpp>
 
+#if 0
+
 namespace mgcom {
 namespace rpc {
 
@@ -83,4 +85,6 @@ MGBASE_ALWAYS_INLINE void remote_call(
 
 } // namespace rpc
 } // namespace mgcom
+
+#endif
 

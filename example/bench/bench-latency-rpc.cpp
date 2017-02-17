@@ -3,15 +3,16 @@
 #include <mgbase/profiling/stopwatch.hpp>
 #include <iostream>
 
-struct am_test {
+struct bench_handler {
     static const mgcom::rpc::handler_id_t handler_id = 1;
     
-    struct argument_type { };
-    typedef void return_type;
+    struct request_type { };
+    typedef void reply_type;
     
-    static return_type on_request(const mgcom::rpc::handler_parameters& /*params*/, const argument_type& /*arg*/)
+    template <typename ServerCtx>
+    typename ServerCtx::return_type operator() (ServerCtx& sc)
     {
-        return;
+        return sc.make_reply();
     }
 };
 
@@ -22,7 +23,7 @@ int main(int argc, char* argv[])
     const mgcom::process_id_t root_proc = 0;
     const int number_of_trials = atoi(argv[1]);
     
-    mgcom::rpc::register_handler<am_test>();
+    mgcom::rpc::register_handler2(mgcom::rpc::requester::get_instance(), bench_handler{});
     
     mgcom::collective::barrier();
     
@@ -34,7 +35,11 @@ int main(int argc, char* argv[])
             mgbase::stopwatch sw;
             sw.start();
             
-            mgcom::rpc::remote_call<am_test>(root_proc, am_test::argument_type());
+            mgcom::rpc::call2<bench_handler>(
+                mgcom::rpc::requester::get_instance()
+            ,   root_proc
+            ,   bench_handler::request_type()
+            );
             
             clocks += sw.elapsed();
         }

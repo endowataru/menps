@@ -66,8 +66,6 @@ target_link_libraries(mgcom-common
 
 add_library(mgcom-mpi
     src/device/mpi/rpc/rpc.cpp
-    src/device/mpi/rma/contiguous.cpp
-    src/device/mpi/rma/atomic.cpp
     src/device/mpi/rma/rma.cpp
     src/device/mpi/rma/registrator.cpp
     src/device/mpi/collective/barrier.cpp
