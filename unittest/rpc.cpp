@@ -32,7 +32,7 @@ TEST(Rpc, Roundtrip)
     
     {
         const auto rply_msg =
-            mgcom::rpc::call2<test_handler>(
+            mgcom::rpc::call<test_handler>(
                 mgcom::rpc::requester::get_instance()
             ,   0
             ,   dest

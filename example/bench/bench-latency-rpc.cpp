@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
             mgbase::stopwatch sw;
             sw.start();
             
-            mgcom::rpc::call2<bench_handler>(
+            mgcom::rpc::call<bench_handler>(
                 mgcom::rpc::requester::get_instance()
             ,   root_proc
             ,   bench_handler::request_type()

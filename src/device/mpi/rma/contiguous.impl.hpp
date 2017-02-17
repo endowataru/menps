@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgcom/rma.hpp>
-#include <mgcom/rpc/call2.hpp>
+#include <mgcom/rpc/call.hpp>
 
 #include "common/rma/rma.hpp"
 #include "device/mpi/mpi_base.hpp"

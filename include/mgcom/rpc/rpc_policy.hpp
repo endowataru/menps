@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgcom/rpc/call2.hpp>
+#include <mgcom/rpc/call.hpp>
 #include <mgcom/rpc/requester.hpp>
 
 namespace mgcom {
@@ -75,7 +75,7 @@ struct rpc_policy
     ,   const process_id_t                                      target_proc
     ,   client_request_message<typename Handler::request_type>  rqst_msg
     ) {
-        return mgcom::rpc::call2<Handler>(
+        return mgcom::rpc::call<Handler>(
             rqstr
         ,   target_proc
         ,   mgbase::move(rqst_msg)
@@ -87,7 +87,7 @@ struct rpc_policy
     ,   const process_id_t                      target_proc
     ,   const typename Handler::request_type&   rqst_data
     ) {
-        return mgcom::rpc::call2<Handler>(
+        return mgcom::rpc::call<Handler>(
             rqstr
         ,   target_proc
         ,   rqst_data
@@ -99,7 +99,7 @@ struct rpc_policy
         const process_id_t                                      target_proc
     ,   client_request_message<typename Handler::request_type>  rqst_msg
     ) {
-        return mgcom::rpc::call2<Handler>(
+        return mgcom::rpc::call<Handler>(
             mgcom::rpc::requester::get_instance()
         ,   target_proc
         ,   mgbase::move(rqst_msg)
@@ -110,7 +110,7 @@ struct rpc_policy
         const process_id_t                      target_proc
     ,   const typename Handler::request_type&   rqst_data
     ) {
-        return mgcom::rpc::call2<Handler>(
+        return mgcom::rpc::call<Handler>(
             mgcom::rpc::requester::get_instance()
         ,   target_proc
         ,   rqst_data

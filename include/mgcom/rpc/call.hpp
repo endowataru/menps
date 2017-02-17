@@ -265,8 +265,7 @@ struct async_call_functor
 } // namespace detail
 
 template <typename Handler>
-inline client_reply_message<typename Handler::reply_type>
-call2(
+inline client_reply_message<typename Handler::reply_type> call(
     requester&                                              rqstr
 ,   const process_id_t                                      target_proc
 ,   client_request_message<typename Handler::request_type>  rqst_msg
@@ -283,12 +282,12 @@ call2(
 }
 
 template <typename Handler>
-inline client_reply_message<typename Handler::reply_type> call2(
+inline client_reply_message<typename Handler::reply_type> call(
     requester&                              rqstr
 ,   const process_id_t                      target_proc
 ,   const typename Handler::request_type&   rqst_data
 ) {
-    return call2<Handler>(
+    return call<Handler>(
         rqstr
     ,   target_proc
     ,   client_request_message<typename Handler::request_type>::convert_from(
