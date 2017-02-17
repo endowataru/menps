@@ -120,7 +120,7 @@ private:
         typedef ult_id          reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             auto& rqst = sc.request();
             const auto src_proc = sc.src_proc();
@@ -188,7 +188,7 @@ private:
         typedef void                        reply_type;
         
         template <typename ServerCtx>
-        typename ServerCtx::return_type operator() (ServerCtx& sc)
+        typename ServerCtx::return_type operator() (ServerCtx& sc) const
         {
             instance_->dsm_.write_barrier();
             
