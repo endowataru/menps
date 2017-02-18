@@ -5,19 +5,25 @@
 #include "sharer_block.hpp"
 #include "sharer_page_accessor.hpp"
 #include "sharer_block_transfer.hpp"
+#include <mgcom/rpc/rpc_policy.hpp>
 
 namespace mgdsm {
 
 struct sharer_block_accessor_traits
+    : mgcom::rpc::rpc_policy
 {
     typedef sharer_block::accessor     derived_type;
     
     typedef mgbase::uintptr_t       index_type;
+    
+    typedef mgcom::process_id_t     process_id_type;
+    
+    static const mgcom::rpc::handler_id_t write_diff_handler_id = 501;
 };
 
 class sharer_block::accessor
     : public basic_sharer_block_accessor<sharer_block_accessor_traits>
-    , public sharer_block_transfer
+    , public sharer_block_transfer<sharer_block_accessor_traits>
 {
     typedef sharer_page::accessor   page_accessor_type;
     typedef sharer_block_entry      block_entry_type;
