@@ -96,8 +96,8 @@ public:
     }
     
     bool is_diff_needed() const MGBASE_NOEXCEPT {
-        return this->is_diff_needed_.load(mgbase::memory_order_acquire);
-        //return true; // FIXME: broken?
+        //return this->is_diff_needed_.load(mgbase::memory_order_acquire);
+        return true; // FIXME: broken?
     }
     bool is_flush_needed() const MGBASE_NOEXCEPT {
         return this->is_flush_needed_.load(mgbase::memory_order_acquire);
