@@ -38,6 +38,7 @@ public:
     {
         MGBASE_ASSERT(valid_process_id(ep_, params.server_proc));
         MGBASE_ASSERT(params.handler_id < MGCOM_RPC_MAX_NUM_HANDLERS);
+        MGBASE_ASSERT(params.rqst_msg.size_in_bytes() <= MGCOM_RPC_MAX_DATA_SIZE);
         //MGBASE_ASSERT(params.arg_ptr != MGBASE_NULLPTR);
         //MGBASE_ASSERT(params.return_size == 0 || params.return_ptr != MGBASE_NULLPTR);
         
@@ -92,22 +93,23 @@ public:
         }
         
         {
-            buffer_type msg_buf;
+            const auto msg_buf =
+                mgbase::make_unique<buffer_type>();
             
             const auto ptr = params.rqst_msg.get();
             const auto size = params.rqst_msg.size_in_bytes();
             
-            msg_buf.id      = params.handler_id;
-            msg_buf.size    = size;
+            msg_buf->id      = params.handler_id;
+            msg_buf->size    = size;
             
-            msg_buf.reply_size  = MGCOM_RPC_MAX_DATA_SIZE;
-            msg_buf.reply_tag   = recv_tag;
+            msg_buf->reply_size  = MGCOM_RPC_MAX_DATA_SIZE;
+            msg_buf->reply_tag   = recv_tag;
             
-            std::memcpy(msg_buf.data, ptr, size);
+            std::memcpy(msg_buf->data, ptr, size);
             
             //mpi::irsend( // TODO: Introduce buffer management
             mi.send(
-                &msg_buf                                    // buf
+                msg_buf.get()                               // buf
             ,   static_cast<int>(sizeof(buffer_type))       // size_in_bytes
             ,   static_cast<int>(params.server_proc)        // dest_proc
             ,   send_tag                                    // tag

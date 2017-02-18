@@ -11,6 +11,17 @@ struct rpc_policy
 {
     typedef handler_id_t    handler_id_type;
     
+    template <typename T>
+    struct client_request_message_type {
+        typedef client_request_message<T>   type;
+    };
+    
+    static client_request_message<void> allocate_request(mgbase::size_t alignment, mgbase::size_t size) {
+        return client_request_message<void>::convert_from(
+            detail::allocate_message(alignment, size)
+        );
+    }
+    
     template <typename T, typename... Args>
     static client_request_message<T> make_request(Args&&... args)
     {

@@ -7,7 +7,7 @@
 namespace mgcom {
 namespace rpc {
 
-#define MGCOM_RPC_MAX_DATA_SIZE         1024
+#define MGCOM_RPC_MAX_DATA_SIZE         (64<<10)
 #define MGCOM_RPC_MAX_NUM_HANDLERS      10000
 
 struct constants
