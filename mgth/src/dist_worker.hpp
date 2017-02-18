@@ -42,9 +42,9 @@ class dist_worker
     
     static const mgbase::size_t join_stack_size = 2 << 20;
     
-public:
-    static const mgbase::size_t stack_size = global_ult_desc_pool::stack_size;
+    static const mgbase::size_t page_fault_stack_size = 2 << 20;
     
+public:
     dist_worker(dist_scheduler& sched, const worker_rank_t rank);
     
     // Methods required by basic_worker.
@@ -97,8 +97,8 @@ private:
     dist_scheduler&         sched_;
     const worker_rank_t     rank_;
     
-    //mgbase::unique_ptr<mgbase::uint8_t []>      stack_area_;
-    //mgbase::unique_ptr<alternate_signal_stack>  alter_stack_;
+    mgbase::unique_ptr<mgbase::uint8_t []>      stack_area_;
+    mgbase::unique_ptr<alternate_signal_stack>  alter_stack_;
     
     mgbase::unique_ptr<mgbase::uint8_t []> join_stack_area_;
     

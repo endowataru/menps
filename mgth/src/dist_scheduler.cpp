@@ -428,14 +428,14 @@ void dist_worker::on_exit_resume(global_ult_ref& th)
 
 void dist_worker::initialize_on_this_thread()
 {
-    /*stack_area_.reset(
-        new mgbase::uint8_t[stack_size]
+    stack_area_.reset(
+        new mgbase::uint8_t[page_fault_stack_size]
     );
     alter_stack_ = 
         mgbase::make_unique<alternate_signal_stack>( 
             stack_area_.get()
-        ,   stack_size
-        );*/
+        ,   page_fault_stack_size
+        );
     
     tls_base::initialize_on_this_thread();
     
@@ -450,11 +450,11 @@ void dist_worker::finalize_on_this_thread()
     
     tls_base::finalize_on_this_thread();
     
-    /*alter_stack_.reset();
-    stack_area_.reset();*/
+    alter_stack_.reset();
+    stack_area_.reset();
 }
 
-const mgbase::size_t dist_worker::stack_size;
+const mgbase::size_t dist_worker::page_fault_stack_size;
 
 } // namespace mgth
 
