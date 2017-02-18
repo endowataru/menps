@@ -210,33 +210,6 @@ async_call(
             client_reply_message<typename Handler::reply_type>
         >();
     }
-    
-    #if 0
-    typedef typename Handler::reply_type   reply_type;
-    
-    reply_message<reply_type> rply_msg(
-        reinterpret_cast<reply_type*>(
-            new mgbase::uint8_t[MGCOM_RPC_MAX_DATA_SIZE]
-        )
-    ,   MGCOM_RPC_MAX_DATA_SIZE
-    );
-    
-    const untyped::call_params params{
-        target_proc
-    ,   Handler::handler_id
-    ,   rqst_msg.get()
-    ,   rqst_msg.size_in_bytes()
-    ,   rply_msg.get()
-    ,   rply_msg.size_in_bytes()
-    ,   on_complete
-    };
-    
-    while (!req.try_call_async(params)) {
-        ult::this_thread::yield();
-    }
-    
-    *rply_out = mgbase::move(rply_msg);
-    #endif
 }
 
 namespace detail {
