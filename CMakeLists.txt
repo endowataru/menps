@@ -441,7 +441,6 @@ add_executable(mgbase-unittest
     unittest/deferred.cpp
     unittest/thread.cpp
     unittest/callback_function.cpp
-    unittest/bound_function.cpp
     unittest/spinlock.cpp
     unittest/condition_variable.cpp
     #unittest/optional.cpp
