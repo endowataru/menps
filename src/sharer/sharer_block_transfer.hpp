@@ -8,7 +8,11 @@ namespace mgdsm {
 class sharer_block_transfer
 {
     typedef mgcom::rma::paired_remote_ptr<void>     prptr_type;
+    typedef mgcom::rma::remote_ptr<void>            rptr_type;
     typedef mgcom::rma::local_ptr<void>             lptr_type;
+    
+    typedef mgcom::rma::remote_ptr<mgbase::uint8_t> rptr_byte_type;
+    typedef mgcom::rma::local_ptr<mgbase::uint8_t>  lptr_byte_type;
     
 public:
     static void read(
@@ -66,6 +70,30 @@ public:
     ,   const lptr_type&        twin_lptr
     ,   const prptr_type&       dest_prptr
     ,   const mgbase::size_t    block_size
+    ) {
+        copy_diffs(src_ptr, twin_lptr, dest_prptr, block_size, rma_write{});
+    }
+    
+private:
+    struct rma_write
+    {
+        void operator() (
+            const mgcom::process_id_t   dest_proc
+        ,   const rptr_byte_type&       dest_rptr
+        ,   const lptr_byte_type&       src_lptr
+        ,   const mgbase::size_t        size
+        ) {
+            mgcom::rma::write(dest_proc, dest_rptr, src_lptr, size);
+        }
+    };
+    
+    template <typename WriteFunc>
+    static void copy_diffs(
+        void* const             src_ptr
+    ,   const lptr_type&        twin_lptr
+    ,   const prptr_type&       dest_prptr
+    ,   const mgbase::size_t    block_size
+    ,   WriteFunc               write_func
     )
     {
         const auto data_ptr =
