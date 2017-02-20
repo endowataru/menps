@@ -94,22 +94,19 @@ public:
         return mgbase::next_in_bytes(seg_ptr, pg_offset);
     }
     
-    // Coherence activations don't require coherence operations.
     void enable_flush(const page_id_type pg_id)
     {
         auto& self = this->derived();
-        auto& seg_ent = self.get_segment_entry();
-        auto& pg = seg_ent.get_page(pg_id);
+        auto pg_ac = self.get_page_accessor(pg_id);
         
-        pg.enable_flush(); // Not locked
+        pg_ac.enable_flush();
     }
     void enable_diff(const page_id_type pg_id)
     {
         auto& self = this->derived();
-        auto& seg_ent = self.get_segment_entry();
-        auto& pg = seg_ent.get_page(pg_id);
+        auto pg_ac = self.get_page_accessor(pg_id);
         
-        pg.enable_diff(); // Not locked
+        pg_ac.enable_diff();
     }
     
 private:

@@ -26,13 +26,10 @@ public:
     {
         MGBASE_RANGE_BASED_FOR(const auto proc, this->readers_)
         {
-            // A new writer must be different from the existing readers.
-            //MGBASE_ASSERT(proc != src_proc);
-            
             if (proc == src_proc)
             {
                 // The existing reader is the same as the new writer.
-                // The coherence information is sent via "acquire_write"'s RPC.
+                // The coherence information is sent via "acquire_write"'s RPC reply.
             }
             else
             {
