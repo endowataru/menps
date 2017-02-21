@@ -18,7 +18,7 @@ struct sharer_block_accessor_traits
     
     typedef mgcom::process_id_t     process_id_type;
     
-    static const mgcom::rpc::handler_id_t write_diff_handler_id = 501;
+    static const mgcom::rpc::handler_id_t write_diff_handler_id = 601;
 };
 
 class sharer_block::accessor
