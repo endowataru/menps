@@ -207,12 +207,6 @@ public:
         
         // Allocate a space for fork data.
         align_fork_data(stack_ptr, stack_size);
-        /*mgbase::align_call_stack(
-            std::max(MGBASE_ALIGNOF(fork_child_first_data), MGBASE_ALIGNOF(fork_parent_first_data))
-        ,   std::max(sizeof(fork_child_first_data), sizeof(fork_parent_first_data))
-        ,   stack_ptr
-        ,   stack_size
-        );*/
         
         if (MGBASE_LIKELY(size > 0))
         {
@@ -239,32 +233,11 @@ public:
 private:
     struct fork_stack_info
     {
-        // Explicitly delete copying for old compilers.
-        //fork_stack_info(const fork_stack_info&) = delete;
-        //fork_stack_info& operator = (const fork_stack_info&) = delete;
-        
         ult_ref_type    child_th;
         void*           stack_ptr;
         mgbase::size_t  stack_size;
         void*           data;
     };
-    
-    #if 0
-    static fork_data& get_fork_data(void* stack_ptr, mgbase::size_t stack_size)
-    {
-        auto p =
-            static_cast<fork_data*>(
-                mgbase::align_call_stack(
-                    MGBASE_ALIGNOF(fork_data)
-                ,   sizeof(fork_data)
-                ,   stack_ptr
-                ,   stack_size
-                )
-            );
-        
-        return *p;
-    }
-    #endif
     
     void calc_fork_stack_info(const allocated_ult& child, fork_stack_info* const out)
     {
