@@ -107,7 +107,7 @@ public:
     requester& operator = (const requester&) = delete;
     
     MGBASE_WARN_UNUSED_RESULT
-    virtual ult::async_status<void> async_read(const async_untyped_read_params&)= 0;
+    virtual ult::async_status<void> async_read(const async_untyped_read_params&) = 0;
     
     MGBASE_WARN_UNUSED_RESULT
     virtual ult::async_status<void> async_write(const async_untyped_write_params&) = 0;

@@ -3,6 +3,7 @@
 
 #include <mgcom/rma/requester.hpp>
 #include <mgcom/ult.hpp>
+#include <mgcom/rma/to_raw.hpp>
 
 namespace mgcom {
 namespace rma {
@@ -41,6 +42,35 @@ struct async_write_params : write_params<T>
 };
 
 namespace detail {
+
+inline bool try_local_read(const untyped_read_params& params)
+{
+    if (params.src_proc == mgcom::current_process_id())
+    {
+        const auto src_ptr = untyped::to_raw_pointer(params.src_raddr);
+        const auto dest_ptr = untyped::to_raw_pointer(params.dest_laddr);
+        
+        memcpy(dest_ptr, src_ptr, params.size_in_bytes);
+        
+        return true;
+    }
+    else
+        return false;
+}
+inline bool try_local_write(const untyped_write_params& params)
+{
+    if (params.dest_proc == mgcom::current_process_id())
+    {
+        const auto src_ptr = untyped::to_raw_pointer(params.src_laddr);
+        const auto dest_ptr = untyped::to_raw_pointer(params.dest_raddr);
+        
+        memcpy(dest_ptr, src_ptr, params.size_in_bytes);
+        
+        return true;
+    }
+    else
+        return false;
+}
 
 template <typename Remote, typename Local>
 inline read_params<Local> make_read_params(
@@ -90,10 +120,6 @@ inline write_params<Remote> make_write_params(
     };
 }
 
-} // namespace detail
-
-namespace detail {
-
 template <
     typename Params
 ,   ult::async_status<void> (requester::*Method)(const Params&)
@@ -134,7 +160,12 @@ struct async_closure
         requester&                              rqstr \
     ,   const async_untyped_##NAME##_params&    params \
     ) { \
-        return rqstr.async_##NAME(params); \
+        if (detail::try_local_##NAME(params)) { \
+            return ult::make_async_ready(); \
+        } \
+        else { \
+            return rqstr.async_##NAME(params); \
+        } \
     } \
     MGBASE_WARN_UNUSED_RESULT \
     inline ult::async_status<void> async_##NAME( \
@@ -212,6 +243,10 @@ struct async_closure
         requester&                          rqstr \
     ,   const untyped_##NAME##_params&      params \
     ) { \
+        if (detail::try_local_##NAME(params)) { \
+            return; \
+        } \
+        \
         async_untyped_##NAME##_params p; \
         \
         untyped_##NAME##_params& base = p; \
