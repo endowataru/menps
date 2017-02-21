@@ -1,6 +1,0 @@
-
-namespace mgdsm {
-
-
-} // namespace mgdsm
-
