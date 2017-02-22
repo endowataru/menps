@@ -37,7 +37,7 @@
 - `decltype`
     - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47289
 
-```
+```cpp
 template <typename T>
 T r(T x) { return x; }
 
@@ -54,7 +54,7 @@ decltype(f(&g, 123)) x;
 - `using`
     - Fixed in GCC 4.7
 
-```
+```cpp
 template <typename D>
 struct A { typedef int x; };
 
@@ -93,15 +93,15 @@ struct B : A<B<D>> {
 
 - Uniform initialization syntax
     - Zero argument
-        - Always use {}
+        - Always use `{}`
     - One reference
         - Use `()` for the old versions of GCC
     - One argument, not reference
         - Use `()` if we expect normal constructors
-        - Use `{}` if we expect initializer_list<>
+        - Use `{}` if we expect `initializer_list<>`
     - Multiple arguments
         - Use `()` if we expect normal constructors
-        - Use `{}` if we expect initializer_list<>
+        - Use `{}` if we expect `initializer_list<>`
     - Omitting return type
         - Use if the constructed type is aggregate
 
