@@ -14,6 +14,7 @@
 ## Language
 
 - `auto`, `decltype`
+    - Most of compilers do support these
 - Initializer lists
     - Be careful to use
     - Bugs in GCC 4.x
@@ -36,29 +37,33 @@
 - `decltype`
     - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47289
 
-    template <typename T>
-    T r(T x) { return x; }
-    
-    template <typename F, typename... T>
-    inline auto f(F&& f, T&&... x) -> decltype(r(f)(x...)) { return f(x...); }
-    
-    int g(int);
-    
-    decltype(f(&g, 123)) x;
+```
+template <typename T>
+T r(T x) { return x; }
+
+template <typename F, typename... T>
+inline auto f(F&& f, T&&... x) -> decltype(r(f)(x...)) { return f(x...); }
+
+int g(int);
+
+decltype(f(&g, 123)) x;
+```
 
 ### Bug in GCC
 
 - `using`
     - Fixed in GCC 4.7
 
-    template <typename D>
-    struct A { typedef int x; };
-    
-    template <typename D>
-    struct B : A<B<D>> {
-        using typename A<B<D>>::x;
-        x f() { return 1; }
-    };
+```
+template <typename D>
+struct A { typedef int x; };
+
+template <typename D>
+struct B : A<B<D>> {
+    using typename A<B<D>>::x;
+    x f() { return 1; }
+};
+```
 
 ## Library
 
@@ -72,10 +77,14 @@
 - Inheriting constructors
 - Delegating constructors
 - `nullptr`
+    - Emulated by `MGBASE_NULLPTR`
 - Alignment support
+    - Use `MGBASE_ALIGNOF`
 - Explicit virtual overrides
+    - Use `MGBASE_OVERRIDE`
 - Template arguments with internal linkage
     - DR 1155
+    - Do not use locally-defined classes as template parameters
 
 ## Library
 
@@ -86,13 +95,13 @@
     - Zero argument
         - Always use {}
     - One reference
-        - Use () for the old versions of GCC
+        - Use `()` for the old versions of GCC
     - One argument, not reference
-        - Use () if we expect normal constructors
-        - Use {} if we expect initializer_list<>
+        - Use `()` if we expect normal constructors
+        - Use `{}` if we expect initializer_list<>
     - Multiple arguments
-        - Use () if we expect normal constructors
-        - Use {} if we expect initializer_list<>
+        - Use `()` if we expect normal constructors
+        - Use `{}` if we expect initializer_list<>
     - Omitting return type
         - Use if the constructed type is aggregate
 
