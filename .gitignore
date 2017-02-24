@@ -4,3 +4,8 @@
 .gdbinit
 .lldbinit
 
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+
