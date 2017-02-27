@@ -13,34 +13,16 @@ class completion_queue
     static const mgbase::uint32_t num_cqe = 1 << 18;
     
 public:
-    completion_queue()
-        : cq_(MGBASE_NULLPTR) { }
+    completion_queue();
     
-    ~completion_queue() {
-        if (cq_ != MGBASE_NULLPTR)
-            destroy();
-    }
+    ~completion_queue();
     
     completion_queue(const completion_queue&) = delete;
     completion_queue& operator = (const completion_queue&) = delete;
     
-    void create(ibv_context& ctx)
-    {
-        MGBASE_ASSERT(cq_ == MGBASE_NULLPTR);
-        
-        cq_ = ibv_create_cq(&ctx, num_cqe, MGBASE_NULLPTR, MGBASE_NULLPTR, 0);
-        if (cq_ == MGBASE_NULLPTR)
-            throw ibv_error("ibv_create_cq() failed");
-    }
+    void create(ibv_context& ctx);
     
-    void destroy() MGBASE_NOEXCEPT
-    {
-        MGBASE_ASSERT(cq_ != MGBASE_NULLPTR);
-        
-        ibv_destroy_cq(cq_); // ignore error
-        
-        cq_ = MGBASE_NULLPTR;
-    }
+    void destroy() MGBASE_NOEXCEPT;
     
     int poll(
         ibv_wc* const   wc_array

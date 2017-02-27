@@ -70,6 +70,7 @@ endif()
 if(${MGDEV_DEVICE_IBV_SUPPORTED})
     add_library(mgdev-ibv
         ./src/ibv/queue_pair.cpp
+        ./src/ibv/completion_queue.cpp
     )
     target_include_directories(mgdev-ibv
         PUBLIC  ./include

@@ -8,20 +8,20 @@
 namespace mgdev {
 namespace ibv {
 
-class context
+class device_context
 {
 public:
-    context()
+    device_context()
         : ctx_(MGBASE_NULLPTR) { }
     
-    ~context()
+    ~device_context()
     {
         if (ctx_ != MGBASE_NULLPTR)
             close();
     }
     
-    context(const context&) = delete;
-    context& operator = (const context&) = delete;
+    device_context(const device_context&) = delete;
+    device_context& operator = (const device_context&) = delete;
     
     void open(ibv_device& dev)
     {
