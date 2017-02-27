@@ -5,7 +5,7 @@
 #include <mgdev/ibv/completion_queue.hpp>
 #include <mgdev/ibv/device_list.hpp>
 #include <mgdev/ibv/protection_domain.hpp>
-#include <mgdev/ibv/context.hpp>
+#include <mgdev/ibv/device_context.hpp>
 #include <mgdev/ibv/attributes.hpp>
 
 namespace mgcom {
@@ -80,7 +80,7 @@ public:
     completion_queue& get_cq() { return cq_; }
     
 private:
-    context             ctx_;
+    device_context      ctx_;
     completion_queue    cq_;
 };
 
