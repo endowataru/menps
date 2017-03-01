@@ -87,7 +87,7 @@ public:
     {
         while (! derived().template try_enqueue<ibv::atomic_read_command>(
             params.src_proc
-        ,   Derived::command_code_type::ibv_read
+        ,   Derived::command_code_type::ibv_atomic_read
         ,   atomic_read_closure{ params }
         )) {
             ult::yield();
@@ -115,7 +115,7 @@ public:
     {
         while (! derived().template try_enqueue<ibv::atomic_write_command>(
             params.dest_proc
-        ,   Derived::command_code_type::ibv_write
+        ,   Derived::command_code_type::ibv_atomic_write
         ,   atomic_write_closure{ params }
         )) {
             ult::yield();
