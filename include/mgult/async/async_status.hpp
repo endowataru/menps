@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgbase/utility/move.hpp>
+#include <mgbase/utility/forward.hpp>
 #include <mgbase/assert.hpp>
 
 namespace mgult {
@@ -13,8 +14,7 @@ public:
     async_status(const async_status&) /*may throw*/ = default;
     async_status& operator = (const async_status&) /*may throw*/ = default;
     
-    async_status(async_status&&) /*may throw*/ = default;
-    async_status& operator = (async_status&&) /*may throw*/ = default;
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_2(async_status, ready_, val_)
     
     bool is_ready() const {
         return this->ready_;
