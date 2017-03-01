@@ -155,6 +155,55 @@ protected:
 };
 
 
+TEST_F(RmaAtomic, AtomicRead)
+{
+    const mgcom::rma::atomic_default_t some_const = 234;
+    
+    if (mgcom::current_process_id() == 0) {
+        *lptr = some_const;
+    }
+    
+    mgcom::collective::barrier();
+    
+    mgcom::rma::atomic_default_t dest = 0;
+    
+    mgcom::rma::atomic_read<mgcom::rma::atomic_default_t>(
+        0
+    ,   rptr
+    ,   &dest
+    );
+    
+    ASSERT_EQ(some_const, dest);
+}
+
+TEST_F(RmaAtomic, AtomicWrite)
+{
+    const mgcom::rma::atomic_default_t some_const = 234;
+    
+    if (mgcom::current_process_id() == 0) {
+        *lptr = some_const;
+    }
+    
+    mgcom::collective::barrier();
+    
+    for (mgcom::process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
+    {
+        if (proc == mgcom::current_process_id()) {
+            mgcom::rma::atomic_write<mgcom::rma::atomic_default_t>(
+                0
+            ,   rptr
+            ,   some_const + proc
+            );
+        }
+        
+        mgcom::collective::barrier();
+        
+        if (mgcom::current_process_id() == 0) {
+            ASSERT_EQ(some_const + proc, *lptr);
+        }
+    }
+}
+
 TEST_F(RmaAtomic, FetchAndAdd)
 {
     if (mgcom::current_process_id() == 0) {
