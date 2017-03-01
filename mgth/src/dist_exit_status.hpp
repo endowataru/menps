@@ -23,7 +23,7 @@ public:
         const auto root = root_proc();
         
         if (mgcom::current_process_id() == root) {
-            my_result_ = mgcom::rma::allocate<result_type>();
+            my_result_.reset(mgcom::rma::allocate<result_type>());
         }
         
         auto ptr = my_result_.get();
