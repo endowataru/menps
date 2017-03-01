@@ -302,6 +302,17 @@
                 return *this; \
             }
         
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_2(T, m0, m1) \
+            T(T&& other) MGBASE_NOEXCEPT \
+                : m0(::mgbase::move(other.m0)) \
+                , m1(::mgbase::move(other.m1)) \
+            { } \
+            T& operator = (T&& other) MGBASE_NOEXCEPT { \
+                this->m0 = ::mgbase::move(other.m0); \
+                this->m1 = ::mgbase::move(other.m1); \
+                return *this; \
+            }
+        
         #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(T, base) \
             T(T&& other) MGBASE_NOEXCEPT \
                 : base(::mgbase::move(other)) \

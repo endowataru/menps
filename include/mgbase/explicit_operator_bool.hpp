@@ -21,7 +21,7 @@ namespace detail {
 struct unspecified_bool
 {
     struct operators_not_allowed;
-    void true_value(operators_not_allowed*);
+    void true_value(operators_not_allowed*) { }
 };
 
 typedef void (unspecified_bool::*unspecified_bool_type)(unspecified_bool::operators_not_allowed*);
