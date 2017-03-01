@@ -1,73 +1,50 @@
 
 #pragma once
 
-#include "verbs.hpp"
-#include <cstring>
-#include <mgbase/external/fmt.hpp>
+#include <mgdev/ibv/verbs.hpp>
+#include <mgbase/unique_ptr.hpp>
 
 namespace mgdev {
 namespace ibv {
 
-class device_list
+struct device_list_deleter
 {
-public:
-    device_list()
-        : dev_list_(MGBASE_NULLPTR) { }
+    void operator () (ibv_device**) const MGBASE_NOEXCEPT;
+};
+
+class device_list
+    : public mgbase::unique_ptr<ibv_device* [], device_list_deleter>
+{
+    typedef mgbase::unique_ptr<ibv_device* [], device_list_deleter>    base;
     
-    ~device_list()
-    {
-        if (dev_list_ != MGBASE_NULLPTR)
-            free_list();
-    }
+public:
+    device_list() MGBASE_DEFAULT_NOEXCEPT = default;
+    
+    explicit device_list(ibv_device** p, mgbase::size_t size)
+        : base(p)
+        , size_(size)
+    { }
+    
+    ~device_list() /*noexcept*/ = default;
     
     device_list(const device_list&) = delete;
     device_list& operator = (const device_list&) = delete;
     
-    void get_list()
-    {
-        MGBASE_ASSERT(dev_list_ == MGBASE_NULLPTR);
-        
-        dev_list_ = ibv_get_device_list(&num_devices_);
-        if (dev_list_ == MGBASE_NULLPTR || num_devices_ < 0)
-            throw ibv_error("ibv_get_device_list() failed");
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(device_list, base, size_)
+    
+    mgbase::size_t size() const MGBASE_NOEXCEPT {
+        return size_;
     }
     
-    void free_list() MGBASE_NOEXCEPT
-    {
-        MGBASE_ASSERT(dev_list_ != MGBASE_NULLPTR);
-        
-        ibv_free_device_list(dev_list_); // ignore error
-        
-        dev_list_ = MGBASE_NULLPTR;
-    }
+    ibv_device* get_by_index(mgbase::size_t idx) const;
     
-    ibv_device& get_by_index(const mgbase::size_t idx)
-    {
-        MGBASE_ASSERT(dev_list_ != MGBASE_NULLPTR);
-        return *dev_list_[idx];
-    }
-    
-    ibv_device& get_by_name(const char* const name)
-    {
-        MGBASE_ASSERT(dev_list_ != MGBASE_NULLPTR);
-        
-        for (int i = 0; i < num_devices_; ++i)
-        {
-            const char* const dev_name = ibv_get_device_name(dev_list_[i]);
-            
-            if (std::strcmp(dev_name, name) == 0)
-            {
-                return *dev_list_[i];
-            }
-        }
-        
-        throw ibv_error(fmt::format("device \"{}\" was not found", name));
-    }
+    ibv_device* get_by_name(const char* name) const;
     
 private:
-    ibv_device**    dev_list_;
-    int             num_devices_;
+    mgbase::size_t size_;
 };
+
+device_list get_device_list();
 
 } // namespace ibv
 } // namespace mgdev

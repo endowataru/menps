@@ -1,55 +1,44 @@
 
 #pragma once
 
-#include "verbs.hpp"
-#include <mgbase/assert.hpp>
-#include "device/ibv/ibv_error.hpp"
+#include <mgdev/ibv/verbs.hpp>
+#include <mgbase/unique_ptr.hpp>
 
 namespace mgdev {
 namespace ibv {
 
-class device_context
+struct device_context_deleter
 {
-public:
-    device_context()
-        : ctx_(MGBASE_NULLPTR) { }
+    void operator () (ibv_context*) const MGBASE_NOEXCEPT;
+};
+
+class device_context
+    : public mgbase::unique_ptr<ibv_context, device_context_deleter>
+{
+    typedef mgbase::unique_ptr<ibv_context, device_context_deleter> base;
     
-    ~device_context()
-    {
-        if (ctx_ != MGBASE_NULLPTR)
-            close();
-    }
+public:
+    device_context() MGBASE_DEFAULT_NOEXCEPT = default;
+    
+    explicit device_context(ibv_context* const ctx)
+        : base(ctx)
+    { }
+    
+    ~device_context() /*noexcept*/ = default;
     
     device_context(const device_context&) = delete;
     device_context& operator = (const device_context&) = delete;
     
-    void open(ibv_device& dev)
-    {
-        MGBASE_ASSERT(ctx_ == MGBASE_NULLPTR);
-        
-        ctx_ = ibv_open_device(&dev);
-        if (ctx_ == MGBASE_NULLPTR)
-            throw ibv_error("ibv_open_device() failed");
-    }
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(device_context, base)
     
-    void close() MGBASE_NOEXCEPT
-    {
-        MGBASE_ASSERT(ctx_ != MGBASE_NULLPTR);
-        
-        ibv_close_device(ctx_); // ignore error
-        
-        ctx_ = MGBASE_NULLPTR;
-    }
+    ibv_device_attr query_device() const;
     
-    ibv_context& get() const MGBASE_NOEXCEPT
-    {
-        MGBASE_ASSERT(ctx_ != MGBASE_NULLPTR);
-        return *ctx_;
-    }
+    ibv_port_attr query_port(port_num_t port_num) const;
     
-private:
-    ibv_context* ctx_;
+    node_id_t get_node_id(port_num_t port_num) const;
 };
+
+device_context open_device(ibv_device*);
 
 } // namespace ibv
 } // namespace mgdev

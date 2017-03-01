@@ -103,11 +103,11 @@ public:
     
     virtual void send(send_params);
     
-    virtual ult::async_status<void> recv_async(recv_async_params)
-        MGBASE_WARN_UNUSED_RESULT = 0;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> recv_async(recv_async_params) = 0;
     
-    virtual ult::async_status<void> send_async(send_async_params)
-        MGBASE_WARN_UNUSED_RESULT = 0;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> send_async(send_async_params) = 0;
     
     void recv(
         void* const                     buf
@@ -143,6 +143,7 @@ public:
         });
     }
     
+    MGBASE_WARN_UNUSED_RESULT
     ult::async_status<void> recv_async(
         void* const                     buf
     ,   const int                       num_bytes
@@ -151,8 +152,7 @@ public:
     ,   const MPI_Comm                  comm
     ,   MPI_Status* const               status_result
     ,   const mgbase::callback<void ()> on_complete
-    ) MGBASE_WARN_UNUSED_RESULT
-    {
+    ) {
         return this->recv_async(recv_async_params{
             recv_params{
                 buf
@@ -166,6 +166,7 @@ public:
         });
     }
     
+    MGBASE_WARN_UNUSED_RESULT
     ult::async_status<void> send_async(
         const void* const               buf
     ,   const int                       num_bytes
@@ -173,8 +174,7 @@ public:
     ,   const int                       tag
     ,   const MPI_Comm                  comm
     ,   const mgbase::callback<void ()> on_complete
-    ) MGBASE_WARN_UNUSED_RESULT
-    {
+    ) {
         return this->send_async(send_async_params{
             send_params{
                 buf
@@ -197,17 +197,17 @@ public:
     
     virtual void alltoall(alltoall_params);
     
-    virtual ult::async_status<void> barrier_async(barrier_async_params)
-        MGBASE_WARN_UNUSED_RESULT = 0;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> barrier_async(barrier_async_params) = 0;
     
-    virtual ult::async_status<void> broadcast_async(broadcast_async_params)
-        MGBASE_WARN_UNUSED_RESULT = 0;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> broadcast_async(broadcast_async_params) = 0;
     
-    virtual ult::async_status<void> allgather_async(allgather_async_params)
-        MGBASE_WARN_UNUSED_RESULT = 0;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> allgather_async(allgather_async_params) = 0;
     
-    virtual ult::async_status<void> alltoall_async(alltoall_async_params)
-        MGBASE_WARN_UNUSED_RESULT = 0;
+    MGBASE_WARN_UNUSED_RESULT
+    virtual ult::async_status<void> alltoall_async(alltoall_async_params) = 0;
     
     // Communicators
     

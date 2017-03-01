@@ -69,8 +69,14 @@ endif()
 
 if(${MGDEV_DEVICE_IBV_SUPPORTED})
     add_library(mgdev-ibv
+        ./src/ibv/ibv_error.cpp
+        ./src/ibv/attributes.cpp
         ./src/ibv/queue_pair.cpp
         ./src/ibv/completion_queue.cpp
+        ./src/ibv/device_list.cpp
+        ./src/ibv/device_context.cpp
+        ./src/ibv/memory_region.cpp
+        ./src/ibv/protection_domain.cpp
     )
     target_include_directories(mgdev-ibv
         PUBLIC  ./include
@@ -80,6 +86,7 @@ if(${MGDEV_DEVICE_IBV_SUPPORTED})
     target_link_libraries(mgdev-ibv
         mgbase-options
         mgult
+        ibverbs # libibverbs.so
     )
 endif()
 
@@ -87,4 +94,15 @@ if(${MGDEV_DEVICE_UCX_ENABLED})
     include(cmake/ucx.cmake)
 endif()
 
+# Examples
+
+if(${MGDEV_DEVICE_IBV_SUPPORTED})
+    add_executable(mgdev-ibv_test
+        ./examples/ibv/ibv_test.cpp
+    )
+    target_link_libraries(mgdev-ibv_test
+        mgbase-options
+        mgdev-ibv
+    )
+endif()
 
