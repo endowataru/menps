@@ -43,7 +43,7 @@ class unique_local_ptr
 public:
     unique_local_ptr() MGBASE_DEFAULT_NOEXCEPT = default;
     
-    unique_local_ptr(resource_type ptr) MGBASE_NOEXCEPT
+    explicit unique_local_ptr(resource_type ptr) MGBASE_NOEXCEPT
         : base(mgbase::move(ptr))
     { }
     
