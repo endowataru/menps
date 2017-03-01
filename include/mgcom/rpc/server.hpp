@@ -19,6 +19,20 @@ typedef const handler_context&  handler_context_t;
 
 struct handler_result
 {
+    // These members are only needed in GCC 4.x.
+    //#if 0
+    handler_result() MGBASE_DEFAULT_NOEXCEPT = default;
+    
+    /*implicit*/ handler_result(server_reply_message<void> msg)
+        : rply_msg(mgbase::move(msg))
+    { }
+    
+    handler_result(const handler_result&) = delete;
+    handler_result& operator = (const handler_result&) = delete;
+    
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_1(handler_result, rply_msg)
+    //#endif
+    
     server_reply_message<void>      rply_msg;
 };
 
