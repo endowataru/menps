@@ -82,13 +82,18 @@ TEST_F(RmaBasic, ConcurrentGet)
     }
     
     for (vec_type::iterator itr = ptrs.begin(); itr != ptrs.end(); ++itr) {
-        mgcom::rma::async_read(
-            0
-        ,   rptr
-        ,   *itr
-        ,   1
-        ,   mgbase::make_callback_fetch_add_release(&count, MGBASE_NONTYPE(1u))
-        );
+        auto r =
+            mgcom::rma::async_read(
+                0
+            ,   rptr
+            ,   *itr
+            ,   1
+            ,   mgbase::make_callback_fetch_add_release(&count, MGBASE_NONTYPE(1u))
+            );
+        
+        if (r.is_ready()) {
+            count.fetch_add(1);
+        }
     }
     
     while (true) {
