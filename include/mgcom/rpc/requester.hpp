@@ -13,7 +13,14 @@ class requester
     : public client
     , public server
 {
+protected:
+    requester() MGBASE_DEFAULT_NOEXCEPT = default;
+    
 public:
+    // Important: Virtual "default" destructors are not properly called
+    //            in GCC 4.4 and causes a runtime error.
+    virtual ~requester() MGBASE_DEFAULT_NOEXCEPT { }
+    
     static requester& get_instance() MGBASE_NOEXCEPT {
         MGBASE_ASSERT(req_ != MGBASE_NULLPTR);
         return *req_;

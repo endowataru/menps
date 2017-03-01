@@ -16,6 +16,11 @@ public:
         , rpc_server(mi)
         , rpc_client(mi, ep)
     { }
+    
+    ~rpc_requester()
+    {
+        MGBASE_LOG_DEBUG("msg:Finalize RPC.");
+    }
 };
 
 mgbase::unique_ptr<rpc::requester> make_rpc_requester(mpi_interface& mi, endpoint& ep)

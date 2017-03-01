@@ -7,7 +7,8 @@
 namespace mgcom {
 namespace ibv {
 
-void alltoall_queue_pairs::create(mgcom::endpoint& ep, collective::requester& coll, ibv_context& ctx, ibv_cq& cq, ibv_pd& pd)
+void alltoall_queue_pairs::create(mgcom::endpoint& ep, collective::requester& coll,
+    ibv_cq& cq, ibv_pd& pd, const mgdev::ibv::port_num_t port_num)
 {
     ep_ = &ep;
     coll_ = &coll;
@@ -16,8 +17,16 @@ void alltoall_queue_pairs::create(mgcom::endpoint& ep, collective::requester& co
     
     qps_ = new queue_pair[total_qp_count];
     
-    for (mgbase::size_t qp_id = 0; qp_id < total_qp_count; ++qp_id)
-        qps_[qp_id].create(ctx, cq, pd);
+    for (mgbase::size_t qp_id = 0; qp_id < total_qp_count; ++qp_id) {
+        auto init_attr = mgdev::ibv::make_default_rc_qp_init_attr();
+        init_attr.send_cq = &cq;
+        init_attr.recv_cq = &cq;
+        
+        auto qp = mgdev::ibv::make_queue_pair(&pd, &init_attr);
+        qp.init(port_num);
+        
+        qps_[qp_id] = mgbase::move(qp);
+    }
 
     MGBASE_LOG_DEBUG("msg:Created all IBV queue_pairs.");
 }
@@ -29,7 +38,8 @@ void alltoall_queue_pairs::destroy()
     MGBASE_LOG_DEBUG("msg:Destroyed all IBV queue_pairs.");
 }
 
-void alltoall_queue_pairs::collective_start(const ibv_device_attr& device_attr, const ibv_port_attr& port_attr)
+void alltoall_queue_pairs::collective_start(const ibv_device_attr& device_attr, const ibv_port_attr& port_attr,
+    const mgdev::ibv::port_num_t port_num)
 {
     const mgbase::size_t total_qp_count = ep_->number_of_processes() * qp_count_;
     
@@ -57,7 +67,16 @@ void alltoall_queue_pairs::collective_start(const ibv_device_attr& device_attr, 
     for (process_id_t proc = 0; proc < ep_->number_of_processes(); ++proc) {
         for (mgbase::size_t qp_index = 0; qp_index < qp_count_; ++qp_index) {
             const mgbase::size_t qp_id = proc * qp_count_ + qp_index;
-            qps_[qp_id].start(remote_qp_nums[qp_id], lids[proc], device_attr);
+            
+            auto& qp = qps_[qp_id];
+            
+            mgdev::ibv::global_qp_id dest_id;
+            dest_id.node_id = mgdev::ibv::make_node_id_from_lid(lids[proc]);
+            dest_id.port_num = port_num;
+            dest_id.qp_num = remote_qp_nums[qp_id];
+            
+            auto attr = mgdev::ibv::make_default_qp_attr(device_attr);
+            qp.connect_to(dest_id, &attr);
         }
     }
     

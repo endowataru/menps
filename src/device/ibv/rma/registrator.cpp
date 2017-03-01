@@ -2,6 +2,7 @@
 #include "registrator.hpp"
 #include "device/ibv/native/endpoint.hpp"
 #include "address.hpp"
+#include <mgdev/ibv/memory_region.hpp>
 
 namespace mgcom {
 
@@ -17,10 +18,15 @@ public:
     
     virtual untyped::local_region register_region(const untyped::register_region_params& params) MGBASE_OVERRIDE
     {
-        ibv_mr& mr = ep_.register_memory(params.local_ptr, params.size_in_bytes);
+        const auto pd = ep_.get_pd();
         
-        const untyped::region_key key = { params.local_ptr, mr.lkey };
-        const untyped::local_region reg = { key, reinterpret_cast<mgbase::uint64_t>(&mr) };
+        auto mr = ibv::make_memory_region(pd, params.local_ptr, params.size_in_bytes);
+        
+        // Explicitly release the ownership.
+        const auto mr_ptr = mr.release();
+        
+        const untyped::region_key key = { params.local_ptr, mr_ptr->lkey };
+        const untyped::local_region reg = { key, reinterpret_cast<mgbase::uint64_t>(mr_ptr) };
         return reg;
     }
     
@@ -33,8 +39,12 @@ public:
     
     virtual void deregister_region(const untyped::deregister_region_params& params) MGBASE_OVERRIDE
     {
-        ibv_mr* const mr = ibv::to_mr(params.region);
-        ep_.deregister_memory(*mr);
+        const auto mr_ptr = ibv::to_mr(params.region);
+        
+        // Wrap the ownership again.
+        ibv::memory_region mr(mr_ptr);
+        
+        // Deregister the MR by the destructor.
     }
     
 private:

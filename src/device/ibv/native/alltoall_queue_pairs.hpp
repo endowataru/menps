@@ -16,11 +16,11 @@ public:
     explicit alltoall_queue_pairs(const index_t qp_count)
         : qp_count_(qp_count) { }
     
-    void create(mgcom::endpoint&, collective::requester&, ibv_context&, ibv_cq&, ibv_pd&);
+    void create(mgcom::endpoint&, collective::requester&, ibv_cq&, ibv_pd&, mgdev::ibv::port_num_t);
     
     void destroy();
     
-    void collective_start(const ibv_device_attr&, const ibv_port_attr&);
+    void collective_start(const ibv_device_attr&, const ibv_port_attr&, mgdev::ibv::port_num_t);
     
     MGBASE_WARN_UNUSED_RESULT
     bool try_post_send(

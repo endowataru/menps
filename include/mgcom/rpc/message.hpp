@@ -49,7 +49,7 @@ public:
     message(const message&) = delete;
     message& operator = (const message&) = delete;
     
-    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(message, base)
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(message, base, size_)
     
     mgbase::size_t size_in_bytes() const MGBASE_NOEXCEPT {
         return size_;
