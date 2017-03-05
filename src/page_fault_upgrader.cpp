@@ -34,6 +34,8 @@ private:
                 return false;
             }
             
+            self.conf_.sp.do_for_block_at(ptr, upgrade_callback{});
+            #if 0
             auto& indexer = self.conf_.indexer;
             
             if (!indexer.in_range(ptr)) {
@@ -42,6 +44,8 @@ private:
             
             const auto r =
                 indexer.do_for_block_at(upgrade_callback{self}, ptr);
+            
+            
             
             // Note: Histories must be modified after unlocking sharer entries
             //       in order to avoid deadlocking.
@@ -54,6 +58,7 @@ private:
                 // Add this block as a reconciled page.
                 self.conf_.hist.add_new_write(r.ablk_id);
             }
+            #endif
             
             return true;
         }
@@ -61,11 +66,39 @@ private:
     
     struct upgrade_error : std::exception { };
     
+    struct upgrade_callback
+    {
+        void operator() (protector_block_accessor& blk_ac)
+        {
+            // Try to fetch the block first.
+            if (blk_ac.fetch())
+            {
+                // Fetch succeeded. Return to the user code.
+            }
+            else {
+                // If the block is already readable,
+                // then try to make it writable.
+                if (! blk_ac.touch())
+                {
+                    // If the block is already touched,
+                    // it's OS page must not be protected.
+                    MGBASE_ASSERT(false);
+                    
+                    // The program should abort instead of an exception
+                    // because this is in a signal handler.
+                    // TODO: Really?
+                    abort();
+                }
+            }
+        }
+    };
+    
+        #if 0
     struct upgrade_result
     {
-        access_history::abs_block_id    ablk_id;
-        bool                            add_read;
-        bool                            add_write;
+        abs_block_id    ablk_id;
+        bool            add_read;
+        bool            add_write;
     };
     
     struct upgrade_callback
@@ -109,6 +142,7 @@ private:
         }
     };
     
+        #endif
     const config conf_;
     
     sigsegv_catcher segv_catch_;

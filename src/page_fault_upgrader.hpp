@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include "app_space.hpp"
-#include "app_space_indexer.hpp"
+#include "protector/protector_space.hpp"
 #include "access_history.hpp"
 
 namespace mgdsm {
@@ -11,8 +10,7 @@ class page_fault_upgrader
 {
 public:
     struct config {
-        app_space&          space;
-        app_space_indexer&  indexer;
+        protector_space&    sp;
         access_history&     hist;
     };
     

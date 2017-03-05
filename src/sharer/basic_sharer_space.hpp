@@ -15,6 +15,7 @@ class basic_sharer_space
     typedef typename Traits::segment_ptr_type       segment_ptr_type;
     typedef typename Traits::segment_id_type        segment_id_type;
     typedef typename Traits::segment_accessor_type  segment_accessor_type;
+    typedef typename Traits::segment_conf_type      segment_conf_type;
     
     typedef typename Traits::lock_type              lock_type;
     
@@ -28,6 +29,55 @@ public:
     { }
     
 protected:
+    segment_type& get_segment(const segment_id_type seg_id)
+    {
+        // Start the critical section.
+        const auto lk = Traits::get_lock(lock_);
+        
+        auto& seg_ptr = segs_[seg_id];
+        MGBASE_ASSERT(seg_ptr);
+        
+        return *seg_ptr;
+    }
+    
+private:
+    // Note: Old GCC cannot use internal linkage class for template argument
+    struct sharer_segment_conf {
+        manager_segment_proxy_ptr   manager;
+        void*                       sys_ptr;
+    };
+    
+public:
+    template <typename Conf>
+    void make_segment(const segment_id_type seg_id, const Conf& conf)
+    {
+        auto& self = this->derived();
+        
+        // Start the critical section.
+        const auto lk = Traits::get_lock(lock_);
+        
+        auto& manager = self.get_manager();
+        
+        segment_conf_type seg_conf{};
+        seg_conf.num_pages  = conf.num_pages;
+        seg_conf.page_size  = conf.page_size;
+        seg_conf.block_size = conf.block_size;
+        
+        manager.make_segment(seg_id, seg_conf);
+        
+        MGBASE_ASSERT(segs_[seg_id] == MGBASE_NULLPTR);
+        
+        // Load the segment from the manager.
+        sharer_segment_conf sh_seg_conf{
+            manager.make_segment_proxy(seg_id)
+        ,   conf.sys_ptr
+        };
+        
+        segs_[seg_id] = mgbase::make_unique<segment_type>(sh_seg_conf);
+    }
+    
+    #if 0
+    
     segment_type& get_segment(const segment_id_type seg_id)
     {
         auto& self = this->derived();
@@ -50,6 +100,7 @@ protected:
         
         return *seg_ptr;
     }
+    #endif
     
 private:
     derived_type& derived() MGBASE_NOEXCEPT {

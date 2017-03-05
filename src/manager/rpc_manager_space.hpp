@@ -4,7 +4,7 @@
 #include "basic_rpc_manager_space_shard.hpp"
 #include "space_coherence_activater.hpp"
 #include "rpc_manager_segment.hpp"
-#include "manager_space_proxy.hpp"
+#include "manager_space.hpp"
 
 namespace mgdsm {
 

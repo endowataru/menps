@@ -50,6 +50,13 @@ public:
     page_id_t get_segment_id() const MGBASE_NOEXCEPT {
         return this->get_page_accessor().get_segment_accessor().get_segment_id();
     }
+    abs_block_id get_abs_block_id() const MGBASE_NOEXCEPT {
+        return {
+            this->get_segment_id()
+        ,   this->get_page_id()
+        ,   this->get_block_id()
+        };
+    }
     
     std::string to_string() const
     {

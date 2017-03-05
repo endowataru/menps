@@ -3,6 +3,7 @@
 
 #include <mgbase/crtp_base.hpp>
 #include <mgbase/unique_ptr.hpp>
+#include <mgbase/assert.hpp>
 
 namespace mgdsm {
 

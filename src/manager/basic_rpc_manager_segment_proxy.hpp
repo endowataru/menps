@@ -1,7 +1,9 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <mgbase/crtp_base.hpp>
+#include <mgbase/utility/move.hpp>
+#include <mgbase/assert.hpp>
 #include <vector>
 
 namespace mgdsm {

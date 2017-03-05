@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "sharer_space.hpp"
 #include "basic_sharer_space_proxy.hpp"
 #include <mgcom/structure/alltoall_ptr_group.hpp>
 #include <mgcom/rpc/rpc_policy.hpp>
@@ -31,7 +32,6 @@ class sharer_space::proxy
     
 public:
     explicit proxy(sharer_space& sp)
-        //: sp_(&sp)
         : a2a_(&sp)
     { }
     
@@ -47,8 +47,6 @@ private:
     {
         return this->a2a_.at_process(proc);
     }
-    
-    //sharer_space* sp_;
     
     mgcom::structure::alltoall_ptr_group<sharer_space> a2a_;
 };

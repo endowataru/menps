@@ -6,10 +6,9 @@
 namespace mgdsm {
 
 template <typename Policy>
-class basic_rpc_manager_space_proxy
+class basic_protector_space_proxy
     : public mgbase::crtp_base<Policy>
 {
-    #if 0
     typedef typename Policy::derived_type       derived_type;
     
     typedef typename Policy::space_type         space_type;
@@ -34,7 +33,7 @@ public:
         
         for (process_id_type proc = 0; proc < Policy::number_of_processes(); ++proc)
         {
-            auto* man_sp = self.get_manager_space_at_proc(proc);
+            auto* man_sp = self.get_protector_space_at_proc(proc);
             
             typename create_segment_handler::request_type req{
                 man_sp
@@ -75,7 +74,6 @@ private:
             return sc.make_reply();
         }
     };
-    #endif
 };
 
 } // namespace mgdsm

@@ -2,9 +2,10 @@
 #pragma once
 
 #include "basic_rpc_manager_segment_proxy.hpp"
-#include "rpc_manager_space_proxy.hpp"
+#include "rpc_manager_space.hpp"
 #include "rpc_manager_segment.hpp"
 #include "rpc_manager_page_accessor.hpp"
+#include "rpc_manager_space_proxy.hpp"
 #include <mgcom/rpc/rpc_policy.hpp>
 
 namespace mgdsm {
@@ -40,7 +41,7 @@ class rpc_manager_segment::proxy
     typedef rpc_manager_segment_proxy_policy    policy;
     
 public:
-    proxy(
+    /*implicit*/ proxy(
         rpc_manager_space::proxy&   sp_pr
     ,   const segment_id_t          seg_id
     )
@@ -61,7 +62,6 @@ private:
     rpc_manager_segment::accessor get_accessor() const MGBASE_NOEXCEPT
     {
         auto& sp = this->sp_pr_.get_space();
-        
         return sp.get_segment_accessor(this->seg_id_);
     }
     

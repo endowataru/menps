@@ -16,7 +16,6 @@ class basic_rpc_manager_page_accessor
     
     typedef typename Policy::process_id_type        process_id_type;
     
-    
 public:
     // TODO: Are these functions correct?
     void assign_reader(const owner_plptr_type& owner) {

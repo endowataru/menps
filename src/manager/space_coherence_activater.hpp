@@ -2,6 +2,7 @@
 #pragma once
 
 #include "mgdsm_common.hpp"
+#include <mgcom.hpp>
 
 namespace mgdsm {
 

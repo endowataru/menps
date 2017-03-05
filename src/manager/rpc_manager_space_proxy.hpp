@@ -1,43 +1,25 @@
 
 #pragma once
 
-#include "basic_rpc_manager_space_proxy.hpp"
 #include "rpc_manager_space.hpp"
-#include "manager_space_proxy.hpp"
 #include <mgcom/structure/alltoall_ptr_group.hpp>
 #include <mgcom/rpc/rpc_policy.hpp>
 
 namespace mgdsm {
 
+#if 0
 struct rpc_manager_space_proxy_policy
     : mgcom::rpc::rpc_policy
 {
     typedef rpc_manager_space::proxy        derived_type;
-    
-    typedef rpc_manager_space               space_type;
-    
-    typedef segment_id_t                    segment_id_type;
-    
-    typedef mgcom::process_id_t             process_id_type;
-    
-    struct create_conf_type {
-        mgbase::size_t  num_pages;
-        mgbase::size_t  page_size;
-        mgbase::size_t  block_size;
-    };
-    
-    static const mgcom::rpc::handler_id_t create_segment_handler_id = 301;
-    
-    static mgbase::size_t number_of_processes() MGBASE_NOEXCEPT {
-        return mgcom::number_of_processes();
-    }
 };
+#endif
 
 class rpc_manager_space::proxy
-    : public basic_rpc_manager_space_proxy<rpc_manager_space_proxy_policy>
-    , public manager_space_proxy
+    //: public basic_rpc_manager_space_proxy<rpc_manager_space_proxy_policy>
+    : public manager_space
 {
-    typedef basic_rpc_manager_space_proxy<rpc_manager_space_proxy_policy>   base;
+    //typedef basic_rpc_manager_space_proxy<rpc_manager_space_proxy_policy>   base;
     
 public:
     explicit proxy(rpc_manager_space& sp)
@@ -50,9 +32,6 @@ public:
     
     // Note: precisely, there are two base classes
     MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_2(proxy, base, sp_, a2a_)
-    
-    virtual manager_segment_proxy_ptr make_segment_proxy(segment_id_t) MGBASE_OVERRIDE;
-        // defined in rpc_manager_segment_proxy.hpp
     
     rpc_manager_space& get_space() const MGBASE_NOEXCEPT {
         return *sp_;
@@ -68,6 +47,12 @@ public:
     {
         return this->a2a_.at_process(proc);
     }
+    
+    virtual void make_segment(const segment_id_t seg_id, const segment_conf& conf) MGBASE_OVERRIDE {
+        sp_->make_segment(seg_id, conf);
+    }
+    
+    virtual manager_segment_proxy_ptr make_segment_proxy(segment_id_t) MGBASE_OVERRIDE;
     
 private:
     rpc_manager_space* sp_;
