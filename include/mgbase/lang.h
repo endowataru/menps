@@ -348,6 +348,38 @@
                 this->m1 = ::mgbase::move(other.m1); \
                 return *this; \
             }
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_3(T, base, m0, m1, m2) \
+            T(T&& other) MGBASE_NOEXCEPT \
+                : base(::mgbase::move(other)) \
+                , m0(::mgbase::move(other.m0)) \
+                , m1(::mgbase::move(other.m1)) \
+                , m2(::mgbase::move(other.m2)) \
+            { } \
+            T& operator = (T&& other) MGBASE_NOEXCEPT { \
+                base::operator=(::mgbase::move(other)); \
+                this->m0 = ::mgbase::move(other.m0); \
+                this->m1 = ::mgbase::move(other.m1); \
+                this->m2 = ::mgbase::move(other.m2); \
+                return *this; \
+            }
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_4(T, base, m0, m1, m2, m3) \
+            T(T&& other) MGBASE_NOEXCEPT \
+                : base(::mgbase::move(other)) \
+                , m0(::mgbase::move(other.m0)) \
+                , m1(::mgbase::move(other.m1)) \
+                , m2(::mgbase::move(other.m2)) \
+                , m3(::mgbase::move(other.m3)) \
+            { } \
+            T& operator = (T&& other) MGBASE_NOEXCEPT { \
+                base::operator=(::mgbase::move(other)); \
+                this->m0 = ::mgbase::move(other.m0); \
+                this->m1 = ::mgbase::move(other.m1); \
+                this->m2 = ::mgbase::move(other.m2); \
+                this->m3 = ::mgbase::move(other.m3); \
+                return *this; \
+            }
     #endif
     
     
