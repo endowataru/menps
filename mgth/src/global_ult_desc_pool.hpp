@@ -13,7 +13,7 @@ namespace mgth {
 class global_ult_desc_pool
 {
 public:
-    static const mgbase::size_t stack_size = 16 << 10; // TODO: adjustable
+    static const mgbase::size_t stack_size = 64 << 10; // TODO: adjustable
     
     struct config
     {
