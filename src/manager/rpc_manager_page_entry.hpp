@@ -37,7 +37,7 @@ struct rpc_manager_page_entry_traits
     }
     
     static owner_plptr_type make_invalid_plptr() MGBASE_NOEXCEPT {
-        return owner_plptr_type{};
+        return owner_plptr_type();
     }
 };
 

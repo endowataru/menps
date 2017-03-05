@@ -42,18 +42,25 @@ struct sharer_page_accessor_traits
 class sharer_page::accessor
     : public basic_sharer_page_accessor<sharer_page_accessor_traits>
 {
+    typedef basic_sharer_page_accessor<sharer_page_accessor_traits> base;
 public:
     accessor(sharer_segment::accessor& seg_pr, const page_id_t pg_id, sharer_page& pg)
-        : seg_pr_(seg_pr)
+        : seg_pr_(&seg_pr)
         , pg_id_(pg_id)
-        , pg_(pg)
+        , pg_(&pg)
         , pg_lk_(pg.get_lock())
     { }
     
+    accessor(const accessor&) = delete;
+    accessor& operator = (const accessor&) = delete;
+    
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_4(accessor, base, seg_pr_, pg_id_, pg_, pg_lk_)
+    
+    // defined in sharer_block_accessor.hpp
     inline sharer_block::accessor get_block_accessor(block_id_t) MGBASE_NOEXCEPT;
     
     sharer_segment::accessor& get_segment_accessor() const MGBASE_NOEXCEPT {
-        return seg_pr_;
+        return *seg_pr_;
     }
     page_id_t get_page_id() const MGBASE_NOEXCEPT {
         return pg_id_;
@@ -64,7 +71,7 @@ public:
         return fmt::format(
             "{}\t"
             "pg_id:{}"
-        ,   seg_pr_.to_string()
+        ,   seg_pr_->to_string()
         ,   pg_id_
         );
     }
@@ -73,13 +80,13 @@ private:
     friend class basic_sharer_page_accessor<sharer_page_accessor_traits>;
     
     sharer_page_entry& get_page_entry() const MGBASE_NOEXCEPT {
-        return pg_;
+        return *pg_;
     }
     
-    sharer_segment::accessor&           seg_pr_;
+    sharer_segment::accessor*           seg_pr_;
     
     page_id_t                           pg_id_;
-    sharer_page&                        pg_;
+    sharer_page*                        pg_;
     
     sharer_page_entry::unique_lock_type pg_lk_;
 };

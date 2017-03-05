@@ -82,7 +82,7 @@ private:
 
 sharer_block::accessor sharer_page::accessor::get_block_accessor(const block_id_t blk_id) MGBASE_NOEXCEPT
 {
-    auto& blk = this->pg_.get_block(blk_id);
+    auto& blk = this->pg_->get_block(blk_id);
     
     return sharer_block::accessor(*this, blk_id, blk);
 }

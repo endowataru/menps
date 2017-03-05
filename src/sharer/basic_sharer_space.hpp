@@ -58,7 +58,7 @@ public:
         
         auto& manager = self.get_manager();
         
-        segment_conf_type seg_conf{};
+        segment_conf_type seg_conf = segment_conf_type();
         seg_conf.num_pages  = conf.num_pages;
         seg_conf.page_size  = conf.page_size;
         seg_conf.block_size = conf.block_size;

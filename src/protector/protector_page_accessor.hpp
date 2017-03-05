@@ -27,14 +27,19 @@ public:
         protector_segment&      seg
     ,   sharer_page::accessor   sh_pg_ac
     )
-        : seg_(seg)
+        : seg_(&seg)
         , sh_pg_ac_(mgbase::move(sh_pg_ac))
     { }
+    
+    protector_page_accessor(const protector_page_accessor&) = delete;
+    protector_page_accessor& operator = (const protector_page_accessor&) = delete;
+    
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_2(protector_page_accessor, base, seg_, sh_pg_ac_)
     
     protector_block_accessor get_block_accessor(const block_id_t blk_id)
     {
         return protector_block_accessor(
-            seg_
+            *seg_
         ,   sh_pg_ac_.get_block_accessor(blk_id)
         );
     }
@@ -48,7 +53,7 @@ private:
     }
     inline mgbase::size_t get_max_seg_size() const MGBASE_NOEXCEPT;
     
-    protector_segment&      seg_;
+    protector_segment*      seg_;
     sharer_page::accessor   sh_pg_ac_;
 };
 

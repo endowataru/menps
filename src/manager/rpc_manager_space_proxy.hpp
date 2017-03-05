@@ -31,7 +31,7 @@ public:
     proxy& operator = (const proxy&) = delete;
     
     // Note: precisely, there are two base classes
-    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_2(proxy, base, sp_, a2a_)
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_2(proxy, sp_, a2a_)
     
     rpc_manager_space& get_space() const MGBASE_NOEXCEPT {
         return *sp_;

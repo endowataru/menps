@@ -4,6 +4,7 @@
 #include <mgbase/crtp_base.hpp>
 #include <mgbase/unique_ptr.hpp>
 #include <mgbase/utility/move.hpp>
+#include <mgbase/utility/forward.hpp>
 #include <mgbase/type_traits/result_of.hpp>
 #include <mgbase/assert.hpp>
 #include <vector>

@@ -21,6 +21,8 @@ struct rpc_manager_page_accessor_policy
 class rpc_manager_page::accessor
     : public basic_rpc_manager_page_accessor<rpc_manager_page_accessor_policy>
 {
+    typedef basic_rpc_manager_page_accessor<rpc_manager_page_accessor_policy> base;
+    
     typedef rpc_manager_page_accessor_policy::invalidator_type  invalidator_type;
     
 public:
@@ -28,24 +30,29 @@ public:
         rpc_manager_segment::accessor&  seg_ac
     ,   rpc_manager_page&               pg
     )
-        : seg_ac_(seg_ac)
-        , pg_(pg)
-        , lk_(pg_.get_lock())
+        : seg_ac_(&seg_ac)
+        , pg_(&pg)
+        , lk_(pg.get_lock())
     { }
+    
+    accessor(const accessor&) = delete;
+    accessor& operator = (const accessor&) = delete;
+    
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_3(accessor, base, seg_ac_, pg_, lk_)
     
 private:
     friend class basic_rpc_manager_page_accessor<rpc_manager_page_accessor_policy>;
     
     rpc_manager_page_entry& get_page_entry() MGBASE_NOEXCEPT {
-        return pg_;
+        return *pg_;
     }
     void wait_if_migrating() {
-        pg_.wait_if_migrating(lk_);
+        pg_->wait_if_migrating(lk_);
     }
     
-    rpc_manager_segment::accessor& seg_ac_;
-    rpc_manager_page& pg_;
-    rpc_manager_page_entry::unique_lock_type lk_;
+    rpc_manager_segment::accessor*              seg_ac_;
+    rpc_manager_page*                           pg_;
+    rpc_manager_page_entry::unique_lock_type    lk_;
 };
 
 rpc_manager_page::accessor rpc_manager_segment::accessor::get_page_accessor(const page_id_t pg_id)
