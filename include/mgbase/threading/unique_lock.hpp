@@ -21,16 +21,17 @@ class condition_variable; // for friend declaration
 
 struct unique_lock_error { };
 
-// Because it is impossible to implement the full features of unique_lock in C++03,
-// it is defined as a restricted version.
-
 template <typename Mutex>
 class unique_lock
 {
 public:
     typedef Mutex   mutex_type;
     
-    explicit unique_lock(mutex_type& mtx)
+    unique_lock()
+        : mtx_(MGBASE_NULLPTR), locked_(false)
+    { }
+    
+    explicit unique_lock(mutex_type& mtx) MGBASE_NOEXCEPT
         : mtx_(&mtx), locked_(true)
     {
         mtx.lock();
@@ -46,10 +47,30 @@ public:
         : mtx_(&mtx)
         , locked_(mtx.try_lock()) { }
     
+    unique_lock(const unique_lock&) = delete;
+    unique_lock& operator = (const unique_lock&) = delete;
+    
+    unique_lock(unique_lock&& other)
+        : mtx_(MGBASE_NULLPTR), locked_(false)
+    {
+        *this = mgbase::move(other);
+    }
+    unique_lock& operator = (unique_lock&& other) MGBASE_NOEXCEPT
+    {
+        unlock_if_locked();
+        
+        this->mtx_ = other.mtx_;
+        this->locked_ = other.locked_;
+        
+        other.mtx_ = MGBASE_NULLPTR;
+        other.locked_ = false;
+        
+        return *this;
+    }
+    
     ~unique_lock()
     {
-        if ((mtx_ != MGBASE_NULLPTR) && locked_)
-            mtx_->unlock();
+        unlock_if_locked();
     }
     
     void lock()
@@ -82,23 +103,28 @@ public:
     mutex_type* release() MGBASE_NOEXCEPT
     {
         mutex_type* const mtx = mtx_;
-        mtx_ = MGBASE_NULLPTR;
+        this->mtx_ = MGBASE_NULLPTR;
+        this->locked_ = false;
         return mtx;
     }
     
-    mutex_type* mutex() const MGBASE_NOEXCEPT
-    {
+    mutex_type* mutex() const MGBASE_NOEXCEPT {
         return mtx_;
     }
     
-    bool owns_lock() const MGBASE_NOEXCEPT
-    {
+    bool owns_lock() const MGBASE_NOEXCEPT {
         return locked_;
     }
     
 private:
-    Mutex* mtx_;
-    bool locked_;
+    void unlock_if_locked()
+    {
+        if (this->owns_lock())
+            this->unlock();
+    }
+    
+    Mutex*  mtx_;
+    bool    locked_;
 };
 
 } // namespace mgbase
