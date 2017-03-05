@@ -295,6 +295,12 @@
         #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_2(T, base, m0, m1) \
             MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT(T)
         
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_3(T, base, m0, m1, m2) \
+            MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT(T)
+        
+        #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_4(T, base, m0, m1, m2, m3) \
+            MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT(T)
+        
     #else
         #define MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_1(T, m0) \
             T(T&& other) MGBASE_NOEXCEPT \
