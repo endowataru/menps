@@ -65,7 +65,6 @@ private:
         const auto index = seg_id * max_seg_size + index_in_seg;
         
         const auto ptr = reinterpret_cast<void*>(index);
-        //const auto ptr = mgbase::next_in_bytes(this->conf_.app_ptr, index);
         
         MGBASE_ASSERT(reinterpret_cast<mgbase::uintptr_t>(ptr) % os_page_size == 0);
         MGBASE_ASSERT(size % os_page_size == 0);

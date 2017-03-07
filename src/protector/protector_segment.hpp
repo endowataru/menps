@@ -1,22 +1,13 @@
 
 #pragma once
 
-#include "basic_protector_segment.hpp"
 #include <mgbase/memory/mapped_memory.hpp>
 
 namespace mgdsm {
 
-class protector_segment;
-
-struct protector_segment_policy
-{
-    typedef protector_segment   derived_type;
-};
-
 class protector_space;
 
 class protector_segment
-    : public basic_protector_segment<protector_segment_policy>
 {
 public:
     template <typename Conf>

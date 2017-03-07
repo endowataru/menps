@@ -35,30 +35,6 @@ private:
             }
             
             self.conf_.sp.do_for_block_at(ptr, upgrade_callback{});
-            #if 0
-            auto& indexer = self.conf_.indexer;
-            
-            if (!indexer.in_range(ptr)) {
-                return false;
-            }
-            
-            const auto r =
-                indexer.do_for_block_at(upgrade_callback{self}, ptr);
-            
-            
-            
-            // Note: Histories must be modified after unlocking sharer entries
-            //       in order to avoid deadlocking.
-            
-            if (r.add_read) {
-                // Add this block as a flushed page.
-                self.conf_.hist.add_new_read(r.ablk_id); 
-            }
-            if (r.add_write) {
-                // Add this block as a reconciled page.
-                self.conf_.hist.add_new_write(r.ablk_id);
-            }
-            #endif
             
             return true;
         }
@@ -92,57 +68,7 @@ private:
             }
         }
     };
-    
-        #if 0
-    struct upgrade_result
-    {
-        abs_block_id    ablk_id;
-        bool            add_read;
-        bool            add_write;
-    };
-    
-    struct upgrade_callback
-    {
-        impl& self;
-        
-        upgrade_result operator() (sharer_block::accessor& blk_ac)
-        {
-            auto& space = self.conf_.space;
-            
-            const access_history::abs_block_id ablk_id{
-                blk_ac.get_segment_id()
-            ,   blk_ac.get_page_id()
-            ,   blk_ac.get_block_id()
-            };
-            
-            // Fetch the block first.
-            if (space.fetch(blk_ac))
-            {
-                // Call add_new_read() later.
-                return { ablk_id, true, false };
-            }
-            else {
-                // If the block is already readable,
-                // then try to make it writable.
-                if (! space.touch(blk_ac))
-                {
-                    // If the block is already touched,
-                    // it's OS page must not be protected.
-                    MGBASE_ASSERT(false);
-                    
-                    // The program should abort instead of an exception
-                    // because this is in a signal handler.
-                    // TODO: Really?
-                    abort();
-                }
-                
-                // Call add_new_write() later.
-                return { ablk_id, false, true };
-            }
-        }
-    };
-    
-        #endif
+   
     const config conf_;
     
     sigsegv_catcher segv_catch_;

@@ -62,27 +62,6 @@ public:
         , sharer_pr_(sharer_->make_proxy_collective())
         , protector_pr_(protector_.make_proxy_collective())
         
-        #if 0
-        
-        : reg_name_(get_reg_name())
-        , reg_(get_region_config())
-        , app_prot_(
-            {
-                reg_.get_app_ptr()
-            ,   get_max_segment_size()
-            }
-        )
-        , app_sp_(app_prot_)
-        , app_idx_(
-            {
-                *sharer_
-            ,   reg_.get_app_ptr()
-            ,   get_address_space_size()
-            ,   get_max_segment_size()
-            }
-        )
-        
-        #endif
         , hist_(
             {
                 protector_
@@ -93,10 +72,6 @@ public:
         )
         , new_seg_id_offset_(0)
     {
-        #if 0
-        this->sharer_->set_locator(protector_);
-        #endif
-        
         this->protector_.set_history(this->hist_);
         
         this->manager_->set_activater(this->sharer_pr_);
@@ -211,52 +186,6 @@ public:
         this->fault_upgrader_.disable_on_this_thread();
     }
     
-    #if 0
-    virtual void* get_segment_sys_ptr(const segment_id_t seg_id) MGBASE_NOEXCEPT MGBASE_OVERRIDE
-    {
-        const auto seg_size = get_max_segment_size();
-        
-        return mgbase::next_in_bytes(get_sys_ptr(), seg_id * seg_size);
-    }
-    #endif
-    
-private:
-    #if 0
-    void* get_segment_app_ptr(const segment_id_t seg_id) MGBASE_NOEXCEPT
-    {
-        const auto seg_size = get_max_segment_size();
-        
-        return mgbase::next_in_bytes(get_app_ptr(), seg_id * seg_size);
-    }
-    
-    aliasing_mapped_region::config get_region_config() {
-        return {
-            reg_name_.c_str()
-        ,   get_address_space_size()
-        ,   get_app_ptr() // Be careful for this order
-        ,   get_sys_ptr()
-        };
-    }
-    
-    void* get_sys_ptr() {
-        return reinterpret_cast<void*>(0x100000000000);
-        //return reinterpret_cast<void*>(0x30000000000);
-    }
-    void* get_app_ptr() {
-        return mgbase::next_in_bytes(this->get_sys_ptr(), get_address_space_size());
-    }
-    
-    mgbase::size_t get_max_segment_size() MGBASE_NOEXCEPT {
-        return get_address_space_size() / get_num_segments();
-    }
-    
-    mgbase::size_t get_address_space_size() MGBASE_NOEXCEPT {
-        return 0x300000000000;
-        //return 1ull << 36;
-    }
-    
-    #endif
-    
     std::string get_reg_name() MGBASE_NOEXCEPT
     {
         return fmt::format("mgdsm_cache_{}", mgcom::current_process_id());
@@ -312,15 +241,6 @@ private:
     page_fault_upgrader                     fault_upgrader_;
     
     segment_id_t                            new_seg_id_offset_;
-    
-    #if 0
-    const std::string                   reg_name_;
-    aliasing_mapped_region              reg_;
-    
-    app_space_protector                 app_prot_;
-    app_space                           app_sp_;
-    app_space_indexer                   app_idx_;
-    #endif
 };
 
 } // namespace mgdsm
