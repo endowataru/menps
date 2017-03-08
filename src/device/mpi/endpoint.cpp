@@ -6,6 +6,8 @@
 #include <mgbase/threading/this_thread.hpp>
 #include <mgbase/profiling/clock.hpp>
 
+#include <unistd.h>
+
 namespace mgcom {
 namespace mpi {
 
@@ -56,7 +58,15 @@ mpi_endpoint::mpi_endpoint(int* const argc, char*** const argv)
     
     MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN); // DEBUG
     
-    MGBASE_LOG_DEBUG("msg:Initialized MPI.");
+    static const mgbase::size_t len = 128;
+    char hostname[len];
+    gethostname(hostname, len);
+    
+    MGBASE_LOG_DEBUG(
+        "msg:Initialized MPI.\t"
+        "host:{}"
+    ,   hostname
+    );
 }
 
 mpi_endpoint::~mpi_endpoint()
