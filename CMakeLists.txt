@@ -17,7 +17,6 @@ target_link_libraries(mgdsm-header
 add_library(mgdsm
     ./src/sigbus_catcher.cpp
     ./src/sigsegv_catcher.cpp
-    ./src/aliasing_mapped_region.cpp
     ./src/page_fault_upgrader.cpp
     ./src/dsm_space.cpp
 )
