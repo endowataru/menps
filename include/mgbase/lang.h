@@ -138,6 +138,7 @@
     #define MGBASE_EXTERN_C_BEGIN
     #define MGBASE_EXTERN_C_END
     
+    #define MGBASE_ALIGNOF(x)                   __alignof(x)
     #define MGBASE_ALIGNAS(a)                   __attribute__((aligned(a)))
     #define MGBASE_DECLTYPE(x)                  __typeof__(x)
     
