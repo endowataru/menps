@@ -33,6 +33,9 @@ void exit();
 
 } // namespace mgth
 
+extern "C" {
 
 int mgth_main(int argc, char* argv[]);
+
+} // extern "C"
 

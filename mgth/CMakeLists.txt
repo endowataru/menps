@@ -8,6 +8,7 @@ add_library(mgth STATIC
     ./src/global_ult_desc_pool.cpp
     ./src/entrypoint.cpp
     ./src/disable_aslr.cpp
+    ./src/c_interface.cpp
 )
 
 target_include_directories(mgth
@@ -26,7 +27,7 @@ target_link_libraries(mgth
 #)
 #target_link_libraries(mgth-unittest mgth googletest)
 
-file(GLOB example_files example/*.cpp)
+file(GLOB example_files example/*.cpp example/*.c)
 foreach(example_path IN LISTS example_files)
     get_filename_component(example_name ${example_path} NAME_WE)
     add_executable(mgth-${example_name}

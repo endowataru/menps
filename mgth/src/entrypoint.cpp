@@ -108,8 +108,6 @@ private:
 
 mgbase::unique_ptr<count_allocator> g_heap_alloc;
 
-dist_scheduler_ptr g_sched;
-
 int g_argc;
 char** g_argv;
 int g_ret;
@@ -128,6 +126,8 @@ inline mgult::ult_id to_ult_id(const sched::thread_id_t& id) {
 }
 
 } // unnamed namespace
+
+dist_scheduler_ptr g_sched;
 
 namespace sched {
 
