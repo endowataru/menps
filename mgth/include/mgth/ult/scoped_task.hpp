@@ -29,7 +29,7 @@ class scoped_task
     
 public:
     template <typename Func, typename... Args>
-    scoped_task(Func&& func, Args&&... args)
+    explicit scoped_task(Func&& func, Args&&... args)
         : base(mgbase::forward<Func>(func), mgbase::forward<Args>(args)...) { }
     
     scoped_task(const scoped_task&) = delete;
