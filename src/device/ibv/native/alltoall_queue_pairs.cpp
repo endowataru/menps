@@ -2,6 +2,7 @@
 #include "alltoall_queue_pairs.hpp"
 #include <mgcom/collective.hpp>
 #include <mgbase/scoped_ptr.hpp>
+#include <mgbase/utility/move.hpp>
 #include <mgbase/logger.hpp>
 
 namespace mgcom {

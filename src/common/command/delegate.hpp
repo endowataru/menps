@@ -2,6 +2,7 @@
 #pragma once
 
 #include "delegator.hpp"
+#include <mgbase/callback.hpp>
 #include <mgcom/ult.hpp>
 #include <mgbase/value_wrapper.hpp>
 

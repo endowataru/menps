@@ -2,7 +2,7 @@
 #pragma once
 
 #include <mgcom/common.h>
-#include <mgbase/deferred.hpp>
+#include <mgbase/assert.hpp>
 
 #include <cstddef>
 #include <cstring>

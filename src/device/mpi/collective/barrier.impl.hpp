@@ -9,6 +9,8 @@
 
 #include "device/mpi/mpi_base.hpp"
 
+#include <mgbase/deferred.hpp>
+
 namespace mgcom {
 namespace mpi {
 namespace collective {
