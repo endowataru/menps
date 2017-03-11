@@ -62,28 +62,6 @@ private:
     friend class basic_sharer_space<sharer_space_policy>;
     // friend base;
     
-    #if 0
-    void* get_segment_sys_ptr(const segment_id_t seg_id) const MGBASE_NOEXCEPT
-    {
-        return this->locator_->get_segment_sys_ptr(seg_id);
-    }
-    
-    // Note: Old GCC cannot use internal linkage class for template argument
-    struct info {
-        manager_segment_proxy_ptr   manager;
-        void*                       sys_ptr;
-    };
-    
-    segment_ptr_type create_sharer_segment(
-        const segment_id_t          seg_id
-    ,   manager_segment_proxy_ptr&& seg_ptr
-    ) {
-        return mgbase::make_unique<sharer_segment>(
-            info{ mgbase::move(seg_ptr), get_segment_sys_ptr(seg_id) }
-        );
-    }
-    #endif
-    
     manager_space& get_manager() {
         MGBASE_ASSERT(this->manager_ != MGBASE_NULLPTR);
         return *this->manager_;

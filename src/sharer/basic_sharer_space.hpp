@@ -18,9 +18,6 @@ class basic_sharer_space
     typedef typename Traits::segment_conf_type      segment_conf_type;
     
     typedef typename Traits::lock_type              lock_type;
-    
-    // TODO : reduce dependency
-    typedef typename Traits::manager_segment_ptr_type   manager_segment_ptr_type;
 
 public:
     template <typename Conf>

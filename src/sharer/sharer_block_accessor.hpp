@@ -30,7 +30,7 @@ class sharer_block::accessor
     typedef block_id_t              block_id_type;
     
 public:
-    accessor(sharer_page::accessor& pg_pr, const block_id_t blk_id, sharer_block& blk)
+    explicit accessor(sharer_page::accessor& pg_pr, const block_id_t blk_id, sharer_block& blk)
         : pg_pr_(pg_pr)
         , blk_id_(blk_id)
         , blk_(blk)

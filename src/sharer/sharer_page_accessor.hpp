@@ -44,7 +44,7 @@ class sharer_page::accessor
 {
     typedef basic_sharer_page_accessor<sharer_page_accessor_traits> base;
 public:
-    accessor(sharer_segment::accessor& seg_pr, const page_id_t pg_id, sharer_page& pg)
+    explicit accessor(sharer_segment::accessor& seg_pr, const page_id_t pg_id, sharer_page& pg)
         : seg_pr_(&seg_pr)
         , pg_id_(pg_id)
         , pg_(&pg)
