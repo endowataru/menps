@@ -33,24 +33,6 @@ public:
             conf.comp_sel.set(qp_num, qps_[index]->get_completer());
         }
         
-        #if 0
-        for (process_id_t proc_index = 0; proc_index < conf.num_procs; ++proc_index)
-        {
-            const process_id_t proc = conf.proc_first + proc_index;
-            
-            for (index_t qp_index = 0; qp_index < conf.ep.get_qp_count(); ++qp_index)
-            {
-                const index_t index = proc_index * conf.ep.get_qp_count() + qp_index;
-                
-                qps_[index] = new qp_buffer(conf.ep, conf.alloc, proc, qp_index);
-                
-                const auto qp_num = conf.ep.get_qp_num_of_proc(proc, qp_index);
-                
-                conf.comp_sel.set(qp_num, qps_[index]->get_completer());
-            }
-        }
-        #endif
-        
         th_ = mgbase::thread(starter{*this});
     }
     

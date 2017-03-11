@@ -1,7 +1,6 @@
 
 #pragma once
 
-//#include "common/command/delegator.hpp"
 #include "device/mpi/mpi.hpp"
 
 namespace mgcom {
@@ -10,7 +9,6 @@ namespace mpi3 {
 class rma_window
 {
 public:
-    //rma_window(delegator&);
     rma_window();
     
     ~rma_window();

@@ -45,7 +45,6 @@ public:
     virtual ~mpi1_starter()
     {
         collective_requester_->barrier();
-        //collective::barrier();
         
         commander_->get_mpi_interface().barrier({ MPI_COMM_WORLD });
         
