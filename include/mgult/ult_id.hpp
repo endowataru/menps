@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgcom/common.hpp>
+#include <mgbase/type_traits/is_trivially_copyable.hpp>
 
 namespace mgult {
 
@@ -13,7 +13,7 @@ union ult_id
     
     struct distributed
     {
-        mgcom::process_id_t proc;
+        mgbase::uint32_t    proc; // TODO: mgcom::process_id_t
         ult_local_id_t      local_id;
     }
     di;

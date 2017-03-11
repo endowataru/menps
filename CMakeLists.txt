@@ -8,7 +8,6 @@ target_include_directories(mgult-header
 )
 target_link_libraries(mgult-header
     INTERFACE mgbase-header
-    mgcom-header
     mgctx
 )
 

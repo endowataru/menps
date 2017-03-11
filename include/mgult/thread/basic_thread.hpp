@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgbase/tuple.hpp>
+#include <mgbase/utility/move.hpp>
 #include <mgbase/logger.hpp>
 #include <exception>
 

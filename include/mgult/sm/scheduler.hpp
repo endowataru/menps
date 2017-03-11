@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgult/scheduler.hpp>
+#include <mgbase/assert.hpp>
 #include <mgbase/shared_ptr.hpp>
 
 namespace mgult {
