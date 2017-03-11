@@ -238,8 +238,6 @@
         
         #define MGBASE_NORETURN                     [[noreturn]]
         
-        #define MGBASE_DEPRECATED                   __attribute__((deprecated))
-        
     #else
         #define MGBASE_IF_CXX11_SUPPORTED(x)
         

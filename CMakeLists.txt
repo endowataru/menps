@@ -13,7 +13,6 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
 option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
-option(MGBASE_ULT_DISABLE_YIELD "Disable mgbase::ult::this_thread::yield" OFF)
 option(MGBASE_LOGGER_USE_LOCK "Use lock in logger" ON)
 
 set(MGBASE_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
@@ -215,68 +214,54 @@ else()
     endif()
 endif()
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 __attribute__((always_inline))
 void f() { }
 
 int main() { return 0; }
 " MGBASE_COMPILER_SUPPORTS_ALWAYS_INLINE)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 void f() { __builtin_unreachable(); }
 
 int main() { return 0; }
-" MGBASE_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE
-)
+" MGBASE_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE)
 
+# To check C++0x features, we need this flag
 set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 void f() noexcept { }
 int main() { return 0; }
-" MGBASE_CXX11_NOEXCEPT_SUPPORTED
-)
+" MGBASE_CXX11_NOEXCEPT_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 int main() { int* x = nullptr; return 0; }
-" MGBASE_CXX11_NULLPTR_SUPPORTED
-)
+" MGBASE_CXX11_NULLPTR_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 #include <cstddef>
 int main() { std::nullptr_t x = nullptr; return 0; }
-" MGBASE_CXX11_NULLPTR_T_SUPPORTED
-)
+" MGBASE_CXX11_NULLPTR_T_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 #include <memory>
 int main() { std::unique_ptr<int> p(new int); return 0; }
-" MGBASE_CXX11_UNIQUE_PTR_SUPPORTED
-)
+" MGBASE_CXX11_UNIQUE_PTR_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 struct A {
     A(A&&) = default;
 };
 int main() { return 0; }
-" MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-)
+" MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 struct A {
     A(A&&) = default;
 };
 int main() { return 0; }
-" MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
-)
+" MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED)
 
 CHECK_CXX_SOURCE_COMPILES(
 "
@@ -285,25 +270,19 @@ int main() {
     for (int x : a) { }
     return 0;
 }
-" MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED
-)
+" MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 struct X { void f() &; void g() &&; };
 int main() { return 0; }
-" MGBASE_CXX11_REF_QUALIFIERS_SUPPORTED
-)
+" MGBASE_CXX11_REF_QUALIFIERS_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 struct X { explicit operator bool(); };
 int main() { return 0; }
-" MGBASE_CXX11_EXPLICIT_CONVERSION_OPERATORS_SUPPORTED
-)
+" MGBASE_CXX11_EXPLICIT_CONVERSION_OPERATORS_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 template <typename T> T r(T x) { return x; }
 
 template <typename F, typename... T>
@@ -314,58 +293,23 @@ int g(int);
 decltype(f(&g, 123)) x;
 
 int main() { return 0; }
-"
-MGBASE_CXX_SFINAE_EXPR
-)
+" MGBASE_CXX_SFINAE_EXPR)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 struct A { A() noexcept = default; };
 int main() { return 0; }
-"
-MGBASE_CXX11_DEFAULT_FUNCTION_NOEXCEPT
-)
+" MGBASE_CXX11_DEFAULT_FUNCTION_NOEXCEPT)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
-#include <memory>
-int main() { int x; int* p = std::addressof(x); return 0; }
-"
-MGBASE_CXX11_ADDRESSOF_SUPPORTED
-)
-
-CHECK_CXX_SOURCE_COMPILES(
-"
-#include <iterator>
-int main() { int a[1]; std::begin(a); return 0; }
-"
-MGBASE_CXX11_STD_BEGIN_SUPPORTED
-)
-CHECK_CXX_SOURCE_COMPILES(
-"
-#include <iterator>
-int main() { int a[1]; std::end(a); return 0; }
-"
-MGBASE_CXX11_STD_END_SUPPORTED
-)
-
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 thread_local int x;
 int main() { return 0; }
-"
-MGBASE_CXX11_THREAD_LOCAL_SUPPORTED
-)
+" MGBASE_CXX11_THREAD_LOCAL_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 int main() { alignof(int); return 0; }
-"
-MGBASE_CXX11_ALIGNOF_SUPPORTED
-)
+" MGBASE_CXX11_ALIGNOF_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES(
-"
+CHECK_CXX_SOURCE_COMPILES("
 struct A {
     A() { }
     A(const A&) = delete;
@@ -375,9 +319,23 @@ struct A {
 };
 A f(A a) { return a; };
 int main() { return 0; }
-"
-MGBASE_CXX11_RETURN_MOVE_ONLY_ARGUMENT_SUPPORTED
-)
+" MGBASE_CXX11_RETURN_MOVE_ONLY_ARGUMENT_SUPPORTED)
+
+CHECK_CXX_SOURCE_COMPILES("
+#include <iterator>
+int main() { int a[1]; std::begin(a); return 0; }
+" MGBASE_CXX11_STD_BEGIN_SUPPORTED)
+
+CHECK_CXX_SOURCE_COMPILES("
+#include <iterator>
+int main() { int a[1]; std::end(a); return 0; }
+" MGBASE_CXX11_STD_END_SUPPORTED)
+
+CHECK_CXX_SOURCE_COMPILES("
+#include <memory>
+int main() { int x; int* p = std::addressof(x); return 0; }
+" MGBASE_CXX11_ADDRESSOF_SUPPORTED)
+
 
 add_library(mgbase
     ./external/fmt/fmt/format.cc
