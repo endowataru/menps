@@ -96,8 +96,7 @@ private:
 
 mgbase::unique_ptr<starter> make_starter(int* const argc, char*** const argv)
 {
-    // TODO: replace with make_unique
-    return mgbase::unique_ptr<starter>(new ibv_starter(argc, argv));
+    return mgbase::make_unique<ibv_starter>(argc, argv);
 }
 
 } // namespace ibv
