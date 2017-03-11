@@ -12,7 +12,7 @@ public:
     rpc_manager_page_invalidator() = default;
     
     template <typename Conf>
-    rpc_manager_page_invalidator(const Conf& conf)
+    /*implicit*/ rpc_manager_page_invalidator(const Conf& conf)
         : readers_(conf.readers)
         , writers_(conf.writers)
     { }

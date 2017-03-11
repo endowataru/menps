@@ -4,12 +4,14 @@
 #include "protector_space.hpp"
 #include "basic_protector_space_proxy.hpp"
 #include <mgcom/structure/alltoall_ptr_group.hpp>
+#include <mgcom/common_policy.hpp>
 #include <mgcom/rpc/rpc_policy.hpp>
 
 namespace mgdsm {
 
 struct protector_space_proxy_policy
-    : mgcom::rpc::rpc_policy
+    : mgcom::common_policy
+    , mgcom::rpc::rpc_policy
 {
     typedef protector_space::proxy      derived_type;
     typedef space_coherence_activater   interface_type;
@@ -27,13 +29,7 @@ struct protector_space_proxy_policy
     
     typedef segment_id_t                    segment_id_type;
     
-    typedef mgcom::process_id_t             process_id_type;
-    
     static const mgcom::rpc::handler_id_t create_segment_handler_id = 701;
-    
-    static mgbase::size_t number_of_processes() MGBASE_NOEXCEPT {
-        return mgcom::number_of_processes();
-    }
 };
 
 class protector_space::proxy

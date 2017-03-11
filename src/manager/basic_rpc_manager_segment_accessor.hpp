@@ -10,8 +10,6 @@ class basic_rpc_manager_segment_accessor
     : public mgbase::crtp_base<Policy>
 {
     typedef typename Policy::derived_type       derived_type;
-    typedef typename Policy::process_id_type    process_id_type;
-    typedef typename Policy::page_id_type       page_id_type;
     
 public:
     mgbase::size_t get_page_size()

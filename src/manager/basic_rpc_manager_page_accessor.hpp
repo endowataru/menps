@@ -136,7 +136,7 @@ public:
 private:
     // TODO: "needs_flush" and "needs_diff" are the same!!!
     
-    bool is_flush_needed(const process_id_type proc)
+    bool is_flush_needed(const process_id_type /*proc*/)
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
@@ -147,7 +147,7 @@ private:
         return !pg_ent.is_readonly();
     }
     
-    bool is_diff_needed(const process_id_type proc)
+    bool is_diff_needed(const process_id_type /*proc*/)
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();

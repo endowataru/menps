@@ -9,7 +9,8 @@
 namespace mgdsm {
 
 struct sharer_space_proxy_policy
-    : mgcom::rpc::rpc_policy
+    : mgcom::common_policy
+    , mgcom::rpc::rpc_policy
 {
     typedef sharer_space::proxy         derived_type;
     typedef space_coherence_activater   interface_type;
@@ -18,8 +19,6 @@ struct sharer_space_proxy_policy
     
     typedef segment_id_t                segment_id_type;
     typedef page_id_t                   page_id_type;
-    
-    typedef mgcom::process_id_t         process_id_type;
     
     static const mgcom::rpc::handler_id_t enable_flush_handler_id = 501;
     static const mgcom::rpc::handler_id_t enable_diff_handler_id = 502;

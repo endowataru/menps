@@ -8,18 +8,19 @@
 #include <mgcom/rma/paired_local_ptr.hpp>
 #include "process_id_set.hpp"
 #include "rpc_manager_page_invalidator.hpp"
+#include <mgcom/common_policy.hpp>
 
 namespace mgdsm {
 
 class rpc_manager_page_entry;
 
 struct rpc_manager_page_entry_traits
+    : mgcom::common_policy
 {
     typedef rpc_manager_page_entry                      derived_type;
     
     typedef mgcom::rma::paired_local_ptr<void>          owner_plptr_type;
     
-    typedef mgcom::process_id_t                         process_id_type;
     typedef process_id_set                              process_id_set_type;
     
     typedef rpc_manager_page_invalidator                invalidator_type;

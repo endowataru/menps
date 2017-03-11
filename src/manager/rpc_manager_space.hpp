@@ -19,10 +19,6 @@ struct rpc_manager_space_policy
     typedef segment_id_t                segment_id_type;
     
     typedef space_coherence_activater   activater_type;
-    
-    static mgbase::size_t number_of_processes() MGBASE_NOEXCEPT {
-        return mgcom::number_of_processes();
-    }
 };
 
 class rpc_manager_space

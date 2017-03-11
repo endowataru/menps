@@ -41,7 +41,7 @@ public:
     
     mgcom::process_id_t get_manager_proc(const page_id_t pg_id) const MGBASE_NOEXCEPT
     {
-        return pg_id % mgcom::number_of_processes();
+        return static_cast<mgcom::process_id_t>(pg_id % mgcom::number_of_processes());
     }
     rpc_manager_space* get_manager_space_at_proc(const mgcom::process_id_t proc) const MGBASE_NOEXCEPT
     {

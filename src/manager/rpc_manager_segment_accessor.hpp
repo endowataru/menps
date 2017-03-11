@@ -18,7 +18,7 @@ class rpc_manager_segment::accessor
     : public basic_rpc_manager_segment_accessor<rpc_manager_segment_accessor_policy>
 {
 public:
-    accessor(rpc_manager_space& sp, const segment_id_t seg_id)
+    explicit accessor(rpc_manager_space& sp, const segment_id_t seg_id)
         : sp_(sp)
         , seg_id_(seg_id)
         , seg_(sp.get_segment(seg_id))
