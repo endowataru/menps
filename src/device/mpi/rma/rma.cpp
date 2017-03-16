@@ -33,7 +33,7 @@ class mpi_requester
     , public emulated_atomic<mpi_requster_policy>
 {
 public:
-    mpi_requester(rpc::requester& rqstr, mpi_interface& mi)
+    explicit mpi_requester(rpc::requester& rqstr, mpi_interface& mi)
         : rqstr_(rqstr)
         , mi_(mi)
     {
@@ -60,8 +60,7 @@ private:
 
 mgbase::unique_ptr<rma::requester> make_rma_requester(rpc::requester& req, mpi_interface& mi)
 {
-    // TODO: replace with make_unique
-    return mgbase::unique_ptr<rma::requester>{ new mpi_requester(req, mi) };
+    return mgbase::make_unique<mpi_requester>(req, mi);
 }
 
 } // namespace mpi
