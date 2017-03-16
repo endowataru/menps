@@ -13,6 +13,13 @@
 #include "dsm_segment.hpp"
 #include "shm_object.hpp"
 
+extern "C" {
+
+extern void* _dsm_data_begin;
+extern void* _dsm_data_end;
+
+} // extern "C"
+
 namespace mgdsm {
 
 class dsm_space
@@ -79,6 +86,14 @@ public:
         this->sharer_->set_manager(this->manager_pr_);
         
         MGBASE_LOG_DEBUG("msg:Initialize DSM space.");
+        
+        // Barrier to initialize global variables.
+        mgcom::collective::barrier();
+        
+        init_global_var_seg();
+        
+        // Barrier to initialize global variables.
+        mgcom::collective::barrier();
     }
     
     ~dsm_space()
@@ -99,6 +114,7 @@ private:
         void*                       app_ptr;
         void*                       sys_ptr;
         mgbase::size_t              index_in_file;
+        bool                        copy_data;
     };
     
 public:
@@ -122,6 +138,7 @@ public:
             ,   get_segment_app_ptr(seg_id)
             ,   get_segment_sys_ptr(seg_id)
             ,   reinterpret_cast<mgbase::size_t>(get_segment_app_ptr(seg_id))
+            ,   false
             }
         ));
     }
@@ -227,6 +244,52 @@ public:
         //return 0x300000000000;
     }
     
+    void init_global_var_seg()
+    {
+        if (mgcom::current_process_id() != 0) {
+            // Only the process 0 creates the global variable segment.
+            return;
+        }
+        
+        const segment_id_t seg_id = 0;
+        const mgbase::size_t seg_size = get_global_var_seg_size();
+        
+        if (seg_size == 0) {
+            // There's no global variable.
+            return;
+        }
+        
+        const auto app_ptr = get_global_var_seg_start_ptr();
+        const auto sys_ptr = get_segment_sys_ptr(seg_id);
+        
+        const mgbase::size_t page_size_in_bytes = 4096; // TODO
+        const mgbase::size_t block_size_in_bytes = 4096; // TODO
+        
+        global_var_seg_ =
+            mgbase::make_unique<dsm_segment>(
+                segment_conf{
+                    protector_pr_
+                ,   0 // segment_id
+                ,   mgbase::roundup_divide(seg_size, page_size_in_bytes)
+                ,   page_size_in_bytes
+                ,   block_size_in_bytes
+                ,   app_ptr
+                ,   sys_ptr
+                ,   reinterpret_cast<mgbase::size_t>(app_ptr)
+                ,   true
+                }
+            );
+    }
+    
+    void* get_global_var_seg_start_ptr() MGBASE_NOEXCEPT {
+        return reinterpret_cast<void*>(&_dsm_data_begin);
+    }
+    mgbase::size_t get_global_var_seg_size() MGBASE_NOEXCEPT {
+        return 
+            reinterpret_cast<mgbase::int8_t*>(&_dsm_data_end) -
+            reinterpret_cast<mgbase::int8_t*>(&_dsm_data_begin);
+    }
+    
     shm_object                              shm_obj_;
     
     mgbase::unique_ptr<rpc_manager_space>   manager_;
@@ -241,6 +304,8 @@ public:
     page_fault_upgrader                     fault_upgrader_;
     
     segment_id_t                            new_seg_id_offset_;
+    
+    mgbase::unique_ptr<dsm_segment>         global_var_seg_;
 };
 
 } // namespace mgdsm

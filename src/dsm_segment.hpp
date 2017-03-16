@@ -16,7 +16,16 @@ public:
         , app_ptr_(conf.app_ptr)
         , size_(conf.page_size * conf.num_pages)
     {
-        protector_->create_segment(seg_id_, { conf.num_pages, conf.page_size, conf.block_size, conf.app_ptr, conf.sys_ptr, conf.index_in_file });
+        auto cconf = protector_space::proxy::create_conf_type();
+        cconf.num_pages      = conf.num_pages;
+        cconf.page_size      = conf.page_size;
+        cconf.block_size     = conf.block_size;
+        cconf.app_ptr        = conf.app_ptr;
+        cconf.sys_ptr        = conf.sys_ptr;
+        cconf.index_in_file  = conf.index_in_file;
+        cconf.copy_data      = conf.copy_data;
+        
+        protector_->create_segment(seg_id_, cconf);
     }
     
     ~dsm_segment()

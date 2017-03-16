@@ -12,6 +12,7 @@ namespace mgdsm {
 struct protector_space_proxy_policy
     : mgcom::common_policy
     , mgcom::rpc::rpc_policy
+    , dsm_base_policy
 {
     typedef protector_space::proxy      derived_type;
     typedef space_coherence_activater   interface_type;
@@ -25,9 +26,8 @@ struct protector_space_proxy_policy
         void*           app_ptr;
         void*           sys_ptr;
         mgbase::size_t  index_in_file;
+        bool            copy_data;
     };
-    
-    typedef segment_id_t                    segment_id_type;
     
     static const mgcom::rpc::handler_id_t create_segment_handler_id = 701;
 };

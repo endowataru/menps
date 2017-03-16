@@ -12,16 +12,15 @@ class basic_protector_space_proxy
     typedef typename Policy::derived_type       derived_type;
     
     typedef typename Policy::space_type         space_type;
+    typedef typename Policy::segment_id_type    segment_id_type;
+    
+    typedef typename Policy::process_id_type    process_id_type;
+    typedef typename Policy::handler_id_type    handler_id_type;
+    
+public:
     
     typedef typename Policy::create_conf_type   create_conf_type;
     
-    typedef typename Policy::segment_id_type    segment_id_type;
-    
-    typedef typename Policy::handler_id_type    handler_id_type;
-    
-    typedef typename Policy::process_id_type    process_id_type;
-    
-public:
     static void register_handlers()
     {
         Policy::template register_handler<create_segment_handler>();

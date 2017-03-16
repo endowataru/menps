@@ -2,11 +2,12 @@
 #pragma once
 
 #include <mgbase/crtp_base.hpp>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <mgbase/memory/next_in_bytes.hpp>
 #include <mgbase/assert.hpp>
 #include <mgbase/logger.hpp>
+
+#include <unistd.h>
+#include <sys/mman.h>
 
 namespace mgdsm {
 
@@ -60,11 +61,9 @@ private:
                 .get_segment_accessor()
                 .get_segment_id();
         
-        const auto max_seg_size = self.get_max_seg_size();
+        const auto seg_app_ptr = self.get_segment_app_ptr();
         
-        const auto index = seg_id * max_seg_size + index_in_seg;
-        
-        const auto ptr = reinterpret_cast<void*>(index);
+        const auto ptr = mgbase::next_in_bytes(seg_app_ptr, index_in_seg);
         
         MGBASE_ASSERT(reinterpret_cast<mgbase::uintptr_t>(ptr) % os_page_size == 0);
         MGBASE_ASSERT(size % os_page_size == 0);

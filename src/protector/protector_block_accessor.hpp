@@ -44,6 +44,7 @@ private:
     }
     
     inline mgbase::size_t get_max_seg_size() const MGBASE_NOEXCEPT;
+    inline void* get_segment_app_ptr() const MGBASE_NOEXCEPT;
     
     inline void add_new_read();
     inline void add_new_write();

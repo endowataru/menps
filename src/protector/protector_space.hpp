@@ -87,26 +87,25 @@ mgbase::size_t protector_block_accessor::get_max_seg_size() const MGBASE_NOEXCEP
     return sp.get_max_segment_size();
 }
 
-
 template <typename Conf>
 protector_segment::protector_segment(protector_space& sp, const Conf& conf)
     : sp_(sp)
 {   
     const auto size_in_bytes = conf.num_pages * conf.page_size;
     
-    app_map_ = mgbase::mapped_memory::map(
-        conf.app_ptr
+    sys_map_ = mgbase::mapped_memory::map(
+        conf.sys_ptr
     ,   size_in_bytes
-    ,   PROT_NONE//PROT_READ | PROT_WRITE
+    ,   PROT_READ | PROT_WRITE
     ,   MAP_FIXED | MAP_SHARED
     ,   sp_.get_fd()
     ,   conf.index_in_file
     );
     
-    sys_map_ = mgbase::mapped_memory::map(
-        conf.sys_ptr
+    app_map_ = mgbase::mapped_memory::map(
+        conf.app_ptr
     ,   size_in_bytes
-    ,   PROT_READ | PROT_WRITE
+    ,   PROT_NONE//PROT_READ | PROT_WRITE
     ,   MAP_FIXED | MAP_SHARED
     ,   sp_.get_fd()
     ,   conf.index_in_file

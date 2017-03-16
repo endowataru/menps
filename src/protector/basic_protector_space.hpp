@@ -94,12 +94,20 @@ private:
     {
         auto& self = this->derived();
         
-        const auto abs_idx = reinterpret_cast<mgbase::uintptr_t>(ptr);
+        const auto iptr = reinterpret_cast<mgbase::uintptr_t>(ptr);
         const auto max_seg_size = self.get_max_segment_size();
         
+        const segment_id_type seg_id =
+            static_cast<segment_id_type>(iptr / max_seg_size);
+        
+        auto& seg = segs_[seg_id];
+        
+        const auto app_iptr =
+            reinterpret_cast<mgbase::uintptr_t>(seg->get_app_ptr());
+        
         return {
-            static_cast<segment_id_type>(abs_idx / max_seg_size)
-        ,   abs_idx % max_seg_size
+            seg_id
+        ,   iptr - app_iptr
         };
     }
     

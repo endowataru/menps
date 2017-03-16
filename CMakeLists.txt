@@ -13,7 +13,6 @@ target_link_libraries(mgdsm-header
     INTERFACE mgbase-header
 )
 
-
 add_library(mgdsm
     ./src/sigbus_catcher.cpp
     ./src/sigsegv_catcher.cpp
@@ -28,7 +27,9 @@ target_link_libraries(mgdsm
     mgcom
     mgbase-options
     mgult
+    -T ${CMAKE_CURRENT_SOURCE_DIR}/src/linker.ld
 )
+
 
 # Used for shm_open()
 # See also: https://bugs.freedesktop.org/show_bug.cgi?id=94096
@@ -43,6 +44,8 @@ foreach(example_path IN LISTS example_files)
     add_executable(mgdsm-${example_name}
         ${example_path}
     )
-    target_link_libraries(mgdsm-${example_name} mgdsm)
+    target_link_libraries(mgdsm-${example_name}
+        mgdsm
+    )
 endforeach()
 
