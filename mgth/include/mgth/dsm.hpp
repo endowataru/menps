@@ -5,6 +5,7 @@
 #include <mgbase/unique_ptr.hpp>
 #include <mgbase/type_traits/remove_extent.hpp>
 #include <mgbase/utility/forward.hpp>
+#include <mgdsm/global_variable.hpp>
 
 namespace mgth {
 
@@ -149,4 +150,7 @@ make_unique(Args&&...) = delete;
 } // namespace dsm
 
 } // namespace mgth
+
+// Provide an alias.
+#define MGTH_GLOBAL_VARIABLE    MGDSM_GLOBAL_VARIABLE
 

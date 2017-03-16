@@ -1,6 +1,5 @@
 
 #include <mgth.hpp>
-//#include <mgas2.hpp>
 #include <mgdsm.hpp>
 #include <mgcom.hpp>
 #include "dist_scheduler.hpp"

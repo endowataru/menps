@@ -77,7 +77,9 @@ public:
     
     void lock()
     {
-        while (!try_lock()) { }
+        while (!try_lock()) {
+            mgult::klt::this_thread::yield();
+        }
     }
     
     bool try_lock()
