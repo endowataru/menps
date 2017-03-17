@@ -16,8 +16,12 @@ target_include_directories(mgctx
     PUBLIC ./include
 )
 target_link_libraries(mgctx
-    mgbase
-    mgbase-options
+    PUBLIC mgbase
+    PRIVATE mgbase-options
+)
+install(TARGETS mgctx
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
 )
 
 add_executable(mgctx-unittest
@@ -26,6 +30,7 @@ add_executable(mgctx-unittest
 )
 target_link_libraries(mgctx-unittest
     mgctx
+    mgbase-options
     googletest
 )
 
