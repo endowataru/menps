@@ -2,13 +2,17 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mgbase CXX ASM)
 
-find_package(Threads)
+INCLUDE(CheckCXXCompilerFlag)
 
-INCLUDE (CheckCXXCompilerFlag)
+# Threading is required.
+# This package adds CMAKE_THREAD_LIBS_INIT, which is used later.
+find_package(Threads)
 
 # Do not link shared libraries again
 set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
+# BUILD_SHARED_LIBS is a common flag in CMake that decides shared/static libs.
+# I don't know whether it's correct to use it as an option.
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
 option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
@@ -17,18 +21,33 @@ option(MGBASE_LOGGER_USE_LOCK "Use lock in logger" ON)
 
 set(MGBASE_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
-add_library(mgbase-header INTERFACE)
-target_include_directories(mgbase-header
-    INTERFACE ./include
-    INTERFACE ./external/fmt
-    INTERFACE ./external/cmdline
-    INTERFACE ${CMAKE_CURRENT_BINARY_DIR}
+set(error_limit 3)
+
+# mgbase : SHARED/STATIC target
+
+add_library(mgbase
+    ./external/fmt/fmt/format.cc
+    ./external/fmt/fmt/ostream.cc
+    ./src/malloc.cpp
 )
-target_compile_definitions(mgbase-header
-    INTERFACE "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
+target_include_directories(mgbase
+    PUBLIC ./include
+    PUBLIC ./external/fmt
+    PUBLIC ./external/cmdline
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mgbase/config.h
+)
+target_compile_definitions(mgbase
+    PUBLIC "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
+)
+target_link_libraries(mgbase
+    PRIVATE ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
+)
+install(TARGETS mgbase
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
 )
 
-set(error_limit 3)
+# mgbase-options : INTERFACE target to set options individually
 
 add_library(mgbase-options INTERFACE)
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
@@ -90,18 +109,11 @@ else()
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         # Get the version
-        execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-                OUTPUT_VARIABLE MGBASE_COMPILER_GCC_VERSION)
-        string(REGEX MATCHALL "[0-9]+" MGBASE_COMPILER_GCC_VERSION_COMPONENTS ${MGBASE_COMPILER_GCC_VERSION})
-        list(GET MGBASE_COMPILER_GCC_VERSION_COMPONENTS 0 MGBASE_COMPILER_GCC_VERSION_MAJOR)
-        list(GET MGBASE_COMPILER_GCC_VERSION_COMPONENTS 1 MGBASE_COMPILER_GCC_VERSION_MINOR)
+        set(MGBASE_COMPILER_GCC_VERSION ${CMAKE_CXX_COMPILER_VERSION})
         message(STATUS "MGBASE_COMPILER_GCC_VERSION=${MGBASE_COMPILER_GCC_VERSION}")
-        message(STATUS "MGBASE_COMPILER_GCC_VERSION_MAJOR=${MGBASE_COMPILER_GCC_VERSION_MAJOR}")
-        message(STATUS "MGBASE_COMPILER_GCC_VERSION_MINOR=${MGBASE_COMPILER_GCC_VERSION_MINOR}")
         
         CHECK_CXX_COMPILER_FLAG("-Wc++14-compat" MGBASE_GCC_SUPPORTS_WCXX14_COMPAT)
         CHECK_CXX_COMPILER_FLAG("-Wconditionally-supported" MGBASE_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED)
-        CHECK_CXX_COMPILER_FLAG("-Wdate-time" MGBASE_GCC_SUPPORTS_WDATE_TIME)
         CHECK_CXX_COMPILER_FLAG("-Wdelete-non-virtual-dtor" MGBASE_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR)
         CHECK_CXX_COMPILER_FLAG("-Wdouble-promotion" MGBASE_GCC_SUPPORTS_WDOUBLE_PROMOTION)
         CHECK_CXX_COMPILER_FLAG("-Wformat-signedness" MGBASE_GCC_SUPPORTS_WFORMAT_SIGNEDNESS)
@@ -121,6 +133,7 @@ else()
             
             # Disable SSP.
             -fno-stack-protector
+                # TODO : this is only needed for mgth
             
             # Meta warnings
             -Wall
@@ -134,24 +147,24 @@ else()
             #   $ gcc -Q --help=warning -Wall -pedantic -Wextra | grep disabled | cut -f 1
             #-Wabi # Seems useless
             #-Wabi-tag # Seems useless
-            -Wc++0x-compat
+            #-Wc++0x-compat
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WCXX14_COMPAT}>:-Wc++14-compat>
             -Wcast-qual
             #-Wchkp # Undocumented warning option
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED}>:-Wconditionally-supported>
             -Wconversion
             $<$<VERSION_GREATER:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wctor-dtor-privacy> # #pragma GCC diagnostic is required
-            $<$<BOOL:${MGBASE_GCC_SUPPORTS_WDATE_TIME}>:-Wdate-time>
+            #-Wdate-time # Seems useless
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR}>:-Wdelete-non-virtual-dtor>
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WDOUBLE_PROMOTION}>:-Wdouble-promotion>
-            #-Weffc++ # TODO: Too strict?
+            #-Weffc++ # Out-dated warning
             -Wfloat-equal
             -Wformat-nonliteral
             -Wformat-security
             $<$<BOOL:${MGBASE_GCC_SUPPORTS_WFORMAT_SIGNEDNESS}>:-Wformat-signedness>
-            -Wformat-y2k
+            #-Wformat-y2k # Not important
             -Winit-self
-            -Winvalid-pch
+            #-Winvalid-pch # TODO
             -Wlogical-op
             -Wmissing-declarations
             -Wmissing-include-dirs
@@ -336,16 +349,21 @@ CHECK_CXX_SOURCE_COMPILES("
 int main() { int x; int* p = std::addressof(x); return 0; }
 " MGBASE_CXX11_ADDRESSOF_SUPPORTED)
 
+message(STATUS "Generate mgbase/config.h ...")
+message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
+message(STATUS "MGBASE_PROFILER_USE_GPROF=${MGBASE_PROFILER_USE_GPROF}")
+message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}")
+message(STATUS "MGBASE_CXX_STANDARD=${MGBASE_CXX_STANDARD}")
+message(STATUS "MGBASE_ATOMIC_USE_STANDARD=${MGBASE_ATOMIC_USE_STANDARD}")
+message(STATUS "MGBASE_ULT_DISABLE_YIELD=${MGBASE_ULT_DISABLE_YIELD}")
+message(STATUS "MGBASE_DISABLE_STANDARD_UNIQUE_PTR=${MGBASE_DISABLE_STANDARD_UNIQUE_PTR}")
+message(STATUS "MGBASE_LOGGER_USE_LOCK=${MGBASE_LOGGER_USE_LOCK}")
 
-add_library(mgbase
-    ./external/fmt/fmt/format.cc
-    ./external/fmt/fmt/ostream.cc
-    ./src/malloc.cpp
-)
+# Generate config.h
 
-target_link_libraries(mgbase mgbase-header 
-    pthread # TODO: Use ${CMAKE_THREAD_LIBS_INIT} ?
-    )
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/mgbase/config.h)
+
 
 if (MGBASE_PROFILER_USE_GPERFTOOLS)
     target_link_libraries(mgbase profiler)
@@ -372,6 +390,7 @@ target_compile_options(googletest
 target_include_directories(googletest
     PUBLIC ./external/googletest/googletest
     PUBLIC ./external/googletest/googletest/include
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mgbase/config.h
 )
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     target_sources(googletest
@@ -404,22 +423,11 @@ add_executable(mgbase-unittest
     #unittest/optional.cpp
 )
 
-target_link_libraries(mgbase-unittest mgbase mgbase-options googletest)
-
-message(STATUS "Generate mgbase/config.h ...")
-message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
-message(STATUS "MGBASE_PROFILER_USE_GPROF=${MGBASE_PROFILER_USE_GPROF}")
-message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}")
-message(STATUS "MGBASE_CXX_STANDARD=${MGBASE_CXX_STANDARD}")
-message(STATUS "MGBASE_ATOMIC_USE_STANDARD=${MGBASE_ATOMIC_USE_STANDARD}")
-message(STATUS "MGBASE_ULT_DISABLE_YIELD=${MGBASE_ULT_DISABLE_YIELD}")
-message(STATUS "MGBASE_DISABLE_STANDARD_UNIQUE_PTR=${MGBASE_DISABLE_STANDARD_UNIQUE_PTR}")
-message(STATUS "MGBASE_LOGGER_USE_LOCK=${MGBASE_LOGGER_USE_LOCK}")
-
-# Generate config.h
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mgbase/config.h)
+target_link_libraries(mgbase-unittest
+    mgbase
+    mgbase-options
+    googletest
+)
 
 
 # MassiveThreads
