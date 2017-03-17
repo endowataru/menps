@@ -5,14 +5,6 @@ project(mgdsm)
 # Do not link shared libraries again
 set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
-add_library(mgdsm-header INTERFACE)
-target_include_directories(mgdsm-header
-    INTERFACE ./include
-)
-target_link_libraries(mgdsm-header
-    INTERFACE mgbase-header
-)
-
 add_library(mgdsm
     ./src/sigbus_catcher.cpp
     ./src/sigsegv_catcher.cpp
@@ -20,16 +12,18 @@ add_library(mgdsm
     ./src/dsm_space.cpp
 )
 target_include_directories(mgdsm
+    PUBLIC ./include
     PRIVATE ./src
 )
 target_link_libraries(mgdsm
-    mgdsm-header
     mgcom
     mgbase-options
-    mgult
     -T ${CMAKE_CURRENT_SOURCE_DIR}/src/linker.ld
 )
-
+install(TARGETS mgdsm
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
 
 # Used for shm_open()
 # See also: https://bugs.freedesktop.org/show_bug.cgi?id=94096
