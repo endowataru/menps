@@ -2,15 +2,6 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mgult CXX ASM)
 
-add_library(mgult-header INTERFACE)
-target_include_directories(mgult-header
-    INTERFACE ./include
-)
-target_link_libraries(mgult-header
-    INTERFACE mgbase-header
-    mgctx
-)
-
 add_library(mgult
     $<$<PLATFORM_ID:Linux>:
     ./src/fcontext/jump_x86_64_sysv_elf_gas.S
@@ -27,18 +18,29 @@ add_library(mgult
     ./src/sm/initializer.cpp
     ./src/scheduler_initializer.cpp
 )
-
 target_include_directories(mgult
     PUBLIC ./include
 )
-target_link_libraries(mgult mgult-header mgbase-options mgbase mgctx)
+target_link_libraries(mgult
+    PUBLIC mgctx
+    PRIVATE mgbase-options
+)
+install(TARGETS mgult
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
+# Unit tests
 
 add_executable(mgult-unittest
     unittest/unittest.cpp
     unittest/fcontext.cpp
 )
-target_link_libraries(mgult-unittest mgult googletest)
-
+target_link_libraries(mgult-unittest
+    mgult
+    mgbase-options
+    googletest
+)
 
 file(GLOB example_files example/*.cpp)
 foreach(example_path IN LISTS example_files)
@@ -46,6 +48,9 @@ foreach(example_path IN LISTS example_files)
     add_executable(mgult-${example_name}
         ${example_path}
     )
-    target_link_libraries(mgult-${example_name} mgult)
+    target_link_libraries(mgult-${example_name}
+        mgult
+        mgbase-options
+    )
 endforeach()
 
