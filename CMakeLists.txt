@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mgult CXX ASM)
 
+# Do not link shared libraries again
+set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
+
 add_library(mgult
     $<$<PLATFORM_ID:Linux>:
     ./src/fcontext/jump_x86_64_sysv_elf_gas.S
