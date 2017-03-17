@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mgth CXX)
 
+# Do not link shared libraries again
+set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
+
 add_library(mgth STATIC
     ./src/alternate_signal_stack.cpp
     ./src/dist_scheduler.cpp
@@ -19,6 +22,13 @@ target_link_libraries(mgth
     mgbase
     mgdsm
     mgult
+)
+install(TARGETS mgth
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+install(DIRECTORY include/
+    DESTINATION include
 )
 
 #add_executable(mgth-unittest
