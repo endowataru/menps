@@ -5,23 +5,20 @@ project(mgth CXX)
 # Do not link shared libraries again
 set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
-add_library(mgth STATIC
+add_library(mgth
     ./src/alternate_signal_stack.cpp
     ./src/dist_scheduler.cpp
     ./src/global_ult_desc_pool.cpp
-    ./src/entrypoint.cpp
+    ./src/mgth.cpp
     ./src/disable_aslr.cpp
     ./src/c_interface.cpp
 )
-
 target_include_directories(mgth
     PUBLIC ./include
 )
 target_link_libraries(mgth
-    mgbase-options
-    mgbase
-    mgdsm
-    mgult
+    PUBLIC mgdsm
+    PRIVATE mgbase-options
 )
 install(TARGETS mgth
     LIBRARY DESTINATION lib
@@ -29,6 +26,18 @@ install(TARGETS mgth
 )
 install(DIRECTORY include/
     DESTINATION include
+)
+
+add_library(mgth-start STATIC
+    ./src/entrypoint.cpp
+)
+target_link_libraries(mgth-start
+    PUBLIC mgth
+    PRIVATE mgbase-options
+)
+install(TARGETS mgth-start
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
 )
 
 #add_executable(mgth-unittest
@@ -43,6 +52,9 @@ foreach(example_path IN LISTS example_files)
     add_executable(mgth-${example_name}
         ${example_path}
     )
-    target_link_libraries(mgth-${example_name} mgth)
+    target_link_libraries(mgth-${example_name}
+        mgth
+        mgth-start
+    )
 endforeach()
 
