@@ -41,13 +41,6 @@ public:
         return *this;
     }
     
-    void set_context(const context_type& ctx) const MGBASE_NOEXCEPT {
-        get_desc().ctx = ctx;
-    }
-    context_type get_context() const MGBASE_NOEXCEPT  {
-        return get_desc().ctx;
-    }
-    
     void* get_stack_ptr() const MGBASE_NOEXCEPT {
         return get_desc().stack_ptr;
     }

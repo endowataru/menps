@@ -22,8 +22,6 @@ struct ult_desc
     typedef mgbase::spinlock lock_type;
     mgbase::spinlock lock;
     
-    context_t ctx;
-    
     ult_state state;
     
     bool detached;
