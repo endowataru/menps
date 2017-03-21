@@ -25,6 +25,46 @@ private:
     typedef typename Traits::context_type   context_type;
     typedef typename Traits::transfer_type  transfer_type;
     
+    struct suspension_data
+    {
+        context_type    ctx;
+        
+        fork_func_type  func;   // used in fork
+        void*           ptr;    // used in fork
+        ult_id_type     id;     // used in fork (TODO: unnecessary in Release build?)
+    };
+    
+    static void* align_suspension_data(void*& stack_ptr, mgbase::size_t& stack_size)
+    {
+        return mgbase::align_call_stack(
+            MGBASE_ALIGNOF(suspension_data)
+        ,   sizeof(suspension_data)
+        ,   stack_ptr
+        ,   stack_size
+        );
+    }
+    
+    suspension_data& get_suspension_data(ult_ref_type& th)
+    {
+        auto stack_ptr  = th.get_stack_ptr();
+        auto stack_size = th.get_stack_size();
+        
+        return *static_cast<suspension_data*>(
+            align_suspension_data(stack_ptr, stack_size)
+        );
+    }
+    
+    context_type get_context(ult_ref_type& th)
+    {
+        auto& d = this->get_suspension_data(th);
+        return d.ctx;
+    }
+    void set_context(ult_ref_type& th, const context_type ctx)
+    {
+        auto& d = this->get_suspension_data(th);
+        d.ctx = ctx;
+    }
+    
     struct loop_root_data {
         derived_type&   self;
         ult_ref_type    th;
@@ -42,9 +82,7 @@ private:
         self.on_after_switch(self.root_th_, d->th);
         
         // Set the root context.
-        self.root_th_.set_context(
-            ctx /*>---resuming context---<*/
-        );
+        self.set_context(self.root_th_, ctx /*>---resuming context---<*/);
         
         // Set the executed thread as the current one.
         self.set_current_ult(mgbase::move(d->th));
@@ -56,7 +94,7 @@ private:
 protected:
     explicit basic_worker(const worker_deque_conf_type& conf)
         : wd_(conf)
-        { }
+    { }
     
 public:
     void loop()
@@ -65,11 +103,11 @@ public:
         
         self.check_current_worker();
         
-        while (!self.finished())
+        while (MGBASE_LIKELY(!self.finished()))
         {
             auto th = this->try_pop_top();
             
-            if (th.is_valid())
+            if (MGBASE_LIKELY(th.is_valid()))
             {
                 MGBASE_LOG_INFO(
                     "msg:Popped a thread.\t"
@@ -81,7 +119,7 @@ public:
             {
                 th = self.try_steal_from_another();
                 
-                if (th.is_valid())
+                if (MGBASE_LIKELY(th.is_valid()))
                 {
                     MGBASE_LOG_INFO(
                         "msg:Stole thread in worker loop.\t"
@@ -103,9 +141,10 @@ public:
             
             const auto root_id = this->root_th_.get_id();
             
-            loop_root_data d{ self, mgbase::move(th) };
+            // Load the next resumed context.
+            const auto ctx = self.get_context(th);
             
-            const auto ctx = d.th.get_context();
+            loop_root_data d{ self, mgbase::move(th) };
             
             MGBASE_LOG_INFO(
                 "msg:Set up a root thread. Resume the thread.\t"
@@ -141,50 +180,12 @@ public:
         }
     }
     
-private:
-    struct fork_child_first_data
-    {
-        fork_func_type  func;
-        void*           ptr;
-        
-        derived_type*   self;
-        ult_ref_type    parent_th;
-        ult_ref_type    child_th;
-    };
-    
-    struct fork_parent_first_data
-    {
-        fork_func_type  func;
-        void*           ptr;
-        
-        ult_id_type     child_id;
-    };
-    
-    #if 0
-    // Using union is simpler, but not working on old GCC.
-    union fork_data
-    {
-        fork_child_first_data   child_first;
-        fork_parent_first_data  parent_first;
-    };
-    #endif
-    
 public:
     struct allocated_ult
     {
         ult_id_type id;
         void*       ptr;
     };
-    
-    static void* align_fork_data(void*& stack_ptr, mgbase::size_t& stack_size)
-    {
-        return mgbase::align_call_stack(
-            std::max(MGBASE_ALIGNOF(fork_child_first_data), MGBASE_ALIGNOF(fork_parent_first_data))
-        ,   std::max(sizeof(fork_child_first_data), sizeof(fork_parent_first_data))
-        ,   stack_ptr
-        ,   stack_size
-        );
-    }
     
     MGBASE_WARN_UNUSED_RESULT
     allocated_ult allocate(
@@ -205,8 +206,10 @@ public:
         void* stack_ptr = th.get_stack_ptr();
         mgbase::size_t stack_size = th.get_stack_size();
         
-        // Allocate a space for fork data.
-        align_fork_data(stack_ptr, stack_size);
+        // Allocate a space for suspension data.
+        auto p = this->align_suspension_data(stack_ptr, stack_size);
+        
+        new (p) suspension_data();
         
         if (MGBASE_LIKELY(size > 0))
         {
@@ -236,11 +239,13 @@ private:
         ult_ref_type    child_th;
         void*           stack_ptr;
         mgbase::size_t  stack_size;
-        void*           data;
     };
     
-    void calc_fork_stack_info(const allocated_ult& child, fork_stack_info* const out)
-    {
+    void setup_fork_info(
+        const allocated_ult&    child
+    ,   const fork_func_type    func
+    ,   fork_stack_info* const  out
+    ) {
         auto& self = this->derived();
         self.check_current_worker();
         
@@ -263,8 +268,23 @@ private:
         out->child_th   = mgbase::move(child_th);
         out->stack_ptr  = stack_ptr;
         out->stack_size = orig_stack_size - used_size;
-        out->data       = align_fork_data(orig_stack_ptr, orig_stack_size);
+        
+        auto& sus_data =
+            * static_cast<suspension_data*>(
+                align_suspension_data(orig_stack_ptr, orig_stack_size)
+            );
+        
+        sus_data.func = func;
+        sus_data.ptr  = child.ptr;
+        sus_data.id   = child.id;
     }
+    
+    struct fork_child_first_data
+    {
+        derived_type&   self;
+        ult_ref_type    parent_th;
+        ult_ref_type    child_th;
+    };
     
     MGBASE_NORETURN
     static transfer_type fork_child_first_handler(
@@ -272,19 +292,20 @@ private:
     ,   fork_child_first_data* const    d
     ) MGBASE_NOEXCEPT
     {
-        auto& self = * d->self;
+        auto& self = d->self;
         self.check_current_worker();
         
         // Call the hook.
         self.on_after_switch(d->parent_th, d->child_th);
         
+        // Move the reference to the child (current) thread.
+        auto child_th = mgbase::move(d->child_th);
+        
         {
-            auto& parent_th = d->parent_th;
+            auto parent_th = mgbase::move(d->parent_th);
             
             // Set the context to the parent thread.
-            parent_th.set_context(
-                ctx /*>---resuming context---<*/
-            );
+            self.set_context(parent_th, ctx /*>---resuming context---<*/);
             
             // Push the parent thread to the top.
             // The current thread must be on a different stack from the parent's one
@@ -299,17 +320,20 @@ private:
         MGBASE_LOG_INFO(
             "msg:Forked a new thread in a child-first manner.\t"
             "{}"
-        ,   self.show_ult_ref(d->child_th)
+        ,   self.show_ult_ref(child_th)
         );
         
         // Copy the ID to the current stack.
-        const auto child_id = d->child_th.get_id();
+        const auto child_id = child_th.get_id();
+        
+        // Get the reference to the suspension data.
+        auto& sus_data = self.get_suspension_data(child_th);
         
         // Change this thread to the child thread.
-        self.set_current_ult(mgbase::move(d->child_th));
+        self.set_current_ult(mgbase::move(child_th));
         
         // Execute the user-defined function.
-        d->func(d->ptr);
+        sus_data.func(sus_data.ptr);
         
         // Renew a worker to the child continuation's one.
         auto& self_2 = derived_type::renew_worker(child_id);
@@ -331,16 +355,13 @@ public:
         
         fork_stack_info info;
         
-        self.calc_fork_stack_info(child, &info);
+        self.setup_fork_info(child, func, &info);
         
-        // Place the thread data on the child's stack.
-        auto& d = * new (info.data) fork_child_first_data;
-        
-        d.func      = func;
-        d.ptr       = child.ptr;
-        d.self      = & self;
-        d.parent_th = self.remove_current_ult();
-        d.child_th  = mgbase::move(info.child_th);
+        fork_child_first_data d{
+            self
+        ,   self.remove_current_ult()
+        ,   mgbase::move(info.child_th)
+        };
         
         // Call the hook.
         self.on_before_switch(d.parent_th, d.child_th);
@@ -380,15 +401,10 @@ private:
         // Get the worker reference passed by the previous thread.
         auto& self = *tr.p0;
         
-        auto orig_stack_ptr = self.current_th_.get_stack_ptr();
-        auto orig_stack_size = self.current_th_.get_stack_size();
-        
         // Get the reference to the fork data.
-        auto& d = * static_cast<fork_parent_first_data*>(
-            align_fork_data(orig_stack_ptr, orig_stack_size)
-        );
+        auto& d = self.get_suspension_data(self.current_th_);
         
-        const auto child_id = d.child_id;
+        const auto child_id = d.id;
         
         self.check_current_worker();
         self.check_current_ult_id(child_id);
@@ -407,7 +423,7 @@ private:
         self_2.check_current_ult_id(child_id);
         
         // Destruct the data.
-        d.~fork_parent_first_data();
+        //d.~fork_parent_first_data();
         
         // Exit this thread.
         self_2.exit();
@@ -423,15 +439,7 @@ public:
         
         fork_stack_info info;
         
-        self.calc_fork_stack_info(child, &info);
-        
-        // Place the thread data on the child's stack.
-        auto& d =
-            * new (info.data) fork_parent_first_data{
-                func
-            ,   child.ptr
-            ,   child.id
-            };
+        self.setup_fork_info(child, func, &info);
         
         // Prepare a context.
         const auto ctx =
@@ -442,13 +450,11 @@ public:
             );
         
         // Set the context.
-        info.child_th.set_context(ctx);
+        self.set_context(info.child_th, ctx);
         
         MGBASE_LOG_INFO(
             "msg:Parent thread forked in a parent-first manner is pushed.\t"
-            "data_ptr:{:x}\t"
             "{}"
-        ,   reinterpret_cast<mgbase::uintptr_t>(&d)
         ,   self.show_ult_ref(info.child_th)
         );
         
@@ -485,9 +491,7 @@ private:
             d->this_th.set_blocked();
             
             // Assign the previous context.
-            d->this_th.set_context(
-                ctx /*>---resuming context---<*/
-            );
+            self.set_context(d->this_th, ctx /*>---resuming context---<*/);
             
             // This worker already has a lock of the child thread.
             auto lc = d->child_th.get_lock(mgbase::adopt_lock);
@@ -571,7 +575,7 @@ public:
         };
         
         // Get the context of the thread executed next.
-        const auto ctx = d.next_th.get_context();
+        const auto ctx = self.get_context(d.next_th);
         
         // Call the hook.
         self.on_before_switch(d.this_th, d.next_th);
@@ -637,9 +641,7 @@ private:
         {
             auto this_th = self.remove_current_ult();
             
-            this_th.set_context(
-                ctx /*>---resuming context---<*/
-            );
+            self.set_context(this_th, ctx /*>---resuming context---<*/);
             
             // Push the parent thread to the bottom.
             // This behavior is still controversial.
@@ -668,7 +670,7 @@ public:
         ,   this->pop_top()
         };
         
-        const auto ctx = d.next_th.get_context();
+        const auto ctx = self.get_context(d.next_th);
         
         // Call the hook.
         self.on_before_switch(self.current_th_, d.next_th);
@@ -855,7 +857,7 @@ public:
         }
         
         // Get the context of the following thread.
-        d.next_ctx = d.next_th.get_context();
+        d.next_ctx = self.get_context(d.next_th);
         
         // Call the hook.
         self.on_before_switch(d.this_th, d.next_th);
