@@ -147,6 +147,17 @@ template <typename T, typename... Args>
 inline typename detail::make_unique_helper<T>::invalid_type
 make_unique(Args&&...) = delete;
 
+
+// malloc/free interface
+
+inline void* malloc(const mgbase::size_t size) {
+    return untyped::allocate(16 /*TODO*/, size);
+}
+
+inline void free(void* const ptr) {
+    untyped::deallocate(ptr);
+}
+
 } // namespace dsm
 
 } // namespace mgth
