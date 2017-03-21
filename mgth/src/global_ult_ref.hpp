@@ -2,7 +2,6 @@
 #pragma once
 
 #include "global_ult_desc.hpp"
-#include <mgult/fcontext.hpp>
 
 #include <mgbase/threading/unique_lock.hpp>
 #include <string>
@@ -12,8 +11,6 @@ namespace mgth {
 
 class global_ult_ref
 {
-    typedef context_t   context_type;
-    
     typedef mgcom::rma::remote_ptr<global_ult_desc> desc_remote_ptr;
     
     typedef global_ult_ref  lock_type;
@@ -45,13 +42,6 @@ public:
         
         other.set_invalid();
         return *this;
-    }
-    
-    void set_context(const context_type& ctx) const MGBASE_NOEXCEPT {
-        store_desc_member(&global_ult_desc::ctx, ctx);
-    }
-    context_type get_context() const MGBASE_NOEXCEPT {
-        return load_desc_member(&global_ult_desc::ctx);
     }
     
     void* get_stack_ptr() const MGBASE_NOEXCEPT
@@ -211,7 +201,6 @@ public:
             "detached:{}\t"
             "stack_ptr:{:x}\t"
             "stack_size:{:x}\t"
-            "ctx:{:x}\t"
             "owner:{}"
         ,   reinterpret_cast<mgbase::uintptr_t>(id_.ptr)
         ,   static_cast<global_ult_state_underlying_t>(get_state())
@@ -219,7 +208,6 @@ public:
         ,   is_detached()
         ,   reinterpret_cast<mgbase::uintptr_t>(get_stack_ptr())
         ,   get_stack_size()
-        ,   reinterpret_cast<mgbase::uintptr_t>(get_context().p)
         ,   get_owner_proc()
         );
         return w.str();

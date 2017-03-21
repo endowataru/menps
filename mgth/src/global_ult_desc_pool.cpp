@@ -86,7 +86,6 @@ public:
         
         // Initialize the thread descriptor.
         desc.owner = -1;
-        desc.ctx = context_t{};
         desc.state = global_ult_state::ready;
         desc.joiner = mgult::make_invalid_ult_id();
         

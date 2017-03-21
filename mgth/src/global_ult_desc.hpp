@@ -20,8 +20,6 @@ struct global_ult_desc
 {
     mgcom::rma::atomic_default_t lock;
     
-    context_t ctx;
-    
     global_ult_state state;
     
     mgbase::uint32_t detached; // Avoid using bool for FJMPI
