@@ -5,12 +5,12 @@
 
 namespace mgult {
 
-template <typename Traits>
+template <typename Policy>
 class thread_local_worker_base
 {
 private:
-    typedef typename Traits::derived_type       derived_type;
-    typedef typename Traits::ult_ref_type       ult_ref_type;
+    typedef typename Policy::derived_type       derived_type;
+    typedef typename Policy::ult_ref_type       ult_ref_type;
 
 public:
     void initialize_on_this_thread()
@@ -58,9 +58,9 @@ private:
     static MGBASE_THREAD_LOCAL derived_type* current_worker_;
 };
 
-template <typename Traits>
-MGBASE_THREAD_LOCAL typename Traits::derived_type*
-thread_local_worker_base<Traits>::current_worker_{};
+template <typename Policy>
+MGBASE_THREAD_LOCAL typename Policy::derived_type*
+thread_local_worker_base<Policy>::current_worker_{};
 
 } // namespace mgult
 

@@ -35,22 +35,22 @@ struct thread_functor
 
 } // namespace detail
 
-template <typename Traits>
+template <typename Policy>
 class basic_thread
 {
-    typedef typename Traits::derived_type   derived_type;
-    typedef typename Traits::scheduler_type scheduler_type;
-    typedef typename Traits::thread_id_type thread_id_type;
+    typedef typename Policy::derived_type   derived_type;
+    typedef typename Policy::scheduler_type scheduler_type;
+    typedef typename Policy::thread_id_type thread_id_type;
     
 public:
     basic_thread() MGBASE_NOEXCEPT
-        : id_(Traits::make_invalid_thread_id())
+        : id_(Policy::make_invalid_thread_id())
     { }
     
     basic_thread(const basic_thread&) = delete;
     
     basic_thread(basic_thread&& other) MGBASE_NOEXCEPT
-        : id_(Traits::make_invalid_thread_id())
+        : id_(Policy::make_invalid_thread_id())
     {
         *this = mgbase::move(other);
     }
@@ -96,7 +96,7 @@ public:
         
         // Swap the IDs.
         id_ = other.id_;
-        other.id_ = Traits::make_invalid_thread_id();
+        other.id_ = Policy::make_invalid_thread_id();
         
         return *this;
     }
@@ -114,7 +114,7 @@ public:
         
         sched.join(id_);
         
-        id_ = Traits::make_invalid_thread_id();
+        id_ = Policy::make_invalid_thread_id();
     }
     void detach()
     {
@@ -124,12 +124,12 @@ public:
         
         sched.detach(id_);
         
-        id_ = Traits::make_invalid_thread_id();
+        id_ = Policy::make_invalid_thread_id();
     }
     
     bool joinable() const MGBASE_NOEXCEPT
     {
-        return ! Traits::is_invalid_thread_id(id_);
+        return ! Policy::is_invalid_thread_id(id_);
     }
     
 private:

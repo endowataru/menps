@@ -5,10 +5,10 @@
 
 namespace mgult {
 
-template <typename Traits>
+template <typename Policy>
 class basic_scheduler_initializer
 {
-    typedef typename Traits::derived_type   derived_type;
+    typedef typename Policy::derived_type   derived_type;
     
 public:
     void initialize()
@@ -45,7 +45,7 @@ public:
     
 private:
     MGBASE_NORETURN
-    static void call_loop(typename Traits::template context_argument<derived_type, derived_type>::type arg)
+    static void call_loop(typename Policy::template context_argument<derived_type, derived_type>::type arg)
     {
         auto& self = *arg.data;
         
@@ -83,7 +83,7 @@ private:
         return static_cast<derived_type&>(*this);
     }
     
-    typename Traits::template context<derived_type, derived_type>::type ctx_;
+    typename Policy::template context<derived_type, derived_type>::type ctx_;
     
     mgbase::unique_ptr<mgbase::uint8_t []> call_stack_;
 };

@@ -10,20 +10,20 @@
 
 namespace mgult {
 
-template <typename Traits>
+template <typename Policy>
 class basic_worker
 {
 private:
-    typedef typename Traits::derived_type           derived_type;
-    typedef typename Traits::ult_ref_type           ult_ref_type;
-    typedef typename Traits::worker_deque_type      worker_deque_type;
-    typedef typename Traits::worker_deque_conf_type worker_deque_conf_type;
-    typedef typename Traits::ult_id_type            ult_id_type;
+    typedef typename Policy::derived_type           derived_type;
+    typedef typename Policy::ult_ref_type           ult_ref_type;
+    typedef typename Policy::worker_deque_type      worker_deque_type;
+    typedef typename Policy::worker_deque_conf_type worker_deque_conf_type;
+    typedef typename Policy::ult_id_type            ult_id_type;
     
     typedef void (*fork_func_type)(void*);
     
-    typedef typename Traits::context_type   context_type;
-    typedef typename Traits::transfer_type  transfer_type;
+    typedef typename Policy::context_type   context_type;
+    typedef typename Policy::transfer_type  transfer_type;
     
     struct suspension_data
     {
@@ -978,7 +978,7 @@ private:
     
     void check_current_ult_id(const ult_id_type& id)
     {
-        Traits::check_ult_id(current_th_, id);
+        Policy::check_ult_id(current_th_, id);
     }
     
     // Overloaded functions to get the descriptor's reference.

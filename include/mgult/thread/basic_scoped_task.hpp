@@ -32,11 +32,11 @@ struct scoped_task_functor<void>
 
 } // namespace detail
 
-template <typename Traits, typename T>
+template <typename Policy, typename T>
 class basic_scoped_task
 {
-    typedef typename Traits::derived_type   derived_type;
-    typedef typename Traits::thread_type    thread_type;
+    typedef typename Policy::derived_type   derived_type;
+    typedef typename Policy::thread_type    thread_type;
     
 public:
     template <typename Func, typename... Args>
@@ -71,11 +71,11 @@ private:
     thread_type th_;
 };
 
-template <typename Traits>
-class basic_scoped_task<Traits, void>
+template <typename Policy>
+class basic_scoped_task<Policy, void>
 {
-    typedef typename Traits::derived_type   derived_type;
-    typedef typename Traits::thread_type    thread_type;
+    typedef typename Policy::derived_type   derived_type;
+    typedef typename Policy::thread_type    thread_type;
     
 public:
     template <typename Func, typename... Args>

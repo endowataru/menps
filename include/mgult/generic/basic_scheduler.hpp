@@ -9,17 +9,16 @@
 
 namespace mgult {
 
-template <typename Traits>
+template <typename Policy>
 class basic_scheduler
-    : public Traits::scheduler_base_type
+    : public Policy::scheduler_base_type
 {
-    typedef typename Traits::derived_type       derived_type;
-    typedef typename Traits::worker_type        worker_type;
-    typedef typename Traits::worker_rank_type   worker_rank_type;
-    typedef typename Traits::ult_id_type        ult_id_type;
+    typedef typename Policy::derived_type       derived_type;
+    typedef typename Policy::worker_type        worker_type;
+    typedef typename Policy::worker_rank_type   worker_rank_type;
+    typedef typename Policy::ult_id_type        ult_id_type;
     
-    typedef typename Traits::scheduler_base_type::allocated_ult allocated_ult_type;
-
+    typedef typename Policy::scheduler_base_type::allocated_ult allocated_ult_type;
     
 private:
     struct main_thread_data
