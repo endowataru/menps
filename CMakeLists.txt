@@ -122,6 +122,7 @@ else()
         CHECK_CXX_COMPILER_FLAG("-Wsuggest-override" MGBASE_GCC_SUPPORTS_WSUGGEST_OVERRIDE)
         #CHECK_CXX_COMPILER_FLAG("-Wuseless-cast" MGBASE_GCC_SUPPORTS_WUSELESS_CAST)
         CHECK_CXX_COMPILER_FLAG("-Wzero-as-null-pointer-constant" MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT)
+        CHECK_CXX_COMPILER_FLAG("-fmax-errors=1" MGBASE_GCC_SUPPORTS_FMAX_ERRORS)
         
         target_compile_options(mgbase-options INTERFACE
             # C++ Standard
@@ -196,8 +197,8 @@ else()
             $<$<VERSION_LESS:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wno-logical-op>
             
             # Prevent too many errors
-            #-fmax-errors=${error_limit}
-            -Wfatal-errors
+            #-Wfatal-errors
+            $<$<BOOL:${MGBASE_GCC_SUPPORTS_FMAX_ERRORS}>:-fmax-errors=${error_limit}>
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         target_compile_options(mgbase-options INTERFACE
