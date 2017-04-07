@@ -112,5 +112,13 @@ if(${MGDEV_DEVICE_IBV_SUPPORTED})
         mgdev-ibv
         mgbase-options
     )
+    
+    add_executable(mgdev-ibv_qp_count
+        ./examples/ibv/ibv_qp_count.cpp
+    )
+    target_link_libraries(mgdev-ibv_qp_count
+        mgdev-ibv
+        mgbase-options
+    )
 endif()
 
