@@ -126,7 +126,11 @@ else()
         
         target_compile_options(mgbase-options INTERFACE
             # C++ Standard
-            $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
+            $<$<COMPILE_LANGUAGE:CXX>:
+                $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
+            >
+            # C Standard
+            $<$<COMPILE_LANGUAGE:C>:-std=c99>
             
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
