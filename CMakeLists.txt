@@ -23,30 +23,6 @@ set(MGBASE_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
 set(error_limit 3)
 
-# mgbase : SHARED/STATIC target
-
-add_library(mgbase
-    ./external/fmt/fmt/format.cc
-    ./external/fmt/fmt/ostream.cc
-    ./src/malloc.cpp
-)
-target_include_directories(mgbase
-    PUBLIC ./include
-    PUBLIC ./external/fmt
-    PUBLIC ./external/cmdline
-    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mgbase/config.h
-)
-target_compile_definitions(mgbase
-    PUBLIC "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
-)
-target_link_libraries(mgbase
-    PRIVATE ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
-)
-install(TARGETS mgbase
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
-
 # mgbase-options : INTERFACE target to set options individually
 
 add_library(mgbase-options INTERFACE)
@@ -382,6 +358,31 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     )
 endif()
 
+# mgbase : SHARED/STATIC target
+
+add_library(mgbase
+    ./external/fmt/fmt/format.cc
+    ./external/fmt/fmt/ostream.cc
+    ./src/malloc.cpp
+)
+target_include_directories(mgbase
+    PUBLIC ./include
+    PUBLIC ./external/fmt
+    PUBLIC ./external/cmdline
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mgbase/config.h
+)
+target_compile_definitions(mgbase
+    PUBLIC "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
+)
+target_link_libraries(mgbase
+    PRIVATE ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
+    PRIVATE mgbase-options
+)
+install(TARGETS mgbase
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
 # Google Test
 
 add_library(googletest
@@ -396,6 +397,9 @@ target_include_directories(googletest
     PUBLIC ./external/googletest/googletest
     PUBLIC ./external/googletest/googletest/include
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mgbase/config.h
+)
+target_link_libraries(googletest
+    PRIVATE mgbase-options
 )
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     target_sources(googletest
