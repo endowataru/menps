@@ -1,5 +1,6 @@
 
 #include <mgdev/ibv/completion_queue.hpp>
+#include <mgdev/ibv/attributes.hpp>
 #include <mgdev/ibv/ibv_error.hpp>
 #include <mgbase/assert.hpp>
 
@@ -13,6 +14,13 @@ completion_queue make_completion_queue(ibv_context* const ctx, const int num_cqe
         throw ibv_error("ibv_create_cq() failed");
     
     return completion_queue(cq);
+}
+
+completion_queue make_completion_queue(ibv_context* const ctx)
+{
+    const auto dev_attr = query_device(ctx);
+    
+    return make_completion_queue(ctx, dev_attr.max_cqe);
 }
 
 void completion_queue::poll_error(const int err)

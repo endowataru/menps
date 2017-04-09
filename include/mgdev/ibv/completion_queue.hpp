@@ -49,6 +49,8 @@ private:
     void poll_error(int ret);
 };
 
+completion_queue make_completion_queue(ibv_context* ctx);
+
 completion_queue make_completion_queue(ibv_context* ctx, int num_cqe);
 
 } // namespace ibv

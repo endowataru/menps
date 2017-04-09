@@ -23,7 +23,7 @@ int main()
     //ibv::node_id_t other_id; // TODO
     
     const auto pd = ibv::make_protection_domain(dev.get());
-    const auto cq = ibv::make_completion_queue(dev.get(), 1<<18);
+    const auto cq = ibv::make_completion_queue(dev.get());
     
     auto init_attr = ibv::make_default_rc_qp_init_attr();
     init_attr.send_cq = cq.get();
