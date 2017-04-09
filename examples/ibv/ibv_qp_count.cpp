@@ -31,13 +31,26 @@ int main()
     init_attr.send_cq = cq.get();
     init_attr.recv_cq = cq.get();
     
-    mgbase::vector<ibv::queue_pair> qps;
+    mgbase::size_t num_qps = 0;
     
-    while (true)
-    {
-        auto qp = ibv::make_queue_pair(pd.get(), &init_attr);
-        qps.push_back(mgbase::move(qp));
+    try {
+        while (true)
+        {
+            auto qp = ibv::make_queue_pair(pd.get(), &init_attr);
+            const auto qp_num = qp.get_qp_num();
+            
+            print("QP Num = {}\n", qp_num);
+            
+            // Explicitly leak the resource.
+            qp.release();
+            
+            ++num_qps;
+        }
+    } catch (...) {
+        // Ignore the exception.
     }
+    
+    print("Number of QPs : {}\n", num_qps);
     
     return 0;
 }
