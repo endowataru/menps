@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include <mgult/klt.hpp>
+#include <mgdev/ult.hpp>
 
 namespace mgcom {
 
-namespace ult = mgult::klt;
+namespace ult = mgdev::ult;
 
 } // namespace mgcom
 

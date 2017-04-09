@@ -2,12 +2,13 @@
 #include "qp_buffer.hpp"
 #include "command_consumer.hpp"
 #include "send_wr_buffer.hpp"
-#include <mgbase/thread.hpp>
-#include <vector>
 #include "device/ibv/native/endpoint.hpp"
 #include "device/ibv/command/set_command_to.hpp"
-#include <mgbase/container/index_list.hpp>
 #include "device/ibv/command/completion_selector.hpp"
+#include <mgcom/ult.hpp>
+#include <mgbase/container/index_list.hpp>
+#include <mgbase/vector.hpp>
+#include <mgbase/shared_ptr.hpp>
 
 namespace mgcom {
 namespace ibv {
@@ -26,14 +27,14 @@ public:
         {
             const process_id_t proc = conf.proc_first + index;
             
-            qps_[index] = new qp_buffer(conf.ep, conf.alloc, proc);
+            qps_[index] = mgbase::make_shared<qp_buffer>(conf.ep, conf.alloc, proc);
             
             const auto qp_num = conf.ep.get_qp_num_of_proc(proc, 0);
             
             conf.comp_sel.set(qp_num, qps_[index]->get_completer());
         }
         
-        th_ = mgbase::thread(starter{*this});
+        th_ = ult::thread(starter{*this});
     }
     
     virtual ~impl()
@@ -43,10 +44,6 @@ public:
         
         // Join the running thread.
         th_.join();
-        
-        MGBASE_RANGE_BASED_FOR(auto&& qp, qps_) {
-            delete qp;
-        }
     }
     
 private:
@@ -146,9 +143,9 @@ private:
     const config conf_;
     
     bool finished_;
-    mgbase::thread th_;
+    ult::thread th_;
     
-    std::vector<qp_buffer*> qps_;
+    mgbase::vector<mgbase::shared_ptr<qp_buffer>> qps_;
     mgbase::index_list<process_id_t> proc_indexes_;
 };
 

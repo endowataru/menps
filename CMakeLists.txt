@@ -16,38 +16,6 @@ target_link_libraries(mgcom-header INTERFACE
     mgult-header
 )
 
-# Platform Checks
-
-CHECK_INCLUDE_FILE_CXX("mpi.h" MGCOM_DEVICE_MPI_SUPPORTED)
-#set(MGCOM_DEVICE_MPI_SUPPORTED FALSE) # Just for compilation check
-
-CHECK_CXX_SOURCE_COMPILES("
-#include <mpi.h>
-
-// MPI_VERSION must be greater than 3
-int a[MPI_VERSION - 3];
-
-int main() { return 0; }
-"
-MGCOM_DEVICE_MPI3_SUPPORTED)
-
-CHECK_SYMBOL_EXISTS("FJMPI_Rdma_init" "mpi-ext.h" MGCOM_DEVICE_FJMPI_SUPPORTED)
-#set(MGCOM_DEVICE_FJMPI_SUPPORTED TRUE) # Just for compilation check
-
-CHECK_INCLUDE_FILE_CXX("infiniband/verbs.h" MGCOM_DEVICE_IBV_SUPPORTED)
-#set(MGCOM_DEVICE_IBV_SUPPORTED TRUE) # Just for compilation check
-
-CHECK_INCLUDE_FILE_CXX("infiniband/verbs_exp.h" MGCOM_IBV_EXP_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-#include <infiniband/verbs.h>
-#include <infiniband/verbs_exp.h>
-
-int x = IBV_EXP_DEVICE_ATTR_EXT_ATOMIC_ARGS;
-
-int main() { return 0; } "
-MGCOM_IBV_MASKED_ATOMICS_SUPPORTED)
-
 # mgcom-mpi : MPI-based implementation
 
 add_library(mgcom-mpi
@@ -77,7 +45,7 @@ install(TARGETS mgcom-mpi
 
 # Library for each device
 
-if(${MGCOM_DEVICE_MPI_SUPPORTED})
+if(${MGDEV_DEVICE_MPI_SUPPORTED})
     add_library(mgcom-dev-mpi1
         src/device/mpi1/command/commander.cpp
         src/device/mpi1/mpi1.cpp
@@ -95,7 +63,7 @@ if(${MGCOM_DEVICE_MPI_SUPPORTED})
         )
 endif()
 
-if(${MGCOM_DEVICE_MPI3_SUPPORTED})
+if(${MGDEV_DEVICE_MPI3_SUPPORTED})
     add_library(mgcom-dev-mpi3
         src/device/mpi3/command/mpi3_delegator.cpp
         src/device/mpi3/rma/rma_window.cpp
@@ -118,7 +86,7 @@ if(${MGCOM_DEVICE_MPI3_SUPPORTED})
     )
 endif()
 
-if (${MGCOM_DEVICE_FJMPI_SUPPORTED})
+if (${MGDEV_DEVICE_FJMPI_SUPPORTED})
     add_library(mgcom-dev-fjmpi
         src/device/fjmpi/fjmpi.cpp
         src/device/fjmpi/rma/requester.cpp
@@ -145,7 +113,7 @@ if (${MGCOM_DEVICE_FJMPI_SUPPORTED})
         )
 endif()
 
-if (${MGCOM_DEVICE_IBV_SUPPORTED})
+if (${MGDEV_DEVICE_IBV_SUPPORTED})
     add_library(mgcom-dev-ibv
         src/device/ibv/rma/direct_requester.cpp
         src/device/ibv/rma/rma_comm.cpp
@@ -181,10 +149,10 @@ target_include_directories(mgcom
     PRIVATE ./src
 )
 target_link_libraries(mgcom
-    PUBLIC $<$<BOOL:${MGCOM_DEVICE_MPI_SUPPORTED}>:mgcom-dev-mpi1>
-    PUBLIC $<$<BOOL:${MGCOM_DEVICE_MPI3_SUPPORTED}>:mgcom-dev-mpi3>
-    PUBLIC $<$<BOOL:${MGCOM_DEVICE_IBV_SUPPORTED}>:mgcom-dev-ibv>
-    PUBLIC $<$<BOOL:${MGCOM_DEVICE_FJMPI_SUPPORTED}>:mgcom-dev-fjmpi>
+    PUBLIC $<$<BOOL:${MGDEV_DEVICE_MPI_SUPPORTED}>:mgcom-dev-mpi1>
+    PUBLIC $<$<BOOL:${MGDEV_DEVICE_MPI3_SUPPORTED}>:mgcom-dev-mpi3>
+    PUBLIC $<$<BOOL:${MGDEV_DEVICE_IBV_SUPPORTED}>:mgcom-dev-ibv>
+    PUBLIC $<$<BOOL:${MGDEV_DEVICE_FJMPI_SUPPORTED}>:mgcom-dev-fjmpi>
     PRIVATE mgbase-options
 )
 install(TARGETS mgcom

@@ -6,13 +6,13 @@
 #include <mgbase/logger.hpp>
 
 #include "device/mpi1/mpi1.hpp"
-#ifdef MGCOM_DEVICE_MPI3_SUPPORTED
+#ifdef MGDEV_DEVICE_MPI3_SUPPORTED
     #include "device/mpi3/mpi3.hpp"
 #endif
-#ifdef MGCOM_DEVICE_FJMPI_SUPPORTED
+#ifdef MGDEV_DEVICE_FJMPI_SUPPORTED
     #include "device/fjmpi/starter.hpp"
 #endif
-#ifdef MGCOM_DEVICE_IBV_SUPPORTED
+#ifdef MGDEV_DEVICE_IBV_SUPPORTED
     #include "device/ibv/ibv_starter.hpp"
 #endif
 
@@ -33,13 +33,13 @@ struct device
 const device devs[] =
 {
     // Earlier one has a better priority.
-#ifdef MGCOM_DEVICE_IBV_SUPPORTED
+#ifdef MGDEV_DEVICE_IBV_SUPPORTED
     { "ibv", ibv::make_starter },
 #endif
-#ifdef MGCOM_DEVICE_FJMPI_SUPPORTED
+#ifdef MGDEV_DEVICE_FJMPI_SUPPORTED
     { "fjmpi", fjmpi::make_starter },
 #endif
-#ifdef MGCOM_DEVICE_MPI3_SUPPORTED
+#ifdef MGDEV_DEVICE_MPI3_SUPPORTED
     { "mpi3", mpi3::make_starter },
 #endif
     { "mpi1", mpi1::make_starter }
@@ -47,7 +47,7 @@ const device devs[] =
 
 factory_func_t select_starter()
 {
-    const char* const dev_name = getenv("MGCOM_DEVICE");
+    const char* const dev_name = getenv("MGDEV_DEVICE");
     
     if (dev_name != MGBASE_NULLPTR)
     {

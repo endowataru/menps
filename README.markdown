@@ -2,7 +2,7 @@
 MGCOM
 =====
 
-Low-level communication library.
+Low-Level Communication Library for HPC Interconnects.
 
 This project is experimental and the API is still unstable.
 

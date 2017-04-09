@@ -1,10 +1,10 @@
 
 #include "poll_thread.hpp"
 #include "completer.hpp"
-#include <mgbase/thread.hpp>
 #include <mgbase/logger.hpp>
 #include "completion_selector.hpp"
 #include <mgdev/ibv/ibv_error.hpp>
+#include <mgcom/ult.hpp>
 
 namespace mgcom {
 namespace ibv {
@@ -22,12 +22,7 @@ public:
         , cq_(cq)
         , comp_sel_(comp_sel)
     {
-        th_ = mgbase::thread(
-            mgbase::bind1st_of_1(
-                MGBASE_MAKE_INLINED_FUNCTION(pass)
-            ,   mgbase::wrap_reference(*this)
-            )
-        );
+        th_ = ult::thread(starter{*this});
     }
     
     ~impl()
@@ -38,10 +33,14 @@ public:
     }
     
 private:
-    static void pass(impl& self)
+    struct starter
     {
-        self.loop();
-    }
+        impl&   self;
+        
+        void operator() () const {
+            self.loop();
+        }
+    };
     
     void loop()
     {
@@ -88,7 +87,7 @@ private:
     bool finished_;
     completion_queue& cq_;
     completion_selector& comp_sel_;
-    mgbase::thread th_;
+    ult::thread th_;
 };
 
 poll_thread::poll_thread(completion_queue& cq, completion_selector& comp_sel)
