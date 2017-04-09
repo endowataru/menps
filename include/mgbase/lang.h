@@ -492,9 +492,11 @@ typedef uintptr_t       mgbase_uintptr_t;
 typedef intmax_t        mgbase_intmax_t;
 typedef uintmax_t       mgbase_uintmax_t;
 
-#ifndef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    // If there's no default move constructor support,
-    // explicitly include this to use mgbase::move.
-    #include <mgbase/utility/move.hpp>
+#ifdef MGBASE_CPLUSPLUS
+    #ifndef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
+        // If there's no default move constructor support,
+        // explicitly include this to use mgbase::move.
+        #include <mgbase/utility/move.hpp>
+    #endif
 #endif
 
