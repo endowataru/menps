@@ -49,8 +49,14 @@ port_attr_t query_port(ibv_context* const dev, const port_num_t port_num)
 
 bool is_only_masked_atomics(const device_attr_t& dev_attr) MGBASE_NOEXCEPT
 {
-    return (dev_attr.exp_atomic_cap & IBV_EXP_ATOMIC_HCA_REPLY_BE) &&
-        (dev_attr.exp_device_cap_flags & IBV_EXP_DEVICE_EXT_ATOMICS);
+    #ifdef MGDEV_IBV_EXP_SUPPORTED
+    return (dev_attr.exp_atomic_cap & IBV_EXP_ATOMIC_HCA_REPLY_BE)
+        // && (dev_attr.exp_device_cap_flags & IBV_EXP_DEVICE_EXT_ATOMICS)
+            // TODO: 2nd condition doesn't satisfy in our environment
+        ;
+    #else
+    return false;
+    #endif
 }
 
 } // namespace ibv
