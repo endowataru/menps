@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgcom/rma/allocation.hpp>
+#include "device/ibv/native/endpoint.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -9,13 +10,16 @@ namespace ibv {
 class atomic_buffer
 {
 public:
-    atomic_buffer(rma::allocator& alloc, const mgbase::size_t max_num_completions)
+    atomic_buffer(endpoint& ep, rma::allocator& alloc, const mgbase::size_t max_num_completions)
         : alloc_(alloc)
         , entries_(max_num_completions)
         , buf_{rma::allocate<rma::atomic_default_t>(alloc, max_num_completions)}
     {
         for (mgbase::size_t i = 0; i < max_num_completions; ++i)
             entries_[i].src = &buf_[static_cast<mgbase::ptrdiff_t>(i)];
+        
+        const auto dev_attr = ep.get_device().query_device();
+        reply_be_ = is_only_masked_atomics(dev_attr);
     }
     
     ~atomic_buffer()
@@ -68,7 +72,7 @@ public:
         make_notification_base(wr_id, on_complete, dest_ptr);
         
         return {
-            atomic_callback{ &entries_[wr_id] }
+            atomic_callback{ this, &entries_[wr_id] }
         ,   buf_at(wr_id)
         };
     }
@@ -111,20 +115,21 @@ private:
     
     struct atomic_callback
     {
+        atomic_buffer* self;
         entry* e;
         
         void operator() () const
         {
             mgbase::uint64_t orig_val = *e->src;
             
-            #ifdef MGCOM_IBV_MASKED_ATOMICS_SUPPORTED
+            mgbase::uint64_t val = 0;
+            if (self->reply_be_) {
                 // Big-endian to little-endian
-                mgbase::uint64_t val = 0;
                 for (mgbase::size_t i = 0; i < 8; ++i)
                     val |= ((orig_val >> (8 * (7 - i))) & 0xFF) << (8 * i);
-            #else
-                const mgbase::uint64_t val = orig_val;
-            #endif
+            } else {
+                val = orig_val;
+            }
             
             *e->dest = val;
             
@@ -152,6 +157,7 @@ private:
     rma::allocator& alloc_;
     std::vector<entry> entries_;
     rma::local_ptr<rma::atomic_default_t> buf_;
+    bool reply_be_;
 };
 
 } // namespace ibv

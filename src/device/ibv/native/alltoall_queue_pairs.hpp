@@ -3,12 +3,15 @@
 
 #include <mgcom/common.hpp>
 #include <mgdev/ibv/queue_pair.hpp>
+#include <mgdev/ibv/attributes.hpp>
 #include <mgbase/scoped_ptr.hpp>
 
 namespace mgcom {
 namespace ibv {
 
 using mgdev::ibv::queue_pair;
+using mgdev::ibv::device_attr_t;
+using mgdev::ibv::port_attr_t;
 
 class alltoall_queue_pairs
 {
@@ -16,11 +19,11 @@ public:
     explicit alltoall_queue_pairs(const index_t qp_count)
         : qp_count_(qp_count) { }
     
-    void create(mgcom::endpoint&, collective::requester&, ibv_cq&, ibv_pd&, mgdev::ibv::port_num_t);
+    void create(mgcom::endpoint&, collective::requester&, ibv_cq&, ibv_pd&, const device_attr_t&, mgdev::ibv::port_num_t);
     
     void destroy();
     
-    void collective_start(const ibv_device_attr&, const ibv_port_attr&, mgdev::ibv::port_num_t);
+    void collective_start(const device_attr_t&, const port_attr_t&, mgdev::ibv::port_num_t);
     
     MGBASE_WARN_UNUSED_RESULT
     bool try_post_send(

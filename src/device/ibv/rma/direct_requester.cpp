@@ -26,7 +26,7 @@ public:
     ibv_direct_requester(ibv::endpoint& ibv_ep, ibv::completion_selector& sel, rma::allocator& alloc, endpoint& ep)
         : ep_(ibv_ep)
         , sel_(sel)
-        , atomic_buf_(alloc, max_num_completions)
+        , atomic_buf_(ibv_ep, alloc, max_num_completions)
     {
         qps_.resize(ep.number_of_processes());
         

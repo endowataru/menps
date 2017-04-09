@@ -17,8 +17,8 @@ public:
         , proc_(proc)
         , comp_{}
         , sges_(send_wr_buffer::max_size)
-        , atomic_buf_(alloc, completer::max_num_completions)
-        { }
+        , atomic_buf_(ep, alloc, completer::max_num_completions)
+    { }
     
     qp_buffer(const qp_buffer&) = delete;
     qp_buffer& operator = (const qp_buffer&) = delete;

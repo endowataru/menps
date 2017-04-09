@@ -8,9 +8,14 @@
 namespace mgcom {
 namespace ibv {
 
-void alltoall_queue_pairs::create(mgcom::endpoint& ep, collective::requester& coll,
-    ibv_cq& cq, ibv_pd& pd, const mgdev::ibv::port_num_t port_num)
-{
+void alltoall_queue_pairs::create(
+    mgcom::endpoint& ep
+,   collective::requester& coll
+,   ibv_cq& cq
+,   ibv_pd& pd
+,   const device_attr_t& dev_attr
+,   const mgdev::ibv::port_num_t port_num
+) {
     ep_ = &ep;
     coll_ = &coll;
     
@@ -19,7 +24,7 @@ void alltoall_queue_pairs::create(mgcom::endpoint& ep, collective::requester& co
     qps_ = new queue_pair[total_qp_count];
     
     for (mgbase::size_t qp_id = 0; qp_id < total_qp_count; ++qp_id) {
-        auto init_attr = mgdev::ibv::make_default_rc_qp_init_attr();
+        auto init_attr = mgdev::ibv::make_default_rc_qp_init_attr(dev_attr);
         init_attr.send_cq = &cq;
         init_attr.recv_cq = &cq;
         
@@ -39,9 +44,11 @@ void alltoall_queue_pairs::destroy()
     MGBASE_LOG_DEBUG("msg:Destroyed all IBV queue_pairs.");
 }
 
-void alltoall_queue_pairs::collective_start(const ibv_device_attr& device_attr, const ibv_port_attr& port_attr,
-    const mgdev::ibv::port_num_t port_num)
-{
+void alltoall_queue_pairs::collective_start(
+    const device_attr_t& device_attr
+,   const port_attr_t& port_attr
+,   const mgdev::ibv::port_num_t port_num
+) {
     const mgbase::size_t total_qp_count = ep_->number_of_processes() * qp_count_;
     
     mgbase::scoped_ptr<mgbase::uint32_t []> local_qp_nums(

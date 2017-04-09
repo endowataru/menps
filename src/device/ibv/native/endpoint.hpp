@@ -38,10 +38,10 @@ public:
         
         const auto port_num = this->get_port_number();
         
-        alltoall_queue_pairs::create(ep, coll, *cq_.get(), *pd_.get(), port_num);
-        
         auto dev_attr = ctx_.query_device();
         auto port_attr = ctx_.query_port(port_num);
+        
+        alltoall_queue_pairs::create(ep, coll, *cq_.get(), *pd_.get(), dev_attr, port_num);
         
         alltoall_queue_pairs::collective_start(dev_attr, port_attr, port_num);
     }
@@ -50,6 +50,8 @@ public:
     {
         alltoall_queue_pairs::destroy();
     }
+    
+    device_context& get_device() { return ctx_; }
     
     completion_queue& get_cq() { return cq_; }
     
