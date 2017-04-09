@@ -1,11 +1,12 @@
 
 #pragma once
 
-#include <mgult/klt.hpp>
+#include <mgdev/common.hpp>
+#include <mgult/mgult.hpp>
 
 namespace mgdev {
 
-namespace ult = mgult::klt;
+namespace ult = MGDEV_ULT_NAMESPACE;
 
 } // namespace mgdev
 
