@@ -27,10 +27,10 @@ void device_context_deleter::operator () (ibv_context* const ctx) const MGBASE_N
     ibv_close_device(ctx); // ignore error
 }
 
-ibv_device_attr device_context::query_device() const {
+device_attr_t device_context::query_device() const {
     return ibv::query_device(this->get());
 }
-ibv_port_attr device_context::query_port(const port_num_t port_num) const {
+port_attr_t device_context::query_port(const port_num_t port_num) const {
     return ibv::query_port(this->get(), port_num);
 }
 node_id_t device_context::get_node_id(const port_num_t port_num) const {

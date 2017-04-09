@@ -18,8 +18,8 @@ void queue_pair_deleter::operator () (ibv_qp* const qp) const MGBASE_NOEXCEPT
 
 qp_init_attr_t make_default_rc_qp_init_attr()
 {
-    static const mgbase::uint32_t default_max_send_wr = 1 << 14;
-    static const mgbase::uint32_t default_max_recv_wr = 1 << 14;
+    static const mgbase::uint32_t default_max_send_wr = 1 << 14; // TODO: magic number
+    static const mgbase::uint32_t default_max_recv_wr = 1 << 14; // TODO: magic number
     static const mgbase::uint32_t default_max_send_sge = 1; // Scatter/Gather
     static const mgbase::uint32_t default_max_recv_sge = 1;
     
@@ -45,17 +45,25 @@ qp_init_attr_t make_default_rc_qp_init_attr()
     
     attr.pd                  = MGBASE_NULLPTR; // Set by make_queue_pair later
     
-    attr.comp_mask = IBV_EXP_QP_INIT_ATTR_PD
-        #ifdef MGDEV_IBV_MASKED_ATOMICS_SUPPORTED
-        | IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS
-        #endif
-        ;
+    attr.comp_mask =
+        IBV_EXP_QP_INIT_ATTR_PD |
+        IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS;
         // Both flags are not documented
+    #endif
+    
+    return attr;
+}
+qp_init_attr_t make_default_rc_qp_init_attr(const device_attr_t& dev_attr)
+{
+    auto attr = make_default_rc_qp_init_attr();
     
     #ifdef MGDEV_IBV_MASKED_ATOMICS_SUPPORTED
-    attr.max_atomic_arg      = 8; // TODO : correct?
-    attr.exp_create_flags |= IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY;
-    #endif
+    if (is_only_masked_atomics(dev_attr))
+    {
+        attr.max_atomic_arg     = 8; // TODO : correct?
+        attr.exp_create_flags   |= IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY;
+        attr.comp_mask          |= IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG;
+    }
     #endif
     
     return attr;
@@ -118,7 +126,7 @@ qp_attr_t make_default_qp_attr()
     
     return attr;
 }
-qp_attr_t make_default_qp_attr(const ibv_device_attr& dev_attr)
+qp_attr_t make_default_qp_attr(const device_attr_t& dev_attr)
 {
     auto qp_attr = make_default_qp_attr();
     
@@ -151,7 +159,7 @@ void set_qp_dest(qp_attr_t* const attr, const global_qp_id dest_qp_id)
 }
 
 
-#ifdef MGDEV_IBV_MASKED_ATOMICS_SUPPORTED
+#ifdef MGDEV_IBV_EXP_SUPPORTED
     #define MODIFY_QP   ibv_exp_modify_qp
 #else
     #define MODIFY_QP   ibv_modify_qp

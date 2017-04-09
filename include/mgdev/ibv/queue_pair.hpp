@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgdev/ibv/verbs.hpp>
+#include <mgdev/ibv/attributes.hpp>
 #include <mgbase/unique_ptr.hpp>
 #include <mgdev/ibv/ibv_error.hpp>
 #include <mgbase/assert.hpp>
@@ -18,9 +18,10 @@ namespace ibv {
 #endif
 
 qp_init_attr_t make_default_rc_qp_init_attr();
+qp_init_attr_t make_default_rc_qp_init_attr(const device_attr_t&);
 
 qp_attr_t make_default_qp_attr();
-qp_attr_t make_default_qp_attr(const ibv_device_attr&);
+qp_attr_t make_default_qp_attr(const device_attr_t&);
 
 void set_qp_dest(qp_attr_t* attr, global_qp_id dest_qp_id);
 

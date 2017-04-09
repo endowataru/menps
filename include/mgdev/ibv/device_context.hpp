@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgdev/ibv/verbs.hpp>
+#include <mgdev/ibv/attributes.hpp>
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgdev {
@@ -31,9 +31,9 @@ public:
     
     MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(device_context, base)
     
-    ibv_device_attr query_device() const;
+    device_attr_t query_device() const;
     
-    ibv_port_attr query_port(port_num_t port_num) const;
+    port_attr_t query_port(port_num_t port_num) const;
     
     node_id_t get_node_id(port_num_t port_num) const;
 };
