@@ -2,6 +2,7 @@
 #include <mgult/scheduler_initializer.hpp>
 #include <mgult/generic/basic_scheduler_initializer.hpp>
 #include <mgult/generic/fcontext_worker_base.hpp>
+#include <mgbase/utility/forward.hpp>
 
 namespace mgult {
 
