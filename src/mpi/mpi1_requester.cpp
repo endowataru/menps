@@ -55,14 +55,9 @@ void mpi1_requester::broadcast(const broadcast_params params)
 }
 void mpi1_requester::allgather(const allgather_params params)
 {
-    ult::sync_flag f;
-    
-    this->allgather_async({
-        params
-    ,   mgbase::make_callback_notify(&f)
-    });
-    
-    f.wait();
+    ult::suspend_and_call<void>(
+        async_closure<allgather_params, allgather_async_params, &mpi1_requester::allgather_async>{ this, &params }
+    );
 }
 void mpi1_requester::alltoall(const alltoall_params params)
 {
