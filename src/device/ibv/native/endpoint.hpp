@@ -18,8 +18,6 @@ using namespace mgdev::ibv;
 class endpoint
     : protected alltoall_queue_pairs
 {
-    static const int num_cqe = 1 << 18; // TODO
-    
 public:
     explicit endpoint(const index_t qp_count)
         : alltoall_queue_pairs(qp_count) { }
@@ -33,7 +31,7 @@ public:
         else
             ctx_ = open_device(devices.get_by_index(0));
         
-        cq_ = make_completion_queue(ctx_.get(), num_cqe);
+        cq_ = make_completion_queue(ctx_.get());
         pd_ = make_protection_domain(ctx_.get());
         
         const auto port_num = this->get_port_number();
