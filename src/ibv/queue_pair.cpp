@@ -45,10 +45,8 @@ qp_init_attr_t make_default_rc_qp_init_attr()
     
     attr.pd                  = MGBASE_NULLPTR; // Set by make_queue_pair later
     
-    attr.comp_mask =
-        IBV_EXP_QP_INIT_ATTR_PD |
-        IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS;
-        // Both flags are not documented
+    // Only use attr.pd by default.
+    attr.comp_mask = IBV_EXP_QP_INIT_ATTR_PD;
     #endif
     
     return attr;
@@ -60,6 +58,9 @@ qp_init_attr_t make_default_rc_qp_init_attr(const device_attr_t& dev_attr)
     #ifdef MGDEV_IBV_MASKED_ATOMICS_SUPPORTED
     if (is_only_masked_atomics(dev_attr))
     {
+        // Enable attr.exp_create_flags too.
+        attr.comp_mask |= IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS;
+        
         attr.max_atomic_arg     = 8; // TODO : correct?
         attr.exp_create_flags   |= IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY;
         attr.comp_mask          |= IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG;
