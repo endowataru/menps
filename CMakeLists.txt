@@ -5,6 +5,10 @@ project(mgult CXX ASM)
 # Do not link shared libraries again
 set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
+# Options
+option(MGULT_ENABLE_MTH "Build MassiveThreads" ON)
+
+
 add_library(mgult
     $<$<PLATFORM_ID:Linux>:
     ./src/fcontext/jump_x86_64_sysv_elf_gas.S
@@ -32,6 +36,11 @@ install(TARGETS mgult
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
+
+if (${MGULT_ENABLE_MTH})
+    include(cmake/massivethreads.cmake)
+endif()
+
 
 # Unit tests
 

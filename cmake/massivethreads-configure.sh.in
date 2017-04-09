@@ -1,0 +1,7 @@
+#!/bin/sh
+export "CC=@MGULT_MASSIVETHREADS_CC@"
+export "CFLAGS=@MGULT_MASSIVETHREADS_CFLAGS@"
+export "CXXFLAGS=@MGULT_MASSIVETHREADS_CFLAGS@ @MGULT_MASSIVETHREADS_CXXFLAGS@"
+#HOST=`${CC} -v 2>&1 | grep 'Target' | awk '{print $2}'`
+#eval "$* --host=${HOST}"
+eval "$*"

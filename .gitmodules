@@ -1,0 +1,3 @@
+[submodule "external/massivethreads"]
+	path = external/massivethreads
+	url = https://github.com/massivethreads/massivethreads.git
