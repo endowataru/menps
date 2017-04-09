@@ -9,13 +9,6 @@ include(CheckIncludeFileCXX)
 include(CheckCXXSourceCompiles)
 include(CheckSymbolExists)
 
-add_library(mgcom-header INTERFACE)
-target_include_directories(mgcom-header INTERFACE
-)
-target_link_libraries(mgcom-header INTERFACE
-    mgult-header
-)
-
 # mgcom-mpi : MPI-based implementation
 
 add_library(mgcom-mpi

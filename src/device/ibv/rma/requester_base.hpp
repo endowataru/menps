@@ -34,7 +34,7 @@ public:
         ,   Derived::command_code_type::ibv_read
         ,   read_closure{ /*wr_id,*/ params }
         )) {
-            ult::yield();
+            ult::this_thread::yield();
         }
         
         return ult::make_async_deferred<void>();
@@ -62,7 +62,7 @@ public:
         ,   Derived::command_code_type::ibv_write
         ,   write_closure{ params }
         )) {
-            ult::yield();
+            ult::this_thread::yield();
         }
         
         return ult::make_async_deferred<void>();
@@ -90,7 +90,7 @@ public:
         ,   Derived::command_code_type::ibv_atomic_read
         ,   atomic_read_closure{ params }
         )) {
-            ult::yield();
+            ult::this_thread::yield();
         }
         
         return ult::make_async_deferred<void>();
@@ -118,7 +118,7 @@ public:
         ,   Derived::command_code_type::ibv_atomic_write
         ,   atomic_write_closure{ params }
         )) {
-            ult::yield();
+            ult::this_thread::yield();
         }
         
         return ult::make_async_deferred<void>();
@@ -146,7 +146,7 @@ public:
         ,   Derived::command_code_type::ibv_compare_and_swap
         ,   compare_and_swap_closure{ params }
         )) {
-            ult::yield();
+            ult::this_thread::yield();
         }
         
         return ult::make_async_deferred<void>();
@@ -174,7 +174,7 @@ public:
         ,   Derived::command_code_type::ibv_fetch_and_add
         ,   fetch_and_add_closure{ params }
         )) {
-            ult::yield();
+            ult::this_thread::yield();
         }
         
         return ult::make_async_deferred<void>();
