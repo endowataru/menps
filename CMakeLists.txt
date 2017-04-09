@@ -48,15 +48,19 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Fujitsu")
     #   (googletest)
 else()
     target_compile_options(mgbase-options INTERFACE
+        # C++ Standard
+        $<$<COMPILE_LANGUAGE:CXX>:
+            $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
+        >
+        # C Standard
+        $<$<COMPILE_LANGUAGE:C>:-std=c99>
+        
         #$<$<COMPILE_LANGUAGE:CXX>:-std=c++03> # TODO: COMPILE_LANGUAGE doesn't work on old CMake versions
         -DGTEST_HAS_TR1_TUPLE=0
         -Wno-variadic-macros
     )
     if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"))
         target_compile_options(mgbase-options INTERFACE
-            # C++ Standard
-            $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
-            
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
             $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
@@ -101,13 +105,6 @@ else()
         CHECK_CXX_COMPILER_FLAG("-fmax-errors=1" MGBASE_GCC_SUPPORTS_FMAX_ERRORS)
         
         target_compile_options(mgbase-options INTERFACE
-            # C++ Standard
-            $<$<COMPILE_LANGUAGE:CXX>:
-                $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
-            >
-            # C Standard
-            $<$<COMPILE_LANGUAGE:C>:-std=c99>
-            
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
             $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
@@ -182,9 +179,6 @@ else()
         )
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         target_compile_options(mgbase-options INTERFACE
-            # C++ Standard
-            $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
-            
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
             $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
