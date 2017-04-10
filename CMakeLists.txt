@@ -8,6 +8,9 @@ set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 # Options
 option(MGULT_ENABLE_MTH "Build MassiveThreads" ON)
 
+# Show messages invoking CMake
+message(STATUS "Generate mgult/config.h ...")
+message(STATUS "MGULT_ENABLE_MTH=${MGULT_ENABLE_MTH}")
 
 add_library(mgult
     $<$<PLATFORM_ID:Linux>:
@@ -27,6 +30,7 @@ add_library(mgult
 )
 target_include_directories(mgult
     PUBLIC ./include
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_link_libraries(mgult
     PUBLIC mgctx
@@ -37,10 +41,18 @@ install(TARGETS mgult
     ARCHIVE DESTINATION lib
 )
 
+# MassiveThreads support
 if (${MGULT_ENABLE_MTH})
     include(cmake/massivethreads.cmake)
+    
+    target_link_libraries(mgult
+        PUBLIC massivethreads
+    )
 endif()
 
+# Generate config.h
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mgult/config.h)
 
 # Unit tests
 

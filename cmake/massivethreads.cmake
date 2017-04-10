@@ -28,7 +28,7 @@ add_dependencies(massivethreads MassiveThreads)
 set_property(
     TARGET massivethreads
     PROPERTY IMPORTED_LOCATION
-    ${install_dir}/lib/libmyth-native.so)
+    ${install_dir}/lib/libmyth.so)
 
 # Make a directory for include path if it doesn't exist
 # Reported as a bug of CMake:

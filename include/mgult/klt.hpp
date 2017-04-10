@@ -23,15 +23,17 @@ using mgbase::unique_lock;
 
 using mgbase::thread;
 
-namespace this_thread = mgbase::this_thread;
-
-using mgbase::spinlock;
+namespace this_thread {
 
 #ifdef MGBASE_ULT_DISABLE_YIELD
 inline void yield() MGBASE_NOEXCEPT { }
 #else
 using mgbase::this_thread::yield;
 #endif
+
+} // namespace this_thread
+
+using mgbase::spinlock;
 
 using mgult::async_status;
 using mgult::make_async_ready;
@@ -78,7 +80,7 @@ inline T suspend_and_call(Func&& func, Args&&... args)
         return async_get(mgbase::move(d));
     }
     else {
-        return async_get(mgbase::move(ch), klt::yield);
+        return async_get(mgbase::move(ch), klt::this_thread::yield);
     }
 }
 
