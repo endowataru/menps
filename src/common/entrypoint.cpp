@@ -47,7 +47,7 @@ const device devs[] =
 
 factory_func_t select_starter()
 {
-    const char* const dev_name = getenv("MGDEV_DEVICE");
+    const char* const dev_name = getenv("MGCOM_DEVICE");
     
     if (dev_name != MGBASE_NULLPTR)
     {
