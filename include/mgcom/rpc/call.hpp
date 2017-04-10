@@ -224,13 +224,13 @@ struct async_call_functor
     template <typename Cont>
     MGBASE_WARN_UNUSED_RESULT
     ult::async_status<client_reply_message<typename Handler::reply_type>>
-    operator() (Cont& cont)
+    operator() (Cont&& cont)
     {
         return async_call<Handler>(
             rqstr
         ,   target_proc
         ,   mgbase::move(rqst_msg)
-        ,   cont
+        ,   mgbase::forward<Cont>(cont)
         );
     }
 };

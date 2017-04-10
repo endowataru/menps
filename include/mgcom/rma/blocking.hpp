@@ -131,9 +131,9 @@ struct async_closure
     
     template <typename Cont>
     MGBASE_WARN_UNUSED_RESULT
-    ult::async_status<void> operator() (Cont& cont) const /*may throw*/
+    ult::async_status<void> operator() (Cont&& cont) const /*may throw*/
     {
-        p->on_complete = cont;
+        p->on_complete = mgbase::forward<Cont>(cont);
         return (self->*Method)(*p);
     }
 };
