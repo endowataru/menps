@@ -20,9 +20,9 @@ struct async_closure
     
     template <typename Cont>
     MGBASE_WARN_UNUSED_RESULT
-    ult::async_status<void> operator() (Cont& cont) const /*may throw*/
+    ult::async_status<void> operator() (Cont&& cont) const /*may throw*/
     {
-        return (self->*Method)({ *p, cont });
+        return (self->*Method)({ *p, mgbase::forward<Cont>(cont) });
     }
 };
 
