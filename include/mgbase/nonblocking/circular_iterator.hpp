@@ -38,17 +38,6 @@ private:
         index_ = static_cast<mgbase::size_t>(
             static_cast<mgbase::ptrdiff_t>(index_) + diff
         );
-        
-        //index_ += diff;
-        
-        /*const auto sindex = static_cast<mgbase::ptrdiff_t>(index_);
-        const auto ssize = static_cast<mgbase::ptrdiff_t>(size());
-        
-        const auto i = static_cast<mgbase::size_t>(
-            sindex + diff + ssize
-        );
-        
-        index_ = i % size();*/
     }
     
     bool equal(const circular_iterator& other) const MGBASE_NOEXCEPT
