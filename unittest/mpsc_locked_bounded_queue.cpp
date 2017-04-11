@@ -69,8 +69,8 @@ struct functor
     void operator() ()
     {
         for (mgbase::uint64_t i = 1; i <= n; ++i) {
-            do {
-                auto t = q.try_enqueue(1); // CAS: tail += 0x2;
+            while (true) {
+                auto t = q.try_enqueue(1); // CAS: tail = (tail + 0x2) & ~1;
                 if (!t.valid() || t.size() == 0) {
                     mgbase::this_thread::yield();
                     continue;
@@ -82,9 +82,11 @@ struct functor
                 if (t.is_sleeping()) { // (old_tail & 1) == 1
                     mgbase::unique_lock<mgbase::mutex> lk(mtx);
                     cv.notify_one();
+                    MGBASE_LOG_VERBOSE("msg:Notified.");
                 }
+                
+                break;
             }
-            while (false);
         }
     }
 };
@@ -93,9 +95,9 @@ struct functor
 
 TEST(MpscLockedBoundedQueue, SpSc)
 {
-    typedef mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 256>  queue_type;
+    typedef mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 1000>  queue_type;
     
-    const mgbase::uint64_t N = 100000;
+    const mgbase::uint64_t N = 10000;
     
     queue_type buf;
     mgbase::mutex mtx;
@@ -107,13 +109,13 @@ TEST(MpscLockedBoundedQueue, SpSc)
     {
         mgbase::unique_lock<mgbase::mutex> lk(mtx);
         for (mgbase::uint64_t i = 1; i <= N; ++i) {
-            do {
+            while (true) {
                 auto t = buf.try_dequeue(1); // check queue size & entry flag
                 if (!t.valid() || t.size() == 0) { // (head&~1) == (tail&~1) ?
                     if (buf.try_sleep()) { // CAS: tail |= 1
                         cv.wait(lk);
                     }
-                    else  {
+                    else {
                         mgbase::this_thread::yield();
                     }
                     
@@ -122,9 +124,10 @@ TEST(MpscLockedBoundedQueue, SpSc)
                 
                 x += *t.begin();
                 
-                t.commit(1); // head += 0x2;
+                t.commit(1); // reset entry flag; head += 0x2;
+                
+                break;
             }
-            while (false);
         }
     }
     

@@ -103,6 +103,8 @@ public:
     
     enqueue_transaction try_enqueue(const index_type num)
     {
+        MGBASE_ASSERT(num > 0);
+        
         auto& self = this->derived();
         const auto cap = self.capacity();
         
@@ -226,6 +228,9 @@ public:
             
             const auto new_head = (this->data_.from + num) << 1;
             
+            MGBASE_UNUSED
+            const auto old_head = self.head_.load(mgbase::memory_order_relaxed);
+            
             // Allow producers to use the element at "head".
             // If a producer sees this modification,
             // then processing the element on the current thread must have completed.
@@ -235,9 +240,11 @@ public:
                 "msg:Finished dequeuing MPSC queue.\t"
                 "from:0x{:x}\t"
                 "to:0x{:x}\t"
+                "old_head:0x{:x}\t"
                 "new_head:0x{:x}"
             ,   this->data_.from
             ,   this->data_.to
+            ,   old_head
             ,   new_head
             );
             
@@ -284,7 +291,6 @@ public:
         }
     }
     
-    //void try_start_sleeping()
     bool try_sleep()
     {
         const auto head = this->head_.load(mgbase::memory_order_relaxed);
