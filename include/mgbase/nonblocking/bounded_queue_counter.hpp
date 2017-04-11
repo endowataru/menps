@@ -44,7 +44,7 @@ public:
     ) MGBASE_NOEXCEPT
         : base(index)
         , self_(self)
-        { }
+    { }
     
 private:
     friend class circular_iterator<bounded_queue_entry_iterator, entry_type>;
@@ -126,7 +126,7 @@ protected:
     bounded_queue_counter() MGBASE_DEFAULT_NOEXCEPT
         : head_{0}
         , tail_{0}
-        { }
+    { }
     
     typedef bounded_queue_entry_iterator<traits_type>   entry_iterator;
     typedef bounded_queue_iterator<traits_type>         iterator;
@@ -348,9 +348,6 @@ private:
     
 private:
     derived_type& derived() MGBASE_NOEXCEPT {
-        return static_cast<derived_type&>(*this);
-    }
-    const derived_type& derived() const MGBASE_NOEXCEPT {
         return static_cast<derived_type&>(*this);
     }
 };

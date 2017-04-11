@@ -59,13 +59,9 @@ public:
             { }
         
         enqueue_transaction(const enqueue_transaction&) = delete;
+        enqueue_transaction& operator = (const enqueue_transaction&) = delete;
         
-        #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-        enqueue_transaction(enqueue_transaction&&) MGBASE_DEFAULT_NOEXCEPT = default;
-        #else
-        enqueue_transaction(enqueue_transaction&& other) MGBASE_NOEXCEPT
-            : enqueue_transaction_base(mgbase::move(other)) { }
-        #endif
+        MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(enqueue_transaction, enqueue_transaction_base)
         
         void commit(MGBASE_UNUSED const index_type num)
         {
@@ -96,21 +92,20 @@ public:
     
     enqueue_transaction try_enqueue(const index_type num)
     {
-        index_type tail = this->tail_.load(mgbase::memory_order_relaxed);
+        auto& self = this->derived();
+        const auto cap = self.capacity();
         
-        const index_type cap = derived().capacity();
+        auto tail = this->tail_.load(mgbase::memory_order_relaxed);
         
         while (true)
         {
+            const auto head = this->head_.load(mgbase::memory_order_acquire);
+            
             MGBASE_UNUSED
-            const index_type old_tail = tail;
+            const auto old_tail = tail;
             
-            const index_type head =
-                this->head_.load(mgbase::memory_order_acquire);
-            
-            const index_type new_tail = tail + num;
-            
-            const index_type new_cap = new_tail - head;
+            const auto new_tail = tail + num;
+            const auto new_cap = new_tail - head;
             
             if (MGBASE_UNLIKELY(new_cap >= cap)) {
                 return {};
@@ -130,8 +125,6 @@ public:
                 ,   mgbase::memory_order_acquire
                 ,   mgbase::memory_order_relaxed
                 );
-            
-            // Now head_ is written to head by compare_exchange_weak.
             
             if (MGBASE_LIKELY(success))
             {
@@ -175,15 +168,13 @@ public:
             derived_type&                   self
         ,   const dequeue_transaction_data& data
         ) MGBASE_NOEXCEPT
-            : dequeue_transaction_base(self, data) { }
+            : dequeue_transaction_base(self, data)
+        { }
         
         dequeue_transaction(const dequeue_transaction&) = delete;
-        #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-        dequeue_transaction(dequeue_transaction&&) MGBASE_DEFAULT_NOEXCEPT = default;
-        #else
-        dequeue_transaction(dequeue_transaction&& other) MGBASE_NOEXCEPT
-            : dequeue_transaction_base(mgbase::move(other)) { }
-        #endif
+        dequeue_transaction& operator = (const dequeue_transaction&) = delete;
+        
+        MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(dequeue_transaction, dequeue_transaction_base)
         
         void commit(const index_type num)
         {
