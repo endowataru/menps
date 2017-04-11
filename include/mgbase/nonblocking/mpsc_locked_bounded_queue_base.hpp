@@ -309,18 +309,7 @@ public:
         ,   mgbase::memory_order_relaxed
         ,   mgbase::memory_order_relaxed
         );
-        
-        /*MGBASE_ASSERT((this->tail_.load(mgbase::memory_order_relaxed) & 0x1) == 0x0);
-        
-        this->tail_.fetch_add(1, mgbase::memory_order_relaxed);*/
     }
-    
-    /*void stop_sleeping()
-    {
-        MGBASE_ASSERT((this->tail_.load(mgbase::memory_order_relaxed) & 0x1) == 0x1);
-        
-        this->tail_.fetch_sub(1, mgbase::memory_order_relaxed);
-    }*/
 };
 
 } // namespace detail
