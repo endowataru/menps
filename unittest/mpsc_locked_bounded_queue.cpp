@@ -82,7 +82,6 @@ struct functor
                 if (t.is_sleeping()) { // (old_tail & 1) == 1
                     mgbase::unique_lock<mgbase::mutex> lk(mtx);
                     cv.notify_one();
-                    MGBASE_LOG_VERBOSE("msg:Notified.");
                 }
                 
                 break;
@@ -95,9 +94,9 @@ struct functor
 
 TEST(MpscLockedBoundedQueue, SpSc)
 {
-    typedef mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 1000>  queue_type;
+    typedef mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 256>  queue_type;
     
-    const mgbase::uint64_t N = 10000;
+    const mgbase::uint64_t N = 100000;
     
     queue_type buf;
     mgbase::mutex mtx;
@@ -136,25 +135,46 @@ TEST(MpscLockedBoundedQueue, SpSc)
     ASSERT_EQ(N * (N+1) / 2, x);
 }
 
-#if 0
-
 TEST(MpscLockedBoundedQueue, MpSc)
 {
     const mgbase::uint64_t N = 10000;
     const mgbase::size_t num_threads = 10;
     
-    typedef mgbase::mpsc_locked_bounded_queue<mgbase::uint64_t, 256>  queue_type;
+    typedef mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 256>  queue_type;
     
     queue_type buf;
+    mgbase::mutex mtx;
+    mgbase::condition_variable cv;
     
-    mgbase::scoped_ptr<mgbase::thread []> ths(new mgbase::thread[num_threads]);
+    const auto ths = mgbase::make_unique<mgbase::thread []>(num_threads);
     
     for (mgbase::size_t i = 0; i < num_threads; ++i)
-        ths[i] = mgbase::thread{functor<queue_type>{buf, N}};
+        ths[i] = mgbase::thread{functor<queue_type>{buf, N, mtx, cv}};
     
     mgbase::uint64_t x = 0;
-    for (mgbase::uint64_t i = 0; i < num_threads * N; ++i) {
-        x += buf.dequeue();
+    {
+        mgbase::unique_lock<mgbase::mutex> lk(mtx);
+        for (mgbase::uint64_t i = 0; i < num_threads * N; ++i) {
+            while (true) {
+                auto t = buf.try_dequeue(1); // check queue size & entry flag
+                if (!t.valid() || t.size() == 0) { // (head&~1) == (tail&~1) ?
+                    if (buf.try_sleep()) { // CAS: tail |= 1
+                        cv.wait(lk);
+                    }
+                    else {
+                        mgbase::this_thread::yield();
+                    }
+                    
+                    continue;
+                }
+                
+                x += *t.begin();
+                
+                t.commit(1); // reset entry flag; head += 0x2;
+                
+                break;
+            }
+        }
     }
     
     for (mgbase::size_t i = 0; i < num_threads; ++i)
@@ -166,6 +186,4 @@ TEST(MpscLockedBoundedQueue, MpSc)
     ASSERT_EQ(num_threads * N * (N+1) / 2, x);
 }
 
-
-#endif
 
