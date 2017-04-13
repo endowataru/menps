@@ -58,6 +58,10 @@ private:
     
     void loop()
     {
+        #ifdef MGCOM_IBV_ENABLE_SLEEP
+        this->lk_ = this->queue_.get_lock();
+        #endif
+        
         while (MGBASE_LIKELY(!finished_))
         {
             dequeue_some();
@@ -74,8 +78,18 @@ private:
         
         auto ret = queue_.try_dequeue(send_wr_buffer::max_size);
         
-        if (!ret.valid())
+        if (!ret.valid()) {
+            
+            #ifdef MGCOM_IBV_ENABLE_SLEEP
+            if (queue_.try_sleep()) {
+                queue_.wait(lk_);
+            } else {
+                ult::this_thread::yield();
+            }
+            #endif
+            
             return;
+        }
         
         // TODO: exception safety
         
@@ -147,6 +161,10 @@ private:
     
     mgbase::vector<mgbase::shared_ptr<qp_buffer>> qps_;
     mgbase::index_list<process_id_t> proc_indexes_;
+    
+    #ifdef MGCOM_IBV_ENABLE_SLEEP
+    command_queue::unique_lock_type lk_;
+    #endif
 };
 
 command_consumer::command_consumer(const config& conf)

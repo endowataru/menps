@@ -40,6 +40,12 @@ public:
             
             t.commit(1);
             
+            #ifdef MGCOM_IBV_ENABLE_SLEEP
+            if (t.is_sleeping()) { // (old_tail & 1) == 1
+                this->notify();
+            }
+            #endif
+            
             return true;
         }
         else

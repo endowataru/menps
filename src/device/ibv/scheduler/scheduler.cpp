@@ -6,6 +6,7 @@
 #include <mgbase/arithmetic.hpp>
 #include <mgbase/algorithm.hpp>
 #include <mgbase/logger.hpp>
+#include <mgbase/shared_ptr.hpp>
 
 namespace mgcom {
 namespace ibv {
@@ -40,7 +41,7 @@ public:
             ,   num_qps
             );
             
-            sers_[index] = new serializer(
+            sers_[index] = mgbase::make_shared<serializer>(
                 serializer::config{ ibv_ep, alloc, comp_sel, qp_from, num_qps }
             );
             
@@ -56,12 +57,6 @@ public:
                 serializer::config{ ibv_ep, alloc, comp_sel, proc, 1 }
             );
         }*/
-    }
-    
-    ~scheduled_rma_requester()
-    {
-        for (auto itr = sers_.begin(); itr != sers_.end(); ++itr)
-            delete *itr;
     }
     
     scheduled_rma_requester(const scheduled_rma_requester&) = delete;
@@ -94,7 +89,7 @@ private:
             return 1; // Default
     }
     
-    std::vector<serializer*> sers_;
+    std::vector<mgbase::shared_ptr<serializer>> sers_;
     mgbase::size_t qp_per_thread_;
 };
 

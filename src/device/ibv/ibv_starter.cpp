@@ -18,7 +18,7 @@ class ibv_starter
     : public starter
 {
 public:
-    ibv_starter(int* const argc, char*** const argv)
+    /*implicit*/ ibv_starter(int* const argc, char*** const argv)
     {
         endpoint_ = mpi::make_endpoint(argc, argv);
         

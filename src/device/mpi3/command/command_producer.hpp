@@ -27,6 +27,6 @@ private:
     mpi3_delegator mpi_;
 };
 
-} // namespace mpi1
+} // namespace mpi3
 } // namespace mgcom
 
