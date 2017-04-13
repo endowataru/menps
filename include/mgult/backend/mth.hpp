@@ -4,6 +4,7 @@
 #include <mgult/backend/mth/thread.hpp>
 #include <mgult/backend/mth/mutex.hpp>
 #include <mgult/backend/mth/condition_variable.hpp>
+#include <mgult/backend/mth/this_thread.hpp>
 
 #include <mgult/async/async_status.hpp>
 #include <mgult/async/async_atomic_channel.hpp>
@@ -13,8 +14,6 @@
 namespace mgult {
 namespace backend {
 namespace mth {
-
-using mgult::async_status;
 
 namespace detail {
 
@@ -111,14 +110,9 @@ inline T suspend_and_call(Func&& func, Args&&... args)
     }
 }
 
-using klt::make_async_ready;
-using klt::make_async_deferred;
-
-namespace this_thread {
-
-using klt::this_thread::yield;
-
-} // namespace this_thread
+using mgult::async_status;
+using mgult::make_async_ready;
+using mgult::make_async_deferred;
 
 using mgbase::unique_lock;
 using mgbase::lock_guard;
