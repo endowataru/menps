@@ -36,7 +36,6 @@ TEST(MpscLockedBoundedQueue, Serial2)
     
     mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 256> buf;
     
-    //buf.start_sleeping();
     ASSERT_TRUE(buf.try_sleep());
     
     mgbase::uint64_t x = 0;
