@@ -5,6 +5,7 @@
 #include "completion_selector.hpp"
 #include <mgdev/ibv/ibv_error.hpp>
 #include <mgcom/ult.hpp>
+#include <mgbase/unique_ptr.hpp>
 
 namespace mgcom {
 namespace ibv {
@@ -46,11 +47,11 @@ private:
     {
         MGBASE_LOG_DEBUG("msg:Started IBV polling.");
         
+        const auto wcs = mgbase::make_unique<ibv_wc []>(max_num_polled);
+        
         while (MGBASE_LIKELY(!finished_))
         {
-            ibv_wc wcs[max_num_polled];
-            
-            const int ret = cq_.poll(wcs, max_num_polled);
+            const int ret = cq_.poll(wcs.get(), max_num_polled);
             
             if (ret > 0)
             {
