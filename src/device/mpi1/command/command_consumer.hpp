@@ -3,7 +3,7 @@
 
 #include "command_queue.hpp"
 #include "device/mpi/command/mpi_completer.hpp"
-#include <mgbase/thread.hpp>
+#include <mgcom/ult.hpp>
 
 namespace mgcom {
 namespace mpi1 {
@@ -18,7 +18,7 @@ public:
     {
         completer_.initialize();
         
-        th_ = mgbase::thread(starter{*this});
+        th_ = ult::thread(starter{*this});
     }
     
     virtual ~command_consumer()
@@ -86,7 +86,7 @@ private:
     }
     
     bool finished_;
-    mgbase::thread th_;
+    ult::thread th_;
     
     mpi::mpi_completer completer_;
 };
