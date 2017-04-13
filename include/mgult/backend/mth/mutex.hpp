@@ -15,8 +15,11 @@ public:
     typedef myth_mutex_t*   native_handle_type;
     
     mutex() MGBASE_NOEXCEPT
-        : m_(MYTH_MUTEX_INITIALIZER)
-    { }
+    {
+        // TODO: On old GCC (4.4), we cannot use {} on member initialization (?).
+        myth_mutex_t m = MYTH_MUTEX_INITIALIZER;
+        m_ = m;
+    }
     
     mutex(const mutex&) = delete;
     mutex& operator = (const mutex&) = delete;

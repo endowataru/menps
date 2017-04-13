@@ -15,8 +15,11 @@ class condition_variable
     
 public:
     condition_variable()
-        : cond_(MYTH_COND_INITIALIZER)
-    { }
+    {
+        // TODO: On old GCC (4.4), we cannot use {} on member initialization (?).
+        myth_cond_t cond = MYTH_COND_INITIALIZER;
+        cond_ = cond;
+    }
     
     condition_variable(const condition_variable&) = delete;
     condition_variable& operator = (const condition_variable&) = delete;
