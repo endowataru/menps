@@ -72,7 +72,7 @@ protected:
             
             const auto t0 = mgbase::get_cpu_clock();
             
-            mgcom::rma::async_read(
+            const auto r = mgcom::rma::async_read(
                 proc
             ,   buf_.at_process(proc)
             ,   lptr
@@ -82,8 +82,10 @@ protected:
             
             const auto t1 = mgbase::get_cpu_clock();
             
-            while (!flag.load(mgbase::memory_order_acquire)) {
-                ult::this_thread::yield();
+            if (!r.is_ready()) {
+                while (!flag.load(mgbase::memory_order_acquire)) {
+                    ult::this_thread::yield();
+                }
             }
             
             const auto t2 = mgbase::get_cpu_clock();

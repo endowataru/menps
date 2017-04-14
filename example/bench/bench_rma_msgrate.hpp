@@ -106,7 +106,7 @@ protected:
             
             const auto t0 = mgbase::get_cpu_clock();
             
-            mgcom::rma::async_read(
+            const auto r = mgcom::rma::async_read(
                 proc
             ,   buf_.at_process(proc)
             ,   lptrs[pos]
@@ -130,6 +130,9 @@ protected:
             
             pos = (pos + 1) % num_local_bufs;
             
+            if (r.is_ready()) {
+                flags[pos].store(true, mgbase::memory_order_relaxed);
+            }
             
             //while (posted - count.load() >= lptrs.size()) {
                 // busy loop
@@ -156,8 +159,9 @@ protected:
         while (count.load() < posted)
             mgbase::ult::this_thread::yield();*/
         
-        for (auto itr = lptrs.begin(); itr != lptrs.end(); ++itr)
-            mgcom::rma::deallocate(*itr);
+        // TODO: currently deallocation is disabled (= memory leak)
+        /*for (auto itr = lptrs.begin(); itr != lptrs.end(); ++itr)
+            mgcom::rma::deallocate(*itr);*/
     }
     
     virtual mgcom::process_id_t select_target_proc() {
