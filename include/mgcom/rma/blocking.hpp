@@ -45,6 +45,7 @@ namespace detail {
 
 inline bool try_local_read(const untyped_read_params& params)
 {
+    #ifndef MGCOM_ENABLE_LOOPBACK_RMA
     if (params.src_proc == mgcom::current_process_id())
     {
         const auto src_ptr = untyped::to_raw_pointer(params.src_raddr);
@@ -55,10 +56,12 @@ inline bool try_local_read(const untyped_read_params& params)
         return true;
     }
     else
+    #endif
         return false;
 }
 inline bool try_local_write(const untyped_write_params& params)
 {
+    #ifndef MGCOM_ENABLE_LOOPBACK_RMA
     if (params.dest_proc == mgcom::current_process_id())
     {
         const auto src_ptr = untyped::to_raw_pointer(params.src_laddr);
@@ -69,6 +72,7 @@ inline bool try_local_write(const untyped_write_params& params)
         return true;
     }
     else
+    #endif
         return false;
 }
 

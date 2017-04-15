@@ -1,1 +1,1 @@
-
+#cmakedefine MGCOM_ENABLE_LOOPBACK_RMA

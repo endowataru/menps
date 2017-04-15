@@ -2,12 +2,15 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mgcom)
 
-# Do not link shared libraries again
-set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
-
 include(CheckIncludeFileCXX)
 include(CheckCXXSourceCompiles)
 include(CheckSymbolExists)
+
+# Do not link shared libraries again
+set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
+
+# Options
+option(MGCOM_ENABLE_LOOPBACK_RMA "Enable loopback RMA" OFF)
 
 # mgcom-mpi : MPI-based implementation
 
