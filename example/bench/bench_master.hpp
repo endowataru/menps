@@ -3,7 +3,7 @@
 
 #include <mgbase/thread.hpp>
 #include <mgbase/atomic.hpp>
-#include <mgbase/scoped_ptr.hpp>
+#include <mgbase/unique_ptr.hpp>
 #include <mgbase/assert.hpp>
 
 #include <mgcom/ult.hpp>
@@ -31,9 +31,9 @@ public:
     {
         finished_.store(false);
         
-        ths_ = new mgbase::thread[num_threads_];
+        ths_ = mgbase::make_unique<ult::thread []>(num_threads_);
         for (mgbase::size_t i = 0; i < num_threads_; ++i)
-            ths_[i] = mgbase::thread{ starter{*this, i} };
+            ths_[i] = ult::thread{ starter{*this, i} };
     }
     
     void finish()
@@ -63,6 +63,6 @@ private:
     
     mgbase::atomic<bool> finished_;
     mgbase::size_t num_threads_;
-    mgbase::scoped_ptr<mgbase::thread []> ths_;
+    mgbase::unique_ptr<ult::thread []> ths_;
 };
 
