@@ -42,6 +42,10 @@ public:
         // Order the running thread to stop.
         finished_ = true;
         
+        #ifdef MGCOM_IBV_ENABLE_SLEEP
+        this->queue_.notify();
+        #endif
+        
         // Join the running thread.
         th_.join();
     }
