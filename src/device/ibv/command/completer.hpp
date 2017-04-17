@@ -4,7 +4,6 @@
 #include <mgbase/nonblocking/spsc_bounded_queue.hpp>
 #include <mgbase/threading/spinlock.hpp>
 #include <mgbase/threading/lock_guard.hpp>
-#include <mgbase/scoped_ptr.hpp>
 #include <mgbase/callback.hpp>
 #include <mgcom/rma/pointer.hpp>
 
@@ -50,23 +49,7 @@ public:
         start_transaction(const start_transaction&) = delete;
         start_transaction& operator = (const start_transaction&) = delete;
         
-        #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-        start_transaction(start_transaction&&) = default;
-        #else
-        start_transaction(start_transaction&& other)
-            : base(mgbase::move(other)) { }
-        #endif
-        
-        #if 0
-        #ifdef MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
-        start_transaction& operator = (start_transaction&&) = default;
-        #else
-        start_transaction& operator = (start_transaction&& other) {
-            static_cast<base&>(*this) = mgbase::move(other);
-            return *this;
-        }
-        #endif
-        #endif
+        MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(start_transaction, base)
         
         void commit()
         {
@@ -104,8 +87,8 @@ public:
     }
 
 private:
-    queue_type queue_;
-    std::vector<callback_type> cbs_;
+    queue_type                  queue_;
+    std::vector<callback_type>  cbs_;
 };
 
 } // namespace ibv
