@@ -29,6 +29,8 @@ struct global_qp_id
     qp_num_t    qp_num;
 };
 
+typedef mgbase::uint64_t    wr_id_t;
+
 inline node_id_t make_node_id_from_lid(const mgbase::uint16_t lid) {
     return { lid };
 }
