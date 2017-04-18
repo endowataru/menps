@@ -1,1 +1,2 @@
 #cmakedefine MGCOM_ENABLE_LOOPBACK_RMA
+#cmakedefine MGCOM_IBV_ENABLE_SLEEP

@@ -3,8 +3,6 @@
 
 #include "device/ibv/command/command.hpp"
 
-//#define MGCOM_IBV_ENABLE_SLEEP
-
 #ifdef MGCOM_IBV_ENABLE_SLEEP
     #include <mgbase/nonblocking/mpsc_locked_bounded_queue.hpp>
 #else

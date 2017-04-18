@@ -5,6 +5,7 @@
 #include "send_wr_buffer.hpp"
 #include "device/ibv/command/set_command_to.hpp"
 #include "device/ibv/native/alltoall_queue_pairs.hpp"
+#include "device/ibv/command/completion_selector.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -15,6 +16,7 @@ public:
     struct config {
         alltoall_queue_pairs&   qps;
         rma::allocator&         alloc;
+        completion_selector&    comp_sel;
         process_id_t            proc;
         bool                    reply_be;
     };
@@ -51,6 +53,10 @@ public:
         set_command_to(cmd, wr_id, wr, &sge, comp_, atomic_buf_);
         
         t.commit();
+        
+        #ifdef MGCOM_IBV_ENABLE_SLEEP
+        conf_.comp_sel.notify(1);
+        #endif
         
         return true;
     }

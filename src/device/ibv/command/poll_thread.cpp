@@ -48,6 +48,10 @@ private:
         MGBASE_LOG_DEBUG("msg:Started IBV polling.");
         
         const auto wcs = mgbase::make_unique<ibv_wc []>(max_num_polled);
+    
+        #ifdef MGCOM_IBV_ENABLE_SLEEP
+        auto lk = comp_sel_.get_lock();
+        #endif
         
         while (MGBASE_LIKELY(!finished_))
         {
@@ -68,6 +72,10 @@ private:
                     auto& comp = comp_sel_.get(wc.qp_num);
                     
                     comp.notify(wc.wr_id);
+                
+                    #ifdef MGCOM_IBV_ENABLE_SLEEP
+                    comp_sel_.remove_outstanding(1, lk);
+                    #endif
                     
                     MGBASE_LOG_DEBUG(
                         "msg:Polled completion.\t"
@@ -79,6 +87,9 @@ private:
             else
             {
                 MGBASE_LOG_VERBOSE("msg:IBV CQ was empty.");
+                #ifdef MGCOM_IBV_ENABLE_SLEEP
+                ult::this_thread::yield();
+                #endif
             }
         }
         

@@ -80,6 +80,11 @@ private:
         
         if (success) {
             t.commit();
+            
+            #ifdef MGCOM_IBV_ENABLE_SLEEP
+            conf_.comp_sel.notify(1);
+            #endif
+            
             return true;
         }
         else {

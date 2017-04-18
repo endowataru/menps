@@ -11,6 +11,7 @@ set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
 # Options
 option(MGCOM_ENABLE_LOOPBACK_RMA "Enable loopback RMA" OFF)
+option(MGCOM_IBV_ENABLE_SLEEP "Enable sleep on IBV" OFF)
 
 # mgcom-mpi : MPI-based implementation
 
