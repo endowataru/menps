@@ -43,21 +43,67 @@ public:
         return unique_lock_type(this->mtx_);
     }
     
+    bool try_wait(unique_lock_type& lk)
+    {
+        auto old = num_outstanding_.load(mgbase::memory_order_relaxed);
+        
+        // If there's no request in QP - CQ
+        if (old == 0) {
+            // Try to sleep.
+            if (num_outstanding_.compare_exchange_weak(old, 1, mgbase::memory_order_relaxed)) {
+                cv_.wait(lk);
+                
+                // Restarted again on notification.
+                num_outstanding_.fetch_sub(1, mgbase::memory_order_relaxed);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
     void remove_outstanding(const mgbase::size_t num_polled, unique_lock_type& lk)
     {
-        const auto num_outstanding = num_outstanding_.fetch_sub(num_polled, mgbase::memory_order_acquire);
-        if (num_outstanding == 0) {
-            cv_.wait(lk);
+        auto old = num_outstanding_.load(mgbase::memory_order_relaxed);
+        
+        while (true) {
+            // If only there are requests that finished right now
+            if (old == (num_polled << 1)) {
+                // Try to sleep.
+                if (num_outstanding_.compare_exchange_weak(old, 1, mgbase::memory_order_relaxed)) {
+                    cv_.wait(lk);
+                    
+                    // Restarted again on notification.
+                    num_outstanding_.fetch_sub(1, mgbase::memory_order_relaxed);
+                    break;
+                }
+                
+                // Retry.
+                // (old is reloaded by compare_exchange_weak.)
+            }
+            else {
+                // Avoid trying to wait.
+                num_outstanding_.fetch_sub(num_polled << 1, mgbase::memory_order_relaxed);
+                break;
+            }
         }
     }
     
     void notify(const mgbase::size_t num_wrs)
     {
-        const auto num_outstanding = num_outstanding_.fetch_add(num_wrs, mgbase::memory_order_acquire);
-        if (num_outstanding == 0) {
-            ult::lock_guard<ult::mutex> lk(this->mtx_);
-            cv_.notify_one();
+        const auto num_outstanding = num_outstanding_.fetch_add(num_wrs << 1, mgbase::memory_order_acquire);
+        
+        // Check if LSB is 1 (= sleeping).
+        if ((num_outstanding & 1) == 1) {
+            force_notify();
         }
+    }
+    
+    void force_notify()
+    {
+        ult::lock_guard<ult::mutex> lk(this->mtx_);
+        // Awake the completer.
+        cv_.notify_one();
     }
     #endif
     

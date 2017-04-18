@@ -30,6 +30,10 @@ public:
     {
         finished_ = true;
         
+        #ifdef MGCOM_IBV_ENABLE_SLEEP
+        comp_sel_.force_notify();
+        #endif
+        
         th_.join();
     }
     
@@ -87,8 +91,13 @@ private:
             else
             {
                 MGBASE_LOG_VERBOSE("msg:IBV CQ was empty.");
+                
                 #ifdef MGCOM_IBV_ENABLE_SLEEP
-                ult::this_thread::yield();
+                if (! comp_sel_.try_wait(lk)) {
+                    // While there are ongoing requests,
+                    // polling is failing.
+                    ult::this_thread::yield();
+                }
                 #endif
             }
         }
