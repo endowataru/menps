@@ -45,7 +45,6 @@ public:
             : base(mgbase::move(t))
             { }
         
-        
         start_transaction(const start_transaction&) = delete;
         start_transaction& operator = (const start_transaction&) = delete;
         

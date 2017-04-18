@@ -16,7 +16,7 @@ namespace ibv {
 class command_consumer::impl
 {
 public:
-    impl(command_queue& queue, const config& conf)
+    explicit impl(command_queue& queue, const config& conf)
         : queue_(queue)
         , conf_(conf)
         , finished_{false}
@@ -27,9 +27,11 @@ public:
         {
             const process_id_t proc = conf.proc_first + index;
             
-            qps_[index] = mgbase::make_shared<qp_buffer>(conf.ep, conf.alloc, proc);
+            qps_[index] = mgbase::make_shared<qp_buffer>(
+                qp_buffer::config{ conf_.qps, conf_.alloc, proc, conf_.reply_be }
+            );
             
-            const auto qp_num = conf.ep.get_qp_num_of_proc(proc, 0);
+            const auto qp_num = conf.qps.get_qp_num_of_proc(proc, 0);
             
             conf.comp_sel.set(qp_num, qps_[index]->get_completer());
         }
@@ -83,7 +85,6 @@ private:
         auto ret = queue_.try_dequeue(send_wr_buffer::max_size);
         
         if (!ret.valid()) {
-            
             #ifdef MGCOM_IBV_ENABLE_SLEEP
             if (queue_.try_sleep()) {
                 queue_.wait(lk_);

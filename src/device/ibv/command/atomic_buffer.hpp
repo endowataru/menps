@@ -10,21 +10,25 @@ namespace ibv {
 class atomic_buffer
 {
 public:
-    atomic_buffer(endpoint& ep, rma::allocator& alloc, const mgbase::size_t max_num_completions)
-        : alloc_(alloc)
-        , entries_(max_num_completions)
-        , buf_{rma::allocate<rma::atomic_default_t>(alloc, max_num_completions)}
+    struct config
     {
-        for (mgbase::size_t i = 0; i < max_num_completions; ++i)
+        rma::allocator&     alloc;
+        mgbase::size_t      max_num_completions;
+        bool                reply_be;
+    };
+    
+    explicit atomic_buffer(const config& conf)
+        : conf_(conf)
+        , entries_(conf.max_num_completions)
+        , buf_(rma::allocate<rma::atomic_default_t>(conf.alloc, conf.max_num_completions))
+    {
+        for (mgbase::size_t i = 0; i < this->conf_.max_num_completions; ++i)
             entries_[i].src = &buf_[static_cast<mgbase::ptrdiff_t>(i)];
-        
-        const auto dev_attr = ep.get_device().query_device();
-        reply_be_ = is_only_masked_atomics(dev_attr);
     }
     
     ~atomic_buffer()
     {
-        rma::deallocate(alloc_, buf_);
+        rma::deallocate(conf_.alloc, buf_);
     }
     
     atomic_buffer(const atomic_buffer&) = delete;
@@ -80,9 +84,9 @@ public:
 private:
     struct entry
     {
-        mgbase::callback<void ()>       on_complete;
-        rma::atomic_default_t*  src;
-        rma::atomic_default_t*  dest;
+        mgbase::callback<void ()>   on_complete;
+        rma::atomic_default_t*      src;
+        rma::atomic_default_t*      dest;
     };
     
     struct write_callback
@@ -115,15 +119,15 @@ private:
     
     struct atomic_callback
     {
-        atomic_buffer* self;
-        entry* e;
+        atomic_buffer*  self;
+        entry*          e;
         
         void operator() () const
         {
             mgbase::uint64_t orig_val = *e->src;
             
             mgbase::uint64_t val = 0;
-            if (self->reply_be_) {
+            if (self->conf_.reply_be) {
                 // Big-endian to little-endian
                 for (mgbase::size_t i = 0; i < 8; ++i)
                     val |= ((orig_val >> (8 * (7 - i))) & 0xFF) << (8 * i);
@@ -149,15 +153,14 @@ private:
     ,   const mgbase::callback<void ()>&    on_complete
     ,   mgbase::uint64_t* const             dest_ptr
     ) {
-        entry& e = entries_[wr_id];
+        auto& e = entries_[wr_id];
         e.on_complete = on_complete;
         e.dest = dest_ptr;
     }
     
-    rma::allocator& alloc_;
-    std::vector<entry> entries_;
-    rma::local_ptr<rma::atomic_default_t> buf_;
-    bool reply_be_;
+    const config                            conf_;
+    std::vector<entry>                      entries_;
+    rma::local_ptr<rma::atomic_default_t>   buf_;
 };
 
 } // namespace ibv

@@ -1,8 +1,7 @@
 
-#include "scheduler.hpp"
-#include "serializer.hpp"
+#include "device/ibv/rma/requester.hpp"
 #include "device/ibv/rma/requester_base.hpp"
-#include "device/ibv/command/atomic_buffer.hpp"
+#include "serializer.hpp"
 #include <mgbase/arithmetic.hpp>
 #include <mgbase/algorithm.hpp>
 #include <mgbase/logger.hpp>
@@ -19,20 +18,22 @@ class scheduled_rma_requester
 public:
     typedef ibv::command_code   command_code_type;
     
-    scheduled_rma_requester(endpoint& ibv_ep, completion_selector& comp_sel, rma::allocator& alloc, mgcom::endpoint& ep)
+    scheduled_rma_requester(const requester_config& conf)
+        : conf_(conf)
     {
+        const auto num_procs = conf_.ep.number_of_processes();
+        
         const mgbase::size_t max_num_offload_threads = get_max_num_offload_threads();
         
         sers_.resize(max_num_offload_threads);
         
-        mgbase::size_t qp_per_thread = mgbase::roundup_divide(ep.number_of_processes(), max_num_offload_threads);
-        qp_per_thread_ = qp_per_thread;
+        qp_per_thread_ = mgbase::roundup_divide(num_procs, max_num_offload_threads);
         
         mgbase::size_t qp_from = 0;
         
         for (mgbase::size_t index = 0; index < max_num_offload_threads; ++index)
         {
-            mgbase::size_t num_qps = mgbase::min(qp_from + qp_per_thread, ep.number_of_processes()) - qp_from;
+            mgbase::size_t num_qps = mgbase::min(qp_from + qp_per_thread_, num_procs) - qp_from;
             
             MGBASE_LOG_DEBUG(
                 "msg:Initializing serializer.\t"
@@ -42,12 +43,12 @@ public:
             );
             
             sers_[index] = mgbase::make_shared<serializer>(
-                serializer::config{ ibv_ep, alloc, comp_sel, qp_from, num_qps }
+                serializer::config{ conf_.qps, conf_.alloc, conf_.comp_sel, qp_from, num_qps, conf.reply_be }
             );
             
-            qp_from += qp_per_thread;
+            qp_from += qp_per_thread_;
             
-            if (qp_from >= ep.number_of_processes())
+            if (qp_from >= num_procs)
                 break;
         }
         /*
@@ -89,15 +90,16 @@ private:
             return 1; // Default
     }
     
-    std::vector<mgbase::shared_ptr<serializer>> sers_;
+    const requester_config conf_;
     mgbase::size_t qp_per_thread_;
+    std::vector<mgbase::shared_ptr<serializer>> sers_;
 };
 
 } // unnamed namespace
 
-mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(endpoint& ibv_ep, completion_selector& comp_sel, rma::allocator& alloc, mgcom::endpoint& ep)
+mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(const requester_config& conf)
 {
-    return mgbase::make_unique<scheduled_rma_requester>(ibv_ep, comp_sel, alloc, ep);
+    return mgbase::make_unique<scheduled_rma_requester>(conf);
 }
 
 } // namespace ibv

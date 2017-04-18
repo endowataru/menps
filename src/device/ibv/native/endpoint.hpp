@@ -16,7 +16,7 @@ namespace ibv {
 using namespace mgdev::ibv;
 
 class endpoint
-    : protected alltoall_queue_pairs
+    : public alltoall_queue_pairs // XXX
 {
 public:
     explicit endpoint(const index_t qp_count)

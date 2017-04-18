@@ -6,7 +6,6 @@
 #include "registrator.hpp"
 #include "device/ibv/command/poll_thread.hpp"
 #include "common/rma/default_allocator.hpp"
-#include "device/ibv/scheduler/scheduler.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -54,6 +53,12 @@ protected:
         return *comp_sel_;
     }
     
+    bool is_reply_be()
+    {
+        const auto dev_attr = ep_.get_device().query_device();
+        return is_only_masked_atomics(dev_attr);
+    }
+    
 public:
     virtual rma::registrator& get_registrator() MGBASE_OVERRIDE {
         return *reg_;
@@ -78,7 +83,14 @@ public:
     direct_rma_comm(mgcom::endpoint& ep, collective::requester& coll)
         : rma_comm_base(ep, coll)
     {
-        req_ = make_rma_direct_requester(this->get_endpoint(), this->get_completion_selector(), this->get_allocator(), ep); // depends on rma::registrator
+        req_ = make_rma_direct_requester({
+            this->get_endpoint()
+        ,   this->get_completion_selector()
+        ,   this->get_allocator() // depends on rma::registrator
+        ,   ep
+        ,   this->is_reply_be()
+        });
+        
         rma::requester::set_instance(*req_);
     }
     
@@ -97,7 +109,14 @@ public:
     scheduled_rma_comm(mgcom::endpoint& ep, collective::requester& coll)
         : rma_comm_base(ep, coll)
     {
-        req_ = make_scheduled_rma_requester(this->get_endpoint(), this->get_completion_selector(), this->get_allocator(), ep); // depends on rma::registrator
+        req_ = make_scheduled_rma_requester({
+            this->get_endpoint()
+        ,   this->get_completion_selector()
+        ,   this->get_allocator() // depends on rma::registrator
+        ,   ep
+        ,   this->is_reply_be()
+        });
+        
         rma::requester::set_instance(*req_);
     }
     

@@ -4,7 +4,7 @@
 #include "device/ibv/command/completer.hpp"
 #include "send_wr_buffer.hpp"
 #include "device/ibv/command/set_command_to.hpp"
-#include "device/ibv/native/endpoint.hpp"
+#include "device/ibv/native/alltoall_queue_pairs.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -12,12 +12,20 @@ namespace ibv {
 class qp_buffer
 {
 public:
-    qp_buffer(ibv::endpoint& ep, rma::allocator& alloc, const process_id_t proc)
-        : ep_(ep)
-        , proc_(proc)
-        , comp_{}
+    struct config {
+        alltoall_queue_pairs&   qps;
+        rma::allocator&         alloc;
+        process_id_t            proc;
+        bool                    reply_be;
+    };
+    
+    explicit qp_buffer(const config& conf)
+        : conf_(conf)
+        , comp_()
         , sges_(send_wr_buffer::max_size)
-        , atomic_buf_(ep, alloc, completer::max_num_completions)
+        , atomic_buf_(
+            atomic_buffer::config{ conf.alloc, completer::max_num_completions, conf.reply_be }
+        )
     { }
     
     qp_buffer(const qp_buffer&) = delete;
@@ -56,7 +64,7 @@ public:
         ibv_send_wr* bad_wr = MGBASE_NULLPTR;
         
         MGBASE_UNUSED
-        const bool success = ep_.try_post_send(proc_, 0, wr_buf_.front(), &bad_wr);
+        const bool success = conf_.qps.try_post_send(conf_.proc, 0, wr_buf_.front(), &bad_wr);
         
         wr_buf_.relink();
         
@@ -65,7 +73,7 @@ public:
         MGBASE_LOG_DEBUG(
             "msg:Posted IBV requests.\t"
             "proc:{}\tbad_wr:{:x}"
-        ,   proc_
+        ,   conf_.proc
         ,   reinterpret_cast<mgbase::uintptr_t>(bad_wr)
         );
         
@@ -78,13 +86,11 @@ public:
     }
     
 private:
-    ibv::endpoint& ep_;
-    process_id_t proc_;
-    
-    completer comp_;
-    send_wr_buffer wr_buf_;
-    std::vector<ibv_sge> sges_;
-    atomic_buffer atomic_buf_;
+    const config            conf_;
+    completer               comp_;
+    send_wr_buffer          wr_buf_;
+    std::vector<ibv_sge>    sges_;
+    atomic_buffer           atomic_buf_;
 };
 
 } // namespace ibv
