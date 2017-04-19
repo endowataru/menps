@@ -22,33 +22,47 @@ public:
         : conf_(conf)
     {
         const auto num_procs = conf_.ep.number_of_processes();
+        num_grouped_procs_ = get_num_grouped_procs();
+        num_groups_ = mgbase::roundup_divide(num_procs, num_grouped_procs_);
         
-        const mgbase::size_t max_num_offload_threads = get_max_num_offload_threads();
+        sers_.resize(num_groups_);
         
-        sers_.resize(max_num_offload_threads);
+        const auto num_qps_per_proc = conf_.num_qps_per_proc;
         
-        qp_per_thread_ = mgbase::roundup_divide(num_procs, max_num_offload_threads);
+        mgbase::size_t proc_from = 0;
         
-        mgbase::size_t qp_from = 0;
-        
-        for (mgbase::size_t index = 0; index < max_num_offload_threads; ++index)
+        for (mgbase::size_t group_index = 0; group_index < num_groups_; ++group_index)
         {
-            mgbase::size_t num_qps = mgbase::min(qp_from + qp_per_thread_, num_procs) - qp_from;
+            sers_[group_index].resize(num_qps_per_proc);
             
-            MGBASE_LOG_DEBUG(
-                "msg:Initializing serializer.\t"
-                "from:{}\tnum:{}"
-            ,   qp_from
-            ,   num_qps
-            );
+            for (mgbase::size_t qp_index = 0; qp_index < num_qps_per_proc; ++qp_index)
+            {
+                mgbase::size_t num_procs_per_group = mgbase::min(proc_from + num_grouped_procs_, num_procs) - proc_from;
+                
+                MGBASE_LOG_DEBUG(
+                    "msg:Initializing serializer.\t"
+                    "from:{}\tnum:{}"
+                ,   proc_from
+                ,   num_procs_per_group
+                );
+                
+                sers_[group_index][qp_index] =
+                    mgbase::make_shared<serializer>(
+                        serializer::config{
+                            conf_.qps
+                        ,   qp_index
+                        ,   conf_.alloc
+                        ,   conf_.comp_sel
+                        ,   proc_from
+                        ,   num_procs_per_group
+                        ,   conf.reply_be
+                        }
+                    );
+            }
             
-            sers_[index] = mgbase::make_shared<serializer>(
-                serializer::config{ conf_.qps, conf_.alloc, conf_.comp_sel, qp_from, num_qps, conf.reply_be }
-            );
+            proc_from += num_grouped_procs_;
             
-            qp_from += qp_per_thread_;
-            
-            if (qp_from >= num_procs)
+            if (proc_from >= num_procs)
                 break;
         }
         /*
@@ -75,25 +89,45 @@ private:
     ) {
         MGBASE_ASSERT(valid_process_id(proc));
         
-        const mgbase::size_t i = proc / qp_per_thread_;
+        const mgbase::size_t group_index = proc / num_grouped_procs_;
+        MGBASE_ASSERT(group_index < sers_.size());
         
-        MGBASE_ASSERT(i < sers_.size());
+        auto qp_indexes = qp_indexes_;
+        if (MGBASE_UNLIKELY(qp_indexes == MGBASE_NULLPTR)) {
+            qp_indexes_ = qp_indexes = new mgbase::size_t[num_groups_]; // value-initialization
+            // TODO : memory leak
+            
+            std::uninitialized_fill_n(qp_indexes, num_groups_, 0);
+        }
         
-        return sers_[i]->try_enqueue<Params>(proc, code, std::forward<Func>(func));
+        const auto qp_index = qp_indexes[group_index];
+        MGBASE_ASSERT(qp_index < conf_.num_qps_per_proc);
+        
+        if (++qp_indexes[group_index] >= conf_.num_qps_per_proc) {
+            qp_indexes[group_index] = 0;
+        }
+        
+        return sers_[group_index][qp_index]
+            ->try_enqueue<Params>(proc, code, std::forward<Func>(func));
     }
     
-    static mgbase::size_t get_max_num_offload_threads() MGBASE_NOEXCEPT
+    static mgbase::size_t get_num_grouped_procs() MGBASE_NOEXCEPT
     {
-        if (const char* const direct = std::getenv("MGCOM_IBV_MAX_NUM_OFFLOAD_THREADS"))
-            return std::atoi(direct);
+        if (const auto str = std::getenv("MGCOM_IBV_NUM_GROUP_PROCS"))
+            return std::atoi(str);
         else
             return 1; // Default
     }
     
     const requester_config conf_;
-    mgbase::size_t qp_per_thread_;
-    std::vector<mgbase::shared_ptr<serializer>> sers_;
+    mgbase::size_t num_grouped_procs_;
+    mgbase::size_t num_groups_;
+    std::vector<std::vector<mgbase::shared_ptr<serializer>>> sers_;
+    
+    static MGBASE_THREAD_LOCAL mgbase::size_t* qp_indexes_;
 };
+
+MGBASE_THREAD_LOCAL mgbase::size_t* scheduled_rma_requester::qp_indexes_ = MGBASE_NULLPTR;
 
 } // unnamed namespace
 

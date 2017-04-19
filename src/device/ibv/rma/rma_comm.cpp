@@ -17,7 +17,7 @@ class rma_comm_base
 {
 protected:
     rma_comm_base(mgcom::endpoint& ep, collective::requester& coll)
-        : ep_(2)
+        : ep_(get_num_qps_per_proc())
     {
         ep_.collective_initialize(ep, coll);
         
@@ -59,6 +59,14 @@ protected:
         return is_only_masked_atomics(dev_attr);
     }
     
+    static mgbase::size_t get_num_qps_per_proc() MGBASE_NOEXCEPT
+    {
+        if (const auto str = std::getenv("MGCOM_IBV_NUM_QPS_PER_PROC"))
+            return std::atoi(str);
+        else
+            return 1; // Default
+    }
+    
 public:
     virtual rma::registrator& get_registrator() MGBASE_OVERRIDE {
         return *reg_;
@@ -89,6 +97,7 @@ public:
         ,   this->get_allocator() // depends on rma::registrator
         ,   ep
         ,   this->is_reply_be()
+        ,   this->get_num_qps_per_proc()
         });
         
         rma::requester::set_instance(*req_);
@@ -115,6 +124,7 @@ public:
         ,   this->get_allocator() // depends on rma::registrator
         ,   ep
         ,   this->is_reply_be()
+        ,   this->get_num_qps_per_proc()
         });
         
         rma::requester::set_instance(*req_);

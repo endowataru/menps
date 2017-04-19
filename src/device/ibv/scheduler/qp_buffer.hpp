@@ -15,6 +15,8 @@ class qp_buffer
 public:
     struct config {
         alltoall_queue_pairs&   qps;
+        mgbase::size_t          qp_index;
+        
         rma::allocator&         alloc;
         completion_selector&    comp_sel;
         process_id_t            proc;
@@ -70,7 +72,7 @@ public:
         ibv_send_wr* bad_wr = MGBASE_NULLPTR;
         
         MGBASE_UNUSED
-        const bool success = conf_.qps.try_post_send(conf_.proc, 0, wr_buf_.front(), &bad_wr);
+        const bool success = conf_.qps.try_post_send(conf_.proc, conf_.qp_index, wr_buf_.front(), &bad_wr);
         
         wr_buf_.relink();
         

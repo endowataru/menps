@@ -18,6 +18,7 @@ struct requester_config
     rma::allocator&         alloc;
     mgcom::endpoint&        ep;
     bool                    reply_be;
+    mgbase::size_t          num_qps_per_proc;
 };
 
 mgbase::unique_ptr<rma::requester> make_rma_direct_requester(const requester_config&);

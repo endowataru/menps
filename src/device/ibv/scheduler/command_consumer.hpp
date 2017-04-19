@@ -17,6 +17,8 @@ public:
     struct config
     {
         alltoall_queue_pairs&   qps;
+        mgbase::size_t          qp_index;
+        
         rma::allocator&         alloc;
         completion_selector&    comp_sel;
         mgbase::size_t          proc_first;
