@@ -369,7 +369,7 @@ target_compile_definitions(mgbase
     PUBLIC "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
 )
 target_link_libraries(mgbase
-    PRIVATE ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
+    PUBLIC ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
     PRIVATE mgbase-options
 )
 install(TARGETS mgbase
