@@ -64,10 +64,6 @@ private:
     
     void loop()
     {
-        #ifdef MGCOM_IBV_ENABLE_SLEEP
-        this->lk_ = this->queue_.get_lock();
-        #endif
-        
         while (MGBASE_LIKELY(!finished_))
         {
             dequeue_some();
@@ -86,13 +82,18 @@ private:
         
         if (!ret.valid()) {
             #ifdef MGCOM_IBV_ENABLE_SLEEP
+            auto lk = this->queue_.get_lock();
+            
             if (queue_.try_sleep()) {
                 MGBASE_LOG_DEBUG(
                     "msg:Command consumer starts sleeping."
                 );
                 
-                queue_.wait(lk_);
+                queue_.wait(lk);
             } else {
+                // Finish the critical section because this thread failed to sleep.
+                lk.unlock();
+                
                 ult::this_thread::yield();
             }
             #endif
@@ -170,10 +171,6 @@ private:
     
     mgbase::vector<mgbase::shared_ptr<qp_buffer>> qps_;
     mgbase::index_list<process_id_t> proc_indexes_;
-    
-    #ifdef MGCOM_IBV_ENABLE_SLEEP
-    command_queue::unique_lock_type lk_;
-    #endif
 };
 
 command_consumer::command_consumer(const config& conf)
