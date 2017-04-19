@@ -41,7 +41,9 @@ public:
     {
         base::finish();
         
+        #if 0 // TODO : disable waiting for all the completions (to get the results fast)
         mgcom::rma::deallocate(lptr_);
+        #endif
     }
     
     const thread_info& get_thread_info(const mgbase::size_t thread_id) {
@@ -154,11 +156,13 @@ protected:
         
         info.count = count;
         
+        #if 0 // TODO : disable waiting for all the completions (to get the results fast)
         // Wait for all established requests.
         for (mgbase::size_t i = 0; i < num_local_bufs; ++i) {
             while (!flags[i].load(mgbase::memory_order_relaxed))
                 mgcom::ult::this_thread::yield();
         }
+        #endif
         
         /*info.count = count.load();
         
