@@ -39,9 +39,17 @@ public:
         auto dev_attr = ctx_.query_device();
         auto port_attr = ctx_.query_port(port_num);
         
-        alltoall_queue_pairs::create(ep, coll, *cq_.get(), *pd_.get(), dev_attr, port_num);
-        
-        alltoall_queue_pairs::collective_start(dev_attr, port_attr, port_num);
+        alltoall_queue_pairs::collective_start(
+            alltoall_queue_pairs::start_config{
+                ep
+            ,   coll
+            ,   *cq_.get()
+            ,   *pd_.get()
+            ,   dev_attr
+            ,   port_attr
+            ,   port_num
+            }
+        );
     }
     
     void finalize()

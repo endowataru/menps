@@ -12,6 +12,7 @@ namespace ibv {
 using mgdev::ibv::queue_pair;
 using mgdev::ibv::device_attr_t;
 using mgdev::ibv::port_attr_t;
+using mgdev::ibv::port_num_t;
 
 class alltoall_queue_pairs
 {
@@ -19,11 +20,19 @@ public:
     explicit alltoall_queue_pairs(const index_t qp_count)
         : qp_count_(qp_count) { }
     
-    void create(mgcom::endpoint&, collective::requester&, ibv_cq&, ibv_pd&, const device_attr_t&, mgdev::ibv::port_num_t);
+    struct start_config {
+        mgcom::endpoint&        ep;
+        collective::requester&  coll;
+        ibv_cq&                 cq;
+        ibv_pd&                 pd;
+        const device_attr_t&    dev_attr;
+        const port_attr_t&      port_attr;
+        port_num_t              port_num;
+    };
+    
+    void collective_start(const start_config&);
     
     void destroy();
-    
-    void collective_start(const device_attr_t&, const port_attr_t&, mgdev::ibv::port_num_t);
     
     MGBASE_WARN_UNUSED_RESULT
     bool try_post_send(
@@ -51,9 +60,7 @@ private:
     }
     
     const index_t                       qp_count_;
-    mgbase::scoped_ptr<queue_pair []>   qps_;
-    endpoint*                           ep_;
-    collective::requester*              coll_;
+    mgbase::unique_ptr<queue_pair []>   qps_;
 };
 
 } // namespace ibv
