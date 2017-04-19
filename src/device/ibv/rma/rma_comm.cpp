@@ -81,7 +81,9 @@ private:
     mgbase::unique_ptr<completion_selector> comp_sel_;
     mgbase::unique_ptr<rma::registrator> reg_;
     mgbase::unique_ptr<rma::allocator> alloc_;
-    mgbase::unique_ptr<poll_thread> poll_;
+    
+protected:
+    mgbase::unique_ptr<poll_thread> poll_; // TODO: XXX
 };
 
 class direct_rma_comm
@@ -101,6 +103,12 @@ public:
         });
         
         rma::requester::set_instance(*req_);
+    }
+    
+    ~direct_rma_comm()
+    {
+        // Destroy poll_thread first to stop accessing the completion callbacks.
+        this->poll_.reset();
     }
     
     virtual rma::requester& get_requester() MGBASE_OVERRIDE {
@@ -128,6 +136,12 @@ public:
         });
         
         rma::requester::set_instance(*req_);
+    }
+    
+    ~scheduled_rma_comm()
+    {
+        // Destroy poll_thread first to stop accessing the completion callbacks.
+        this->poll_.reset();
     }
     
     virtual rma::requester& get_requester() MGBASE_OVERRIDE {
