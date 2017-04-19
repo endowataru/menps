@@ -31,7 +31,7 @@ public:
                 qp_buffer::config{ conf_.qps, conf_.qp_index, conf_.alloc, conf_.comp_sel, proc, conf_.reply_be }
             );
             
-            const auto qp_num = conf.qps.get_qp_num_of_proc(proc, 0);
+            const auto qp_num = conf.qps.get_qp_num_of_proc(proc, conf_.qp_index);
             
             conf.comp_sel.set(qp_num, qps_[index]->get_completer());
         }
