@@ -303,12 +303,24 @@ public:
             return false;
         }
         
-        return this->tail_.compare_exchange_weak(
-            tail
-        ,   (tail | 1)
-        ,   mgbase::memory_order_relaxed
-        ,   mgbase::memory_order_relaxed
+        const auto ret =
+            this->tail_.compare_exchange_weak(
+                tail
+            ,   (tail | 1)
+            ,   mgbase::memory_order_relaxed
+            ,   mgbase::memory_order_relaxed
+            );
+        
+        MGBASE_LOG_DEBUG(
+            "msg:{}.\t"
+            "head:0x{:x}\t"
+            "tail:0x{:x}\t"
+        ,   (ret ? "Succeeded sleeping" : "Falied to sleep")
+        ,   head
+        ,   tail
         );
+        
+        return ret;
     }
 };
 
