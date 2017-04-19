@@ -52,10 +52,6 @@ private:
         MGBASE_LOG_DEBUG("msg:Started IBV polling.");
         
         const auto wcs = mgbase::make_unique<ibv_wc []>(max_num_polled);
-    
-        #ifdef MGCOM_IBV_ENABLE_SLEEP
-        auto lk = comp_sel_.get_lock();
-        #endif
         
         while (MGBASE_LIKELY(!finished_))
         {
@@ -78,7 +74,7 @@ private:
                     comp.notify(wc.wr_id);
                 
                     #ifdef MGCOM_IBV_ENABLE_SLEEP
-                    comp_sel_.remove_outstanding(1, lk);
+                    comp_sel_.remove_outstanding(1);
                     #endif
                     
                     MGBASE_LOG_DEBUG(
@@ -93,7 +89,7 @@ private:
                 MGBASE_LOG_VERBOSE("msg:IBV CQ was empty.");
                 
                 #ifdef MGCOM_IBV_ENABLE_SLEEP
-                if (! comp_sel_.try_wait(lk)) {
+                if (! comp_sel_.try_wait()) {
                     // While there are ongoing requests,
                     // polling is failing.
                     ult::this_thread::yield();

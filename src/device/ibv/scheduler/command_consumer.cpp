@@ -87,6 +87,10 @@ private:
         if (!ret.valid()) {
             #ifdef MGCOM_IBV_ENABLE_SLEEP
             if (queue_.try_sleep()) {
+                MGBASE_LOG_DEBUG(
+                    "msg:Command consumer starts sleeping."
+                );
+                
                 queue_.wait(lk_);
             } else {
                 ult::this_thread::yield();

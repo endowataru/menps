@@ -38,17 +38,19 @@ public:
 private:
     typedef ult::unique_lock<ult::mutex>    unique_lock_type;
     
-public:
     unique_lock_type get_lock() {
         return unique_lock_type(this->mtx_);
     }
     
-    bool try_wait(unique_lock_type& lk)
+public:
+    bool try_wait()
     {
         auto old = num_outstanding_.load(mgbase::memory_order_relaxed);
         
         // If there's no request in QP - CQ
         if (old == 0) {
+            auto lk = this->get_lock();
+            
             // Try to sleep.
             if (num_outstanding_.compare_exchange_weak(old, 1, mgbase::memory_order_relaxed)) {
                 cv_.wait(lk);
@@ -62,13 +64,15 @@ public:
         return false;
     }
     
-    void remove_outstanding(const mgbase::size_t num_polled, unique_lock_type& lk)
+    void remove_outstanding(const mgbase::size_t num_polled)
     {
         auto old = num_outstanding_.load(mgbase::memory_order_relaxed);
         
         while (true) {
             // If only there are requests that finished right now
             if (old == (num_polled << 1)) {
+                auto lk = this->get_lock();
+                
                 // Try to sleep.
                 if (num_outstanding_.compare_exchange_weak(old, 1, mgbase::memory_order_relaxed)) {
                     cv_.wait(lk);
