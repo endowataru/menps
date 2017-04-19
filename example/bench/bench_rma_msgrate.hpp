@@ -148,16 +148,21 @@ protected:
         }
         
         for (mgbase::size_t i = 0; i < num_local_bufs; ++i) {
-            if (flags[i].load())
+            if (flags[i].load(mgbase::memory_order_relaxed))
                 ++count;
         }
         
         info.count = count;
         
+        // Wait for all established requests.
+        for (mgbase::size_t i = 0; i < num_local_bufs; ++i) {
+            while (!flags[i].load(mgbase::memory_order_relaxed))
+                mgcom::ult::this_thread::yield();
+        }
+        
         /*info.count = count.load();
         
-        while (count.load() < posted)
-            mgbase::ult::this_thread::yield();*/
+        */
         
         // TODO: currently deallocation is disabled (= memory leak)
         /*for (auto itr = lptrs.begin(); itr != lptrs.end(); ++itr)
