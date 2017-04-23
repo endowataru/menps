@@ -29,6 +29,9 @@ public:
             atomic_buffer::config{ conf.alloc, max_num_completions, conf.reply_be }
         )
         , qp_infos_(mgbase::make_unique<qp_info []>(conf.ep.number_of_processes()))
+        #ifdef MGCOM_IBV_SEPARATE_CQ
+        , comp_sel_(mgbase::make_unique<completion_selector>())
+        #endif
     {
         for (process_id_t proc = 0; proc < conf.ep.number_of_processes(); ++proc)
         {
@@ -36,7 +39,7 @@ public:
             
             const auto qp_num = conf_.qps.get_qp_num_of_proc(proc, 0);
             
-            conf_.comp_sel.set(qp_num, info.comp);
+            this->get_comp_sel().set(qp_num, info.comp);
         }
     }
     
@@ -82,7 +85,7 @@ private:
             t.commit();
             
             #ifdef MGCOM_IBV_ENABLE_SLEEP
-            conf_.comp_sel.notify(1);
+            this->get_comp_sel().notify(1);
             #endif
             
             return true;
@@ -91,6 +94,14 @@ private:
             t.rollback();
             return false;
         }
+    }
+    
+    completion_selector& get_comp_sel() const MGBASE_NOEXCEPT {
+        #ifdef MGCOM_IBV_SEPARATE_CQ
+        return *comp_sel_;
+        #else
+        return conf_.comp_sel;
+        #endif
     }
     
     struct qp_info
@@ -102,6 +113,10 @@ private:
     const requester_config          conf_;
     ibv::atomic_buffer              atomic_buf_;
     mgbase::unique_ptr<qp_info []>  qp_infos_;
+    
+    #ifdef MGCOM_IBV_SEPARATE_CQ
+    mgbase::unique_ptr<completion_selector> comp_sel_;
+    #endif
 };
 
 } // unnamed namespace

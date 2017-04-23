@@ -17,12 +17,25 @@ void alltoall_queue_pairs::collective_start(const start_config& conf)
     
     const mgbase::size_t total_qp_count = ep.number_of_processes() * qp_count_;
     
+    #ifdef MGCOM_IBV_SEPARATE_CQ
+    cqs_ = mgbase::make_unique<completion_queue []>(total_qp_count);
+    #endif
+    
     qps_ = mgbase::make_unique<queue_pair []>(total_qp_count);
     
     for (mgbase::size_t qp_id = 0; qp_id < total_qp_count; ++qp_id) {
+        #ifdef MGCOM_IBV_SEPARATE_CQ
+        cqs_[qp_id] = mgdev::ibv::make_completion_queue(conf.dev_ctx.get());
+        #endif
+        
         auto init_attr = mgdev::ibv::make_default_rc_qp_init_attr(conf.dev_attr);
+        #ifdef MGCOM_IBV_SEPARATE_CQ
+        init_attr.send_cq = cqs_[qp_id].get();
+        init_attr.recv_cq = cqs_[qp_id].get();
+        #else
         init_attr.send_cq = &conf.cq;
         init_attr.recv_cq = &conf.cq;
+        #endif
         
         auto qp = mgdev::ibv::make_queue_pair(&conf.pd, &init_attr);
         qp.init(conf.port_num);
@@ -69,6 +82,10 @@ void alltoall_queue_pairs::collective_start(const start_config& conf)
 void alltoall_queue_pairs::destroy()
 {
     qps_.reset();
+    
+    #ifdef MGCOM_IBV_SEPARATE_CQ
+    cqs_.reset();
+    #endif
     
     MGBASE_LOG_DEBUG("msg:Destroyed all IBV queue_pairs.");
 }

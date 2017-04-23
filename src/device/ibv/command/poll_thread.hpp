@@ -12,7 +12,11 @@ class completion_selector;
 class poll_thread
 {
 public:
-    poll_thread(mgdev::ibv::completion_queue&, completion_selector&);
+    poll_thread(
+        mgdev::ibv::completion_queue&
+    ,   completion_selector&
+    );
+    
     ~poll_thread();
     
 private:

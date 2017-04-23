@@ -14,7 +14,9 @@ class completion_selector;
 struct requester_config
 {
     alltoall_queue_pairs&   qps;
+    #ifndef MGCOM_IBV_SEPARATE_CQ
     completion_selector&    comp_sel;
+    #endif
     rma::allocator&         alloc;
     mgcom::endpoint&        ep;
     bool                    reply_be;

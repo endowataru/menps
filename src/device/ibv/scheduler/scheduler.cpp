@@ -6,6 +6,9 @@
 #include <mgbase/algorithm.hpp>
 #include <mgbase/logger.hpp>
 #include <mgbase/shared_ptr.hpp>
+#include "device/ibv/command/poll_thread.hpp"
+#include "device/ibv/command/completion_selector.hpp"
+#include "device/ibv/native/alltoall_queue_pairs.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -26,6 +29,10 @@ public:
         num_groups_ = mgbase::roundup_divide(num_procs, num_grouped_procs_);
         
         sers_.resize(num_groups_);
+        #ifdef MGCOM_IBV_SEPARATE_CQ
+        comp_sels_.resize(num_groups_);
+        poll_ths_.resize(num_groups_);
+        #endif
         
         const auto num_qps_per_proc = conf_.num_qps_per_proc;
         
@@ -34,6 +41,11 @@ public:
         for (mgbase::size_t group_index = 0; group_index < num_groups_; ++group_index)
         {
             sers_[group_index].resize(num_qps_per_proc);
+            
+            #ifdef MGCOM_IBV_SEPARATE_CQ
+            comp_sels_[group_index].resize(num_qps_per_proc);
+            poll_ths_[group_index].resize(num_qps_per_proc);
+            #endif
             
             for (mgbase::size_t qp_index = 0; qp_index < num_qps_per_proc; ++qp_index)
             {
@@ -46,13 +58,31 @@ public:
                 ,   num_procs_per_group
                 );
                 
+                #ifdef MGCOM_IBV_SEPARATE_CQ
+                comp_sels_[group_index][qp_index] =
+                    mgbase::make_shared<completion_selector>();
+                
+                // FIXME: broken when num_groups != num_procs
+                auto& cq = conf_.qps.get_cq(group_index, qp_index);
+                
+                poll_ths_[group_index][qp_index] =
+                    mgbase::make_shared<poll_thread>(
+                        cq
+                    ,   *comp_sels_[group_index][qp_index]
+                    );
+                #endif
+                
                 sers_[group_index][qp_index] =
                     mgbase::make_shared<serializer>(
                         serializer::config{
                             conf_.qps
                         ,   qp_index
                         ,   conf_.alloc
+                        #ifdef MGCOM_IBV_SEPARATE_CQ
+                        ,   *comp_sels_[group_index][qp_index]
+                        #else
                         ,   conf_.comp_sel
+                        #endif
                         ,   proc_from
                         ,   num_procs_per_group
                         ,   conf.reply_be
@@ -125,6 +155,11 @@ private:
     std::vector<std::vector<mgbase::shared_ptr<serializer>>> sers_;
     
     static MGBASE_THREAD_LOCAL mgbase::size_t* qp_indexes_;
+    
+    #ifdef MGCOM_IBV_SEPARATE_CQ
+    std::vector<std::vector<mgbase::shared_ptr<completion_selector>>> comp_sels_;
+    std::vector<std::vector<mgbase::shared_ptr<poll_thread>>> poll_ths_;
+    #endif
 };
 
 MGBASE_THREAD_LOCAL mgbase::size_t* scheduled_rma_requester::qp_indexes_ = MGBASE_NULLPTR;
