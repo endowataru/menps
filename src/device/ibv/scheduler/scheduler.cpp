@@ -25,8 +25,11 @@ public:
         : conf_(conf)
     {
         const auto num_procs = conf_.ep.number_of_processes();
+        #if 0
         num_grouped_procs_ = get_num_grouped_procs();
-        num_groups_ = mgbase::roundup_divide(num_procs, num_grouped_procs_);
+        #endif
+        const auto num_grouped_procs = get_num_grouped_procs();
+        num_groups_ = mgbase::roundup_divide(num_procs, num_grouped_procs);
         
         sers_.resize(num_groups_);
         #ifdef MGCOM_IBV_SEPARATE_CQ
@@ -49,14 +52,14 @@ public:
             
             for (mgbase::size_t qp_index = 0; qp_index < num_qps_per_proc; ++qp_index)
             {
-                mgbase::size_t num_procs_per_group = mgbase::min(proc_from + num_grouped_procs_, num_procs) - proc_from;
+                mgbase::size_t num_procs_per_group = mgbase::min(proc_from + num_grouped_procs, num_procs) - proc_from;
                 
                 MGBASE_LOG_DEBUG(
                     "msg:Initializing serializer.\t"
                     "from:{}\tnum:{}"
                 ,   proc_from
                 ,   num_procs_per_group
-                );
+);
                 
                 #ifdef MGCOM_IBV_SEPARATE_CQ
                 comp_sels_[group_index][qp_index] =
@@ -90,7 +93,7 @@ public:
                     );
             }
             
-            proc_from += num_grouped_procs_;
+            proc_from += num_grouped_procs;
             
             if (proc_from >= num_procs)
                 break;
@@ -119,7 +122,7 @@ private:
     ) {
         MGBASE_ASSERT(valid_process_id(proc));
         
-        const mgbase::size_t group_index = proc / num_grouped_procs_;
+        const mgbase::size_t group_index = proc / this->get_num_grouped_procs();
         MGBASE_ASSERT(group_index < sers_.size());
         
         auto qp_indexes = qp_indexes_;
@@ -143,14 +146,18 @@ private:
     
     static mgbase::size_t get_num_grouped_procs() MGBASE_NOEXCEPT
     {
+    #if 0
         if (const auto str = std::getenv("MGCOM_IBV_NUM_GROUP_PROCS"))
             return std::atoi(str);
         else
+    #endif
             return 1; // Default
     }
     
     const requester_config conf_;
+    #if 0
     mgbase::size_t num_grouped_procs_;
+    #endif
     mgbase::size_t num_groups_;
     std::vector<std::vector<mgbase::shared_ptr<serializer>>> sers_;
     
