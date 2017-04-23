@@ -164,6 +164,9 @@ protected:
         }
         #endif
         
+        // TODO : memory leak
+        flags.release();
+        
         /*info.count = count.load();
         
         */
