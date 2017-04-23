@@ -58,6 +58,8 @@ else()
         #$<$<COMPILE_LANGUAGE:CXX>:-std=c++03> # TODO: COMPILE_LANGUAGE doesn't work on old CMake versions
         -DGTEST_HAS_TR1_TUPLE=0
         -Wno-variadic-macros
+        
+        -ftls-model=initial-exec
     )
     if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"))
         target_compile_options(mgbase-options INTERFACE
