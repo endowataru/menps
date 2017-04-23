@@ -101,7 +101,10 @@ protected:
         {
             const auto proc = select_target_proc();
             
-            while (!flags[pos].load(mgbase::memory_order_acquire)) { /*busy loop*/ }
+            while (!flags[pos].load(mgbase::memory_order_acquire)) {
+                ult::this_thread::yield();
+                /*busy loop*/
+            }
             
             flags[pos].store(false);
             ++count;
