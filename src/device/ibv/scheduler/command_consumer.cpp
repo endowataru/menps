@@ -80,7 +80,7 @@ private:
         
         auto ret = queue_.try_dequeue(send_wr_buffer::max_size);
         
-        if (!ret.valid()) {
+        if (MGBASE_UNLIKELY(!ret.valid())) {
             #ifdef MGCOM_IBV_ENABLE_SLEEP
             auto lk = this->queue_.get_lock();
             
