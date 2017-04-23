@@ -22,7 +22,8 @@ inline void make_wr_to(
     wr->sg_list               = sge;
     wr->num_sge               = 1;
     wr->opcode                = IBV_WR_RDMA_WRITE;
-    wr->send_flags            = 0; // TODO
+    //wr->send_flags            = 0; // TODO
+    wr->send_flags            = IBV_SEND_INLINE; // TODO
     wr->wr.rdma.remote_addr   = cmd.raddr;
     wr->wr.rdma.rkey          = cmd.rkey;
     
