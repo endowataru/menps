@@ -62,12 +62,9 @@ public:
             : enqueue_transaction_base(self, data) { }
         
         enqueue_transaction(const enqueue_transaction&) = delete;
-        #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-        enqueue_transaction(enqueue_transaction&&) MGBASE_DEFAULT_NOEXCEPT = default;
-        #else
-        enqueue_transaction(enqueue_transaction&& other) MGBASE_NOEXCEPT
-            : enqueue_transaction_base(mgbase::move(other)) { }
-        #endif
+        enqueue_transaction& operator = (const enqueue_transaction&) = delete;
+        
+        MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(enqueue_transaction, enqueue_transaction_base)
         
         void commit(const index_type num)
         {
@@ -122,12 +119,9 @@ public:
             : dequeue_transaction_base(self, data) { }
         
         dequeue_transaction(const dequeue_transaction&) = delete;
-        #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-        dequeue_transaction(dequeue_transaction&&) MGBASE_DEFAULT_NOEXCEPT = default;
-        #else
-        dequeue_transaction(dequeue_transaction&& other) MGBASE_NOEXCEPT
-            : dequeue_transaction_base(mgbase::move(other)) { }
-        #endif
+        dequeue_transaction& operator = (const dequeue_transaction&) = delete;
+        
+        MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(dequeue_transaction, dequeue_transaction_base)
         
         void commit(const index_type num)
         {
