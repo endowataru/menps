@@ -79,7 +79,9 @@ protected:
         mgbase::uint64_t pos = 0;
         mgbase::int64_t count = -num_local_bufs;
         #endif
-        mgbase::atomic<mgbase::uint64_t> num_finished{0};
+        // num_finished{0};
+        auto num_finished = mgbase::make_unique<mgbase::atomic<mgbase::uint64_t>>();
+        num_finished->store(0);
         mgbase::uint64_t num_established = 0;
         
         while (!this->finished())
@@ -108,7 +110,7 @@ protected:
             ,   buf_.at_process(proc)
             ,   lbuf
             ,   msg_size_
-            ,   mgbase::make_callback_fetch_add_release(&num_finished, MGBASE_NONTYPE(1))
+            ,   mgbase::make_callback_fetch_add_release(num_finished.get(), MGBASE_NONTYPE(1))
             );
             
             const auto t1 = mgbase::get_cpu_clock();
@@ -125,7 +127,7 @@ protected:
             ++num_established;
             
             if (r.is_ready()) {
-                num_finished.fetch_add(1, mgbase::memory_order_relaxed);
+                num_finished->fetch_add(1, mgbase::memory_order_relaxed);
                 //flags[pos].store(true, mgbase::memory_order_relaxed);
             }
         }
@@ -137,12 +139,16 @@ protected:
         }
         #endif
         
-        info.count = num_finished.load();
+        info.count = num_finished->load();
         
-        while (num_finished.load() < num_established)
+        #if 0
+        num_finished.release();
+        #else
+        while (num_finished->load() < num_established)
         {
             ult::this_thread::yield();
         }
+        #endif
         
         
         #if 0 // TODO : disable waiting for all the completions (to get the results fast)
