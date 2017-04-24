@@ -84,6 +84,13 @@ private:
             #ifdef MGCOM_IBV_ENABLE_SLEEP_QP
             auto lk = this->queue_.get_lock();
             
+            if (!proc_indexes_.empty()) {
+                lk.unlock();
+                
+                ult::this_thread::yield();
+                return;
+            }
+            
             if (queue_.try_sleep()) {
                 MGBASE_LOG_DEBUG(
                     "msg:Command consumer starts sleeping."
