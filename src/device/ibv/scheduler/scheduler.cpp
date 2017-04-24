@@ -169,7 +169,8 @@ private:
     #endif
 };
 
-MGBASE_THREAD_LOCAL mgbase::size_t* scheduled_rma_requester::qp_indexes_ = MGBASE_NULLPTR;
+MGBASE_THREAD_LOCAL mgbase::size_t* scheduled_rma_requester::qp_indexes_ = 0/*MGBASE_NULLPTR*/;
+    // TODO: MGBASE_NULLPTR doesn't work well in initialization in old GCC
 
 } // unnamed namespace
 
