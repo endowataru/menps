@@ -30,7 +30,7 @@ public:
     {
         finished_ = true;
         
-        #ifdef MGCOM_IBV_ENABLE_SLEEP
+        #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
         comp_sel_.force_notify();
         #endif
         
@@ -73,7 +73,7 @@ private:
                     
                     comp.notify(wc.wr_id);
                 
-                    #ifdef MGCOM_IBV_ENABLE_SLEEP
+                    #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
                     comp_sel_.remove_outstanding(1);
                     #endif
                     
@@ -88,7 +88,7 @@ private:
             {
                 MGBASE_LOG_VERBOSE("msg:IBV CQ was empty.");
                 
-                #ifdef MGCOM_IBV_ENABLE_SLEEP
+                #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
                 if (! comp_sel_.try_wait()) {
                     // While there are ongoing requests,
                     // polling is failing.

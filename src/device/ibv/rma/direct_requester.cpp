@@ -84,7 +84,7 @@ private:
         if (success) {
             t.commit();
             
-            #ifdef MGCOM_IBV_ENABLE_SLEEP
+            #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
             this->get_comp_sel().notify(1);
             #endif
             

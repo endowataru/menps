@@ -3,7 +3,7 @@
 
 #include "device/ibv/command/command.hpp"
 
-#ifdef MGCOM_IBV_ENABLE_SLEEP
+#ifdef MGCOM_IBV_ENABLE_SLEEP_QP
     #include <mgbase/nonblocking/mpsc_locked_bounded_queue.hpp>
 #else
     #include <mgbase/nonblocking/mpsc_bounded_queue.hpp>
@@ -15,7 +15,7 @@ namespace mgcom {
 namespace ibv {
 
 class command_queue
-#ifdef MGCOM_IBV_ENABLE_SLEEP
+#ifdef MGCOM_IBV_ENABLE_SLEEP_QP
     : public mgbase::static_mpsc_locked_bounded_queue<command, command::queue_size>
 {
 //protected:

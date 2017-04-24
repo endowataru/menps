@@ -14,7 +14,7 @@ class completion_selector
 {
 public:
     completion_selector()
-        #ifdef MGCOM_IBV_ENABLE_SLEEP
+        #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
         : num_outstanding_{0}
         #endif
     { }
@@ -34,7 +34,7 @@ public:
         return *m_[qp_num];
     }
     
-    #ifdef MGCOM_IBV_ENABLE_SLEEP
+    #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
 private:
     typedef ult::unique_lock<ult::mutex>    unique_lock_type;
     
@@ -114,7 +114,7 @@ public:
 private:
     std::unordered_map<qp_num_t, completer*> m_;
     
-    #ifdef MGCOM_IBV_ENABLE_SLEEP
+    #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
     mgbase::atomic<mgbase::size_t>  num_outstanding_;
     
     ult::mutex              mtx_;

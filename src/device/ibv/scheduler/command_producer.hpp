@@ -40,7 +40,7 @@ public:
             
             t.commit(1);
             
-            #ifdef MGCOM_IBV_ENABLE_SLEEP
+            #ifdef MGCOM_IBV_ENABLE_SLEEP_QP
             if (t.is_sleeping()) { // (old_tail & 1) == 1
                 MGBASE_LOG_DEBUG(
                     "msg:Awake command consumer."

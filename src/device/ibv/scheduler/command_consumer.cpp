@@ -44,7 +44,7 @@ public:
         // Order the running thread to stop.
         finished_ = true;
         
-        #ifdef MGCOM_IBV_ENABLE_SLEEP
+        #ifdef MGCOM_IBV_ENABLE_SLEEP_QP
         this->queue_.notify();
         #endif
         
@@ -81,7 +81,7 @@ private:
         auto ret = queue_.try_dequeue(send_wr_buffer::max_size);
         
         if (MGBASE_UNLIKELY(!ret.valid())) {
-            #ifdef MGCOM_IBV_ENABLE_SLEEP
+            #ifdef MGCOM_IBV_ENABLE_SLEEP_QP
             auto lk = this->queue_.get_lock();
             
             if (queue_.try_sleep()) {
