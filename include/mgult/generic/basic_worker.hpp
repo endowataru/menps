@@ -6,6 +6,7 @@
 #include <mgbase/memory/align.hpp>
 #include <mgbase/memory/distance_in_bytes.hpp>
 #include <mgbase/nontype.hpp>
+#include <mgctx/common.hpp>
 #include <algorithm>
 
 namespace mgult {
@@ -70,6 +71,7 @@ private:
         ult_ref_type    th;
     };
     
+    MGCTX_SWITCH_FUNCTION
     static transfer_type loop_root_handler(
         const context_type      ctx
     ,   loop_root_data* const   d
@@ -286,7 +288,7 @@ private:
         ult_ref_type    child_th;
     };
     
-    MGBASE_NORETURN
+    MGCTX_SWITCH_FUNCTION MGBASE_NORETURN
     static transfer_type fork_child_first_handler(
         const context_type              ctx
     ,   fork_child_first_data* const    d
@@ -394,7 +396,7 @@ public:
     }
     
 private:
-    MGBASE_NORETURN
+    MGCTX_SWITCH_FUNCTION MGBASE_NORETURN
     static void fork_parent_first_handler(const transfer_type tr)
     MGBASE_NOEXCEPT
     {
@@ -473,6 +475,7 @@ private:
         ult_ref_type    next_th;
     };
     
+    MGCTX_SWITCH_FUNCTION
     static transfer_type join_handler(
         const context_type  ctx
     ,   join_data* const    d
@@ -628,6 +631,7 @@ private:
         ult_ref_type    next_th;
     };
     
+    MGCTX_SWITCH_FUNCTION
     static transfer_type yield_handler(
         const context_type  ctx
     ,   yield_data* const   d
@@ -720,6 +724,7 @@ private:
         context_type    next_ctx;
     };
     
+    MGCTX_SWITCH_FUNCTION
     static transfer_type exit_handler(exit_data* const d) MGBASE_NOEXCEPT
     {
         auto& self = d->self;
