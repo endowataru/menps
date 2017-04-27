@@ -109,6 +109,9 @@
 
 #define MGBASE_GET_STACK_POINTER()      (__builtin_frame_address(0))
 
+#define MGBASE_VISIBILITY_DEFAULT       __attribute__((visibility("default")))
+#define MGBASE_VISIBILITY_HIDDEN        __attribute__((visibility("hidden")))
+
 #ifndef __cplusplus
     #include <stdint.h>
     #include <stdlib.h>
