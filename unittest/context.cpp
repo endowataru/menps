@@ -7,6 +7,7 @@ namespace /*unnamed*/ {
 
 typedef mgbase::uintptr_t   uip;
 
+MGCTX_SWITCH_FUNCTION
 mgctx::transfer<int*> f_return(mgctx::context<int*>, int* d)
 {
     return { d };
@@ -36,11 +37,13 @@ TEST(Context, Return)
 
 namespace /*unnamed*/ {
 
+MGCTX_SWITCH_FUNCTION
 mgctx::transfer<int*> f_restore_2(int* d)
 {
     return { d };
 }
 
+MGCTX_SWITCH_FUNCTION
 mgctx::transfer<int*> f_restore(mgctx::context<int*> ctx, int* d)
 {
     mgctx::restore_context(
@@ -75,6 +78,7 @@ namespace /*unnamed*/ {
 
 mgctx::context<int*> g_ctx_swap;
 
+MGCTX_SWITCH_FUNCTION
 mgctx::transfer<int*> f_swap_3(int* d)
 {
     return { d };
@@ -83,6 +87,7 @@ mgctx::transfer<int*> f_swap_3(int* d)
 #ifdef MGBASE_COMPILER_CLANG
 MGBASE_NORETURN
 #endif
+MGCTX_SWITCH_FUNCTION
 void f_swap_2(mgctx::transfer<int*> tr)
 {
     mgctx::restore_context(
@@ -92,6 +97,7 @@ void f_swap_2(mgctx::transfer<int*> tr)
     );
 }
 
+MGCTX_SWITCH_FUNCTION
 mgctx::transfer<int*> f_swap(mgctx::context<int*> ctx, int* d)
 {
     g_ctx_swap = ctx;

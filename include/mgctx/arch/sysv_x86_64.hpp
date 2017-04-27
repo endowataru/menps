@@ -51,7 +51,7 @@ inline context<T*> make_context(
 }
 
 #define SAVE_CONTEXT(saved_rsp) \
-        /* Save RSP to a certain callee-saved register (R15). */ \
+        /* Save RSP to a certain callee-saved register. */ \
         "movq   %%rsp, %%" saved_rsp "\n\t" \
         \
         /* Align RSP to follow 16-byte stack alignment. */ \
@@ -76,18 +76,44 @@ inline context<T*> make_context(
         /* Swap the stack pointers. */ \
         "xchg   %%rdi, %%rsp\n\t"
 
-#define CLOBBER_REGISTERS \
+#define CLOBBERS_BASE \
+        "cc", "memory", \
         /* Caller-saved registers */ \
         "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11", \
         /* Callee-saved registers */ \
         "%r12", "%r13", "%r14", "%r15"
-        
+    
         // Not listed in clobbers:
         //  RSI, RDI : Inputs.
         //  RAX      : Returned value.
         //  RSP, RBP : Saved & restored.
-        //  RBX      : Function pointer.
+        //  RBX      : Function pointer. (MGCTX_AVOID_PLT is not defined)
 
+#ifdef MGCTX_AVOID_PLT
+    #define CLOBBERS                CLOBBERS_BASE, "rbx"
+    #define FUNC_OPERAND            "%P[func]"
+    #define OUTPUT_CONSTRAINT_FUNC
+    #define INPUT_CONSTRAINTS   \
+        [func] "i" (Func)
+#else
+    #define CLOBBERS                CLOBBERS_BASE
+    #define FUNC_OPERAND            "*%[func]"
+    #define OUTPUT_CONSTRAINT_FUNC \
+        /* RBX | Input: User-defined function. / Output: Overwritten (but discarded). */ \
+        , [func] "+b" (func)
+    
+    #define INPUT_CONSTRAINTS   \
+        /* No input constraints */
+#endif
+
+#define OUTPUT_CONSTRAINTS(rdi, rax, rsi)   \
+    /* RDI | Input: RSP or  / Output: Overwritten (but discarded). */ \
+    "+D" (rdi), \
+    /* RAX | Output: User-defined value from Func or the previous context. */ \
+    "=a" (rax), \
+    /* RSI | Input: User-defined value. / Output: Overwritten (but discarded). */ \
+    "+S" (arg)  \
+    OUTPUT_CONSTRAINT_FUNC
 
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> save_context(
@@ -101,7 +127,9 @@ inline transfer<T*> save_context(
     // Align the stack pointer.
     auto new_sp = (reinterpret_cast<i64>(sp) & mask) - 0x8;
     
+    #ifndef MGCTX_AVOID_PLT
     auto func = Func;
+    #endif
     
     transfer<T*> result;
     
@@ -118,7 +146,7 @@ inline transfer<T*> save_context(
         
         // Call the user-defined function here.
         //  (RAX, RDX) = func(RDI, RSI);
-        "call   *%[func]\n\t"
+        "call   " FUNC_OPERAND "\n\t"
         
         // The function ordinarily finished.
         
@@ -134,20 +162,16 @@ inline transfer<T*> save_context(
         
         // result = RAX;
         
-    :   // Output constraints
+    :   OUTPUT_CONSTRAINTS(
         // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
-        "+D" (new_sp),
+            new_sp ,
         // RAX | Output: User-defined value from Func or the previous context.
-        "=a" (result.p0),
+            result.p0 ,
         // RSI | Input: User-defined value. / Output: Overwritten (but discarded).
-        "+S" (arg),
-        // RBX | Input: User-defined function. / Output: Overwritten (but discarded).
-        [func] "+b" (func)
-        
-    :   // No input constraints
-        
-    :   "cc", "memory",
-        CLOBBER_REGISTERS
+            arg
+        )
+    :   INPUT_CONSTRAINTS
+    :   CLOBBERS
     );
     
     return result;
@@ -173,7 +197,7 @@ inline transfer<T*> swap_context(
         
         // Call the user-defined function here.
         //  (RAX, RDX) = func(RDI, RSI);
-        "jmp    *%[func]\n\t"
+        "jmp    " FUNC_OPERAND "\n\t"
         
     "1:\n\t"
         // Continuation starts here.
@@ -187,24 +211,28 @@ inline transfer<T*> swap_context(
         
         // result = RAX;
         
-    :   // Output constraints
+    :   OUTPUT_CONSTRAINTS(
         // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
-        "+D" (ctx.p),
+            ctx.p ,
         // RAX | Output: User-defined value from Func or the previous context.
-        "=a" (result.p0),
+            result.p0 ,
         // RSI | Input: User-defined value / Output: Overwritten (but discarded).
-        "+S" (arg),
-        // RBX | Input: User-defined function. / Output: Overwritten (but discarded).
-        [func] "+b" (func)
-        
-    :   // No input constraints
-        
-    :   "cc", "memory",
-        CLOBBER_REGISTERS
+            arg
+        )
+    :   INPUT_CONSTRAINTS
+    :   CLOBBERS
     );
     
     return result;
 }
+
+#undef SAVE_CONTEXT
+#undef CLOBBERS_BASE
+#undef CLOBBERS
+#undef OUTPUT_CONSTRAINT_FUNC
+#undef OUTPUT_CONSTRAINTS
+#undef INPUT_CONSTRAINTS
+#undef FUNC_OPERAND
 
 template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
 MGBASE_NORETURN
@@ -244,9 +272,6 @@ inline void restore_context(
     
     MGBASE_UNREACHABLE();
 }
-
-#undef SAVE_CONTEXT
-#undef CLOBBER_REGISTERS
 
 } // namespace mgctx
 

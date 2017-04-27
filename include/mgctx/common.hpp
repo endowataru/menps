@@ -3,6 +3,10 @@
 
 #include <mgbase/lang.hpp>
 
+#define MGCTX_SWITCH_FUNCTION   MGBASE_VISIBILITY_HIDDEN
+
+#define MGCTX_AVOID_PLT
+
 namespace mgctx {
 
 struct context_frame;
