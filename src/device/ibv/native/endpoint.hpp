@@ -88,7 +88,6 @@ private:
     }
     
 public:
-    using alltoall_queue_pairs::try_post_send;
     using alltoall_queue_pairs::get_qp_num_of_proc;
     using alltoall_queue_pairs::get_qp_count;
     

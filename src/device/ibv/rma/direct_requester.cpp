@@ -79,7 +79,10 @@ private:
         wr.next = MGBASE_NULLPTR;
         
         ibv_send_wr* bad_wr = MGBASE_NULLPTR;
-        const bool success = conf_.qps.try_post_send(proc, 0, wr, &bad_wr);
+        auto& qp = conf_.qps.get_qp(proc, 0);
+        
+        const bool success =
+            qp.try_post_send(wr, &bad_wr);
         
         if (success) {
             t.commit();

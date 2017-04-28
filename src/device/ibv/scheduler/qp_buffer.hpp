@@ -14,12 +14,9 @@ class qp_buffer
 {
 public:
     struct config {
-        alltoall_queue_pairs&   qps;
-        mgbase::size_t          qp_index;
-        
+        queue_pair&             qp;
         rma::allocator&         alloc;
         completion_selector&    comp_sel;
-        process_id_t            proc;
         bool                    reply_be;
     };
     
@@ -45,7 +42,7 @@ public:
         
         mgbase::size_t wr_index = 0;
         const auto wr = wr_buf_.try_enqueue(&wr_index);
-        if (!wr) {
+        if (MGBASE_UNLIKELY(!wr)) {
             t.rollback();
             return false;
         }
@@ -72,7 +69,7 @@ public:
         ibv_send_wr* bad_wr = MGBASE_NULLPTR;
         
         MGBASE_UNUSED
-        const bool success = conf_.qps.try_post_send(conf_.proc, conf_.qp_index, wr_buf_.front(), &bad_wr);
+        const bool success = conf_.qp.try_post_send(wr_buf_.front(), &bad_wr);
         
         wr_buf_.relink();
         
@@ -80,8 +77,7 @@ public:
         
         MGBASE_LOG_DEBUG(
             "msg:Posted IBV requests.\t"
-            "proc:{}\tbad_wr:{:x}"
-        ,   conf_.proc
+            "bad_wr:{:x}"
         ,   reinterpret_cast<mgbase::uintptr_t>(bad_wr)
         );
         

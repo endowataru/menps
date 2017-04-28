@@ -27,8 +27,10 @@ public:
         {
             const process_id_t proc = conf.proc_first + index;
             
+            auto& qp = conf_.qps.get_qp(proc, conf_.qp_index);
+            
             qps_[index] = mgbase::make_shared<qp_buffer>(
-                qp_buffer::config{ conf_.qps, conf_.qp_index, conf_.alloc, conf_.comp_sel, proc, conf_.reply_be }
+                qp_buffer::config{ qp, conf_.alloc, conf_.comp_sel, conf_.reply_be }
             );
             
             const auto qp_num = conf.qps.get_qp_num_of_proc(proc, conf_.qp_index);

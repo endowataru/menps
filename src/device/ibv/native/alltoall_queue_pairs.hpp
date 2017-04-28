@@ -47,16 +47,6 @@ public:
     
     void destroy();
     
-    MGBASE_WARN_UNUSED_RESULT
-    bool try_post_send(
-        const process_id_t  proc
-    ,   const index_t       qp_index
-    ,   ibv_send_wr&        wr
-    ,   ibv_send_wr** const bad_wr
-    ) {
-        return get_qp(proc, qp_index).try_post_send(wr, bad_wr);
-    }
-    
     mgbase::uint32_t get_qp_num_of_proc(const process_id_t proc, const index_t qp_index)
     {
         return get_qp(proc, qp_index).get_qp_num();
@@ -72,7 +62,6 @@ public:
     }
     #endif
     
-private:
     queue_pair& get_qp(const process_id_t proc, const index_t qp_index)
     {
         MGBASE_ASSERT(qp_index < qp_count_);
@@ -80,6 +69,7 @@ private:
         return qps_[qp_id];
     }
     
+private:
     const index_t                       qp_count_;
     
     #ifdef MGCOM_IBV_SEPARATE_CQ
