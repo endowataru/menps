@@ -38,8 +38,6 @@ public:
     
     void destroy();
     
-    index_t get_qp_count() const MGBASE_NOEXCEPT { return qp_count_; }
-    
     queue_pair& get_qp(const process_id_t proc, const index_t qp_index)
     {
         MGBASE_ASSERT(qp_index < qp_count_);

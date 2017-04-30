@@ -76,9 +76,6 @@ private:
         return std::getenv("MGCOM_IBV_DEVICE");
     }
     
-public:
-    using alltoall_queue_pairs::get_qp_count;
-    
 private:
     device_context      ctx_;
     protection_domain   pd_;
