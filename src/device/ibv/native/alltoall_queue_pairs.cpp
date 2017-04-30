@@ -29,7 +29,7 @@ void alltoall_queue_pairs::collective_start(const start_config& conf)
     );
     
     qps_ = mgbase::make_unique<queue_pair []>(total_qp_count);
-    tag_queues_ = mgbase::make_unique<completer []>(total_qp_count);
+    tag_queues_ = mgbase::make_unique<tag_queue []>(total_qp_count);
     
     for (mgbase::size_t qp_id = 0; qp_id < total_qp_count; ++qp_id) {
         const mgbase::size_t cq_id =

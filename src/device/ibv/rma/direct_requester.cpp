@@ -1,7 +1,6 @@
 
 #include "requester_base.hpp"
 #include "requester.hpp"
-#include "device/ibv/command/completer.hpp"
 #include "device/ibv/command/atomic_buffer.hpp"
 #include "device/ibv/command/code.hpp"
 #include "device/ibv/native/alltoall_queue_pairs.hpp"
@@ -101,7 +100,6 @@ private:
     struct qp_info
     {
         mgbase::spinlock    lock;
-        //ibv::completer      comp;
     };
     
     const requester_config          conf_;

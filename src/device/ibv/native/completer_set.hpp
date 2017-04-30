@@ -2,9 +2,9 @@
 #pragma once
 
 #include <mgdev/ibv/completion_queue.hpp>
+#include "device/ibv/command/tag_queue.hpp"
 #include "device/ibv/command/completion_selector.hpp"
 #include "device/ibv/command/poll_thread.hpp"
-#include "device/ibv/command/completer.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -42,7 +42,7 @@ public:
         return this->cqs_[i].cq;
     }
     
-    void set_qp_num(const mgbase::size_t i, const qp_num_t qp_num, completer& tag_que) {
+    void set_qp_num(const mgbase::size_t i, const qp_num_t qp_num, tag_queue& tag_que) {
         this->cqs_[i].comp_sel.set(qp_num, tag_que);
     }
     

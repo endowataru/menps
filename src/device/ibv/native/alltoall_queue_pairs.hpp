@@ -8,6 +8,7 @@
 #include <mgdev/ibv/completion_queue.hpp>
 #include <mgdev/ibv/device_context.hpp>
 #include "device/ibv/native/completer_set.hpp"
+#include "device/ibv/command/tag_queue.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -45,7 +46,7 @@ public:
         return qps_[qp_id];
     }
     
-    completer& get_tag_queue(const process_id_t proc, const index_t qp_index)
+    tag_queue& get_tag_queue(const process_id_t proc, const index_t qp_index)
     {
         MGBASE_ASSERT(qp_index < qp_count_);
         const auto qp_id = proc * qp_count_ + qp_index;
@@ -68,7 +69,7 @@ private:
     
     mgbase::unique_ptr<completer_set>   comp_set_;
     mgbase::unique_ptr<queue_pair []>   qps_;
-    mgbase::unique_ptr<completer []>    tag_queues_;
+    mgbase::unique_ptr<tag_queue []>    tag_queues_;
 };
 
 } // namespace ibv

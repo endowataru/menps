@@ -1,28 +1,29 @@
 
 #pragma once
 
+#include "device/ibv/verbs.hpp"
 #include <mgbase/nonblocking/spsc_bounded_queue.hpp>
-#include <mgbase/threading/spinlock.hpp>
-#include <mgbase/threading/lock_guard.hpp>
 #include <mgbase/callback.hpp>
-#include <mgcom/rma/pointer.hpp>
 
 namespace mgcom {
 namespace ibv {
 
-class completer
+class tag_queue
 {
 public:
     static const mgbase::size_t max_num_completions = 1 << 17;
     
 private:
-    typedef mgbase::uint64_t    wr_id_type;
-    typedef mgbase::static_spsc_bounded_queue<wr_id_type, max_num_completions>    queue_type;
+    typedef mgdev::ibv::wr_id_t     wr_id_type;
+    typedef mgbase::static_spsc_bounded_queue<
+        wr_id_type
+    ,   max_num_completions
+    > queue_type;
     
     typedef mgbase::callback<void ()>   callback_type;
     
 public:
-    completer()
+    tag_queue()
         : cbs_(max_num_completions, callback_type{})
     {
         // TODO: Exactly insert max_num_completions elements
@@ -30,10 +31,10 @@ public:
             queue_.enqueue(wr_id);
     }
     
-    ~completer() = default;
+    ~tag_queue() /*noexcept*/ = default;
     
-    completer(const completer&) = delete;
-    completer& operator = (const completer&) = delete;
+    tag_queue(const tag_queue&) = delete;
+    tag_queue& operator = (const tag_queue&) = delete;
     
     class start_transaction
         : public queue_type::dequeue_transaction

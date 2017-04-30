@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "completer.hpp"
+#include "tag_queue.hpp"
 #include <unordered_map>
 #include <mgcom/ult.hpp>
 
@@ -22,14 +22,14 @@ public:
     completion_selector(const completion_selector&) = delete;
     completion_selector& operator = (const completion_selector&) = delete;
     
-    void set(const qp_num_t qp_num, completer& comp)
+    void set(const qp_num_t qp_num, tag_queue& tag_que)
     {
         MGBASE_ASSERT(m_.find(qp_num) == m_.end());
         
-        m_[qp_num] = &comp;
+        m_[qp_num] = &tag_que;
     }
     
-    completer& get(const qp_num_t qp_num)
+    tag_queue& get(const qp_num_t qp_num)
     {
         return *m_[qp_num];
     }
@@ -112,7 +112,7 @@ public:
     #endif
     
 private:
-    std::unordered_map<qp_num_t, completer*> m_;
+    std::unordered_map<qp_num_t, tag_queue*> m_;
     
     #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
     mgbase::atomic<mgbase::size_t>  num_outstanding_;

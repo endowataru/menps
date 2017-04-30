@@ -1,6 +1,5 @@
 
 #include "poll_thread.hpp"
-#include "completer.hpp"
 #include <mgbase/logger.hpp>
 #include "completion_selector.hpp"
 #include <mgdev/ibv/ibv_error.hpp>

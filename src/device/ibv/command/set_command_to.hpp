@@ -12,7 +12,7 @@ inline void set_command_to(
 ,   const mgbase::uint64_t  wr_id
 ,   ibv_send_wr* const      wr
 ,   ibv_sge* const          sge
-,   completer&              comp
+,   tag_queue&              comp
 ,   atomic_buffer&          atomic_buf
 )
 {

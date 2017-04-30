@@ -4,7 +4,7 @@
 #include "params.hpp"
 #include "atomic_buffer.hpp"
 #include "device/ibv/rma/address.hpp"
-#include "completer.hpp"
+#include "tag_queue.hpp"
 
 namespace mgcom {
 namespace ibv {
@@ -14,7 +14,7 @@ inline void make_wr_to(
 ,   const mgbase::uint64_t  wr_id
 ,   ibv_send_wr* const      wr
 ,   ibv_sge* const          sge
-,   completer&              comp
+,   tag_queue&              tag_que
 ,   atomic_buffer&          //atomic_buf
 ) {
     wr->wr_id                 = wr_id;
@@ -31,7 +31,7 @@ inline void make_wr_to(
     sge->length = static_cast<mgbase::uint32_t>(cmd.size_in_bytes);
     sge->lkey   = cmd.lkey;
     
-    comp.set_on_complete(wr_id, cmd.on_complete);
+    tag_que.set_on_complete(wr_id, cmd.on_complete);
 }
 
 inline void make_wr_to(
@@ -39,7 +39,7 @@ inline void make_wr_to(
 ,   const mgbase::uint64_t  wr_id
 ,   ibv_send_wr* const      wr
 ,   ibv_sge* const          sge
-,   completer&              comp
+,   tag_queue&              tag_que
 ,   atomic_buffer&          //atomic_buf
 ) {
     wr->wr_id                 = wr_id;
@@ -55,7 +55,7 @@ inline void make_wr_to(
     sge->length = static_cast<mgbase::uint32_t>(cmd.size_in_bytes);
     sge->lkey   = cmd.lkey;
     
-    comp.set_on_complete(wr_id, cmd.on_complete);
+    tag_que.set_on_complete(wr_id, cmd.on_complete);
 }
 
 inline void make_wr_to(
@@ -63,7 +63,7 @@ inline void make_wr_to(
 ,   const mgbase::uint64_t      wr_id
 ,   ibv_send_wr* const          wr
 ,   ibv_sge* const              sge
-,   completer&                  comp
+,   tag_queue&                  tag_que
 ,   atomic_buffer&              atomic_buf
 ) {
     const auto r = atomic_buf.make_notification_read(wr_id, cmd.on_complete, cmd.dest_ptr);
@@ -82,7 +82,7 @@ inline void make_wr_to(
     sge->length = sizeof(mgbase::uint64_t);
     sge->lkey   = to_lkey(buf_laddr);
     
-    comp.set_on_complete(wr_id, r.on_complete);
+    tag_que.set_on_complete(wr_id, r.on_complete);
 }
 
 inline void make_wr_to(
@@ -90,7 +90,7 @@ inline void make_wr_to(
 ,   const mgbase::uint64_t      wr_id
 ,   ibv_send_wr* const          wr
 ,   ibv_sge* const              sge
-,   completer&                  comp
+,   tag_queue&                  tag_que
 ,   atomic_buffer&              atomic_buf
 ) {
     const auto r = atomic_buf.make_notification_write(wr_id, cmd.on_complete);
@@ -113,7 +113,7 @@ inline void make_wr_to(
     sge->length = sizeof(mgbase::uint64_t);
     sge->lkey   = to_lkey(buf_laddr);
     
-    comp.set_on_complete(wr_id, r.on_complete);
+    tag_que.set_on_complete(wr_id, r.on_complete);
 }
 
 inline void make_wr_to(
@@ -121,7 +121,7 @@ inline void make_wr_to(
 ,   const mgbase::uint64_t          wr_id
 ,   ibv_send_wr* const              wr
 ,   ibv_sge* const                  sge
-,   completer&                      comp
+,   tag_queue&                      tag_que
 ,   atomic_buffer&                  atomic_buf
 ) {
     const auto r = atomic_buf.make_notification_atomic(wr_id, cmd.on_complete, cmd.result_ptr);
@@ -142,7 +142,7 @@ inline void make_wr_to(
     sge->length = sizeof(mgbase::uint64_t);
     sge->lkey   = to_lkey(buf_laddr);
     
-    comp.set_on_complete(wr_id, r.on_complete);
+    tag_que.set_on_complete(wr_id, r.on_complete);
 }
 
 inline void make_wr_to(
@@ -150,7 +150,7 @@ inline void make_wr_to(
 ,   const mgbase::uint64_t          wr_id
 ,   ibv_send_wr* const              wr
 ,   ibv_sge* const                  sge
-,   completer&                      comp
+,   tag_queue&                      tag_que
 ,   atomic_buffer&                  atomic_buf
 ) {
     const auto r = atomic_buf.make_notification_atomic(wr_id, cmd.on_complete, cmd.result_ptr);
@@ -171,7 +171,7 @@ inline void make_wr_to(
     sge->length = sizeof(mgbase::uint64_t);
     sge->lkey   = to_lkey(buf_laddr);
     
-    comp.set_on_complete(wr_id, r.on_complete);
+    tag_que.set_on_complete(wr_id, r.on_complete);
 }
 
 } // namespace ibv

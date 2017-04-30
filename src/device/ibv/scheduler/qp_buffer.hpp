@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "device/ibv/command/completer.hpp"
+#include "device/ibv/command/tag_queue.hpp"
 #include "send_wr_buffer.hpp"
 #include "device/ibv/command/set_command_to.hpp"
 #include "device/ibv/native/alltoall_queue_pairs.hpp"
@@ -15,7 +15,7 @@ class qp_buffer
 public:
     struct config {
         queue_pair&             qp;
-        completer&              tag_que;
+        tag_queue&              tag_que;
         rma::allocator&         alloc;
         completion_selector&    comp_sel;
         bool                    reply_be;
@@ -25,7 +25,7 @@ public:
         : conf_(conf)
         , sges_(send_wr_buffer::max_size)
         , atomic_buf_(
-            atomic_buffer::config{ conf.alloc, completer::max_num_completions, conf.reply_be }
+            atomic_buffer::config{ conf.alloc, tag_queue::max_num_completions, conf.reply_be }
         )
     { }
     
