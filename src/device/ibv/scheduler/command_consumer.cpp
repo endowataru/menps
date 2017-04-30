@@ -29,13 +29,12 @@ public:
             
             auto& qp = conf_.qps.get_qp(proc, conf_.qp_index);
             
+            auto& comp_sel = conf_.qps.get_comp_sel(proc, conf_.qp_index);
+            auto& tag_que = conf_.qps.get_tag_queue(proc, conf_.qp_index);
+            
             qps_[index] = mgbase::make_shared<qp_buffer>(
-                qp_buffer::config{ qp, conf_.alloc, conf_.comp_sel, conf_.reply_be }
+                qp_buffer::config{ qp, tag_que, conf_.alloc, comp_sel, conf_.reply_be }
             );
-            
-            const auto qp_num = conf.qps.get_qp_num_of_proc(proc, conf_.qp_index);
-            
-            conf.comp_sel.set(qp_num, qps_[index]->get_completer());
         }
         
         th_ = ult::thread(starter{*this});

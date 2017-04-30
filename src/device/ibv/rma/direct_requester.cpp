@@ -6,7 +6,6 @@
 #include "device/ibv/command/code.hpp"
 #include "device/ibv/native/alltoall_queue_pairs.hpp"
 #include "device/ibv/command/make_wr_to.hpp"
-#include "device/ibv/command/completion_selector.hpp"
 #include <mgdev/ibv/verbs.hpp>
 #include <mgbase/unique_ptr.hpp>
 
@@ -29,18 +28,17 @@ public:
             atomic_buffer::config{ conf.alloc, max_num_completions, conf.reply_be }
         )
         , qp_infos_(mgbase::make_unique<qp_info []>(conf.ep.number_of_processes()))
-        #ifdef MGCOM_IBV_SEPARATE_CQ
-        , comp_sel_(mgbase::make_unique<completion_selector>())
-        #endif
     {
+        #if 0
         for (process_id_t proc = 0; proc < conf.ep.number_of_processes(); ++proc)
         {
             auto& info = qp_infos_[proc];
             
             const auto qp_num = conf_.qps.get_qp_num_of_proc(proc, 0);
             
-            this->get_comp_sel().set(qp_num, info.comp);
+            this->comp_sel_->set(qp_num, info.comp);
         }
+        #endif
     }
     
     direct_rma_requester(const direct_rma_requester&) = delete;
@@ -57,11 +55,11 @@ private:
     ,   Func&&                  func
     ) {
         auto& info = qp_infos_[proc];
-        auto& comp = info.comp;
+        auto& tag_que = conf_.qps.get_tag_queue(proc, 0);
         
         mgbase::lock_guard<mgbase::spinlock> lc(info.lock);
         
-        auto t = comp.try_start();
+        auto t = tag_que.try_start();
         
         if (!t.valid())
             return false;
@@ -74,7 +72,7 @@ private:
         ibv_send_wr wr = ibv_send_wr();
         ibv_sge sge = ibv_sge();
         
-        make_wr_to(params, wr_id, &wr, &sge, comp, atomic_buf_);
+        make_wr_to(params, wr_id, &wr, &sge, tag_que, atomic_buf_);
         
         wr.next = MGBASE_NULLPTR;
         
@@ -88,7 +86,8 @@ private:
             t.commit();
             
             #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
-            this->get_comp_sel().notify(1);
+            auto& comp_sel = conf_.qps.get_comp_sel(proc, 0);
+            comp_sel.notify(1);
             #endif
             
             return true;
@@ -99,27 +98,15 @@ private:
         }
     }
     
-    completion_selector& get_comp_sel() const MGBASE_NOEXCEPT {
-        #ifdef MGCOM_IBV_SEPARATE_CQ
-        return *comp_sel_;
-        #else
-        return conf_.comp_sel;
-        #endif
-    }
-    
     struct qp_info
     {
         mgbase::spinlock    lock;
-        ibv::completer      comp;
+        //ibv::completer      comp;
     };
     
     const requester_config          conf_;
     ibv::atomic_buffer              atomic_buf_;
     mgbase::unique_ptr<qp_info []>  qp_infos_;
-    
-    #ifdef MGCOM_IBV_SEPARATE_CQ
-    mgbase::unique_ptr<completion_selector> comp_sel_;
-    #endif
 };
 
 } // unnamed namespace

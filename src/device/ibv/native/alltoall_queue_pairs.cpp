@@ -17,28 +17,39 @@ void alltoall_queue_pairs::collective_start(const start_config& conf)
     
     const mgbase::size_t total_qp_count = ep.number_of_processes() * qp_count_;
     
-    #ifdef MGCOM_IBV_SEPARATE_CQ
-    cqs_ = mgbase::make_unique<completion_queue []>(total_qp_count);
-    #endif
+    comp_set_ = mgbase::make_unique<completer_set>(
+        completer_set::config{
+            conf.dev_ctx ,
+            #ifdef MGCOM_IBV_SEPARATE_CQ
+                total_qp_count
+            #else
+                1
+            #endif
+        }
+    );
     
     qps_ = mgbase::make_unique<queue_pair []>(total_qp_count);
+    tag_queues_ = mgbase::make_unique<completer []>(total_qp_count);
     
     for (mgbase::size_t qp_id = 0; qp_id < total_qp_count; ++qp_id) {
-        #ifdef MGCOM_IBV_SEPARATE_CQ
-        cqs_[qp_id] = mgdev::ibv::make_completion_queue(conf.dev_ctx.get());
-        #endif
+        const mgbase::size_t cq_id =
+            #ifdef MGCOM_IBV_SEPARATE_CQ
+                qp_id;
+            #else
+                0;
+            #endif
+        
+        auto& cq = comp_set_->get_cq(cq_id);
         
         auto init_attr = mgdev::ibv::make_default_rc_qp_init_attr(conf.dev_attr);
-        #ifdef MGCOM_IBV_SEPARATE_CQ
-        init_attr.send_cq = cqs_[qp_id].get();
-        init_attr.recv_cq = cqs_[qp_id].get();
-        #else
-        init_attr.send_cq = &conf.cq;
-        init_attr.recv_cq = &conf.cq;
-        #endif
+        init_attr.send_cq = cq.get();
+        init_attr.recv_cq = cq.get();
         
         auto qp = mgdev::ibv::make_queue_pair(&conf.pd, &init_attr);
         qp.init(conf.port_num);
+        
+        const auto qp_num = qp.get_qp_num();
+        comp_set_->set_qp_num(cq_id, qp_num, tag_queues_[qp_id]);
         
         qps_[qp_id] = mgbase::move(qp);
     }
@@ -83,9 +94,7 @@ void alltoall_queue_pairs::destroy()
 {
     qps_.reset();
     
-    #ifdef MGCOM_IBV_SEPARATE_CQ
-    cqs_.reset();
-    #endif
+    comp_set_.reset();
     
     MGBASE_LOG_DEBUG("msg:Destroyed all IBV queue_pairs.");
 }

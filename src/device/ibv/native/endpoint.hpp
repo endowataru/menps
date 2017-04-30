@@ -31,9 +31,6 @@ public:
         else
             ctx_ = open_device(devices.get_by_index(0));
         
-        #ifndef MGCOM_IBV_SEPARATE_CQ
-        cq_ = make_completion_queue(ctx_.get());
-        #endif
         pd_ = make_protection_domain(ctx_.get());
         
         const auto port_num = this->get_port_number();
@@ -45,12 +42,8 @@ public:
             alltoall_queue_pairs::start_config{
                 ep
             ,   coll
-            #ifdef MGCOM_IBV_SEPARATE_CQ
-            ,   ctx_
-            #else
-            ,   *cq_.get()
-            #endif
-            ,   *pd_.get()
+            ,   *ctx_
+            ,   *pd_
             ,   dev_attr
             ,   port_attr
             ,   port_num
@@ -64,10 +57,6 @@ public:
     }
     
     device_context& get_device() { return ctx_; }
-    
-    #ifndef MGCOM_IBV_SEPARATE_CQ
-    completion_queue& get_cq() { return cq_; }
-    #endif
     
     ibv_pd* get_pd() const MGBASE_NOEXCEPT {
         return pd_.get();
@@ -88,14 +77,10 @@ private:
     }
     
 public:
-    using alltoall_queue_pairs::get_qp_num_of_proc;
     using alltoall_queue_pairs::get_qp_count;
     
 private:
     device_context      ctx_;
-    #ifndef MGCOM_IBV_SEPARATE_CQ
-    completion_queue    cq_;
-    #endif
     protection_domain   pd_;
 };
 

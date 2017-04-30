@@ -15,6 +15,7 @@ class qp_buffer
 public:
     struct config {
         queue_pair&             qp;
+        completer&              tag_que;
         rma::allocator&         alloc;
         completion_selector&    comp_sel;
         bool                    reply_be;
@@ -22,7 +23,6 @@ public:
     
     explicit qp_buffer(const config& conf)
         : conf_(conf)
-        , comp_()
         , sges_(send_wr_buffer::max_size)
         , atomic_buf_(
             atomic_buffer::config{ conf.alloc, completer::max_num_completions, conf.reply_be }
@@ -35,7 +35,9 @@ public:
     template <typename Command>
     bool try_enqueue(const Command& cmd)
     {
-        auto t = comp_.try_start();
+        auto& tag_que = conf_.tag_que;
+        
+        auto t = tag_que.try_start();
         if (!t.valid()) return false;
         
         const auto wr_id = *t.begin();
@@ -49,7 +51,7 @@ public:
         
         auto& sge = sges_[wr_index];
         
-        set_command_to(cmd, wr_id, wr, &sge, comp_, atomic_buf_);
+        set_command_to(cmd, wr_id, wr, &sge, tag_que, atomic_buf_);
         
         t.commit();
         
@@ -84,14 +86,8 @@ public:
         return bad_wr == MGBASE_NULLPTR;
     }
     
-    completer& get_completer() MGBASE_NOEXCEPT
-    {
-        return comp_;
-    }
-    
 private:
     const config            conf_;
-    completer               comp_;
     send_wr_buffer          wr_buf_;
     std::vector<ibv_sge>    sges_;
     atomic_buffer           atomic_buf_;
