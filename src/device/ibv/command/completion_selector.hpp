@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgcom/common.hpp> // be sure to define MGCOM_IBV_ENABLE_SLEEP_CQ
 #include "tag_queue.hpp"
 #include <unordered_map>
 #include <mgcom/ult.hpp>
