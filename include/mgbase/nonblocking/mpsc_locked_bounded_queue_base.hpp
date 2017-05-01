@@ -9,7 +9,7 @@ namespace mgbase {
 namespace detail {
 
 template <typename Element>
-struct mpsc_bounded_queue_entry
+struct mpsc_locked_bounded_queue_entry
 {
     Element                 elem;
     mgbase::atomic<bool>    state;
@@ -19,9 +19,10 @@ template <typename Policy>
 struct mpsc_locked_bounded_queue_policy
     : Policy
 {
-    typedef typename Policy::element_type           element_type;
+    typedef typename Policy::element_type   element_type;
     
-    typedef mpsc_bounded_queue_entry<element_type>  entry_type;
+    typedef mpsc_locked_bounded_queue_entry<element_type>
+        entry_type;
 };
 
 template <typename Policy>
