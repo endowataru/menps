@@ -27,18 +27,7 @@ public:
             atomic_buffer::config{ conf.alloc, max_num_completions, conf.reply_be }
         )
         , qp_infos_(mgbase::make_unique<qp_info []>(conf.ep.number_of_processes()))
-    {
-        #if 0
-        for (process_id_t proc = 0; proc < conf.ep.number_of_processes(); ++proc)
-        {
-            auto& info = qp_infos_[proc];
-            
-            const auto qp_num = conf_.qps.get_qp_num_of_proc(proc, 0);
-            
-            this->comp_sel_->set(qp_num, info.comp);
-        }
-        #endif
-    }
+    { }
     
     direct_rma_requester(const direct_rma_requester&) = delete;
     direct_rma_requester& operator = (const direct_rma_requester&) = delete;

@@ -106,6 +106,7 @@ public:
         : rma_comm_base(ep, coll)
     {
         req_ = make_scheduled_rma_requester({
+        //req_ = make_rma_offload_requester({
             this->get_endpoint()
         ,   this->get_allocator() // depends on rma::registrator
         ,   ep

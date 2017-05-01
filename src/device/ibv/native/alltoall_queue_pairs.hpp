@@ -4,19 +4,13 @@
 #include <mgcom/common.hpp>
 #include <mgdev/ibv/queue_pair.hpp>
 #include <mgdev/ibv/attributes.hpp>
-#include <mgbase/scoped_ptr.hpp>
 #include <mgdev/ibv/completion_queue.hpp>
-#include <mgdev/ibv/device_context.hpp>
+#include "device/ibv/verbs.hpp"
 #include "device/ibv/native/completer_set.hpp"
 #include "device/ibv/command/tag_queue.hpp"
 
 namespace mgcom {
 namespace ibv {
-
-using mgdev::ibv::queue_pair;
-using mgdev::ibv::device_attr_t;
-using mgdev::ibv::port_attr_t;
-using mgdev::ibv::port_num_t;
 
 class alltoall_queue_pairs
 {

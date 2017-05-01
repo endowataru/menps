@@ -59,7 +59,7 @@ if(${MGDEV_DEVICE_MPI_SUPPORTED})
     install(TARGETS mgcom-dev-mpi1
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
-        )
+    )
 endif()
 
 if(${MGDEV_DEVICE_MPI3_SUPPORTED})
@@ -109,7 +109,7 @@ if (${MGDEV_DEVICE_FJMPI_SUPPORTED})
     install(TARGETS mgcom-dev-fjmpi
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
-        )
+    )
 endif()
 
 if (${MGDEV_DEVICE_IBV_SUPPORTED})
@@ -122,6 +122,8 @@ if (${MGDEV_DEVICE_IBV_SUPPORTED})
         src/device/ibv/scheduler/command_consumer.cpp
         src/device/ibv/scheduler/scheduler.cpp
         src/device/ibv/ibv_starter.cpp
+        src/device/ibv/offload/rma_executor.cpp
+        src/device/ibv/offload/rma_offload_requester.cpp
     )
     target_include_directories(mgcom-dev-ibv
         PRIVATE ./src
@@ -137,7 +139,7 @@ if (${MGDEV_DEVICE_IBV_SUPPORTED})
     install(TARGETS mgcom-dev-ibv
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
-        )
+    )
 endif()
 
 

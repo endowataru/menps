@@ -24,6 +24,8 @@ mgbase::unique_ptr<rma::requester> make_rma_direct_requester(const requester_con
 
 mgbase::unique_ptr<rma::requester> make_scheduled_rma_requester(const requester_config&);
 
+mgbase::unique_ptr<rma::requester> make_rma_offload_requester(const requester_config&);
+
 } // namespace ibv
 } // namespace mgcom
 
