@@ -57,6 +57,8 @@ int main(int argc, char* argv[])
     {
         if (!is_master && proc == mgcom::current_process_id())
         {
+            mgbase::uint64_t count = 0;
+            
             fstream ofs{p.output_file.c_str(), fstream::out | fstream::app};
             
             print(ofs, TAB "- process_id: {}\n", proc);
@@ -69,7 +71,12 @@ int main(int argc, char* argv[])
                 print(ofs, TAB TAB "- thread_id: {}\n", thread_id);
                 print(ofs, TAB TAB "  count: {}\n", info.count);
                 print(ofs, TAB TAB "  overhead: {} # [cycles]\n", info.overhead.summary());
+                
+                count += info.count;
             }
+            
+            print(ofs, TAB "  total_count: {}\n", count);
+            print(ofs, TAB "  message_rate: {} [/sec]\n", count*1.0/p.duration);
         }
         
         mgcom::collective::barrier();
