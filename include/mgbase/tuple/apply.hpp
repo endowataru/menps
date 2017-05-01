@@ -44,7 +44,12 @@ struct apply_result
 
 template <typename F, typename Tuple, mgbase::size_t... Indexes>
 inline typename apply_result<F, Tuple>::type
-apply_impl(F&& f, Tuple&& t, mgbase::integer_sequence<mgbase::size_t, Indexes...>)
+apply_impl(
+    F&&      f
+,   Tuple&&  t MGBASE_UNUSED
+    // "t" is considered as "unused" in GCC when (sizeof...(Indexes) == 0)
+,   mgbase::integer_sequence<mgbase::size_t, Indexes...> /*unused*/
+)
 {
     return mgbase::invoke(mgbase::forward<F>(f), mgbase::get<Indexes>(std::forward<Tuple>(t))...);
 }
