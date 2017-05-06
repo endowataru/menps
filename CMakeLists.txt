@@ -15,6 +15,8 @@ option(MGCOM_IBV_ENABLE_SLEEP_QP "Enable QP sleep on IBV" OFF)
 option(MGCOM_IBV_ENABLE_SLEEP_CQ "Enable CQ sleep on IBV" OFF)
 option(MGCOM_IBV_SEPARATE_CQ "Separate CQ into QPs" OFF)
 
+option(MGCOM_ENABLE_SLEEP_QP_THREAD "Enable sleeping of QP thread" ON)
+
 # mgcom-mpi : MPI-based implementation
 
 add_library(mgcom-mpi
@@ -119,8 +121,8 @@ if (${MGDEV_DEVICE_IBV_SUPPORTED})
         src/device/ibv/rma/registrator.cpp
         src/device/ibv/command/poll_thread.cpp
         src/device/ibv/native/alltoall_queue_pairs.cpp
-        src/device/ibv/scheduler/command_consumer.cpp
-        src/device/ibv/scheduler/scheduler.cpp
+        #src/device/ibv/scheduler/command_consumer.cpp
+        #src/device/ibv/scheduler/scheduler.cpp
         src/device/ibv/ibv_starter.cpp
         src/device/ibv/offload/rma_executor.cpp
         src/device/ibv/offload/rma_offload_requester.cpp
