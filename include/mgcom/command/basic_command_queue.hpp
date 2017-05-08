@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgcom/common.hpp>
 #include <mgbase/nonblocking/mpsc_bounded_queue.hpp>
 
 namespace mgcom {

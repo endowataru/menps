@@ -2,3 +2,5 @@
 #cmakedefine MGCOM_IBV_ENABLE_SLEEP_QP
 #cmakedefine MGCOM_IBV_ENABLE_SLEEP_CQ
 #cmakedefine MGCOM_IBV_SEPARATE_CQ
+#cmakedefine MGCOM_USE_SLEEP_RMA
+#cmakedefine MGCOM_FORK_OFFLOAD_THREAD

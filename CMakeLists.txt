@@ -15,7 +15,8 @@ option(MGCOM_IBV_ENABLE_SLEEP_QP "Enable QP sleep on IBV" OFF)
 option(MGCOM_IBV_ENABLE_SLEEP_CQ "Enable CQ sleep on IBV" OFF)
 option(MGCOM_IBV_SEPARATE_CQ "Separate CQ into QPs" OFF)
 
-option(MGCOM_ENABLE_SLEEP_QP_THREAD "Enable sleeping of QP thread" ON)
+option(MGCOM_USE_SLEEP_RMA "Enable sleeping thread in RMA" ON)
+option(MGCOM_FORK_OFFLOAD_THREAD "Use ult::thread to start offloading" ON)
 
 # mgcom-mpi : MPI-based implementation
 

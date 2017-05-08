@@ -2,8 +2,12 @@
 #pragma once
 
 #include "requester.hpp"
-#include <mgcom/command/basic_locked_command_queue.hpp>
-#include <mgcom/command/basic_command_queue.hpp>
+
+#ifdef MGCOM_USE_SLEEP_RMA
+    #include <mgcom/command/basic_locked_command_queue.hpp>
+#else
+    #include <mgcom/command/basic_command_queue.hpp>
+#endif
 
 namespace mgcom {
 namespace rma {
@@ -39,8 +43,11 @@ struct command_queue_policy
     static const index_t queue_size = 1 << 14; // TODO: magic number
 };
 
-//typedef basic_locked_command_queue<command_queue_policy>  command_queue;
-typedef basic_command_queue<command_queue_policy>           command_queue;
+#ifdef MGCOM_USE_SLEEP_RMA
+    typedef basic_locked_command_queue<command_queue_policy>    command_queue;
+#else
+    typedef basic_command_queue<command_queue_policy>           command_queue;
+#endif
 
 } // namespace rma
 } // namespace mgcom

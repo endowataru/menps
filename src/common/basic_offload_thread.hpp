@@ -20,7 +20,16 @@ protected:
     
     void start()
     {
+        #ifdef MGCOM_FORK_OFFLOAD_THREAD
+        auto& self = this->derived();
+        self.set_entrypoint(&basic_offload_thread::loop, &self);
+        
+        while (!self.try_sleep()) {
+            ult::this_thread::yield();
+        }
+        #else
         th_ = thread_type(starter{*this});
+        #endif
     }
     
 public:
@@ -32,10 +41,39 @@ public:
         
         self.force_notify();
         
+        #ifndef MGCOM_FORK_OFFLOAD_THREAD
         th_.join();
+        #endif
     }
     
 private:
+    #ifdef MGCOM_FORK_OFFLOAD_THREAD
+    static void loop(void* const self_ptr)
+    {
+        auto& self = *static_cast<derived_type*>(self_ptr);
+        
+        while (MGBASE_LIKELY(
+            ! self.finished_.load(mgbase::memory_order_relaxed)
+        )) {
+            if (MGBASE_UNLIKELY(
+                ! self.dequeue_some()
+            )) {
+                if (MGBASE_UNLIKELY(
+                    ! self.has_remaining()
+                )) {
+                    if (MGBASE_UNLIKELY(
+                        self.try_sleep()
+                    )) {
+                        return;
+                    }
+                }
+            }
+            
+            self.post_all();
+        }
+        
+    }
+    #else
     struct starter
     {
        basic_offload_thread& self;
@@ -69,6 +107,7 @@ private:
             self.post_all();
         }
     }
+    #endif
     
     bool dequeue_some()
     {
