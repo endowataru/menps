@@ -297,7 +297,8 @@ public:
         const auto head = this->head_.load(mgbase::memory_order_relaxed);
         auto tail = this->tail_.load(mgbase::memory_order_relaxed);
         
-        MGBASE_ASSERT((tail & 0x1) == 0x0);
+        // TODO: this assertion is not appropriate?
+        //MGBASE_ASSERT((tail & 0x1) == 0x0);
         
         if ((head >> 1) != (tail >> 1)) {
             // The queue is not empty.
