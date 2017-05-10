@@ -64,6 +64,7 @@ private:
                     if (MGBASE_UNLIKELY(
                         self.try_sleep()
                     )) {
+                        ult::this_thread::detach();
                         return MGBASE_NULLPTR;
                     }
                 }

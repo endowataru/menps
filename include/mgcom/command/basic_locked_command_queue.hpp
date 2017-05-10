@@ -34,14 +34,14 @@ public:
                 "msg:Create command consumer."
             );
             
-            #if 1
+            ult::fork_fast(func_, arg_);
+            
+            /*#if 0
             ult::fork_parent_first_detached(func_, arg_);
             #else
             auto th = ult::thread(this->func_, this->arg_);
             th.detach();
-            #endif
-            
-            //th_ = mgbase::move(th);
+            #endif*/
         }
     }
     
