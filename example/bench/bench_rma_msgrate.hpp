@@ -35,7 +35,7 @@ public:
     {
         info_ = new thread_info[this->get_num_threads()];
         
-        lptr_ = mgcom::rma::allocate<value_type>(msg_size_);
+        lptr_ = mgcom::rma::allocate<value_type>(msg_size_ * this->get_num_threads() * 8);
         buf_.collective_initialize(lptr_);
     }
     void finish()
@@ -111,7 +111,7 @@ protected:
             if (Write) {
                 const auto r = mgcom::rma::async_write(
                     proc
-                ,   buf_.at_process(proc)
+                ,   buf_.at_process(proc) + this->get_num_threads() * 8
                 ,   lbuf
                 ,   msg_size_
                 ,   mgbase::make_callback_fetch_add_release(num_finished.get(), MGBASE_NONTYPE(1))
@@ -121,7 +121,7 @@ protected:
             } else {
                 const auto r = mgcom::rma::async_read(
                     proc
-                ,   buf_.at_process(proc)
+                ,   buf_.at_process(proc) + this->get_num_threads() * 8
                 ,   lbuf
                 ,   msg_size_
                 ,   mgbase::make_callback_fetch_add_release(num_finished.get(), MGBASE_NONTYPE(1))
