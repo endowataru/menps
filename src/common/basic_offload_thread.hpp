@@ -32,8 +32,7 @@ protected:
         #endif
     }
     
-public:
-    ~basic_offload_thread() /*noexcept*/
+    void stop()
     {
         auto& self = this->derived();
         

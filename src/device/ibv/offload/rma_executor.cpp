@@ -47,6 +47,11 @@ public:
         this->start();
     }
     
+    ~impl()
+    {
+        this->stop();
+    }
+    
 private:
     friend class basic_offload_thread<rma_executor_policy>;
     
