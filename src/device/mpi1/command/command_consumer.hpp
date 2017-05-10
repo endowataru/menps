@@ -76,6 +76,9 @@ private:
             
             // Do polling.
             completer_.poll_on_this_thread();
+            
+            // TODO: this is harmful for MPI-based implementation
+            ult::this_thread::yield();
         }
     }
     

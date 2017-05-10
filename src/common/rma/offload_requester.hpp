@@ -106,11 +106,13 @@ private:
         const auto que_index = que_indexes[proc];
         MGBASE_ASSERT(que_index < conf_.num_ques_per_proc);
         
-        if (++que_indexes[proc] >= conf_.num_ques_per_proc) {
-            que_indexes[proc] = 0;
-        }
-        
         auto& que = *queues_[proc][que_index];
+        
+        if (que.peek_num_entries() > 1024) {
+            if (++que_indexes[proc] >= conf_.num_ques_per_proc) {
+                que_indexes[proc] = 0;
+            }
+        }
         
         while (true)
         {
