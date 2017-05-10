@@ -48,7 +48,7 @@ public:
     
 private:
     #ifdef MGCOM_FORK_OFFLOAD_THREAD
-    static void loop(void* const self_ptr)
+    static void* loop(void* const self_ptr)
     {
         auto& self = *static_cast<derived_type*>(self_ptr);
         
@@ -64,7 +64,7 @@ private:
                     if (MGBASE_UNLIKELY(
                         self.try_sleep()
                     )) {
-                        return;
+                        return MGBASE_NULLPTR;
                     }
                 }
             }

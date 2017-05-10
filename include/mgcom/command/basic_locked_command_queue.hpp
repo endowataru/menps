@@ -21,7 +21,7 @@ class basic_locked_command_queue
     
     #ifdef MGCOM_FORK_OFFLOAD_THREAD
 public:
-    void set_entrypoint(void (*func)(void*), void* arg)
+    void set_entrypoint(void* (*func)(void*), void* arg)
     {
         func_ = func;
         arg_ = arg;
@@ -34,8 +34,12 @@ public:
                 "msg:Create command consumer."
             );
             
+            #if 1
+            ult::fork_parent_first_detached(func_, arg_);
+            #else
             auto th = ult::thread(this->func_, this->arg_);
             th.detach();
+            #endif
             
             //th_ = mgbase::move(th);
         }
@@ -51,7 +55,7 @@ public:
     }*/
     
 private:
-    void (*func_)(void*);
+    void* (*func_)(void*);
     void* arg_;
     //ult::thread th_;
     
