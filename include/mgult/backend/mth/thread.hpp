@@ -124,12 +124,17 @@ private:
     thread_ptr_type t_;
 };
 
+inline myth_thread_t fork_fast(void* (*func)(void*), void* arg)
+{
+    return myth_create(func, arg);
+}
+
 inline myth_thread_attr_t make_parent_first_detached_thread_attr()
 {
     myth_thread_attr_t attr = myth_thread_attr_t();
     myth_thread_attr_init(&attr);
     myth_thread_attr_setdetachstate(&attr, 1);
-    //attr.child_first = 0;
+    attr.child_first = 0;
     return attr;
 }
 

@@ -14,6 +14,12 @@ inline void yield()
     myth_yield();
 }
 
+// non-standard function
+inline void detach()
+{
+    myth_detach(myth_self());
+}
+
 } // namespace this_thread
 
 } // namespace mth
