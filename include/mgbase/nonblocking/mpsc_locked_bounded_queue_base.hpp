@@ -324,6 +324,13 @@ public:
         
         return ret;
     }
+    
+    size_t peek_num_entries()
+    {
+        return 
+            (this->tail_.load(mgbase::memory_order_relaxed) >> 1)
+            - (this->head_.load(mgbase::memory_order_relaxed) >> 1);
+    }
 };
 
 } // namespace detail
