@@ -256,6 +256,12 @@ public:
             return dequeue_transaction(derived(), { head, head + num_dequeued });
         }
     }
+    size_t peek_num_entries()
+    {
+        return 
+            this->tail_.load(mgbase::memory_order_relaxed)
+            - this->head_.load(mgbase::memory_order_relaxed);
+    }
     
 private:
     derived_type& derived() MGBASE_NOEXCEPT {
