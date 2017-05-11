@@ -20,7 +20,7 @@ protected:
     
     void start()
     {
-        #ifdef MGCOM_FORK_OFFLOAD_THREAD
+        #ifdef MGCOM_FORK_EXECUTOR_THREAD
         auto& self = this->derived();
         self.set_entrypoint(&basic_offload_thread::loop, &self);
         
@@ -40,13 +40,13 @@ protected:
         
         self.force_notify();
         
-        #ifndef MGCOM_FORK_OFFLOAD_THREAD
+        #ifndef MGCOM_FORK_EXECUTOR_THREAD
         th_.join();
         #endif
     }
     
 private:
-    #ifdef MGCOM_FORK_OFFLOAD_THREAD
+    #ifdef MGCOM_FORK_EXECUTOR_THREAD
     static void* loop(void* const self_ptr)
     {
         auto& self = *static_cast<derived_type*>(self_ptr);

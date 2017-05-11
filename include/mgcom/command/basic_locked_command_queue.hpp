@@ -19,7 +19,7 @@ class basic_locked_command_queue
     >
     base;
     
-    #ifdef MGCOM_FORK_OFFLOAD_THREAD
+    #ifdef MGCOM_FORK_EXECUTOR_THREAD
 public:
     void set_entrypoint(void* (*func)(void*), void* arg)
     {

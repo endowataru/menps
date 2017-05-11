@@ -21,8 +21,13 @@ public:
         : finished_{false}
         , cq_(cq)
         , comp_sel_(comp_sel)
+        , wcs_(mgbase::make_unique<ibv_wc []>(max_num_polled))
     {
+        #if defined(MGCOM_IBV_ENABLE_SLEEP_CQ) && defined(MGCOM_FORK_COMPLETER_THREAD)
+        comp_sel_.set_entrypoint(&impl::loop_start, this);
+        #else
         th_ = ult::thread(starter{*this});
+        #endif
     }
     
     ~impl()
@@ -33,7 +38,9 @@ public:
         comp_sel_.force_notify();
         #endif
         
+        #ifndef MGCOM_FORK_COMPLETER_THREAD
         th_.join();
+        #endif
     }
     
 private:
@@ -46,15 +53,25 @@ private:
         }
     };
     
+    static void* loop_start(void* const self_ptr)
+    {
+        auto& self = *static_cast<impl*>(self_ptr);
+        self.loop();
+        
+        return MGBASE_NULLPTR;
+    }
+    
     void loop()
     {
-        MGBASE_LOG_DEBUG("msg:Started IBV polling.");
+        /*#ifdef MGCOM_FORK_COMPLETER_THREAD
+        ult::this_thread::yield();
+        #endif*/
         
-        const auto wcs = mgbase::make_unique<ibv_wc []>(max_num_polled);
+        MGBASE_LOG_DEBUG("msg:Started IBV polling.");
         
         while (MGBASE_LIKELY(!finished_))
         {
-            const int ret = cq_.poll(wcs.get(), max_num_polled);
+            const int ret = cq_.poll(wcs_.get(), max_num_polled);
             
             if (ret > 0)
             {
@@ -62,7 +79,7 @@ private:
                 
                 for (mgbase::size_t i = 0; i < num; ++i)
                 {
-                    auto& wc = wcs[i];
+                    auto& wc = wcs_[i];
                     
                     if (MGBASE_UNLIKELY(wc.status != IBV_WC_SUCCESS)) {
                         throw ibv_error("polling failed", wc.status);
@@ -73,7 +90,14 @@ private:
                     comp.notify(wc.wr_id);
                 
                     #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
+                    #ifdef MGCOM_FORK_COMPLETER_THREAD
+                    if (comp_sel_.remove_outstanding_and_try_sleep(1)) {
+                        ult::this_thread::detach();
+                        return;
+                    }
+                    #else
                     comp_sel_.remove_outstanding(1);
+                    #endif
                     #endif
                     
                     MGBASE_LOG_DEBUG(
@@ -88,11 +112,15 @@ private:
                 MGBASE_LOG_VERBOSE("msg:IBV CQ was empty.");
                 
                 #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
+                #ifdef MGCOM_FORK_COMPLETER_THREAD
+                ult::this_thread::yield();
+                #else
                 if (! comp_sel_.try_wait()) {
                     // While there are ongoing requests,
                     // polling is failing.
                     ult::this_thread::yield();
                 }
+                #endif
                 #endif
             }
         }
@@ -104,6 +132,7 @@ private:
     completion_queue& cq_;
     completion_selector& comp_sel_;
     ult::thread th_;
+    mgbase::unique_ptr<ibv_wc []> wcs_;
 };
 
 poll_thread::poll_thread(completion_queue& cq, completion_selector& comp_sel)
