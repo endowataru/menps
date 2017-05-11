@@ -45,10 +45,13 @@ int bench_main(int argc, char* argv[], const char* name)
         const auto nqps_str = getenv("MGCOM_IBV_NUM_QPS_PER_PROC");
         const int nqps = nqps_str ? atoi(nqps_str) : -1;
         
+        const int nwks = ult::get_num_workers();
+        
         print(ofs, "- exp_type: bench_rma_msgrate_{}\n", name);
         print(ofs, "  number_of_processes: {}\n", mgcom::number_of_processes());
         print(ofs, "  number_of_threads: {}\n", p.num_threads);
         print(ofs, "  number_of_endpoints: {}\n", nqps);
+        print(ofs, "  number_of_workers: {}\n", nwks);
         print(ofs, "  duration: {} # [sec]\n", p.duration);
         print(ofs, "  number_of_startup_samples: {}\n", p.num_startup_samples);
         print(ofs, "  master_proc: {}\n", p.master_proc);
