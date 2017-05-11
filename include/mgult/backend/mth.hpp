@@ -119,6 +119,11 @@ using mgbase::lock_guard;
 
 using mgbase::sync_flag;
 
+inline mgbase::size_t get_num_workers() MGBASE_NOEXCEPT
+{
+    return static_cast<mgbase::size_t>(myth_get_num_workers());
+}
+
 } // namespace mth
 } // namespace backend
 } // namespace mgult
