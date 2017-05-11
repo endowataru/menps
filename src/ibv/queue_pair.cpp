@@ -36,7 +36,7 @@ qp_init_attr_t make_default_rc_qp_init_attr()
     attr.cap.max_recv_wr     = default_max_recv_wr;
     attr.cap.max_send_sge    = default_max_send_sge;
     attr.cap.max_recv_sge    = default_max_recv_sge;
-    attr.cap.max_inline_data = 1; // TODO
+    attr.cap.max_inline_data = 0; // disable IBV_SEND_INLINE by default
     attr.sq_sig_all          = 1;
     
     #ifdef MGDEV_IBV_EXP_SUPPORTED
