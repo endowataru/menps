@@ -88,17 +88,6 @@ private:
                     auto& comp = comp_sel_.get(wc.qp_num);
                     
                     comp.notify(wc.wr_id);
-                
-                    #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
-                    #ifdef MGCOM_FORK_COMPLETER_THREAD
-                    if (comp_sel_.remove_outstanding_and_try_sleep(1)) {
-                        ult::this_thread::detach();
-                        return;
-                    }
-                    #else
-                    comp_sel_.remove_outstanding(1);
-                    #endif
-                    #endif
                     
                     MGBASE_LOG_DEBUG(
                         "msg:Polled completion.\t"
@@ -106,6 +95,17 @@ private:
                     ,   wc.wr_id
                     );
                 }
+                
+                #ifdef MGCOM_IBV_ENABLE_SLEEP_CQ
+                #ifdef MGCOM_FORK_COMPLETER_THREAD
+                if (comp_sel_.remove_outstanding_and_try_sleep(num)) {
+                    ult::this_thread::detach();
+                    return;
+                }
+                #else
+                comp_sel_.remove_outstanding(num);
+                #endif
+                #endif
             }
             else
             {

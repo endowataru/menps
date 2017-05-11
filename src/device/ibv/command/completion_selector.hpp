@@ -84,7 +84,7 @@ private:
     }
     
 public:
-    #if 0
+    #if 1
     bool try_wait()
     {
         auto old = num_outstanding_.load(mgbase::memory_order_relaxed);
@@ -144,27 +144,9 @@ public:
             force_notify();
         }
     }
-    #endif
+    #else
     bool try_wait()
     {
-        #if 0
-        auto old = num_outstanding_.load(mgbase::memory_order_relaxed);
-        
-        // If there's no request in QP - CQ
-        if (old == 0) {
-            auto lk = this->get_lock();
-            
-            // Try to sleep.
-            if (num_outstanding_.compare_exchange_weak(old, 1, mgbase::memory_order_relaxed)) {
-                cv_.wait(lk);
-                
-                // Restarted again on notification.
-                num_outstanding_.fetch_sub(1, mgbase::memory_order_relaxed);
-                return true;
-            }
-        }
-        
-        #endif
         return false;
     }
     
@@ -191,6 +173,7 @@ public:
             cv_.notify_one();
         }
     }
+    #endif
     
     void force_notify()
     {
