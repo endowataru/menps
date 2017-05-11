@@ -108,11 +108,11 @@ private:
         
         auto& que = *queues_[proc][que_index];
         
-        if (que.peek_num_entries() > 1024) {
+        //if (que.peek_num_entries() > 1024) {
             if (++que_indexes[proc] >= conf_.num_ques_per_proc) {
                 que_indexes[proc] = 0;
             }
-        }
+        //}
         
         while (true)
         {
