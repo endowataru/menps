@@ -31,6 +31,11 @@ inline void yield() MGBASE_NOEXCEPT { }
 using mgbase::this_thread::yield;
 #endif
 
+/*inline void detach()
+{
+    pthread_detach(pthread_self());
+}*/
+
 } // namespace this_thread
 
 using mgbase::spinlock;
@@ -85,6 +90,15 @@ inline T suspend_and_call(Func&& func, Args&&... args)
 }
 
 using mgbase::sync_flag;
+
+/*inline pthread_t fork_fast(void* (*func)(void*), void* arg)
+{
+    return pthread_create(func, arg);
+}*/
+
+inline mgbase::size_t get_num_workers() MGBASE_NOEXCEPT {
+    return -1;
+}
 
 } // namespace klt
 } // namespace mgult
