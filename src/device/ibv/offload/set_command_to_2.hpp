@@ -22,7 +22,7 @@ inline void make_wr_to(
     wr->sg_list               = sge;
     wr->num_sge               = 1;
     wr->opcode                = IBV_WR_RDMA_READ;
-    wr->send_flags            = 0; // TODO
+    wr->send_flags            = 0;
     wr->wr.rdma.remote_addr   = to_raddr(params.src_raddr);
     wr->wr.rdma.rkey          = to_rkey(params.src_raddr);
     
@@ -46,8 +46,10 @@ inline void make_wr_to(
     wr->sg_list               = sge;
     wr->num_sge               = 1;
     wr->opcode                = IBV_WR_RDMA_WRITE;
-    //wr->send_flags            = 0; // TODO
-    wr->send_flags            = IBV_SEND_INLINE; // TODO
+    
+    wr->send_flags            =
+        (params.size_in_bytes < MGCOM_IBV_SEND_INLINE_SIZE) ? IBV_SEND_INLINE : 0;
+    
     wr->wr.rdma.remote_addr   = to_raddr(params.dest_raddr);
     wr->wr.rdma.rkey          = to_rkey(params.dest_raddr);
     
@@ -109,7 +111,9 @@ inline void make_wr_to(
     wr->sg_list               = sge;
     wr->num_sge               = 1;
     wr->opcode                = IBV_WR_RDMA_WRITE;
-    wr->send_flags            = IBV_SEND_INLINE; // TODO
+    wr->send_flags            =
+        (sizeof(T) < MGCOM_IBV_SEND_INLINE_SIZE) ? IBV_SEND_INLINE : 0;
+    
     wr->wr.rdma.remote_addr   = to_raddr(params.dest_rptr);
     wr->wr.rdma.rkey          = to_rkey(params.dest_rptr);
     

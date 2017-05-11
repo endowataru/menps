@@ -63,10 +63,6 @@ private:
     
     void loop()
     {
-        /*#ifdef MGCOM_FORK_COMPLETER_THREAD
-        ult::this_thread::yield();
-        #endif*/
-        
         MGBASE_LOG_DEBUG("msg:Started IBV polling.");
         
         while (MGBASE_LIKELY(!finished_))

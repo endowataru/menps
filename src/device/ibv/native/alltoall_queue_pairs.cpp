@@ -42,6 +42,8 @@ void alltoall_queue_pairs::collective_start(const start_config& conf)
         auto& cq = comp_set_->get_cq(cq_id);
         
         auto init_attr = mgdev::ibv::make_default_rc_qp_init_attr(conf.dev_attr);
+        init_attr.cap.max_inline_data = MGCOM_IBV_SEND_INLINE_SIZE;
+        
         init_attr.send_cq = cq.get();
         init_attr.recv_cq = cq.get();
         

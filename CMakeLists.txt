@@ -19,6 +19,8 @@ option(MGCOM_USE_SLEEP_RMA "Enable sleeping thread in RMA" ON)
 option(MGCOM_FORK_EXECUTOR_THREAD "Use ult::thread to start offloading" ON)
 option(MGCOM_FORK_COMPLETER_THREAD "Use ult::thread to start offloading" ON)
 
+set(MGCOM_IBV_SEND_INLINE_SIZE "92" CACHE STRING "Use IBV_SEND_INLINE below this size")
+
 # mgcom-mpi : MPI-based implementation
 
 add_library(mgcom-mpi
