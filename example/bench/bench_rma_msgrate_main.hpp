@@ -1,19 +1,11 @@
 
-#include "bench_rma_msgrate_main.hpp"
-
-int main(int argc, char* argv[])
-{
-    return bench_main<bench_rma_msgrate<true>>(argc, argv, "write");
-}
-
-#if 0
-
-#include "bench_rma_msgrate_write.hpp"
+#include "bench_rma_msgrate.hpp"
 #include <mgbase/external/fmt.hpp>
 #include <fstream>
 #include "basic_args.hpp"
 
-int main(int argc, char* argv[])
+template <typename Bench>
+int bench_main(int argc, char* argv[], const char* name)
 {
     mgcom::initialize(&argc, &argv);
     
@@ -22,7 +14,7 @@ int main(int argc, char* argv[])
     const bool is_master =
         p.master_proc == static_cast<mgbase::int32_t>(mgcom::current_process_id());
     
-    bench_rma_msgrate_write bench;
+    Bench bench;
     
     bench.set_num_threads(p.num_threads);
     bench.set_num_startup_samples(p.num_startup_samples);
@@ -50,7 +42,7 @@ int main(int argc, char* argv[])
     if (mgcom::current_process_id() == 0) {
         fstream ofs{p.output_file.c_str(), fstream::out | fstream::app};
         
-        print(ofs, "- exp_type: bench_rma_msgrate_write\n");
+        print(ofs, "- exp_type: bench_rma_msgrate_{}\n", name);
         print(ofs, "  number_of_processes: {}\n", mgcom::number_of_processes());
         print(ofs, "  number_of_threads: {}\n", p.num_threads);
         print(ofs, "  duration: {} # [sec]\n", p.duration);
@@ -102,4 +94,3 @@ int main(int argc, char* argv[])
     
     return 0;
 }
-#endif

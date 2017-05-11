@@ -12,7 +12,7 @@
 #include <mgbase/unique_ptr.hpp>
 #include <vector>
 
-class bench_rma_msgrate_write
+class bench_rma_msgrate
     : public bench_master
 {
     typedef bench_master        base;
@@ -21,7 +21,7 @@ class bench_rma_msgrate_write
         accumulator_type;
     
 public:
-    bench_rma_msgrate_write()
+    bench_rma_msgrate()
         : msg_size_{1}
         , num_startup_samples_{0} { }
     
@@ -63,37 +63,44 @@ public:
 protected:
     virtual void thread_main(const mgbase::size_t thread_id) MGBASE_OVERRIDE
     {
+        // TODO
+        const mgbase::size_t num_local_bufs = mgbase::min(
+            (1ull << 30) / this->get_num_threads() / msg_size_ / sizeof(value_type)
+        ,   16ull << 10
+        );
+        MGBASE_LOG_DEBUG(
+            "msg:Allocating buffers.\t"
+            "num_local_bufs:{}\tnum_threads:{}\tmsg_size:{}"
+        ,   num_local_bufs
+        ,   this->get_num_threads()
+        ,   msg_size_
+        );
+        
         auto& info = info_[thread_id];
         
-        const auto lbuf = mgcom::rma::allocate<value_type>(msg_size_);
+        const auto large_buf
+            = mgcom::rma::allocate<value_type>(msg_size_ * num_local_bufs);
         
-        const mgbase::size_t num_batch = 4096; // TODO
-        #if 0
+        std::vector< mgcom::rma::local_ptr<value_type> > lptrs;
+        for (mgbase::size_t i = 0; i < num_local_bufs; ++i) {
+            lptrs.push_back(large_buf + i * msg_size_);
+            //lptrs.push_back(mgcom::rma::allocate<value_type>(msg_size_));
+        }
         
-        const auto flags =
-            mgbase::make_unique<mgbase::atomic<bool> []>(num_batch);
-        
-        for (mgbase::size_t i = 0; i < num_batch; ++i)
+        mgbase::unique_ptr<mgbase::atomic<bool> []> flags{new mgbase::atomic<bool>[num_local_bufs]};
+        for (mgbase::size_t i = 0; i < num_local_bufs; ++i)
             flags[i].store(true);
+        
+        /*mgbase::atomic<mgbase::uint64_t> count{0};
+        mgbase::uint64_t posted{0};*/
         
         mgbase::uint64_t pos = 0;
         mgbase::int64_t count = -num_local_bufs;
-        #endif
-        // num_finished{0};
-        auto num_finished = mgbase::make_unique<mgbase::atomic<mgbase::uint64_t>>();
-        num_finished->store(0);
-        mgbase::uint64_t num_established = 0;
         
         while (!this->finished())
         {
-            /*while (num_established - num_finished.load(mgbase::memory_order_relaxed) > num_batch) {
-                ult::this_thread::yield();
-            }*/
-            
             const auto proc = select_target_proc();
             
-            
-            #if 0
             while (!flags[pos].load(mgbase::memory_order_acquire)) {
                 ult::this_thread::yield();
                 /*busy loop*/
@@ -101,55 +108,56 @@ protected:
             
             flags[pos].store(false);
             ++count;
-            #endif
             
             const auto t0 = mgbase::get_cpu_clock();
             
-            const auto r = mgcom::rma::async_write(
+            const auto r = mgcom::rma::async_read(
                 proc
             ,   buf_.at_process(proc)
-            ,   lbuf
+            ,   lptrs[pos]
             ,   msg_size_
-            ,   mgbase::make_callback_fetch_add_release(num_finished.get(), MGBASE_NONTYPE(1))
+            ,   mgbase::make_callback_store_release(&flags[pos], MGBASE_NONTYPE(true))
             );
+            /*const bool ret = mgcom::rma::try_read_async(
+                proc
+            ,   buf_.at_process(proc)
+            ,   lptrs[posted % lptrs.size()]
+            ,   msg_size_
+            ,   mgbase::make_callback_fetch_add_release(&count, MGBASE_NONTYPE(1))
+            );*/
             
             const auto t1 = mgbase::get_cpu_clock();
             
-            if (num_established > num_startup_samples_)
+            if (count > num_startup_samples_)
             {
                 info.overhead.add(t1 - t0);
             }
             
-            #if 0
             pos = (pos + 1) % num_local_bufs;
-            #endif
-            
-            ++num_established;
             
             if (r.is_ready()) {
-                num_finished->fetch_add(1, mgbase::memory_order_relaxed);
-                //flags[pos].store(true, mgbase::memory_order_relaxed);
+                flags[pos].store(true, mgbase::memory_order_relaxed);
             }
+            
+            //while (posted - count.load() >= lptrs.size()) {
+                // busy loop
+                //mgbase::ult::this_thread::yield();
+            //}
+                
+            #if 0
+            if (posted % lptrs.size() == 0)
+            {
+                while (count.load() < posted) { /*busy loop*/ }
+            }
+            #endif
         }
         
-        #if 0
         for (mgbase::size_t i = 0; i < num_local_bufs; ++i) {
             if (flags[i].load(mgbase::memory_order_relaxed))
                 ++count;
         }
-        #endif
         
-        info.count = num_finished->load();
-        
-        #if 0
-        num_finished.release();
-        #else
-        while (num_finished->load() < num_established)
-        {
-            ult::this_thread::yield();
-        }
-        #endif
-        
+        info.count = count;
         
         #if 0 // TODO : disable waiting for all the completions (to get the results fast)
         // Wait for all established requests.
@@ -159,6 +167,8 @@ protected:
         }
         #endif
         
+        // TODO : memory leak
+        flags.release();
         
         /*info.count = count.load();
         

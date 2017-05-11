@@ -4,6 +4,7 @@
 #include "bench_rma_msgrate.hpp"
 #include <cstdlib>
 
+template <typename 
 class bench_rma_msgrate_rand
     : public bench_rma_msgrate
 {
