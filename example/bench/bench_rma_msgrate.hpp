@@ -68,7 +68,7 @@ protected:
         
         const auto lbuf = mgcom::rma::allocate<value_type>(msg_size_);
         
-        const mgbase::size_t num_batch = 4096; // TODO
+        const mgbase::size_t num_batch = 256; // TODO
         #if 0
         
         const auto flags =
@@ -87,12 +87,11 @@ protected:
         
         while (!this->finished())
         {
-            /*while (num_established - num_finished.load(mgbase::memory_order_relaxed) > num_batch) {
+            while (num_established - num_finished->load(mgbase::memory_order_relaxed) > num_batch) {
                 ult::this_thread::yield();
-            }*/
+            }
             
             const auto proc = select_target_proc();
-            
             
             #if 0
             while (!flags[pos].load(mgbase::memory_order_acquire)) {
