@@ -87,8 +87,8 @@ int bench_main(int argc, char* argv[], const char* name)
             const auto bandwidth = msgrate*p.msg_size;
             
             print(ofs, TAB "  total_count: {}\n", count);
-            print(ofs, TAB "  message_rate: {} [/sec]\n", msgrate);
-            print(ofs, TAB "  bandwidth: {} [bytes/sec]\n", bandwidth);
+            print(ofs, TAB "  message_rate: {} # [/sec]\n", msgrate);
+            print(ofs, TAB "  bandwidth: {} # [bytes/sec]\n", bandwidth);
         }
         
         mgcom::collective::barrier();
