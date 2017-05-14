@@ -3,6 +3,7 @@
 
 #include <mgbase/atomic.hpp>
 #include <mgbase/crtp_base.hpp>
+#include <mgbase/profiling/clock.hpp>
 
 namespace mgcom {
 
@@ -51,23 +52,42 @@ private:
     {
         auto& self = *static_cast<derived_type*>(self_ptr);
         
+        #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+        auto old_clock = mgbase::get_cpu_clock();
+        #endif
+        
         while (MGBASE_LIKELY(
             ! self.finished_.load(mgbase::memory_order_relaxed)
         )) {
             if (MGBASE_UNLIKELY(
                 ! self.dequeue_some()
             )) {
-                if (MGBASE_UNLIKELY(
-                    ! self.has_remaining()
-                )) {
-                    if (MGBASE_UNLIKELY(
-                        self.try_sleep()
-                    )) {
-                        ult::this_thread::detach();
-                        return MGBASE_NULLPTR;
-                    }
+                #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+                const auto cur_clock = mgbase::get_cpu_clock();
+                if (cur_clock - old_clock < MGCOM_EXECUTOR_LIFETIME_CYCLES) {
+                    ult::this_thread::yield();
                 }
+                else {
+                #endif
+                    if (MGBASE_UNLIKELY(
+                        ! self.has_remaining()
+                    )) {
+                        if (MGBASE_UNLIKELY(
+                            self.try_sleep()
+                        )) {
+                            ult::this_thread::detach();
+                            return MGBASE_NULLPTR;
+                        }
+                    }
+                #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+                }
+                #endif
             }
+            #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+            else {
+                old_clock = mgbase::get_cpu_clock();
+            }
+            #endif
             
             self.post_all();
         }
@@ -87,6 +107,10 @@ private:
     {
         auto& self = this->derived();
         
+        #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+        auto old_clock = mgbase::get_cpu_clock();
+        #endif
+        
         while (MGBASE_LIKELY(
             ! finished_.load(mgbase::memory_order_relaxed)
         )) {
@@ -96,13 +120,28 @@ private:
                 if (MGBASE_UNLIKELY(
                     ! self.has_remaining()
                 )) {
-                    if (MGBASE_UNLIKELY(
-                        ! self.try_sleep()
-                    )) {
+                    #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+                    const auto cur_clock = mgbase::get_cpu_clock();
+                    if (cur_clock - old_clock < MGCOM_EXECUTOR_LIFETIME_CYCLES) {
                         ult::this_thread::yield();
                     }
+                    else {
+                    #endif
+                        if (MGBASE_UNLIKELY(
+                            ! self.try_sleep()
+                        )) {
+                            ult::this_thread::yield();
+                        }
+                    #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+                    }
+                    #endif
                 }
             }
+            #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+            else {
+                old_clock = mgbase::get_cpu_clock();
+            }
+            #endif
             
             self.post_all();
         }
