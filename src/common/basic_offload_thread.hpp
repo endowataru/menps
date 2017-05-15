@@ -135,6 +135,8 @@ private:
                     #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
                     }
                     #endif
+                } else {
+                    ult::this_thread::yield();
                 }
             }
             #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
