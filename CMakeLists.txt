@@ -18,6 +18,7 @@ option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
 option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
 option(MGBASE_LOGGER_USE_LOCK "Use lock in logger" ON)
+option(MGBASE_ENABLE_EXPONENTIAL_BACKOFF "Use exponential backoff" OFF)
 
 set(MGBASE_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 

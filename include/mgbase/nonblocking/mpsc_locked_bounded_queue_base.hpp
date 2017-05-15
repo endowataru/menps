@@ -4,6 +4,10 @@
 #include "bounded_queue_counter.hpp"
 #include <mgbase/crtp_base.hpp>
 
+#ifdef MGBASE_ENABLE_EXPONENTIAL_BACKOFF
+#include <random>
+#endif
+
 namespace mgbase {
 
 namespace detail {
@@ -104,6 +108,13 @@ public:
     
     enqueue_transaction try_enqueue(const index_type num)
     {
+        #ifdef MGBASE_ENABLE_EXPONENTIAL_BACKOFF
+        const int backoff_min = 32, backoff_max = 4096; // TODO
+        thread_local std::mt19937 gen(std::random_device{}());
+        
+        int delay_limit = backoff_min;
+        #endif
+        
         MGBASE_ASSERT(num > 0);
         
         auto& self = this->derived();
@@ -180,6 +191,17 @@ public:
                 ,   old_tail
                 ,   new_tail
                 );
+                
+                #ifdef MGBASE_ENABLE_EXPONENTIAL_BACKOFF
+                std::uniform_int_distribution<int> dist(0, delay_limit);
+                const int delay = dist(gen);
+                
+                for (volatile int i = 0; i < delay; i++) {
+                    asm volatile("pause");
+                }
+                
+                delay_limit = std::min(backoff_max, 2 * delay_limit);
+                #endif
                 
                 // TODO : Avoid contention on CAS
                 //        It's better to insert an exponential back-off here
