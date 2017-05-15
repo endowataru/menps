@@ -23,7 +23,7 @@ enum class command_code {
 
 struct command
 {
-    static const mgbase::size_t args_size = 128 - sizeof(long) - sizeof(void*); // TODO
+    static const mgbase::size_t args_size = 128 - sizeof(command_code); // TODO
     
     command_code        code;
     
