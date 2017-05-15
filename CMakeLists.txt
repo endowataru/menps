@@ -20,8 +20,9 @@ option(MGCOM_FORK_EXECUTOR_THREAD "Use ult::thread to start offloading" ON)
 option(MGCOM_FORK_COMPLETER_THREAD "Use ult::thread to start offloading" ON)
 
 set(MGCOM_IBV_SEND_INLINE_SIZE "92" CACHE STRING "Use IBV_SEND_INLINE below this size")
+#set(MGCOM_IBV_SEND_INLINE_SIZE "0 " CACHE STRING "Use IBV_SEND_INLINE below this size")
 
-set(MGCOM_EXECUTOR_LIFETIME_CYCLES "10000" CACHE STRING "Run executors during at least this time")
+set(MGCOM_EXECUTOR_LIFETIME_CYCLES "0 " CACHE STRING "Run executors during at least this time")
 
 # mgcom-mpi : MPI-based implementation
 
