@@ -4,6 +4,26 @@
 namespace mgult {
 namespace sm {
 
+namespace /*unnamed*/ {
+
+worker_rank_t get_num_ranks_from_env()
+{
+    const auto s = getenv("MGULT_NUM_WORKERS");
+    
+    if (s != MGBASE_NULLPTR) {
+        auto num_ranks = static_cast<worker_rank_t>(atoi(s));
+        if (num_ranks == 0) {
+            // TODO: Should it be an exception?
+            return 1; // Default
+        }
+        return num_ranks;
+    }
+    else
+        return 1; // Default
+}
+
+} // unnamed namespace
+
 sm_scheduler::sm_scheduler()
 {
     instance_ = this;

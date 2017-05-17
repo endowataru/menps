@@ -13,9 +13,9 @@ namespace detail {
 
 struct thread_traits
 {
-    typedef thread      derived_type;
-    typedef sm_scheduler   scheduler_type;
-    typedef ult_id      thread_id_type;
+    typedef thread          derived_type;
+    typedef sm_scheduler    scheduler_type;
+    typedef ult_id          thread_id_type;
     
     static bool is_invalid_thread_id(const thread_id_type id) MGBASE_NOEXCEPT {
         return is_invalid_ult_id(id);

@@ -25,6 +25,7 @@ add_library(mgult
     >
     
     ./src/sm/sm_scheduler.cpp
+    ./src/sm/ult_desc_pool.cpp
     ./src/sm/initializer.cpp
     ./src/scheduler_initializer.cpp
 )

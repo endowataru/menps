@@ -6,7 +6,6 @@
 #include <mgult/generic/fcontext_worker_base.hpp>
 #include <mgult/generic/ult_id_worker_traits_base.hpp>
 #include <mgult/generic/default_worker_deque.hpp>
-//#include <mgult/generic/locked_worker_deque.hpp>
 #include "ult_ptr_ref.hpp"
 #include "ptr_worker_deque.hpp"
 #include "ult_desc_pool.hpp"
@@ -18,8 +17,7 @@ namespace sm {
 typedef mgbase::size_t      worker_rank_t;
 
 struct sm_worker_traits
-    : //fcontext_worker_traits_base
-    /*,*/ ult_id_worker_traits_base
+    : ult_id_worker_traits_base
 {
     typedef sm_worker       derived_type;
     typedef ult_ptr_ref     ult_ref_type;

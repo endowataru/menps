@@ -6,6 +6,7 @@
 
 #include <mgbase/threading/unique_lock.hpp>
 #include <mgbase/type_traits/underlying_type.hpp>
+#include <mgbase/utility/move.hpp>
 
 #include <mgbase/external/fmt.hpp>
 #include <string>
