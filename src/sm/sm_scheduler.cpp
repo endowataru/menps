@@ -67,10 +67,6 @@ ult_ptr_ref sm_worker::try_steal_from_another()
 {
     return sched_.try_steal_from_another(*this);
 }
-mgbase::unique_ptr<sm_scheduler> make_scheduler()
-{
-    return mgbase::make_unique<sm_scheduler>();
-}
 
 } // namespace sm
 } // namespace mgult
