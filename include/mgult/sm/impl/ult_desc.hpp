@@ -6,6 +6,7 @@
 #include <mgbase/threading/spinlock.hpp>
 
 namespace mgult {
+namespace sm {
 
 typedef mgbase::uint64_t    ult_state_underlying_t;
 
@@ -31,5 +32,6 @@ struct ult_desc
     mgbase::size_t stack_size;
 };
 
+} // namespace sm
 } // namespace mgult
 

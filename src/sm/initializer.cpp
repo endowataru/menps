@@ -1,6 +1,6 @@
 
 #include <mgult/sm/initializer.hpp>
-#include <mgult/sm/make_scheduler.hpp>
+//#include <mgult/sm/make_scheduler.hpp>
 #include <mgult/sm/scheduler.hpp>
 #include <mgult/scheduler_initializer.hpp>
 
@@ -12,7 +12,7 @@ class initializer::impl
 public:
     impl()
     {
-        sched_ = make_scheduler();
+        sched_ = mgbase::make_unique<sm_scheduler>();//make_scheduler();
         
         sm::set_scheduler(sched_);
         
@@ -31,8 +31,8 @@ public:
     }
     
 private:
-    mgbase::shared_ptr<root_scheduler>  sched_;
-    mgbase::unique_ptr<scheduler_initializer> init_;
+    scheduler_ptr                               sched_;
+    mgbase::unique_ptr<scheduler_initializer>   init_;
 };
 
 initializer::initializer()

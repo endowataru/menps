@@ -13,6 +13,7 @@
 #include <mgctx/context_policy.hpp>
 
 namespace mgult {
+namespace sm {
 
 typedef mgbase::size_t      worker_rank_t;
 
@@ -115,5 +116,6 @@ private:
     ult_desc_pool desc_pool_;
 };
 
+} // namespace sm
 } // namespace mgult
 

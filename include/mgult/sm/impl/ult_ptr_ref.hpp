@@ -11,6 +11,7 @@
 #include <string>
 
 namespace mgult {
+namespace sm {
 
 class ult_ptr_ref
 {
@@ -156,5 +157,6 @@ private:
     ult_desc* desc_;
 };
 
+} // namespace sm
 } // namespace mgult
 

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "scheduler.hpp"
+#include <mgult/sm/scheduler.hpp>
 #include <mgult/thread/basic_thread.hpp>
 
 namespace mgult {
@@ -14,7 +14,7 @@ namespace detail {
 struct thread_traits
 {
     typedef thread      derived_type;
-    typedef scheduler   scheduler_type;
+    typedef sm_scheduler   scheduler_type;
     typedef ult_id      thread_id_type;
     
     static bool is_invalid_thread_id(const thread_id_type id) MGBASE_NOEXCEPT {
@@ -37,7 +37,11 @@ public:
     
     template <typename F, typename... Args>
     explicit thread(F&& f, Args&&... args)
-        : base{ sm::get_scheduler(), mgbase::forward<F>(f), mgbase::forward<Args>(args)... }
+        : base{
+            sm::get_scheduler()
+        ,   mgbase::forward<F>(f)
+        ,   mgbase::forward<Args>(args)...
+        }
     { }
     
     thread(const thread&) = delete;
@@ -45,7 +49,9 @@ public:
     
     MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(thread, base)
     
-    scheduler& get_scheduler() { return sm::get_scheduler(); }
+    static sm_scheduler& get_scheduler() {
+        return sm::get_scheduler();
+    }
 };
 
 } // namespace sm

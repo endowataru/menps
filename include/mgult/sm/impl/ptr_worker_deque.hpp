@@ -4,6 +4,7 @@
 #include "ult_ptr_ref.hpp"
 
 namespace mgult {
+namespace sm {
 
 struct ptr_worker_deque_conf
 {
@@ -43,5 +44,6 @@ private:
     Deque dq_;
 };
 
+} // namespace sm
 } // namespace mgult
 

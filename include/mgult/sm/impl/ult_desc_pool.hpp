@@ -7,6 +7,7 @@
 #include <mgbase/logger.hpp>
 
 namespace mgult {
+namespace sm {
 
 struct ult_desc_node
     : ult_desc
@@ -106,5 +107,6 @@ private:
     mgbase::intrusive_forward_list<ult_desc_node> l_;
 };
 
+} // namespace sm
 } // namespace mgult
 
