@@ -35,31 +35,15 @@ class thread
 public:
     thread() MGBASE_DEFAULT_NOEXCEPT = default;
     
-    thread(const thread&) = delete;
-    
-    #ifdef MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
-    thread(thread&&) MGBASE_NOEXCEPT = default;
-    #else
-    thread(thread&& other) MGBASE_NOEXCEPT
-        : base(mgbase::move(other))
-    { }
-    #endif
-    
     template <typename F, typename... Args>
     explicit thread(F&& f, Args&&... args)
         : base{ sm::get_scheduler(), mgbase::forward<F>(f), mgbase::forward<Args>(args)... }
     { }
     
+    thread(const thread&) = delete;
     thread& operator = (const thread&) = delete;
     
-    #ifdef MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED
-    thread& operator = (thread&&) MGBASE_NOEXCEPT = default;
-    #else
-    thread& operator = (thread&& other) MGBASE_NOEXCEPT {
-        base::operator = (mgbase::move(other));
-        return *this;
-    }
-    #endif
+    MGBASE_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(thread, base)
     
     scheduler& get_scheduler() { return sm::get_scheduler(); }
 };
