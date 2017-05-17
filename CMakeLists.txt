@@ -16,8 +16,8 @@ option(MGCOM_IBV_ENABLE_SLEEP_CQ "Enable CQ sleep on IBV" OFF)
 option(MGCOM_IBV_SEPARATE_CQ "Separate CQ into QPs" OFF)
 
 option(MGCOM_USE_SLEEP_RMA "Enable sleeping thread in RMA" ON)
-option(MGCOM_FORK_EXECUTOR_THREAD "Use ult::thread to start offloading" ON)
-option(MGCOM_FORK_COMPLETER_THREAD "Use ult::thread to start offloading" ON)
+option(MGCOM_FORK_EXECUTOR_THREAD "Use ult::thread to start offloading" OFF)
+option(MGCOM_FORK_COMPLETER_THREAD "Use ult::thread to start offloading" OFF)
 
 set(MGCOM_IBV_SEND_INLINE_SIZE "92" CACHE STRING "Use IBV_SEND_INLINE below this size")
 #set(MGCOM_IBV_SEND_INLINE_SIZE "0 " CACHE STRING "Use IBV_SEND_INLINE below this size")
