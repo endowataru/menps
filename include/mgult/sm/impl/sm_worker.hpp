@@ -3,7 +3,6 @@
 
 #include <mgult/generic/basic_worker.hpp>
 #include <mgult/generic/thread_local_worker_base.hpp>
-#include <mgult/generic/fcontext_worker_base.hpp>
 #include <mgult/generic/ult_id_worker_traits_base.hpp>
 #include <mgult/generic/default_worker_deque.hpp>
 #include "ult_ptr_ref.hpp"
@@ -35,7 +34,6 @@ class sm_scheduler;
 class sm_worker
     : public basic_worker<sm_worker_traits>
     , public thread_local_worker_base<sm_worker_traits>
-    //, public fcontext_worker_base
     , public mgctx::context_policy
 {
     typedef basic_worker<sm_worker_traits>  base;

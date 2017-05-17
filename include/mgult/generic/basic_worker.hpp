@@ -642,6 +642,9 @@ private:
         // Call the hook.
         self.on_after_switch(self.current_th_, d->next_th);
         
+        // Explicitly move the reference.
+        auto next_th = mgbase::move(d->next_th);
+        
         {
             auto this_th = self.remove_current_ult();
             
@@ -655,7 +658,8 @@ private:
         }
         
         // Set the following thread as the current thread.
-        self.set_current_ult( mgbase::move(d->next_th) );
+        self.set_current_ult( mgbase::move(next_th) );
+        //self.set_current_ult( mgbase::move(d->next_th) );
         
         // Switch to the resumed context of the following thread.
         // No parameters are passed to the resumed context.
