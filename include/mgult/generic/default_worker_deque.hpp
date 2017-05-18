@@ -19,7 +19,7 @@ public:
         : top_{0}
         , bottom_{0}
         , array_{new ult_id[size]}
-        , size_{size}
+        , size_{static_cast<index_type>(size)}
     {
         for (mgbase::size_t i = 0; i < size; ++i) {
             array_[i] = make_invalid_ult_id();
@@ -124,7 +124,7 @@ private:
     mgbase::atomic<index_type>      top_;
     mgbase::atomic<index_type>      bottom_;
     mgbase::unique_ptr<ult_id []>   array_;
-    mgbase::size_t                  size_;
+    index_type                      size_;
 };
 
 } // namespace mgult
