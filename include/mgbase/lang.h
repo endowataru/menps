@@ -240,6 +240,7 @@
         #define MGBASE_CONSTEXPR                    constexpr
         
         #define MGBASE_NORETURN                     [[noreturn]]
+        #define MGBASE_FINAL                        final
         
     #else
         #define MGBASE_IF_CXX11_SUPPORTED(x)
@@ -267,6 +268,7 @@
         #define MGBASE_STATIC_ASSERT_MSG(expr, msg) MGBASE_STATIC_ASSERT(expr)
         
         #define MGBASE_NORETURN                     __attribute__((noreturn))
+        #define MGBASE_FINAL
     #endif
     
     
