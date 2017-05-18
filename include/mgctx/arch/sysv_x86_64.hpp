@@ -182,7 +182,9 @@ inline transfer<T*> swap_context(
     context<T*> ctx
 ,   Arg*        arg
 ) {
+    #ifndef MGCTX_AVOID_PLT
     auto func = Func;
+    #endif
     
     transfer<T*> result;
     
