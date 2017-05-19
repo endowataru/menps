@@ -281,6 +281,7 @@ private:
         sus_data.id   = child.id;
     }
     
+    #if 0
     struct fork_child_first_data
     {
         derived_type&   self;
@@ -394,6 +395,7 @@ public:
         ,   self_2.show_ult_ref(self_2.current_th_)
         );
     }
+    #endif
     
 private:
     MGCTX_SWITCH_FUNCTION MGBASE_NORETURN
@@ -670,11 +672,10 @@ public:
     void yield()
     {
         auto& self = this->derived();
-        
         self.check_current_worker();
         
         yield_data d{
-            this->derived()
+            self
         ,   this->pop_top()
         };
         
@@ -693,6 +694,138 @@ public:
         /*>---resuming context---<*/
     }
     
+private:
+    struct suspend_data
+    {
+        derived_type&   self;
+        ult_ref_type    parent_th;
+        ult_ref_type    child_th;
+    };
+    
+    template <void (*Func)(derived_type&, ult_ref_type)>
+    MGBASE_NORETURN MGCTX_SWITCH_FUNCTION
+    static transfer_type suspend_handler(
+        const context_type  ctx
+    ,   suspend_data* const d
+    )
+    {
+        auto& self = d->self;
+        self.check_current_worker();
+        
+        // Move the references to the child (current) thread.
+        auto parent_th = mgbase::move(d->parent_th);
+        auto child_th = mgbase::move(d->child_th);
+        
+        // Call the hook.
+        self.on_after_switch(parent_th, child_th);
+        
+        // Change this thread to the child thread.
+        self.set_current_ult(mgbase::move(child_th));
+        
+        // Set the context to the parent thread.
+        self.set_context(parent_th, ctx /*>---resuming context---<*/);
+        
+        Func(self, mgbase::move(parent_th));
+        
+        MGBASE_UNREACHABLE();
+    }
+    
+public:
+    template <void (*Func)(derived_type&, ult_ref_type)>
+    derived_type& suspend(const allocated_ult& child, const fork_func_type func)
+    {
+        auto& self = this->derived();
+        self.check_current_worker();
+        
+        fork_stack_info info;
+        
+        self.setup_fork_info(child, func, &info);
+        
+        suspend_data d{
+            self
+        ,   self.remove_current_ult()
+        ,   mgbase::move(info.child_th)
+        };
+        
+        // Call the hook.
+        self.on_before_switch(d.parent_th, d.child_th);
+        
+        const auto tr =
+            self.save_context(
+                info.stack_ptr
+            ,   info.stack_size
+            ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::suspend_handler<Func>)
+            ,   &d
+            );
+        
+        /*>---resuming context---<*/
+        
+        // this pointer is no longer available.
+        
+        // Renew the worker.
+        auto& self_2 = *tr.p0;
+        self_2.check_current_worker();
+        
+        MGBASE_ASSERT(self_2.current_th_.is_valid());
+        
+        MGBASE_LOG_INFO(
+            "msg:Suspended parent thread was resumed.\t"
+            "{}"
+        ,   self_2.show_ult_ref(self_2.current_th_)
+        );
+        
+        return self_2;
+    }
+    
+private:
+    MGBASE_NORETURN
+    static void fork_child_first_handler(
+        derived_type&   self
+    ,   ult_ref_type    parent_th
+    ) {
+        // Push the parent thread to the top.
+        // The current thread must be on a different stack from the parent's one
+        // before calling this
+        // because the parent thread might be stolen and started from another worker.
+        self.push_top( mgbase::move(parent_th) );
+        
+        // The parent's call stack is no longer accessible from the current context
+        // because the parent thread might have already started on another worker.
+        
+        MGBASE_LOG_INFO(
+            "msg:Forked a new thread in a child-first manner.\t"
+            "{}"
+        ,   self.show_ult_ref(self.current_th_)
+        );
+        
+        // Copy the ID to the current stack.
+        const auto child_id = self.current_th_.get_id();
+        
+        // Get the reference to the suspension data.
+        auto& sus_data = self.get_suspension_data(self.current_th_);
+        
+        // Execute the user-defined function.
+        sus_data.func(sus_data.ptr);
+        
+        // Renew a worker to the child continuation's one.
+        auto& self_2 = derived_type::renew_worker(child_id);
+        
+        // Check that this worker is running the child's continuation.
+        self_2.check_current_ult_id(child_id);
+        
+        // Exit this thread.
+        self_2.exit();
+        
+        // Be careful that the destructors are not called in this function.
+    }
+    
+public:
+    void fork_child_first(const allocated_ult& child, const fork_func_type func)
+    {
+        this->suspend<&basic_worker::fork_child_first_handler>(child, func);
+    }
+    
+public:
     void detach(const ult_id_type& id)
     {
         auto& self = this->derived();
