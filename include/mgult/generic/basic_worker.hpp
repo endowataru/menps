@@ -26,6 +26,12 @@ private:
     typedef typename Policy::context_type   context_type;
     typedef typename Policy::transfer_type  transfer_type;
     
+    typedef typename Policy::allocated_ult_type allocated_ult_type;
+    
+public:
+    typedef allocated_ult_type  allocated_ult;
+    
+private:
     struct suspension_data
     {
         context_type    ctx;
@@ -176,19 +182,13 @@ public:
                 "msg:The thread finished. Came back to worker loop."
             );
             
-            auto root_th = this->remove_current_ult();
+            auto root_th = self.remove_current_ult();
             
             this->derived().deallocate_ult( mgbase::move(root_th) );
         }
     }
     
 public:
-    struct allocated_ult
-    {
-        ult_id_type id;
-        void*       ptr;
-    };
-    
     MGBASE_WARN_UNUSED_RESULT
     allocated_ult allocate(
         const mgbase::size_t    alignment
@@ -235,7 +235,7 @@ public:
         return { id, stack_ptr };
     }
     
-private:
+public: // XXX
     struct fork_stack_info
     {
         ult_ref_type    child_th;
@@ -1092,37 +1092,6 @@ private:
         );
     }
     
-    void set_current_ult(ult_ref_type&& th)
-    {
-        MGBASE_ASSERT(th.is_valid());
-        MGBASE_ASSERT(!current_th_.is_valid());
-        
-        MGBASE_LOG_INFO(
-            "msg:Set the current thread.\t"
-            "{}"
-        ,   derived().show_ult_ref(th)
-        );
-        
-        current_th_ = mgbase::move(th);
-    }
-    ult_ref_type remove_current_ult()
-    {
-        MGBASE_ASSERT(current_th_.is_valid());
-        
-        MGBASE_LOG_INFO(
-            "msg:Remove the current thread.\t"
-            "{}"
-        ,   derived().show_ult_ref(current_th_)
-        );
-        
-        return mgbase::move(current_th_);
-    }
-    
-    void check_current_ult_id(const ult_id_type& id)
-    {
-        Policy::check_ult_id(current_th_, id);
-    }
-    
     // Overloaded functions to get the descriptor's reference.
     ult_ref_type get_ult_ref(ult_ref_type ref) {
         // Return the identical reference.
@@ -1147,9 +1116,6 @@ private:
     
     worker_deque_type   wd_;
     
-    // The current thread can be modified by the current worker
-    // without acquiring a lock.
-    ult_ref_type        current_th_;
     ult_ref_type        root_th_;
 };
 

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgult/generic/basic_worker.hpp>
+#include <mgult/generic/basic_current_thread.hpp>
 #include <mgult/generic/thread_local_worker_base.hpp>
 #include <mgult/generic/ult_id_worker_traits_base.hpp>
 #include <mgult/generic/default_worker_deque.hpp>
@@ -27,12 +28,19 @@ struct sm_worker_traits
     
     typedef mgctx::context<sm_worker*>  context_type;
     typedef mgctx::transfer<sm_worker*> transfer_type;
+    
+    struct allocated_ult_type
+    {
+        ult_id_type id;
+        void*       ptr;
+    };
 };
 
 class sm_scheduler;
 
 class sm_worker
     : public basic_worker<sm_worker_traits>
+    , public basic_current_thread<sm_worker_traits>
     , public thread_local_worker_base<sm_worker_traits>
     , public mgctx::context_policy
 {
