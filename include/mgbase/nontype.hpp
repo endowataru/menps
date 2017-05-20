@@ -35,8 +35,11 @@ inline nontype_deducer<T> make_nontype_deducer(T /*ignored*/) {
 
 } // namespace detail
 
-#define MGBASE_NONTYPE(v)           (::mgbase::detail::make_nontype_deducer(v).make<v>())
-#define MGBASE_NONTYPE_TEMPLATE(v)  (::mgbase::detail::make_nontype_deducer(v).template make<v>())
+#define MGBASE_NONTYPE(...) \
+    (::mgbase::detail::make_nontype_deducer(__VA_ARGS__).make<__VA_ARGS__>())
+
+#define MGBASE_NONTYPE_TEMPLATE(...) \
+    (::mgbase::detail::make_nontype_deducer(__VA_ARGS__).template make<__VA_ARGS__>())
 
 #else
 #define MGBASE_NONTYPE(v)   (::mgbase::nontype<decltype(v), v>{})
