@@ -21,19 +21,18 @@ class basic_current_thread
     typedef void (*fork_func_type)(void*);
     
 private:
-    struct suspend_data
+    struct suspend_to_new_data
     {
         derived_type&   self;
         ult_ref_type    parent_th;
         ult_ref_type    child_th;
-        void*           ptr;
     };
     
     template <void (*Func)(derived_type&, ult_ref_type)>
     MGBASE_NORETURN MGCTX_SWITCH_FUNCTION
     static transfer_type suspend_to_new_handler(
-        const context_type  ctx
-    ,   suspend_data* const d
+        const context_type          ctx
+    ,   suspend_to_new_data* const  d
     ) {
         auto& self = d->self;
         self.check_current_worker();
@@ -41,7 +40,6 @@ private:
         // Move the references to the child (current) thread.
         auto parent_th = mgbase::move(d->parent_th);
         auto child_th = mgbase::move(d->child_th);
-        const auto ptr = d->ptr;
         
         // Call the hook.
         self.on_after_switch(parent_th, child_th);
@@ -52,7 +50,7 @@ private:
         // Change this thread to the child thread.
         self.set_current_ult(mgbase::move(child_th));
         
-        Func(self, mgbase::move(parent_th), ptr);
+        Func(self, mgbase::move(parent_th));
         
         MGBASE_UNREACHABLE();
     }
@@ -68,11 +66,10 @@ public:
         
         self.setup_fork_info(child, func, &info);
         
-        suspend_data d{
+        suspend_to_new_data d{
             self
         ,   self.remove_current_ult()
         ,   mgbase::move(info.child_th)
-        ,   child.ptr
         };
         
         // Call the hook.

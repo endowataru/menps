@@ -61,6 +61,7 @@ private:
         );
     }
     
+public: // XXX
     context_type get_context(ult_ref_type& th)
     {
         auto& d = this->get_suspension_data(th);
@@ -72,6 +73,7 @@ private:
         d.ctx = ctx;
     }
     
+private:
     struct loop_root_data {
         derived_type&   self;
         ult_ref_type    th;
@@ -694,6 +696,7 @@ public:
         /*>---resuming context---<*/
     }
     
+    #if 0
 private:
     struct suspend_data
     {
@@ -776,6 +779,7 @@ public:
         
         return self_2;
     }
+    #endif
     
 private:
     MGBASE_NORETURN
@@ -822,7 +826,8 @@ private:
 public:
     void fork_child_first(const allocated_ult& child, const fork_func_type func)
     {
-        this->suspend<&basic_worker::fork_child_first_handler>(child, func);
+        auto& self = this->derived();
+        self.template suspend_to_new<&basic_worker::fork_child_first_handler>(child, func);
     }
     
 public:
