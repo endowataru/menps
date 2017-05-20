@@ -5,6 +5,7 @@
 #include "dist_worker_deque.hpp"
 
 #include <mgult/generic/basic_worker.hpp>
+#include <mgult/generic/basic_current_thread.hpp>
 #include <mgult/generic/default_worker_deque.hpp>
 #include <mgult/generic/thread_local_worker_base.hpp>
 #include <mgult/generic/fcontext_worker_base.hpp>
@@ -27,12 +28,19 @@ struct dist_worker_traits
     
     typedef mgctx::context<derived_type*>   context_type;
     typedef mgctx::transfer<derived_type*>  transfer_type;
+    
+    struct allocated_ult_type
+    {
+        ult_id_type id;
+        void*       ptr;
+    };
 };
 
 class dist_scheduler;
 
 class dist_worker
     : public mgult::basic_worker<dist_worker_traits>
+    , public mgult::basic_current_thread<dist_worker_traits>
     , public mgult::thread_local_worker_base<dist_worker_traits>
     , public mgctx::context_policy
 {
