@@ -188,8 +188,65 @@ public:
         return self_2;
     }
     
+private:
+    struct exit_to_cont_data
+    {
+        derived_type&   self;
+        ult_ref_type    next_th;
+    };
+    
+    template <transfer_type (*Func)(derived_type&, ult_ref_type)>
+    MGCTX_SWITCH_FUNCTION
+    static transfer_type exit_to_cont_handler(exit_to_cont_data* const d)
+    {
+        auto& self = d->self;
+        self.check_current_worker();
+        
+        // Move the references to the current thread.
+        auto prev_th = self.remove_current_ult();
+        auto next_th = mgbase::move(d->next_th);
+        
+        // Call the hook.
+        self.on_after_switch(prev_th, next_th);
+        
+        // Change this thread to the child thread.
+        self.set_current_ult(mgbase::move(next_th));
+        
+        // Call the user-defined function.
+        return Func(self, mgbase::move(prev_th));
+    }
+    
 public:
-    //derived_type& exit_to_cont(ult_ref_type);
+    template <transfer_type (*Func)(derived_type&, ult_ref_type)>
+    MGBASE_NORETURN
+    void exit_to_cont(ult_ref_type next_th)
+    {
+        auto& self = this->derived();
+        
+        exit_to_cont_data d{
+            self
+        ,   mgbase::move(next_th)
+        };
+        
+        // Call the hook.
+        self.on_before_switch(self.current_th_, d.next_th);
+        
+        // Get the context of the following thread.
+        const auto ctx = self.get_context(d.next_th);
+        
+        // Switch to the context of the following thread.
+        self.restore_context(
+            ctx
+        ,   MGBASE_NONTYPE_TEMPLATE(&basic_current_thread::exit_to_cont_handler<Func>)
+        ,   &d
+        );
+        
+        /*>--- this context is abandoned ---<*/
+        
+        // Be careful that the destructors are not called in this function.
+        
+        MGBASE_UNREACHABLE();
+    }
     
     void check_current_ult_id(const ult_id_type& id)
     {
@@ -209,6 +266,11 @@ public: // XXX
         );
         
         current_th_ = mgbase::move(th);
+    }
+    // TODO: privacy
+    ult_ref_type& get_current_ult() MGBASE_NOEXCEPT
+    {
+        return current_th_;
     }
     ult_ref_type remove_current_ult()
     {

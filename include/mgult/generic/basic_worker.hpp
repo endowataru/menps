@@ -136,9 +136,6 @@ public:
             
             const auto root_id = self.current_th_.get_id();
             
-            // Load the next resumed context.
-            const auto ctx = self.get_context(th);
-            
             MGBASE_LOG_INFO(
                 "msg:Set up a root thread. Resume the thread.\t"
                 "{}"
@@ -564,6 +561,7 @@ public:
         self.deallocate_ult( mgbase::move(th) );
     }
     
+    #if 0
 private:
     struct exit_data
     {
@@ -729,6 +727,107 @@ public:
         
         MGBASE_UNREACHABLE();
     }
+    #endif
+    
+private:
+    static transfer_type exit_handler(
+        derived_type&   self
+    ,   ult_ref_type    prev_th
+    ) {
+        bool is_detached;
+        {
+            // This worker has already locked the thread.
+            auto lc = prev_th.get_lock(mgbase::adopt_lock);
+            
+            is_detached = prev_th.is_detached();
+            
+            // Unlock the current thread here to free the thread descriptor.
+        }
+        
+        if (is_detached) {
+            // Because this thread is detached,
+            // no other threads will join and manage its resource.
+            
+            // Free the thread descriptor by itself.
+            self.deallocate_ult( mgbase::move(prev_th) );
+        }
+        
+        MGBASE_LOG_INFO(
+            "msg:Exiting this thread.\t"
+            "sp:{:x}"
+        ,   reinterpret_cast<mgbase::uintptr_t>(MGBASE_GET_STACK_POINTER())
+        );
+        
+        // Switch to the resumed context of the following thread.
+        return { &self };
+    }
+    
+public:
+    MGBASE_NORETURN
+    void exit()
+    {
+        auto& self = this->derived();
+        self.check_current_worker();
+        
+        ult_ref_type next_th;
+        
+        {
+            auto& current_th = self.get_current_ult();
+            
+            // Lock this thread; a joiner thread may modify this thread.
+            auto lc = current_th.get_lock();
+            
+            // Change the state of this thread.
+            current_th.set_finished();
+            
+            if (current_th.has_joiner()) {
+                // Set the joiner thread as the next thread.
+                // Note that "get_joiner" may return either ult_ref_type or ult_id_type.
+                next_th =
+                    self.get_ult_ref(
+                        current_th.get_joiner()
+                    );
+                
+                // Change the state of the joiner thread to "ready".
+                next_th.set_ready();
+                
+                // Call the hook to issue write/read barriers.
+                // The joiner thread may have modified data.
+                self.on_exit_resume(next_th);
+                
+                MGBASE_LOG_INFO(
+                    "msg:Exiting this thread and switching to the joiner thread.\t"
+                    "{}"
+                ,   self.show_ult_ref(next_th)
+                );
+            }
+            else {
+                // Get the next thread. It might be a root thread.
+                next_th = self.pop_top();
+                
+                MGBASE_LOG_INFO(
+                    "msg:Exiting this thread and switching to an unrelated thread.\t"
+                    "{}"
+                ,   self.show_ult_ref(next_th)
+                );
+            }
+            
+            // Release the lock; this lock is unlocked by the handler.
+            lc.release();
+        }
+        
+        // Exit the current thread.
+        self.template exit_to_cont<&basic_worker::exit_handler>(
+            mgbase::move(next_th)
+        );
+        
+        /*>--- this context is abandoned ---<*/
+        
+        // Be careful that the destructors are not called in this function.
+        
+        MGBASE_UNREACHABLE();
+    }
+    
     
     ult_ref_type try_steal()
     {
