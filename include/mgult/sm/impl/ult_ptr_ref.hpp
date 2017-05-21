@@ -97,10 +97,11 @@ public:
     
     bool has_joiner()
     {
-        return desc_->joiner != MGBASE_NULLPTR;
+        return !is_invalid_ult_id(get_joiner().get_id());
     }
     void set_joiner(const ult_ptr_ref& joiner)
     {
+        MGBASE_ASSERT(joiner.desc_ != MGBASE_NULLPTR);
         desc_->joiner = joiner.desc_;
     }
     ult_ptr_ref get_joiner() {

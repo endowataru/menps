@@ -20,14 +20,12 @@ public:
     
     ult_ptr_ref allocate_ult()
     {
-        if (!l_.empty())
+        if (MGBASE_LIKELY(!l_.empty()))
         {
             auto& desc = l_.front();
             l_.pop_front();
             
-            desc.state = ult_state::ready;
-            desc.detached = false;
-            desc.joiner = static_cast<ult_desc_node*>(make_invalid_ult_id().ptr);
+            initialize_desc(&desc);
             
             ult_id id{ &desc };
             return ult_ptr_ref(id);
@@ -46,6 +44,13 @@ public:
     }
     
 private:
+    static void initialize_desc(ult_desc* const desc)
+    {
+        desc->state = ult_state::ready;
+        desc->detached = false;
+        desc->joiner = static_cast<ult_desc_node*>(make_invalid_ult_id().ptr);
+    }
+    
     static ult_ptr_ref create_ult();
     
     static void destory_ult(ult_ptr_ref&& th);

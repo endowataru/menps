@@ -20,6 +20,8 @@ ult_ptr_ref ult_desc_pool::create_ult()
     desc->stack_ptr = desc;
     desc->stack_size = stack_size - sizeof(ult_desc_node);
     
+    initialize_desc(desc);
+    
     MGBASE_LOG_VERBOSE(
         "msg:Allocate a new thread descriptor.\t"
         "desc:{:x}\t"
