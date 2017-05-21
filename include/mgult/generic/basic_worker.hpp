@@ -73,126 +73,10 @@ public: // XXX
         d.ctx = ctx;
     }
     
-    #if 0
-private:
-    struct loop_root_data {
-        derived_type&   self;
-        ult_ref_type    th;
-    };
-    
-    MGCTX_SWITCH_FUNCTION
-    static transfer_type loop_root_handler(
-        const context_type      ctx
-    ,   loop_root_data* const   d
-    ) MGBASE_NOEXCEPT
-    {
-        auto& self = d->self;
-        self.check_current_worker();
-        
-        // Call the hook.
-        self.on_after_switch(self.root_th_, d->th);
-        
-        // Set the root context.
-        self.set_context(self.root_th_, ctx /*>---resuming context---<*/);
-        
-        // Set the executed thread as the current one.
-        self.set_current_ult(mgbase::move(d->th));
-        
-        // Switch to the resumed context of the following thread.
-        return { &self };
-    }
-    #endif
-    
 protected:
     explicit basic_worker(const worker_deque_conf_type& conf)
         : wd_(conf)
     { }
-    
-    #if 0
-public:
-    void loop()
-    {
-        auto& self = this->derived();
-        
-        self.check_current_worker();
-        
-        while (MGBASE_LIKELY(!self.finished()))
-        {
-            auto th = this->try_pop_top();
-            
-            if (MGBASE_LIKELY(th.is_valid()))
-            {
-                MGBASE_LOG_INFO(
-                    "msg:Popped a thread.\t"
-                    "{}"
-                ,   derived().show_ult_ref(th)
-                );
-            }
-            else
-            {
-                th = self.try_steal_from_another();
-                
-                if (MGBASE_LIKELY(th.is_valid()))
-                {
-                    MGBASE_LOG_INFO(
-                        "msg:Stole thread in worker loop.\t"
-                        "{}"
-                    ,   derived().show_ult_ref(th)
-                    );
-                }
-                else
-                {
-                    MGBASE_LOG_DEBUG("msg:Failed to steal in worker loop.");
-                    continue;
-                }
-            }
-            
-            MGBASE_ASSERT(th.is_valid());
-            
-            // TODO: reuse the thread descriptor
-            this->root_th_ = self.allocate_ult();
-            
-            const auto root_id = this->root_th_.get_id();
-            
-            // Load the next resumed context.
-            const auto ctx = self.get_context(th);
-            
-            loop_root_data d{ self, mgbase::move(th) };
-            
-            MGBASE_LOG_INFO(
-                "msg:Set up a root thread. Resume the thread.\t"
-                "{}"
-            ,   self.show_ult_ref(this->root_th_)
-            );
-            
-            // Call the hook.
-            self.on_before_switch(this->root_th_, d.th);
-            
-            // Switch to the context of the next thread.
-            const auto tr =
-                self.swap_context(
-                    ctx
-                ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::loop_root_handler)
-                ,   &d
-                );
-            
-            /*>---resuming context---<*/
-            
-            MGBASE_ASSERT(&self == tr.p0);
-            self.check_current_worker();
-            self.check_current_ult_id(root_id);
-            MGBASE_ASSERT(!this->root_th_.is_valid());
-            
-            MGBASE_LOG_INFO(
-                "msg:The thread finished. Came back to worker loop."
-            );
-            
-            auto root_th = self.remove_current_ult();
-            
-            this->derived().deallocate_ult( mgbase::move(root_th) );
-        }
-    }
-    #endif
     
 private:
     static transfer_type loop_root_handler(
@@ -282,7 +166,6 @@ public:
         // Deallocate the root thread.
         self.deallocate_ult(self.remove_current_ult());
     }
-    
     
 public:
     MGBASE_WARN_UNUSED_RESULT
@@ -571,7 +454,6 @@ public:
         // Destroy the thread descriptor of the child thread.
         self_2.deallocate_ult( mgbase::move(child_th_2) );
     }
-    
     
 private:
     static transfer_type yield_handler(
