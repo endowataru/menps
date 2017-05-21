@@ -629,6 +629,36 @@ public:
     }
     
 private:
+    static transfer_type yield_handler(
+        derived_type&   self
+    ,   ult_ref_type    prev_th
+    ) {
+        // Push the parent thread to the bottom.
+        // This behavior is still controversial.
+        // Practically, it is better than push_top
+        // because it avoids deadlocking caused by problematic user programs.
+        self.push_bottom( mgbase::move(prev_th) );
+        
+        // Switch to the resumed context of the following thread.
+        // No parameters are passed to the resumed context.
+        return { &self };
+    }
+    
+public:
+    void yield()
+    {
+        auto& self = this->derived();
+        
+        auto th = this->pop_top();
+        
+        self.template suspend_to_cont<&basic_worker::yield_handler>(
+            mgbase::move(th)
+        );
+    }
+    
+    
+    #if 0
+private:
     struct yield_data
     {
         derived_type&   self;
@@ -695,6 +725,7 @@ public:
         
         /*>---resuming context---<*/
     }
+    #endif
     
     #if 0
 private:

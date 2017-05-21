@@ -50,6 +50,7 @@ private:
         // Change this thread to the child thread.
         self.set_current_ult(mgbase::move(child_th));
         
+        // Call the user-defined function.
         Func(self, mgbase::move(parent_th));
         
         MGBASE_UNREACHABLE();
@@ -97,6 +98,86 @@ public:
         
         MGBASE_LOG_INFO(
             "msg:Suspended parent thread was resumed.\t"
+            "{}"
+        ,   self_2.show_ult_ref(self_2.current_th_)
+        );
+        
+        return self_2;
+    }
+    
+private:
+    struct suspend_to_cont_data
+    {
+        derived_type&   self;
+        ult_ref_type    prev_th;
+        ult_ref_type    next_th;
+    };
+    
+    template <transfer_type (*Func)(derived_type&, ult_ref_type)>
+    MGCTX_SWITCH_FUNCTION
+    static transfer_type suspend_to_cont_handler(
+        const context_type          ctx
+    ,   suspend_to_cont_data* const d
+    ) {
+        auto& self = d->self;
+        self.check_current_worker();
+        
+        // Move the references to the current thread.
+        auto prev_th = mgbase::move(d->prev_th);
+        auto next_th = mgbase::move(d->next_th);
+        
+        // Call the hook.
+        self.on_after_switch(prev_th, next_th);
+        
+        // Set the context to the parent thread.
+        self.set_context(prev_th, ctx /*>---resuming context---<*/);
+        
+        // Change this thread to the child thread.
+        self.set_current_ult(mgbase::move(next_th));
+        
+        // Call the user-defined function.
+        return Func(self, mgbase::move(prev_th));
+    }
+    
+public:
+    template <transfer_type (*Func)(derived_type&, ult_ref_type)>
+    derived_type& suspend_to_cont(ult_ref_type next_th)
+    {
+        auto& self = this->derived();
+        
+        suspend_to_cont_data d{
+            self
+        ,   self.remove_current_ult()
+        ,   mgbase::move(next_th)
+        };
+        
+        // Get the context of the thread executed next.
+        const auto ctx = self.get_context(d.next_th);
+        
+        // Call the hook.
+        self.on_before_switch(d.prev_th, d.next_th);
+        
+        // Switch to the context of the next thread.
+        const auto r =
+            self.swap_context(
+                ctx
+            ,   MGBASE_NONTYPE_TEMPLATE(
+                    &basic_current_thread::suspend_to_cont_handler<Func>
+                )
+            ,   &d
+            );
+        
+        /*>---resuming context---<*/
+        
+        // this pointer is no longer available.
+        
+        auto& self_2 = *r.p0;
+        self_2.check_current_worker();
+        
+        MGBASE_ASSERT(self_2.current_th_.is_valid());
+        
+        MGBASE_LOG_INFO(
+            "msg:Resumed the thread blocked to join a child thread that finished now.\t"
             "{}"
         ,   self_2.show_ult_ref(self_2.current_th_)
         );
