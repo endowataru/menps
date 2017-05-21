@@ -253,6 +253,18 @@ public:
         Policy::check_ult_id(current_th_, id);
     }
     
+    ult_id_type get_current_ult_id() const MGBASE_NOEXCEPT
+    {
+        return this->current_th_.get_id();
+    }
+    
+    std::string show_current_ult()
+    {
+        auto& self = this->derived();
+        
+        return self.show_ult_ref(this->current_th_);
+    }
+    
 public: // XXX
     void set_current_ult(ult_ref_type&& th)
     {
@@ -285,6 +297,7 @@ public: // XXX
         return mgbase::move(current_th_);
     }
     
+private:
     // The current thread can be modified by the current worker
     // without acquiring a lock.
     ult_ref_type        current_th_;

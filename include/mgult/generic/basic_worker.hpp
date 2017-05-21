@@ -134,12 +134,12 @@ public:
             
             MGBASE_ASSERT(th.is_valid());
             
-            const auto root_id = self.current_th_.get_id();
+            const auto root_id = self.get_current_ult_id();
             
             MGBASE_LOG_INFO(
                 "msg:Set up a root thread. Resume the thread.\t"
                 "{}"
-            ,   self.show_ult_ref(self.current_th_)
+            ,   self.show_current_ult()
             );
             
             // Suspend the root thread.
@@ -266,7 +266,7 @@ private:
         auto& self = *tr.p0;
         
         // Get the reference to the fork data.
-        auto& d = self.get_suspension_data(self.current_th_);
+        auto& d = self.get_suspension_data(self.get_current_ult());
         
         const auto child_id = d.id;
         
@@ -276,7 +276,7 @@ private:
         MGBASE_LOG_INFO(
             "msg:Child thread forked in a parent-first manner was resumed.\t"
             "{}"
-        ,   self.show_ult_ref(self.current_th_)
+        ,   self.show_current_ult()
         );
         
         // Execute the user-specified function on this stack.
@@ -389,7 +389,7 @@ public:
                 
                 // Call the hook to issue write/read barriers.
                 // The joined thread may have modified data.
-                self.on_join_already(self.current_th_, child_th);
+                self.on_join_already(self.get_current_ult(), child_th);
                 
                 // Unlock the child thread to destroy the thread descriptor.
                 lc.unlock();
@@ -429,7 +429,7 @@ public:
         MGBASE_LOG_INFO(
             "msg:Resumed the thread blocked to join a child thread that finished now.\t"
             "{}"
-        ,   self_2.show_ult_ref(self_2.current_th_)
+        ,   self_2.show_current_ult()
         );
         
         // Get the reference to the child thread again
@@ -501,14 +501,14 @@ private:
         MGBASE_LOG_INFO(
             "msg:Forked a new thread in a child-first manner.\t"
             "{}"
-        ,   self.show_ult_ref(self.current_th_)
+        ,   self.show_ult_ref(self.get_current_ult())
         );
         
         // Copy the ID to the current stack.
-        const auto child_id = self.current_th_.get_id();
+        const auto child_id = self.get_current_ult_id();
         
         // Get the reference to the suspension data.
-        auto& sus_data = self.get_suspension_data(self.current_th_);
+        auto& sus_data = self.get_suspension_data(self.get_current_ult());
         
         // Execute the user-defined function.
         sus_data.func(sus_data.ptr);
@@ -560,175 +560,7 @@ public:
         // Free the thread descriptor.
         self.deallocate_ult( mgbase::move(th) );
     }
-    
-    #if 0
-private:
-    struct exit_data
-    {
-        derived_type&   self;
-        ult_ref_type    this_th;
-        ult_ref_type    next_th;
-        context_type    next_ctx;
-    };
-    
-    MGCTX_SWITCH_FUNCTION
-    static transfer_type exit_handler(exit_data* const d) MGBASE_NOEXCEPT
-    {
-        auto& self = d->self;
-        
-        // Call the hook.
-        self.on_after_switch(d->this_th, d->next_th);
-        
-        {
-            // Move the previous thread to the current stack
-            // in order to destroy the thread descriptor.
-            auto this_th = mgbase::move(d->this_th);
-            
-            bool is_detached;
-            {
-                // This worker has already locked the thread.
-                auto lc = this_th.get_lock(mgbase::adopt_lock);
-                
-                is_detached = this_th.is_detached();
-                
-                // Unlock the current thread here to free the thread descriptor.
-            }
-            
-            if (is_detached) {
-                // Because this thread is detached,
-                // no other threads will join and manage its resource.
-                
-                // Free the thread descriptor by itself.
-                self.deallocate_ult( mgbase::move(this_th) );
-            }
-        }
-        
-        MGBASE_LOG_INFO(
-            "msg:Exiting this thread.\t"
-            "sp:{:x}"
-        ,   reinterpret_cast<mgbase::uintptr_t>(MGBASE_GET_STACK_POINTER())
-        );
-        
-        // Set the following thread as the current thread.
-        self.set_current_ult( mgbase::move(d->next_th) );
-        
-        // Explicitly call the destructors
-        // because the previous context will be abandoned.
-        // These destructors do nothing in an ordinary implementation.
-        d->this_th.~ult_ref_type();
-        d->next_th.~ult_ref_type();
-        d->next_ctx.~context_type();
-        
-        #if 0
-        MGBASE_LOG_INFO(
-            "msg:Switching from exiting thread.\t"
-            "return0:{:x}\t"
-            "frame0:{:x}\t"
-            "return1:{:x}\t"
-            "frame1:{:x}\t"
-            "return2:{:x}\t"
-            "frame2:{:x}\t"
-            /*"return3:{:x}\t"
-            "frame3:{:x}\t"*/
-        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_return_address(0))
-        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_frame_address(0))
-        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_return_address(1))
-        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_frame_address(1))
-        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_return_address(2))
-        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_frame_address(2))
-        /*,   reinterpret_cast<mgbase::uintptr_t>(__builtin_return_address(3))
-        ,   reinterpret_cast<mgbase::uintptr_t>(__builtin_frame_address(3))*/
-        );
-        #endif
-        
-        // Switch to the resumed context of the following thread.
-        return { &self };
-    }
-    
-public:
-    MGBASE_NORETURN
-    void exit()
-    {
-        auto& self = this->derived();
-        self.check_current_worker();
-        
-        exit_data d{
-            self
-        ,   self.remove_current_ult()
-        ,   {} // invalid thread
-        ,   { MGBASE_NULLPTR } // invalid context 
-            // TODO: create function make_invalid_context()
-        };
-        
-        {
-            // Lock this thread; a joiner thread may modify this thread.
-            auto lc = d.this_th.get_lock();
-            
-            // Change the state of this thread.
-            d.this_th.set_finished();
-            
-            if (d.this_th.has_joiner())
-            {
-                // "get_joiner" may return either ult_ref_type or ult_id_type.
-                auto joiner = 
-                    self.get_ult_ref(
-                        d.this_th.get_joiner()
-                    );
-                
-                // Set the joiner thread as the next thread.
-                d.next_th = mgbase::move(joiner);
-            }
-            
-            // Release the lock; this lock is unlocked by the handler.
-            lc.release();
-        }
-        
-        if (d.next_th.is_valid()) {
-            // Change the state of the joiner thread to "ready".
-            d.next_th.set_ready();
-            
-            // Call the hook to issue write/read barriers.
-            // The joiner thread may have modified data.
-            self.on_exit_resume(d.next_th);
-            
-            MGBASE_LOG_INFO(
-                "msg:Exiting this thread and switching to the joiner thread.\t"
-                "{}"
-            ,   derived().show_ult_ref(d.next_th)
-            );
-        }
-        else {
-            // Get the next thread. It might be a root thread.
-            d.next_th = self.pop_top();
-            
-            MGBASE_LOG_INFO(
-                "msg:Exiting this thread and switching to an unrelated thread.\t"
-                "{}"
-            ,   derived().show_ult_ref(d.next_th)
-            );
-        }
-        
-        // Get the context of the following thread.
-        d.next_ctx = self.get_context(d.next_th);
-        
-        // Call the hook.
-        self.on_before_switch(d.this_th, d.next_th);
-        
-        // Switch to the context of the following thread.
-        self.restore_context(
-            d.next_ctx
-        ,   MGBASE_NONTYPE_TEMPLATE(&basic_worker::exit_handler)
-        ,   &d
-        );
-        
-        /*>--- this context is abandoned ---<*/
-        
-        // Be careful that the destructors are not called in this function.
-        
-        MGBASE_UNREACHABLE();
-    }
-    #endif
-    
+       
 private:
     static transfer_type exit_handler(
         derived_type&   self
