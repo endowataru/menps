@@ -73,6 +73,7 @@ public: // XXX
         d.ctx = ctx;
     }
     
+    #if 0
 private:
     struct loop_root_data {
         derived_type&   self;
@@ -100,12 +101,14 @@ private:
         // Switch to the resumed context of the following thread.
         return { &self };
     }
+    #endif
     
 protected:
     explicit basic_worker(const worker_deque_conf_type& conf)
         : wd_(conf)
     { }
     
+    #if 0
 public:
     void loop()
     {
@@ -189,6 +192,97 @@ public:
             this->derived().deallocate_ult( mgbase::move(root_th) );
         }
     }
+    #endif
+    
+private:
+    static transfer_type loop_root_handler(
+        derived_type&   self
+    ,   ult_ref_type    prev_th
+    ,   void* const     /*unused*/
+    ) {
+        // Set the root thread.
+        self.root_th_ = mgbase::move(prev_th);
+        
+        // Switch to the resumed context of the following thread.
+        return { &self };
+    }
+    
+public:
+    void loop()
+    {
+        auto& self = this->derived();
+        
+        self.check_current_worker();
+        
+        // Allocate a thread descriptor for the root thread.
+        self.set_current_ult(self.allocate_ult());
+        
+        while (MGBASE_LIKELY(!self.finished()))
+        {
+            auto th = this->try_pop_top();
+            
+            if (MGBASE_LIKELY(th.is_valid()))
+            {
+                MGBASE_LOG_INFO(
+                    "msg:Popped a thread.\t"
+                    "{}"
+                ,   self.show_ult_ref(th)
+                );
+            }
+            else
+            {
+                th = self.try_steal_from_another();
+                
+                if (MGBASE_LIKELY(th.is_valid()))
+                {
+                    MGBASE_LOG_INFO(
+                        "msg:Stole thread in worker loop.\t"
+                        "{}"
+                    ,   self.show_ult_ref(th)
+                    );
+                }
+                else
+                {
+                    MGBASE_LOG_DEBUG("msg:Failed to steal in worker loop.");
+                    continue;
+                }
+            }
+            
+            MGBASE_ASSERT(th.is_valid());
+            
+            const auto root_id = self.current_th_.get_id();
+            
+            // Load the next resumed context.
+            const auto ctx = self.get_context(th);
+            
+            MGBASE_LOG_INFO(
+                "msg:Set up a root thread. Resume the thread.\t"
+                "{}"
+            ,   self.show_ult_ref(self.current_th_)
+            );
+            
+            // Suspend the root thread.
+            auto& self_2 =
+                self.template suspend_to_cont<void, &basic_worker::loop_root_handler>(
+                    mgbase::move(th)
+                ,   MGBASE_NULLPTR
+                );
+            
+            MGBASE_ASSERT(&self == &self_2);
+            self.check_current_worker();
+            self.check_current_ult_id(root_id);
+            MGBASE_ASSERT(!this->root_th_.is_valid());
+            
+            MGBASE_LOG_INFO(
+                "msg:The thread finished. Came back to worker loop."
+            );
+            
+        }
+        
+        // Deallocate the root thread.
+        self.deallocate_ult(self.remove_current_ult());
+    }
+    
     
 public:
     MGBASE_WARN_UNUSED_RESULT
