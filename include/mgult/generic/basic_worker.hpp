@@ -468,6 +468,7 @@ public:
         self.push_top( mgbase::move(info.child_th) );
     }
     
+    #if 0
 private:
     struct join_data
     {
@@ -627,11 +628,139 @@ public:
         // Destroy the thread descriptor of the child thread.
         self_2.deallocate_ult( mgbase::move(child_th_2) );
     }
+    #endif
+    
+private:
+    struct join_data
+    {
+        ult_ref_type    child_th;
+    };
+    
+    static transfer_type join_handler(
+        derived_type&       self
+    ,   ult_ref_type        prev_th
+    ,   join_data* const    d
+    ) {
+        {
+            // Set this thread as blocked.
+            prev_th.set_blocked();
+            
+            // This worker already has a lock of the child thread.
+            auto lc = d->child_th.get_lock(mgbase::adopt_lock);
+            
+            MGBASE_LOG_INFO(
+                "msg:Set the current thread as the joiner thread.\t"
+                //"{}"
+            //,   self.show_ult_ref(d->child_th)
+            );
+            
+            // Set the blocking thread continued by the child thread.
+            d->child_th.set_joiner( mgbase::move(prev_th) );
+            
+            // The child thread is automatically unlocked here.
+        }
+        
+        // Switch to the resumed context of the following thread.
+        return { &self };
+    }
+    
+public:
+    void join(const ult_id_type& id)
+    {
+        auto& self = this->derived();
+        self.check_current_worker();
+        
+        // Now this thread is the parent thread.
+        
+        auto child_th = self.get_ult_ref_from_id(id);
+        
+        {
+            // Lock the child thread to examine the state.
+            auto lc = child_th.get_lock();
+            
+            // The child thread must not be detached
+            // because the current thread is joining it.
+            MGBASE_ASSERT(!child_th.is_detached());
+            
+            if (child_th.is_finished()) {
+                // The child thread has already finished.
+                
+                MGBASE_LOG_INFO(
+                    "msg:Join a thread that already finished.\t"
+                    "{}"
+                ,   self.show_ult_ref(child_th)
+                );
+                
+                // Call the hook to issue write/read barriers.
+                // The joined thread may have modified data.
+                self.on_join_already(self.current_th_, child_th);
+                
+                // Unlock the child thread to destroy the thread descriptor.
+                lc.unlock();
+                
+                // Destroy the thread descriptor of the child thread.
+                // The thread is not detached because it is being joined,
+                self.deallocate_ult( mgbase::move(child_th) );
+                
+                return;
+            }
+            else {
+                MGBASE_LOG_INFO(
+                    "msg:Joining a thread that is still running.\t"
+                    "{}"
+                ,   self.show_ult_ref(child_th)
+                );
+            }
+            
+            // Release the lock; this lock is unlocked by the handler.
+            lc.release();
+        }
+        
+        join_data d{
+            mgbase::move(child_th)
+        };
+        
+        // Get the next thread. It might be a root thread.
+        auto next_th = self.pop_top();
+        
+        auto& self_2 =
+            self.template suspend_to_cont<join_data, &basic_worker::join_handler>(
+                mgbase::move(next_th)
+            ,   &d
+            );
+        
+        MGBASE_LOG_INFO(
+            "msg:Resumed the thread blocked to join a child thread that finished now.\t"
+            "{}"
+        ,   self_2.show_ult_ref(self_2.current_th_)
+        );
+        
+        // Get the reference to the child thread again
+        // because this context is resumed on the worker of the child thread.
+        
+        auto child_th_2 = self_2.get_ult_ref_from_id(id);
+        
+        // The child thread already finished
+        // because this parent thread is joining.
+        MGBASE_ASSERT(child_th_2.is_finished());
+        
+        // No need to lock here
+        // because the child thread has already finished
+        // and no other threads are joining.
+        
+        // If the other threads are joining this child thread,
+        // it's just a mistake of user programs.
+        
+        // Destroy the thread descriptor of the child thread.
+        self_2.deallocate_ult( mgbase::move(child_th_2) );
+    }
+    
     
 private:
     static transfer_type yield_handler(
         derived_type&   self
     ,   ult_ref_type    prev_th
+    ,   void* const     /*unused*/ // TODO
     ) {
         // Push the parent thread to the bottom.
         // This behavior is still controversial.
@@ -651,8 +780,9 @@ public:
         
         auto th = this->pop_top();
         
-        self.template suspend_to_cont<&basic_worker::yield_handler>(
+        self.template suspend_to_cont<void, &basic_worker::yield_handler>(
             mgbase::move(th)
+        ,   MGBASE_NULLPTR
         );
     }
     

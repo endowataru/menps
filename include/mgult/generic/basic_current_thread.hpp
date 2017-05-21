@@ -106,18 +106,20 @@ public:
     }
     
 private:
+    template <typename T>
     struct suspend_to_cont_data
     {
         derived_type&   self;
         ult_ref_type    prev_th;
         ult_ref_type    next_th;
+        T*              ptr;
     };
     
-    template <transfer_type (*Func)(derived_type&, ult_ref_type)>
+    template <typename T, transfer_type (*Func)(derived_type&, ult_ref_type, T*)>
     MGCTX_SWITCH_FUNCTION
     static transfer_type suspend_to_cont_handler(
-        const context_type          ctx
-    ,   suspend_to_cont_data* const d
+        const context_type              ctx
+    ,   suspend_to_cont_data<T>* const  d
     ) {
         auto& self = d->self;
         self.check_current_worker();
@@ -136,19 +138,20 @@ private:
         self.set_current_ult(mgbase::move(next_th));
         
         // Call the user-defined function.
-        return Func(self, mgbase::move(prev_th));
+        return Func(self, mgbase::move(prev_th), d->ptr);
     }
     
 public:
-    template <transfer_type (*Func)(derived_type&, ult_ref_type)>
-    derived_type& suspend_to_cont(ult_ref_type next_th)
+    template <typename T, transfer_type (*Func)(derived_type&, ult_ref_type, T*)>
+    derived_type& suspend_to_cont(ult_ref_type next_th, T* const ptr)
     {
         auto& self = this->derived();
         
-        suspend_to_cont_data d{
+        suspend_to_cont_data<T> d{
             self
         ,   self.remove_current_ult()
         ,   mgbase::move(next_th)
+        ,   ptr
         };
         
         // Get the context of the thread executed next.
@@ -162,7 +165,7 @@ public:
             self.swap_context(
                 ctx
             ,   MGBASE_NONTYPE_TEMPLATE(
-                    &basic_current_thread::suspend_to_cont_handler<Func>
+                    &basic_current_thread::suspend_to_cont_handler<T, Func>
                 )
             ,   &d
             );
@@ -186,7 +189,6 @@ public:
     }
     
 public:
-    //derived_type& suspend_to_cont(ult_ref_type th);
     //derived_type& exit_to_cont(ult_ref_type);
     
     void check_current_ult_id(const ult_id_type& id)
