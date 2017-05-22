@@ -378,7 +378,7 @@ public:
             // because the current thread is joining it.
             MGBASE_ASSERT(!child_th.is_detached());
             
-            if (child_th.is_finished()) {
+            if (MGBASE_LIKELY(child_th.is_finished())) {
                 // The child thread has already finished.
                 
                 MGBASE_LOG_INFO(
