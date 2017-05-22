@@ -19,6 +19,7 @@ option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
 option(MGBASE_LOGGER_USE_LOCK "Use lock in logger" ON)
 option(MGBASE_ENABLE_EXPONENTIAL_BACKOFF "Use exponential backoff" OFF)
+option(MGBASE_DISABLE_ALIGN_CHECK_SIZE "Disable size check in mgbase::align_*_nocheck" ON)
 
 set(MGBASE_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
@@ -66,7 +67,7 @@ else()
         target_compile_options(mgbase-options INTERFACE
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
-            $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
+            $<$<CONFIG:OptDebug>:-O3 -DNDEBUG -g>
             
             # Enable -Weverything
             -Weverything
@@ -110,7 +111,7 @@ else()
         target_compile_options(mgbase-options INTERFACE
             # Optimizations
             $<$<CONFIG:Debug>:-O0>
-            $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
+            $<$<CONFIG:OptDebug>:-O3 -DNDEBUG -g>
             
             # Disable SSP.
             -fno-stack-protector
@@ -333,9 +334,7 @@ message(STATUS "MGBASE_PROFILER_USE_GPROF=${MGBASE_PROFILER_USE_GPROF}")
 message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}")
 message(STATUS "MGBASE_CXX_STANDARD=${MGBASE_CXX_STANDARD}")
 message(STATUS "MGBASE_ATOMIC_USE_STANDARD=${MGBASE_ATOMIC_USE_STANDARD}")
-message(STATUS "MGBASE_ULT_DISABLE_YIELD=${MGBASE_ULT_DISABLE_YIELD}")
-message(STATUS "MGBASE_DISABLE_STANDARD_UNIQUE_PTR=${MGBASE_DISABLE_STANDARD_UNIQUE_PTR}")
-message(STATUS "MGBASE_LOGGER_USE_LOCK=${MGBASE_LOGGER_USE_LOCK}")
+message(STATUS "MGBASE_DISABLE_ALIGN_CHECK_SIZE=${MGBASE_DISABLE_ALIGN_CHECK_SIZE}")
 
 # Generate config.h
 
