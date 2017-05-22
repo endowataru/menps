@@ -3,7 +3,7 @@
 
 #include <mgbase/utility.hpp>
 #include <mgbase/logger.hpp>
-#include <mgbase/memory/align.hpp>
+#include <mgbase/memory/align_nocheck.hpp>
 #include <mgbase/memory/distance_in_bytes.hpp>
 #include <mgbase/nontype.hpp>
 #include <mgctx/common.hpp>
@@ -43,7 +43,7 @@ private:
     
     static void* align_suspension_data(void*& stack_ptr, mgbase::size_t& stack_size)
     {
-        return mgbase::align_call_stack(
+        return mgbase::align_call_stack_nocheck(
             MGBASE_ALIGNOF(suspension_data)
         ,   sizeof(suspension_data)
         ,   stack_ptr
@@ -192,20 +192,23 @@ public:
         if (MGBASE_LIKELY(size > 0))
         {
             // Allocate a space for user-defined data.
+            MGBASE_UNUSED
             const auto ptr =
-                mgbase::align_call_stack(
+                mgbase::align_call_stack_nocheck(
                     alignment
                 ,   size
                 ,   stack_ptr
                 ,   stack_size
                 );
             
+            #ifndef MGBASE_DISABLE_ALIGN_CHECK_SIZE
             if (MGBASE_UNLIKELY(ptr == MGBASE_NULLPTR))
             {
                 // The required size by the user is too big
                 // to place on the call stack.
                 throw std::bad_alloc{};
             }
+            #endif
         }
         
         return { id, stack_ptr };
