@@ -12,6 +12,10 @@ option(MGULT_ENABLE_MTH "Build MassiveThreads" ON)
 message(STATUS "Generate mgult/config.h ...")
 message(STATUS "MGULT_ENABLE_MTH=${MGULT_ENABLE_MTH}")
 
+# Generate config.h
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mgult/config.h)
+
 add_library(mgult
     $<$<PLATFORM_ID:Linux>:
     ./src/fcontext/jump_x86_64_sysv_elf_gas.S
@@ -51,9 +55,6 @@ if (${MGULT_ENABLE_MTH})
     )
 endif()
 
-# Generate config.h
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mgult/config.h)
 
 # Unit tests
 
