@@ -91,29 +91,38 @@ inline context<T*> make_context(
 
 #ifdef MGCTX_AVOID_PLT
     #define CLOBBERS                CLOBBERS_BASE, "rbx"
+    #define DECLARE_FUNC
     #define FUNC_OPERAND            "%P[func]"
     #define OUTPUT_CONSTRAINT_FUNC
+    #define OUTPUT_CONSTRAINT_FUNC_COMMA
     #define INPUT_CONSTRAINTS   \
         [func] "i" (Func)
+    #define INPUT_CONSTRAINTS_COMMA \
+        INPUT_CONSTRAINTS ,
 #else
     #define CLOBBERS                CLOBBERS_BASE
+    #define DECLARE_FUNC            auto func = Func;
     #define FUNC_OPERAND            "*%[func]"
     #define OUTPUT_CONSTRAINT_FUNC \
         /* RBX | Input: User-defined function. / Output: Overwritten (but discarded). */ \
-        , [func] "+b" (func)
+        [func] "+b" (func)
+    #define OUTPUT_CONSTRAINT_FUNC_COMMA \
+        OUTPUT_CONSTRAINT_FUNC ,
     
     #define INPUT_CONSTRAINTS   \
+        /* No input constraints */
+    #define INPUT_CONSTRAINTS_COMMA \
         /* No input constraints */
 #endif
 
 #define OUTPUT_CONSTRAINTS(rdi, rax, rsi)   \
+    OUTPUT_CONSTRAINT_FUNC_COMMA \
     /* RDI | Input: RSP or  / Output: Overwritten (but discarded). */ \
     "+D" (rdi), \
     /* RAX | Output: User-defined value from Func or the previous context. */ \
     "=a" (rax), \
     /* RSI | Input: User-defined value. / Output: Overwritten (but discarded). */ \
-    "+S" (arg)  \
-    OUTPUT_CONSTRAINT_FUNC
+    "+S" (arg)
 
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> save_context(
@@ -127,9 +136,7 @@ inline transfer<T*> save_context(
     // Align the stack pointer.
     auto new_sp = (reinterpret_cast<i64>(sp) & mask) - 0x8;
     
-    #ifndef MGCTX_AVOID_PLT
-    auto func = Func;
-    #endif
+    DECLARE_FUNC
     
     transfer<T*> result;
     
@@ -182,9 +189,7 @@ inline transfer<T*> swap_context(
     context<T*> ctx
 ,   Arg*        arg
 ) {
-    #ifndef MGCTX_AVOID_PLT
-    auto func = Func;
-    #endif
+    DECLARE_FUNC
     
     transfer<T*> result;
     
@@ -228,14 +233,6 @@ inline transfer<T*> swap_context(
     return result;
 }
 
-#undef SAVE_CONTEXT
-#undef CLOBBERS_BASE
-#undef CLOBBERS
-#undef OUTPUT_CONSTRAINT_FUNC
-#undef OUTPUT_CONSTRAINTS
-#undef INPUT_CONSTRAINTS
-#undef FUNC_OPERAND
-
 template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
 MGBASE_NORETURN
 inline void restore_context(
@@ -244,6 +241,8 @@ inline void restore_context(
 ) {
     // The pointer to the context must be 16-byte aligned.
     MGBASE_ASSERT(reinterpret_cast<mgbase::int64_t>(ctx.p) % 0x10 == 0);
+    
+    DECLARE_FUNC
     
     asm volatile (
         // Restore RSP.
@@ -254,20 +253,21 @@ inline void restore_context(
         
         // Call the user-defined function.
         // The return address is the continuation.
-        "jmp    *%[func]\n\t"
+        "jmp    " FUNC_OPERAND "\n\t"
         
         // RAX is passed to the continuation.
         
     :   // No output constraints
+        OUTPUT_CONSTRAINT_FUNC
         
     :   // Input constraints
+        
+        INPUT_CONSTRAINTS_COMMA
         
         // Allow any register or memory operand.
         [ctx] "g" (ctx.p),
         // RDI | Input: User-defined value
-        "D" (arg),
-        
-        [func] "b" (Func)
+        "D" (arg)
         
     :   // "cc" is added without any strong reasons now.
         "cc",
@@ -278,6 +278,15 @@ inline void restore_context(
     
     MGBASE_UNREACHABLE();
 }
+
+#undef SAVE_CONTEXT
+#undef CLOBBERS_BASE
+#undef CLOBBERS
+#undef OUTPUT_CONSTRAINT_FUNC
+#undef OUTPUT_CONSTRAINTS
+#undef INPUT_CONSTRAINTS
+#undef INPUT_CONSTRAINTS_COMMA
+#undef FUNC_OPERAND
 
 } // namespace mgctx
 
