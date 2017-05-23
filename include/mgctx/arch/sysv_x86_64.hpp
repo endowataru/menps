@@ -269,7 +269,11 @@ inline void restore_context(
         
         [func] "b" (Func)
         
-    :   // No clobbers
+    :   // "cc" is added without any strong reasons now.
+        "cc",
+        // Necessary to flush out the registers to the memory.
+        // There was a bug in which *arg was not written to the stack.
+        "memory"
     );
     
     MGBASE_UNREACHABLE();
