@@ -8,6 +8,8 @@
 #include <string>
 #include <mgbase/logger.hpp>
 
+#include <mgcom/rma/unique_local_ptr.hpp>
+
 namespace mgth {
 
 class global_ult_ref
@@ -26,6 +28,8 @@ public:
         , desc_rptr_(desc_rptr)
     {
         MGBASE_ASSERT(mgcom::valid_process_id(id.di.proc));
+        
+        desc_lptr_.reset(mgcom::rma::allocate<global_ult_desc>());
     }
     
     ~global_ult_ref() = default;
@@ -40,6 +44,7 @@ public:
     global_ult_ref& operator = (global_ult_ref&& other) MGBASE_NOEXCEPT {
         id_ = other.id_;
         desc_rptr_ = other.desc_rptr_;
+        desc_lptr_ = mgbase::move(other.desc_lptr_);
         
         other.set_invalid();
         return *this;
@@ -226,13 +231,11 @@ private:
         const auto target_proc = get_target_proc();
         const auto rptr = desc_rptr_.member(mem);
         
-        const auto lptr = mgcom::rma::allocate<T>();
+        const auto lptr = mgbase::reinterpret_pointer_cast<T>(desc_lptr_.get());
         
         mgcom::rma::read(target_proc, rptr, lptr, 1);
         
         const auto ret = *lptr;
-        
-        mgcom::rma::deallocate(lptr);
         
         return ret;
     }
@@ -243,12 +246,10 @@ private:
         const auto target_proc = get_target_proc();
         const auto rptr = desc_rptr_.member(mem);
         
-        const auto lptr = mgcom::rma::allocate<T>();
+        const auto lptr = mgbase::reinterpret_pointer_cast<T>(desc_lptr_.get());
         *lptr = val;
         
         mgcom::rma::write(target_proc, rptr, lptr, 1);
-        
-        mgcom::rma::deallocate(lptr);
     }
     
     void set_invalid()
@@ -263,6 +264,7 @@ private:
     
     ult_id          id_;
     desc_remote_ptr desc_rptr_;
+    mgcom::rma::unique_local_ptr<global_ult_desc>  desc_lptr_;
 };
 
 } // namespace mgth
