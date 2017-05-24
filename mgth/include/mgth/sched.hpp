@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <mgth/common.hpp>
 
 namespace mgth {
 

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgth/common.hpp>
 #include <mgbase/unique_ptr.hpp>
 
 namespace mgth {

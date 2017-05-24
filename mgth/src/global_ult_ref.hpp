@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgth/common.hpp>
 #include "global_ult_desc.hpp"
 
 #include <mgbase/threading/unique_lock.hpp>

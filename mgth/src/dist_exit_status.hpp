@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgth/common.hpp>
 #include <mgcom/rma.hpp>
 #include <mgcom/rma/unique_local_ptr.hpp>
 #include <mgcom/structure/alltoall_buffer.hpp>

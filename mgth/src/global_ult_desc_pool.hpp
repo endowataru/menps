@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgth/common.hpp>
 #include "global_ult_ref.hpp"
 
 #include <mgdsm/space_ref.hpp>

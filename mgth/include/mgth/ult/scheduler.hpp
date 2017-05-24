@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgth/common.hpp>
 #include <mgult/scheduler.hpp>
 #include <mgbase/shared_ptr.hpp>
 

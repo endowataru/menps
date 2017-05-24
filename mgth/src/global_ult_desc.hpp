@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgth/common.hpp>
 #include "dist_common.hpp"
 #include <mgcom/rma.hpp>
 

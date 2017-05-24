@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgth/common.hpp>
 #include <mgult/root_scheduler.hpp>
 #include <mgdsm/space_ref.hpp>
 #include <mgbase/memory/allocatable.hpp>

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <mgth/common.hpp>
 #include <mgbase/unique_ptr.hpp>
 #include <mgbase/type_traits/remove_extent.hpp>
 #include <mgbase/utility/forward.hpp>

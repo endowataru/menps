@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgth/config.h>
 #include <mgbase/lang.h>
 
 MGBASE_EXTERN_C_BEGIN
