@@ -319,8 +319,8 @@ void dist_worker::on_before_switch(global_ult_ref& /*from_th*/, global_ult_ref& 
     const auto stack_first_ptr = static_cast<mgbase::uint8_t*>(stack_ptr) - stack_size;
     
     MGBASE_LOG_DEBUG(
-        "msg:Pinning call stack before switching to different thread."
-        "stack_ptr:{}\n"
+        "msg:Pinning call stack before switching to different thread.\t"
+        "stack_ptr:{}\t"
         "stack_size:{}"
     ,   reinterpret_cast<mgbase::uintptr_t>(stack_ptr)
     ,   stack_size
@@ -343,8 +343,8 @@ void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_
     const auto stack_first_ptr = static_cast<mgbase::uint8_t*>(stack_ptr) - stack_size;
     
     MGBASE_LOG_DEBUG(
-        "msg:Unpinning call stack after switching to different thread."
-        "stack_ptr:{}\n"
+        "msg:Unpinning call stack after switching to different thread.\t"
+        "stack_ptr:{}\t"
         "stack_size:{}"
     ,   reinterpret_cast<mgbase::uintptr_t>(stack_ptr)
     ,   stack_size
