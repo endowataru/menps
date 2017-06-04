@@ -38,7 +38,7 @@ private:
     {
         auto& self = *static_cast<derived_type*>(self_ptr);
         
-        #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+        #if MGULT_EXECUTOR_LIFETIME_CYCLES > 0
         auto old_clock = mgbase::get_cpu_clock();
         #endif
         
@@ -48,9 +48,9 @@ private:
             if (MGBASE_UNLIKELY(
                 ! self.dequeue_some()
             )) {
-                #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+                #if MGULT_EXECUTOR_LIFETIME_CYCLES > 0
                 const auto cur_clock = mgbase::get_cpu_clock();
-                if (cur_clock - old_clock < MGCOM_EXECUTOR_LIFETIME_CYCLES) {
+                if (cur_clock - old_clock < MGULT_EXECUTOR_LIFETIME_CYCLES) {
                     Policy::this_thread::yield();
                 }
                 else {
@@ -65,11 +65,11 @@ private:
                             return MGBASE_NULLPTR;
                         }
                     }
-                #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+                #if MGULT_EXECUTOR_LIFETIME_CYCLES > 0
                 }
                 #endif
             }
-            #if MGCOM_EXECUTOR_LIFETIME_CYCLES > 0
+            #if MGULT_EXECUTOR_LIFETIME_CYCLES > 0
             else {
                 old_clock = mgbase::get_cpu_clock();
             }

@@ -7,6 +7,7 @@ set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
 # Options
 option(MGULT_ENABLE_MTH "Build MassiveThreads" ON)
+set(MGULT_EXECUTOR_LIFETIME_CYCLES "0 " CACHE STRING "Run executors during at least this time")
 
 # Show messages invoking CMake
 message(STATUS "Generate mgult/config.h ...")
