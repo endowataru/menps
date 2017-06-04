@@ -6,7 +6,7 @@
 #include "manager/manager_space.hpp"
 #include "segment_locator.hpp"
 #include <mgbase/unique_ptr.hpp>
-#include <mgbase/threading/mutex.hpp>
+#include <mgdsm/ult.hpp>
 
 namespace mgdsm {
 
@@ -22,8 +22,8 @@ struct sharer_space_policy
     typedef sharer_segment::accessor            segment_accessor_type;
     typedef manager_space::segment_conf         segment_conf_type;
     
-    typedef mgbase::mutex                       lock_type;
-    typedef mgbase::unique_lock<lock_type>      unique_lock_type;
+    typedef ult::mutex                          lock_type;
+    typedef ult::unique_lock<lock_type>         unique_lock_type;
     
     typedef manager_segment_proxy_ptr           manager_segment_ptr_type;
     

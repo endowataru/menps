@@ -3,12 +3,11 @@
 
 #include "basic_rpc_manager_page_entry.hpp"
 #include "mgdsm_common.hpp"
-#include <mgbase/threading/mutex.hpp>
-#include <mgbase/threading/condition_variable.hpp>
 #include <mgcom/rma/paired_local_ptr.hpp>
 #include "process_id_set.hpp"
 #include "rpc_manager_page_invalidator.hpp"
 #include <mgcom/common_policy.hpp>
+#include <mgdsm/ult.hpp>
 
 namespace mgdsm {
 
@@ -25,9 +24,9 @@ struct rpc_manager_page_entry_traits
     
     typedef rpc_manager_page_invalidator                invalidator_type;
     
-    typedef mgbase::mutex                               mutex_type;
-    typedef mgbase::condition_variable                  cv_type;
-    typedef mgbase::unique_lock<mutex_type>             unique_lock_type;
+    typedef ult::mutex                                  mutex_type;
+    typedef ult::condition_variable                     cv_type;
+    typedef ult::unique_lock<mutex_type>                unique_lock_type;
     
     static unique_lock_type get_lock(mutex_type& mtx) {
         return unique_lock_type(mtx);
