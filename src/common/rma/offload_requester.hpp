@@ -116,7 +116,7 @@ private:
         
         while (true)
         {
-            auto t = que.try_enqueue(1);
+            auto t = que.try_enqueue(1, true);
             
             if (MGBASE_LIKELY(t.valid()))
             {

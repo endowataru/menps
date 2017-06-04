@@ -26,7 +26,7 @@ public:
     ,   const command_code_type code
     ,   Func&&                  func
     ) {
-        auto t = base::try_enqueue(1);
+        auto t = base::try_enqueue(1, true);
         
         if (t.valid())
         {
