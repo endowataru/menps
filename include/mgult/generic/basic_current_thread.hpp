@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <mgult/common.hpp>
 #include <mgbase/crtp_base.hpp>
 
 namespace mgult {

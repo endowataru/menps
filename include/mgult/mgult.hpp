@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgult/config.h>
+#include <mgult/common.hpp>
 
 #include <mgult/klt.hpp>
 
