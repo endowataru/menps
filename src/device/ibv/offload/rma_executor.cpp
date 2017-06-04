@@ -13,6 +13,7 @@ namespace mgcom {
 namespace ibv {
 
 struct rma_executor_policy
+    : mgcom::ult::ult_policy
 {
     typedef rma_executor::impl  derived_type;
     typedef ult::thread         thread_type;
@@ -52,9 +53,7 @@ public:
         this->stop();
     }
     
-private:
-    friend class basic_offload_thread<rma_executor_policy>;
-    
+public: // XXX
     queue_type::dequeue_transaction try_dequeue()
     {
         return queue_type::try_dequeue(send_wr_buffer::max_size);
@@ -130,3 +129,4 @@ rma::command_queue& rma_executor::get_command_queue() {
 
 } // namespace ibv
 } // namespace mgcom
+

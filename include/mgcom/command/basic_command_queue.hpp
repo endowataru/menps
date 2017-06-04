@@ -2,10 +2,20 @@
 #pragma once
 
 #include <mgcom/common.hpp>
+#include <mgult/offload/basic_spin_offload_queue.hpp>
+#if 0
+#include <mgcom/common.hpp>
 #include <mgbase/nonblocking/mpsc_bounded_queue.hpp>
+#endif
 
 namespace mgcom {
 
+template <typename Policy>
+class basic_command_queue
+    : public mgult::basic_spin_offload_queue<Policy>
+{ };
+
+#if 0
 template <typename Policy>
 class basic_command_queue
     : public mgbase::static_mpsc_bounded_queue<
@@ -35,5 +45,6 @@ public:
         return false;
     }
 };
+#endif
 
 } // namespace mgcom

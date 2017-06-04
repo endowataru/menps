@@ -1,11 +1,32 @@
 
 #pragma once
 
+#include <mgcom/common.hpp>
+
+#ifdef MGCOM_FORK_EXECUTOR_THREAD
+    #include <mgult/offload/basic_fork_offload_thread.hpp>
+#else
+    #include <mgult/offload/basic_cv_offload_thread.hpp>
+#endif
+
+#if 0
 #include <mgbase/atomic.hpp>
 #include <mgbase/crtp_base.hpp>
 #include <mgbase/profiling/clock.hpp>
+#endif
 
 namespace mgcom {
+
+template <typename Policy>
+class basic_offload_thread
+#ifdef MGCOM_FORK_EXECUTOR_THREAD
+    : public mgult::basic_fork_offload_thread<Policy>
+#else
+    : public mgult::basic_cv_offload_thread<Policy>
+#endif
+{ };
+
+#if 0
 
 template <typename Policy>
 class basic_offload_thread
@@ -195,6 +216,7 @@ private:
     mgbase::atomic<bool>    finished_;
     thread_type             th_;
 };
+#endif
 
 } // namespace mgcom
 

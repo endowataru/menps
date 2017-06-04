@@ -37,6 +37,7 @@ struct command
 };
 
 struct command_queue_policy
+    : mgcom::ult::ult_policy
 {
     typedef command     command_type;
     
