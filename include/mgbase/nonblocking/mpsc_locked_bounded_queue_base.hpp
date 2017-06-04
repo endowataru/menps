@@ -106,7 +106,7 @@ public:
         bool sleeping_;
     };
     
-    enqueue_transaction try_enqueue(const index_type num)
+    enqueue_transaction try_enqueue(const index_type num, const bool wakeup)
     {
         #ifdef MGBASE_ENABLE_EXPONENTIAL_BACKOFF
         const int backoff_min = 32, backoff_max = 4096; // TODO
@@ -133,7 +133,7 @@ public:
             // We don't use head's LSB but it's also shifted to debug easily.
             
             // Add num to tail and also reset the tail's LSB.
-            const auto new_tail = (tail + (num << 1)) & ~static_cast<index_type>(0x1);
+            const auto new_tail = (tail + (num << 1)) & ~static_cast<index_type>(wakeup);
             const auto new_cap = (new_tail - head) >> 1;
             
             if (MGBASE_UNLIKELY(new_cap >= cap)) {
@@ -174,7 +174,7 @@ public:
                         (tail >> 1)         // from
                     ,   (new_tail >> 1)     // to
                     }
-                    ,   ((tail & 0x1) == 0x1) // sleeping
+                    ,   ((tail & 0x1) == 0x1) && wakeup // sleeping
                         // If the old tail's LSB was "0",
                         // this thread found that the consumer thread is sleeping.
                     );

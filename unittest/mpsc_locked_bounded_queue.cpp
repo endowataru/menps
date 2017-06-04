@@ -16,7 +16,7 @@ TEST(MpscLockedBoundedQueue, Serial)
     mgbase::uint64_t x = 0;
     for (mgbase::uint64_t i = 1; i <= N; ++i) {
         {
-            auto t = buf.try_enqueue(1);
+            auto t = buf.try_enqueue(1, true);
             ASSERT_TRUE(t.valid());
             *t.begin() = i;
             t.commit(1);
@@ -41,7 +41,7 @@ TEST(MpscLockedBoundedQueue, Serial2)
     mgbase::uint64_t x = 0;
     for (mgbase::uint64_t i = 1; i <= N; ++i) {
         {
-            auto t = buf.try_enqueue(1);
+            auto t = buf.try_enqueue(1, true);
             ASSERT_TRUE(t.valid());
             *t.begin() = i;
             t.commit(1);
@@ -69,7 +69,7 @@ struct functor
     {
         for (mgbase::uint64_t i = 1; i <= n; ++i) {
             while (true) {
-                auto t = q.try_enqueue(1); // CAS: tail = (tail + 0x2) & ~1;
+                auto t = q.try_enqueue(1, true); // CAS: tail = (tail + 0x2) & ~1;
                 if (!t.valid() || t.size() == 0) {
                     mgbase::this_thread::yield();
                     continue;
