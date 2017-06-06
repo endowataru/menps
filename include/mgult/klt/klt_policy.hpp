@@ -22,6 +22,10 @@ struct klt_policy
             mgult::klt::this_thread::detach();
         }
     };
+    
+    typedef mgult::klt::spinlock            spinlock;
+    
+    typedef mgult::klt::thread              thread;
 };
 
 namespace klt {
