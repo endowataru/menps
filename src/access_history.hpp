@@ -33,6 +33,10 @@ public:
     {
         ult::suspend_and_call<void>(do_read_barrier{*this});
     }
+    void async_read_barrier(mgbase::callback<void ()> cb)
+    {
+        rh_.commit(cb);
+    }
     
 private:
     struct do_read_barrier
@@ -58,6 +62,10 @@ public:
     void write_barrier()
     {
         ult::suspend_and_call<void>(do_write_barrier{*this});
+    }
+    void async_write_barrier(mgbase::callback<void ()> cb)
+    {
+        wh_.commit(cb);
     }
     
 private:

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgdsm/segment_ref.hpp>
+#include <mgbase/callback.hpp>
 
 namespace mgdsm {
 
@@ -19,6 +20,10 @@ public:
     virtual void read_barrier() = 0;
     
     virtual void write_barrier() = 0;
+    
+    virtual void async_read_barrier(mgbase::callback<void ()>) = 0;
+    
+    virtual void async_write_barrier(mgbase::callback<void ()>) = 0;
     
     virtual void enable_on_this_thread() = 0;
     

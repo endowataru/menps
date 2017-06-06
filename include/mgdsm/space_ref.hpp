@@ -34,6 +34,12 @@ public:
     void write_barrier() {
         sp_->write_barrier();
     }
+    void async_read_barrier(mgbase::callback<void ()> cb) {
+        sp_->async_read_barrier(cb);
+    }
+    void async_write_barrier(mgbase::callback<void ()> cb) {
+        sp_->async_write_barrier(cb);
+    }
     
     void enable_on_this_thread()
     {

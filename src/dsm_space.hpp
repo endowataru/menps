@@ -151,6 +151,14 @@ public:
     {
         this->hist_.write_barrier();
     }
+    virtual void async_read_barrier(mgbase::callback<void ()> cb) MGBASE_OVERRIDE
+    {
+        this->hist_.async_read_barrier(cb);
+    }
+    virtual void async_write_barrier(mgbase::callback<void ()> cb) MGBASE_OVERRIDE
+    {
+        this->hist_.async_write_barrier(cb);
+    }
     
     virtual void pin(void* const ptr, const mgbase::size_t size_in_bytes) MGBASE_OVERRIDE
     {
