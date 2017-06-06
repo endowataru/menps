@@ -21,6 +21,8 @@ struct dsm_base_policy
     typedef segment_id_t    segment_id_type;
     typedef page_id_t       page_id_type;
     typedef block_id_t      block_id_type;
+    
+    typedef abs_block_id    abs_block_id_type;
 };
 
 } // namespace mgdsm

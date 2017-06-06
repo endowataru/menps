@@ -4,6 +4,9 @@
 #include "protector/protector_space.hpp"
 #include <vector>
 
+#include "history/write_history.hpp"
+#include "history/read_history.hpp"
+
 namespace mgdsm {
 
 class access_history
@@ -16,21 +19,69 @@ public:
     };
     
     explicit access_history(const conf& cnf)
-        : conf_(cnf)
+        : rh_(read_history::config{ cnf.sp })
+        , wh_(write_history::config{ cnf.sp })
     { }
     
+public:
+    void add_new_read(const abs_block_id ablk_id)
+    {
+        rh_.add(ablk_id);
+    }
+    
+    void read_barrier()
+    {
+        ult::suspend_and_call<void>(do_read_barrier{*this});
+    }
+    
+private:
+    struct do_read_barrier
+    {
+        access_history& self;
+        
+        template <typename Cont>
+        MGBASE_WARN_UNUSED_RESULT
+        ult::async_status<void> operator() (Cont&& cont) const {
+            self.rh_.commit(mgbase::forward<Cont>(cont));
+            return ult::make_async_deferred<void>();
+        }
+    };
+    
+    read_history rh_;
+        
+public:
+    void add_new_write(const abs_block_id ablk_id)
+    {
+        wh_.add(ablk_id);
+    }
+    
+    void write_barrier()
+    {
+        ult::suspend_and_call<void>(do_write_barrier{*this});
+    }
+    
+private:
+    struct do_write_barrier
+    {
+        access_history& self;
+        
+        template <typename Cont>
+        MGBASE_WARN_UNUSED_RESULT
+        ult::async_status<void> operator() (Cont&& cont) const {
+            self.wh_.commit(mgbase::forward<Cont>(cont));
+            return ult::make_async_deferred<void>();
+        }
+    };
+    
+    write_history wh_;
+    
+    #if 0
+public:
     void add_new_read(const abs_block_id ablk_id)
     {
         mgbase::lock_guard<mutex_type> lk(this->read_ids_mtx_);
         
         this->read_ids_.push_back(ablk_id);
-    }
-    
-    void add_new_write(const abs_block_id ablk_id)
-    {
-        mgbase::lock_guard<mutex_type> lk(this->write_ids_mtx_);
-        
-        this->write_ids_.push_back(ablk_id);
     }
     
 private:
@@ -72,6 +123,18 @@ public:
     }
     
 private:
+    mutex_type read_barrier_mtx_;
+    mutex_type read_ids_mtx_;
+    std::vector<abs_block_id> read_ids_;
+    
+public:
+    void add_new_write(const abs_block_id ablk_id)
+    {
+        mgbase::lock_guard<mutex_type> lk(this->write_ids_mtx_);
+        
+        this->write_ids_.push_back(ablk_id);
+    }
+private:
     struct write_barrier_closure
     {
         void operator() (protector_block_accessor& blk)
@@ -104,16 +167,14 @@ public:
         MGBASE_LOG_INFO("msg:Finished write barrier.");
     }
     
-private:
-    const conf conf_;
-    
-    mutex_type read_barrier_mtx_;
-    mutex_type read_ids_mtx_;
-    std::vector<abs_block_id> read_ids_;
     
     mutex_type write_barrier_mtx_;
     mutex_type write_ids_mtx_;
     std::vector<abs_block_id> write_ids_;
+    
+private:
+    const conf conf_;
+    #endif
 };
 
 void protector_block_accessor::add_new_read()
