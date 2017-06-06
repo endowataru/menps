@@ -26,7 +26,11 @@ public:
     ,   const command_code_type code
     ,   Func&&                  func
     ) {
+        #ifdef MGCOM_IBV_ENABLE_SLEEP_QP
         auto t = base::try_enqueue(1, true);
+        #else
+        auto t = base::try_enqueue(1);
+        #endif
         
         if (t.valid())
         {
