@@ -477,7 +477,7 @@ public:
         // In distributed-memory implementation,
         // the descriptor is locked and checked whether the write back is ongoing or not.
         // TODO: Can we merge these two behaviors?
-        self.on_join_resume(mgbase::move(child_th_2));
+        self_2.on_join_resume(mgbase::move(child_th_2));
     }
     
 private:
