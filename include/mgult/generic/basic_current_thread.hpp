@@ -42,10 +42,6 @@ private:
         auto parent_th = mgbase::move(d->parent_th);
         auto child_th = mgbase::move(d->child_th);
         
-        // Call the hook.
-        // A new thread is always not locked.
-        self.template on_after_switch<false>(parent_th, child_th);
-        
         // Set the context to the parent thread.
         self.set_context(parent_th, ctx /*>---resuming context---<*/);
         
@@ -130,9 +126,6 @@ private:
         auto prev_th = mgbase::move(d->prev_th);
         auto next_th = mgbase::move(d->next_th);
         
-        // Call the hook.
-        self.template on_after_switch<IsPrevLocked>(prev_th, next_th);
-        
         // Set the context to the parent thread.
         self.set_context(prev_th, ctx /*>---resuming context---<*/);
         
@@ -207,9 +200,6 @@ private:
         // Move the references to the current thread.
         auto prev_th = self.remove_current_ult();
         auto next_th = mgbase::move(d->next_th);
-        
-        // Call the hook.
-        self.template on_after_switch<IsPrevLocked>(prev_th, next_th);
         
         // Change this thread to the child thread.
         self.set_current_ult(mgbase::move(next_th));

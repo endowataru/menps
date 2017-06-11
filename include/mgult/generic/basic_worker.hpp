@@ -357,6 +357,10 @@ private:
             // Move the reference to this call stack.
             auto child_th = mgbase::move(d->child_th);
             
+            // Call the hook.
+            // This hook cannot precede moving the reference of the child thread.
+            self.template on_after_switch<false>(prev_th, self.get_current_ult());
+            
             // This worker already has a lock of the child thread.
             auto lc = child_th.get_lock(mgbase::adopt_lock);
             
@@ -505,6 +509,9 @@ private:
     ,   ult_ref_type    prev_th
     ,   void* const     /*unused*/ // TODO
     ) {
+        // Call the hook.
+        self.template on_after_switch<false>(prev_th, self.get_current_ult());
+        
         // Push the parent thread to the bottom.
         // This behavior is still controversial.
         // Practically, it is better than push_top
@@ -536,6 +543,10 @@ private:
         derived_type&   self
     ,   ult_ref_type    parent_th
     ) {
+        // Call the hook.
+        // A new thread is always not locked.
+        self.template on_after_switch<false>(parent_th, self.get_current_ult());
+        
         // Push the parent thread to the top.
         // The current thread must be on a different stack from the parent's one
         // before calling this
@@ -638,6 +649,9 @@ private:
             // Because this thread is detached and written back,
             // no other threads will join and manage its resource.
             is_destroyable = prev_th.is_detached(lc) && prev_th.is_latest_stamp(lc);
+            
+            // Call the hook.
+            self.template on_after_switch<true>(prev_th, self.get_current_ult());
             
             // Unlock the current thread here to free the thread descriptor.
         }
