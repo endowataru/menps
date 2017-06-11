@@ -59,6 +59,7 @@ public:
         return lk;
     }
     
+    #if 0
     void set_blocked(unique_lock_type& lk) {
         check_locked(lk);
         MGBASE_ASSERT(desc_->state == ult_state::ready);
@@ -71,6 +72,7 @@ public:
         
         desc_->state = ult_state::ready;
     }
+    #endif
     void set_finished(unique_lock_type& lk) {
         check_locked(lk);
         MGBASE_ASSERT(desc_->state == ult_state::ready);

@@ -144,7 +144,7 @@ public:
             
             // Suspend the root thread.
             auto& self_2 =
-                self.template suspend_to_cont<void, &basic_worker::loop_root_handler>(
+                self.template suspend_to_cont<void, &basic_worker::loop_root_handler, false>(
                     mgbase::move(th)
                 ,   MGBASE_NULLPTR
                 );
@@ -445,7 +445,7 @@ public:
         
         // Suspend the current thread.
         auto& self_2 =
-            self.template suspend_to_cont<join_data, &basic_worker::join_handler>(
+            self.template suspend_to_cont<join_data, &basic_worker::join_handler, false>(
                 mgbase::move(next_th)
             ,   &d
             );
@@ -515,7 +515,7 @@ public:
         auto th = this->pop_top();
         
         // Suspend the current thread.
-        self.template suspend_to_cont<void, &basic_worker::yield_handler>(
+        self.template suspend_to_cont<void, &basic_worker::yield_handler, false>(
             mgbase::move(th)
         ,   MGBASE_NULLPTR
         );
@@ -706,7 +706,7 @@ public:
         }
         
         // Exit the current thread.
-        self.template exit_to_cont<&basic_worker::exit_handler>(
+        self.template exit_to_cont<&basic_worker::exit_handler, true>(
             mgbase::move(next_th)
         );
         

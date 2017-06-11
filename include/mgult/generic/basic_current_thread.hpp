@@ -43,7 +43,8 @@ private:
         auto child_th = mgbase::move(d->child_th);
         
         // Call the hook.
-        self.on_after_switch(parent_th, child_th);
+        // A new thread is always not locked.
+        self.template on_after_switch<false>(parent_th, child_th);
         
         // Set the context to the parent thread.
         self.set_context(parent_th, ctx /*>---resuming context---<*/);
@@ -116,7 +117,7 @@ private:
         T*              ptr;
     };
     
-    template <typename T, transfer_type (*Func)(derived_type&, ult_ref_type, T*)>
+    template <typename T, transfer_type (*Func)(derived_type&, ult_ref_type, T*), bool IsPrevLocked>
     MGCTX_SWITCH_FUNCTION
     static transfer_type suspend_to_cont_handler(
         const context_type              ctx
@@ -130,7 +131,7 @@ private:
         auto next_th = mgbase::move(d->next_th);
         
         // Call the hook.
-        self.on_after_switch(prev_th, next_th);
+        self.template on_after_switch<IsPrevLocked>(prev_th, next_th);
         
         // Set the context to the parent thread.
         self.set_context(prev_th, ctx /*>---resuming context---<*/);
@@ -143,7 +144,7 @@ private:
     }
     
 public:
-    template <typename T, transfer_type (*Func)(derived_type&, ult_ref_type, T*)>
+    template <typename T, transfer_type (*Func)(derived_type&, ult_ref_type, T*), bool IsPrevLocked>
     derived_type& suspend_to_cont(ult_ref_type next_th, T* const ptr)
     {
         auto& self = this->derived();
@@ -166,7 +167,7 @@ public:
             self.swap_context(
                 ctx
             ,   MGBASE_NONTYPE_TEMPLATE(
-                    &basic_current_thread::suspend_to_cont_handler<T, Func>
+                    &basic_current_thread::suspend_to_cont_handler<T, Func, IsPrevLocked>
                 )
             ,   &d
             );
@@ -196,7 +197,7 @@ private:
         ult_ref_type    next_th;
     };
     
-    template <transfer_type (*Func)(derived_type&, ult_ref_type)>
+    template <transfer_type (*Func)(derived_type&, ult_ref_type), bool IsPrevLocked>
     MGCTX_SWITCH_FUNCTION
     static transfer_type exit_to_cont_handler(exit_to_cont_data* const d)
     {
@@ -208,7 +209,7 @@ private:
         auto next_th = mgbase::move(d->next_th);
         
         // Call the hook.
-        self.on_after_switch(prev_th, next_th);
+        self.template on_after_switch<IsPrevLocked>(prev_th, next_th);
         
         // Change this thread to the child thread.
         self.set_current_ult(mgbase::move(next_th));
@@ -218,7 +219,7 @@ private:
     }
     
 public:
-    template <transfer_type (*Func)(derived_type&, ult_ref_type)>
+    template <transfer_type (*Func)(derived_type&, ult_ref_type), bool IsPrevLocked>
     MGBASE_NORETURN
     void exit_to_cont(ult_ref_type next_th)
     {
@@ -238,7 +239,9 @@ public:
         // Switch to the context of the following thread.
         self.restore_context(
             ctx
-        ,   MGBASE_NONTYPE_TEMPLATE(&basic_current_thread::exit_to_cont_handler<Func>)
+        ,   MGBASE_NONTYPE_TEMPLATE(
+                &basic_current_thread::exit_to_cont_handler<Func, IsPrevLocked>
+            )
         ,   &d
         );
         

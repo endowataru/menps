@@ -99,6 +99,7 @@ public:
         // This hook is for distributed work-stealing.
     }
     
+    template <bool IsPrevLocked>
     void on_after_switch(ult_ptr_ref& /*from_th*/, ult_ptr_ref& /*to_th*/)
     {
         // Do nothing.
