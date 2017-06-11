@@ -354,8 +354,11 @@ private:
             // This is disabled because it seems unnecessary.
             //prev_th.set_blocked();
             
+            // Move the reference to this call stack.
+            auto child_th = mgbase::move(d->child_th);
+            
             // This worker already has a lock of the child thread.
-            auto lc = d->child_th.get_lock(mgbase::adopt_lock);
+            auto lc = child_th.get_lock(mgbase::adopt_lock);
             
             MGBASE_LOG_INFO(
                 "msg:Set the current thread as the joiner thread.\t"
@@ -364,7 +367,7 @@ private:
             );
             
             // Set the blocking thread continued by the child thread.
-            d->child_th.set_joiner(lc, mgbase::move(prev_th));
+            child_th.set_joiner(lc, mgbase::move(prev_th));
             
             // The child thread is automatically unlocked here.
         }
@@ -459,6 +462,9 @@ public:
         // Get the reference to the child thread again
         // because this context is resumed on the worker of the child thread.
         
+        // The reference on the stack must be invalid.
+        MGBASE_ASSERT(!d.child_th.is_valid());
+        
         auto child_th_2 = self_2.get_ult_ref_from_id(id);
         
         // In shared-memory implementation, no need to lock here
@@ -488,6 +494,9 @@ public:
         // the descriptor is locked and checked whether the write back is ongoing or not.
         // TODO: Can we merge these two behaviors?
         self_2.on_join_resume(mgbase::move(child_th_2));
+        
+        // The reference on the stack must be invalid.
+        MGBASE_ASSERT(!d.child_th.is_valid());
     }
     
 private:
