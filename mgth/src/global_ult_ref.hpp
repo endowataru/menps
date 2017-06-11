@@ -16,6 +16,8 @@ namespace mgth {
 
 class global_ult_desc_pool;
 
+//#define MGTH_ENABLE_RELAXED_ULT_DESC
+
 class global_ult_ref
 {
     typedef mgcom::rma::remote_ptr<global_ult_desc> desc_remote_ptr;
@@ -36,6 +38,8 @@ public:
         MGBASE_ASSERT(mgcom::valid_process_id(id.di.proc));
         
         desc_lptr_.reset(mgcom::rma::allocate<global_ult_desc>());
+        
+        load_desc();
     }
     
     ~global_ult_ref() = default;
@@ -58,11 +62,11 @@ public:
     
     void* get_stack_ptr() const MGBASE_NOEXCEPT
     {
-        return load_desc_member(&global_ult_desc::stack_ptr);
+        return load_desc_member_relaxed(&global_ult_desc::stack_ptr);
     }
     mgbase::size_t get_stack_size() const MGBASE_NOEXCEPT
     {
-        return load_desc_member(&global_ult_desc::stack_size);
+        return load_desc_member_relaxed(&global_ult_desc::stack_size);
     }
     
     template <typename... Args>
@@ -109,6 +113,13 @@ public:
         ,   to_string()
         );
         
+        if (locked) {
+            load_desc();
+            #ifdef MGTH_ENABLE_RELAXED_ULT_DESC
+            MGBASE_ASSERT(desc_lptr_->lock == 1);
+            #endif
+        }
+        
         return locked;
     }
     
@@ -119,6 +130,11 @@ public:
             "{}"
         ,   to_string()
         );
+        
+        #ifdef MGTH_ENABLE_RELAXED_ULT_DESC
+        MGBASE_ASSERT(desc_lptr_->lock == 1);
+        #endif
+        store_desc();
         
         const auto target_proc = get_target_proc();
         const auto lock_rptr = desc_rptr_.member(&global_ult_desc::lock);
@@ -140,9 +156,10 @@ public:
     // FIXME: not locked
     void set_owner_proc(const mgcom::process_id_t proc) {
         MGBASE_ASSERT(mgcom::valid_process_id(proc));
-        store_desc_member(&global_ult_desc::owner, proc);
+        store_desc_member_relaxed(&global_ult_desc::owner, proc);
     }
     
+    #if 0
     void set_blocked(unique_lock_type& lk) {
         check_locked(lk);
         MGBASE_ASSERT(get_state() == global_ult_state::ready);
@@ -155,23 +172,24 @@ public:
         
         store_desc_member(&global_ult_desc::state, global_ult_state::ready);
     }
+    #endif
     void set_finished(unique_lock_type& lk) {
         check_locked(lk);
         MGBASE_ASSERT(get_state() == global_ult_state::ready);
         
-        store_desc_member(&global_ult_desc::state, global_ult_state::finished);
+        store_desc_member_relaxed(&global_ult_desc::state, global_ult_state::finished);
     }
     // FIXME: not locked
     void invalidate_desc() {
-        store_desc_member(&global_ult_desc::state, global_ult_state::invalid);
+        store_desc_member_relaxed(&global_ult_desc::state, global_ult_state::invalid);
     }
     
     bool is_latest_stamp(unique_lock_type& lk) {
         #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
         check_locked(lk);
         
-        auto cur_stamp = load_desc_member(&global_ult_desc::cur_stamp);
-        auto old_stamp = load_desc_member(&global_ult_desc::old_stamp);
+        auto cur_stamp = load_desc_member_relaxed(&global_ult_desc::cur_stamp);
+        auto old_stamp = load_desc_member_relaxed(&global_ult_desc::old_stamp);
         
         MGBASE_ASSERT(cur_stamp - old_stamp >= 0);
         
@@ -188,12 +206,12 @@ public:
     
     bool is_detached(unique_lock_type& lk) const MGBASE_NOEXCEPT {
         check_locked(lk);
-        return load_desc_member(&global_ult_desc::detached) == 1;
+        return load_desc_member_relaxed(&global_ult_desc::detached) == 1;
     }
     void set_detached(unique_lock_type& lk) const MGBASE_NOEXCEPT {
         check_locked(lk);
-        const decltype(load_desc_member(&global_ult_desc::detached)) one = 1;
-        store_desc_member(&global_ult_desc::detached, one);
+        const decltype(load_desc_member_relaxed(&global_ult_desc::detached)) one = 1;
+        store_desc_member_relaxed(&global_ult_desc::detached, one);
     }
     
     bool has_joiner(unique_lock_type& lk) {
@@ -202,11 +220,11 @@ public:
     }
     void set_joiner(unique_lock_type& lk, const global_ult_ref& joiner) {
         check_locked(lk);
-        store_desc_member(&global_ult_desc::joiner, joiner.get_id());
+        store_desc_member_relaxed(&global_ult_desc::joiner, joiner.get_id());
     }
     ult_id get_joiner(unique_lock_type& lk) {
         check_locked(lk);
-        return load_desc_member(&global_ult_desc::joiner);
+        return load_desc_member_relaxed(&global_ult_desc::joiner);
     }
     
     bool is_valid() const MGBASE_NOEXCEPT {
@@ -232,14 +250,15 @@ private:
     };
     
 public:
-    // TODO: not locked
-    do_update_stamp make_update_stamp(global_ult_desc_pool& pool)
+    do_update_stamp make_update_stamp(unique_lock_type& lk, global_ult_desc_pool& pool)
     {
+        check_locked(lk);
+        
         // Increment cur_stamp in a relaxed manner.
-        auto cur_stamp = load_desc_member(&global_ult_desc::cur_stamp);
+        auto cur_stamp = load_desc_member_relaxed(&global_ult_desc::cur_stamp);
         
         #ifdef MGBASE_DEBUG
-        const auto old_stamp = load_desc_member(&global_ult_desc::old_stamp);
+        const auto old_stamp = load_desc_member_relaxed(&global_ult_desc::old_stamp);
         MGBASE_ASSERT(cur_stamp - old_stamp >= 0);
         
         MGBASE_LOG_INFO(
@@ -254,7 +273,7 @@ public:
         #endif
         
         ++cur_stamp;
-        store_desc_member(&global_ult_desc::cur_stamp, cur_stamp);
+        store_desc_member_relaxed(&global_ult_desc::cur_stamp, cur_stamp);
         
         return do_update_stamp{ pool, this->get_id(), cur_stamp };
     }
@@ -280,11 +299,11 @@ public:
             "owner:{}"
         ,   reinterpret_cast<mgbase::uintptr_t>(id_.ptr)
         ,   static_cast<global_ult_state_underlying_t>(get_state())
-        ,   reinterpret_cast<mgbase::uintptr_t>(load_desc_member(&global_ult_desc::joiner).ptr)
-        ,   load_desc_member(&global_ult_desc::detached)
+        ,   reinterpret_cast<mgbase::uintptr_t>(load_desc_member_relaxed(&global_ult_desc::joiner).ptr)
+        ,   load_desc_member_relaxed(&global_ult_desc::detached)
         ,   reinterpret_cast<mgbase::uintptr_t>(get_stack_ptr())
         ,   get_stack_size()
-        ,   load_desc_member(&global_ult_desc::owner)
+        ,   load_desc_member_relaxed(&global_ult_desc::owner)
         );
         return w.str();
     }
@@ -292,11 +311,30 @@ public:
 private:
     global_ult_state get_state() const
     {
-        return load_desc_member(&global_ult_desc::state);
+        return load_desc_member_relaxed(&global_ult_desc::state);
     }
     
     template <typename T>
-    T load_desc_member(T (global_ult_desc::*mem)) const
+    T load_desc_member_relaxed(T (global_ult_desc::* const mem)) const
+    {
+        #ifdef MGTH_ENABLE_RELAXED_ULT_DESC
+            return desc_lptr_.get()->*mem;
+        #else
+            return load_desc_member(mem);
+        #endif
+    }
+    template <typename T>
+    void store_desc_member_relaxed(T (global_ult_desc::* const mem), const T val) const
+    {
+        #ifdef MGTH_ENABLE_RELAXED_ULT_DESC
+            desc_lptr_.get()->*mem = val;
+        #else
+            store_desc_member(mem, val);
+        #endif
+    }
+    
+    template <typename T>
+    T load_desc_member(T (global_ult_desc::* const mem)) const
     {
         const auto target_proc = get_target_proc();
         const auto rptr = desc_rptr_.member(mem);
@@ -309,9 +347,8 @@ private:
         
         return ret;
     }
-    
     template <typename T>
-    void store_desc_member(T (global_ult_desc::*mem), T val) const
+    void store_desc_member(T (global_ult_desc::* const mem), const T val) const
     {
         const auto target_proc = get_target_proc();
         const auto rptr = desc_rptr_.member(mem);
@@ -336,6 +373,33 @@ private:
         MGBASE_ASSERT(is_valid());
         MGBASE_ASSERT(lk.mutex() == this);
         MGBASE_ASSERT(lk.owns_lock());
+    }
+    
+    void load_desc()
+    {
+        #ifdef MGTH_ENABLE_RELAXED_ULT_DESC
+        const auto target_proc = get_target_proc();
+        
+        mgcom::rma::read(
+            target_proc
+        ,   desc_rptr_
+        ,   desc_lptr_.get()
+        ,   1 // 1 element == sizeof(global_ult_desc)
+        );
+        #endif
+    }
+    void store_desc()
+    {
+        #ifdef MGTH_ENABLE_RELAXED_ULT_DESC
+        const auto target_proc = get_target_proc();
+        
+        mgcom::rma::write(
+            target_proc
+        ,   desc_rptr_
+        ,   desc_lptr_.get()
+        ,   1 // 1 element == sizeof(global_ult_desc)
+        );
+        #endif
     }
     
     ult_id          id_;

@@ -341,6 +341,7 @@ void dist_worker::on_before_switch(global_ult_ref& /*from_th*/, global_ult_ref& 
     
     dsm.pin(stack_first_ptr, stack_size);
 }
+template <bool IsFromLocked>
 void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_th*/)
 {
     if (!from_th.is_valid()) {
@@ -386,7 +387,7 @@ void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_
     #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
     // Start write barrier.
     dsm.async_write_barrier(
-        from_th.make_update_stamp(this->sched_.get_desc_pool())
+        from_th.make_update_stamp(lk, this->sched_.get_desc_pool())
     );
     #endif
 }

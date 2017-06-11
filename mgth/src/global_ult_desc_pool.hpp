@@ -44,14 +44,14 @@ void global_ult_ref::do_update_stamp::operator() () const
     
     auto lk = th.get_lock();
     
-    const auto old_stamp = th.load_desc_member(&global_ult_desc::old_stamp);
-    const auto cur_stamp = th.load_desc_member(&global_ult_desc::cur_stamp);
+    const auto old_stamp = th.load_desc_member_relaxed(&global_ult_desc::old_stamp);
+    const auto cur_stamp = th.load_desc_member_relaxed(&global_ult_desc::cur_stamp);
     
     MGBASE_LOG_INFO(
         "msg:Increment old stamp for thread.\t"
         "old_stamp:{}\t"
         "cur_stamp:{}\t"
-        "assigned_stamp:{}"
+        "assigned_stamp:{}\t"
         "{}"
     ,   old_stamp
     ,   cur_stamp
@@ -64,7 +64,7 @@ void global_ult_ref::do_update_stamp::operator() () const
     
     MGBASE_ASSERT(old_stamp != this->stamp);
     if (old_stamp < this->stamp) {
-        th.store_desc_member(&global_ult_desc::old_stamp, this->stamp);
+        th.store_desc_member_relaxed(&global_ult_desc::old_stamp, this->stamp);
     }
     
     if (cur_stamp == this->stamp && (th.is_finished(lk) && th.is_detached(lk))) {

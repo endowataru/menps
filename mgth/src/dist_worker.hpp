@@ -82,6 +82,7 @@ public:
     }
     
     void on_before_switch(global_ult_ref&, global_ult_ref&);
+    template <bool IsFromLocked>
     void on_after_switch(global_ult_ref&, global_ult_ref&);
     void on_join_already(global_ult_ref&, global_ult_ref&, global_ult_ref::unique_lock_type&);
     void on_join_resume(global_ult_ref&&);
