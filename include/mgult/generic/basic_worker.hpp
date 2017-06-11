@@ -599,11 +599,16 @@ public:
             // it cannot be destroyed now.
             is_destroyable = th.is_latest_stamp(lc);
             
-            // Both the thread and the write barrier for it have finished.
+            if (! is_destroyable) {
+                // If the thread cannot be destroyed now (due to the write back),
+                // we need to set the detached flag.
+                th.set_detached(lc);
+            }
         }
         
         if (is_destroyable) {
             // Free the thread descriptor.
+            // Both the thread and the write barrier for it have finished.
             //
             // Both shared-memory and distributed-memory versions destroy the child thread
             // because the write back is already completed.
