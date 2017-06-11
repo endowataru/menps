@@ -30,7 +30,7 @@ public:
         set_id(id);
     }
     
-    ~ult_ptr_ref() = default;
+    ~ult_ptr_ref() /*noexcept*/ = default;
     
     ult_ptr_ref(const ult_ptr_ref&) = delete;
     ult_ptr_ref& operator = (const ult_ptr_ref&) = delete;
@@ -46,70 +46,67 @@ public:
     }
     
     void* get_stack_ptr() const MGBASE_NOEXCEPT {
-        return get_desc().stack_ptr;
+        return desc_->stack_ptr;
     }
     mgbase::size_t get_stack_size() {
-        return get_desc().stack_size;
+        return desc_->stack_size;
     }
     
-    mgbase::unique_lock<lock_type> get_lock()
+    template <typename... Args>
+    unique_lock_type get_lock(Args&&... args)
     {
-        mgbase::unique_lock<lock_type> lc(desc_->lock);
-        return lc;
-    }
-    template <typename T>
-    mgbase::unique_lock<lock_type> get_lock(const T tag)
-    {
-        mgbase::unique_lock<lock_type> lc(desc_->lock, tag);
-        return lc;
+        unique_lock_type lk(desc_->lock, mgbase::forward<Args>(args)...);
+        return lk;
     }
     
-    void set_blocked()
-    {
-        MGBASE_ASSERT(is_valid());
+    void set_blocked(unique_lock_type& lk) {
+        check_locked(lk);
         MGBASE_ASSERT(desc_->state == ult_state::ready);
         
         desc_->state = ult_state::blocked;
     }
-    void set_ready()
-    {
-        MGBASE_ASSERT(is_valid());
+    void set_ready(unique_lock_type& lk) {
+        check_locked(lk);
         MGBASE_ASSERT(desc_->state == ult_state::blocked);
         
         desc_->state = ult_state::ready;
     }
-    void set_finished()
-    {
-        MGBASE_ASSERT(is_valid());
+    void set_finished(unique_lock_type& lk) {
+        check_locked(lk);
         MGBASE_ASSERT(desc_->state == ult_state::ready);
         
         desc_->state = ult_state::finished;
     }
     
-    bool is_finished() const MGBASE_NOEXCEPT {
+    bool is_finished(unique_lock_type& lk) const {
+        check_locked(lk);
         return desc_->state == ult_state::finished;
     }
-    bool is_latest_stamp() const MGBASE_NOEXCEPT {
+    bool is_latest_stamp(unique_lock_type& lk) const {
+        check_locked(lk);
         return true; // this function is for distributed-memory version
     }
     
-    bool is_detached() const MGBASE_NOEXCEPT {
+    bool is_detached(unique_lock_type& lk) const {
+        check_locked(lk);
         return desc_->detached;
     }
-    void set_detached() const MGBASE_NOEXCEPT {
+    void set_detached(unique_lock_type& lk) {
+        check_locked(lk);
         desc_->detached = false;
     }
     
-    bool has_joiner()
-    {
-        return !is_invalid_ult_id(get_joiner().get_id());
+    bool has_joiner(unique_lock_type& lk) const {
+        check_locked(lk);
+        return ! is_invalid_ult_id(this->get_joiner(lk).get_id());
     }
-    void set_joiner(const ult_ptr_ref& joiner)
-    {
+    void set_joiner(unique_lock_type& lk, const ult_ptr_ref& joiner) {
+        check_locked(lk);
         MGBASE_ASSERT(joiner.desc_ != MGBASE_NULLPTR);
         desc_->joiner = joiner.desc_;
     }
-    ult_ptr_ref get_joiner() {
+    ult_ptr_ref get_joiner(unique_lock_type& lk) const {
+        check_locked(lk);
         return ult_ptr_ref(make_desc_id(*desc_->joiner));
     }
     
@@ -150,6 +147,12 @@ public:
     }
     
 private:
+    void check_locked(unique_lock_type& lk) const {
+        MGBASE_ASSERT(is_valid());
+        MGBASE_ASSERT(&desc_->lock == lk.mutex());
+        MGBASE_ASSERT(lk.owns_lock());
+    }
+    
     void set_invalid() MGBASE_NOEXCEPT {
         set_id(make_invalid_ult_id());
     }

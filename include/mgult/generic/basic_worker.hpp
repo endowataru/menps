@@ -351,7 +351,8 @@ private:
     ) {
         {
             // Set this thread as blocked.
-            prev_th.set_blocked();
+            // This is disabled because it seems unnecessary.
+            //prev_th.set_blocked();
             
             // This worker already has a lock of the child thread.
             auto lc = d->child_th.get_lock(mgbase::adopt_lock);
@@ -363,7 +364,7 @@ private:
             );
             
             // Set the blocking thread continued by the child thread.
-            d->child_th.set_joiner( mgbase::move(prev_th) );
+            d->child_th.set_joiner(lc, mgbase::move(prev_th));
             
             // The child thread is automatically unlocked here.
         }
@@ -388,9 +389,9 @@ public:
             
             // The child thread must not be detached
             // because the current thread is joining it.
-            MGBASE_ASSERT(!child_th.is_detached());
+            MGBASE_ASSERT(!child_th.is_detached(lc));
             
-            if (MGBASE_LIKELY(child_th.is_finished())) {
+            if (MGBASE_LIKELY(child_th.is_finished(lc))) {
                 // The child thread has already finished
                 // (and has written back the cache on distributed-memory implementation).
                 
@@ -404,7 +405,7 @@ public:
                 // The joined thread may have modified data.
                 self.on_join_already(self.get_current_ult(), child_th, lc);
                 
-                if (child_th.is_latest_stamp()) {
+                if (child_th.is_latest_stamp(lc)) {
                     // Unlock the child thread to destroy the thread descriptor.
                     lc.unlock();
                     
@@ -418,7 +419,7 @@ public:
                 else {
                     // Detach the thread.
                     // This execution path is disabled in shared-memory implementation.
-                    child_th.set_detached();
+                    child_th.set_detached(lc);
                 }
                 
                 return;
@@ -460,16 +461,25 @@ public:
         
         auto child_th_2 = self_2.get_ult_ref_from_id(id);
         
-        // The child thread already finished
-        // because this parent thread is joining.
-        MGBASE_ASSERT(child_th_2.is_finished());
-        
         // In shared-memory implementation, no need to lock here
         // because the child thread has already finished
         // and no other threads are joining.
         
-        // If the other threads are joining this child thread,
-        // it's just a mistake of user programs.
+        #ifdef MGULT_CHECK_FINISHED_ULT
+            // disabled by default
+        {
+            // Currently, we need to lock the descriptor
+            // to check whether the thread has finished.
+            auto lc = child_th_2.get_lock();
+            
+            // The child thread already finished
+            // because this parent thread is joining.
+            MGBASE_ASSERT(child_th_2.is_finished(lc));
+            
+            // If the other threads are joining this child thread,
+            // it's just a mistake of user programs.
+        }
+        #endif
         
         // Destroy the thread descriptor.
         // In shared-memory implementation,
@@ -574,12 +584,12 @@ public:
         {
             auto lc = th.get_lock();
             
-            if (! th.is_finished())
+            if (! th.is_finished(lc))
             {
                 // The thread is still being executed.
                 
                 // Change the thread's state to "detached".
-                th.set_detached();
+                th.set_detached(lc);
                 
                 // lc is automatically unlocked when this function finishes.
                 return;
@@ -587,7 +597,7 @@ public:
             
             // If the thread is still writing back,
             // it cannot be destroyed now.
-            is_destroyable = th.is_latest_stamp();
+            is_destroyable = th.is_latest_stamp(lc);
             
             // Both the thread and the write barrier for it have finished.
         }
@@ -613,7 +623,7 @@ private:
             
             // Because this thread is detached and written back,
             // no other threads will join and manage its resource.
-            is_destroyable = prev_th.is_detached() && prev_th.is_latest_stamp();
+            is_destroyable = prev_th.is_detached(lc) && prev_th.is_latest_stamp(lc);
             
             // Unlock the current thread here to free the thread descriptor.
         }
@@ -651,18 +661,19 @@ public:
             auto lc = current_th.get_lock();
             
             // Change the state of this thread.
-            current_th.set_finished();
+            current_th.set_finished(lc);
             
-            if (current_th.has_joiner()) {
+            if (current_th.has_joiner(lc)) {
                 // Set the joiner thread as the next thread.
                 // Note that "get_joiner" may return either ult_ref_type or ult_id_type.
                 next_th =
                     self.get_ult_ref(
-                        current_th.get_joiner()
+                        current_th.get_joiner(lc)
                     );
                 
                 // Change the state of the joiner thread to "ready".
-                next_th.set_ready();
+                // This is disabled because it seems unnecessary.
+                //next_th.set_ready();
                 
                 // Call the hook to issue write/read barriers.
                 // The joiner thread may have modified data.
