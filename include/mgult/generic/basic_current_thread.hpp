@@ -149,11 +149,13 @@ public:
         ,   ptr
         };
         
+        // Call the hook.
+        self.on_before_switch(d.prev_th, d.next_th);
+        
         // Get the context of the thread executed next.
         const auto ctx = self.get_context(d.next_th);
         
-        // Call the hook.
-        self.on_before_switch(d.prev_th, d.next_th);
+        MGBASE_ASSERT(ctx.p != MGBASE_NULLPTR);
         
         // Switch to the context of the next thread.
         const auto r =
@@ -225,6 +227,8 @@ public:
         
         // Get the context of the following thread.
         const auto ctx = self.get_context(d.next_th);
+        
+        MGBASE_ASSERT(ctx.p != MGBASE_NULLPTR);
         
         // Switch to the context of the following thread.
         self.restore_context(
