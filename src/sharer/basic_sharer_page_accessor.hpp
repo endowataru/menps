@@ -4,6 +4,8 @@
 #include <mgbase/crtp_base.hpp>
 #include <mgbase/utility/move.hpp>
 #include <mgbase/memory/next_in_bytes.hpp>
+#include <mgbase/threading/unique_lock.hpp>
+#include <mgbase/threading/spinlock.hpp>
 
 namespace mgdsm {
 
@@ -19,6 +21,9 @@ class basic_sharer_page_accessor
     typedef typename Policy::plptr_type             plptr_type;
     typedef typename Policy::difference_type        difference_type;
     typedef typename Policy::index_type             index_type;
+    
+    typedef mgbase::spinlock                        transfer_lock_type;
+    typedef mgbase::unique_lock<transfer_lock_type> unique_transfer_lock_type;
     
 public:
     // Transfer functions
@@ -38,33 +43,41 @@ public:
         return pg_ent.get_num_blocks();
     }
     
-    bool is_diff_needed()
+    unique_transfer_lock_type get_transfer_lock()
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
         
-        return pg_ent.is_diff_needed();
+        return pg_ent.get_transfer_lock();
     }
-    bool is_flush_needed()
+    
+    bool is_diff_needed(unique_transfer_lock_type& lk)
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
         
-        return pg_ent.is_flush_needed();
+        return pg_ent.is_diff_needed(lk);
     }
-    void enable_diff()
+    bool is_flush_needed(unique_transfer_lock_type& lk)
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
         
-        pg_ent.enable_diff();
+        return pg_ent.is_flush_needed(lk);
     }
-    void enable_flush()
+    void enable_diff(unique_transfer_lock_type& lk)
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
         
-        pg_ent.enable_flush();
+        pg_ent.enable_diff(lk);
+    }
+    void enable_flush(unique_transfer_lock_type& lk)
+    {
+        auto& self = this->derived();
+        auto& pg_ent = self.get_page_entry();
+        
+        pg_ent.enable_flush(lk);
     }
     
     // Called by fetch.
@@ -91,8 +104,12 @@ public:
                 seg_pr.assign_reader_page(pg_id, ret.owner_plptr);
             }
             
-            // Update the owner with the lookup result from the manager.
-            pg_ent.update_owner_for_read(mgbase::move(ret));
+            {
+                auto lk = pg_ent.get_transfer_lock();
+                
+                // Update the owner with the lookup result from the manager.
+                pg_ent.update_owner_for_read(lk, mgbase::move(ret));
+            }
         }
     }
     
@@ -139,8 +156,12 @@ public:
                 seg_pr.assign_writer_page(pg_id, ret.owner_plptr);
             }
             
-            // Update the owner with the lookup result from the manager.
-            pg_ent.update_owner_for_write(mgbase::move(ret));
+            {
+                auto lk = pg_ent.get_transfer_lock();
+                
+                // Update the owner with the lookup result from the manager.
+                pg_ent.update_owner_for_write(lk, mgbase::move(ret));
+            }
         }
     }
     
@@ -161,8 +182,12 @@ public:
             // Release the write privilege.
             auto ret = seg_pr.release_write_page(pg_id);
             
-            // Update "needs_flush".
-            pg_ent.update_for_release_write(mgbase::move(ret));
+            {
+                auto lk = pg_ent.get_transfer_lock();
+                
+                // Update "needs_flush".
+                pg_ent.update_for_release_write(lk, mgbase::move(ret));
+            }
         }
     }
     

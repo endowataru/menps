@@ -157,14 +157,18 @@ public:
         // Get the address of the owner's block.
         const auto dest_prptr = pg.get_write_owner_prptr(blk_id);
         
-        // Check whether the page is only written by this process.
-        if (pg.is_diff_needed()) {
-            // Write diffs because there are multiple writers.
-            self.write_diffs(src_ptr, twin_lptr, dest_prptr, blk_size);
-        }
-        else {
-            // Write the whole page.
-            self.write_whole(src_ptr, twin_lptr, dest_prptr, blk_size);
+        {
+            auto tr_lk = pg.get_transfer_lock();
+            
+            // Check whether the page is only written by this process.
+            if (pg.is_diff_needed(tr_lk)) {
+                // Write diffs because there are multiple writers.
+                self.write_diffs(src_ptr, twin_lptr, dest_prptr, blk_size);
+            }
+            else {
+                // Write the whole page.
+                self.write_whole(src_ptr, twin_lptr, dest_prptr, blk_size);
+            }
         }
         
         // Mark this block as clean.

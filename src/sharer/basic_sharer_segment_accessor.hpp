@@ -97,16 +97,20 @@ public:
     void enable_flush(const page_id_type pg_id)
     {
         auto& self = this->derived();
-        auto pg_ac = self.get_page_accessor(pg_id);
+        auto& seg_ent = self.get_segment_entry();
+        auto& pg_ent = seg_ent.get_page(pg_id);
         
-        pg_ac.enable_flush();
+        auto tr_lk = pg_ent.get_transfer_lock();
+        pg_ent.enable_flush(tr_lk);
     }
     void enable_diff(const page_id_type pg_id)
     {
         auto& self = this->derived();
-        auto pg_ac = self.get_page_accessor(pg_id);
+        auto& seg_ent = self.get_segment_entry();
+        auto& pg_ent = seg_ent.get_page(pg_id);
         
-        pg_ac.enable_diff();
+        auto tr_lk = pg_ent.get_transfer_lock();
+        pg_ent.enable_diff(tr_lk);
     }
     
 private:

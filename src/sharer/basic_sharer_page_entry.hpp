@@ -5,6 +5,8 @@
 #include <mgbase/unique_ptr.hpp>
 #include <vector>
 #include <mgbase/atomic.hpp>
+#include <mgbase/threading/unique_lock.hpp>
+#include <mgbase/threading/spinlock.hpp>
 
 namespace mgdsm {
 
@@ -17,6 +19,9 @@ class basic_sharer_page_entry
     typedef typename Traits::block_count_type   block_count_type;
     
     typedef typename Traits::prptr_type         prptr_type;
+    
+    typedef mgbase::spinlock                        transfer_lock_type;
+    typedef mgbase::unique_lock<transfer_lock_type> unique_transfer_lock_type;
     
 public:
     basic_sharer_page_entry()
@@ -95,24 +100,34 @@ public:
         return num_read_blks_ > 0;
     }
     
-    bool is_diff_needed() const MGBASE_NOEXCEPT {
+    unique_transfer_lock_type get_transfer_lock() {
+        return unique_transfer_lock_type(this->transfer_lock_);
+    }
+    
+    bool is_diff_needed(unique_transfer_lock_type& lk) MGBASE_NOEXCEPT {
         //return this->is_diff_needed_.load(mgbase::memory_order_acquire);
+        check_transfer_locked(lk);
         return true; // FIXME: broken?
     }
-    bool is_flush_needed() const MGBASE_NOEXCEPT {
+    bool is_flush_needed(unique_transfer_lock_type& lk) MGBASE_NOEXCEPT {
+        check_transfer_locked(lk);
         return this->is_flush_needed_.load(mgbase::memory_order_acquire);
         //return true; // FIXME: broken?
     }
     
-    void enable_diff() MGBASE_NOEXCEPT
+    void enable_diff(unique_transfer_lock_type& lk) MGBASE_NOEXCEPT
     {
+        check_transfer_locked(lk);
+        
         // Ignore redundant enable_diff()
         // even if is_flush_needed_ is already true.
         
         this->is_diff_needed_.store(true, mgbase::memory_order_release);
     }
-    void enable_flush() MGBASE_NOEXCEPT
+    void enable_flush(unique_transfer_lock_type& lk) MGBASE_NOEXCEPT
     {
+        check_transfer_locked(lk);
+        
         // Ignore redundant enable_flush()
         // even if is_flush_needed_ is already true.
         
@@ -120,8 +135,10 @@ public:
     }
     
     template <typename Data>
-    void update_owner_for_read(const Data& data)
+    void update_owner_for_read(unique_transfer_lock_type& lk, const Data& data)
     {
+        check_transfer_locked(lk);
+        
         this->owner_ = Traits::use_remote_ptr(data.owner_plptr);
         this->is_flush_needed_.store(data.needs_flush, mgbase::memory_order_release);
         
@@ -129,15 +146,19 @@ public:
         // because the reader doesn't need that flag.
     }
     template <typename Data>
-    void update_owner_for_write(const Data& data)
+    void update_owner_for_write(unique_transfer_lock_type& lk, const Data& data)
     {
+        check_transfer_locked(lk);
+        
         this->owner_ = Traits::use_remote_ptr(data.owner_plptr);
         this->is_flush_needed_.store(data.needs_flush, mgbase::memory_order_release);
         this->is_diff_needed_.store(data.needs_diff, mgbase::memory_order_release);
     }
     template <typename Data>
-    void update_for_release_write(const Data& data)
+    void update_for_release_write(unique_transfer_lock_type& lk, const Data& data)
     {
+        check_transfer_locked(lk);
+        
         this->is_flush_needed_.store(data.needs_flush, mgbase::memory_order_release);
     }
     
@@ -146,6 +167,12 @@ public:
     }
     
 private:
+    void check_transfer_locked(unique_transfer_lock_type& lk)
+    {
+        MGBASE_ASSERT(lk.mutex() == &this->transfer_lock_);
+        MGBASE_ASSERT(lk.owns_lock());
+    }
+    
     mgbase::size_t                      blk_size_;
     mgbase::size_t                      num_blks_;
     mgbase::unique_ptr<block_type []>   blks_;
@@ -155,7 +182,7 @@ private:
     block_count_type        num_read_blks_;
     block_count_type        num_write_blks_;
     
-    // These members are not locked.
+    mgbase::spinlock                    transfer_lock_;
     mgbase::atomic<bool>                is_diff_needed_;
     mgbase::atomic<bool>                is_flush_needed_;
 };
