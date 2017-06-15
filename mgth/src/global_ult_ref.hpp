@@ -181,7 +181,7 @@ public:
     }
     // FIXME: not locked
     void invalidate_desc() {
-        store_desc_member_relaxed(&global_ult_desc::state, global_ult_state::invalid);
+        store_desc_member(&global_ult_desc::state, global_ult_state::invalid);
     }
     
     bool is_latest_stamp(unique_lock_type& lk) {
