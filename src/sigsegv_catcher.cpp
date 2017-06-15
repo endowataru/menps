@@ -22,7 +22,7 @@ public:
         
         // We defer SIGSEGV and SIGBUS during handler execution.
         sigemptyset(&sa.sa_mask);
-        sigaddset(&sa.sa_mask, SIGSEGV);
+        //sigaddset(&sa.sa_mask, SIGSEGV);
         sigaddset(&sa.sa_mask, SIGBUS);
         
         // Set the handler function to sa_sigaction
@@ -30,7 +30,7 @@ public:
         sa.sa_sigaction = &sigsegv_handler;
         
         // Signal handler obtains three arguments.
-        sa.sa_flags = SA_SIGINFO;
+        sa.sa_flags = SA_SIGINFO | SA_NODEFER;
         
         if (conf.alter_stack)
         {

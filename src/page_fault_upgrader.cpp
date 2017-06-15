@@ -34,7 +34,17 @@ private:
                 return false;
             }
             
+            if (++rec_count_ > 1) {
+                return false;
+            }
+            
+            if (ptr == MGBASE_NULLPTR) {
+                return false;
+            }
+            
             self.conf_.sp.do_for_block_at(ptr, upgrade_callback{});
+            
+            --rec_count_;
             
             return true;
         }
@@ -75,9 +85,11 @@ private:
     sigbus_catcher bus_catch_;
     
     static MGBASE_THREAD_LOCAL bool is_upgrade_enabled_;
+    static MGBASE_THREAD_LOCAL mgbase::size_t rec_count_;
 };
 
 MGBASE_THREAD_LOCAL bool page_fault_upgrader::impl::is_upgrade_enabled_ = false;
+MGBASE_THREAD_LOCAL mgbase::size_t page_fault_upgrader::impl::rec_count_ = 0;
 
 
 page_fault_upgrader::page_fault_upgrader(const config& conf)
