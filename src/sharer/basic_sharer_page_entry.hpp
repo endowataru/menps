@@ -105,8 +105,8 @@ public:
     }
     
     bool is_diff_needed(unique_transfer_lock_type& lk) MGBASE_NOEXCEPT {
-        //return this->is_diff_needed_.load(mgbase::memory_order_acquire);
         check_transfer_locked(lk);
+        //return this->is_diff_needed_.load(mgbase::memory_order_acquire);
         return true; // FIXME: broken?
     }
     bool is_flush_needed(unique_transfer_lock_type& lk) MGBASE_NOEXCEPT {
@@ -152,7 +152,14 @@ public:
         
         this->owner_ = Traits::use_remote_ptr(data.owner_plptr);
         this->is_flush_needed_.store(data.needs_flush, mgbase::memory_order_release);
-        this->is_diff_needed_.store(data.needs_diff, mgbase::memory_order_release);
+        
+        const bool enable_diff_arrived =
+            this->is_diff_needed_.load(mgbase::memory_order_relaxed);
+        
+        const bool is_diff_needed_new =
+            data.needs_diff || enable_diff_arrived;
+        
+        this->is_diff_needed_.store(is_diff_needed_new, mgbase::memory_order_relaxed);
     }
     template <typename Data>
     void update_for_release_write(unique_transfer_lock_type& lk, const Data& data)
