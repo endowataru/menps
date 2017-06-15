@@ -88,7 +88,7 @@ private:
             
             auto& sp = *rqst.sp;
             const auto seg_id = rqst.seg_id;
-            const auto pg_id = rqst.seg_id;
+            const auto pg_id = rqst.pg_id;
             
             auto seg_ac = sp.get_segment_accessor(seg_id);
             
@@ -113,7 +113,7 @@ private:
             
             auto& sp = *rqst.sp;
             const auto seg_id = rqst.seg_id;
-            const auto pg_id = rqst.seg_id;
+            const auto pg_id = rqst.pg_id;
             
             auto seg_ac = sp.get_segment_accessor(seg_id);
             
