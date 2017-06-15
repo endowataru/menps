@@ -369,6 +369,7 @@ target_include_directories(mgbase
 )
 target_compile_definitions(mgbase
     PUBLIC "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
+    PUBLIC "$<$<CONFIG:OptDebug>:MGBASE_DEBUG>"
 )
 target_link_libraries(mgbase
     PUBLIC ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
