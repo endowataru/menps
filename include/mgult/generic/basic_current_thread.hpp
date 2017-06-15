@@ -88,6 +88,9 @@ public:
         
         // this pointer is no longer available.
         
+        MGBASE_ASSERT(!d.parent_th.is_valid());
+        MGBASE_ASSERT(!d.child_th.is_valid());
+        
         // Renew the worker.
         auto& self_2 = *tr.p0;
         self_2.check_current_worker();
@@ -171,6 +174,9 @@ public:
         
         // this pointer is no longer available.
         
+        MGBASE_ASSERT(!d.prev_th.is_valid());
+        MGBASE_ASSERT(!d.next_th.is_valid());
+        
         auto& self_2 = *r.p0;
         self_2.check_current_worker();
         
@@ -229,6 +235,12 @@ public:
         const auto ctx = self.get_context(d.next_th);
         
         MGBASE_ASSERT(ctx.p != MGBASE_NULLPTR);
+        
+        MGBASE_LOG_INFO(
+            "msg:Exiting to continuation.\t"
+            "{}"
+        ,   self.show_ult_ref(d.next_th)
+        );
         
         // Switch to the context of the following thread.
         self.restore_context(
