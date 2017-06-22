@@ -23,7 +23,6 @@ public:
         cconf.app_ptr        = conf.app_ptr;
         cconf.sys_ptr        = conf.sys_ptr;
         cconf.index_in_file  = conf.index_in_file;
-        cconf.copy_data      = conf.copy_data;
         
         protector_->create_segment(seg_id_, cconf);
     }

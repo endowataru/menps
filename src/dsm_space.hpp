@@ -114,7 +114,6 @@ private:
         void*                       app_ptr;
         void*                       sys_ptr;
         mgbase::size_t              index_in_file;
-        bool                        copy_data;
     };
     
 public:
@@ -138,7 +137,6 @@ public:
             ,   get_segment_app_ptr(seg_id)
             ,   get_segment_sys_ptr(seg_id)
             ,   reinterpret_cast<mgbase::size_t>(get_segment_app_ptr(seg_id))
-            ,   false
             }
         ));
     }
@@ -270,6 +268,11 @@ public:
         const auto app_ptr = get_global_var_seg_start_ptr();
         const auto sys_ptr = get_segment_sys_ptr(seg_id);
         
+        mgbase::unique_ptr<mgbase::uint8_t []> data(new mgbase::uint8_t[seg_size]);
+        
+        // Copy the initial data to a buffer (before mmap()).
+        memcpy(data.get(), app_ptr, seg_size);
+        
         const mgbase::size_t page_size_in_bytes = 4096; // TODO
         const mgbase::size_t block_size_in_bytes = 4096; // TODO
         
@@ -284,9 +287,15 @@ public:
                 ,   app_ptr
                 ,   sys_ptr
                 ,   reinterpret_cast<mgbase::size_t>(app_ptr)
-                ,   true
                 }
             );
+        
+        this->enable_on_this_thread();
+        
+        // Restore the initial data to the global buffer.
+        memcpy(global_var_seg_.get(), data.get(), seg_size);
+        
+        this->disable_on_this_thread();
     }
     
     void* get_global_var_seg_start_ptr() MGBASE_NOEXCEPT {
