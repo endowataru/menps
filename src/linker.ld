@@ -1,18 +1,17 @@
 
 SECTIONS
 {
-    . = ALIGN(0x1000);
-    
-    _dsm_data_begin = .;
-    
-    .dsm_data :
+    .dsm_data : ALIGN(0x1000)
     {
+        _dsm_data_begin = .;
+        
         *(.dsm_data)
+        
+        . = ALIGN(0x1000);
+        
+        _dsm_data_end = .;
     }
     
-    . = ALIGN(0x1000);
-    
-    _dsm_data_end = .;
 }
 
 /* Insert .dsm_data after .ldata

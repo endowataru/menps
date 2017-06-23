@@ -293,7 +293,10 @@ public:
         this->enable_on_this_thread();
         
         // Restore the initial data to the global buffer.
-        memcpy(global_var_seg_.get(), data.get(), seg_size);
+        const auto seg_ptr = global_var_seg_->get_ptr();
+        MGBASE_ASSERT(seg_ptr == app_ptr);
+        
+        memcpy(seg_ptr, data.get(), seg_size);
         
         this->disable_on_this_thread();
     }
