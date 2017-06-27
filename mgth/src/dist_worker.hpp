@@ -8,7 +8,8 @@
 #include <mgult/generic/basic_worker.hpp>
 #include <mgult/generic/basic_current_thread.hpp>
 #include <mgult/generic/default_worker_deque.hpp>
-#include <mgult/generic/thread_local_worker_base.hpp>
+//#include <mgult/generic/thread_local_worker_base.hpp>
+#include <mgult/generic/thread_specific_worker_base.hpp>
 #include <mgult/generic/fcontext_worker_base.hpp>
 #include <mgult/generic/ult_id_worker_traits_base.hpp>
 #include <mgctx/context_policy.hpp>
@@ -21,6 +22,7 @@ class dist_worker;
 
 struct dist_worker_traits
     : mgult::ult_id_worker_traits_base
+    , mgth::base_ult::ult_policy
 {
     typedef dist_worker                 derived_type;
     typedef global_ult_ref              ult_ref_type;
@@ -42,12 +44,14 @@ class dist_scheduler;
 class dist_worker
     : public mgult::basic_worker<dist_worker_traits>
     , public mgult::basic_current_thread<dist_worker_traits>
-    , public mgult::thread_local_worker_base<dist_worker_traits>
+    //, public mgult::thread_local_worker_base<dist_worker_traits>
+    , public mgult::thread_specific_worker_base<dist_worker_traits>
     , public mgctx::context_policy
 {
     typedef mgult::basic_worker<dist_worker_traits>         base;
     
-    typedef mgult::thread_local_worker_base<dist_worker_traits> tls_base;
+    //typedef mgult::thread_local_worker_base<dist_worker_traits> tls_base;
+    typedef mgult::thread_specific_worker_base<dist_worker_traits> tls_base;
     
     static const mgbase::size_t join_stack_size = 2 << 20;
     

@@ -18,6 +18,7 @@ struct dist_scheduler_traits
     typedef dist_worker         worker_type;
     typedef worker_rank_t       worker_rank_type;
     typedef ult_id              ult_id_type;
+    typedef mgth::base_ult::thread  worker_thread_type;
 };
 
 class dist_scheduler
