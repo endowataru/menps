@@ -169,9 +169,11 @@ private:
         {
             auto& buf = *buf_ptr;
             
-            mgbase::uint8_t reply_data[MGCOM_RPC_MAX_DATA_SIZE];
+            // Don't use call stack for allocating a large array in user-level threads.
+            const auto reply_data =
+                mgbase::make_unique<mgbase::uint8_t []>(MGCOM_RPC_MAX_DATA_SIZE);
             
-            auto rply_msg = self.call(cli_rank, buf, reply_data);
+            auto rply_msg = self.call(cli_rank, buf, reply_data.get());
             
             self.send_reply(cli_rank, buf.reply_tag, rply_msg.get(), rply_msg.size_in_bytes());
         }
