@@ -1,6 +1,7 @@
 
 #include <mgth.hpp>
 #include <mgbase/profiling/stopwatch.hpp>
+#include <mgbase/profiling/time.hpp>
 #include <iostream>
 
 void f()
@@ -19,6 +20,7 @@ int mgth_main(const int argc, char** const argv)
     
     mgbase::stopwatch sw;
     sw.start();
+    const auto start_sec = mgbase::get_current_sec();
     
     for (mgbase::size_t i = 0; i < n; ++i) {
         mgth::ult::thread th(f);
@@ -26,8 +28,9 @@ int mgth_main(const int argc, char** const argv)
     }
     
     const auto elapsed = sw.elapsed();
+    const auto end_sec = mgbase::get_current_sec();
     
-    std::cout << "took " << elapsed << " cycles" << std::endl;
+    std::cout << "took " << elapsed << " cycles, " << end_sec << " sec" << std::endl;
     
     return 0;
 }

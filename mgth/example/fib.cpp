@@ -1,6 +1,7 @@
 
 #include <mgth.hpp>
 #include <mgbase/profiling/stopwatch.hpp>
+#include <mgbase/profiling/time.hpp>
 #include <iostream>
 
 namespace /*unnamed*/ {
@@ -62,6 +63,7 @@ int mgth_main(const int argc, char** const argv)
     
     mgbase::stopwatch sw;
     sw.start();
+    const auto start_sec = mgbase::get_current_sec();
     
     fib_int_t result{};
     
@@ -69,8 +71,11 @@ int mgth_main(const int argc, char** const argv)
     
     fib(&d);
     
+    const auto end_sec = mgbase::get_current_sec();
+    
     std::cout << "fib(" << arg_n << ") = " << result
-        << ", took " << sw.elapsed() << " cycles" << std::endl;
+        << ", took " << sw.elapsed() << " cycles, "
+        << (end_sec - start_sec) << " sec" << std::endl;
     
     return 0;
 }
