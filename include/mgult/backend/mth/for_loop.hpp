@@ -24,12 +24,13 @@ void for_loop_strided(parallel_execution_policy /*ignored*/, I first, I last, S 
     if (diff <= 0) {
         return;
     }
-    else if (diff < stride) {
+    else if (diff <= stride) {
         func(first);
     }
     else {
         const auto half = diff / 2 / stride * stride;
         thread t(&for_loop_strided<I, S, F>, par, first, first + half, stride, func);
+        //for_loop_strided(par, first, first + half, stride, func);
         for_loop_strided(par, first + half, last, stride, func);
         t.join();
     }
