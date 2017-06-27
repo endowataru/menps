@@ -96,6 +96,28 @@ inline mgbase::size_t get_num_workers() MGBASE_NOEXCEPT {
     return -1;
 }
 
+
+template <typename Policy>
+class thread_specific
+{
+    typedef typename Policy::value_type value_type;
+    
+public:
+    value_type* get() {
+        return p_;
+    }
+    
+    void set(value_type* const ptr) const {
+        p_ = ptr;
+    }
+    
+private:
+    static MGBASE_THREAD_LOCAL value_type* p_;
+};
+
+template <typename Policy>
+MGBASE_THREAD_LOCAL typename Policy::value_type* thread_specific<Policy>::p_ = 0;
+
 } // namespace klt
 } // namespace mgult
 

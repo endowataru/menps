@@ -18,6 +18,7 @@ struct sm_scheduler_traits
     typedef sm_worker       worker_type;
     typedef worker_rank_t   worker_rank_type;
     typedef ult_id          ult_id_type;
+    typedef mgbase::thread  worker_thread_type;
 };
 
 class sm_scheduler

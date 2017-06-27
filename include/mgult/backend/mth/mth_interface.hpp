@@ -5,6 +5,7 @@
 #include <mgult/backend/mth/mutex.hpp>
 #include <mgult/backend/mth/condition_variable.hpp>
 #include <mgult/backend/mth/this_thread.hpp>
+#include <mgult/backend/mth/thread_specific.hpp>
 
 #include <mgult/async/async_status.hpp>
 #include <mgult/async/async_atomic_channel.hpp>

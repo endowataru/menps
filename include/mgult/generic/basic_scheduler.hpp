@@ -20,6 +20,8 @@ class basic_scheduler
     
     typedef typename Policy::scheduler_base_type::allocated_ult allocated_ult_type;
     
+    typedef typename Policy::worker_thread_type worker_thread_type;
+    
 private:
     struct main_thread_data
     {
@@ -113,8 +115,8 @@ public:
             {
                 typedef typename mgbase::decay<Func>::type  func_type;
                 
-                info0.real_th = mgbase::make_shared<mgbase::thread>(
-                    mgbase::thread(
+                info0.real_th = mgbase::make_shared<worker_thread_type>(
+                    worker_thread_type(
                         worker_loop_main_functor<func_type>{
                             *info0.wk
                         ,   mgbase::forward<Func>(func)
@@ -123,8 +125,8 @@ public:
                 );
             }
             else {
-                info0.real_th = mgbase::make_shared<mgbase::thread>(
-                    mgbase::thread(worker_loop_functor{ *info0.wk })
+                info0.real_th = mgbase::make_shared<worker_thread_type>(
+                    worker_thread_type(worker_loop_functor{ *info0.wk })
                 );
             }
         }
@@ -133,8 +135,8 @@ public:
         for (worker_rank_type rank = 1; rank < num_ranks; ++rank)
         {
             auto& info = this->workers_[rank];
-            info.real_th = mgbase::make_shared<mgbase::thread>(
-                mgbase::thread(worker_loop_functor{ *info.wk })
+            info.real_th = mgbase::make_shared<worker_thread_type>(
+                worker_thread_type(worker_loop_functor{ *info.wk })
             );
         }
         
@@ -228,8 +230,8 @@ private:
         // TODO: Currently shared_ptr is used
         //       because old libstdc++'s vector doesn't allow move-only types as elements.
         //       They are unique in fact.
-        mgbase::shared_ptr<mgbase::thread>  real_th;
-        mgbase::shared_ptr<worker_type>     wk;
+        mgbase::shared_ptr<worker_thread_type>  real_th;
+        mgbase::shared_ptr<worker_type>         wk;
     };
     
     std::vector<worker_info> workers_;

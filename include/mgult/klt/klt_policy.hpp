@@ -26,6 +26,11 @@ struct klt_policy
     typedef mgult::klt::spinlock            spinlock;
     
     typedef mgult::klt::thread              thread;
+    
+    template <typename Policy>
+    struct thread_specific_ {
+        typedef typename mgult::klt::thread_specific<Policy>    type;
+    };
 };
 
 namespace klt {

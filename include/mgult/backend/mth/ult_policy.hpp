@@ -28,6 +28,15 @@ struct ult_policy
     static myth_thread_t fork_fast(void* (* const func)(void*), void* const arg) {
         return mgult::backend::mth::fork_fast(func, arg);
     }
+    
+    typedef mgbase::spinlock            spinlock;
+    
+    typedef mgult::backend::mth::thread thread;
+    
+    template <typename Policy>
+    struct thread_specific_ {
+        typedef typename mgult::backend::mth::thread_specific<Policy>   type;
+    };
 };
 
 } // namespace mth
