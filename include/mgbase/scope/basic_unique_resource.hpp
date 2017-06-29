@@ -5,11 +5,7 @@
 #include <mgbase/tuple/tuple.hpp>
 #include <mgbase/type_traits/conditional.hpp>
 #include <mgbase/type_traits/is_reference.hpp>
-#include <mgbase/type_traits/is_pointer.hpp>
 #include <mgbase/type_traits/remove_reference.hpp>
-#include <mgbase/type_traits/remove_pointer.hpp>
-#include <mgbase/type_traits/add_lvalue_reference.hpp>
-#include <mgbase/type_traits/is_void.hpp>
 #include <mgbase/utility/move.hpp>
 #include <mgbase/explicit_operator_bool.hpp>
 
@@ -34,50 +30,13 @@ public:
     }
 };
 
-namespace detail {
-
-template <
-    typename Traits
-,   bool Dereferencable =
-        // resource_type is a pointer
-        mgbase::is_pointer<typename Traits::resource_type>::value
-        &&
-        // resource_type is not void*
-        ! mgbase::is_void<
-            typename mgbase::remove_pointer<typename Traits::resource_type>::type
-        >::value
->
-class basic_unique_resource_deref
-    : public mgbase::crtp_base<Traits>
-{ };
-
-template <typename Traits>
-class basic_unique_resource_deref<Traits, true>
-    : public mgbase::crtp_base<Traits>
-{
-    typedef typename Traits::derived_type   derived_type;
-    typedef typename Traits::resource_type  resource_type;
-    
-    typedef typename mgbase::add_lvalue_reference<
-        typename mgbase::remove_pointer<resource_type>::type
-    >::type
-    lv_ref_resource_type;
-    
-public:
-    lv_ref_resource_type operator * () const MGBASE_NOEXCEPT {
-        return * this->derived().get();
-    }
-};
-
-} // namespace detail
-
-template <typename Traits>
+template <typename Policy>
 class basic_unique_resource
-    : public detail::basic_unique_resource_deref<Traits>
 {
-    typedef typename Traits::derived_type   derived_type;
-    typedef typename Traits::resource_type  resource_type;
-    typedef typename Traits::deleter_type   deleter_type;
+    MGBASE_POLICY_BASED_CRTP(Policy)
+    
+    typedef typename Policy::resource_type  resource_type;
+    typedef typename Policy::deleter_type   deleter_type;
     
 public:
     basic_unique_resource()
