@@ -2,6 +2,7 @@
 #pragma once
 
 #include <mgcom/rpc/common.hpp>
+#include <mgbase/basic_dereferencable.hpp>
 #include <mgbase/scope/basic_unique_resource.hpp>
 #include <mgcom/ult.hpp>
 #include <mgbase/type_traits/is_void.hpp>
@@ -35,6 +36,7 @@ struct message_traits
 template <typename T>
 class message
     : public mgbase::basic_unique_resource<detail::message_traits<T>>
+    , public mgbase::basic_dereferencable<detail::message_traits<T>>
 {
     typedef mgbase::basic_unique_resource<detail::message_traits<T>>   base;
     
