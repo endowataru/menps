@@ -15,7 +15,7 @@ namespace mpi {
 class mpi_completer
     : public mpi_completer_base
 {
-    static const index_t max_completion_count = 65536;
+    static const index_t max_completion_count = 256;
     
 public:
     void initialize()
