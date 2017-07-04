@@ -28,7 +28,8 @@ int main(int argc, char* argv[])
         
         mgdsm::segment_ref seg;
         
-        const int num_changes = 5000;
+        const int num_changed = 30000;
+        const int num_samples = 1000;
         
         mgbase::uint8_t* pi = MGBASE_NULLPTR;
         if (mgcom::current_process_id() == 0) {
@@ -36,17 +37,17 @@ int main(int argc, char* argv[])
             seg = sp.make_segment(1ull << 20, 1<<12, 1<<12);
             pi = static_cast<mgbase::uint8_t*>(seg.get_ptr());
             
-            for (mgbase::uint8_t i = 0; i < num_changes; ++i) {
+            for (int i = 0; i < num_changed; ++i) {
                 pi[i] = 0;
             }
         }
         
         mgcom::collective::broadcast(0, &pi, 1);
         
-        mgbase::average_accumulator<double> data_read[num_changes];
-        mgbase::average_accumulator<double> data_write[num_changes];
-        mgbase::average_accumulator<double> data_write_barrier[num_changes];
-        mgbase::average_accumulator<double> data_read_barrier[num_changes];
+        const auto data_read = mgbase::make_unique<mgbase::average_accumulator<double> []>(num_samples);
+        const auto data_write = mgbase::make_unique<mgbase::average_accumulator<double> []>(num_samples);
+        const auto data_write_barrier = mgbase::make_unique<mgbase::average_accumulator<double> []>(num_samples);
+        const auto data_read_barrier = mgbase::make_unique<mgbase::average_accumulator<double> []>(num_samples);
         
         /*mgbase::cpu_clock_t write_cycles[num_changes] = {0};
         mgbase::cpu_clock_t barrier_cycles[num_changes] = {0};*/
@@ -58,19 +59,19 @@ int main(int argc, char* argv[])
         if (mgcom::current_process_id() == 1)
         {
             for (int j = 0; j <= num_trials; j++) {
-                for (int i = 0; i < num_changes; i += 8) {
+                for (int i = 0; i < num_samples; ++i) {
                     /*mgbase::stopwatch sw;
                     sw.start();*/
                     
                     const auto t0 = cur_time();
                     
-                    for (int k = 0; k < i; ++k) {
+                    for (int k = 0; k < i*(num_changed/num_samples); ++k) {
                         dummy += pi[k];
                     }
                     
                     const auto t1 = cur_time();
                     
-                    for (int k = 0; k < i; ++k) {
+                    for (int k = 0; k < i*(num_changed/num_samples); ++k) {
                         pi[k] = j;
                     }
                     
@@ -105,8 +106,8 @@ int main(int argc, char* argv[])
         //for (mgcom::process_id_t proc = 0; proc < mgcom::number_of_processes(); ++proc)
         if (mgcom::current_process_id() == 1)
         {
-            for (int i = 0; i < num_changes; ++i) {
-                print("- changed : {}\n", i);
+            for (int i = 0; i < num_samples; ++i) {
+                print("- changed : {} # [bytes]\n", i*(num_changed/num_samples));
                 print("  read_time : {}\n", data_read[i].summary());
                 print("  write_time : {}\n", data_write[i].summary());
                 print("  data_write_barrier: {}\n", data_write_barrier[i].summary());
