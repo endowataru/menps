@@ -67,6 +67,10 @@ public:
         return *instance_;
     }
     
+    void global_barrier() {
+        // do nothing
+    }
+    
 private:
     worker_rank_t get_num_ranks() const MGBASE_NOEXCEPT {
         return num_ranks_;

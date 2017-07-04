@@ -155,6 +155,12 @@ public:
             "msg:All workers finished."
         );
         
+        this->derived().global_barrier();
+        
+        MGBASE_LOG_VERBOSE(
+            "msg:All workers globally finished."
+        );
+        
         this->workers_.clear();
     }
     
