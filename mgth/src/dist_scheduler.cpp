@@ -320,6 +320,7 @@ void dist_worker::on_before_switch(global_ult_ref& /*from_th*/, global_ult_ref& 
     }
     
     // Set the owner.
+    // TODO: to_th is not locked.
     to_th.set_owner_proc(mgcom::current_process_id());
     
     auto& dsm = sched_.get_dsm();
@@ -395,9 +396,7 @@ namespace /*unnamed*/ {
 
 inline void wait_for_latest_stamp(global_ult_ref& th, global_ult_ref::unique_lock_type& lk)
 {
-    MGBASE_ASSERT(lk.owns_lock());
-    
-    while (!th.is_latest_stamp()) {
+    while (!th.is_latest_stamp(lk)) {
         lk.unlock();
         base_ult::this_thread::yield();
         lk.lock();
@@ -476,7 +475,7 @@ void dist_worker::on_join_resume(global_ult_ref&& child_th)
     
     // If the write back is completed, the thread is destroyed.
     // Note: We don't lock the child thread.
-    if (child_th.is_latest_stamp()) {
+    if (child_th.is_latest_stamp(lk)) {
         // Unlock the thread first to destroy it.
         lk.unlock();
         
@@ -490,7 +489,7 @@ void dist_worker::on_join_resume(global_ult_ref&& child_th)
     else {
         // Detach the thread.
         // This execution path is disabled in shared-memory implementation.
-        child_th.set_detached();
+        child_th.set_detached(lk);
     }
     
     // Unlock the child thread.

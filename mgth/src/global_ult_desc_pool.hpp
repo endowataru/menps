@@ -37,7 +37,7 @@ private:
 };
 
 #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
-
+// TODO: move this definition
 void global_ult_ref::do_update_stamp::operator() () const
 {
     auto th = pool.get_ult_ref_from_id(this->id);
@@ -67,7 +67,7 @@ void global_ult_ref::do_update_stamp::operator() () const
         th.store_desc_member(&global_ult_desc::old_stamp, this->stamp);
     }
     
-    if (cur_stamp == this->stamp && (th.is_finished() && th.is_detached())) {
+    if (cur_stamp == this->stamp && (th.is_finished(lk) && th.is_detached(lk))) {
         lk.unlock();
         pool.deallocate_ult(mgbase::move(th));
     }
