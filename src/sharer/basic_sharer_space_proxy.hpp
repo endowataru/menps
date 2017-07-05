@@ -120,6 +120,14 @@ private:
             // Directly access the page entry to avoid deadlocking.
             seg_ac.enable_diff(pg_id);
             
+            MGBASE_LOG_INFO(
+                "msg:Enabled diff.\t"
+                "seg_id:{}\t"
+                "pg_id:{}"
+            ,   seg_id
+            ,   pg_id
+            );
+            
             return sc.make_reply();
         }
     };

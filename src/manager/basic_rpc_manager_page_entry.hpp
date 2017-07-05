@@ -109,6 +109,14 @@ public:
         return this->writers_.is_only(proc);
     }
     
+    // for debugging
+    mgbase::size_t get_num_readers() const MGBASE_NOEXCEPT {
+        return this->readers_.size();
+    }
+    mgbase::size_t get_num_writers() const MGBASE_NOEXCEPT {
+        return this->writers_.size();
+    }
+    
 private:
     // Old GCC cannot use local class for template argument
     struct invalidator_conf {

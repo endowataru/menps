@@ -49,6 +49,10 @@ public:
         return ids_.end();
     }
     
+    mgbase::size_t size() const MGBASE_NOEXCEPT {
+        return ids_.size();
+    }
+    
 private:
     set_type ids_;
 };

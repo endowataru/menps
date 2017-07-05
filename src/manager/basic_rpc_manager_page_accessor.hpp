@@ -102,6 +102,20 @@ public:
         // Copy the readers/writers and make an invalidator object.
         auto inv = pg_ent.make_invalidator();
         
+        MGBASE_LOG_INFO(
+            "msg:Acquire write.\t"
+            "proc:{}\t"
+            /*"seg_id:{}\t"
+            "pg_id:{}\t"*/
+            "n_read:{}\t"
+            "n_write:{}"
+        ,   proc
+        /*,   seg_id
+        ,   pg_id*/
+        ,   pg_ent.get_num_readers()
+        ,   pg_ent.get_num_writers()
+        );
+        
         // Add the process as a writer.
         pg_ent.add_writer(proc);
         
@@ -123,6 +137,20 @@ public:
     {
         auto& self = this->derived();
         auto& pg_ent = self.get_page_entry();
+        
+        MGBASE_LOG_INFO(
+            "msg:Release write.\t"
+            "proc:{}\t"
+            /*"seg_id:{}\t"
+            "pg_id:{}\t"*/
+            "n_read:{}\t"
+            "n_write:{}"
+        ,   proc
+        /*,   seg_id
+        ,   pg_id*/
+        ,   pg_ent.get_num_readers()
+        ,   pg_ent.get_num_writers()
+        );
         
         // Remove the process as a writer.
         pg_ent.remove_writer(proc);

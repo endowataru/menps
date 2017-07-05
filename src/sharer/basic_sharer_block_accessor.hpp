@@ -157,8 +157,18 @@ public:
         // Get the address of the owner's block.
         const auto dest_prptr = pg.get_write_owner_prptr(blk_id);
         
+        bool is_diff;
+        
         {
             auto tr_lk = pg.get_transfer_lock();
+        
+            MGBASE_LOG_INFO(
+                "msg:Start reconciling block.\t"
+                "{}"
+            ,   self.to_string()
+            );
+            
+            is_diff = pg.is_diff_needed(tr_lk);
             
             // Check whether the page is only written by this process.
             if (pg.is_diff_needed(tr_lk)) {
@@ -169,6 +179,13 @@ public:
                 // Write the whole page.
                 self.write_whole(src_ptr, twin_lptr, dest_prptr, blk_size);
             }
+        
+            MGBASE_LOG_INFO(
+                "msg:Reconciled block {}.\t"
+                "{}"
+            ,   (is_diff ? "using diff" : "as whole block")
+            ,   self.to_string()
+            );
         }
         
         // Mark this block as clean.
@@ -177,12 +194,6 @@ public:
         // Decrement the count of writing blocks for this page.
         // If it becomes 0, then a message will be sent to the manager process.
         pg.release_write_block(blk_id);
-        
-        MGBASE_LOG_INFO(
-            "msg:Reconciled block.\t"
-            "{}"
-        ,   self.to_string()
-        );
     }
     
     bool is_flush_needed()
