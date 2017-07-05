@@ -20,6 +20,8 @@ class ult_ptr_ref
     typedef context_t               context_type;
     
 public:
+    typedef mgbase::unique_lock<lock_type>  unique_lock_type;
+    
     ult_ptr_ref() MGBASE_NOEXCEPT {
         set_invalid();
     }
@@ -86,6 +88,9 @@ public:
     
     bool is_finished() const MGBASE_NOEXCEPT {
         return desc_->state == ult_state::finished;
+    }
+    bool is_latest_stamp() const MGBASE_NOEXCEPT {
+        return true; // this function is for distributed-memory version
     }
     
     bool is_detached() const MGBASE_NOEXCEPT {

@@ -162,6 +162,15 @@ public:
         
         // Deallocate the root thread.
         self.deallocate_ult(self.remove_current_ult());
+        #if 0
+        // TODO: necessary for MGTH_ENABLE_ASYNC_WRITE_BACK
+        
+        auto current_th = self.remove_current_ult();
+        
+        // Detach the thread to remove it.
+        // If the write back is still ongoing, detach doesn't destroy it immediately.
+        self.detach(current_th.get_id());
+        #endif
     }
     
 public:
@@ -382,7 +391,8 @@ public:
             MGBASE_ASSERT(!child_th.is_detached());
             
             if (MGBASE_LIKELY(child_th.is_finished())) {
-                // The child thread has already finished.
+                // The child thread has already finished
+                // (and has written back the cache on distributed-memory implementation).
                 
                 MGBASE_LOG_INFO(
                     "msg:Join a thread that already finished.\t"
@@ -392,14 +402,24 @@ public:
                 
                 // Call the hook to issue write/read barriers.
                 // The joined thread may have modified data.
-                self.on_join_already(self.get_current_ult(), child_th);
+                self.on_join_already(self.get_current_ult(), child_th, lc);
                 
-                // Unlock the child thread to destroy the thread descriptor.
-                lc.unlock();
-                
-                // Destroy the thread descriptor of the child thread.
-                // The thread is not detached because it is being joined,
-                self.deallocate_ult( mgbase::move(child_th) );
+                if (child_th.is_latest_stamp()) {
+                    // Unlock the child thread to destroy the thread descriptor.
+                    lc.unlock();
+                    
+                    // Destroy the thread descriptor of the child thread.
+                    // The thread is not detached because it is being joined,
+                    //
+                    // Both shared-memory and distributed-memory versions destroy this thread
+                    // because the write back is already completed.
+                    self.deallocate_ult( mgbase::move(child_th) );
+                }
+                else {
+                    // Detach the thread.
+                    // This execution path is disabled in shared-memory implementation.
+                    child_th.set_detached();
+                }
                 
                 return;
             }
@@ -444,15 +464,20 @@ public:
         // because this parent thread is joining.
         MGBASE_ASSERT(child_th_2.is_finished());
         
-        // No need to lock here
+        // In shared-memory implementation, no need to lock here
         // because the child thread has already finished
         // and no other threads are joining.
         
         // If the other threads are joining this child thread,
         // it's just a mistake of user programs.
         
-        // Destroy the thread descriptor of the child thread.
-        self_2.deallocate_ult( mgbase::move(child_th_2) );
+        // Destroy the thread descriptor.
+        // In shared-memory implementation,
+        // the descriptor is not locked and always deallocated.
+        // In distributed-memory implementation,
+        // the descriptor is locked and checked whether the write back is ongoing or not.
+        // TODO: Can we merge these two behaviors?
+        self.on_join_resume(mgbase::move(child_th_2));
     }
     
 private:
@@ -545,10 +570,11 @@ public:
         
         auto th = self.get_ult_ref_from_id(id);
         
+        bool is_destroyable;
         {
             auto lc = th.get_lock();
             
-            if (!th.is_finished())
+            if (! th.is_finished())
             {
                 // The thread is still being executed.
                 
@@ -558,10 +584,21 @@ public:
                 // lc is automatically unlocked when this function finishes.
                 return;
             }
+            
+            // If the thread is still writing back,
+            // it cannot be destroyed now.
+            is_destroyable = th.is_latest_stamp();
+            
+            // Both the thread and the write barrier for it have finished.
         }
         
-        // Free the thread descriptor.
-        self.deallocate_ult( mgbase::move(th) );
+        if (is_destroyable) {
+            // Free the thread descriptor.
+            //
+            // Both shared-memory and distributed-memory versions destroy the child thread
+            // because the write back is already completed.
+            self.deallocate_ult( mgbase::move(th) );
+        }
     }
        
 private:
@@ -569,21 +606,22 @@ private:
         derived_type&   self
     ,   ult_ref_type    prev_th
     ) {
-        bool is_detached;
+        bool is_destroyable;
         {
             // This worker has already locked the thread.
             auto lc = prev_th.get_lock(mgbase::adopt_lock);
             
-            is_detached = prev_th.is_detached();
+            // Because this thread is detached and written back,
+            // no other threads will join and manage its resource.
+            is_destroyable = prev_th.is_detached() && prev_th.is_latest_stamp();
             
             // Unlock the current thread here to free the thread descriptor.
         }
         
-        if (is_detached) {
-            // Because this thread is detached,
-            // no other threads will join and manage its resource.
-            
+        if (is_destroyable) {
             // Free the thread descriptor by itself.
+            // In distributed-memory implementation,
+            // deallocation is delayed until async_write_barrier (called in on_after_switch) is done.
             self.deallocate_ult( mgbase::move(prev_th) );
         }
         

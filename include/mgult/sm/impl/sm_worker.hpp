@@ -62,6 +62,10 @@ public:
     {
         desc_pool_.deallocate_ult(mgbase::move(th));
     }
+    void deallocate_ult_on_sm(ult_ptr_ref&& th)
+    {
+        deallocate_ult(mgbase::move(th));
+    }
     
     ult_ptr_ref get_ult_ref_from_id(const ult_id& id)
     {
@@ -100,9 +104,13 @@ public:
         // Do nothing.
         // This hook is for distributed work-stealing.
     }
-    void on_join_already(ult_ptr_ref& /*current_th*/, ult_ptr_ref& /*joinee_th*/) {
+    void on_join_already(ult_ptr_ref& /*current_th*/, ult_ptr_ref& /*joinee_th*/, ult_ptr_ref::unique_lock_type& /*lk*/) {
         // Do nothing.
         // This hook is for distributed work-stealing.
+    }
+    void on_join_resume(ult_ptr_ref&& child_th) {
+        // Always destroy the child thread without locking.
+        this->deallocate_ult( mgbase::move(child_th) );
     }
     void on_exit_resume(ult_ptr_ref& /*th*/) {
         // Do nothing.
