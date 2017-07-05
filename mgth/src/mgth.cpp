@@ -12,6 +12,8 @@
 
 namespace mgth {
 
+void initialize_misc();
+
 namespace /*unnamed*/ {
 
 mgdsm::space_ref g_dsm;
@@ -202,6 +204,8 @@ int start(int argc, char* argv[], int (*f)(int, char**))
     
     mgth::g_argc = argc;
     mgth::g_argv = argv;
+    
+    mgth::initialize_misc();
     
     // Initialize DSM.
     mgth::g_dsm = mgdsm::make_space();

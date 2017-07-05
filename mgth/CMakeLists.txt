@@ -23,6 +23,7 @@ add_library(mgth
     ./src/mgth.cpp
     ./src/disable_aslr.cpp
     ./src/c_interface.cpp
+    ./src/misc.cpp
 )
 target_include_directories(mgth
     PUBLIC ./include
