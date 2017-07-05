@@ -238,6 +238,11 @@ public:
         return *instance_;
     }
     
+    void global_barrier()
+    {
+        mgcom::collective::barrier();
+    }
+    
     global_ult_desc_pool& get_desc_pool() { // TODO: will be removed
         return desc_pool_;
     }
