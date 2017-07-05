@@ -18,6 +18,7 @@ public:
     
     struct config
     {
+        mgdsm::space_ref& space;
         void* stack_segment_ptr;
     };
     

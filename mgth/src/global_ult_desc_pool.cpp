@@ -23,7 +23,8 @@ class global_ult_desc_pool::impl
     
 public:
     explicit impl(const config& conf)
-        : local_descs_{ mgcom::rma::allocate<global_ult_desc>(num_descs) }
+        : conf_(conf)
+        , local_descs_{ mgcom::rma::allocate<global_ult_desc>(num_descs) }
     {
         mgcom::rpc::register_handler2<deallocate_handler>(
             mgcom::rpc::requester::get_instance()
@@ -140,6 +141,13 @@ public:
         ,   th.to_string()
         );
         
+        if (th_id.di.proc != mgcom::current_process_id()) {
+            // Write back the memory to flush the call stack.
+            // The call stack will no longer be used again,
+            // but local modifications must be applied before the revival.
+            conf_.space.write_barrier();
+        }
+        
         // Invalidate the descriptor (for debugging).
         th.invalidate_desc();
         
@@ -176,16 +184,18 @@ private:
         auto& di = id.di;
         
         MGBASE_ASSERT(di.proc == mgcom::current_process_id());
-        
+        MGBASE_ASSERT(di.local_id < num_descs);
         
         unique_lock_type lk(this->mtx_);
         
         // Return the ID.
-        //indexes_.push_front(di.local_id);
-        indexes_.push_back(di.local_id);
+        indexes_.push_front(di.local_id); // LIFO
+        //indexes_.push_back(di.local_id); // FIFO
         
         cv_.notify_one();
     }
+    
+    const config conf_;
     
     mgcom::rma::local_ptr<global_ult_desc> local_descs_;
     

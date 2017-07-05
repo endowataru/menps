@@ -28,7 +28,7 @@ class dist_scheduler
     
 public:
     explicit dist_scheduler(const dist_scheduler_config& conf)
-        : desc_pool_({ conf.stack_segment_ptr })
+        : desc_pool_({ conf.space, conf.stack_segment_ptr })
         , dsm_(conf.space)
     {
         instance_ = this;
