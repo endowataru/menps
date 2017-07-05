@@ -44,6 +44,16 @@ public:
         num_ranks_ = get_num_ranks_from_env();
     }
     
+    ~dist_scheduler()
+    {
+        #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+        // Flush all ongoing operations to destroy resources
+        // which are accessed concurrently by threads in DSM.
+        dsm_.write_barrier();
+        dsm_.read_barrier();
+        #endif
+    }
+    
     virtual void loop(const loop_func_type& func) MGBASE_OVERRIDE
     {
         base::loop_workers(num_ranks_, func, &mgcom::collective::barrier);
@@ -154,8 +164,10 @@ private:
                 ,   reinterpret_cast<mgbase::uintptr_t>(id.ptr)
                 );
                 
+                #ifndef MGTH_ENABLE_ASYNC_WRITE_BACK
                 // Reconcile here.
                 instance_->dsm_.write_barrier();
+                #endif
             }
             
             auto rply = sc.make_reply();
@@ -351,7 +363,49 @@ void dist_worker::on_after_switch(global_ult_ref& from_th, global_ult_ref& /*to_
     );
     
     dsm.unpin(stack_first_ptr, stack_size);
+    
+    /*
+    // TODO: Check when MGTH_ENABLE_RELAXED_ULT_DESC is enabled
+    
+    auto lk = 
+        IsFromLocked
+        ? from_th.get_lock(mgbase::adopt_lock)
+        : from_th.get_lock();
+    
+    // Set the owner.
+    from_th.set_owner_proc(lk, mgcom::current_process_id());
+    
+    if (IsFromLocked) {
+        // This function doesn't unlock.
+        // The worker will unlock it later.
+        lk.release();
+    }
+    */
+    
+    #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+    // Start write barrier.
+    dsm.async_write_barrier(
+        from_th.make_update_stamp(this->sched_.get_desc_pool())
+    );
+    #endif
 }
+
+#ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+namespace /*unnamed*/ {
+
+inline void wait_for_latest_stamp(global_ult_ref& th, global_ult_ref::unique_lock_type& lk)
+{
+    MGBASE_ASSERT(lk.owns_lock());
+    
+    while (!th.is_latest_stamp()) {
+        lk.unlock();
+        base_ult::this_thread::yield();
+        lk.lock();
+    }
+}
+
+} // unnamed namespace
+#endif
 
 struct dist_worker::join_already_data
 {
@@ -378,7 +432,7 @@ struct dist_worker::join_already_data
     }
 };
 
-void dist_worker::on_join_already(global_ult_ref& current_th, global_ult_ref& joinee_th)
+void dist_worker::on_join_already(global_ult_ref& current_th, global_ult_ref& joinee_th, global_ult_ref::unique_lock_type& lk)
 {
     const auto owner_proc = joinee_th.get_owner_proc();
     
@@ -386,7 +440,11 @@ void dist_worker::on_join_already(global_ult_ref& current_th, global_ult_ref& jo
     
     if (owner_proc != mgcom::current_process_id())
     {
+        #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+        wait_for_latest_stamp(joinee_th, lk);
+        #else
         sched_.do_write_barrier_at(owner_proc, joinee_th.get_id());
+        #endif
         
         // Do read barrier on a different stack to unpin the current stack.
         
@@ -409,15 +467,57 @@ void dist_worker::on_join_already(global_ult_ref& current_th, global_ult_ref& jo
         mgult::jump_fcontext<void>(ctx, &data);
     }
 }
+void dist_worker::on_join_resume(global_ult_ref&& child_th)
+{
+    #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+    // Lock the thread.
+    // This is different from shared-memory implementation.
+    auto lk = child_th.get_lock();
+    
+    // If the write back is completed, the thread is destroyed.
+    // Note: We don't lock the child thread.
+    if (child_th.is_latest_stamp()) {
+        // Unlock the thread first to destroy it.
+        lk.unlock();
+        
+        // Destroy the thread descriptor of the child thread.
+        //
+        // Both shared-memory and distributed-memory versions destroy the child thread
+        // because the write back is already completed
+        // (and the current thread has already been reading the changes).
+        this->deallocate_ult( mgbase::move(child_th) );
+    }
+    else {
+        // Detach the thread.
+        // This execution path is disabled in shared-memory implementation.
+        child_th.set_detached();
+    }
+    
+    // Unlock the child thread.
+    
+    #else
+    
+    this->deallocate_ult( mgbase::move(child_th) );
+    
+    #endif
+}
 void dist_worker::on_exit_resume(global_ult_ref& th)
 {
+    #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+    auto lk = th.get_lock();
+    #endif
+    
     const auto owner_proc = th.get_owner_proc();
     
     MGBASE_ASSERT(mgcom::valid_process_id(owner_proc));
     
     if (owner_proc != mgcom::current_process_id())
     {
+        #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+        wait_for_latest_stamp(th, lk);
+        #else
         sched_.do_write_barrier_at(owner_proc, th.get_id());
+        #endif
         
         // Do a read barrier directly on the current stack.
         // The current stack is deallocated

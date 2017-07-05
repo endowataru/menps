@@ -88,6 +88,11 @@ public:
         desc.owner = -1;
         desc.state = global_ult_state::ready;
         desc.joiner = mgult::make_invalid_ult_id();
+        #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+        desc.cur_stamp = 0;
+        desc.old_stamp = 0;
+        #endif
+        desc.detached = false;
         
         MGBASE_ASSERT(index < num_descs);
         
@@ -129,6 +134,15 @@ public:
     {
         const auto th_id = th.get_id();
         
+        MGBASE_LOG_INFO(
+            "msg:Deallocate thread descriptor.\t"
+            "{}"
+        ,   th.to_string()
+        );
+        
+        // Invalidate the descriptor (for debugging).
+        th.invalidate_desc();
+        
         const auto proc = th_id.di.proc;
         
         mgcom::rpc::call<deallocate_handler>(
@@ -167,6 +181,7 @@ private:
         unique_lock_type lk(this->mtx_);
         
         // Return the ID.
+        //indexes_.push_front(di.local_id);
         indexes_.push_back(di.local_id);
         
         cv_.notify_one();

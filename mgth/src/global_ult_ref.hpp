@@ -10,7 +10,11 @@
 
 #include <mgcom/rma/unique_local_ptr.hpp>
 
+#include "base_ult.hpp"
+
 namespace mgth {
+
+class global_ult_desc_pool;
 
 class global_ult_ref
 {
@@ -19,6 +23,8 @@ class global_ult_ref
     typedef global_ult_ref  lock_type;
     
 public:
+    typedef mgbase::unique_lock<lock_type>  unique_lock_type;
+    
     global_ult_ref() MGBASE_NOEXCEPT {
         set_invalid();
     }
@@ -74,7 +80,7 @@ public:
     void lock()
     {
         while (!try_lock()) {
-            mgult::klt::this_thread::yield();
+            base_ult::this_thread::yield();
         }
     }
     
@@ -113,6 +119,12 @@ public:
     
     void unlock()
     {
+        MGBASE_LOG_VERBOSE(
+            "msg:Unlocking thread descriptor.\t"
+            "{}"
+        ,   to_string()
+        );
+        
         const auto target_proc = get_target_proc();
         const auto lock_rptr = desc_rptr_.member(&global_ult_desc::lock);
         
@@ -120,12 +132,6 @@ public:
             target_proc
         ,   lock_rptr
         ,   0
-        );
-        
-        MGBASE_LOG_VERBOSE(
-            "msg:Unlocked thread descriptor.\t"
-            "{}"
-        ,   to_string()
         );
     }
     
@@ -161,6 +167,24 @@ public:
         
         store_desc_member(&global_ult_desc::state, global_ult_state::finished);
     }
+    void invalidate_desc()
+    {
+        store_desc_member(&global_ult_desc::state, global_ult_state::invalid);
+    }
+    
+    bool is_latest_stamp()
+    {
+        #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+        auto cur_stamp = load_desc_member(&global_ult_desc::cur_stamp);
+        auto old_stamp = load_desc_member(&global_ult_desc::old_stamp);
+        
+        MGBASE_ASSERT(cur_stamp - old_stamp >= 0);
+        
+        return cur_stamp == old_stamp;
+        #else
+        return true;
+        #endif
+    }
     
     bool is_finished() const MGBASE_NOEXCEPT {
         return get_state() == global_ult_state::finished;
@@ -187,8 +211,54 @@ public:
     }
     
     bool is_valid() const MGBASE_NOEXCEPT {
-        return ! mgult::is_invalid_ult_id(id_);
+        //return ! mgult::is_invalid_ult_id(id_);
+        if (! mgult::is_invalid_ult_id(id_)) {
+            MGBASE_ASSERT(get_state() != global_ult_state::invalid);
+            return true;
+        }
+        else
+            return false;
     }
+    
+    #ifdef MGTH_ENABLE_ASYNC_WRITE_BACK
+private:
+    struct do_update_stamp
+    {
+        global_ult_desc_pool&   pool; // TODO
+        ult_id                  id;
+        global_ult_stamp_t      stamp;
+        
+        // TODO : arrange dependency on global_ult_desc_pool
+        inline void operator() () const;
+    };
+    
+public:
+    do_update_stamp make_update_stamp(global_ult_desc_pool& pool)
+    {
+        // Increment cur_stamp in a relaxed manner.
+        auto cur_stamp = load_desc_member(&global_ult_desc::cur_stamp);
+        
+        #ifdef MGBASE_DEBUG
+        const auto old_stamp = load_desc_member(&global_ult_desc::old_stamp);
+        MGBASE_ASSERT(cur_stamp - old_stamp >= 0);
+        
+        MGBASE_LOG_INFO(
+            "msg:Increment current stamp for thread.\t"
+            "old_stamp:{}\t"
+            "cur_stamp:{}\t"
+            "{}"
+        ,   old_stamp
+        ,   cur_stamp
+        ,   this->to_string()
+        );
+        #endif
+        
+        ++cur_stamp;
+        store_desc_member(&global_ult_desc::cur_stamp, cur_stamp);
+        
+        return do_update_stamp{ pool, this->get_id(), cur_stamp };
+    }
+    #endif
     
     ult_id get_id() const MGBASE_NOEXCEPT {
         return id_;

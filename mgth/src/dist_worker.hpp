@@ -62,6 +62,10 @@ public:
     
     inline void deallocate_ult(global_ult_ref&& th);
     
+    void deallocate_ult_on_sm(global_ult_ref&& th) {
+        // do nothing; deallocation is delayed until the write back is completed
+    }
+    
     inline global_ult_ref get_ult_ref_from_id(const mgult::ult_id& id);
     
     std::string show_ult_ref(global_ult_ref& th)
@@ -79,7 +83,8 @@ public:
     
     void on_before_switch(global_ult_ref&, global_ult_ref&);
     void on_after_switch(global_ult_ref&, global_ult_ref&);
-    void on_join_already(global_ult_ref&, global_ult_ref&);
+    void on_join_already(global_ult_ref&, global_ult_ref&, global_ult_ref::unique_lock_type&);
+    void on_join_resume(global_ult_ref&&);
     void on_exit_resume(global_ult_ref&);
     
     inline bool finished();
