@@ -11,7 +11,7 @@ include(CheckSymbolExists)
 
 # Options
 
-option(MGDEV_DEVICE_UCX_ENABLED "Enable UCX" FALSE)
+option(MGDEV_DEVICE_UCX_ENABLED "Enable UCX" TRUE)
 set(MGDEV_ULT_NAMESPACE "::mgult::klt" CACHE STRING "Namespace for ult" )
 
 # Platform check
@@ -113,6 +113,74 @@ endif()
 
 if(${MGDEV_DEVICE_UCX_ENABLED})
     include(cmake/ucx.cmake)
+    
+    # UCT
+    
+    add_library(mgdev-uct
+        ./src/ucx/ucs/async_context.cpp
+        ./src/ucx/uct/iface_config.cpp
+        ./src/ucx/uct/interface.cpp
+        ./src/ucx/uct/md_config.cpp
+        ./src/ucx/uct/md_resource_list.cpp
+        ./src/ucx/uct/tl_resource_list.cpp
+        ./src/ucx/uct/memory_domain.cpp
+        ./src/ucx/uct/worker.cpp
+        ./src/ucx/uct/allocated_memory.cpp
+        ./src/ucx/uct/endpoint.cpp
+        ./src/ucx/ucx_error.cpp
+    )
+    target_include_directories(mgdev-uct
+        PUBLIC  ./include
+        PUBLIC  ${CMAKE_CURRENT_BINARY_DIR}
+        PRIVATE ./src
+    )
+    target_link_libraries(mgdev-uct
+        PUBLIC  uct
+        PUBLIC  ucs
+        PUBLIC  mgult
+        PRIVATE mgbase-options
+    )
+    
+    add_executable(mgdev-ucx_uct_test
+        ./examples/ucx/uct/uct_test.cpp
+    )
+    target_link_libraries(mgdev-ucx_uct_test
+        mgdev-uct
+        mgbase-options
+    )
+    
+    # UCP
+    
+    add_library(mgdev-ucp
+        ./src/ucx/ucp/context.cpp
+        ./src/ucx/ucp/config.cpp
+        ./src/ucx/ucp/worker.cpp
+        ./src/ucx/ucp/worker_address.cpp
+        ./src/ucx/ucp/endpoint.cpp
+        ./src/ucx/ucp/rkey_buffer.cpp
+        ./src/ucx/ucp/remote_key.cpp
+        ./src/ucx/ucp/memory.cpp
+        ./src/ucx/ucx_error.cpp
+    )
+    target_include_directories(mgdev-ucp
+        PUBLIC  ./include
+        PUBLIC  ${CMAKE_CURRENT_BINARY_DIR}
+        PRIVATE ./src
+    )
+    target_link_libraries(mgdev-ucp
+        PUBLIC  ucp
+        PUBLIC  ucs
+        PUBLIC  mgult
+        PRIVATE mgbase-options
+    )
+    
+    add_executable(mgdev-ucx_ucp_test
+        ./examples/ucx/ucp/ucp_test.cpp
+    )
+    target_link_libraries(mgdev-ucx_ucp_test
+        mgdev-ucp
+        mgbase-options
+    )
 endif()
 
 # Examples
