@@ -11,7 +11,7 @@ class basic_cv_offload_thread
 {
     MGBASE_POLICY_BASED_CRTP(Policy)
     
-    typedef typename Policy::thread_type    thread_type;
+    typedef typename Policy::thread     thread_type;
     
 protected:
     basic_cv_offload_thread() = default;
