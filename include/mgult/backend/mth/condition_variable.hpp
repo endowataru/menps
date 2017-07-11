@@ -2,6 +2,7 @@
 #pragma once
 
 #include "mutex.hpp"
+#include <mgbase/threading/unique_lock.hpp>
 
 namespace mgult {
 namespace backend {
