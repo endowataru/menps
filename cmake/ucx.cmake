@@ -10,8 +10,10 @@ ExternalProject_Add(UCX
         "s/^noinst_PROGRAMS       = test_memhooks shmem_pingpong/noinst_PROGRAMS       = test_memhooks/"
         <SOURCE_DIR>/test/mpi/Makefile.am
     
-    CONFIGURE_COMMAND <SOURCE_DIR>/contrib/configure-release --prefix=<INSTALL_DIR> --with-mpi
-        --disable-numa
+    CONFIGURE_COMMAND <SOURCE_DIR>/contrib/configure-release --prefix=<INSTALL_DIR>
+    
+    #--with-mpi
+    #    --disable-numa
 )
 
 ExternalProject_Add_Step(UCX autogen
@@ -21,8 +23,9 @@ ExternalProject_Add_Step(UCX autogen
     WORKING_DIRECTORY <SOURCE_DIR>
 )
 
-#ExternalProject_Get_Property(UCX source_dir)
+ExternalProject_Get_Property(UCX source_dir)
 ExternalProject_Get_Property(UCX install_dir)
+ExternalProject_Get_Property(UCX binary_dir)
 
 add_library(ucp SHARED IMPORTED GLOBAL)
 add_dependencies(ucp UCX)
@@ -77,4 +80,16 @@ set_property(
 #    dl
 #    pthread
 #    )
+
+add_library(ucx-src INTERFACE)
+
+target_include_directories(ucx-src INTERFACE
+    ${source_dir}/src
+    ${binary_dir}
+)
+
+# Make a directory for include path if it doesn't exist
+# Reported as a bug of CMake:
+# https://cmake.org/Bug/view.php?id=15052
+file(MAKE_DIRECTORY ${source_dir}/include)
 
