@@ -8,6 +8,7 @@
 #include <mgult/backend/mth/thread_specific.hpp>
 #include <mgult/backend/mth/for_loop.hpp>
 #include <mgult/backend/mth/uncond_variable.hpp>
+#include <mgult/backend/mth/async_channel.hpp>
 
 #include <mgult/async/async_status.hpp>
 #include <mgult/async/async_atomic_channel.hpp>

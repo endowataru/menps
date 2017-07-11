@@ -21,6 +21,9 @@ public:
         myth_uncond_destroy(&this->u_); // ignore error
     }
     
+    uncond_variable(const uncond_variable&) = delete;
+    uncond_variable& operator = (const uncond_variable&) = delete;
+    
     void wait()
     {
         if (myth_uncond_wait(&this->u_) != 0)

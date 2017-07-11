@@ -37,6 +37,13 @@ struct ult_policy
     struct thread_specific_ {
         typedef typename mgult::backend::mth::thread_specific<Policy>   type;
     };
+    
+    typedef mgult::backend::mth::uncond_variable    uncond_variable;
+    
+    template <typename T>
+    struct async_channel_ {
+        typedef async_channel<T>    type;
+    };
 };
 
 } // namespace mth
