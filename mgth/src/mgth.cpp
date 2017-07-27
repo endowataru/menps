@@ -118,8 +118,10 @@ int (*g_main)(int, char**);
 
 void main_handler()
 {
+    mgth::g_dsm.read_barrier();
+    
     // Call the user-defined main function.
-    int ret = g_main(g_argc, g_argv);
+    g_ret = g_main(g_argc, g_argv);
 }
 
 inline sched::thread_id_t to_thread_id(const mgult::ult_id& id) {
@@ -193,17 +195,38 @@ void deallocate(void* const p)
 
 } // namespace dsm
 
+namespace /*unnamed*/ {
+
+char** copy_argv_to_dsm(int argc, char** argv)
+{
+    const auto ret =
+        static_cast<char**>(
+            dsm::untyped::allocate(MGBASE_ALIGNOF(char*), argc * sizeof(char*))
+        );
+    
+    for (int i = 0; i < argc; ++i) {
+        const mgbase::size_t len = strlen(argv[i]);
+        const auto arg =
+            static_cast<char*>(
+                dsm::untyped::allocate(MGBASE_ALIGNOF(char), (len+1) * sizeof(char))
+            );
+        
+        strcpy(arg, argv[i]);
+        
+        ret[i] = arg;
+    }
+    
+    return ret;
+}
+
+} // unnamed namespace
+
 int start(int argc, char* argv[], int (*f)(int, char**))
 {
-    g_main = f;
-    
     mgth::disable_aslr(argc, argv);
     
     // The communication interface is initialized here. (e.g. MPI_Init() is called.)
     mgcom::initialize(&argc, &argv);
-    
-    mgth::g_argc = argc;
-    mgth::g_argv = argv;
     
     mgth::initialize_misc();
     
@@ -227,6 +250,22 @@ int start(int argc, char* argv[], int (*f)(int, char**))
         
         // Initialize a scheduler.
         mgth::g_sched = mgth::make_dist_scheduler({ mgth::g_dsm, stack_seg.get_ptr() });
+        
+        // Set up the start-up variables.
+        // TODO: avoid using global vars
+        g_main = f;
+        mgth::g_argc = argc;
+        
+        // Set up argv.
+        if (mgcom::current_process_id() == 0) {
+            mgth::g_dsm.enable_on_this_thread();
+            mgth::g_argv = copy_argv_to_dsm(argc, argv);
+            mgth::g_dsm.write_barrier();
+            mgth::g_dsm.disable_on_this_thread();
+        }
+        
+        // Broadcast "argv" (because the start-up thread may be executed in other processes.)
+        mgcom::collective::broadcast(0, &mgth::g_argv, 1);
         
         // Start the scheduler loop.
         if (mgcom::current_process_id() == 0) {
