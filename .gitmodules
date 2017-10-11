@@ -1,0 +1,15 @@
+[submodule "mgbase/external/cmdline"]
+	path = mgbase/external/cmdline
+	url = https://github.com/tanakh/cmdline
+[submodule "mgbase/external/fmt"]
+	path = mgbase/external/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "mgbase/external/googletest"]
+	path = mgbase/external/googletest
+	url = https://github.com/google/googletest.git
+[submodule "mgdev/external/ucx"]
+	path = mgdev/external/ucx
+	url = https://github.com/openucx/ucx
+[submodule "mgult/external/massivethreads"]
+	path = mgult/external/massivethreads
+	url = https://github.com/massivethreads/massivethreads
