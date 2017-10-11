@@ -314,12 +314,3 @@ target_link_libraries(mgbase-unittest
     googletest
 )
 
-
-# MassiveThreads
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    if (${MGBASE_ENABLE_MASSIVETHREADS})
-        include(cmake/massivethreads.cmake)
-    endif()
-endif()
-
