@@ -64,12 +64,10 @@ public:
             : enqueue_transaction_base(self, data) { }
         
         enqueue_transaction(const enqueue_transaction&) = delete;
-        #ifdef MEFDN_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
+        enqueue_transaction& operator = (const enqueue_transaction&) = delete;
+        
         enqueue_transaction(enqueue_transaction&&) noexcept = default;
-        #else
-        enqueue_transaction(enqueue_transaction&& other) noexcept
-            : enqueue_transaction_base(mefdn::move(other)) { }
-        #endif
+        enqueue_transaction& operator = (enqueue_transaction&&) noexcept = default;
         
         void commit(const index_type num)
         {
@@ -151,13 +149,10 @@ public:
             { }
         
         dequeue_transaction(const dequeue_transaction&) = delete;
+        dequeue_transaction& operator = (const dequeue_transaction&) = delete;
         
-        #ifdef MEFDN_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED
         dequeue_transaction(dequeue_transaction&&) noexcept = default;
-        #else
-        dequeue_transaction(dequeue_transaction&& other) noexcept
-            : dequeue_transaction_base(mefdn::move(other)) { }
-        #endif
+        dequeue_transaction& operator = (dequeue_transaction&&) noexcept = default;
         
         void commit(const index_type num)
         {
