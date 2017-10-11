@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(mgbase CXX ASM)
+project(mgbase CXX C ASM)
 
 INCLUDE(CheckCXXCompilerFlag)
 
