@@ -203,48 +203,6 @@ int main() { return 0; }
 set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
 
 CHECK_CXX_SOURCE_COMPILES("
-void f() noexcept { }
-int main() { return 0; }
-" MGBASE_CXX11_NOEXCEPT_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-int main() { int* x = nullptr; return 0; }
-" MGBASE_CXX11_NULLPTR_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-#include <cstddef>
-int main() { std::nullptr_t x = nullptr; return 0; }
-" MGBASE_CXX11_NULLPTR_T_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-#include <memory>
-int main() { std::unique_ptr<int> p(new int); return 0; }
-" MGBASE_CXX11_UNIQUE_PTR_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-struct A {
-    A(A&&) = default;
-};
-int main() { return 0; }
-" MGBASE_CXX11_MOVE_CONSTRUCTOR_DEFAULT_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-struct A {
-    A(A&&) = default;
-};
-int main() { return 0; }
-" MGBASE_CXX11_MOVE_ASSIGNMENT_DEFAULT_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES(
-"
-int main() {
-    int a[1];
-    for (int x : a) { }
-    return 0;
-}
-" MGBASE_CXX11_RANGE_BASED_FOR_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
 struct X { void f() &; void g() &&; };
 int main() { return 0; }
 " MGBASE_CXX11_REF_QUALIFIERS_SUPPORTED)
@@ -266,47 +224,6 @@ decltype(f(&g, 123)) x;
 
 int main() { return 0; }
 " MGBASE_CXX_SFINAE_EXPR)
-
-CHECK_CXX_SOURCE_COMPILES("
-struct A { A() noexcept = default; };
-int main() { return 0; }
-" MGBASE_CXX11_DEFAULT_FUNCTION_NOEXCEPT)
-
-CHECK_CXX_SOURCE_COMPILES("
-thread_local int x;
-int main() { return 0; }
-" MGBASE_CXX11_THREAD_LOCAL_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-int main() { alignof(int); return 0; }
-" MGBASE_CXX11_ALIGNOF_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-struct A {
-    A() { }
-    A(const A&) = delete;
-    A(A&&) { }
-    A& operator = (const A&) = delete;
-    A& operator = (A&) { return *this; }
-};
-A f(A a) { return a; };
-int main() { return 0; }
-" MGBASE_CXX11_RETURN_MOVE_ONLY_ARGUMENT_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-#include <iterator>
-int main() { int a[1]; std::begin(a); return 0; }
-" MGBASE_CXX11_STD_BEGIN_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-#include <iterator>
-int main() { int a[1]; std::end(a); return 0; }
-" MGBASE_CXX11_STD_END_SUPPORTED)
-
-CHECK_CXX_SOURCE_COMPILES("
-#include <memory>
-int main() { int x; int* p = std::addressof(x); return 0; }
-" MGBASE_CXX11_ADDRESSOF_SUPPORTED)
 
 message(STATUS "Generate mgbase/config.h ...")
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
