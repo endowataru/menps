@@ -1,0 +1,11 @@
+/Makefile
+/build-script/*.Makefile
+/build-script/*.mk
+/out
+gyp-mac-tool
+/doc/html
+.DS_Store
+
+/src/device/fjmpi/mpi-ext.h
+/src/device/ibv/native/infiniband
+
