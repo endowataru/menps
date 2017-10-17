@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_subdirectory(./mgbase)
+add_subdirectory(./mefdn)
 add_subdirectory(./mgctx)
 add_subdirectory(./mgult)
 add_subdirectory(./mgdev)

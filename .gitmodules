@@ -1,11 +1,11 @@
 [submodule "mgbase/external/cmdline"]
-	path = mgbase/external/cmdline
+	path = mefdn/external/cmdline
 	url = https://github.com/tanakh/cmdline
 [submodule "mgbase/external/fmt"]
-	path = mgbase/external/fmt
+	path = mefdn/external/fmt
 	url = https://github.com/fmtlib/fmt.git
 [submodule "mgbase/external/googletest"]
-	path = mgbase/external/googletest
+	path = mefdn/external/googletest
 	url = https://github.com/google/googletest.git
 [submodule "mgdev/external/ucx"]
 	path = mgdev/external/ucx
