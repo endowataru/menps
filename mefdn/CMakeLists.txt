@@ -380,7 +380,6 @@ add_executable(mgbase-unittest
     unittest/mpsc_locked_bounded_queue.cpp
     unittest/intrusive.cpp
     unittest/index_list.cpp
-    unittest/bind.cpp
     unittest/tuple.cpp
     unittest/callback.cpp
     unittest/unittest.cpp
