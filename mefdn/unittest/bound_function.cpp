@@ -1,8 +1,8 @@
 
 #include "unittest.hpp"
-#include <mgbase/bound_function.hpp>
+#include <mefdn/bound_function.hpp>
 
-#include <mgbase/functional/inlined_function.hpp>
+#include <mefdn/functional/inlined_function.hpp>
 
 namespace /*unnamed*/ {
 
@@ -15,8 +15,8 @@ void assign(int& x, const int& y) {
 TEST(BoundFunction, Basic)
 {
     int x = 0;
-    mgbase::bound_function<void (const int&)> func =
-        mgbase::make_bound_function<void (int&, const int&), assign>(&x);
+    mefdn::bound_function<void (const int&)> func =
+        mefdn::make_bound_function<void (int&, const int&), assign>(&x);
     
     func(123);
     
@@ -34,7 +34,7 @@ void f(int& x)
 
 TEST(InlinedFunction, Basic)
 {
-    mgbase::inlined_function<void (*)(int&), &f> x = MGBASE_MAKE_INLINED_FUNCTION(f);
+    mefdn::inlined_function<void (*)(int&), &f> x = MEFDN_MAKE_INLINED_FUNCTION(f);
     int val;
     x(val);
     

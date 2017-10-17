@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <mgbase/config.h>
+#include <menps/mefdn/config.h>
 
 // Processor Compatibility
 

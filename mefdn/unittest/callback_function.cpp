@@ -1,8 +1,8 @@
 
 #include "unittest.hpp"
-#include <mgbase/functional/callback_function.hpp>
-#include <mgbase/functional/bind_arg.hpp>
-#include <mgbase/functional/make_callback_function.hpp>
+#include <mefdn/functional/callback_function.hpp>
+#include <mefdn/functional/bind_arg.hpp>
+#include <mefdn/functional/make_callback_function.hpp>
 
 namespace /*unnamed*/ {
 
@@ -15,9 +15,9 @@ void func1(int& x)
 
 TEST(CallbackFunction, Basic1)
 {
-    const mgbase::callback_function<void (int&)>
-        f = mgbase::make_callback_function(
-            MGBASE_MAKE_INLINED_FUNCTION(func1)
+    const mefdn::callback_function<void (int&)>
+        f = mefdn::make_callback_function(
+            MEFDN_MAKE_INLINED_FUNCTION(func1)
         );
     
     int x;
@@ -37,9 +37,9 @@ int func2()
 
 TEST(CallbackFunction, Basic2)
 {
-    const mgbase::callback_function<int ()>
-        f = mgbase::make_callback_function(
-            MGBASE_MAKE_INLINED_FUNCTION(func2)
+    const mefdn::callback_function<int ()>
+        f = mefdn::make_callback_function(
+            MEFDN_MAKE_INLINED_FUNCTION(func2)
         );
     
     const int x = f();
@@ -60,11 +60,11 @@ TEST(CallbackFunction, Bind1)
 {
     int y;
     
-    mgbase::callback_function<int ()>
-        f = mgbase::make_callback_function(
-            mgbase::bind1st_of_1(
-                MGBASE_MAKE_INLINED_FUNCTION(func3)
-            ,   mgbase::wrap_reference(y)
+    mefdn::callback_function<int ()>
+        f = mefdn::make_callback_function(
+            mefdn::bind1st_of_1(
+                MEFDN_MAKE_INLINED_FUNCTION(func3)
+            ,   mefdn::wrap_reference(y)
             )
         );
     
@@ -75,14 +75,14 @@ TEST(CallbackFunction, Bind1)
     
     y = 1;
     
-    const int x2 = mgbase::bind1st_of_1(
-        MGBASE_MAKE_INLINED_FUNCTION(func3)
-    ,   mgbase::wrap_reference(y)
+    const int x2 = mefdn::bind1st_of_1(
+        MEFDN_MAKE_INLINED_FUNCTION(func3)
+    ,   mefdn::wrap_reference(y)
     )();
     
     ASSERT_EQ(2, x2);
     
-    //MGBASE_STATIC_ASSERT((mgbase::is_callable<mgbase::inlined_function<int (*)(int&), &func3> (int&)>::value));
+    //MEFDN_STATIC_ASSERT((mefdn::is_callable<mefdn::inlined_function<int (*)(int&), &func3> (int&)>::value));
 }
 
 namespace /*unnamed*/ {
@@ -98,11 +98,11 @@ TEST(CallbackFunction, Bind2)
 {
     int x;
     
-    mgbase::callback_function<int (int)>
-        f = mgbase::make_callback_function(
-            mgbase::bind1st_of_2(
-                MGBASE_MAKE_INLINED_FUNCTION(func4)
-            ,   mgbase::wrap_reference(x)
+    mefdn::callback_function<int (int)>
+        f = mefdn::make_callback_function(
+            mefdn::bind1st_of_2(
+                MEFDN_MAKE_INLINED_FUNCTION(func4)
+            ,   mefdn::wrap_reference(x)
             )
         );
     

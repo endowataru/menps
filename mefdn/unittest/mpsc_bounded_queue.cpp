@@ -1,20 +1,20 @@
 
 #include "unittest.hpp"
-//#include <mgbase/nonblocking/bounded_queue.hpp>
-#include <mgbase/nonblocking/mpsc_bounded_queue.hpp>
-#include <mgbase/threading/thread.hpp>
-#include <mgbase/scoped_ptr.hpp>
-#include <mgbase/threading/this_thread.hpp>
+#include <menps/mefdn/nonblocking/mpsc_bounded_queue.hpp>
+#include <menps/mefdn/thread.hpp>
+#include <menps/mefdn/memory.hpp>
+
+namespace fdn = menps::mefdn;
 
 TEST(MpscBoundedQueue, Serial)
 {
-    const mgbase::uint64_t N = 10000;
+    const fdn::uint64_t N = 10000;
     
-    mgbase::static_mpsc_bounded_queue<mgbase::uint64_t, 256> buf;
+    fdn::static_mpsc_bounded_queue<fdn::uint64_t, 256> buf;
     
-    mgbase::uint64_t x = 0;
+    fdn::uint64_t x = 0;
     
-    for (mgbase::uint64_t i = 1; i <= N; ++i)
+    for (fdn::uint64_t i = 1; i <= N; ++i)
     {
         buf.enqueue(i);
         
@@ -30,11 +30,11 @@ template <typename Queue>
 struct functor
 {
     Queue& q;
-    mgbase::uint64_t n;
+    fdn::uint64_t n;
     
     void operator() ()
     {
-        for (mgbase::uint64_t i = 1; i <= n; ++i) {
+        for (fdn::uint64_t i = 1; i <= n; ++i) {
             q.enqueue(i);
         }
     }
@@ -45,16 +45,16 @@ struct functor
 
 TEST(MpscBoundedQueue, SpSc)
 {
-    typedef mgbase::static_mpsc_bounded_queue<mgbase::uint64_t, 256>  queue_type;
+    typedef fdn::static_mpsc_bounded_queue<fdn::uint64_t, 256>  queue_type;
     
-    const mgbase::uint64_t N = 100000;
+    const fdn::uint64_t N = 100000;
     
     queue_type buf;
     
-    mgbase::thread th{functor<queue_type>{buf, N}};
+    fdn::thread th{functor<queue_type>{buf, N}};
     
-    mgbase::uint64_t x = 0;
-    for (mgbase::uint64_t i = 1; i <= N; ++i) {
+    fdn::uint64_t x = 0;
+    for (fdn::uint64_t i = 1; i <= N; ++i) {
         x += buf.dequeue();
     }
     
@@ -65,24 +65,24 @@ TEST(MpscBoundedQueue, SpSc)
 
 TEST(MpscBoundedQueue, MpSc)
 {
-    const mgbase::uint64_t N = 10000;
-    const mgbase::size_t num_threads = 10;
+    const fdn::uint64_t N = 10000;
+    const fdn::size_t num_threads = 10;
     
-    typedef mgbase::static_mpsc_bounded_queue<mgbase::uint64_t, 256>  queue_type;
+    typedef fdn::static_mpsc_bounded_queue<fdn::uint64_t, 256>  queue_type;
     
     queue_type buf;
     
-    mgbase::scoped_ptr<mgbase::thread []> ths(new mgbase::thread[num_threads]);
+    const auto ths = fdn::make_unique<fdn::thread []>(num_threads);
     
-    for (mgbase::size_t i = 0; i < num_threads; ++i)
-        ths[i] = mgbase::thread{functor<queue_type>{buf, N}};
+    for (fdn::size_t i = 0; i < num_threads; ++i)
+        ths[i] = fdn::thread{functor<queue_type>{buf, N}};
     
-    mgbase::uint64_t x = 0;
-    for (mgbase::uint64_t i = 0; i < num_threads * N; ++i) {
+    fdn::uint64_t x = 0;
+    for (fdn::uint64_t i = 0; i < num_threads * N; ++i) {
         x += buf.dequeue();
     }
     
-    for (mgbase::size_t i = 0; i < num_threads; ++i)
+    for (fdn::size_t i = 0; i < num_threads; ++i)
         ths[i].join();
     
     const bool valid = buf.try_dequeue(1).valid();
@@ -90,6 +90,4 @@ TEST(MpscBoundedQueue, MpSc)
     
     ASSERT_EQ(num_threads * N * (N+1) / 2, x);
 }
-
-
 

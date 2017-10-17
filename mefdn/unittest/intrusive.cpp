@@ -1,11 +1,13 @@
 
 #include "unittest.hpp"
-#include <mgbase/container/intrusive_forward_list.hpp>
+#include <menps/mefdn/container/intrusive_forward_list.hpp>
+
+namespace fdn = menps::mefdn;
 
 namespace /*unnamed*/ {
 
 struct elem
-    : mgbase::intrusive_forward_list_node_base
+    : fdn::intrusive_forward_list_node_base
 {
     int x;
 };
@@ -14,7 +16,7 @@ struct elem
 
 TEST(InstrusiveForwardList, Empty)
 {
-    mgbase::intrusive_forward_list<elem> l;
+    fdn::intrusive_forward_list<elem> l;
     
     ASSERT_TRUE(l.empty());
     
@@ -22,7 +24,7 @@ TEST(InstrusiveForwardList, Empty)
 
 TEST(InstrusiveForwardList, Basic)
 {
-    mgbase::intrusive_forward_list<elem> l;
+    fdn::intrusive_forward_list<elem> l;
     
     elem e;
     e.x = 123;   
@@ -31,7 +33,7 @@ TEST(InstrusiveForwardList, Basic)
     ASSERT_FALSE(l.empty());
     
     int s = 0;
-    MGBASE_RANGE_BASED_FOR(auto&& a, l) {
+    for (auto&& a : l) {
         s += a.x;
     }
     

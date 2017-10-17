@@ -1,22 +1,24 @@
 
 #include "unittest.hpp"
-#include <mgbase/threading/thread.hpp>
-#include <mgbase/threading/spinlock.hpp>
-#include <mgbase/threading/lock_guard.hpp>
-#include <mgbase/scoped_ptr.hpp>
+#include <menps/mefdn/thread.hpp>
+#include <menps/mefdn/thread/spinlock.hpp>
+#include <menps/mefdn/thread/lock_guard.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
+
+namespace fdn = menps::mefdn;
 
 namespace /*unnamed*/ {
 
 int val;
-mgbase::spinlock lock;
+fdn::spinlock lock;
 
-const mgbase::size_t count = 100000;
+const fdn::size_t count = 100000;
 
 void f()
 {
-    for (mgbase::size_t i = 0; i < count; ++i)
+    for (fdn::size_t i = 0; i < count; ++i)
     {
-        mgbase::lock_guard<mgbase::spinlock> lc(lock);
+        fdn::lock_guard<fdn::spinlock> lc(lock);
         ++val;
     }
 }
@@ -27,13 +29,14 @@ TEST(Spinlock, Basic)
 {
     val = 0;
     
-    const mgbase::size_t num_threads = 5;
+    const fdn::size_t num_threads = 5;
     
-    mgbase::scoped_ptr<mgbase::thread []> ths(new mgbase::thread[num_threads]);
-    for (mgbase::size_t i = 0; i < num_threads; ++i)
-        ths[i] = mgbase::thread(&f);
+    const auto ths = fdn::make_unique<fdn::thread []>(num_threads);
     
-    for (mgbase::size_t i = 0; i < num_threads; ++i)
+    for (fdn::size_t i = 0; i < num_threads; ++i)
+        ths[i] = fdn::thread(&f);
+    
+    for (fdn::size_t i = 0; i < num_threads; ++i)
         ths[i].join();
     
     ASSERT_EQ(count * num_threads, val);

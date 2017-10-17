@@ -1,55 +1,55 @@
 
 #include "unittest.hpp"
-#include <mgbase/deferred.hpp>
+#include <mefdn/deferred.hpp>
 
 struct B {
-    MGBASE_CONTINUATION(void) cont;
+    MEFDN_CONTINUATION(void) cont;
     int x;
 };
 
 struct A {
-    MGBASE_CONTINUATION(void) cont;
+    MEFDN_CONTINUATION(void) cont;
     B b;
     int x;
 };
 
 namespace /*unnamed*/ {
 
-inline mgbase::deferred<void> g1(B& b) {
+inline mefdn::deferred<void> g1(B& b) {
     b.x += 10;
     // This function immediately finishes.
-    return mgbase::make_ready_deferred();
+    return mefdn::make_ready_deferred();
 }
 
-inline mgbase::deferred<void> g0(B& b) {
+inline mefdn::deferred<void> g0(B& b) {
     b.x += 1;
     // Call g1 when the function is resumed.
-    return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION(&g1), b);
+    return mefdn::make_deferred(MEFDN_MAKE_INLINED_FUNCTION(&g1), b);
 }
 
-inline mgbase::deferred<void> f2(A& a) {
+inline mefdn::deferred<void> f2(A& a) {
     a.x += 100;
     // This function immediately finishes.
-    return mgbase::make_ready_deferred();
+    return mefdn::make_ready_deferred();
 }
 
-inline mgbase::deferred<void> f1(A& a) {
+inline mefdn::deferred<void> f1(A& a) {
     a.x += 10;
     // Call f2 when g0 finishes.
     return g0(a.b)
         .add_continuation(
-            MGBASE_MAKE_INLINED_FUNCTION(&f2)
+            MEFDN_MAKE_INLINED_FUNCTION(&f2)
         ,   a
         );
     
 }
 
-inline mgbase::deferred<void> f0(A& a) {
+inline mefdn::deferred<void> f0(A& a) {
     a.x += 1;
     // Call f1 when g0 finishes.
     return g0(a.b)
         .add_continuation(
-            MGBASE_MAKE_INLINED_FUNCTION(&f1)
+            MEFDN_MAKE_INLINED_FUNCTION(&f1)
         ,   a
         );
 }
@@ -62,12 +62,12 @@ TEST(Deferred, Cont)
     a.x = 0;
     a.b.x = 0;
     
-    mgbase::deferred<void> d = f0(a);
+    mefdn::deferred<void> d = f0(a);
     ASSERT_EQ(1, a.x);
     ASSERT_EQ(1, a.b.x);
     
     // No continuation is added to "d".
-    mgbase::resumable res = d.set_terminal();
+    mefdn::resumable res = d.set_terminal();
     ASSERT_FALSE(res.empty()); // Not finished yet
     
     ASSERT_EQ(1, a.x);
@@ -86,16 +86,16 @@ TEST(Deferred, Cont)
 
 namespace /*unnamed*/ {
 
-mgbase::deferred<void> func(A& a)
+mefdn::deferred<void> func(A& a)
 {
     if (a.x < 10) {
         ++a.x;
         // Call func when the function is resumed.
-        return mgbase::make_deferred(MGBASE_MAKE_INLINED_FUNCTION(&func), a);
+        return mefdn::make_deferred(MEFDN_MAKE_INLINED_FUNCTION(&func), a);
     }
     else {
         // Immediately finish.
-        return mgbase::make_ready_deferred();
+        return mefdn::make_ready_deferred();
     }
 }
 
@@ -106,7 +106,7 @@ TEST(Deferred, Resume)
     A a;
     a.x = 0;
     
-    mgbase::deferred<void> d = func(a);
+    mefdn::deferred<void> d = func(a);
     for (int i = 1; i < 10; i++) {
         ASSERT_EQ(i, a.x);
         d.resume();
@@ -120,12 +120,12 @@ TEST(Deferred, Wait)
     A a;
     a.x = 0;
     
-    mgbase::deferred<void> d = func(a);
+    mefdn::deferred<void> d = func(a);
     d.wait();
     
     ASSERT_EQ(10, a.x);
     
-    d = mgbase::make_ready_deferred();
+    d = mefdn::make_ready_deferred();
     d.wait();
 }
 

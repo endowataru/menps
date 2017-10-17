@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(mgbase CXX C ASM)
+project(mefdn CXX C ASM)
 
 INCLUDE(CheckCXXCompilerFlag)
 
@@ -14,25 +14,25 @@ set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 # BUILD_SHARED_LIBS is a common flag in CMake that decides shared/static libs.
 # I don't know whether it's correct to use it as an option.
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-option(MGBASE_PROFILER_USE_GPROF "Use Gprof" OFF)
-option(MGBASE_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
-option(MGBASE_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
-option(MGBASE_LOGGER_USE_LOCK "Use lock in logger" ON)
-option(MGBASE_ENABLE_EXPONENTIAL_BACKOFF "Use exponential backoff" OFF)
-option(MGBASE_DISABLE_ALIGN_CHECK_SIZE "Disable size check in mgbase::align_*_nocheck" ON)
+option(MEFDN_PROFILER_USE_GPROF "Use Gprof" OFF)
+option(MEFDN_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
+option(MEFDN_ATOMIC_USE_STANDARD "Use <atomic>" OFF)
+option(MEFDN_LOGGER_USE_LOCK "Use lock in logger" ON)
+option(MEFDN_ENABLE_EXPONENTIAL_BACKOFF "Use exponential backoff" OFF)
+option(MEFDN_DISABLE_ALIGN_CHECK_SIZE "Disable size check in mefdn::align_*_nocheck" ON)
 
-set(MGBASE_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
+set(MEFDN_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
 set(error_limit 3)
 
-# mgbase-options : INTERFACE target to set options individually
+# mefdn-options : INTERFACE target to set options individually
 
-add_library(mgbase-options INTERFACE)
+add_library(mefdn-options INTERFACE)
 
-target_compile_options(mgbase-options INTERFACE
+target_compile_options(mefdn-options INTERFACE
     # C++ Standard
     $<$<COMPILE_LANGUAGE:CXX>:
-        $<$<NOT:$<STREQUAL:"${MGBASE_CXX_STANDARD}","">>:-std=c++${MGBASE_CXX_STANDARD}>
+        $<$<NOT:$<STREQUAL:"${MEFDN_CXX_STANDARD}","">>:-std=c++${MEFDN_CXX_STANDARD}>
     >
     # C Standard
     $<$<COMPILE_LANGUAGE:C>:-std=c99>
@@ -44,7 +44,7 @@ target_compile_options(mgbase-options INTERFACE
     -ftls-model=initial-exec
 )
 if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"))
-    target_compile_options(mgbase-options INTERFACE
+    target_compile_options(mefdn-options INTERFACE
         # Optimizations
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:OptDebug>:-O3 -DNDEBUG -g>
@@ -57,7 +57,7 @@ if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}"
         -Wno-exit-time-destructors
         -Wno-padded # TODO: alignment issues
         -Wno-disabled-macro-expansion # Problem of stdbool.h
-        -Wno-used-but-marked-unused # e.g. mgbase::try_to_lock
+        -Wno-used-but-marked-unused # e.g. mefdn::try_to_lock
         -Wno-weak-vtables # couldn't find a correct way to suppress this warning
         -Wno-c++98-compat
         -Wno-c++98-compat-pedantic
@@ -73,22 +73,22 @@ if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}"
     )
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # Get the version
-    set(MGBASE_COMPILER_GCC_VERSION ${CMAKE_CXX_COMPILER_VERSION})
-    message(STATUS "MGBASE_COMPILER_GCC_VERSION=${MGBASE_COMPILER_GCC_VERSION}")
+    set(MEFDN_COMPILER_GCC_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+    message(STATUS "MEFDN_COMPILER_GCC_VERSION=${MEFDN_COMPILER_GCC_VERSION}")
     
-    CHECK_CXX_COMPILER_FLAG("-Wc++14-compat" MGBASE_GCC_SUPPORTS_WCXX14_COMPAT)
-    CHECK_CXX_COMPILER_FLAG("-Wconditionally-supported" MGBASE_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED)
-    CHECK_CXX_COMPILER_FLAG("-Wdelete-non-virtual-dtor" MGBASE_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR)
-    CHECK_CXX_COMPILER_FLAG("-Wdouble-promotion" MGBASE_GCC_SUPPORTS_WDOUBLE_PROMOTION)
-    CHECK_CXX_COMPILER_FLAG("-Wformat-signedness" MGBASE_GCC_SUPPORTS_WFORMAT_SIGNEDNESS)
-    CHECK_CXX_COMPILER_FLAG("-Wnoexcept" MGBASE_GCC_SUPPORTS_WNOEXCEPT)
-    CHECK_CXX_COMPILER_FLAG("-Wsuggest-attribute=format" MGBASE_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE)
-    CHECK_CXX_COMPILER_FLAG("-Wsuggest-override" MGBASE_GCC_SUPPORTS_WSUGGEST_OVERRIDE)
-    #CHECK_CXX_COMPILER_FLAG("-Wuseless-cast" MGBASE_GCC_SUPPORTS_WUSELESS_CAST)
-    CHECK_CXX_COMPILER_FLAG("-Wzero-as-null-pointer-constant" MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT)
-    CHECK_CXX_COMPILER_FLAG("-fmax-errors=1" MGBASE_GCC_SUPPORTS_FMAX_ERRORS)
+    CHECK_CXX_COMPILER_FLAG("-Wc++14-compat" MEFDN_GCC_SUPPORTS_WCXX14_COMPAT)
+    CHECK_CXX_COMPILER_FLAG("-Wconditionally-supported" MEFDN_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED)
+    CHECK_CXX_COMPILER_FLAG("-Wdelete-non-virtual-dtor" MEFDN_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR)
+    CHECK_CXX_COMPILER_FLAG("-Wdouble-promotion" MEFDN_GCC_SUPPORTS_WDOUBLE_PROMOTION)
+    CHECK_CXX_COMPILER_FLAG("-Wformat-signedness" MEFDN_GCC_SUPPORTS_WFORMAT_SIGNEDNESS)
+    CHECK_CXX_COMPILER_FLAG("-Wnoexcept" MEFDN_GCC_SUPPORTS_WNOEXCEPT)
+    CHECK_CXX_COMPILER_FLAG("-Wsuggest-attribute=format" MEFDN_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE)
+    CHECK_CXX_COMPILER_FLAG("-Wsuggest-override" MEFDN_GCC_SUPPORTS_WSUGGEST_OVERRIDE)
+    #CHECK_CXX_COMPILER_FLAG("-Wuseless-cast" MEFDN_GCC_SUPPORTS_WUSELESS_CAST)
+    CHECK_CXX_COMPILER_FLAG("-Wzero-as-null-pointer-constant" MEFDN_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT)
+    CHECK_CXX_COMPILER_FLAG("-fmax-errors=1" MEFDN_GCC_SUPPORTS_FMAX_ERRORS)
     
-    target_compile_options(mgbase-options INTERFACE
+    target_compile_options(mefdn-options INTERFACE
         # Optimizations
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:OptDebug>:-O3 -DNDEBUG -g>
@@ -110,20 +110,20 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         #-Wabi # Seems useless
         #-Wabi-tag # Seems useless
         #-Wc++0x-compat
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WCXX14_COMPAT}>:-Wc++14-compat>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WCXX14_COMPAT}>:-Wc++14-compat>
         -Wcast-qual
         #-Wchkp # Undocumented warning option
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED}>:-Wconditionally-supported>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED}>:-Wconditionally-supported>
         -Wconversion
-        $<$<VERSION_GREATER:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wctor-dtor-privacy> # #pragma GCC diagnostic is required
+        $<$<VERSION_GREATER:${MEFDN_COMPILER_GCC_VERSION},4.5>:-Wctor-dtor-privacy> # #pragma GCC diagnostic is required
         #-Wdate-time # Seems useless
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR}>:-Wdelete-non-virtual-dtor>
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WDOUBLE_PROMOTION}>:-Wdouble-promotion>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR}>:-Wdelete-non-virtual-dtor>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WDOUBLE_PROMOTION}>:-Wdouble-promotion>
         #-Weffc++ # Out-dated warning
         -Wfloat-equal
         -Wformat-nonliteral
         -Wformat-security
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WFORMAT_SIGNEDNESS}>:-Wformat-signedness>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WFORMAT_SIGNEDNESS}>:-Wformat-signedness>
         #-Wformat-y2k # Not important
         -Winit-self
         #-Winvalid-pch # TODO
@@ -131,38 +131,38 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         -Wmissing-declarations
         -Wmissing-include-dirs
         -Wmultichar
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WNOEXCEPT}>:-Wnoexcept>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WNOEXCEPT}>:-Wnoexcept>
         -Wnon-virtual-dtor
-        $<$<VERSION_GREATER:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wold-style-cast> # #pragma GCC diagnostic is required
+        $<$<VERSION_GREATER:${MEFDN_COMPILER_GCC_VERSION},4.5>:-Wold-style-cast> # #pragma GCC diagnostic is required
         -Woverloaded-virtual
         -Wredundant-decls
         -Wreorder
         -Wsign-promo
         -Wstrict-null-sentinel
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE}>:-Wsuggest-attribute=format>
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WSUGGEST_OVERRIDE}>:-Wsuggest-override>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WSUGGEST_ATTRIBUTE}>:-Wsuggest-attribute=format>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WSUGGEST_OVERRIDE}>:-Wsuggest-override>
         -Wswitch-default
         -Wswitch-enum
         -Wsynth
         #-Wsystem-headers # Disable warnings from system headers
         -Wundef
         -Wunused-macros
-        #$<$<BOOL:${MGBASE_GCC_SUPPORTS_WUSELESS_CAST}>:-Wuseless-cast>
+        #$<$<BOOL:${MEFDN_GCC_SUPPORTS_WUSELESS_CAST}>:-Wuseless-cast>
         -Wwrite-strings
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT}>:-Wzero-as-null-pointer-constant>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT}>:-Wzero-as-null-pointer-constant>
         
         # Other warnings
         -Wstrict-overflow=5
         
         # Disabled on old versions
-        $<$<VERSION_LESS:${MGBASE_COMPILER_GCC_VERSION},4.5>:-Wno-logical-op>
+        $<$<VERSION_LESS:${MEFDN_COMPILER_GCC_VERSION},4.5>:-Wno-logical-op>
         
         # Prevent too many errors
         #-Wfatal-errors
-        $<$<BOOL:${MGBASE_GCC_SUPPORTS_FMAX_ERRORS}>:-fmax-errors=${error_limit}>
+        $<$<BOOL:${MEFDN_GCC_SUPPORTS_FMAX_ERRORS}>:-fmax-errors=${error_limit}>
     )
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-    target_compile_options(mgbase-options INTERFACE
+    target_compile_options(mefdn-options INTERFACE
         # Optimizations
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:OptDebug>:-O3 -DNDEBUG>
@@ -178,11 +178,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     )
 endif()
 
-if(MGBASE_PROFILER_USE_GPROF)
-    target_compile_options(mgbase-options INTERFACE
+if(MEFDN_PROFILER_USE_GPROF)
+    target_compile_options(mefdn-options INTERFACE
         $<$<CXX_COMPILER_ID:GNU>:-pg>
     )
-    target_link_libraries(mgbase-options INTERFACE "-pg")
+    target_link_libraries(mefdn-options INTERFACE "-pg")
 endif()
 
 
@@ -191,13 +191,13 @@ __attribute__((always_inline))
 void f() { }
 
 int main() { return 0; }
-" MGBASE_COMPILER_SUPPORTS_ALWAYS_INLINE)
+" MEFDN_COMPILER_SUPPORTS_ALWAYS_INLINE)
 
 CHECK_CXX_SOURCE_COMPILES("
 void f() { __builtin_unreachable(); }
 
 int main() { return 0; }
-" MGBASE_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE)
+" MEFDN_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE)
 
 # To check C++0x features, we need this flag
 set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
@@ -205,12 +205,12 @@ set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
 CHECK_CXX_SOURCE_COMPILES("
 struct X { void f() &; void g() &&; };
 int main() { return 0; }
-" MGBASE_CXX11_REF_QUALIFIERS_SUPPORTED)
+" MEFDN_CXX11_REF_QUALIFIERS_SUPPORTED)
 
 CHECK_CXX_SOURCE_COMPILES("
 struct X { explicit operator bool(); };
 int main() { return 0; }
-" MGBASE_CXX11_EXPLICIT_CONVERSION_OPERATORS_SUPPORTED)
+" MEFDN_CXX11_EXPLICIT_CONVERSION_OPERATORS_SUPPORTED)
 
 CHECK_CXX_SOURCE_COMPILES("
 template <typename T> T r(T x) { return x; }
@@ -223,48 +223,48 @@ int g(int);
 decltype(f(&g, 123)) x;
 
 int main() { return 0; }
-" MGBASE_CXX_SFINAE_EXPR)
+" MEFDN_CXX_SFINAE_EXPR)
 
-message(STATUS "Generate mgbase/config.h ...")
+message(STATUS "Generate mefdn/config.h ...")
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
-message(STATUS "MGBASE_PROFILER_USE_GPROF=${MGBASE_PROFILER_USE_GPROF}")
-message(STATUS "MGBASE_PROFILER_USE_GPERFTOOLS=${MGBASE_PROFILER_USE_GPERFTOOLS}")
-message(STATUS "MGBASE_CXX_STANDARD=${MGBASE_CXX_STANDARD}")
-message(STATUS "MGBASE_ATOMIC_USE_STANDARD=${MGBASE_ATOMIC_USE_STANDARD}")
-message(STATUS "MGBASE_DISABLE_ALIGN_CHECK_SIZE=${MGBASE_DISABLE_ALIGN_CHECK_SIZE}")
+message(STATUS "MEFDN_PROFILER_USE_GPROF=${MEFDN_PROFILER_USE_GPROF}")
+message(STATUS "MEFDN_PROFILER_USE_GPERFTOOLS=${MEFDN_PROFILER_USE_GPERFTOOLS}")
+message(STATUS "MEFDN_CXX_STANDARD=${MEFDN_CXX_STANDARD}")
+message(STATUS "MEFDN_ATOMIC_USE_STANDARD=${MEFDN_ATOMIC_USE_STANDARD}")
+message(STATUS "MEFDN_DISABLE_ALIGN_CHECK_SIZE=${MEFDN_DISABLE_ALIGN_CHECK_SIZE}")
 
 # Generate config.h
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/include/mgbase/config.h)
+    ${CMAKE_CURRENT_BINARY_DIR}/include/menps/mefdn/config.h)
 
-if (MGBASE_PROFILER_USE_GPERFTOOLS)
-    target_link_libraries(mgbase profiler)
+if (MEFDN_PROFILER_USE_GPERFTOOLS)
+    target_link_libraries(mefdn profiler)
 endif()
 
 
-# mgbase : SHARED/STATIC target
+# mefdn : SHARED/STATIC target
 
-add_library(mgbase
+add_library(mefdn
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc
     ./src/malloc.cpp
 )
-target_include_directories(mgbase
+target_include_directories(mefdn
     PUBLIC ./include
     PUBLIC ./external/fmt
     PUBLIC ./external/cmdline
-    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mgbase/config.h
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mefdn/config.h
 )
-target_compile_definitions(mgbase
-    PUBLIC "$<$<CONFIG:Debug>:MGBASE_DEBUG>"
-    PUBLIC "$<$<CONFIG:OptDebug>:MGBASE_DEBUG>"
+target_compile_definitions(mefdn
+    PUBLIC "$<$<CONFIG:Debug>:MEFDN_DEBUG>"
+    PUBLIC "$<$<CONFIG:OptDebug>:MEFDN_DEBUG>"
 )
-target_link_libraries(mgbase
+target_link_libraries(mefdn
     PUBLIC ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
-    PRIVATE mgbase-options
+    PRIVATE mefdn-options
 )
-install(TARGETS mgbase
+install(TARGETS mefdn
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
@@ -282,15 +282,16 @@ target_compile_options(googletest
 target_include_directories(googletest
     PUBLIC ./external/googletest/googletest
     PUBLIC ./external/googletest/googletest/include
-    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mgbase/config.h
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mefdn/config.h
 )
 target_link_libraries(googletest
-    PRIVATE mgbase-options
+    PRIVATE mefdn-options
 )
 
 # Unit tests
 
-add_executable(mgbase-unittest
+add_executable(mefdn-unittest
+    unittest/unittest.cpp
     unittest/mpsc_bounded_queue.cpp
     unittest/spmc_bounded_queue.cpp
     unittest/spsc_bounded_queue.cpp
@@ -298,19 +299,17 @@ add_executable(mgbase-unittest
     unittest/intrusive.cpp
     unittest/index_list.cpp
     unittest/tuple.cpp
-    unittest/callback.cpp
-    unittest/unittest.cpp
-    unittest/deferred.cpp
-    unittest/thread.cpp
-    unittest/callback_function.cpp
+    #unittest/callback.cpp
+    #unittest/deferred.cpp
+    #unittest/callback_function.cpp
     unittest/spinlock.cpp
-    unittest/condition_variable.cpp
+    #unittest/condition_variable.cpp
     #unittest/optional.cpp
 )
 
-target_link_libraries(mgbase-unittest
-    mgbase
-    mgbase-options
+target_link_libraries(mefdn-unittest
+    mefdn
+    mefdn-options
     googletest
 )
 

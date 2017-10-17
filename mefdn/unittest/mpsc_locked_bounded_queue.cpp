@@ -1,20 +1,21 @@
 
 #include "unittest.hpp"
-#include <mgbase/nonblocking/mpsc_locked_bounded_queue.hpp>
-#include <mgbase/threading/thread.hpp>
-#include <mgbase/threading/this_thread.hpp>
-#include <mgbase/mutex.hpp>
-#include <mgbase/condition_variable.hpp>
-#include <mgbase/unique_ptr.hpp>
+#include <menps/mefdn/nonblocking/mpsc_locked_bounded_queue.hpp>
+#include <menps/mefdn/thread.hpp>
+#include <menps/mefdn/mutex.hpp>
+#include <menps/mefdn/condition_variable.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
+
+namespace fdn = menps::mefdn;
 
 TEST(MpscLockedBoundedQueue, Serial)
 {
-    const mgbase::uint64_t N = 10000;
+    const fdn::uint64_t N = 10000;
     
-    mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 256> buf;
+    fdn::static_mpsc_locked_bounded_queue<fdn::uint64_t, 256> buf;
     
-    mgbase::uint64_t x = 0;
-    for (mgbase::uint64_t i = 1; i <= N; ++i) {
+    fdn::uint64_t x = 0;
+    for (fdn::uint64_t i = 1; i <= N; ++i) {
         {
             auto t = buf.try_enqueue(1, true);
             ASSERT_TRUE(t.valid());
@@ -32,14 +33,14 @@ TEST(MpscLockedBoundedQueue, Serial)
 
 TEST(MpscLockedBoundedQueue, Serial2)
 {
-    const mgbase::uint64_t N = 10000;
+    const fdn::uint64_t N = 10000;
     
-    mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 256> buf;
+    fdn::static_mpsc_locked_bounded_queue<fdn::uint64_t, 256> buf;
     
     ASSERT_TRUE(buf.try_sleep());
     
-    mgbase::uint64_t x = 0;
-    for (mgbase::uint64_t i = 1; i <= N; ++i) {
+    fdn::uint64_t x = 0;
+    for (fdn::uint64_t i = 1; i <= N; ++i) {
         {
             auto t = buf.try_enqueue(1, true);
             ASSERT_TRUE(t.valid());
@@ -61,17 +62,17 @@ template <typename Queue>
 struct functor
 {
     Queue& q;
-    mgbase::uint64_t n;
-    mgbase::mutex& mtx;
-    mgbase::condition_variable& cv;
+    fdn::uint64_t n;
+    fdn::mutex& mtx;
+    fdn::condition_variable& cv;
     
     void operator() ()
     {
-        for (mgbase::uint64_t i = 1; i <= n; ++i) {
+        for (fdn::uint64_t i = 1; i <= n; ++i) {
             while (true) {
                 auto t = q.try_enqueue(1, true); // CAS: tail = (tail + 0x2) & ~1;
                 if (!t.valid() || t.size() == 0) {
-                    mgbase::this_thread::yield();
+                    fdn::this_thread::yield();
                     continue;
                 }
                 
@@ -79,7 +80,7 @@ struct functor
                 t.commit(1); // entry.flag = true;
                 
                 if (t.is_sleeping()) { // (old_tail & 1) == 1
-                    mgbase::unique_lock<mgbase::mutex> lk(mtx);
+                    fdn::unique_lock<fdn::mutex> lk(mtx);
                     cv.notify_one();
                 }
                 
@@ -93,20 +94,20 @@ struct functor
 
 TEST(MpscLockedBoundedQueue, SpSc)
 {
-    typedef mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 256>  queue_type;
+    typedef fdn::static_mpsc_locked_bounded_queue<fdn::uint64_t, 256>  queue_type;
     
-    const mgbase::uint64_t N = 100000;
+    const fdn::uint64_t N = 100000;
     
     queue_type buf;
-    mgbase::mutex mtx;
-    mgbase::condition_variable cv;
+    fdn::mutex mtx;
+    fdn::condition_variable cv;
     
-    mgbase::thread th{functor<queue_type>{buf, N, mtx, cv}};
+    fdn::thread th{functor<queue_type>{buf, N, mtx, cv}};
     
-    mgbase::uint64_t x = 0;
+    fdn::uint64_t x = 0;
     {
-        mgbase::unique_lock<mgbase::mutex> lk(mtx);
-        for (mgbase::uint64_t i = 1; i <= N; ++i) {
+        fdn::unique_lock<fdn::mutex> lk(mtx);
+        for (fdn::uint64_t i = 1; i <= N; ++i) {
             while (true) {
                 auto t = buf.try_dequeue(1); // check queue size & entry flag
                 if (!t.valid() || t.size() == 0) { // (head&~1) == (tail&~1) ?
@@ -114,7 +115,7 @@ TEST(MpscLockedBoundedQueue, SpSc)
                         cv.wait(lk);
                     }
                     else {
-                        mgbase::this_thread::yield();
+                        fdn::this_thread::yield();
                     }
                     
                     continue;
@@ -136,24 +137,24 @@ TEST(MpscLockedBoundedQueue, SpSc)
 
 TEST(MpscLockedBoundedQueue, MpSc)
 {
-    const mgbase::uint64_t N = 10000;
-    const mgbase::size_t num_threads = 10;
+    const fdn::uint64_t N = 10000;
+    const fdn::size_t num_threads = 10;
     
-    typedef mgbase::static_mpsc_locked_bounded_queue<mgbase::uint64_t, 256>  queue_type;
+    typedef fdn::static_mpsc_locked_bounded_queue<fdn::uint64_t, 256>  queue_type;
     
     queue_type buf;
-    mgbase::mutex mtx;
-    mgbase::condition_variable cv;
+    fdn::mutex mtx;
+    fdn::condition_variable cv;
     
-    const auto ths = mgbase::make_unique<mgbase::thread []>(num_threads);
+    const auto ths = fdn::make_unique<fdn::thread []>(num_threads);
     
-    for (mgbase::size_t i = 0; i < num_threads; ++i)
-        ths[i] = mgbase::thread{functor<queue_type>{buf, N, mtx, cv}};
+    for (fdn::size_t i = 0; i < num_threads; ++i)
+        ths[i] = fdn::thread{functor<queue_type>{buf, N, mtx, cv}};
     
-    mgbase::uint64_t x = 0;
+    fdn::uint64_t x = 0;
     {
-        mgbase::unique_lock<mgbase::mutex> lk(mtx);
-        for (mgbase::uint64_t i = 0; i < num_threads * N; ++i) {
+        fdn::unique_lock<fdn::mutex> lk(mtx);
+        for (fdn::uint64_t i = 0; i < num_threads * N; ++i) {
             while (true) {
                 auto t = buf.try_dequeue(1); // check queue size & entry flag
                 if (!t.valid() || t.size() == 0) { // (head&~1) == (tail&~1) ?
@@ -161,7 +162,7 @@ TEST(MpscLockedBoundedQueue, MpSc)
                         cv.wait(lk);
                     }
                     else {
-                        mgbase::this_thread::yield();
+                        fdn::this_thread::yield();
                     }
                     
                     continue;
@@ -176,10 +177,9 @@ TEST(MpscLockedBoundedQueue, MpSc)
         }
     }
     
-    for (mgbase::size_t i = 0; i < num_threads; ++i)
+    for (fdn::size_t i = 0; i < num_threads; ++i)
         ths[i].join();
     
     ASSERT_EQ(num_threads * N * (N+1) / 2, x);
 }
-
 

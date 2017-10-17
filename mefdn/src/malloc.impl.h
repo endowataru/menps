@@ -6,7 +6,7 @@
   ========================================================================
 */
 
-#include <mgbase/external/malloc.h>
+#include <menps/mefdn/external/malloc.h>
 
 /*--- Custom settings for mgcom begins ---*/
 

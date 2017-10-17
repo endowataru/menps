@@ -1,23 +1,25 @@
 
+#error "No longer maintained"
+
 #include "unittest.hpp"
 
-#include <mgbase/mutex.hpp>
-#include <mgbase/condition_variable.hpp>
-#include <mgbase/thread.hpp>
+#include <mefdn/mutex.hpp>
+#include <mefdn/condition_variable.hpp>
+#include <mefdn/thread.hpp>
 
 #include <queue>
 
 namespace /*unnamed*/ {
 
-std::queue<mgbase::int64_t> q;
-mgbase::mutex mtx;
-mgbase::condition_variable cv;
+std::queue<mefdn::int64_t> q;
+mefdn::mutex mtx;
+mefdn::condition_variable cv;
 bool finished;
-mgbase::int64_t result;
+mefdn::int64_t result;
 
 void f()
 {
-    mgbase::unique_lock<mgbase::mutex> lc(mtx);
+    mefdn::unique_lock<mefdn::mutex> lc(mtx);
     
     while (!finished || !q.empty())
     {
@@ -38,18 +40,18 @@ TEST(ConditionVariable, Basic)
     finished = false;
     result = 0;
     
-    mgbase::thread th(&f);
+    mefdn::thread th(&f);
     
-    const mgbase::int64_t N = 100000;
+    const mefdn::int64_t N = 100000;
     
-    for (mgbase::int64_t i = 1; i <= N; ++i) {
-        mgbase::unique_lock<mgbase::mutex> lc(mtx);
+    for (mefdn::int64_t i = 1; i <= N; ++i) {
+        mefdn::unique_lock<mefdn::mutex> lc(mtx);
         q.push(i);
         cv.notify_one();
     }
     
     {
-        mgbase::unique_lock<mgbase::mutex> lc(mtx);
+        mefdn::unique_lock<mefdn::mutex> lc(mtx);
         finished = true;
         cv.notify_all();
     }

@@ -1,16 +1,12 @@
 
 #include "unittest.hpp"
-#include <mgbase/container/index_list.hpp>
+#include <menps/mefdn/container/index_list.hpp>
 
-namespace /*unnamed*/ {
-
-
-
-} // unnamed namespace
+namespace fdn = menps::mefdn;
 
 TEST(IndexList, Empty)
 {
-    mgbase::index_list<mgbase::size_t> l(100);
+    fdn::index_list<fdn::size_t> l(100);
     
     ASSERT_TRUE(l.empty());
 }
@@ -19,7 +15,7 @@ TEST(IndexList, Basic)
 {
     const int N = 100;
     
-    mgbase::index_list<int> l(N);
+    fdn::index_list<int> l(N);
     
     for (int i = 0; i < N; ++i)
         l.push_front(i);
@@ -27,7 +23,7 @@ TEST(IndexList, Basic)
     ASSERT_FALSE(l.empty());
     
     int s = 0;
-    MGBASE_RANGE_BASED_FOR(auto x, l) {
+    for (auto x : l) {
         s += x;
     }
     

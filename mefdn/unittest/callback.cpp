@@ -1,7 +1,7 @@
 
 #include "unittest.hpp"
-#include <mgbase/callback.hpp>
-#include <mgbase/functional/functional_constant.hpp>
+#include <mefdn/callback.hpp>
+#include <mefdn/functional/functional_constant.hpp>
 #include <functional>
 
 namespace /*unnamed*/ {
@@ -24,9 +24,9 @@ TEST(Callback, Base)
 {
     //using hoge = typename std::result_of<decltype(&func1) (int&)>::type;
     
-    mgbase::callback<void (int&)>
+    mefdn::callback<void (int&)>
         f = &func1;
-        //f = mgbase::make_callback(func1);
+        //f = mefdn::make_callback(func1);
     
     int x;
     f(x);
@@ -34,8 +34,8 @@ TEST(Callback, Base)
     ASSERT_EQ(123, x);
     
     #if 0
-    f = mgbase::make_callback(
-        std::bind(MGBASE_FUNCTIONAL_CONSTANT(&func2), 100, std::placeholders::_1)
+    f = mefdn::make_callback(
+        std::bind(MEFDN_FUNCTIONAL_CONSTANT(&func2), 100, std::placeholders::_1)
     );
     
     f(x);

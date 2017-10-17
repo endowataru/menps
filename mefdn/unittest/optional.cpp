@@ -1,13 +1,13 @@
 
-#include <mgbase/optional.hpp>
+#include <mefdn/optional.hpp>
 #include "unittest.hpp"
 
 TEST(Optional, Basic)
 {
-    mgbase::optional<int> o = mgbase::make_optional(123);
+    mefdn::optional<int> o = mefdn::make_optional(123);
     ASSERT_TRUE(o);
     
-    o = mgbase::nullopt;
+    o = mefdn::nullopt;
     ASSERT_FALSE(o);
 }
 
