@@ -12,6 +12,7 @@ using std::make_tuple;
 using std::tuple_size;
 using std::tuple_element;
 using std::get;
+using std::forward_as_tuple;
 
 } // namespace mefdn
 } // namespace menps

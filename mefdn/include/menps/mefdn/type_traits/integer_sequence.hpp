@@ -52,6 +52,15 @@ struct make_index_sequence_type {
 };
     //: make_integer_sequence_type<mefdn::size_t, N> { };
 
+template <mefdn::size_t... Ints>
+using index_sequence = integer_sequence<mefdn::size_t, Ints...>;
+
+template <mefdn::size_t N>
+using make_index_sequence = typename detail::make_index_sequence_helper<N>::type::type;
+
+template <typename... Ts>
+using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
+
 } // namespace mefdn
 } // namespace menps
 
