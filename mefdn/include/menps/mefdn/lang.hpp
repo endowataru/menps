@@ -52,6 +52,12 @@
 
 #define MEFDN_STATIC_ASSERT(expr)   static_assert(expr, #expr)
 
+#if (__cplusplus >= 201403L)
+    #define MEFDN_DEPRECATED        [[deprecated]]
+#else
+    #define MEFDN_DEPRECATED        __attribute__((deprecated))
+#endif
+
 // Standard features which have been already supported in C++11
 // (should be removed later)
 
@@ -60,6 +66,11 @@
 
 #define MEFDN_THREAD_LOCAL          thread_local
 #define MEFDN_OVERRIDE              override
+
+#define MEFDN_EXPLICIT_OPERATOR_BOOL() \
+    explicit operator bool() const { \
+        return ! this->operator!(); \
+    }
 
 // Standardized attributes
 

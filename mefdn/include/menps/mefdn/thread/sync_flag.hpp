@@ -3,9 +3,10 @@
 
 #include "synchronic.hpp"
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
-class sync_flag
+class MEFDN_DEPRECATED sync_flag
 {
 public:
     sync_flag()
@@ -26,9 +27,10 @@ public:
     }
     
 private:
-    mgbase::atomic<bool>    flag_;
+    mefdn::atomic<bool>    flag_;
     synchronic<bool>        sync_;
 };
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 

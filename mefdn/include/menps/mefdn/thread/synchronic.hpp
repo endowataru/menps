@@ -1,15 +1,18 @@
 
 #pragma once
 
-#include <mgbase/atomic.hpp>
+#include <menps/mefdn/atomic.hpp>
 #include "this_thread.hpp"
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
+
+// TODO: Check whether the current usages are appropriate
 
 template <typename T>
 class synchronic
 {
-    typedef mgbase::atomic<T>   atomic_type;
+    typedef mefdn::atomic<T>   atomic_type;
     
 public:
     synchronic() = default;
@@ -19,16 +22,17 @@ public:
     
     void notify(atomic_type& obj, T value)
     {
-        obj.store(value, mgbase::memory_order_release);
+        obj.store(value, mefdn::memory_order_release);
     }
     
     void expect(const atomic_type& obj, T desired)
     {
-        while (obj.load(mgbase::memory_order_acquire) != desired) {
+        while (obj.load(mefdn::memory_order_acquire) != desired) {
             this_thread::yield();
         }
     }
 };
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 
