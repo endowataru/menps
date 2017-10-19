@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/uct/uct.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -29,11 +29,13 @@ public:
     iface_config(const iface_config&) = delete;
     iface_config& operator = (const iface_config&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(iface_config, base)
+    iface_config(iface_config&&) noexcept = default;
+    iface_config& operator = (iface_config&&) noexcept = default;
 };
 
 iface_config read_iface_config(
-    const char* tl_name
+    uct_md_t*   md
+,   const char* tl_name
 ,   const char* env_prefix
 ,   const char* filename
 );

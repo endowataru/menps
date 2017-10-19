@@ -1,27 +1,27 @@
 
-#include <mgdev/ucx/ucs/async_context.hpp>
-#include <mgdev/ucx/uct/worker.hpp>
-#include <mgdev/ucx/uct/md_resource_list.hpp>
-#include <mgdev/ucx/uct/tl_resource_list.hpp>
-#include <mgdev/ucx/uct/memory_domain.hpp>
-#include <mgdev/ucx/uct/iface_config.hpp>
-#include <mgdev/ucx/uct/interface.hpp>
-#include <mgdev/ucx/uct/allocated_memory.hpp>
-#include <mgdev/ucx/uct/endpoint.hpp>
+#include <menps/medev/ucx/ucs/async_context.hpp>
+#include <menps/medev/ucx/uct/worker.hpp>
+#include <menps/medev/ucx/uct/md_resource_list.hpp>
+#include <menps/medev/ucx/uct/tl_resource_list.hpp>
+#include <menps/medev/ucx/uct/memory_domain.hpp>
+#include <menps/medev/ucx/uct/iface_config.hpp>
+#include <menps/medev/ucx/uct/interface.hpp>
+#include <menps/medev/ucx/uct/allocated_memory.hpp>
+#include <menps/medev/ucx/uct/endpoint.hpp>
 #include <cstring>
-#include <mgbase/external/fmt.hpp>
+#include <menps/mefdn/external/fmt.hpp>
 
-using namespace mgdev::ucx;
+using namespace menps::medev::ucx;
 
 uct::memory_domain open_md(const char* tl_name, const char* dev_name)
 {
     auto md_ress = uct::query_md_resources();
     
-    MGBASE_RANGE_BASED_FOR(auto&& md_res, md_ress) {
+    MEFDN_RANGE_BASED_FOR(auto&& md_res, md_ress) {
         auto md = uct::open_memory_domain(&md_res);
         auto tl_ress = uct::query_tl_resources(md.get());
         
-        MGBASE_RANGE_BASED_FOR(auto&& tl_res, tl_ress) {
+        MEFDN_RANGE_BASED_FOR(auto&& tl_res, tl_ress) {
             if ((strcmp(tl_res.tl_name, tl_name) == 0)
                 && (strcmp(tl_res.dev_name, dev_name) == 0))
             {
@@ -54,11 +54,12 @@ int main()
     
     auto md = open_md(tl_name, dev_name);
     
-    auto iface_conf = uct::read_iface_config(tl_name, MGBASE_NULLPTR, MGBASE_NULLPTR);
+    auto iface_conf = uct::read_iface_config(md.get(), tl_name, nullptr, nullptr);
     
     uct_iface_params_t iface_params = uct_iface_params_t();
-    iface_params.tl_name = tl_name;
-    iface_params.dev_name = dev_name;
+    iface_params.open_mode = UCT_IFACE_OPEN_MODE_DEVICE;
+    iface_params.mode.device.tl_name = tl_name;
+    iface_params.mode.device.dev_name = dev_name;
     iface_params.stats_root = ucs_stats_get_root();
     iface_params.rx_headroom = 0;
     
@@ -68,7 +69,7 @@ int main()
     
     const uct::am_id_t am_id = 1;
     
-    iface.set_am_handler(am_id, &am_handler_func, MGBASE_NULLPTR, UCT_AM_CB_FLAG_ASYNC);
+    iface.set_am_handler(am_id, &am_handler_func, nullptr, 0);
     
     auto iface_addr = iface.get_address();
     auto dev_addr = iface.get_device_address();
@@ -79,7 +80,7 @@ int main()
     
     
     //auto md = uct::open_memory_domain(/*name*/, md_conf);
-    uct_ep_am_short(ep.get(), am_id, 0, MGBASE_NULLPTR, 0);
+    uct_ep_am_short(ep.get(), am_id, 0, nullptr, 0);
     
     return 0;
     

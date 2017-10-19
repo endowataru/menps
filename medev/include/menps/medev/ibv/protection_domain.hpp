@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ibv/verbs.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -30,7 +30,8 @@ public:
     protection_domain(const protection_domain&) = delete;
     protection_domain& operator = (const protection_domain&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(protection_domain, base)
+    protection_domain(protection_domain&&) noexcept = default;
+    protection_domain& operator = (protection_domain&&) noexcept = default;
 };
 
 protection_domain make_protection_domain(ibv_context*);

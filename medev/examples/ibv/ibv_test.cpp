@@ -1,16 +1,16 @@
 
-#include <mgdev/ibv/device_context.hpp>
-#include <mgdev/ibv/device_list.hpp>
-#include <mgdev/ibv/protection_domain.hpp>
-#include <mgdev/ibv/completion_queue.hpp>
-#include <mgdev/ibv/queue_pair.hpp>
-#include <mgbase/external/fmt.hpp>
-#include <mgbase/string.hpp>
+#include <menps/medev/ibv/device_context.hpp>
+#include <menps/medev/ibv/device_list.hpp>
+#include <menps/medev/ibv/protection_domain.hpp>
+#include <menps/medev/ibv/completion_queue.hpp>
+#include <menps/medev/ibv/queue_pair.hpp>
+#include <menps/mefdn/external/fmt.hpp>
+#include <string>
 #include <iostream>
 
 int main()
 {
-    namespace ibv = mgdev::ibv;
+    namespace ibv = menps::medev::ibv;
     
     using fmt::print;
     
@@ -43,7 +43,7 @@ int main()
         std::string s;
         getline(std::cin, s);
         
-        const auto lid = mgbase::stoul(s);
+        const auto lid = std::stoul(s);
         other_qp_id.node_id =
             ibv::make_node_id_from_lid(
                 static_cast<ibv::lid_t>(lid)
@@ -55,7 +55,7 @@ int main()
         std::string s;
         getline(std::cin, s);
         
-        const auto qp_num = mgbase::stoul(s);
+        const auto qp_num = std::stoul(s);
         other_qp_id.qp_num = static_cast<ibv::qp_num_t>(qp_num);
     }
     

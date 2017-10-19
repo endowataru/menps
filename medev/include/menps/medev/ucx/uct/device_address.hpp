@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/uct/uct.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -32,7 +32,8 @@ public:
     device_address(const device_address&) = delete;
     device_address& operator = (const device_address&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(device_address, base)
+    device_address(device_address&&) noexcept = default;
+    device_address& operator = (device_address&&) noexcept = default;
 };
 
 } // namespace uct

@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/uct/uct.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -30,7 +30,8 @@ public:
     md_resource_list(const md_resource_list&) = delete;
     md_resource_list& operator = (const md_resource_list&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(md_resource_list, base, size_)
+    md_resource_list(md_resource_list&) noexcept = default;
+    md_resource_list& operator = (md_resource_list&&) noexcept = default;
     
     mefdn::size_t size() const noexcept {
         return size_;

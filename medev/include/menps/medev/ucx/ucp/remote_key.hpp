@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/ucp/ucp.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -29,7 +29,8 @@ public:
     remote_key(const remote_key&) = delete;
     remote_key& operator = (const remote_key&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(remote_key, base)
+    remote_key(remote_key&&) noexcept = default;
+    remote_key& operator = (remote_key&&) noexcept = default;
 };
 
 remote_key unpack_rkey(

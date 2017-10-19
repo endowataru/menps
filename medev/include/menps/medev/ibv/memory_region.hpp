@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ibv/verbs.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -30,7 +30,8 @@ public:
     memory_region(const memory_region&) = delete;
     memory_region& operator = (const memory_region&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(memory_region, base)
+    memory_region(memory_region&&) noexcept = default;
+    memory_region& operator = (memory_region&&) noexcept = default;
 };
 
 memory_region make_memory_region(

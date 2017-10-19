@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/ucp/ucp.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -29,7 +29,8 @@ public:
     config(const config&) = delete;
     config& operator = (const config&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(config, base)
+    config(config&&) noexcept = default;
+    config& operator = (config&&) noexcept = default;
 };
 
 config read_config(

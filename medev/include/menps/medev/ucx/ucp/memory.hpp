@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/ucp/rkey_buffer.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -31,7 +31,8 @@ public:
     memory(const memory&) = delete;
     memory& operator = (const memory&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(memory, base)
+    memory(memory&&) noexcept = default;
+    memory& operator = (memory&&) noexcept = default;
     
     ucp_mem_attr_t query(ucp_mem_attr_field field_mask);
     

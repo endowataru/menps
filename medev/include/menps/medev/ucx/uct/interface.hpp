@@ -3,7 +3,7 @@
 
 #include <menps/medev/ucx/uct/iface_address.hpp>
 #include <menps/medev/ucx/uct/device_address.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -30,7 +30,8 @@ public:
     interface(const interface&) = delete;
     interface& operator = (const interface&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(interface, base)
+    interface(interface&&) noexcept = default;
+    interface& operator = (interface&&) noexcept = default;
     
     uct_iface_attr_t query();
     

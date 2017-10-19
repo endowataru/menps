@@ -1,20 +1,21 @@
 
-#include <mgdev/ucx/ucp/context.hpp>
-#include <mgdev/ucx/ucp/config.hpp>
-#include <mgdev/ucx/ucp/worker.hpp>
-#include <mgdev/ucx/ucp/endpoint.hpp>
-#include <mgdev/ucx/ucp/memory.hpp>
-#include <mgbase/external/fmt.hpp>
+#include <menps/medev/ucx/ucp/context.hpp>
+#include <menps/medev/ucx/ucp/config.hpp>
+#include <menps/medev/ucx/ucp/worker.hpp>
+#include <menps/medev/ucx/ucp/endpoint.hpp>
+#include <menps/medev/ucx/ucp/memory.hpp>
+#include <menps/mefdn/external/fmt.hpp>
 
 int main()
 {
-    using namespace mgdev::ucx;
+    using namespace menps::medev::ucx;
+    namespace mefdn = menps::mefdn;
     
     ucp_params ctx_params = ucp_params();
     ctx_params.field_mask = UCP_PARAM_FIELD_FEATURES;
     ctx_params.features   = UCP_FEATURE_RMA;
     
-    auto conf = ucp::read_config(MGBASE_NULLPTR, MGBASE_NULLPTR);
+    auto conf = ucp::read_config(nullptr, nullptr);
     
     auto ctx = ucp::init(&ctx_params, conf.get());
     
@@ -47,7 +48,7 @@ int main()
     auto rkey = rkey_buf.unpack(ep.get());
     
     int* const rptr = static_cast<int*>(mem_attr.address);
-    const auto raddr = reinterpret_cast<mgbase::uintptr_t>(rptr);
+    const auto raddr = reinterpret_cast<mefdn::uintptr_t>(rptr);
     
     fmt::print("{}\n", *rptr);
     

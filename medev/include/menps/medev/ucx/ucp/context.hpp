@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/ucp/ucp.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -29,7 +29,8 @@ public:
     context(const context&) = delete;
     context& operator = (const context&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(context, base)
+    context(context&&) noexcept = default;
+    context& operator = (context&&) noexcept = default;
     
     ucp_context_attr_t query();
 };

@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ibv/verbs.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -31,7 +31,8 @@ public:
     device_list(const device_list&) = delete;
     device_list& operator = (const device_list&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(device_list, base, size_)
+    device_list(device_list&&) noexcept = default;
+    device_list& operator = (device_list&&) noexcept = default;
     
     mefdn::size_t size() const noexcept {
         return size_;

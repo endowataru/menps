@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/ucp/ucp.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -32,7 +32,8 @@ public:
     worker_address(const worker_address&) = delete;
     worker_address& operator = (const worker_address&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(worker_address, base, n_)
+    worker_address(worker_address&&) noexcept = default;
+    worker_address& operator = (worker_address&&) noexcept = default;
     
     mefdn::size_t size() const noexcept {
         return n_;

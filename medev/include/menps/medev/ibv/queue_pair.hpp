@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ibv/attributes.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/medev/ibv/ibv_error.hpp>
 #include <menps/mefdn/assert.hpp>
 
@@ -53,7 +53,8 @@ public:
     queue_pair(const queue_pair&) = delete;
     queue_pair& operator = (const queue_pair&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(queue_pair, base)
+    queue_pair(queue_pair&&) noexcept = default;
+    queue_pair& operator = (queue_pair&&) noexcept = default;
     
     
     mefdn::uint32_t get_qp_num() const noexcept {

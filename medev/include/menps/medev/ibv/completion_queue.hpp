@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ibv/verbs.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -30,7 +30,8 @@ public:
     completion_queue(const completion_queue&) = delete;
     completion_queue& operator = (const completion_queue&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(completion_queue, base)
+    completion_queue(completion_queue&&) noexcept = default;
+    completion_queue& operator = (completion_queue&&) noexcept = default;
     
     int poll(
         ibv_wc* const   wc_array

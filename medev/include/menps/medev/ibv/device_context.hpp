@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ibv/attributes.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -30,7 +30,8 @@ public:
     device_context(const device_context&) = delete;
     device_context& operator = (const device_context&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(device_context, base)
+    device_context(device_context&&) noexcept = default;
+    device_context& operator = (device_context&&) noexcept = default;
     
     device_attr_t query_device() const;
     

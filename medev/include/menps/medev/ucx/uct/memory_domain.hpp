@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/uct/uct.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -29,7 +29,8 @@ public:
     memory_domain(const memory_domain&) = delete;
     memory_domain& operator = (const memory_domain&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(memory_domain, base)
+    memory_domain(memory_domain&&) noexcept = default;
+    memory_domain& operator = (memory_domain&&) noexcept = default;
 };
 
 memory_domain open_memory_domain(const char* md_name, uct_md_config_t*);

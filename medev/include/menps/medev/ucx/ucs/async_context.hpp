@@ -8,7 +8,7 @@ extern "C" {
 
 } // extern "C"
 
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -35,7 +35,8 @@ public:
     async_context(const async_context&) = delete;
     async_context& operator = (const async_context&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(async_context, base)
+    async_context(async_context&&) noexcept = default;
+    async_context& operator = (async_context&&) noexcept = default;
 };
 
 async_context create_async_context(ucs_async_mode_t mode);

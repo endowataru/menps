@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/uct/uct.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -29,7 +29,8 @@ public:
     endpoint(const endpoint&) = delete;
     endpoint& operator = (const endpoint&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(endpoint, base)
+    endpoint(endpoint&&) noexcept = default;
+    endpoint& operator = (endpoint&&) noexcept = default;
     
     void am_short();
 };

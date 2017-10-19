@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/medev/ucx/ucp/remote_key.hpp>
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev {
@@ -30,7 +30,8 @@ public:
     rkey_buffer(const rkey_buffer&) = delete;
     rkey_buffer& operator = (const rkey_buffer&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_1(rkey_buffer, base, size_)
+    rkey_buffer(rkey_buffer&&) noexcept = default;
+    rkey_buffer& operator = (rkey_buffer&&) noexcept = default;
     
     mefdn::size_t size() const noexcept {
         return size_;

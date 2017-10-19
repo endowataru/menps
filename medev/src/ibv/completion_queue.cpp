@@ -41,3 +41,5 @@ void completion_queue_deleter::operator () (ibv_cq* const cq) const noexcept
 
 } // namespace ibv
 } // namespace medev
+} // namespace menps
+

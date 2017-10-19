@@ -1,18 +1,17 @@
 
-#include <mgdev/ibv/device_context.hpp>
-#include <mgdev/ibv/device_list.hpp>
-#include <mgdev/ibv/protection_domain.hpp>
-#include <mgdev/ibv/completion_queue.hpp>
-#include <mgdev/ibv/queue_pair.hpp>
-#include <mgbase/external/fmt.hpp>
-#include <mgbase/string.hpp>
-#include <mgbase/utility/move.hpp>
+#include <menps/medev/ibv/device_context.hpp>
+#include <menps/medev/ibv/device_list.hpp>
+#include <menps/medev/ibv/protection_domain.hpp>
+#include <menps/medev/ibv/completion_queue.hpp>
+#include <menps/medev/ibv/queue_pair.hpp>
+#include <menps/mefdn/external/fmt.hpp>
+#include <menps/mefdn/utility.hpp>
+#include <string>
 #include <iostream>
-#include <mgbase/vector.hpp>
 
 int main()
 {
-    namespace ibv = mgdev::ibv;
+    namespace ibv = menps::medev::ibv;
     
     using fmt::print;
     
@@ -31,7 +30,7 @@ int main()
     init_attr.send_cq = cq.get();
     init_attr.recv_cq = cq.get();
     
-    mgbase::size_t num_qps = 0;
+    menps::mefdn::size_t num_qps = 0;
     
     try {
         while (true)

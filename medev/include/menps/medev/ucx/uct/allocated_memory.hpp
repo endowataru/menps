@@ -42,7 +42,8 @@ public:
     allocated_memory(const allocated_memory&) = delete;
     allocated_memory& operator = (const allocated_memory&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(allocated_memory, base)
+    allocated_memory(allocated_memory&&) noexcept = default;
+    allocated_memory& operator = (allocated_memory&) noexcept = default;
     
 private:
     friend class mefdn::basic_unique_resource_access;
