@@ -1,16 +1,14 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
-#include <mgbase/explicit_operator_bool.hpp>
-#include <mgbase/utility/forward.hpp>
-#include <mgbase/type_traits/is_trivially_copyable.hpp>
-#include <mgbase/type_traits/is_trivially_destructible.hpp>
-#include <mgbase/assert.hpp>
+#include <menps/mefdn/utility.hpp>
+#include <menps/mefdn/type_traits.hpp>
+#include <menps/mefdn/assert.hpp>
 #include <array>
 #include <new> // for placement new
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 // Reference:
 // http://codereview.stackexchange.com/questions/58447/function-wrapper-like-stdfunction-that-uses-small-buffer-allocation
@@ -21,40 +19,40 @@ class callback;
 template <typename Result, typename... Args>
 class callback<Result (Args...)>
 {
-    typedef std::array<mgbase::int64_t, 3>  storage_type;
+    typedef std::array<mefdn::int64_t, 3>  storage_type;
     typedef Result (func_type)(const storage_type&, Args...);
     
 public:
     callback()
-        : func_{MGBASE_NULLPTR} { }
+        : func_{nullptr} { }
     
-    callback(const callback&) MGBASE_DEFAULT_NOEXCEPT = default;
+    callback(const callback&) noexcept = default;
     
     template <typename Func>
     /*implicit*/ callback(const Func& func)
         : func_(&call<Func>)
     {
-        MGBASE_STATIC_ASSERT(sizeof(func_) <= sizeof(void*));
-        MGBASE_STATIC_ASSERT(mgbase::is_trivially_copyable<Func>::value);
-        MGBASE_STATIC_ASSERT(mgbase::is_trivially_destructible<Func>::value);
+        MEFDN_STATIC_ASSERT(sizeof(func_) <= sizeof(void*));
+        MEFDN_STATIC_ASSERT(mefdn::is_trivially_copyable<Func>::value);
+        MEFDN_STATIC_ASSERT(mefdn::is_trivially_destructible<Func>::value);
         
         new (storage_.data()) Func(func);
     }
     
     ~callback() = default;
     
-    callback& operator = (const callback&) MGBASE_DEFAULT_NOEXCEPT = default;
+    callback& operator = (const callback&) noexcept = default;
     
     template <typename... As>
     Result operator () (As&&... args) const {
-        MGBASE_ASSERT(func_ != MGBASE_NULLPTR);
-        return func_(storage_, mgbase::forward<As>(args)...);
+        MEFDN_ASSERT(func_ != nullptr);
+        return func_(storage_, mefdn::forward<As>(args)...);
     }
     
-    MGBASE_EXPLICIT_OPERATOR_BOOL()
+    MEFDN_EXPLICIT_OPERATOR_BOOL()
     
-    bool operator ! () const MGBASE_NOEXCEPT {
-        return func_ == MGBASE_NULLPTR;
+    bool operator ! () const noexcept {
+        return func_ == nullptr;
     }
     
 private:
@@ -74,5 +72,6 @@ private:
     storage_type    storage_;
 };
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 
