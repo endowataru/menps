@@ -1,10 +1,11 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <menps/mefdn/lang.hpp>
 #include <sys/time.h>
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 inline double get_current_sec()
 {
@@ -15,5 +16,6 @@ inline double get_current_sec()
     return t.tv_sec + t.tv_usec * 1e-9;
 }
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 

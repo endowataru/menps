@@ -1,28 +1,26 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <menps/mefdn/lang.hpp>
 #include <limits>
 #include <sstream>
 #include <cmath>
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 template <typename Sample, typename Real = double>
 class average_accumulator {
 public:
-    average_accumulator() MGBASE_NOEXCEPT
+    average_accumulator() noexcept
         : count_(0), sum_(0.0), squared_sum_(0.0)
         , min_(std::numeric_limits<Sample>::min())
         , max_(std::numeric_limits<Sample>::max()) { }
     
-    #ifdef MGBASE_CXX11_SUPPORTED
     average_accumulator(const average_accumulator&) noexcept = default;
-    
     average_accumulator& operator = (const average_accumulator&) noexcept = default;
-    #endif
     
-    void add(Sample sample) MGBASE_NOEXCEPT {
+    void add(Sample sample) noexcept {
         ++count_;
         
         min_ = std::min(min_, sample);
@@ -33,23 +31,23 @@ public:
         squared_sum_ += real_sample * real_sample;
     }
     
-    std::size_t count() const MGBASE_NOEXCEPT { return count_; }
+    std::size_t count() const noexcept { return count_; }
     
-    Real sum() const MGBASE_NOEXCEPT { return sum_; }
+    Real sum() const noexcept { return sum_; }
     
-    Real mean() const MGBASE_NOEXCEPT {
+    Real mean() const noexcept {
         return sum() / static_cast<Real>(count());
     }
-    Real stddev() const MGBASE_NOEXCEPT {
+    Real stddev() const noexcept {
         return std::sqrt(variance());
     }
-    Real variance() const MGBASE_NOEXCEPT {
+    Real variance() const noexcept {
         const Real mean_val = mean();
         return squared_sum_ - mean_val*mean_val;
     }
     
-    Sample min() const MGBASE_NOEXCEPT { return min_; }
-    Sample max() const MGBASE_NOEXCEPT { return max_; }
+    Sample min() const noexcept { return min_; }
+    Sample max() const noexcept { return max_; }
     
     std::string summary() const {
         std::stringstream ss;
@@ -68,5 +66,6 @@ inline std::ostream& operator << (std::ostream& ost, const average_accumulator<S
     return ost << value.summary();
 }
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 

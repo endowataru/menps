@@ -1,13 +1,14 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <menps/mefdn/lang.hpp>
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
-typedef mgbase::int64_t cpu_clock_t;
+typedef mefdn::int64_t cpu_clock_t;
 
-MGBASE_ALWAYS_INLINE cpu_clock_t get_cpu_clock() MGBASE_NOEXCEPT
+MEFDN_ALWAYS_INLINE cpu_clock_t get_cpu_clock() noexcept
 {
 #if (defined __i386__) || (defined __x86_64__)
     uint32_t high, low;
@@ -25,5 +26,6 @@ MGBASE_ALWAYS_INLINE cpu_clock_t get_cpu_clock() MGBASE_NOEXCEPT
 #endif
 }
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 
