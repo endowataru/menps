@@ -5,7 +5,12 @@
 
 #define MECTX_SWITCH_FUNCTION   MEFDN_VISIBILITY_HIDDEN
 
-#define MECTX_AVOID_PLT
+#ifndef MEFDN_COMPILER_CLANG
+    // TODO: It seems that Clang cannot provide template arguments
+    //       to the inline assembly parameters as immediate values.
+    //       The performance is degraded by disabling this flag.
+    #define MECTX_AVOID_PLT
+#endif
 
 namespace menps {
 namespace mectx {
