@@ -47,11 +47,26 @@
             return static_cast<const derived_type&>(*this); \
         }
 
+// Standardized attributes
+
+#define MEFDN_NORETURN      [[noreturn]]
 #define MEFDN_NODISCARD     __attribute__((warn_unused_result))
 #define MEFDN_MAYBE_UNUSED  __attribute__((unused))
 
+// Non-standard built-ins
+
 #define MEFDN_LIKELY(x)     __builtin_expect(!!(x), 1)
 #define MEFDN_UNLIKELY(x)   __builtin_expect(!!(x), 0)
+
+#ifdef MEFDN_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE
+    #define MEFDN_UNREACHABLE()     __builtin_unreachable()
+#else
+    #define MEFDN_UNREACHABLE()     abort()
+#endif
+
+#define MEFDN_VISIBILITY_DEFAULT    __attribute__((visibility("default")))
+#define MEFDN_VISIBILITY_HIDDEN     __attribute__((visibility("hidden")))
+
 
 namespace menps {
 namespace mefdn {
@@ -88,6 +103,9 @@ using std::int_fast64_t;
 
 using std::size_t;
 using std::ptrdiff_t;
+
+using std::intptr_t;
+using std::uintptr_t;
 
 } // namespace mefdn
 } // namespace menps
