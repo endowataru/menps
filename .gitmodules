@@ -11,5 +11,5 @@
 	path = mgdev/external/ucx
 	url = https://github.com/openucx/ucx
 [submodule "mgult/external/massivethreads"]
-	path = mgult/external/massivethreads
+	path = meult/external/massivethreads
 	url = https://github.com/massivethreads/massivethreads
