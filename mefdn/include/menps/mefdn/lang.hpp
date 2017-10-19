@@ -69,6 +69,12 @@
 
 // Non-standard built-ins
 
+#if (defined(MEFDN_COMPILER_SUPPORTS_ALWAYS_INLINE) && !defined(MEFDN_DEBUG))
+    #define MEFDN_ALWAYS_INLINE     inline __attribute__((always_inline))
+#else
+    #define MEFDN_ALWAYS_INLINE     inline
+#endif
+
 #define MEFDN_LIKELY(x)     __builtin_expect(!!(x), 1)
 #define MEFDN_UNLIKELY(x)   __builtin_expect(!!(x), 0)
 
