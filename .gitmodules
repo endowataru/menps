@@ -8,7 +8,7 @@
 	path = mefdn/external/googletest
 	url = https://github.com/google/googletest.git
 [submodule "mgdev/external/ucx"]
-	path = mgdev/external/ucx
+	path = medev/external/ucx
 	url = https://github.com/openucx/ucx
 [submodule "mgult/external/massivethreads"]
 	path = meult/external/massivethreads
