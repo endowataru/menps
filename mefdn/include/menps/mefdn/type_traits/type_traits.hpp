@@ -13,6 +13,9 @@ using std::remove_extent;
 using std::remove_cv;
 using std::result_of;
 using std::decay;
+using std::is_reference;
+using std::conditional;
+using std::remove_reference;
 
 } // namespace mefdn
 } // namespace menps

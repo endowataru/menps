@@ -3,11 +3,13 @@
 
 #include "integral_constant.hpp"
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 template <typename T>
 struct is_trivially_destructible
     : bool_constant<(__has_trivial_destructor(T))> { };
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 
