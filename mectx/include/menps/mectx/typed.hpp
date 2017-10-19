@@ -1,18 +1,19 @@
 
 #pragma once
 
-#include <mgctx/common.hpp>
-#include <mgbase/nontype.hpp>
+#include <menps/mectx/common.hpp>
+#include <menps/mefdn/nontype.hpp>
 
-namespace mgctx {
+namespace menps {
+namespace mectx {
 
 // make_context
 
 template <typename T, void (*Func)(transfer<T*>)>
 inline context<T*> make_context(
     void* const             sp
-,   const mgbase::size_t    size
-,   mgbase::nontype<
+,   const mefdn::size_t    size
+,   mefdn::nontype<
         void (*)(transfer<T*>)
     ,   Func
     >                       /*func*/
@@ -25,8 +26,8 @@ inline context<T*> make_context(
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> save_context(
     void* const             sp
-,   const mgbase::size_t    size
-,   mgbase::nontype<
+,   const mefdn::size_t    size
+,   mefdn::nontype<
         transfer<T*> (*)(context<T*>, Arg*)
     ,   Func
     >                       /*func*/
@@ -41,7 +42,7 @@ inline transfer<T*> save_context(
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> swap_context(
     const context<T*>       ctx
-,   mgbase::nontype<
+,   mefdn::nontype<
         transfer<T*> (*)(context<T*>, Arg*)
     ,   Func
     >                       /*func*/
@@ -54,10 +55,10 @@ inline transfer<T*> swap_context(
 // restore_context
 
 template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
-MGBASE_NORETURN
+MEFDN_NORETURN
 inline void restore_context(
     const context<T*>        ctx
-,   mgbase::nontype<
+,   mefdn::nontype<
         transfer<T*> (*)(Arg*)
     ,   Func
     >                       /*func*/
@@ -67,5 +68,6 @@ inline void restore_context(
     restore_context<T, Arg, Func>(ctx, arg);
 }
 
-} // namespace mgctx
+} // namespace mectx
+} // namespace menps
 

@@ -1,13 +1,14 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <menps/mefdn/lang.hpp>
 
-#define MGCTX_SWITCH_FUNCTION   MGBASE_VISIBILITY_HIDDEN
+#define MECTX_SWITCH_FUNCTION   MEFDN_VISIBILITY_HIDDEN
 
-#define MGCTX_AVOID_PLT
+#define MECTX_AVOID_PLT
 
-namespace mgctx {
+namespace menps {
+namespace mectx {
 
 struct context_frame;
 
@@ -32,13 +33,13 @@ struct transfer<T*>
 template <typename T, void (*Func)(transfer<T*>)>
 inline context<T*> make_context(
     void*           sp
-,   mgbase::size_t  size
+,   mefdn::size_t  size
 );
 
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> save_context(
     void*           sp
-,   mgbase::size_t  size
+,   mefdn::size_t  size
 ,   Arg*            arg
 );
 
@@ -49,11 +50,12 @@ inline transfer<T*> swap_context(
 );
 
 template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
-MGBASE_NORETURN
+MEFDN_NORETURN
 inline void restore_context(
     context<T*>     ctx
 ,   Arg*            arg
 );
 
-} // namespace mgctx
+} // namespace mectx
+} // namespace menps
 

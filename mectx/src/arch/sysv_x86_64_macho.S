@@ -1,8 +1,7 @@
 .text
-.globl mgctx_entrypoint
-.type mgctx_entrypoint,@function
-.align 16
-mgctx_entrypoint:
+.globl _mectx_entrypoint
+.align 8
+_mectx_entrypoint:
     // Pass the result as a parameter.
     movq    %rax, %rdi
     
@@ -14,9 +13,5 @@ mgctx_entrypoint:
     
     // Terminate because of unintended return
     // from the user-defined function.
-    call    abort@PLT
-    
-.size mgctx_entrypoint,.-mgctx_entrypoint
+    call    _abort
 
-// Mark that we don't need executable stack.
-.section .note.GNU-stack,"",%progbits

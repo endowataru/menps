@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include <mgctx/common.hpp>
-#include <mgbase/logger.hpp>
-#include <cstdlib>
+#include <menps/mectx/common.hpp>
+#include <menps/mefdn/logger.hpp>
 
 // Implementation on System V x86-64 ABI
 
-namespace mgctx {
+namespace menps {
+namespace mectx {
 
 struct context_frame
 {
@@ -20,16 +20,16 @@ namespace detail {
 
 // Separated to assembly
 extern "C"
-void mgctx_entrypoint();
+void mectx_entrypoint();
 
 } // namespace detail
 
 template <typename T, void (*Func)(transfer<T*>)>
 inline context<T*> make_context(
     void* const             sp
-,   const mgbase::size_t    /*size*/
+,   const mefdn::size_t    /*size*/
 ) {
-    typedef mgbase::int64_t i64;
+    typedef mefdn::int64_t i64;
     const auto mask = ~i64{0xF};
     
     const auto ctx =
@@ -42,7 +42,7 @@ inline context<T*> make_context(
     *ctx = 0;
     
     // Set the entrypoint function.
-    *(ctx+1) = reinterpret_cast<i64>(&detail::mgctx_entrypoint);
+    *(ctx+1) = reinterpret_cast<i64>(&detail::mectx_entrypoint);
     
     // Save the function pointer.
     *(ctx+2) = reinterpret_cast<i64>(Func);
@@ -87,9 +87,9 @@ inline context<T*> make_context(
         //  RSI, RDI : Inputs.
         //  RAX      : Returned value.
         //  RSP, RBP : Saved & restored.
-        //  RBX      : Function pointer. (MGCTX_AVOID_PLT is not defined)
+        //  RBX      : Function pointer. (MECTX_AVOID_PLT is not defined)
 
-#ifdef MGCTX_AVOID_PLT
+#ifdef MECTX_AVOID_PLT
     #define CLOBBERS                CLOBBERS_BASE, "rbx"
     #define DECLARE_FUNC
     #define FUNC_OPERAND            "%P[func]"
@@ -127,10 +127,10 @@ inline context<T*> make_context(
 template <typename T, typename Arg, transfer<T*> (*Func)(context<T*>, Arg*)>
 inline transfer<T*> save_context(
     void* const             sp
-,   const mgbase::size_t    /*size*/
+,   const mefdn::size_t    /*size*/
 ,   Arg*                    arg
 ) {
-    typedef mgbase::int64_t i64;
+    typedef mefdn::int64_t i64;
     const auto mask = ~i64{0xF};
     
     // Align the stack pointer.
@@ -234,13 +234,13 @@ inline transfer<T*> swap_context(
 }
 
 template <typename T, typename Arg, transfer<T*> (*Func)(Arg*)>
-MGBASE_NORETURN
+MEFDN_NORETURN
 inline void restore_context(
     const context<T*>   ctx
 ,   Arg* const          arg
 ) {
     // The pointer to the context must be 16-byte aligned.
-    MGBASE_ASSERT(reinterpret_cast<mgbase::int64_t>(ctx.p) % 0x10 == 0);
+    MEFDN_ASSERT(reinterpret_cast<mefdn::int64_t>(ctx.p) % 0x10 == 0);
     
     DECLARE_FUNC
     
@@ -276,7 +276,7 @@ inline void restore_context(
         "memory"
     );
     
-    MGBASE_UNREACHABLE();
+    MEFDN_UNREACHABLE();
 }
 
 #undef SAVE_CONTEXT
@@ -288,5 +288,6 @@ inline void restore_context(
 #undef INPUT_CONSTRAINTS_COMMA
 #undef FUNC_OPERAND
 
-} // namespace mgctx
+} // namespace mectx
+} // namespace menps
 

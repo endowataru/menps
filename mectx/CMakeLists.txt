@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(mgctx CXX ASM)
+project(mectx CXX ASM)
 
-add_library(mgctx
+add_library(mectx
     src/empty.cpp
     
     $<$<PLATFORM_ID:Linux>:
@@ -12,25 +12,25 @@ add_library(mgctx
     ./src/arch/sysv_x86_64_macho.S
     >
 )
-target_include_directories(mgctx
+target_include_directories(mectx
     PUBLIC ./include
 )
-target_link_libraries(mgctx
-    PUBLIC mgbase
-    PRIVATE mgbase-options
+target_link_libraries(mectx
+    PUBLIC mefdn
+    PRIVATE mefdn-options
 )
-install(TARGETS mgctx
+install(TARGETS mectx
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
 
-add_executable(mgctx-unittest
+add_executable(mectx-unittest
     unittest/unittest.cpp
     unittest/context.cpp
 )
-target_link_libraries(mgctx-unittest
-    mgctx
-    mgbase-options
+target_link_libraries(mectx-unittest
+    mectx
+    mefdn-options
     googletest
 )
 
