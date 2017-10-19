@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include <menps/mefdn/utility/move.hpp>
-#include <menps/mefdn/utility/forward.hpp>
+#include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/assert.hpp>
 
 namespace menps {
@@ -14,8 +13,6 @@ class async_status
 public:
     async_status(const async_status&) /*may throw*/ = default;
     async_status& operator = (const async_status&) /*may throw*/ = default;
-    
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_2(async_status, ready_, val_)
     
     bool is_ready() const {
         return this->ready_;

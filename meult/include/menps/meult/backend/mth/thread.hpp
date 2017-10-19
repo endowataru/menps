@@ -3,7 +3,7 @@
 
 #include "mth.hpp"
 
-#include <menps/mefdn/unique_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/logger.hpp>
 #include <menps/mefdn/tuple.hpp>
 
@@ -95,10 +95,13 @@ public:
         : t_(t)
     { }
     
+    // move-only
+    
     thread(const thread&) = delete;
     thread& operator = (const thread&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_1(thread, t_)
+    thread(thread&&) noexcept = default;
+    thread& operator = (thread&&) noexcept = default;
     
     bool joinable() noexcept {
         return static_cast<bool>(t_);
@@ -145,7 +148,7 @@ inline void fork_parent_first_detached(const myth_func_t func, void* const ptr)
     static myth_thread_attr_t attr = make_parent_first_detached_thread_attr();
     myth_thread_t t;
     
-    MEFDN_UNUSED
+    MEFDN_MAYBE_UNUSED
     const int ret = myth_create_ex(&t, &attr, func, ptr);
     // Note: ret is not checked because current MassiveThreads only returns 0
 }

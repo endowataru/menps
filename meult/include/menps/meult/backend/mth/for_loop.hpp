@@ -13,7 +13,7 @@ struct parallel_execution_policy { };
 
 namespace /*unnamed*/ {
 
-MEFDN_UNUSED parallel_execution_policy par;
+MEFDN_MAYBE_UNUSED parallel_execution_policy par;
 
 } // unnamed namespace
 

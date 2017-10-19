@@ -2,7 +2,7 @@
 #pragma once
 
 #include "mutex.hpp"
-#include <menps/mefdn/threading/unique_lock.hpp>
+#include <menps/mefdn/mutex.hpp>
 
 namespace menps {
 namespace meult {

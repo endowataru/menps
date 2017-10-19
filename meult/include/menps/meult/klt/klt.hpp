@@ -5,10 +5,10 @@
 #include <menps/mefdn/thread.hpp>
 #include <menps/mefdn/mutex.hpp>
 #include <menps/mefdn/condition_variable.hpp>
-#include <menps/mefdn/threading/spinlock.hpp>
-#include <menps/mefdn/threading/sync_flag.hpp>
+#include <menps/mefdn/thread/spinlock.hpp>
+#include <menps/mefdn/thread/sync_flag.hpp>
 
-#include <menps/mefdn/type_traits/decay.hpp>
+#include <menps/mefdn/type_traits.hpp>
 
 #include <menps/meult/async/async_status.hpp>
 #include <menps/meult/async/async_atomic_channel.hpp>
