@@ -100,6 +100,15 @@
 
 #define MEFDN_GET_STACK_POINTER()   (__builtin_frame_address(0))
 
+// Other macros
+
+#ifdef MEFDN_COMPILER_CLANG
+    #define MEFDN_COVERED_SWITCH()
+#else
+    #define MEFDN_COVERED_SWITCH()  default: MEFDN_UNREACHABLE(); break;
+#endif
+
+
 namespace menps {
 namespace mefdn {
 
