@@ -8,7 +8,8 @@
 
 // Processor Compatibility
 
-#define MEFDN_CACHE_LINE_SIZE  64
+#define MEFDN_CACHE_LINE_SIZE       64
+#define MEFDN_CALL_STACK_GROW_DIR   -1
 
 // Compiler Compatibility
     
@@ -47,6 +48,19 @@
             return static_cast<const derived_type&>(*this); \
         }
 
+// Standard features in C++14 or later
+
+#define MEFDN_STATIC_ASSERT(expr)   static_assert(expr, #expr)
+
+// Standard features which have been already supported in C++11
+// (should be removed later)
+
+#define MEFDN_RANGE_BASED_FOR(decl, ...) \
+    for (decl : __VA_ARGS__)
+
+#define MEFDN_THREAD_LOCAL          thread_local
+#define MEFDN_OVERRIDE              override
+
 // Standardized attributes
 
 #define MEFDN_NORETURN      [[noreturn]]
@@ -67,6 +81,7 @@
 #define MEFDN_VISIBILITY_DEFAULT    __attribute__((visibility("default")))
 #define MEFDN_VISIBILITY_HIDDEN     __attribute__((visibility("hidden")))
 
+#define MEFDN_GET_STACK_POINTER()   (__builtin_frame_address(0))
 
 namespace menps {
 namespace mefdn {

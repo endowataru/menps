@@ -1,18 +1,19 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
+#include <menps/mefdn/lang.hpp>
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 inline void* align_downward_nocheck(
-    const mgbase::size_t    alignment
-,   const mgbase::size_t    size
+    const mefdn::size_t    alignment
+,   const mefdn::size_t    size
 ,   void*&                  ptr
-,   mgbase::size_t&         space
+,   mefdn::size_t&         space
 )
 {
-    typedef mgbase::intptr_t    intptr;
+    typedef mefdn::intptr_t    intptr;
     
     const auto iptr = reinterpret_cast<intptr>(ptr);
     const auto salign = static_cast<intptr>(alignment);
@@ -22,13 +23,13 @@ inline void* align_downward_nocheck(
     const auto aligned = (iptr - ssize) & -salign;
     
     const auto diff =
-        static_cast<mgbase::size_t>(
+        static_cast<mefdn::size_t>(
             iptr - aligned
         );
     
-    #ifndef MGBASE_DISABLE_ALIGN_CHECK_SIZE
+    #ifndef MEFDN_DISABLE_ALIGN_CHECK_SIZE
     if (diff > space) {
-        return MGBASE_NULLPTR;
+        return nullptr;
     }
     else
     #endif
@@ -40,14 +41,15 @@ inline void* align_downward_nocheck(
 }
 
 inline void* align_call_stack_nocheck(
-    const mgbase::size_t    alignment
-,   const mgbase::size_t    size
+    const mefdn::size_t    alignment
+,   const mefdn::size_t    size
 ,   void*&                  ptr
-,   mgbase::size_t&         space
+,   mefdn::size_t&         space
 )
 {
     return align_downward_nocheck(alignment, size, ptr, space);
 }
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 

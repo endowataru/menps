@@ -17,7 +17,12 @@ struct nontype
     }
 };
 
-#define MEFDN_NONTYPE(v)    (::mefdn::nontype<decltype(v), v>{})
+#define MEFDN_NONTYPE(...) \
+    (::menps::mefdn::nontype<decltype(__VA_ARGS__), __VA_ARGS__>{})
+
+// old macro used in templates
+#define MEFDN_NONTYPE_TEMPLATE(...) \
+    (::menps::mefdn::nontype<decltype(__VA_ARGS__), __VA_ARGS__>{})
 
 } // namespace mefdn
 } // namespace menps

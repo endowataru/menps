@@ -8,6 +8,8 @@ namespace mefdn {
 
 using std::atomic;
 
+using std::atomic_thread_fence;
+
 using std::memory_order_relaxed;
 using std::memory_order_consume;
 using std::memory_order_acquire;

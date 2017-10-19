@@ -224,7 +224,7 @@ decltype(f(&g, 123)) x;
 int main() { return 0; }
 " MEFDN_CXX_SFINAE_EXPR)
 
-message(STATUS "Generate mefdn/config.h ...")
+message(STATUS "Generate menps/mefdn/config.h ...")
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 message(STATUS "MEFDN_PROFILER_USE_GPROF=${MEFDN_PROFILER_USE_GPROF}")
 message(STATUS "MEFDN_PROFILER_USE_GPERFTOOLS=${MEFDN_PROFILER_USE_GPERFTOOLS}")

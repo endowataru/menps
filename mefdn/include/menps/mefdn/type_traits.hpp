@@ -15,6 +15,7 @@ using std::remove_extent;
 using std::remove_cv;
 using std::result_of;
 using std::decay;
+using std::is_trivially_copyable;
 
 } // namespace mefdn
 } // namespace menps
