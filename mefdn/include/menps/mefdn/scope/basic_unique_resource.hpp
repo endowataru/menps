@@ -1,15 +1,12 @@
 
 #pragma once
 
-#include <mgbase/crtp_base.hpp>
-#include <mgbase/tuple/tuple.hpp>
-#include <mgbase/type_traits/conditional.hpp>
-#include <mgbase/type_traits/is_reference.hpp>
-#include <mgbase/type_traits/remove_reference.hpp>
-#include <mgbase/utility/move.hpp>
-#include <mgbase/explicit_operator_bool.hpp>
+#include <menps/mefdn/tuple/tuple.hpp>
+#include <menps/mefdn/type_traits.hpp>
+#include <menps/mefdn/utility.hpp>
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 class basic_unique_resource_access
 {
@@ -33,7 +30,7 @@ public:
 template <typename Policy>
 class basic_unique_resource
 {
-    MGBASE_POLICY_BASED_CRTP(Policy)
+    MEFDN_DEFINE_DERIVED(Policy)
     
     typedef typename Policy::resource_type  resource_type;
     typedef typename Policy::deleter_type   deleter_type;
@@ -44,7 +41,7 @@ public:
     { }
     
     basic_unique_resource(basic_unique_resource&& other)
-        : t_(other.release(), mgbase::move(other.get_deleter()))
+        : t_(other.release(), mefdn::move(other.get_deleter()))
     { 
         
     }
@@ -52,18 +49,18 @@ public:
     basic_unique_resource(const basic_unique_resource&) = delete;
     
     basic_unique_resource(resource_type&& resource)
-        : t_(mgbase::move(resource), deleter_type{})
+        : t_(mefdn::move(resource), deleter_type{})
     { }
     
 protected:
-    typedef typename mgbase::conditional<
-        mgbase::is_reference<deleter_type>::value
+    typedef typename mefdn::conditional<
+        mefdn::is_reference<deleter_type>::value
     ,   deleter_type
     ,   const deleter_type&
     >::type
     const_ref_deleter_type;
     
-    typedef typename mgbase::remove_reference<deleter_type>::type &&
+    typedef typename mefdn::remove_reference<deleter_type>::type &&
     rv_ref_deleter_type;
     
 public:
@@ -78,7 +75,7 @@ public:
         resource_type&&     resource
     ,   rv_ref_deleter_type   deleter
     )
-        : t_(resource, mgbase::move(deleter))
+        : t_(resource, mefdn::move(deleter))
     { }
     
     ~basic_unique_resource()
@@ -90,23 +87,23 @@ public:
     {
         this->reset(other.release());
         
-        this->get_deleter() = mgbase::move(other.get_deleter());
+        this->get_deleter() = mefdn::move(other.get_deleter());
         
         return *this;
     }
     
     basic_unique_resource& operator = (const basic_unique_resource&) = delete;
     
-    deleter_type& get_deleter() MGBASE_NOEXCEPT {
-        return mgbase::get<1>(t_);
+    deleter_type& get_deleter() noexcept {
+        return mefdn::get<1>(t_);
     }
-    const deleter_type& get_deleter() const MGBASE_NOEXCEPT {
-        return mgbase::get<1>(t_);
+    const deleter_type& get_deleter() const noexcept {
+        return mefdn::get<1>(t_);
     }
     
-    MGBASE_EXPLICIT_OPERATOR_BOOL()
+    MEFDN_EXPLICIT_OPERATOR_BOOL()
     
-    bool operator ! () const MGBASE_NOEXCEPT
+    bool operator ! () const noexcept
     {
         auto& self = this->derived();
         
@@ -120,7 +117,7 @@ public:
         if (basic_unique_resource_access::is_owned(self))
         {
             // Destroy the resource.
-            this->get_deleter()(mgbase::move(this->get_resource()));
+            this->get_deleter()(mefdn::move(this->get_resource()));
             
             // Set this unowned because the resource was deleted.
             basic_unique_resource_access::set_unowned(self);
@@ -136,7 +133,7 @@ public:
         auto& resource = this->get_resource();
         
         // Move-assign the resource.
-        resource = mgbase::move(new_resource);
+        resource = mefdn::move(new_resource);
         
         if (! basic_unique_resource_access::is_owned(self))
         {
@@ -149,7 +146,7 @@ public:
     
     resource_type release()
     {
-        auto ret = mgbase::move(this->get_resource());
+        auto ret = mefdn::move(this->get_resource());
         
         auto& self = this->derived();
         basic_unique_resource_access::set_unowned(self);
@@ -157,12 +154,12 @@ public:
         return ret;
     }
     
-    const resource_type& get() const MGBASE_NOEXCEPT
+    const resource_type& get() const noexcept
     {
         return this->get_resource();
     }
     
-    const resource_type& operator -> () const MGBASE_NOEXCEPT
+    const resource_type& operator -> () const noexcept
     {
         return get();
     }
@@ -174,16 +171,17 @@ public:
     }
     
 protected:
-    resource_type& get_resource() MGBASE_NOEXCEPT {
-        return mgbase::get<0>(t_);
+    resource_type& get_resource() noexcept {
+        return mefdn::get<0>(t_);
     }
-    const resource_type& get_resource() const MGBASE_NOEXCEPT {
-        return mgbase::get<0>(t_);
+    const resource_type& get_resource() const noexcept {
+        return mefdn::get<0>(t_);
     }
     
 private:
-    mgbase::tuple<resource_type, deleter_type> t_;
+    mefdn::tuple<resource_type, deleter_type> t_;
 };
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 
