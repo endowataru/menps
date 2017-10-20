@@ -1,6 +1,8 @@
 
 #pragma once
 
+// TODO: Deprecate this header
+
 #include "callback.hpp"
 #include <menps/mefdn/atomic.hpp>
 #include <menps/mefdn/nontype.hpp>
