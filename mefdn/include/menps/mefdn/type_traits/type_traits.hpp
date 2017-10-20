@@ -16,6 +16,7 @@ using std::decay;
 using std::is_reference;
 using std::conditional;
 using std::remove_reference;
+using std::is_integral;
 
 } // namespace mefdn
 } // namespace menps
