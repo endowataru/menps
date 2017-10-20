@@ -62,6 +62,8 @@ private:
         self.template jump_context<derived_type>(self.ctx_, &self);
         
         // this context is abandoned.
+        
+        MEFDN_UNREACHABLE();
     }
     
     struct functor
