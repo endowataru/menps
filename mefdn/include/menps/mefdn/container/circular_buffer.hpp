@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <menps/mefdn/scoped_ptr.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/assert.hpp>
 
 namespace menps {
@@ -175,14 +175,12 @@ public:
         set_capacity(cap);
     }
     
-    ~circular_buffer() MEFDN_EMPTY_DEFINITION
-    
     void set_capacity(size_type cap)
     {
         // TODO: Moving elements is not supported yet.
         MEFDN_ASSERT(ptr_ == nullptr);
         
-        ptr_ = new T[cap];
+        ptr_.reset(new T[cap]);
         capacity_ = cap;
     }
 
@@ -192,7 +190,7 @@ private:
     T* data() const noexcept { return ptr_.get(); }
     size_type capacity() const noexcept { return capacity_; }
     
-    mefdn::scoped_ptr<T []> ptr_;
+    mefdn::unique_ptr<T []> ptr_;
     size_type capacity_;
 };
 

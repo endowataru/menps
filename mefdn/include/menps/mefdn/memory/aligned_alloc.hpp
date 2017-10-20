@@ -1,25 +1,26 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
-#include <mgbase/assert.hpp>
-#include <mgbase/arithmetic.hpp>
+#include <menps/mefdn/lang.hpp>
+#include <menps/mefdn/assert.hpp>
+#include <menps/mefdn/arithmetic.hpp>
 #include <cstdlib>
 #include <iostream>
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 struct alloc_error { };
 
 namespace /*unnamed*/ {
 
 inline void* aligned_alloc(std::size_t alignment, std::size_t size) {
-    MGBASE_ASSERT(alignment > 0);
-    MGBASE_ASSERT(size > 0);
-    MGBASE_ASSERT(size % alignment == 0);
+    MEFDN_ASSERT(alignment > 0);
+    MEFDN_ASSERT(size > 0);
+    MEFDN_ASSERT(size % alignment == 0);
     
     void* result;
-    /*#ifdef MGBASE_CXX11_SUPPORTED
+    /*#ifdef MEFDN_CXX11_SUPPORTED
         result = std::aligned_alloc(alignment, size);
     #else*/
         if (alignment < sizeof(void*)) {
@@ -33,11 +34,12 @@ inline void* aligned_alloc(std::size_t alignment, std::size_t size) {
         if (ret != 0)
             throw alloc_error();
     //#endif
-    MGBASE_ASSERT(result != MGBASE_NULLPTR);
+    MEFDN_ASSERT(result != nullptr);
     return result;
 }
 
 } // unnamed namespace
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 

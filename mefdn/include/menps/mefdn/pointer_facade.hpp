@@ -1,14 +1,15 @@
 
 #pragma once
 
-#include <mgbase/lang.hpp>
-#include <mgbase/type_traits.hpp>
+#include <menps/mefdn/lang.hpp>
+#include <menps/mefdn/type_traits.hpp>
 
-#include <mgbase/renamed_type.hpp>
+#include <menps/mefdn/renamed_type.hpp>
 
 #include <cstring>
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 namespace detail {
 
@@ -17,7 +18,7 @@ namespace detail {
  */
 template <typename From, typename To>
 struct implicit_pointer_castable
-    : mgbase::is_convertible<
+    : mefdn::is_convertible<
         typename get_actual_type<From>::type*
     ,   typename get_actual_type<To>::type*
     > { };
@@ -27,8 +28,8 @@ struct implicit_pointer_castable
  */
 template <typename From, typename To>
 struct reinterpret_pointer_castable
-    : mgbase::integral_constant<bool,
-        !(mgbase::is_const<From>::value && !mgbase::is_const<To>::value)
+    : mefdn::integral_constant<bool,
+        !(mefdn::is_const<From>::value && !mefdn::is_const<To>::value)
     > { };
 
 }
@@ -39,14 +40,14 @@ template <template <typename> class Derived, typename T>
 class pointer_facade;
 
 template <typename To, template <typename> class Derived, typename From>
-inline typename mgbase::enable_if<
+inline typename mefdn::enable_if<
     detail::implicit_pointer_castable<From, To>::value
 ,   Derived<To>
 >::type
 implicit_pointer_cast(const pointer_facade<Derived, From>&);
 
 template <typename To, template <typename> class Derived, typename From>
-inline typename mgbase::enable_if<
+inline typename mefdn::enable_if<
     detail::reinterpret_pointer_castable<From, To>::value
 ,   Derived<To>
 >::type
@@ -82,7 +83,7 @@ private:
     }
     
     template <template <typename> class Derived, typename T>
-    static void advance(pointer_facade<Derived, T>& ptr, const mgbase::ptrdiff_t diff) {
+    static void advance(pointer_facade<Derived, T>& ptr, const mefdn::ptrdiff_t diff) {
         derived(ptr).advance(diff);
     }
     
@@ -101,14 +102,14 @@ private:
     friend class pointer_facade;
     
     template <typename To, template <typename> class Derived, typename From>
-    friend typename mgbase::enable_if<
+    friend typename mefdn::enable_if<
         detail::implicit_pointer_castable<From, To>::value
     ,   Derived<To>
     >::type
     implicit_pointer_cast(const pointer_facade<Derived, From>& ptr);
     
     template <typename To, template <typename> class Derived, typename From>
-    friend typename mgbase::enable_if<
+    friend typename mefdn::enable_if<
         detail::reinterpret_pointer_castable<From, To>::value
     ,   Derived<To>
     >::type
@@ -116,7 +117,7 @@ private:
 };
 
 template <typename To, template <typename> class Derived, typename From>
-inline typename mgbase::enable_if<
+inline typename mefdn::enable_if<
     detail::implicit_pointer_castable<From, To>::value
 ,   Derived<To>
 >::type
@@ -125,7 +126,7 @@ implicit_pointer_cast(const pointer_facade<Derived, From>& ptr) {
 }
 
 template <typename To, template <typename> class Derived, typename From>
-inline typename mgbase::enable_if<
+inline typename mefdn::enable_if<
     detail::reinterpret_pointer_castable<From, To>::value
 ,   Derived<To>
 >::type
@@ -137,10 +138,10 @@ namespace detail {
 
 template <template <typename> class Derived, typename T,
     bool HasMembers =
-        mgbase::is_compound<typename mgbase::remove_cv<T>::type>::value
-        && !mgbase::is_array<typename mgbase::remove_cv<T>::type>::value
-        && !mgbase::is_pointer<typename mgbase::remove_cv<T>::type>::value
-        && !mgbase::is_enum<typename mgbase::remove_cv<T>::type>::value
+        mefdn::is_compound<typename mefdn::remove_cv<T>::type>::value
+        && !mefdn::is_array<typename mefdn::remove_cv<T>::type>::value
+        && !mefdn::is_pointer<typename mefdn::remove_cv<T>::type>::value
+        && !mefdn::is_enum<typename mefdn::remove_cv<T>::type>::value
 >
 class pointer_facade_member { };
 
@@ -153,18 +154,18 @@ public:
     template <typename U>
     Derived<U> member(U (T::* const q)) const {
         // Calculate the offset of the member q in the struct T.
-        const mgbase::ptrdiff_t offset =
-            reinterpret_cast<const mgbase::uint8_t*>(&(static_cast<T*>(MGBASE_NULLPTR)->*q))
-            - static_cast<const mgbase::uint8_t*>(MGBASE_NULLPTR);
+        const mefdn::ptrdiff_t offset =
+            reinterpret_cast<const mefdn::uint8_t*>(&(static_cast<T*>(nullptr)->*q))
+            - static_cast<const mefdn::uint8_t*>(nullptr);
         
-        Derived<mgbase::uint8_t> byte_ptr = pointer_core_access::cast_to<mgbase::uint8_t>(derived());
+        Derived<mefdn::uint8_t> byte_ptr = pointer_core_access::cast_to<mefdn::uint8_t>(derived());
         pointer_core_access::advance(byte_ptr, offset);
         return pointer_core_access::cast_to<U>(byte_ptr);
     }
     
 private:
-          derived_type& derived()       { return static_cast<      derived_type&>(*this); }
-    const derived_type& derived() const { return static_cast<const derived_type&>(*this); }
+          derived_type& derived()       noexcept { return static_cast<      derived_type&>(*this); }
+    const derived_type& derived() const noexcept { return static_cast<const derived_type&>(*this); }
 };
 
 template <template <typename> class Derived, typename T>
@@ -173,20 +174,20 @@ class pointer_facade_operators
     typedef Derived<T>                      derived_type;
     
 public:
-    derived_type operator += (mgbase::ptrdiff_t diff) {
+    derived_type operator += (mefdn::ptrdiff_t diff) {
         pointer_core_access::advance(derived(), diff);
         return derived();
     }
     
-    derived_type operator + (mgbase::ptrdiff_t diff) const {
+    derived_type operator + (mefdn::ptrdiff_t diff) const {
         derived_type result = derived();
         result += diff;
         return result;
     }
 
 private:
-          derived_type& derived()       MGBASE_NOEXCEPT { return static_cast<      derived_type&>(*this); }
-    const derived_type& derived() const MGBASE_NOEXCEPT { return static_cast<const derived_type&>(*this); }
+          derived_type& derived()       noexcept { return static_cast<      derived_type&>(*this); }
+    const derived_type& derived() const noexcept { return static_cast<const derived_type&>(*this); }
 };
 
 }
@@ -201,15 +202,16 @@ public:
         return implicit_pointer_cast<const T>(*this);
     }
     
-    bool operator == (mgbase::nullptr_t) const {
+    bool operator == (mefdn::nullptr_t) const {
         return pointer_core_access::is_null(*this);
     }
 };
 
 template <template <typename> class Derived, typename T>
-inline bool operator != (const pointer_facade<Derived, T>& ptr, mgbase::nullptr_t) {
-    return !(ptr == MGBASE_NULLPTR);
+inline bool operator != (const pointer_facade<Derived, T>& ptr, mefdn::nullptr_t) {
+    return !(ptr == nullptr);
 }
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 

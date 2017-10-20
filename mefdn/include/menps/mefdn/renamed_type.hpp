@@ -1,16 +1,19 @@
 
 #pragma once
 
-#include <mgbase/type_traits.hpp>
+// TODO: Deprecated
 
-namespace mgbase {
+#include <menps/mefdn/type_traits.hpp>
+
+namespace menps {
+namespace mefdn {
 
 template <typename Defined>
 struct renamed_type {
     typedef Defined     type;
 };
 
-#define MGBASE_DEFINE_RENAMED_TYPE(Defined, Actual)  \
+#define MEFDN_DEFINE_RENAMED_TYPE(Defined, Actual)  \
     namespace mgbase { \
         template <> \
         struct renamed_type<Defined> { \
@@ -30,5 +33,6 @@ struct get_actual_type<const T>
     typedef const typename renamed_type<T>::type  type;
 };
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
 

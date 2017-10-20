@@ -50,7 +50,8 @@
 
 // Standard features in C++14 or later
 
-#define MEFDN_STATIC_ASSERT(expr)   static_assert(expr, #expr)
+#define MEFDN_STATIC_ASSERT(expr)           static_assert(expr, #expr)
+#define MEFDN_STATIC_ASSERT_MSG(expr, msg)  static_assert(expr, msg)
 
 #if (__cplusplus >= 201403L)
     #define MEFDN_DEPRECATED        [[deprecated]]
@@ -108,6 +109,8 @@
     #define MEFDN_COVERED_SWITCH()  default: MEFDN_UNREACHABLE(); break;
 #endif
 
+#define MEFDN_EXTERN_C_BEGIN    extern "C" {
+#define MEFDN_EXTERN_C_END      }
 
 namespace menps {
 namespace mefdn {
@@ -147,6 +150,8 @@ using std::ptrdiff_t;
 
 using std::intptr_t;
 using std::uintptr_t;
+
+using std::nullptr_t;
 
 } // namespace mefdn
 } // namespace menps
