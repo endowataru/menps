@@ -201,8 +201,6 @@ TEST_F(RmaAtomic, AtomicWrite)
         if (mecom::current_process_id() == 0) {
             ASSERT_EQ(some_const + proc, *lptr);
         }
-        
-        mecom::collective::barrier();
     }
 }
 
