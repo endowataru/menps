@@ -11,8 +11,10 @@ template <typename T>
 class async_status
 {
 public:
+    #if 0
     async_status(const async_status&) /*may throw*/ = default;
     async_status& operator = (const async_status&) /*may throw*/ = default;
+    #endif
     
     bool is_ready() const {
         return this->ready_;
@@ -54,8 +56,10 @@ template <>
 class async_status<void>
 {
 public:
+    #if 0
     async_status(const async_status&) noexcept = default;
     async_status& operator = (const async_status&) noexcept = default;
+    #endif
     
     bool is_ready() const noexcept {
         return this->ready_;
