@@ -1,0 +1,97 @@
+
+#include "bench_rma_latency.hpp"
+#include <menps/mefdn/external/fmt.hpp>
+#include <fstream>
+#include "basic_args.hpp"
+
+int main(int argc, char* argv[])
+{
+    mecom::initialize(&argc, &argv);
+    
+    const auto p = get_basic_args(argc, argv);
+    
+    const bool is_master =
+        p.master_proc == static_cast<mefdn::int32_t>(mecom::current_process_id());
+    
+    bench_rma_latency bench;
+    
+    bench.set_num_threads(p.num_threads);
+    bench.set_num_startup_samples(p.num_startup_samples);
+    bench.set_msg_size(p.msg_size);
+    bench.set_target_proc(p.master_proc >= 0 ? static_cast<mecom::process_id_t>(p.master_proc) : 0);
+    
+    bench.collective_setup();
+    
+    if (!is_master)
+    {
+        bench.start();
+        
+        mefdn::this_thread::sleep_for_ns(static_cast<mefdn::uint64_t>(p.duration * 1e9));
+        
+        bench.finish();
+    }
+    
+    mecom::collective::barrier();
+    
+    using std::fstream;
+    using fmt::print;
+    
+    #define TAB "    "
+    
+    if (mecom::current_process_id() == 0) {
+        fstream ofs{p.output_file.c_str(), fstream::out | fstream::app};
+        
+        const auto nqps_str = getenv("MECOM_IBV_NUM_QPS_PER_PROC");
+        const int nqps = nqps_str ? atoi(nqps_str) : -1;
+        
+        const int nwks = ult::get_num_workers();
+        
+        print(ofs, "- exp_type: bench-latency-read\n");
+        print(ofs, "  number_of_processes: {}\n", mecom::number_of_processes());
+        print(ofs, "  number_of_threads: {}\n", p.num_threads);
+        print(ofs, "  number_of_endpoints: {}\n", nqps);
+        print(ofs, "  number_of_workers: {}\n", nwks);
+        print(ofs, "  duration: {} # [sec]\n", p.duration);
+        print(ofs, "  number_of_startup_samples: {}\n", p.num_startup_samples);
+        print(ofs, "  master_proc: {}\n", p.master_proc);
+        print(ofs, "  message_size: {} # [bytes]\n", p.msg_size);
+        print(ofs, "  process_results:\n");
+    }
+    
+    mecom::collective::barrier();
+    
+    for (mecom::process_id_t proc = 0; proc < mecom::number_of_processes(); ++proc)
+    {
+        if (!is_master && proc == mecom::current_process_id())
+        {
+            fstream ofs{p.output_file.c_str(), fstream::out | fstream::app};
+            
+            print(ofs, TAB "- process_id: {}\n", proc);
+            print(ofs, TAB "  thread_results:\n");
+            
+            for (mefdn::uint32_t thread_id = 0; thread_id < p.num_threads; ++thread_id)
+            {
+                auto& info = bench.get_thread_info(thread_id);
+                
+                print(ofs, TAB TAB "- thread_id: {}\n", thread_id);
+                print(ofs, TAB TAB "  count: {}\n", info.count);
+                print(ofs, TAB TAB "  latency: {} # [cycles]\n", info.latency.summary());
+                print(ofs, TAB TAB "  overhead: {} # [cycles]\n", info.overhead.summary());
+            }
+        }
+        
+        mecom::collective::barrier();
+    }
+    
+    if (mecom::current_process_id() == 0) {
+        fstream ofs{p.output_file.c_str(), fstream::out | fstream::app};
+        ofs << std::endl;
+    }
+    
+    #undef TAB
+    
+    mecom::finalize();
+    
+    return 0;
+}
+
