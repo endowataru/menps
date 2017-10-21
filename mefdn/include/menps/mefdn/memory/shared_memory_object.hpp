@@ -1,15 +1,16 @@
 
 #pragma once
 
-#include <mgbase/utility.hpp>
-#include <mgbase/logger.hpp>
+#include <menps/mefdn/utility.hpp>
+#include <menps/mefdn/logger.hpp>
 
 // for shm_open, shm_unlink
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 
-namespace mgbase {
+namespace menps {
+namespace mefdn {
 
 class shared_memory_object_error
     : public std::exception { };
@@ -25,7 +26,7 @@ public:
         fd_ = shm_open(filename, oflag, mode);
         
         if (fd_ < 0) {
-            MGBASE_LOG_FATAL(
+            MEFDN_LOG_FATAL(
                 "msg:shm_open() failed.\t"
                 "filename:{}\t"
                 "oflag:{}\t"
@@ -42,7 +43,7 @@ public:
             throw shared_memory_object_error{};
         }
         
-        MGBASE_LOG_DEBUG(
+        MEFDN_LOG_DEBUG(
             "msg:Called shm_open().\t"
             "filename:{}\t"
             "oflag:{}\t"
@@ -63,7 +64,7 @@ public:
     shared_memory_object(shared_memory_object&& other)
         : fd_{-1}
     {
-        *this = mgbase::move(other);
+        *this = mefdn::move(other);
     }
     
     shared_memory_object& operator = (shared_memory_object&& other)
@@ -71,7 +72,7 @@ public:
         unlink();
         
         fd_ = other.fd_;
-        filename_ = mgbase::move(other.filename_);
+        filename_ = mefdn::move(other.filename_);
         
         return *this;
     }
@@ -81,9 +82,9 @@ public:
         unlink();
     }
     
-    int get_fd() const MGBASE_NOEXCEPT
+    int get_fd() const noexcept
     {
-        MGBASE_ASSERT(fd_ >= 0);
+        MEFDN_ASSERT(fd_ >= 0);
         return fd_;
     }
     
@@ -99,4 +100,6 @@ private:
     std::string filename_;
 };
 
-} // namespace mgbase
+} // namespace mefdn
+} // namespace menps
+
