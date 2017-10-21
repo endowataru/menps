@@ -9,7 +9,7 @@ namespace meult {
 template <typename Policy>
 class thread_specific_worker_base
 {
-    MEFDN_POLICY_BASED_CRTP(Policy)
+    MEFDN_DEFINE_DERIVED(Policy)
     
 private:
     typedef typename Policy::ult_ref_type       ult_ref_type;
