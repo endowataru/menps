@@ -21,7 +21,8 @@ public:
     alltoall_ptr_group(const alltoall_ptr_group&) = delete;
     alltoall_ptr_group& operator = (const alltoall_ptr_group&) = delete;
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_1(alltoall_ptr_group, ptrs_)
+    alltoall_ptr_group(alltoall_ptr_group&&) noexcept = default;
+    alltoall_ptr_group& operator = (alltoall_ptr_group&&) noexcept = default;
     
     T* at_process(const process_id_t proc) const noexcept
     {

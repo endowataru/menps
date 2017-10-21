@@ -42,16 +42,19 @@ class unique_local_ptr
     typedef typename policy::resource_type          resource_type;
     
 public:
-    unique_local_ptr() noexcept = default;
+    unique_local_ptr() /*noexcept (TODO)*/ = default;
     
     explicit unique_local_ptr(resource_type ptr) noexcept
         : base(mefdn::move(ptr))
     { }
     
-    MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(unique_local_ptr, base)
+    // move-only
     
     unique_local_ptr(const unique_local_ptr&) = delete;
     unique_local_ptr& operator = (const unique_local_ptr&) = delete;
+    
+    unique_local_ptr(unique_local_ptr&&) /*noexcept (TODO) */ = default;
+    unique_local_ptr& operator = (unique_local_ptr&&) /*noexcept (TODO)*/ = default;
     
 private:
     friend class mefdn::basic_unique_resource_access;
