@@ -6,5 +6,5 @@ add_subdirectory(./meult)
 add_subdirectory(./medev)
 add_subdirectory(./mecom)
 add_subdirectory(./medsm)
-#add_subdirectory(./mgth)
+add_subdirectory(./meth)
 
