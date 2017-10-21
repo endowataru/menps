@@ -35,6 +35,16 @@
     #define MEFDN_COMPILER_INTEL
 #endif
 
+// OS Compatibility
+
+#if (defined(__linux__))
+    #define MEFDN_OS_LINUX
+#elif (defined(__APPLE__))
+    #define MEFDN_OS_MAC_OS_X
+#else
+    #error "Unsupported OS"
+#endif
+
 // Macros
 
 #define MEFDN_DEFINE_DERIVED(Policy)    \
