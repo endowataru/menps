@@ -69,7 +69,7 @@ int main()
     
     const uct::am_id_t am_id = 1;
     
-    iface.set_am_handler(am_id, &am_handler_func, nullptr, 0);
+    iface.set_am_handler(am_id, &am_handler_func, nullptr, UCT_CB_FLAG_ASYNC);
     
     auto iface_addr = iface.get_address();
     auto dev_addr = iface.get_device_address();
