@@ -1,4 +1,6 @@
 
+
+
 Components
 ----------
 
@@ -35,6 +37,11 @@ Components
 +---------------------+
 ```
 
+Requirements
+------------
+
+- GCC 4.8 or later
+- CMake 3.0 or later.
 
 How to Build
 ------------
