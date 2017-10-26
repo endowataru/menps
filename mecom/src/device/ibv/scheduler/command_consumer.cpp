@@ -8,7 +8,7 @@
 #include <menps/mecom/ult.hpp>
 #include <menps/mefdn/container/index_list.hpp>
 #include <menps/mefdn/vector.hpp>
-#include <menps/mefdn/shared_ptr.hpp>
+#include <menps/mefdn/memory/shared_ptr.hpp>
 
 namespace menps {
 namespace mecom {

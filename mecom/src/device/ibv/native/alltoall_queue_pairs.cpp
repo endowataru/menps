@@ -1,8 +1,7 @@
 
 #include "alltoall_queue_pairs.hpp"
 #include <menps/mecom/collective.hpp>
-#include <menps/mefdn/scoped_ptr.hpp>
-#include <menps/mefdn/utility/move.hpp>
+#include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/logger.hpp>
 
 namespace menps {

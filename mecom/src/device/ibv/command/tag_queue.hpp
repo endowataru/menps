@@ -47,10 +47,13 @@ public:
             : base(mefdn::move(t))
             { }
         
+        // move-only
+        
         start_transaction(const start_transaction&) = delete;
         start_transaction& operator = (const start_transaction&) = delete;
         
-        MEFDN_DEFINE_DEFAULT_MOVE_NOEXCEPT_BASE_0(start_transaction, base)
+        start_transaction(start_transaction&&) noexcept = default;
+        start_transaction& operator = (start_transaction&&) noexcept = default;
         
         void commit()
         {

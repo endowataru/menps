@@ -4,7 +4,7 @@
 #include "common/rma/offload_requester.hpp"
 #include <menps/mefdn/arithmetic.hpp>
 #include <menps/mefdn/logger.hpp>
-#include <menps/mefdn/shared_ptr.hpp>
+#include <menps/mefdn/memory/shared_ptr.hpp>
 
 namespace menps {
 namespace mecom {

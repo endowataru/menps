@@ -71,7 +71,7 @@ public:
         
         ibv_send_wr* bad_wr = nullptr;
         
-        MEFDN_UNUSED
+        MEFDN_MAYBE_UNUSED
         const bool success = conf_.qp.try_post_send(wr_buf_.front(), &bad_wr);
         
         wr_buf_.relink();

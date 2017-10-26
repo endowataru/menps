@@ -5,7 +5,7 @@
 #include <menps/mefdn/arithmetic.hpp>
 #include <menps/mefdn/algorithm.hpp>
 #include <menps/mefdn/logger.hpp>
-#include <menps/mefdn/shared_ptr.hpp>
+#include <menps/mefdn/memory/shared_ptr.hpp>
 #include "device/ibv/command/poll_thread.hpp"
 #include "device/ibv/command/completion_selector.hpp"
 #include "device/ibv/native/alltoall_queue_pairs.hpp"
