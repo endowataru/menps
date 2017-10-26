@@ -8,6 +8,9 @@ int main() { }
 
 #else
 
+namespace mecom = menps::mecom;
+namespace medsm = menps::medsm;
+
 MEDSM_GLOBAL_VARIABLE int g_val;
 
 int main(int argc, char* argv[])
