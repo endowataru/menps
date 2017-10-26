@@ -65,7 +65,7 @@ public:
         const auto& h = handlers_[handler_id];
         MEFDN_ASSERT(h.cb);
         
-        untyped::handler_result r{ h.cb(hc) };
+        auto r = h.cb(hc);
         
         MEFDN_LOG_DEBUG("msg:Finished callback.");
         
