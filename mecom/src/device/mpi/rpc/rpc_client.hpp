@@ -80,6 +80,9 @@ public:
                     rpc::detail::allocate_message(16 /*TODO*/, MECOM_RPC_MAX_DATA_SIZE)
                 );
             
+            // TODO: The result of recv_async is ignored.
+            //       It seems unnecessary to synchronize this recv
+            //       because just waiting for the send operation is sufficient.
             mi.recv_async(
                 rply_msg.get()                              // buf
             ,   static_cast<int>(rply_msg.size_in_bytes())  // size_in_bytes

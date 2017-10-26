@@ -122,6 +122,7 @@ private:
         ,   this->conf_.tag
         );
         
+        // TODO: The result of recv_async is ignored.
         this->conf_.mi->recv_async({
             {
                 &buf
