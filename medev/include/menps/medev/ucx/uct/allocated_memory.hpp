@@ -42,8 +42,8 @@ public:
     allocated_memory(const allocated_memory&) = delete;
     allocated_memory& operator = (const allocated_memory&) = delete;
     
-    allocated_memory(allocated_memory&&) noexcept = default;
-    allocated_memory& operator = (allocated_memory&) noexcept = default;
+    allocated_memory(allocated_memory&&) /*noexcept (TODO)*/ = default;
+    allocated_memory& operator = (allocated_memory&&) /*noexcept (TODO)*/ = default;
     
 private:
     friend class mefdn::basic_unique_resource_access;
@@ -60,7 +60,7 @@ private:
     }
 };
 
-allocated_memory allocate_memory(uct_iface_t* iface, size_t length, unsigned int flags);
+allocated_memory allocate_memory(uct_iface_t* iface, size_t length, unsigned int flags, const char* name);
 
 } // namespace uct
 } // namesapce ucx
