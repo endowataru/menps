@@ -43,7 +43,7 @@ inline void deallocate(const registered_buffer& buffer)
  */
 template <typename T>
 inline local_ptr<T> allocate(allocator& alloc, std::size_t number_of_elements = 1) {
-    untyped::registered_buffer buf = untyped::allocate(alloc, mefdn::runtime_size_of<T>() * number_of_elements);
+    untyped::registered_buffer buf = untyped::allocate(alloc, sizeof(T) * number_of_elements);
     return local_ptr<T>::cast_from(untyped::to_address(buf));
 }
 /**

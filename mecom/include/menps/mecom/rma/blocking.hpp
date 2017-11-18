@@ -154,7 +154,7 @@ struct async_closure
                 params.REMOTE##_proc \
             ,   params.REMOTE##_rptr.to_address() \
             ,   params.LOCAL##_lptr.to_address() \
-            ,   params.num_elems * mefdn::runtime_size_of<T>() \
+            ,   params.num_elems * sizeof(T) \
             }; \
         } \
     } /* namespace detail */ \

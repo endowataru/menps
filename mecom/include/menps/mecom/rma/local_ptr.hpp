@@ -5,7 +5,6 @@
 
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/pointer_facade.hpp>
-#include <menps/mefdn/runtime_sized.hpp>
 
 namespace menps {
 namespace mecom {
@@ -105,7 +104,7 @@ private:
     void advance(const mefdn::ptrdiff_t index) noexcept {
         addr_ = mecom::rma::untyped::advanced(
             addr_
-        ,   index * static_cast<mefdn::ptrdiff_t>(mefdn::runtime_size_of<T>())
+        ,   index * static_cast<mefdn::ptrdiff_t>(sizeof(T))
         );
     }
     

@@ -4,8 +4,6 @@
 #include <menps/mefdn/lang.hpp>
 #include <menps/mefdn/type_traits.hpp>
 
-#include <menps/mefdn/renamed_type.hpp>
-
 #include <cstring>
 
 namespace menps {
@@ -19,8 +17,8 @@ namespace detail {
 template <typename From, typename To>
 struct implicit_pointer_castable
     : mefdn::is_convertible<
-        typename get_actual_type<From>::type*
-    ,   typename get_actual_type<To>::type*
+        From *
+    ,   To *
     > { };
 
 /*
