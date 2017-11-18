@@ -43,8 +43,7 @@ public:
 
 mefdn::unique_ptr<rma::registrator> make_rma_registrator()
 {
-    // TODO: replace with make_unique
-    return mefdn::unique_ptr<rma::registrator>(new mpi_registrator);
+    return mefdn::make_unique<mpi_registrator>();
 }
 
 } // namespace mpi
