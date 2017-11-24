@@ -163,6 +163,8 @@ using std::uintptr_t;
 
 using std::nullptr_t;
 
+enum class byte : unsigned char {}; // added in C++17
+
 } // namespace mefdn
 } // namespace menps
 
