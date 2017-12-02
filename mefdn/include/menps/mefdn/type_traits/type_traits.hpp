@@ -28,6 +28,21 @@ using std::is_void;
 using std::remove_pointer;
 using std::add_lvalue_reference;
 
+template <typename T>
+using decay_t = typename decay<T>::type;
+
+template <typename T>
+using remove_cv_t = typename remove_cv<T>::type;
+
+template <typename T>
+using remove_const_t = typename remove_const<T>::type;
+
+template <typename T>
+using remove_extent_t = typename remove_extent<T>::type;
+
+template <typename T>
+using remove_pointer_t = typename remove_pointer<T>::type;
+
 } // namespace mefdn
 } // namespace menps
 
