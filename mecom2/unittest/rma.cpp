@@ -26,7 +26,7 @@ TEST(Rma, Basic)
         auto h = r.make_handle();
         
         int x = 123;
-        h.write(0, p, &x, 1);
+        h.write_nb(0, p, &x, 1);
         
         h.flush();
     }

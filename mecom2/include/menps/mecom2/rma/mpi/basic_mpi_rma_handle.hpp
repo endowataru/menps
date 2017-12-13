@@ -20,7 +20,7 @@ class basic_mpi_rma_handle
     using local_ptr_type  = typename P::template local_ptr<void>;
     
 public:
-    void untyped_read(
+    void untyped_read_nb(
         const process_id_type   src_proc
     ,   remote_ptr_type         src_rptr
     ,   local_ptr_type          dest_lptr
@@ -39,7 +39,7 @@ public:
         });
     }
     
-    void untyped_write(
+    void untyped_write_nb(
         const process_id_type   dest_proc
     ,   remote_ptr_type         dest_rptr
     ,   local_ptr_type          src_lptr

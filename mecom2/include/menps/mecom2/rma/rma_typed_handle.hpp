@@ -18,7 +18,7 @@ class rma_typed
     
 public:
     template <typename RemotePtr, typename LocalPtr>
-    void read(
+    void read_nb(
         const process_id_type   src_proc
     ,   RemotePtr&&             src_rptr
     ,   LocalPtr&&              dest_lptr
@@ -42,7 +42,7 @@ public:
         
         const auto num_bytes = num_elems * sizeof(remote_elem_type);
         
-        self.untyped_read(
+        self.untyped_read_nb(
             src_proc
         ,   mefdn::forward<RemotePtr>(src_rptr)
         ,   mefdn::forward<LocalPtr>(dest_lptr)
@@ -51,7 +51,7 @@ public:
     }
     
     template <typename RemotePtr, typename LocalPtr>
-    void write(
+    void write_nb(
         const process_id_type   dest_proc
     ,   RemotePtr&&             dest_rptr
     ,   LocalPtr&&              src_lptr
@@ -75,7 +75,7 @@ public:
         
         const auto num_bytes = num_elems * sizeof(remote_elem_type);
         
-        self.untyped_write(
+        self.untyped_write_nb(
             dest_proc
         ,   mefdn::forward<RemotePtr>(dest_rptr)
         ,   mefdn::forward<LocalPtr>(src_lptr)
