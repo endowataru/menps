@@ -4,6 +4,8 @@
 #include <menps/mecom2/rma/rma_typed_allocator.hpp>
 #include <menps/mecom2/rma/basic_unique_local_ptr.hpp>
 #include <menps/mecom2/rma/mpi/basic_mpi_rma_handle.hpp>
+#include <menps/mecom2/rma/basic_rma_itf.hpp>
+#include <menps/medev2/mpi.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -82,7 +84,8 @@ struct mpi_rma_policy
 };
 
 class mpi_rma
-    : public rma_typed_allocator<mpi_rma_policy>
+    : public basic_rma_itf<mpi_rma_policy>
+    , public rma_typed_allocator<mpi_rma_policy>
 {
 public:
     template <typename Conf>
