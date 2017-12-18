@@ -16,14 +16,16 @@ class basic_mpi_rma_handle
     using process_id_type = typename P::process_id_type;
     using size_type       = typename P::size_type;
     
-    using remote_ptr_type = typename P::template remote_ptr<void>;
-    using local_ptr_type  = typename P::template local_ptr<void>;
+    using void_lptr_type    = typename P::template remote_ptr<void>;
+    using void_rptr_type    = typename P::template local_ptr<void>;
+    using cvoid_rptr_type   = typename P::template remote_ptr<const void>;
+    using cvoid_lptr_type   = typename P::template local_ptr<const void>;
     
 public:
     void untyped_read_nb(
         const process_id_type   src_proc
-    ,   remote_ptr_type         src_rptr
-    ,   local_ptr_type          dest_lptr
+    ,   cvoid_rptr_type         src_rptr
+    ,   void_lptr_type          dest_lptr
     ,   const size_type         size_in_bytes
     ) {
         auto& self = this->derived();
@@ -41,8 +43,8 @@ public:
     
     void untyped_write_nb(
         const process_id_type   dest_proc
-    ,   remote_ptr_type         dest_rptr
-    ,   local_ptr_type          src_lptr
+    ,   void_rptr_type          dest_rptr
+    ,   cvoid_lptr_type         src_lptr
     ,   const size_type         size_in_bytes
     ) {
         auto& self = this->derived();
