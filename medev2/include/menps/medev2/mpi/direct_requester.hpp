@@ -187,6 +187,21 @@ public:
         );
     }
     
+    void compare_and_swap(const compare_and_swap_params& p)
+    {
+        mpi_error::check(
+            MPI_Compare_and_swap(
+                p.desired_ptr   // origin_addr
+            ,   p.expected_ptr  // compare_addr
+            ,   p.result_ptr    // result_addr
+            ,   p.datatype      // datatype
+            ,   p.target_rank   // target_rank
+            ,   p.target_index  // target_disp
+            ,   p.win
+            )
+        );
+    }
+    
     void win_flush_all(const win_flush_all_params& p)
     {
         mpi_error::check(

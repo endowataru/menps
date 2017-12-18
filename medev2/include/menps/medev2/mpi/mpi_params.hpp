@@ -82,6 +82,30 @@ struct put_params
     MPI_Win     win;
 };
 
+struct compare_and_swap_params
+{
+    const void*     desired_ptr;
+    const void*     expected_ptr;
+    void*           result_ptr;
+    MPI_Datatype    datatype;
+    int             target_rank;
+    MPI_Aint        target_index;
+    MPI_Win         win;
+};
+
+#if 0
+struct fetch_and_op_params
+{
+    mefdn::uint64_t    value;
+    void*               result_ptr;
+    MPI_Datatype        datatype;
+    int                 dest_rank;
+    MPI_Aint            dest_index;
+    MPI_Op              operation;
+    MPI_Win             win;
+};
+#endif
+
 struct win_flush_all_params
 {
     MPI_Win     win;
@@ -114,28 +138,6 @@ struct win_lock_all_params
 struct win_unlock_all_params
 {
     MPI_Win     win;
-};
-
-struct compare_and_swap_params
-{
-    mefdn::uint64_t     expected;
-    mefdn::uint64_t     desired;
-    void*               result_ptr;
-    MPI_Datatype        datatype;
-    int                 dest_rank;
-    MPI_Aint            dest_index;
-    MPI_Win             win;
-};
-
-struct fetch_and_op_params
-{
-    mefdn::uint64_t    value;
-    void*               result_ptr;
-    MPI_Datatype        datatype;
-    int                 dest_rank;
-    MPI_Aint            dest_index;
-    MPI_Op              operation;
-    MPI_Win             win;
 };
 
 } // namespace mpi
