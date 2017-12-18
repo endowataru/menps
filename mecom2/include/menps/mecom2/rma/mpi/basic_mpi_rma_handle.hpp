@@ -9,7 +9,7 @@ namespace mecom2 {
 
 template <typename P>
 class basic_mpi_rma_handle
-    : public rma_typed<P>
+    : public rma_typed_handle<P>
 {
     MEFDN_DEFINE_DERIVED(P)
     

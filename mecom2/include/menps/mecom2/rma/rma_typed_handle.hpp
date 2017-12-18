@@ -9,7 +9,7 @@ namespace menps {
 namespace mecom2 {
 
 template <typename P>
-class rma_typed
+class rma_typed_handle
 {
     MEFDN_DEFINE_DERIVED(P)
     
