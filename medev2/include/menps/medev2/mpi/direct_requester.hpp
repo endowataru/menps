@@ -111,6 +111,20 @@ public:
             )
         );
     }
+    void allgather(const allgather_params& p)
+    {
+        mpi_error::check(
+            MPI_Allgather(
+                p.src
+            ,   p.num_bytes
+            ,   MPI_BYTE
+            ,   p.dest
+            ,   p.num_bytes
+            ,   MPI_BYTE
+            ,   p.comm
+            )
+        );
+    }
     
     int get_count(const MPI_Status& status)
     {
@@ -209,6 +223,26 @@ public:
         mpi_error::check(
             MPI_Win_lock_all(p.assert, p.win)
         );
+    }
+    void win_unlock_all(const win_unlock_all_params& p) {
+        mpi_error::check(
+            MPI_Win_unlock_all(p.win)
+        );
+    }
+    
+    int comm_rank(const MPI_Comm comm) {
+        int rank = 0;
+        mpi_error::check(
+            MPI_Comm_rank(comm, &rank)
+        );
+        return rank;
+    }
+    int comm_size(const MPI_Comm comm) {
+        int rank = 0;
+        mpi_error::check(
+            MPI_Comm_size(comm, &rank)
+        );
+        return rank;  
     }
 };
 

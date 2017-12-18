@@ -110,7 +110,10 @@ struct win_lock_all_params
 {
     int         assert;
     MPI_Win     win;
-    
+};
+struct win_unlock_all_params
+{
+    MPI_Win     win;
 };
 
 struct compare_and_swap_params
