@@ -4,6 +4,7 @@
 #include <menps/mecom2/common.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/utility.hpp>
+#include <menps/mefdn/assert.hpp>
 #include <menps/mefdn/scope/basic_unique_resource.hpp>
 
 namespace menps {
@@ -16,15 +17,19 @@ class unique_local_ptr_deleter
     using resource_type = typename P::resource_type;
     
 public:
+    unique_local_ptr_deleter() noexcept
+        : alloc_(nullptr) { }
+    
     /*implicit*/ unique_local_ptr_deleter(allocator_type& alloc)
-        : alloc_(alloc) { }
+        : alloc_(&alloc) { }
     
     void operator() (resource_type p) const {
-        alloc_.untyped_deallocate(p);
+        MEFDN_ASSERT(alloc_ != nullptr);
+        alloc_->untyped_deallocate(p);
     }
     
 private:
-    allocator_type& alloc_;
+    allocator_type* alloc_;
 };
 
 template <typename P>
