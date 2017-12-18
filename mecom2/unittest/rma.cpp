@@ -129,15 +129,5 @@ TEST(Rma, Cas)
     
     if (cur_proc == 0)
         ASSERT_EQ(num_procs, *buf.local(0));
-    
-    #if 0
-    for (process_id_type proc = 0; proc < coll.number_of_processes(); ++proc)
-    {
-        rma.compare_and_swap(
-            
-        );
-    }
-    #endif
-    
 }
 
