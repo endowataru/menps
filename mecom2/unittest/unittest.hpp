@@ -7,5 +7,5 @@
 
 using namespace menps;
 
-extern mefdn::unique_ptr<medev2::mpi::direct_requester> g_mi;
+extern medev2::mpi::direct_requester* g_mi;
 
