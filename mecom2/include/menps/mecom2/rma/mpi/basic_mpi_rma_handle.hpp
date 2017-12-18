@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/rma/rma_typed_handle.hpp>
-#include <menps/medev2/mpi/mpi.hpp>
+#include <menps/medev2/mpi/mpi_datatype.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -56,6 +56,36 @@ public:
         ,   dest_proc
         ,   reinterpret_cast<MPI_Aint>(dest_rptr)
         ,   size_in_bytes
+        ,   win
+        });
+    }
+    
+    template <typename TargetPtr, typename ExpectedPtr, typename DesiredPtr, typename ResultPtr>
+    void compare_and_swap_nb(
+        const process_id_type   target_proc
+    ,   TargetPtr&&             target_rptr
+    ,   ExpectedPtr&&           expected_ptr
+    ,   DesiredPtr&&            desired_ptr
+    ,   ResultPtr&&             result_ptr
+    ) {
+        auto& self = this->derived();
+        auto& mi = self.get_mpi_interface();
+        const auto win = self.get_win();
+        
+        self.template check_cas_type_safety<TargetPtr, ExpectedPtr, DesiredPtr, ResultPtr>();
+        
+        using target_ptr_type   = mefdn::decay_t<TargetPtr>;
+        using elem_type         = typename P::template element_type_of<target_ptr_type>;
+        
+        const auto datatype = medev2::mpi::get_datatype<elem_type>{}();
+        
+        mi.compare_and_swap({
+            desired_ptr
+        ,   expected_ptr
+        ,   result_ptr
+        ,   datatype
+        ,   target_proc
+        ,   reinterpret_cast<MPI_Aint>(target_rptr)
         ,   win
         });
     }

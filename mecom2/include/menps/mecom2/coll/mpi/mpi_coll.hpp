@@ -91,6 +91,15 @@ private:
     const int num_ranks_;
 };
 
+inline mpi_coll make_mpi_coll(medev2::mpi::direct_requester& req, MPI_Comm comm)
+{
+    struct conf {
+        medev2::mpi::direct_requester& req;
+        MPI_Comm comm;
+    };
+    return mpi_coll(conf{ req, comm });
+}
+
 } // namespace mecom2
 } // namespace menps
 

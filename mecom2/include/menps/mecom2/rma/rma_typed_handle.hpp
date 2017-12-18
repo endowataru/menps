@@ -82,6 +82,45 @@ public:
         ,   num_bytes
         );
     }
+    
+protected:
+    template <typename TargetPtr, typename ExpectedPtr, typename DesiredPtr, typename ResultPtr>
+    void check_cas_type_safety()
+    {
+        using target_ptr_type   = mefdn::decay_t<TargetPtr>;
+        using expected_ptr_type = mefdn::decay_t<ExpectedPtr>;
+        using desired_ptr_type  = mefdn::decay_t<DesiredPtr>;
+        using result_ptr_type  = mefdn::decay_t<ResultPtr>;
+        
+        using target_elem_type   = typename P::template element_type_of<target_ptr_type>;
+        using expected_elem_type = typename P::template element_type_of<expected_ptr_type>;
+        using desired_elem_type  = typename P::template element_type_of<desired_ptr_type>;
+        using result_elem_type   = typename P::template element_type_of<result_ptr_type>;
+        
+        MEFDN_STATIC_ASSERT_MSG(
+            (mefdn::is_same<
+                target_elem_type
+            ,   mefdn::remove_const_t<expected_elem_type>
+            >::value)
+        ,   "Breaking type safety"
+        );
+        
+        MEFDN_STATIC_ASSERT_MSG(
+            (mefdn::is_same<
+                target_elem_type
+            ,   mefdn::remove_const_t<desired_elem_type>
+            >::value)
+        ,   "Breaking type safety"
+        );
+        
+        MEFDN_STATIC_ASSERT_MSG(
+            (mefdn::is_same<
+                target_elem_type
+            ,   result_elem_type
+            >::value)
+        ,   "Breaking type safety"
+        );
+    }
 };
 
 } // namespace mecom2

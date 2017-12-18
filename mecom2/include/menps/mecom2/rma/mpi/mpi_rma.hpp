@@ -132,6 +132,15 @@ MPI_Win mpi_rma_handle::get_win() {
     return this->rma_.get_win();
 }
 
+
+inline mpi_rma make_mpi_rma(medev2::mpi::direct_requester& req, MPI_Win win) {
+    struct conf {
+        medev2::mpi::direct_requester& req;
+        MPI_Win win;
+    };
+    return mpi_rma(conf{ req, win });
+}
+
 } // namespace mecom2
 } // namespace menps
 

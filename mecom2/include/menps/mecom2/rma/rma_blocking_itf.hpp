@@ -60,6 +60,33 @@ public:
         
         h.flush();
     }
+    
+    template <typename TargetPtr, typename T>
+    T compare_and_swap(
+        const process_id_type   target_proc
+    ,   TargetPtr&&             target_rptr
+    ,   const T                 expected
+    ,   const T                 desired
+    ) {
+        auto& self = this->derived();
+        
+        T result{};
+        {
+            auto h = self.make_handle();
+            
+            h.compare_and_swap_nb(
+                target_proc
+            ,   mefdn::forward<TargetPtr>(target_rptr)
+            ,   &expected
+            ,   &desired
+            ,   &result
+            );
+            
+            h.flush();
+        }
+        
+        return result;
+    }
 };
 
 } // namespace mecom2
