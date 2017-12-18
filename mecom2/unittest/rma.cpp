@@ -67,6 +67,7 @@ TEST(Rma, Alltoall)
     const auto cur_proc = c.current_process_id();
     const auto num_procs = c.number_of_processes();
     
+    // 1st
     {
         auto h = r.make_handle();
         for (process_id_type proc = 0; proc < c.number_of_processes(); ++proc) {
@@ -82,5 +83,23 @@ TEST(Rma, Alltoall)
         const int x = * buf.local(proc);
         ASSERT_EQ(proc + 1, x);
     }
+    
+    // 2nd
+    {
+        for (process_id_type proc = 0; proc < c.number_of_processes(); ++proc) {
+            const int x = cur_proc + 2;
+            r.write(proc, buf.remote(proc, cur_proc), &x, 1);
+        }
+    }
+    
+    c.barrier();
+    
+    for (process_id_type proc = 0; proc < c.number_of_processes(); ++proc) {
+        const int x = * buf.local(proc);
+        ASSERT_EQ(proc + 2, x);
+    }
 }
+
+
+
 
