@@ -1,8 +1,12 @@
 
 image: wendo/mpi
 
-variables:
-    GIT_SUBMODULE_STRATEGY: normal
+#variables:
+#    GIT_SUBMODULE_STRATEGY: normal
+
+before_script:
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
 
 stages:
     - test
@@ -10,7 +14,6 @@ stages:
 test_job:
     stage: test
     script:
-        - git submodule update --init --recursive
         - ./cmake.sh Debug
         - ./make.sh Debug VERBOSE=1
         - MGCOM_DEVICE=mpi3 mpirun -n 2 --allow-run-as-root ./build/Debug/mgth/mgth-fib2 20
