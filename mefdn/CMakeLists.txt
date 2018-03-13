@@ -247,6 +247,7 @@ add_library(mefdn
     ./external/fmt/fmt/format.cc
     ./external/fmt/fmt/ostream.cc
     ./src/malloc.cpp
+    ./src/disable_aslr.cpp
 )
 target_include_directories(mefdn
     PUBLIC ./include
