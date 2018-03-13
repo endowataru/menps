@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/medev2/mpi/mpi_params.hpp>
+#include <exception>
 
 namespace menps {
 namespace medev2 {
