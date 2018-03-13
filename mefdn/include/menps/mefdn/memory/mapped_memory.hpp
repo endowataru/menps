@@ -3,6 +3,7 @@
 
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/assert.hpp>
+#include <menps/mefdn/logger.hpp>
 
 #include <sys/mman.h>
 
