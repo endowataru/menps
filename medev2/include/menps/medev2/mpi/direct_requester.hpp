@@ -212,6 +212,12 @@ public:
             MPI_Win_flush_all(p.win)
         );
     }
+    void win_flush_local_all(const win_flush_all_params& p)
+    {
+        mpi_error::check(
+            MPI_Win_flush_local_all(p.win)
+        );
+    }
     
     MPI_Win win_create_dynamic(const win_create_dynamic_params& p)
     {
