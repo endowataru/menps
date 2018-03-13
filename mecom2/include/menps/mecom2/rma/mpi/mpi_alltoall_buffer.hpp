@@ -27,9 +27,7 @@ struct mpi_alltoall_buffer_policy
 template <typename Elem>
 class mpi_alltoall_buffer
     : public alltoall_buffer<mpi_alltoall_buffer_policy<Elem>>
-{
-
-};
+{ };
 
 } // namespace mecom2
 } // namespace menps

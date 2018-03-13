@@ -6,6 +6,7 @@
 #include <menps/mecom2/rma/mpi/basic_mpi_rma_handle.hpp>
 #include <menps/mecom2/rma/rma_blocking_itf.hpp>
 #include <menps/medev2/mpi.hpp>
+#include <menps/mefdn/memory/distance_in_bytes.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -119,6 +120,23 @@ public:
     void untyped_deallocate(void* const p) {
         this->req_.win_detach({ win_, p });
         delete[] static_cast<mefdn::byte*>(p);
+    }
+    
+    void* attach(void* const first, void* const last) {
+        const auto size = mefdn::distance_in_bytes(first, last);
+        this->req_.win_attach({ win_, first, size });
+        return first;
+    }
+    
+    void detach(void* const first) {
+        this->req_.win_detach({ win_, first });
+    }
+    
+    void progress()
+    {
+        // Call an MPI function to forward the progress.
+        this->req_.iprobe({ MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE });
+        // TODO: Is this the best implementation?
     }
     
 private:

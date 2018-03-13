@@ -90,7 +90,7 @@ protected:
         using target_ptr_type   = mefdn::decay_t<TargetPtr>;
         using expected_ptr_type = mefdn::decay_t<ExpectedPtr>;
         using desired_ptr_type  = mefdn::decay_t<DesiredPtr>;
-        using result_ptr_type  = mefdn::decay_t<ResultPtr>;
+        using result_ptr_type   = mefdn::decay_t<ResultPtr>;
         
         using target_elem_type   = typename P::template element_type_of<target_ptr_type>;
         using expected_elem_type = typename P::template element_type_of<expected_ptr_type>;
