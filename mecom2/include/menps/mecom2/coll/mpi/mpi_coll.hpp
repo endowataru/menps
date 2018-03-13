@@ -91,10 +91,19 @@ public:
         return this->comm_;
     }
     
+    // TODO: remove these
     int current_process_id() const noexcept {
         return this->rank_;
     }
     int number_of_processes() const noexcept {
+        return this->num_ranks_;
+    }
+    
+    // newer functions
+    int this_proc_id() const noexcept {
+        return this->rank_;
+    }
+    int get_num_procs() const noexcept {
         return this->num_ranks_;
     }
     
