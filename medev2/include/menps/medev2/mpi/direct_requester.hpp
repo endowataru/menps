@@ -23,8 +23,11 @@ class direct_requester
 public:
     explicit direct_requester(int* const argc, char*** const argv)
     {
+        int level = 0;
+        
         mpi_error::check(
-            MPI_Init(argc, argv)
+            //MPI_Init(argc, argv)
+            MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &level)
         );
     }
     
