@@ -97,6 +97,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         -fno-stack-protector
             # TODO : this is only needed for mgth
         
+        # Disable _FORTIFY_SOURCE.
+        -D_FORTIFY_SOURCE=0
+        
         # Meta warnings
         -Wall
         -Wextra
