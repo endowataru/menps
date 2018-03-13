@@ -86,6 +86,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     #CHECK_CXX_COMPILER_FLAG("-Wuseless-cast" MEFDN_GCC_SUPPORTS_WUSELESS_CAST)
     CHECK_CXX_COMPILER_FLAG("-Wzero-as-null-pointer-constant" MEFDN_GCC_SUPPORTS_WZERO_AS_NULL_POINTER_CONSTANT)
     CHECK_CXX_COMPILER_FLAG("-fmax-errors=1" MEFDN_GCC_SUPPORTS_FMAX_ERRORS)
+    CHECK_CXX_COMPILER_FLAG("-no-pie" MEFDN_GCC_SUPPORTS_NO_PIE)
     
     target_compile_options(mefdn-options INTERFACE
         # Optimizations
