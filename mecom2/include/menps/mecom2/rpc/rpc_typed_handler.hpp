@@ -93,12 +93,13 @@ public:
         using reply_type = typename Handler::reply_type;
         auto& self = this->derived();
         
-        auto ret = self.untyped_call({
+        // Note: Braced-initializer-list is disabled for GCC 4.8.
+        auto ret = self.untyped_call(/*{*/
             server_proc
         ,   Handler::handler_id
         ,   mefdn::move(rqst_msg)
                 .template reinterpret_cast_to<void>()
-        });
+        /*}*/);
         
         return mefdn::move(ret)
             .template reinterpret_cast_to<reply_type>();

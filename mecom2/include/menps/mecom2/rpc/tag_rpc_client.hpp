@@ -26,6 +26,19 @@ public:
         client_request_message_type&&   rqst_msg;
     };
     
+    // Note: Added for GCC 4.8
+    client_reply_message_type untyped_call(
+        process_id_type                 server_proc
+    ,   handler_id_type                 handler_id
+    ,   client_request_message_type&&   rqst_msg
+    ) {
+        return this->untyped_call(call_params{
+            server_proc
+        ,   handler_id
+        ,   mefdn::move(rqst_msg)
+        });
+    }
+    
     client_reply_message_type untyped_call(const call_params& p)
     {
         auto& self = this->derived();
