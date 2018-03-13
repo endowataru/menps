@@ -12,6 +12,7 @@ class basic_mpi_coll
 {
     MEFDN_DEFINE_DERIVED(P)
     
+    using proc_id_type = typename P::proc_id_type;
     using size_type = typename P::size_type;
     
 public:
@@ -22,6 +23,18 @@ public:
         const auto comm = self.get_communicator();
         
         mi.barrier({ comm });
+    }
+    
+    void untyped_broadcast(
+        const proc_id_type  root_proc
+    ,   void* const         ptr
+    ,   const size_type     num_bytes
+    ) {
+        auto& self = this->derived();
+        auto& mi = self.get_mpi_interface();
+        const auto comm = self.get_communicator();
+        
+        mi.broadcast({ ptr, num_bytes, root_proc, comm });
     }
     
     void untyped_allgather(
@@ -56,6 +69,7 @@ struct mpi_coll_policy
 {
     using derived_type = mpi_coll;
     using size_type = mefdn::size_t;
+    using proc_id_type = int;
 };
 
 class mpi_coll
