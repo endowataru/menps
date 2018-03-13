@@ -40,6 +40,12 @@ inline T ceil_log2(T x) noexcept {
 
 } // unnamed namespace
 
+
+template <typename T>
+constexpr bool is_power_of_2(T x) {
+    return x != 0 && ((x & (x-1)) == 0);
+}
+
 } // namespace mefdn
 } // namespace menps
 
