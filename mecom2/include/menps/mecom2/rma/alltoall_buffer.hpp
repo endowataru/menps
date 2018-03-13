@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <menps/mecom2/common.hpp>
+#include <menps/mecom2/rma/alltoall_ptr_set.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -27,37 +27,25 @@ public:
     template <typename CollItf>
     void coll_make(rma_itf_type& rma, CollItf& coll, const size_type num_elems_per_proc)
     {
-        const auto num_procs = coll.number_of_processes();
-        
         this->lptr_ =
             rma.template make_unique<element_type []>(num_elems_per_proc);
         
-        const auto lptr = this->lptr_.get();
-        const auto lptrs = mefdn::make_unique<lptr_type []>(num_procs);
-        
-        coll.allgather(&lptr, lptrs.get(), 1);
-        
-        this->rptrs_ =
-            mefdn::make_unique<rptr_type []>(num_procs);
-        
-        for (process_id_type proc = 0; proc < num_procs; ++proc) {
-            this->rptrs_[proc] = lptrs[proc];
-        }
+        this->ptrs_.coll_make(rma, coll, this->lptr_.get(), num_elems_per_proc);
     }
     
-    lptr_type local(const size_type idx) {
-        return this->lptr_.get() + idx;
+    lptr_type local(const size_type idx) const noexcept {
+        return this->ptrs_.local(idx);
     }
     
     rptr_type remote(const process_id_type proc, const size_type idx) {
-        return this->rptrs_[proc] + idx;
+        return this->ptrs_.remote(proc, idx);
     }
     
 private:
+    alltoall_ptr_set<P> ptrs_;
+    
     typename rma_itf_type::
         template unique_local_ptr<element_type []> lptr_;
-    
-    mefdn::unique_ptr<rptr_type []> rptrs_;
 };
 
 } // namespace mecom2
