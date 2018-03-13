@@ -28,6 +28,10 @@ struct mpi_rma_handle_policy
     
     template <typename Ptr>
     using element_type_of = mefdn::remove_pointer_t<Ptr>;
+    
+    static MPI_Aint to_mpi_aint(const void* const p) noexcept {
+        return reinterpret_cast<MPI_Aint>(p);
+    }
 };
 
 class mpi_rma_handle

@@ -3,6 +3,7 @@
 
 #include <menps/mecom2/rma/rma_typed_handle.hpp>
 #include <menps/medev2/mpi/mpi_datatype.hpp>
+#include <menps/mefdn/logger.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -35,7 +36,7 @@ public:
         mi.get({
             dest_lptr
         ,   src_proc
-        ,   reinterpret_cast<MPI_Aint>(src_rptr)
+        ,   P::to_mpi_aint(src_rptr)
         ,   size_in_bytes
         ,   win
         });
@@ -54,7 +55,7 @@ public:
         mi.put({
             src_lptr
         ,   dest_proc
-        ,   reinterpret_cast<MPI_Aint>(dest_rptr)
+        ,   P::to_mpi_aint(dest_rptr)
         ,   size_in_bytes
         ,   win
         });
@@ -79,13 +80,25 @@ public:
         
         const auto datatype = medev2::mpi::get_datatype<elem_type>{}();
         
+        MEFDN_LOG_WARN(
+            "msg:Do remote CAS.\t"
+            "target_rptr:{:x}\t"
+            "desired_ptr:{:x}\t"
+            "expected_ptr:{:x}\t"
+            "result_ptr:{:x}"
+        ,   reinterpret_cast<mefdn::uintptr_t>(target_rptr)
+        ,   reinterpret_cast<mefdn::uintptr_t>(desired_ptr)
+        ,   reinterpret_cast<mefdn::uintptr_t>(expected_ptr)
+        ,   reinterpret_cast<mefdn::uintptr_t>(result_ptr)
+        );
+        
         mi.compare_and_swap({
             desired_ptr
         ,   expected_ptr
         ,   result_ptr
         ,   datatype
         ,   target_proc
-        ,   reinterpret_cast<MPI_Aint>(target_rptr)
+        ,   P::to_mpi_aint(target_rptr)
         ,   win
         });
     }
