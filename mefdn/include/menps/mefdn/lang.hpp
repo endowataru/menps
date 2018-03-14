@@ -83,6 +83,15 @@
         return ! this->operator!(); \
     }
 
+// Standard features which suffer from compiler bugs
+
+#if defined(MEFDN_COMPILER_GCC) && MEFDN_COMPILER_GCC_VERSION < 50000
+    // See also: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=59526
+    #define MEFDN_DEFAULT_NOEXCEPT
+#else
+    #define MEFDN_DEFAULT_NOEXCEPT noexcept
+#endif
+
 // Standardized attributes
 
 #define MEFDN_NORETURN      [[noreturn]]

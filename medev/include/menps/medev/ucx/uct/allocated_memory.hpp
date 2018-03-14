@@ -33,7 +33,7 @@ class allocated_memory
     typedef mefdn::basic_unique_resource<detail::allocated_memory_policy>  base;
     
 public:
-    allocated_memory() noexcept = default;
+    allocated_memory() MEFDN_DEFAULT_NOEXCEPT = default;
     
     explicit allocated_memory(uct_allocated_memory_t mem)
         : base(mefdn::move(mem))
