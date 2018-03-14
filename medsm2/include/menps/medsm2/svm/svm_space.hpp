@@ -93,38 +93,6 @@ public:
         this->coll_alloc_seg(seg_size, blk_size, seg_id, priv_app_ptr, priv_sys_ptr, pub_ptr);
         
         return priv_app_ptr;
-        
-        #if 0
-        struct conf {
-            com_itf_type&   com;
-            size_type       blk_size;
-            size_type       num_blks;
-            void*           priv_app_ptr;
-            void*           priv_sys_ptr;
-            void*           pub_ptr;
-            int             fd;
-        };
-        
-        const auto priv_app_ptr = this->get_priv_app_ptr_from_seg(this->new_seg_id_);
-        const auto priv_sys_ptr = this->get_priv_sys_ptr_from_seg(this->new_seg_id_);
-        const auto pub_ptr = this->get_pub_ptr_from_seg(this->new_seg_id_);
-        
-        const auto num_blks = mefdn::roundup_divide(seg_size, blk_size);
-        
-        auto blk_tbl_ptr = mefdn::make_unique<blk_tbl_type>();
-        
-        blk_tbl_ptr->coll_make(
-            conf{ this->com_, blk_size, num_blks, priv_app_ptr, priv_sys_ptr, pub_ptr, this->shm_obj_->get_fd() }
-        );
-        
-        base::set_blk_table(this->new_seg_id_, mefdn::move(blk_tbl_ptr));
-        
-        // Generate the next segment ID.
-        // TODO: Check the max number of segments.
-        ++this->new_seg_id_;
-        
-        return priv_app_ptr;
-        #endif
     }
     
     void coll_alloc_global_var_seg(
