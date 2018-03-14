@@ -197,27 +197,7 @@ public:
         return th.get_stack_size();
     }
     
-    #if 0
-    int get_thread_num() const noexcept {
-        return this->thread_num_;
-    }
-    int get_num_threads() const noexcept {
-        return this->num_threads_;
-    }
-
-    void set_thread_num(int num) {
-        this->thread_num_ = num;
-    }
-    void set_num_threads(int num) {
-        this->num_threads_ = num;
-    }
-    #endif
-    
 private:
-    #if 0
-    int thread_num_ = 0;
-    int num_threads_ = 1;
-    #endif
     my_omp_ult_ref root_th_ = my_omp_ult_ref::make_root();
     my_omp_ult_ref work_th_;
 };
@@ -376,13 +356,6 @@ extern "C"
 void GOMP_barrier()
 {
     return worker_base_type::get_current_worker().barrier();
-    #if 0
-    auto& wk = child_worker_type::get_current_worker();
-    if (wk.get_num_threads() > 1) {
-        auto& cwk = static_cast<child_worker_type&>(wk);
-        return cwk.barrier();
-    }
-    #endif
 }
 
 namespace /*unnamed*/ {

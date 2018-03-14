@@ -15,25 +15,6 @@ class dist_worker
     using cmd_info_type = typename P::cmd_info_type;
     using cmd_code_type = typename P::cmd_code_type;
     
-    #if 0
-    enum class cmd_code {
-        none = 0
-    #ifdef MEOMP_DISABLE_PARALLEL_START
-    ,   do_parallel
-    #else
-    ,   start_parallel
-    ,   end_parallel
-    #endif
-    ,   exit_program
-    };
-    
-    struct cmd_data {
-        cmd_code        code;
-        omp_func_type   func;
-        omp_data_type   data;
-    };
-    #endif
-    
 public:
     void loop()
     {
@@ -71,13 +52,9 @@ private:
                 
                 sp.disable_on_this_thread();
                 
+                // Exit the program.
+                // This context is also abandoned.
                 self2.exit_program();
-                
-                #if 0
-                self2.cmd_ = { cmd_code_type::exit_program, nullptr, nullptr };
-                
-                self2.exit();
-                #endif
                 
                 MEFDN_UNREACHABLE();
             }
@@ -105,9 +82,6 @@ private:
             }
             
             self.reset_cmd_info();
-            #if 0
-            this->cmd_ = { cmd_code_type::none, nullptr, nullptr };
-            #endif
             
             self.resume();
         }
@@ -254,48 +228,6 @@ public:
     
 private:
     bool is_parallel_ = false;
-    
-#if 0
-    #ifdef MEOMP_DISABLE_PARALLEL_START
-    // Called on #pragma omp parallel.
-    void do_parallel(
-        const omp_func_type func
-    ,   const omp_data_type data
-    ) {
-        auto& self = this->derived();
-        
-        this->cmd_ = { cmd_code_type::do_parallel, func, data };
-        
-        self.suspend();
-    }
-    
-    #else
-    // Called at the start of #pragma omp parallel.
-    void start_parallel(
-        const omp_func_type func
-    ,   const omp_data_type data
-    ) {
-        auto& self = this->derived();
-        
-        this->cmd_ = { cmd_code_type::start_parallel, func, data };
-        
-        self.suspend();
-    }
-    
-    // Called at the end of #pragma omp parallel.
-    void end_parallel()
-    {
-        auto& self = this->derived();
-        
-        this->cmd_ = { cmd_code_type::end_parallel, nullptr, nullptr };
-        
-        self.suspend();
-    }
-    #endif
-    
-private:
-    cmd_data cmd_ = { cmd_code_type::none, nullptr, nullptr };
-#endif
 };
 
 } // namespace meomp
