@@ -6,7 +6,6 @@ project(medsm2)
 add_library(medsm2
     ./src/sigsegv_catcher.cpp
     ./src/mpi_svm_space.cpp
-    #./src/compile.cpp
 )
 target_include_directories(medsm2
     PUBLIC  ./include

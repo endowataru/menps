@@ -50,30 +50,6 @@ private:
         return blk_id / this->max_seg_size_;
     }
     
-    #if 0
-    blk_pos_type get_blk_pos(
-        blk_tbl_type&       blk_tbl
-    ,   const blk_id_type   blk_id
-    ) {
-        return get_blk_pos();
-    }
-    #endif
-    
-    #if 0
-    blk_pos_type get_blk_pos(
-        blk_tbl_type&       blk_tbl
-    ,   const blk_id_type   blk_id
-    ) {
-        const auto blk_size = blk_tbl.get_blk_size();
-        
-        // TODO: Remove modulo (use bit operations)
-        const auto diff = blk_id % this->max_seg_size_;
-        
-        // TODO: Remove division (use bit operation)
-        return diff / blk_size;
-    }
-    #endif
-    
     const size_type max_seg_size_;
 };
 
