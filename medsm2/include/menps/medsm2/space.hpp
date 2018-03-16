@@ -222,7 +222,9 @@ public:
         // Serialize the release signature to transfer via MPI.
         const auto this_buf = this->rel_sig_.serialize(sig_size);
         
-        const auto all_buf = mefdn::make_unique<mefdn::byte []>(sig_size * num_procs);
+        // Allocate an uninitialized buffer.
+        const auto all_buf =
+            mefdn::make_unique_uninitialized<mefdn::byte []>(sig_size * num_procs);
         
         // Collect the signatures from all of the processes.
         coll.allgather(this_buf.get(), all_buf.get(), sig_size);
