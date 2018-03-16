@@ -287,7 +287,7 @@ public:
                     
                     r = merge_to_result{ true, true, true };
                 }
-            #if MEDSM2_AVOID_DOWNGRADE
+            #ifdef MEDSM2_AVOID_DOWNGRADE
             }
         }
         #endif
