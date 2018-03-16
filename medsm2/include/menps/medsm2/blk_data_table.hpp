@@ -8,6 +8,7 @@ namespace menps {
 namespace medsm2 {
 
 #define MEDSM2_USE_COMPARE_DIFF
+//#define MEDSM2_AVOID_DOWNGRADE
 
 class data_race_error
     : public std::runtime_error
@@ -183,6 +184,7 @@ public:
         
         merge_to_result r{};
         
+        #ifdef MEDSM2_AVOID_DOWNGRADE
         if (cur_proc == cur_owner) {
             // Compare the private data with the public data.
             // Note that the private data is STILL WRITABLE
@@ -201,6 +203,7 @@ public:
             }
         }
         else {
+        #endif
             // Create a temporary buffer.
             // TODO: Reuse this buffer.
             const auto other_pub_buf =
@@ -211,6 +214,7 @@ public:
             // Read the public data from cur_owner.
             rma.read(cur_owner, this->get_other_pub_ptr(cur_owner, blk_pos), other_pub, blk_size);
             
+            #ifdef MEDSM2_AVOID_DOWNGRADE
             // Compare the public data with that of cur_owner.
             if (std::equal(my_pub, my_pub + blk_size, other_pub)) {
                 // The current owner has the same public data.
@@ -225,6 +229,7 @@ public:
                 r = merge_to_result{ true, true, false };
             }
             else {
+            #endif
                 // Call mprotect(PROT_READ).
                 self.set_readonly(blk_pos, blk_size);
                 
@@ -282,8 +287,10 @@ public:
                     
                     r = merge_to_result{ true, true, true };
                 }
+            #if MEDSM2_AVOID_DOWNGRADE
             }
         }
+        #endif
         
         return r;
         
