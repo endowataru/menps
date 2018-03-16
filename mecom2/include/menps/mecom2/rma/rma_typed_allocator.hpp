@@ -46,19 +46,21 @@ public:
         );
     }
     
-    
-    #if 0
     template <typename T>
-    typename P::template unique_local_ptr<T>
-    make_unique_uninit(size_type n)
+    typename detail::rma_typed_allocator_helper<P, T>::array_type
+    make_unique_uninitialized(const size_type n)
     {
+        using element_type = mefdn::remove_extent_t<T>;
         
+        auto& self = this->derived();
+        const auto size = n * sizeof(element_type);
+        const auto p = self.untyped_allocate(size);
+        
+        return typename P::template unique_local_ptr<T>(
+            P::template static_cast_to<element_type>(p)
+        ,   self
+        );
     }
-    #endif
-    
-    
-private:
-    
 };
 
 } // namespace mecom2
