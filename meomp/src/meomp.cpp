@@ -11,6 +11,8 @@
 #include <menps/mefdn/profiling/clock.hpp> // get_cpu_clock
 #include <menps/mefdn/thread/barrier.hpp>
 #include <stdexcept>
+#include <menps/mefdn/type_traits.hpp>
+#include <menps/mefdn/arithmetic.hpp>
 
 #if 0
 extern void* g_watch_ptr;
@@ -355,7 +357,7 @@ int omp_get_num_threads()
 extern "C"
 void GOMP_barrier()
 {
-    return worker_base_type::get_current_worker().barrier();
+    worker_base_type::get_current_worker().barrier();
 }
 
 namespace /*unnamed*/ {
@@ -400,6 +402,207 @@ void GOMP_parallel(
     func(data);
     GOMP_parallel_end();
 }
+
+// LLVM
+
+struct ident;
+
+using kmp_int32 = mefdn::int32_t;
+
+using kmpc_micro = void (*)(kmp_int32* , kmp_int32*, ...);
+using microtask_t = void (*)(int*, int*, ...);
+
+namespace menps {
+namespace meomp {
+
+constexpr mefdn::size_t max_num_kmp_args = 4;
+
+struct kmp_invoker
+{
+    kmpc_micro      func;
+    mefdn::size_t   argc;
+    void*           ptrs[max_num_kmp_args];
+    
+    static void handler(void* const self_ptr)
+    {
+        MEFDN_ASSERT(self_ptr != nullptr);
+        auto& self = *static_cast<kmp_invoker*>(self_ptr);
+        
+        const auto thread_num = worker_base_type::get_current_worker().get_thread_num();
+        kmp_int32 gtid = thread_num;
+        kmp_int32 btid = thread_num;
+        
+        switch (self.argc) {
+            case 0:
+                self.func(&gtid, &btid);
+                break;
+            
+            case 1:
+                self.func(&gtid, &btid, self.ptrs[0]);
+                break;
+            
+            case 2:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1]);
+                break;
+            
+            case 3:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2]);
+                break;
+            
+            case 4:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3]);
+                break;
+            
+            default:
+                throw std::runtime_error("Too many arguments");
+                break;
+        }
+    }
+};
+
+} // namespace meomp
+} // namespace menps
+
+extern "C"
+void __kmpc_fork_call(ident* /*id*/, const kmp_int32 argc, const kmpc_micro microtask, ...) {
+    using menps::meomp::kmp_invoker;
+    
+    kmp_invoker inv{};
+    inv.func = microtask;
+    inv.argc = argc;
+    
+    {
+        va_list ap;
+        va_start(ap, argc);
+        for (int i = 0; i < argc; ++i) {
+            inv.ptrs[i] = va_arg(ap, void*);
+        }
+        va_end(ap);
+    }
+    
+    g_dw->start_parallel(kmp_invoker::handler, &inv);
+    
+    kmp_invoker::handler(&inv);
+    
+    g_dw->end_parallel();
+}
+
+extern "C"
+kmp_int32 __kmpc_global_thread_num(ident* /*id*/) {
+    return worker_base_type::get_current_worker().get_thread_num();
+}
+
+extern "C"
+kmp_int32 __kmpc_global_num_threads(ident* /*id*/) {
+    return worker_base_type::get_current_worker().get_num_threads();
+}
+
+extern "C"
+void __kmpc_barrier(ident* /*id*/, kmp_int32 /*global_tid*/) {
+    worker_base_type::get_current_worker().barrier();
+}
+
+extern "C"
+kmp_int32 __kmpc_ok_to_fork(ident* /*id*/) {
+    // Always returns TRUE as the official documentation says.
+    return 1;
+}
+
+extern "C"
+void __kmpc_serialized_parallel(ident* /*id*/, kmp_int32 /*global_tid*/) {
+    // Do nothing.
+}
+extern "C"
+void __kmpc_end_serialized_parallel(ident* /*id*/, kmp_int32 /*global_tid*/) {
+    // Do nothing.
+}
+
+
+extern "C"
+kmp_int32 __kmpc_master(ident* /*loc*/, kmp_int32 /*global_tid*/) {
+    return worker_base_type::get_current_worker().get_thread_num() == 0;
+}
+extern "C"
+void __kmpc_end_master(ident* /*loc*/, kmp_int32 /*global_tid*/) {
+    // Do nothing.
+}
+
+namespace /*unnamed*/ {
+
+template <typename T, typename SignedT>
+void kmpc_for_static_init_4(
+    ident* const        /*loc*/
+,   const kmp_int32     gtid
+,   const kmp_int32     /*schedtype*/
+,   kmp_int32* const    plastiter
+,   T* const            plower
+,   T* const            pupper
+,   SignedT* const      pstride
+,   const SignedT       incr
+,   const SignedT       /*chunk*/
+) {
+    // See also: kmp_sched.cpp of LLVM OpenMP
+    
+    MEFDN_STATIC_ASSERT(mefdn::is_signed<SignedT>::value);
+    
+    const auto& wk = worker_base_type::get_current_worker();
+    const auto num_threads = wk.get_num_threads();
+    MEFDN_ASSERT(gtid == wk.get_thread_num());
+    const auto tid = gtid;
+    
+    const auto old_lower = *plower;
+    const auto old_upper = *pupper;
+    
+    MEFDN_ASSERT(incr != 0);
+    MEFDN_ASSERT((incr > 0) == (old_lower <= old_upper));
+    
+    const auto trip_count =
+            incr > 0
+        ?   ((old_upper - old_lower) / incr + 1)
+        :   ((old_lower - old_upper) / (-incr) + 1);
+    
+    // Follow the calculation of kmp_sch_static_greedy.
+    
+    const auto big_chunk_inc_count =
+        mefdn::roundup_divide(trip_count, num_threads);
+    
+    const auto new_lower = old_lower + tid * big_chunk_inc_count;
+    const auto new_upper = new_lower + big_chunk_inc_count - incr;
+    
+    const auto new_last_iter =
+            incr > 0
+        ?   (new_lower <= old_upper && new_upper > old_upper - incr)
+        :   (new_lower >= old_upper && new_upper < old_upper - incr);
+    
+    *plower = new_lower;
+    *pupper = new_upper;
+    *plastiter = new_last_iter;
+    *pstride = trip_count;
+}
+
+} // unnamed namespace
+
+extern "C"
+void __kmpc_for_static_init_4(
+    ident* const        loc
+,   const kmp_int32     gtid
+,   const kmp_int32     schedtype
+,   kmp_int32* const    plastiter
+,   kmp_int32* const    plower
+,   kmp_int32* const    pupper
+,   kmp_int32* const    pstride
+,   const kmp_int32     incr
+,   const kmp_int32     chunk
+) {
+    kmpc_for_static_init_4(loc, gtid, schedtype, plastiter, plower, pupper, pstride, incr, chunk);
+}
+
+extern "C"
+void __kmpc_for_static_fini(ident* /*loc*/, kmp_int32 /*global_tid*/) {
+    // Do nothing.
+}
+
+
 #endif
 
 extern "C" {
