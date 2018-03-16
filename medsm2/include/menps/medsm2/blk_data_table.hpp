@@ -251,39 +251,7 @@ public:
                 else {
                     // Three copies (my_pub, my_priv, other_pub) are different with each other.
                     // It is necessary to merge them to complete the release.
-                    
-                    for (size_type i = 0; i < blk_size; ++i) {
-                        #ifdef MEDSM2_USE_COMPARE_DIFF
-                        if (my_priv[i] != my_pub[i]) {
-                            if (my_pub[i] != other_pub[i]) {
-                                throw data_race_error(
-                                    fmt::format(
-                                        "Data race in release ("
-                                        "other_pub:{}, my_pub:{}, my_priv:{})"
-                                    ,   static_cast<unsigned char>(other_pub[i])
-                                    ,   static_cast<unsigned char>(my_pub[i])
-                                    ,   static_cast<unsigned char>(my_priv[i])
-                                    )
-                                );
-                            }
-                            my_pub[i] = my_priv[i];
-                        }
-                        else {
-                            my_pub[i] = other_pub[i];
-                            my_priv[i] = other_pub[i];
-                        }
-                        
-                        #else
-                        // TODO: Scoped enums cannot do XOR...
-                        my_priv[i] =
-                            static_cast<mefdn::byte>(
-                                static_cast<unsigned char>(my_priv[i]) ^
-                                static_cast<unsigned char>(my_pub[i]) ^
-                                static_cast<unsigned char>(other_pub[i])
-                            );
-                        my_pub[i] = my_priv[i];
-                        #endif
-                    }
+                    this->merge(other_pub, my_priv, my_pub, blk_size);
                     
                     r = merge_to_result{ true, true, true };
                 }
@@ -358,6 +326,46 @@ public:
     }
     
 private:
+    static void merge(
+        const mefdn::byte* const    other_pub
+    ,         mefdn::byte* const    my_priv
+    ,         mefdn::byte* const    my_pub
+    ,   const size_type             blk_size
+    ) {
+        for (size_type i = 0; i < blk_size; ++i) {
+            #ifdef MEDSM2_USE_COMPARE_DIFF
+            if (my_priv[i] != my_pub[i]) {
+                if (my_pub[i] != other_pub[i]) {
+                    throw data_race_error(
+                        fmt::format(
+                            "Data race in release ("
+                            "other_pub:{}, my_pub:{}, my_priv:{})"
+                        ,   static_cast<unsigned char>(other_pub[i])
+                        ,   static_cast<unsigned char>(my_pub[i])
+                        ,   static_cast<unsigned char>(my_priv[i])
+                        )
+                    );
+                }
+                my_pub[i] = my_priv[i];
+            }
+            else {
+                my_pub[i] = other_pub[i];
+                my_priv[i] = other_pub[i];
+            }
+            
+            #else
+            // TODO: Scoped enums cannot do XOR...
+            my_priv[i] =
+                static_cast<mefdn::byte>(
+                    static_cast<unsigned char>(my_priv[i]) ^
+                    static_cast<unsigned char>(my_pub[i]) ^
+                    static_cast<unsigned char>(other_pub[i])
+                );
+            my_pub[i] = my_priv[i];
+            #endif
+        }
+    }
+    
     mefdn::byte* get_my_priv_ptr(const blk_pos_type blk_pos) {
         auto& self = this->derived();
         const auto blk_size = self.get_blk_size();
