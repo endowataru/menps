@@ -63,6 +63,23 @@ template <typename T, typename... Args>
 inline typename detail::make_unique_helper<T>::invalid_type
 make_unique(Args&&...) = delete;
 
+
+
+
+// Non-standard functions to allocate an array without initialization
+
+template <typename T>
+inline typename detail::make_unique_helper<T>::array_type
+make_unique_uninitialized(const mefdn::size_t size)
+{
+    using element_type = remove_extent_t<T>;
+    
+    return unique_ptr<T>(
+        // No value-initialization here.
+        new element_type[size]
+    );
+}
+
 } // namespace mefdn
 } // namespace menps
 
