@@ -233,6 +233,7 @@ public:
                 // Call mprotect(PROT_READ).
                 self.set_readonly(blk_pos, blk_size);
                 
+                #ifdef MEDSM2_AVOID_DOWNGRADE
                 // Compare the public data with the private data.
                 if (std::equal(my_pub, my_pub + blk_size, my_priv)) {
                     // Although this process doesn't release this block at this time,
@@ -249,12 +250,15 @@ public:
                     r = merge_to_result{ false, false, true };
                 }
                 else {
+                #endif
                     // Three copies (my_pub, my_priv, other_pub) are different with each other.
                     // It is necessary to merge them to complete the release.
                     this->merge(other_pub, my_priv, my_pub, blk_size);
                     
                     r = merge_to_result{ true, true, true };
+                #ifdef MEDSM2_AVOID_DOWNGRADE
                 }
+                #endif
             #ifdef MEDSM2_AVOID_DOWNGRADE
             }
         }
