@@ -33,6 +33,10 @@ struct mpi_rma_handle_policy
     static MPI_Aint to_mpi_aint(const void* const p) noexcept {
         return reinterpret_cast<MPI_Aint>(p);
     }
+    
+    static mefdn::intptr_t to_intptr(const void* const p) noexcept {
+        return reinterpret_cast<mefdn::intptr_t>(p);
+    }
 };
 
 class mpi_rma_handle

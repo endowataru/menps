@@ -33,6 +33,18 @@ public:
         auto& mi = self.get_mpi_interface();
         const auto win = self.get_win();
         
+        MEFDN_LOG_VERBOSE(
+            "msg:Do RMA read.\t"
+            "src_proc:{}\t"
+            "src_rptr:0x{:x}\t"
+            "dest_lptr:0x{:x}\t"
+            "size_in_bytes:{}"
+        ,   src_proc
+        ,   P::to_intptr(src_rptr)
+        ,   P::to_intptr(dest_lptr)
+        ,   size_in_bytes
+        );
+        
         mi.get({
             dest_lptr
         ,   src_proc
@@ -51,6 +63,18 @@ public:
         auto& self = this->derived();
         auto& mi = self.get_mpi_interface();
         const auto win = self.get_win();
+        
+        MEFDN_LOG_VERBOSE(
+            "msg:Do RMA put.\t"
+            "dest_proc:{}\t"
+            "dest_rptr:0x{:x}\t"
+            "src_lptr:0x{:x}\t"
+            "size_in_bytes:{}"
+        ,   dest_proc
+        ,   P::to_intptr(dest_rptr)
+        ,   P::to_intptr(src_lptr)
+        ,   size_in_bytes
+        );
         
         mi.put({
             src_lptr
@@ -80,16 +104,18 @@ public:
         
         const auto datatype = medev2::mpi::get_datatype<elem_type>{}();
         
-        MEFDN_LOG_WARN(
+        MEFDN_LOG_VERBOSE(
             "msg:Do remote CAS.\t"
-            "target_rptr:{:x}\t"
-            "desired_ptr:{:x}\t"
-            "expected_ptr:{:x}\t"
-            "result_ptr:{:x}"
-        ,   reinterpret_cast<mefdn::uintptr_t>(target_rptr)
-        ,   reinterpret_cast<mefdn::uintptr_t>(desired_ptr)
-        ,   reinterpret_cast<mefdn::uintptr_t>(expected_ptr)
-        ,   reinterpret_cast<mefdn::uintptr_t>(result_ptr)
+            "target_proc:{}\t"
+            "target_rptr:0x{:x}\t"
+            "desired_ptr:0x{:x}\t"
+            "expected_ptr:0x{:x}\t"
+            "result_ptr:0x{:x}"
+        ,   target_proc
+        ,   P::to_intptr(target_rptr)
+        ,   P::to_intptr(desired_ptr)
+        ,   P::to_intptr(expected_ptr)
+        ,   P::to_intptr(result_ptr)
         );
         
         mi.compare_and_swap({
