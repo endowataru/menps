@@ -336,6 +336,39 @@ private:
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
     ) {
+        #if 1
+        #define VECTOR_LEN  32
+        using vec_buf_type = unsigned char __attribute__((vector_size(VECTOR_LEN)));
+        
+        MEFDN_ASSERT(blk_size % VECTOR_LEN == 0);
+        
+        //__asm__ __volatile__ ("# merge starts");
+        
+        for (size_type i = 0; i < blk_size; i += VECTOR_LEN) {
+            auto* other_pub_vec = reinterpret_cast<const vec_buf_type*>(&other_pub[i]);
+            auto* my_priv_vec   = reinterpret_cast<vec_buf_type*>(&my_priv[i]);
+            auto* my_pub_vec    = reinterpret_cast<vec_buf_type*>(&my_pub[i]);
+            
+            const auto merged =
+                *other_pub_vec ^ *my_priv_vec ^ *my_pub_vec;
+            
+            *my_priv_vec = merged;
+            *my_pub_vec = merged;
+            
+            #if 0
+            // TODO: Scoped enums cannot do XOR...
+            my_priv[i] =
+                static_cast<mefdn::byte>(
+                    static_cast<unsigned char>(my_priv[i]) ^
+                    static_cast<unsigned char>(my_pub[i]) ^
+                    static_cast<unsigned char>(other_pub[i])
+                );
+            my_pub[i] = my_priv[i];
+            #endif
+        }
+        //__asm__ __volatile__ ("# merge ends");
+        
+        #else
         for (size_type i = 0; i < blk_size; ++i) {
             #ifdef MEDSM2_USE_COMPARE_DIFF
             if (my_priv[i] != my_pub[i]) {
@@ -368,6 +401,7 @@ private:
             my_pub[i] = my_priv[i];
             #endif
         }
+        #endif
     }
     
     mefdn::byte* get_my_priv_ptr(const blk_pos_type blk_pos) {
