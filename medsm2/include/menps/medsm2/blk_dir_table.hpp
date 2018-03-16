@@ -407,6 +407,14 @@ public:
             const auto expected = this->make_owned_lock_val(prob_proc);
             const auto desired  = this->make_locked_lock_val(prob_proc);
             
+            MEFDN_LOG_VERBOSE(
+                "msg:Try to lock dir lock.\t"
+                "blk_pos:{}\t"
+                "prob_proc:{}"
+            ,   blk_pos
+            ,   prob_proc
+            );
+            
             // Try to lock the probable owner.
             const auto cas_result =
                 rma.compare_and_swap(
