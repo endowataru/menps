@@ -47,8 +47,9 @@ private:
     inline mefdn::size_t get_max_seg_size() const noexcept;
     inline void* get_segment_app_ptr() const noexcept;
     
-    inline void add_new_read();
-    inline void add_new_write();
+    // TODO: Disabled inline due to compilation error.
+    /*inline*/ void add_new_read();
+    /*inline*/ void add_new_write();
     
     protector_segment&          seg_;
     sharer_block::accessor      sh_blk_ac_;
