@@ -204,7 +204,7 @@ public:
             // Create a temporary buffer.
             // TODO: Reuse this buffer.
             const auto other_pub_buf =
-                rma.template make_unique<mefdn::byte []>(blk_size);
+                rma.template make_unique_uninitialized<mefdn::byte []>(blk_size);
             
             const auto other_pub = other_pub_buf.get();
             
