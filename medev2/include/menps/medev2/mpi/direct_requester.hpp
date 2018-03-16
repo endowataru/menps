@@ -4,6 +4,12 @@
 #include <menps/medev2/mpi/mpi_params.hpp>
 #include <exception>
 
+#define MEDEV2_SERIALIZE_MPI_CALLS
+
+#ifdef MEDEV2_SERIALIZE_MPI_CALLS
+    #include <menps/mefdn/mutex.hpp>
+#endif
+
 namespace menps {
 namespace medev2 {
 namespace mpi {
@@ -16,6 +22,12 @@ struct mpi_error : std::exception
         }
     }
 };
+
+#ifdef MEDEV2_SERIALIZE_MPI_CALLS
+    #define MPI_CRITICAL    mefdn::lock_guard<mefdn::mutex> lk(this->mtx_);
+#else
+    #define MPI_CRITICAL
+#endif
 
 //template <typename P>
 class direct_requester
@@ -41,6 +53,8 @@ public:
     
     void send(const send_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Send(
                 p.buf               // buf
@@ -55,6 +69,8 @@ public:
     
     void recv(const recv_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Recv(
                 p.buf               // buf
@@ -70,6 +86,8 @@ public:
     
     void probe(const probe_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Probe(
                 p.src_rank
@@ -82,6 +100,8 @@ public:
     
     bool iprobe(const probe_params& p)
     {
+        MPI_CRITICAL
+        
         int flag = 0;
         mpi_error::check(
             MPI_Iprobe(
@@ -97,6 +117,8 @@ public:
     
     void barrier(const barrier_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Barrier(
                 p.comm
@@ -105,6 +127,8 @@ public:
     }
     void broadcast(const broadcast_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Bcast(
                 p.ptr
@@ -117,6 +141,8 @@ public:
     }
     void allgather(const allgather_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Allgather(
                 p.src
@@ -132,6 +158,8 @@ public:
     
     int get_count(const MPI_Status& status)
     {
+        MPI_CRITICAL
+        
         int count = 0;
         
         mpi_error::check(
@@ -143,6 +171,8 @@ public:
     
     MPI_Comm comm_dup(const MPI_Comm old_comm)
     {
+        MPI_CRITICAL
+        
         MPI_Comm result;
         
         mpi_error::check(
@@ -154,6 +184,8 @@ public:
     
     void comm_free(MPI_Comm* const comm)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Comm_free(comm)
         );
@@ -161,6 +193,8 @@ public:
     
     void get(const get_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Get(
                 p.dest_ptr      // origin_addr
@@ -177,6 +211,8 @@ public:
     
     void put(const put_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Put(
                 p.src_ptr       // origin_addr
@@ -193,6 +229,8 @@ public:
     
     void compare_and_swap(const compare_and_swap_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Compare_and_swap(
                 p.desired_ptr   // origin_addr
@@ -208,12 +246,16 @@ public:
     
     void win_flush_all(const win_flush_all_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Win_flush_all(p.win)
         );
     }
     void win_flush_local_all(const win_flush_all_params& p)
     {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Win_flush_local_all(p.win)
         );
@@ -221,6 +263,8 @@ public:
     
     MPI_Win win_create_dynamic(const win_create_dynamic_params& p)
     {
+        MPI_CRITICAL
+        
         MPI_Win win{};
         mpi_error::check(
             MPI_Win_create_dynamic(p.info, p.comm, &win)
@@ -229,33 +273,45 @@ public:
     }
     
     void win_free(MPI_Win* const win) {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Win_free(win)
         );
     }
     
     void win_attach(const win_attach_params& p) {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Win_attach(p.win, p.base, p.size)
         );
     }
     void win_detach(const win_detach_params& p) {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Win_detach(p.win, p.base)
         );
     }
     void win_lock_all(const win_lock_all_params& p) {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Win_lock_all(p.assert, p.win)
         );
     }
     void win_unlock_all(const win_unlock_all_params& p) {
+        MPI_CRITICAL
+        
         mpi_error::check(
             MPI_Win_unlock_all(p.win)
         );
     }
     
     int comm_rank(const MPI_Comm comm) {
+        MPI_CRITICAL
+        
         int rank = 0;
         mpi_error::check(
             MPI_Comm_rank(comm, &rank)
@@ -263,12 +319,19 @@ public:
         return rank;
     }
     int comm_size(const MPI_Comm comm) {
+        MPI_CRITICAL
+        
         int rank = 0;
         mpi_error::check(
             MPI_Comm_size(comm, &rank)
         );
         return rank;  
     }
+    
+    #ifdef MEDEV2_SERIALIZE_MPI_CALLS
+private:
+    mefdn::mutex mtx_;
+    #endif
 };
 
 } // namespace mpi
