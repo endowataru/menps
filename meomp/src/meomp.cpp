@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/arithmetic.hpp>
+#include <stdarg.h>
 
 #if 0
 extern void* g_watch_ptr;
