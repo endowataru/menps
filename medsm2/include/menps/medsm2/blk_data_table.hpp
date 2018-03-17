@@ -3,12 +3,12 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/logger.hpp>
+#include <cstring>
 
 namespace menps {
 namespace medsm2 {
 
 #define MEDSM2_USE_COMPARE_DIFF
-//#define MEDSM2_AVOID_DOWNGRADE
 
 class data_race_error
     : public std::runtime_error
@@ -184,26 +184,29 @@ public:
         
         merge_to_result r{};
         
-        #ifdef MEDSM2_AVOID_DOWNGRADE
         if (cur_proc == cur_owner) {
             // Compare the private data with the public data.
             // Note that the private data is STILL WRITABLE
             // and can be modified concurrently by other threads in this process.
             // It's OK to read the intermediate states
             // because those writes will be managed by the next release operation.
-            if (std::equal(my_priv, my_priv + blk_size, my_pub)) {
-                // The data is not modified.
-                r = merge_to_result{ false, false, false };
-            }
-            else {
+            const auto is_written =
+                std::memcmp(my_priv, my_pub, blk_size) != 0;
+                //std::equal(my_priv, my_priv + blk_size, my_pub)
+            
+            if (is_written) {
                 // Copy to the private data.
-                std::copy(my_priv, my_priv + blk_size, my_pub);
+                std::memcpy(my_pub, my_priv, blk_size);
+                //std::copy(my_priv, my_priv + blk_size, my_pub);
                 
                 r = merge_to_result{ false, true, false };
             }
+            else {
+                // The data is not modified.
+                r = merge_to_result{ false, false, false };
+            }
         }
         else {
-        #endif
             // Create a temporary buffer.
             // TODO: Reuse this buffer.
             const auto other_pub_buf =
@@ -214,7 +217,7 @@ public:
             // Read the public data from cur_owner.
             rma.read(cur_owner, this->get_other_pub_ptr(cur_owner, blk_pos), other_pub, blk_size);
             
-            #ifdef MEDSM2_AVOID_DOWNGRADE
+            #if 0
             // Compare the public data with that of cur_owner.
             if (std::equal(my_pub, my_pub + blk_size, other_pub)) {
                 // The current owner has the same public data.
@@ -233,36 +236,38 @@ public:
                 // Call mprotect(PROT_READ).
                 self.set_readonly(blk_pos, blk_size);
                 
-                #ifdef MEDSM2_AVOID_DOWNGRADE
                 // Compare the public data with the private data.
-                if (std::equal(my_pub, my_pub + blk_size, my_priv)) {
+                const auto is_written =
+                    std::memcmp(my_priv, my_pub, blk_size) != 0;
+                    //std::equal(my_pub, my_pub + blk_size, my_priv)
+                
+                if (is_written) {
+                    // Three copies (my_pub, my_priv, other_pub) are different with each other.
+                    // It is necessary to merge them to complete the release.
+                    this->merge(other_pub, my_priv, my_pub, blk_size);
+                    
+                    r = merge_to_result{ true, true, true };
+                }
+                else {
                     // Although this process doesn't release this block at this time,
                     // the buffer read from the current owner can be utilized.
                     // This is important when an acquire on this block is on-going
                     // because that thread requires this releaser thread
                     // to make the latest modifications visible on this process.
                     // Note: The timestamp should also be updated in the directory later.
-                    std::copy(other_pub, other_pub + blk_size, my_priv);
-                    std::copy(other_pub, other_pub + blk_size, my_pub);
+                    std::memcpy(my_priv, other_pub, blk_size);
+                    //std::copy(other_pub, other_pub + blk_size, my_priv);
+                    std::memcpy(my_pub , other_pub, blk_size);
+                    //std::copy(other_pub, other_pub + blk_size, my_pub);
                     
                     // This block is not written by the current process.
                     // It means that releasing this block now is unnecessary.
                     r = merge_to_result{ false, false, true };
                 }
-                else {
-                #endif
-                    // Three copies (my_pub, my_priv, other_pub) are different with each other.
-                    // It is necessary to merge them to complete the release.
-                    this->merge(other_pub, my_priv, my_pub, blk_size);
-                    
-                    r = merge_to_result{ true, true, true };
-                #ifdef MEDSM2_AVOID_DOWNGRADE
-                }
-                #endif
-            #ifdef MEDSM2_AVOID_DOWNGRADE
+            #if 0
             }
+            #endif
         }
-        #endif
         
         return r;
         
