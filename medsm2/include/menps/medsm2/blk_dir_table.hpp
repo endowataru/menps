@@ -502,10 +502,10 @@ public:
         // The home process is only updated locally.
         le.home_proc = new_owner;
         
-        // Update the block timestamp.
+        // Update the write timestamp.
         // Although this value may be read by another writer,
         // this process still has the lock for it.
-        // Also, the block timestamp only increases monotonically.
+        // Also, the write timestamp only increases monotonically.
         ge.wr_ts = new_wr_ts;
         
         // There are 3 conditions:
