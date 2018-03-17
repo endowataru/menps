@@ -9,7 +9,7 @@ target_include_directories(meomp
     PUBLIC ./include
 )
 target_link_libraries(meomp
-    PRIVATE medsm2
+    PUBLIC medsm2
     PRIVATE mefdn-options
     PRIVATE mectx
 )
