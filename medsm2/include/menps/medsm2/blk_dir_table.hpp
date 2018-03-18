@@ -4,9 +4,13 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/assert.hpp>
+#include <menps/mefdn/vector.hpp>
+#include <menps/mefdn/external/fmt.hpp>
+#include <stdexcept>
 
 //#define MEDSM2_USE_ONE_MUTEX
 //#define MEDSM2_FORCE_LATEST_READ
+//#define MEDSM2_CHECK_VALID_LOCKED_LINKS
 
 namespace menps {
 namespace medsm2 {
@@ -433,6 +437,11 @@ public:
             if (cas_result == expected) {
                 // The probable owner was exactly the latest owner.
                 
+                #ifdef MEDSM2_CHECK_VALID_LOCKED_LINKS
+                // Validate "locked_val" of all of the processes.
+                this->check_valid_locked_links(com, blk_pos, prob_proc);
+                #endif
+                
                 // Load the latest timestamps.
                 global_entry ge{};
                 rma.read(prob_proc, ge_rptr, &ge, 1);
@@ -623,6 +632,15 @@ private:
         // Other processes are expressed without 0, 1 & 2.
         return static_cast<atomic_int_type>(owner) + 3;
     }
+    static bool is_valid_linked_lock_val(
+        const proc_id_type      num_procs
+    ,   const proc_id_type      lock_val_proc
+    ,   const atomic_int_type   lock_val
+    ) {
+        return 3 <= lock_val && lock_val < (3+num_procs)
+            // Loop should be expressed as "owned" or "locked" instead.
+            && lock_val != (3+lock_val_proc);
+    }
     static proc_id_type get_probable_owner_from_lock_val(
         const proc_id_type      lock_val_proc
     ,   const atomic_int_type   lock_val
@@ -638,6 +656,85 @@ private:
         :   static_cast<proc_id_type>(lock_val - 3);
     }
     
+    void check_valid_locked_links(
+        com_itf_type&       com
+    ,   const blk_pos_type  blk_pos
+    ,   const proc_id_type  locked_proc
+    ) {
+        // This function can only work when this process is holding the global lock.
+        
+        auto& rma = com.get_rma();
+        //const auto this_proc = com.this_proc_id();
+        const auto num_procs = com.get_num_procs();
+        
+        const auto links_buf =
+            rma.template make_unique<atomic_int_type []>(num_procs);
+        
+        const auto links = links_buf.get();
+        
+        // Load the "lock" values on all of the processes.
+        for (proc_id_type proc = 0; proc < num_procs; ++proc) {
+            const auto ge_rptr = this->ges_.remote(proc, blk_pos);
+            rma.read(proc, &ge_rptr->lock, links + proc, 1);
+        }
+        
+        auto&& produce_error = [&] (const char* const msg) {
+            fmt::MemoryWriter w;
+            w.write("msg:Error of probable owners ({}).\t", msg);
+            w.write("blk_pos:{}\t", blk_pos);
+            w.write("locked_proc:{}\t", locked_proc);
+            w.write("locked_vals:");
+            for (proc_id_type proc = 0; proc < num_procs; ++proc) {
+                w.write("{},", links[proc]);
+            }
+            
+            const auto s = w.str();
+            MEFDN_LOG_FATAL("{}", s);
+            throw std::logic_error(s);
+        };
+        
+        // Validate that there is only one "locked" value.
+        for (proc_id_type proc = 0; proc < num_procs; ++proc) {
+            const auto lock_val = links[proc];
+            if (proc == locked_proc) {
+                if (lock_val != make_locked_lock_val(proc)) {
+                    produce_error("locked_proc doesn't have lock");
+                }
+            }
+            else {
+                if (!is_valid_linked_lock_val(num_procs, proc, lock_val)) {
+                    produce_error("invalid link");
+                }
+            }
+        }
+        
+        // Validate that there is no circular links.
+        for (proc_id_type proc_start = 0; proc_start < num_procs; ++proc_start) {
+            // Avoid using std::vector<bool> (the performance is not serious here, though).
+            mefdn::vector<int> is_visited(num_procs, 0);
+            
+            proc_id_type proc = proc_start;
+            while (true) {
+                const auto lock_val = links[proc];
+                if (lock_val == make_locked_lock_val(proc)) {
+                    // OK, this process reached the locked val.
+                    MEFDN_ASSERT(proc == locked_proc);
+                    break;
+                }
+                
+                is_visited[proc] = true;
+                
+                MEFDN_ASSERT(is_valid_linked_lock_val(num_procs, proc, lock_val));
+                proc = get_probable_owner_from_lock_val(proc, lock_val);
+                
+                if (is_visited[proc]) {
+                    produce_error("circular link detected");
+                }
+            }
+        }
+    }
+    
+private:
     struct global_entry {
         // A probable owner ID + a lock bit (LSB).
         atomic_int_type lock;
