@@ -525,16 +525,15 @@ public:
             
             // (2) linked_proc == cur_proc != old_owner == new_owner
             // (3) linked_proc == old_owner != cur_proc == new_owner
-            const auto linked_proc = mg_ret.is_migrated ? old_owner : cur_proc;
+            const auto linked_proc =
+                mg_ret.is_migrated ? /*(3)*/ old_owner : /*(2)*/ cur_proc;
             
-            const auto ge_rptr = this->ges_.remote(old_owner, blk_pos);
+            const auto ge_rptr = this->ges_.remote(linked_proc, blk_pos);
             const auto new_lock_val =
-                    old_owner == new_owner
-                ?   this->make_owned_lock_val(new_owner)
-                :   this->make_linked_lock_val(new_owner);
+                this->make_linked_lock_val(new_owner /* == (2) old_owner, (3) cur_proc */);
             
             // Assign a link to the non-owner process.
-            rma.write(old_owner, &ge_rptr->lock, &new_lock_val, 1);
+            rma.write(linked_proc, &ge_rptr->lock, &new_lock_val, 1);
             
             // In (2), this is simply replacing the existing link to a newer one.
             // In (3), this will create a circular dependency temporarily.
