@@ -217,56 +217,37 @@ public:
             // Read the public data from cur_owner.
             rma.read(cur_owner, this->get_other_pub_ptr(cur_owner, blk_pos), other_pub, blk_size);
             
-            #if 0
-            // Compare the public data with that of cur_owner.
-            if (std::equal(my_pub, my_pub + blk_size, other_pub)) {
-                // The current owner has the same public data.
-                // It means that the latest writer didn't update this block
-                // after the current process started writing it.
-                // Therefore, the current process can skip merging this block.
+            // Call mprotect(PROT_READ).
+            self.set_readonly(blk_pos, blk_size);
+            
+            // Compare the public data with the private data.
+            const auto is_written =
+                std::memcmp(my_priv, my_pub, blk_size) != 0;
+                //std::equal(my_pub, my_pub + blk_size, my_priv)
+            
+            if (is_written) {
+                // Three copies (my_pub, my_priv, other_pub) are different with each other.
+                // It is necessary to merge them to complete the release.
+                this->merge(other_pub, my_priv, my_pub, blk_size);
                 
-                // Just copy the private data to the public area.
-                // Note that the private data can be concurrently written by the other threads.
-                std::copy(my_priv, my_priv + blk_size, my_pub);
-                
-                r = merge_to_result{ true, true, false };
+                r = merge_to_result{ true, true, true };
             }
             else {
-            #endif
-                // Call mprotect(PROT_READ).
-                self.set_readonly(blk_pos, blk_size);
+                // Although this process doesn't release this block at this time,
+                // the buffer read from the current owner can be utilized.
+                // This is important when an acquire on this block is on-going
+                // because that thread requires this releaser thread
+                // to make the latest modifications visible on this process.
+                // Note: The timestamp should also be updated in the directory later.
+                std::memcpy(my_priv, other_pub, blk_size);
+                //std::copy(other_pub, other_pub + blk_size, my_priv);
+                std::memcpy(my_pub , other_pub, blk_size);
+                //std::copy(other_pub, other_pub + blk_size, my_pub);
                 
-                // Compare the public data with the private data.
-                const auto is_written =
-                    std::memcmp(my_priv, my_pub, blk_size) != 0;
-                    //std::equal(my_pub, my_pub + blk_size, my_priv)
-                
-                if (is_written) {
-                    // Three copies (my_pub, my_priv, other_pub) are different with each other.
-                    // It is necessary to merge them to complete the release.
-                    this->merge(other_pub, my_priv, my_pub, blk_size);
-                    
-                    r = merge_to_result{ true, true, true };
-                }
-                else {
-                    // Although this process doesn't release this block at this time,
-                    // the buffer read from the current owner can be utilized.
-                    // This is important when an acquire on this block is on-going
-                    // because that thread requires this releaser thread
-                    // to make the latest modifications visible on this process.
-                    // Note: The timestamp should also be updated in the directory later.
-                    std::memcpy(my_priv, other_pub, blk_size);
-                    //std::copy(other_pub, other_pub + blk_size, my_priv);
-                    std::memcpy(my_pub , other_pub, blk_size);
-                    //std::copy(other_pub, other_pub + blk_size, my_pub);
-                    
-                    // This block is not written by the current process.
-                    // It means that releasing this block now is unnecessary.
-                    r = merge_to_result{ false, false, true };
-                }
-            #if 0
+                // This block is not written by the current process.
+                // It means that releasing this block now is unnecessary.
+                r = merge_to_result{ false, false, true };
             }
-            #endif
         }
         
         return r;
