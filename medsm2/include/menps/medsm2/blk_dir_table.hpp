@@ -6,6 +6,7 @@
 #include <menps/mefdn/assert.hpp>
 
 //#define MEDSM2_USE_ONE_MUTEX
+//#define MEDSM2_FORCE_LATEST_READ
 
 namespace menps {
 namespace medsm2 {
@@ -130,12 +131,14 @@ public:
             
             const auto cur_rd_ts = ge.rd_ts;
             
+            #ifndef MEDSM2_FORCE_LATEST_READ
             if (acq_sig.is_valid_rd_ts(cur_rd_ts)) {
                 // The home process written in this process is still valid.
                 // (= before self-invalidation.)
                 return { true, is_dirty, le.home_proc, cur_rd_ts };
             }
             else {
+            #endif
                 const auto glk_ret =
                     this->lock_global(com, blk_pos, lk);
                 
@@ -149,7 +152,9 @@ public:
                 ge.rd_ts = new_rd_ts;
                 
                 return { true, is_dirty, glk_ret.owner, new_rd_ts };
+            #ifndef MEDSM2_FORCE_LATEST_READ
             }
+            #endif
         }
     }
     
