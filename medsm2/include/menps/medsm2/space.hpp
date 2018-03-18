@@ -7,6 +7,8 @@
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/logger.hpp>
 
+//#define MEDSM2_FORCE_SELF_INVALIDATE_ALL
+
 namespace menps {
 namespace medsm2 {
 
@@ -240,6 +242,14 @@ public:
                 this->acquire_sig(sig);
             }
         }
+        
+        #ifdef MEDSM2_FORCE_SELF_INVALIDATE_ALL
+        this->rd_set_.self_invalidate_all(
+            [&] (const blk_id_type blk_id) {
+                return this->seg_tbl_.self_invalidate(this->acq_sig_, blk_id);
+            }
+        );
+        #endif
         
         MEFDN_LOG_DEBUG("msg:Exiting DSM barrier.");
     }

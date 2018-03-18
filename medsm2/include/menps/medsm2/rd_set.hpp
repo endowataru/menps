@@ -78,6 +78,26 @@ public:
         }
     }
     
+    template <typename Func>
+    void self_invalidate_all(Func&& func)
+    {
+        mefdn::vector<blk_id_type> blk_ids;
+        
+        {
+            const unique_lock_type lk(this->mtx_);
+            while (!this->pq_.empty()) {
+                const auto& e = this->pq_.top();
+                blk_ids.push_back(e.blk_id);
+                this->pq_.pop();
+            }
+        }
+        
+        for (const auto& blk_id : blk_ids) {
+            // TODO: Ignoring the returned value.
+            func(blk_id);
+        }
+    }
+    
 private:
     mutex_type  mtx_;
     pq_type     pq_;
