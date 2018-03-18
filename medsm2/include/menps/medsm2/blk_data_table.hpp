@@ -11,7 +11,8 @@ namespace medsm2 {
 #define MEDSM2_USE_COMPARE_DIFF
 //#define MEDSM2_DISABLE_READ_MERGE
 #define MEDSM2_USE_SIMD_DIFF
-//#define MEDSM2_FORCE_ALWAYS_MERGE
+//#define MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
+//#define MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
 
 class data_race_error
     : public std::runtime_error
@@ -201,7 +202,7 @@ public:
                 std::memcmp(my_priv, my_pub, blk_size) != 0;
                 //std::equal(my_priv, my_priv + blk_size, my_pub)
             
-            #ifndef MEDSM2_FORCE_ALWAYS_MERGE
+            #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             if (is_written) {
             #endif
                 // Copy to the private data.
@@ -209,7 +210,7 @@ public:
                 //std::copy(my_priv, my_priv + blk_size, my_pub);
                 
                 r = merge_to_result{ false, true, false };
-            #ifndef MEDSM2_FORCE_ALWAYS_MERGE
+            #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             }
             else {
                 // The data is not modified.
@@ -236,7 +237,7 @@ public:
                 std::memcmp(my_priv, my_pub, blk_size) != 0;
                 //std::equal(my_pub, my_pub + blk_size, my_priv)
             
-            #ifndef MEDSM2_FORCE_ALWAYS_MERGE
+            #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             if (is_written) {
             #endif
                 // Three copies (my_pub, my_priv, other_pub) are different with each other.
@@ -244,7 +245,7 @@ public:
                 this->merge(other_pub, my_priv, my_pub, blk_size);
                 
                 r = merge_to_result{ true, true, true };
-            #ifndef MEDSM2_FORCE_ALWAYS_MERGE
+            #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             }
             else {
                 // Although this process doesn't release this block at this time,
