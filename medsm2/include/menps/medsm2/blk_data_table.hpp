@@ -10,6 +10,7 @@ namespace medsm2 {
 
 #define MEDSM2_USE_COMPARE_DIFF
 //#define MEDSM2_DISABLE_READ_MERGE
+#define MEDSM2_USE_SIMD_DIFF
 
 class data_race_error
     : public std::runtime_error
@@ -327,7 +328,7 @@ private:
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
     ) {
-        #if 1
+        #ifdef MEDSM2_USE_SIMD_DIFF
         #define VECTOR_LEN  32
         using vec_buf_type = unsigned char __attribute__((vector_size(VECTOR_LEN)));
         
