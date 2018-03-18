@@ -265,6 +265,7 @@ public:
         }
         else if ((state == state_type::pinned) || (state == state_type::released)) {
             // Pinned/released blocks must not be released.
+            throw std::logic_error("Releasing pinned/released is unsupported yet!");
             return { false, false };
         }
         else {
