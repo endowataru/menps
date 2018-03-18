@@ -3,6 +3,7 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/logger.hpp>
+#include <menps/mefdn/external/fmt.hpp>
 #include <cstring>
 
 namespace menps {
@@ -10,7 +11,7 @@ namespace medsm2 {
 
 #define MEDSM2_USE_COMPARE_DIFF
 //#define MEDSM2_DISABLE_READ_MERGE
-#define MEDSM2_USE_SIMD_DIFF
+//#define MEDSM2_USE_SIMD_DIFF
 //#define MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
 //#define MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
 
@@ -242,7 +243,7 @@ public:
             #endif
                 // Three copies (my_pub, my_priv, other_pub) are different with each other.
                 // It is necessary to merge them to complete the release.
-                this->merge(other_pub, my_priv, my_pub, blk_size);
+                this->merge(blk_pos, other_pub, my_priv, my_pub, blk_size);
                 
                 r = merge_to_result{ true, true, true };
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
@@ -333,7 +334,8 @@ public:
     
 private:
     static void merge(
-        const mefdn::byte* const    other_pub
+        const blk_pos_type          blk_pos
+    ,   const mefdn::byte* const    other_pub
     ,         mefdn::byte* const    my_priv
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
@@ -351,22 +353,24 @@ private:
             auto* my_priv_vec   = reinterpret_cast<vec_buf_type*>(&my_priv[i]);
             auto* my_pub_vec    = reinterpret_cast<vec_buf_type*>(&my_pub[i]);
             
-            const auto merged =
-                *other_pub_vec ^ *my_priv_vec ^ *my_pub_vec;
+            const auto other_pub_val = *other_pub_vec;
+            const auto my_priv_val   = *my_priv_vec;
+            const auto my_pub_val    = *my_pub_vec;
             
-            *my_priv_vec = merged;
-            *my_pub_vec = merged;
+            const auto other_diff = other_pub_val ^ my_pub_val;
+            const auto my_diff    = my_priv_val   ^ my_pub_val;
             
+            const auto result = my_diff ^ other_pub_val;
             #if 0
-            // TODO: Scoped enums cannot do XOR...
-            my_priv[i] =
-                static_cast<mefdn::byte>(
-                    static_cast<unsigned char>(my_priv[i]) ^
-                    static_cast<unsigned char>(my_pub[i]) ^
-                    static_cast<unsigned char>(other_pub[i])
-                );
-            my_pub[i] = my_priv[i];
+            const auto racy = other_diff & my_diff;
+            
+            if (racy != zero) {
+                report_data_race(blk_pos, other_pub, my_priv, my_pub, blk_size);
+            }
             #endif
+            
+            *my_priv_vec = result;
+            *my_pub_vec = result;
         }
         //__asm__ __volatile__ ("# merge ends");
         
@@ -375,15 +379,7 @@ private:
             #ifdef MEDSM2_USE_COMPARE_DIFF
             if (my_priv[i] != my_pub[i]) {
                 if (my_pub[i] != other_pub[i]) {
-                    throw data_race_error(
-                        fmt::format(
-                            "Data race in release ("
-                            "other_pub:{}, my_pub:{}, my_priv:{})"
-                        ,   static_cast<unsigned char>(other_pub[i])
-                        ,   static_cast<unsigned char>(my_pub[i])
-                        ,   static_cast<unsigned char>(my_priv[i])
-                        )
-                    );
+                    report_data_race(blk_pos, i, other_pub, my_priv, my_pub, blk_size);
                 }
                 my_pub[i] = my_priv[i];
             }
@@ -404,6 +400,70 @@ private:
             #endif
         }
         #endif
+    }
+    
+    static void report_data_race(
+        const blk_pos_type          blk_pos
+    ,   const size_type             index
+    ,   const mefdn::byte* const    other_pub
+    ,         mefdn::byte* const    my_priv
+    ,         mefdn::byte* const    my_pub
+    ,   const size_type             blk_size
+    ) {
+        for (size_type i = 0; i < blk_size; ++i) {
+            if ((other_pub[i] != my_pub[i]) && (my_priv[i] != my_pub[i])) {
+                fmt::MemoryWriter w;
+                w.write("msg:Detected data race.\t");
+                w.write("blk_pos:{}\t", blk_pos);
+                w.write("index:{}\t", index);
+                w.write("other_pub:0x{:x}\t", reinterpret_cast<mefdn::intptr_t>(&other_pub[i]));
+                w.write("my_priv:0x{:x}\t"  , reinterpret_cast<mefdn::intptr_t>(&my_priv[i]));
+                w.write("my_pub:0x{:x}\t"   , reinterpret_cast<mefdn::intptr_t>(&my_pub[i]));
+                
+                w.write("other_pub_1b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint8_t>(&other_pub[i]));
+                w.write("my_priv_1b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint8_t>(&my_priv[i]));
+                w.write("my_pub_1b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint8_t>(&my_pub[i]));
+                
+                w.write("other_pub_2b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint16_t>(&other_pub[i]));
+                w.write("my_priv_2b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint16_t>(&my_priv[i]));
+                w.write("my_pub_2b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint16_t>(&my_pub[i]));
+                
+                w.write("other_pub_4b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint32_t>(&other_pub[i]));
+                w.write("my_priv_4b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint32_t>(&my_priv[i]));
+                w.write("my_pub_4b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint32_t>(&my_pub[i]));
+                
+                w.write("other_pub_8b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint64_t>(&other_pub[i]));
+                w.write("my_priv_8b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint64_t>(&my_priv[i]));
+                w.write("my_pub_8b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint64_t>(&my_pub[i]));
+                
+                const auto s = w.str();
+                MEFDN_LOG_FATAL("{}", s);
+                throw std::runtime_error(s);
+            }
+        }
+        
+        // Lost the exact position...
+        fmt::MemoryWriter w;
+        w.write("msg:Detected data race? (but lost exact position...)\t");
+        w.write("blk_pos:{}\t", blk_pos);
+        w.write("index:{}\t", index);
+        w.write("other_pub:0x{:x}\t", reinterpret_cast<mefdn::intptr_t>(other_pub));
+        w.write("my_priv:0x{:x}\t"  , reinterpret_cast<mefdn::intptr_t>(my_priv));
+        w.write("my_pub:0x{:x}"     , reinterpret_cast<mefdn::intptr_t>(my_pub));
+        
+        const auto s = w.str();
+        MEFDN_LOG_FATAL("{}", s);
+        throw std::logic_error(s);
+    }
+    
+    template <typename T>
+    static T get_aligned_data_race_val(const mefdn::byte* const p) {
+        auto ret_pi = reinterpret_cast<mefdn::uintptr_t>(p);
+        
+        // Align the pointer.
+        ret_pi -= ret_pi % sizeof(T);
+        
+        return *reinterpret_cast<T*>(ret_pi);
     }
     
     mefdn::byte* get_my_priv_ptr(const blk_pos_type blk_pos) {
