@@ -9,6 +9,7 @@ namespace menps {
 namespace medsm2 {
 
 #define MEDSM2_USE_COMPARE_DIFF
+//#define MEDSM2_DISABLE_READ_MERGE
 
 class data_race_error
     : public std::runtime_error
@@ -76,6 +77,7 @@ public:
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
         
         if (cur_proc != home_proc) {
+            #ifndef MEDSM2_DISABLE_READ_MERGE
             if (is_dirty) {
                 // Merge the diff in the read.
                 
@@ -128,9 +130,12 @@ public:
                 }
             }
             else {
+            #endif
                 // Simply read from the home process.
                 rma.read(home_proc, this->get_other_pub_ptr(home_proc, blk_pos), my_priv, blk_size);
+            #ifndef MEDSM2_DISABLE_READ_MERGE
             }
+            #endif
         }
         
         // Call mprotect(PROT_READ).
