@@ -1,39 +1,37 @@
 
+Components (old figure)
+------------------------
 
-
-Components
-----------
-
-- mgth
+- meth
     - DSM + distributed work-stealing scheduler
-- mgdsm
+- medsm
     - Distributed Shared Memory (DSM)
-- mgcom
+- mecom
     - Portable low-level communication library
-- mgdev
+- medev
     - Communication device wrapper library
-- mgult
+- meult
     - Customizable work-stealing scheduler
-- mgctx
+- mectx
     - Context switching library
-- mgbase
+- mefdn
     - C++ base library
 
 ```
 +---------------------+
-|         mgth        |
+|         meth        |
 +---------+           |
-|  mgdsm  |           |
+|  medsm  |           |
 +---------+-----+     |
-|      mgcom    |     |
+|      mecom    |     |
 +---------------+     |
-|      mgdev    |     |
+|      medev    |     |
 +---------------+-----+
-|        mgult        |
+|        meult        |
 +---------------------+
-|        mgctx        |
+|        mectx        |
 +---------------------+
-|        mgbase       |
+|        mefdn        |
 +---------------------+
 ```
 
