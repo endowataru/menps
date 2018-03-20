@@ -34,7 +34,8 @@ class blk_dir_table
     enum class state_type {
         invalid_clean = 0
     ,   invalid_dirty
-    ,   readonly
+    ,   readonly_clean
+    ,   readonly_dirty
     ,   writable
     ,   released // special state for store(release)
     ,   pinned   // special state for call stacks
@@ -131,7 +132,7 @@ public:
                 le.state == state_type::invalid_dirty;
             
             // Change the state to read-only only when it was invalid.
-            le.state = state_type::readonly;
+            le.state = is_dirty ? state_type::readonly_dirty : state_type::readonly_clean;
             
             const auto cur_rd_ts = ge.rd_ts;
             
@@ -164,8 +165,9 @@ public:
     
     struct start_write_result
     {
-        // Indicate that this block must be twinned
-        // and changed to PROT_WRITE.
+        // Indicate that this block must be changed to PROT_WRITE.
+        bool needs_protect;
+        // Indicate that this block must be twinned.
         bool needs_twin;
         // Indicate that this block was or is now writable.
         bool is_writable;
@@ -176,21 +178,26 @@ public:
         this->check_locked(blk_pos, lk);
         
         auto& le = this->les_[blk_pos];
-        if (le.state == state_type::readonly) {
+        if (le.state == state_type::readonly_clean || le.state == state_type::readonly_dirty) {
+            // Twinning is only required when only the private data is valid.
+            const auto needs_twin =
+                le.state == state_type::readonly_clean;
+            
             // Change the state to writable only when it was read-only.
             le.state = state_type::writable;
-            return { true, true };
+            
+            return { true, needs_twin, true };
         }
         else if (le.state == state_type::writable || le.state == state_type::released
             || le.state == state_type::pinned)
         {
             // This block is already writable.
-            return { false, true };
+            return { false, false, true };
         }
         else {
             // This block was invalid.
             // TODO: This simply seems an error.
-            return { false, false };
+            return { false, false, false };
         }
     }
     
@@ -305,9 +312,16 @@ private:
                 // invalidated blocks require neither protection nor merging.
                 return { false, false, false };
             }
-            else if (le.state == state_type::readonly) {
+            else if (le.state == state_type::readonly_clean) {
                 // Set the state to "invalid & clean".
                 le.state = state_type::invalid_clean;
+                
+                // mprotect(PROT_NONE) must be called immediately.
+                return { false, true, false };
+            }
+            else if (le.state == state_type::readonly_dirty) {
+                // Set the state to "invalid & dirty".
+                le.state = state_type::invalid_dirty;
                 
                 // mprotect(PROT_NONE) must be called immediately.
                 return { false, true, false };
@@ -568,7 +582,7 @@ public:
             // This block was downgraded to read-only
             // because the old owner wrote on this block.
             // The state is updated because of this downgrading.
-            le.state = state_type::readonly;
+            le.state = state_type::readonly_clean;
         }
         else if (le.state == state_type::released) {
             // The released block becomes a normal writable block.

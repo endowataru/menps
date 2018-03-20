@@ -116,8 +116,11 @@ public:
         self.set_readonly(blk_pos, blk_size);
     }
     
-    void start_write(const blk_pos_type blk_pos, const unique_lock_type& lk)
-    {
+    void start_write(
+        const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ,   const bool              needs_twin
+    ) {
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
         
@@ -126,9 +129,11 @@ public:
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
         const auto my_pub = this->get_my_pub_ptr(blk_pos);
         
-        // Copy the private data to the public data.
-        // This is a preparation for releasing this block later.
-        std::copy(my_priv, my_priv + blk_size, my_pub);
+        if (needs_twin) {
+            // Copy the private data to the public data.
+            // This is a preparation for releasing this block later.
+            std::copy(my_priv, my_priv + blk_size, my_pub);
+        }
         
         // Call mprotect(PROT_READ | PROT_WRITE).
         self.set_writable(blk_pos, blk_size);

@@ -121,7 +121,7 @@ private:
     {
         this->after_read(blk_id, ret.read);
         
-        if (ret.write.needs_twin) {
+        if (ret.write.needs_protect) {
             // Add to the write set.
             // This MUST FOLLOW the mprotect(PROT_READ|PROT_WRITE) call
             // because the write set may be flushed in the reversed order.

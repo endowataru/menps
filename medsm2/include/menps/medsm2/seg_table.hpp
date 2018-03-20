@@ -231,13 +231,13 @@ private:
     {
         const auto dir_ret = info.dir_tbl.start_write(info.blk_pos, info.lk);
         
-        // Check whether this block is invalidated/read-only.
-        if (dir_ret.needs_twin) {
+        // Check whether this block is read-only.
+        if (dir_ret.needs_protect) {
             // This block must be upgraded.
             
             // Copy the data of the private area to the public area
             // and then make the private area writable.
-            info.data_tbl.start_write(info.blk_pos, info.lk);
+            info.data_tbl.start_write(info.blk_pos, info.lk, dir_ret.needs_twin);
             
             MEFDN_LOG_DEBUG(
                 "msg:Start writing block.\t"
