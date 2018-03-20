@@ -100,38 +100,8 @@ public:
                 
                 const auto my_pub = this->get_my_pub_ptr(blk_pos);
                 
-                // TODO: Optimize.
-                for (size_type i = 0; i < blk_size; ++i) {
-                    #ifdef MEDSM2_USE_COMPARE_DIFF
-                    if (my_priv[i] != my_pub[i]) {
-                        if (my_pub[i] != home_pub[i]) {
-                            throw data_race_error(
-                                fmt::format(
-                                    "Data race in read ("
-                                    "home_pub:{}, my_pub:{}, my_priv:{})"
-                                ,   static_cast<unsigned char>(home_pub[i])
-                                ,   static_cast<unsigned char>(my_pub[i])
-                                ,   static_cast<unsigned char>(my_priv[i])
-                                )
-                            );
-                        }
-                        my_priv[i] = my_pub[i];
-                    }
-                    else {
-                        my_pub[i] = home_pub[i];
-                        my_priv[i] = home_pub[i];
-                    }
-                    
-                    #else
-                    // TODO: Scoped enums cannot do XOR...
-                    my_priv[i] =
-                        static_cast<mefdn::byte>(
-                            static_cast<unsigned char>(my_priv[i]) ^
-                            static_cast<unsigned char>(my_pub[i]) ^
-                            static_cast<unsigned char>(home_pub[i])
-                        );
-                    #endif
-                }
+                // Apply the changes written in home_pub into my_priv and my_pub.
+                this->read_merge(blk_pos, home_pub, my_priv, my_pub, blk_size);
             }
             else {
             #endif
@@ -243,7 +213,7 @@ public:
             #endif
                 // Three copies (my_pub, my_priv, other_pub) are different with each other.
                 // It is necessary to merge them to complete the release.
-                this->merge(blk_pos, other_pub, my_priv, my_pub, blk_size);
+                this->write_merge(blk_pos, other_pub, my_priv, my_pub, blk_size);
                 
                 r = merge_to_result{ true, true, true };
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
@@ -333,7 +303,41 @@ public:
     }
     
 private:
-    static void merge(
+    static void read_merge(
+        const blk_pos_type          blk_pos
+    ,   const mefdn::byte* const    home_pub
+    ,         mefdn::byte* const    my_priv
+    ,         mefdn::byte* const    my_pub
+    ,   const size_type             blk_size
+    ) {
+        for (size_type i = 0; i < blk_size; ++i) {
+            #ifdef MEDSM2_USE_COMPARE_DIFF
+            if (my_priv[i] != my_pub[i]) {
+                if (my_pub[i] != home_pub[i]) {
+                    report_data_race(blk_pos, i, home_pub, my_priv, my_pub, blk_size);
+                }
+            }
+            else {
+                my_pub[i] = home_pub[i];
+                my_priv[i] = home_pub[i];
+            }
+            
+            #else
+            // TODO: Scoped enums cannot do XOR...
+            const auto changed =
+                static_cast<unsigned char>(my_pub[i]) ^
+                static_cast<unsigned char>(home_pub[i])
+            
+            my_priv[i] =
+                static_cast<mefdn::byte>(
+                    static_cast<unsigned char>(my_priv[i]) ^ changed
+                );
+            my_pub[i] = home_pub[i];
+            #endif
+        }
+    }
+    
+    static void write_merge(
         const blk_pos_type          blk_pos
     ,   const mefdn::byte* const    other_pub
     ,         mefdn::byte* const    my_priv
