@@ -252,9 +252,12 @@ public:
     {
         // This block is released after this check.
         bool needs_release;
+        // This block must be write-protected (mprotect(PROT_READ))
+        // before modifying the private data on this process.
+        bool needs_protect_before;
         // If the block is invalid or read-only,
         // it should be removed from the write set.
-        bool is_downgraded;
+        bool is_clean;
     };
     
     check_release_result check_release(
@@ -272,16 +275,21 @@ public:
             (ordered && (state == state_type::released)))
         {
             // This block should be released now.
-            return { true, false };
+            return { true , true , false };
         }
         else if ((state == state_type::pinned) || (state == state_type::released)) {
             // Pinned/released blocks must not be released.
             throw std::logic_error("Releasing pinned/released is unsupported yet!");
-            return { false, false };
+            return { false, false, false };
+        }
+        else if (state == state_type::invalid_dirty || state == state_type::readonly_dirty) {
+            // Although this block is invalid or readonly,
+            // it's still dirty and must be released.
+            return { true , false, true  };
         }
         else {
-            // This block is already downgraded (invalid or read-only).
-            return { false, true };
+            // This block is already downgraded (invalid_clean or readonly_clean).
+            return { false, false, true  };
         }
     }
     
@@ -576,18 +584,36 @@ public:
             rma.write(new_owner, &ge_rptr->lock, &new_lock_val, 1);
         }
         
-        if (mg_ret.is_downgraded) {
-            MEFDN_ASSERT(le.state != state_type::pinned);
-            
-            // This block was downgraded to read-only
-            // because the old owner wrote on this block.
-            // The state is updated because of this downgrading.
-            le.state = state_type::readonly_clean;
+        const auto old_state = le.state;
+        auto new_state = old_state;
+        
+        MEFDN_ASSERT(old_state != state_type::invalid_clean);
+        MEFDN_ASSERT(old_state != state_type::readonly_clean);
+        MEFDN_ASSERT(old_state != state_type::released);
+        MEFDN_ASSERT(old_state != state_type::pinned);
+        
+        if (old_state == state_type::invalid_dirty) {
+            new_state = state_type::invalid_clean;
         }
-        else if (le.state == state_type::released) {
-            // The released block becomes a normal writable block.
-            le.state = state_type::writable;
+        else if (old_state == state_type::readonly_dirty) {
+            new_state = state_type::readonly_clean;
         }
+        else if (old_state == state_type::writable) {
+            // Check that cur_proc != old_owner.
+            if (mg_ret.becomes_clean) {
+                // This block was downgraded to read-only
+                // because the old owner wrote on this block.
+                // The state is updated because of this downgrading.
+                new_state = state_type::readonly_clean;
+            }
+            else {
+                // This block was not write-protected in this release
+                // and still can be written in this process.
+                new_state = state_type::writable;
+            }
+        }
+        
+        le.state = new_state;
         
         return { new_wr_ts };
     }

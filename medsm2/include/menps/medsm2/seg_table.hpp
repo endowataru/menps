@@ -304,7 +304,8 @@ public:
     struct release_result {
         bool release_completed;
         bool is_written;
-        bool is_downgraded;
+        // Indicate that this block can be removed from the write set.
+        bool is_clean;
         rd_ts_type new_rd_ts;
         wr_ts_type new_wr_ts;
     };
@@ -321,7 +322,7 @@ public:
         
         if (!check_ret.needs_release) {
             // This block is not released now.
-            return { false, false, check_ret.is_downgraded, 0, 0 };
+            return { false, false, check_ret.is_clean, 0, 0 };
         }
         
         // Lock the latest owner globally.
@@ -331,7 +332,8 @@ public:
         
         // Merge the writes from both the current process and the latest owner.
         const auto mg_ret =
-            info.data_tbl.merge_to_public(com, info.blk_pos, info.lk, glk_ret.owner);
+            info.data_tbl.merge_to_public(com, info.blk_pos, info.lk, glk_ret.owner,
+                check_ret.needs_protect_before);
         
         // Unlock the global lock.
         const auto gunlk_ret =
@@ -345,17 +347,19 @@ public:
             "new_wr_ts:{}\t"
             "is_migrated:{}\t"
             "is_written:{}\t"
-            "is_downgraded:{}"
+            "is_clean:{}"
+            "becomes_clean:{}"
         ,   blk_id
         ,   glk_ret.rd_ts
         ,   glk_ret.wr_ts
         ,   gunlk_ret.new_wr_ts
         ,   mg_ret.is_migrated
         ,   mg_ret.is_written
-        ,   mg_ret.is_downgraded
+        ,   check_ret.is_clean
+        ,   mg_ret.becomes_clean
         );
         
-        return { true, mg_ret.is_written, mg_ret.is_downgraded, glk_ret.rd_ts, gunlk_ret.new_wr_ts };
+        return { true, mg_ret.is_written, mg_ret.becomes_clean, glk_ret.rd_ts, gunlk_ret.new_wr_ts };
     }
     
     typename blk_dir_tbl_type::self_invalidate_result

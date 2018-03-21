@@ -146,8 +146,8 @@ public:
         // This block was written
         // and must be recorded to the write notices.
         bool is_written;
-        // This block became inaccessible (PROT_NONE).
-        bool is_downgraded;
+        // This block was set to read-only (PROT_READ).
+        bool becomes_clean;
     };
     
     merge_to_result merge_to_public(
@@ -155,6 +155,7 @@ public:
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ,   const proc_id_type      cur_owner
+    ,   const bool              needs_protect_before
     ) {
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
@@ -205,8 +206,12 @@ public:
             // Read the public data from cur_owner.
             rma.read(cur_owner, this->get_other_pub_ptr(cur_owner, blk_pos), other_pub, blk_size);
             
-            // Call mprotect(PROT_READ).
-            self.set_readonly(blk_pos, blk_size);
+            // Only when the block was writable, this method protects this block
+            // in order to apply the changes to the private data.
+            if (needs_protect_before) {
+                // Call mprotect(PROT_READ).
+                self.set_readonly(blk_pos, blk_size);
+            }
             
             // Compare the public data with the private data.
             const auto is_written =

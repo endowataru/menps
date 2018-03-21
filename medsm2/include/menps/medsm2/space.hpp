@@ -147,7 +147,7 @@ public:
         const auto this_proc = com.this_proc_id();
         
         wn_vector_type wn_vec;
-        mefdn::vector<blk_id_type> downgraded_ids;
+        mefdn::vector<blk_id_type> clean_ids;
         
         // Iterate all of the writable blocks.
         // If the callback returns false,
@@ -172,10 +172,10 @@ public:
                         }
                         
                         // Return whether this block became inaccessible in this release.
-                        if (rel_ret.is_downgraded) {
+                        if (rel_ret.is_clean) {
                             // If this block became inaccessible now, the subsequent release operations
                             // need not to track this block (if it isn't added to the write set again).
-                            downgraded_ids.push_back(blk_id);
+                            clean_ids.push_back(blk_id);
                         }
                     }
                     else {
@@ -196,7 +196,7 @@ public:
         this->rel_sig_.merge(mefdn::move(wn_vec));
         
         // Remove the block IDs that were downgraded during this release.
-        this->wr_set_.remove(mefdn::begin(downgraded_ids), mefdn::end(downgraded_ids));
+        this->wr_set_.remove(mefdn::begin(clean_ids), mefdn::end(clean_ids));
         
         // TODO: Atomics are not implemented...
         
