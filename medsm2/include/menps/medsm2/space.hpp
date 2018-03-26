@@ -8,6 +8,7 @@
 #include <menps/mefdn/logger.hpp>
 
 //#define MEDSM2_FORCE_SELF_INVALIDATE_ALL
+#define MEDSM2_USE_INPLACE_WR_SET
 
 namespace menps {
 namespace medsm2 {
@@ -138,6 +139,74 @@ public:
     }
     
 public:
+    #ifdef MEDSM2_USE_INPLACE_WR_SET
+    void fence()
+    {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        const auto this_proc = com.this_proc_id();
+        
+        wn_vector_type wn_vec;
+        mefdn::vector<blk_id_type> clean_ids;
+        
+        // Iterate all of the writable blocks.
+        // If the callback returns false,
+        // the corresponding block will be removed in the next release.
+        const auto wrs_ret =
+            this->wr_set_.start_release_for_all_blocks(
+                [&] (const blk_id_type blk_id) {
+                    // Write the data to the public area
+                    // and migrate from the old owner if necessary.
+                    // TODO: Make this a coroutine.
+                    const auto rel_ret =
+                        this->seg_tbl_.release(com, blk_id, false);
+                    
+                    if (rel_ret.release_completed) {
+                        // This block was not marked as "released"
+                        // and the release operation for it has completed.
+                        
+                        if (rel_ret.is_written) {
+                            // Add to the write notices
+                            // because the current process modified this block.
+                            wn_vec.push_back(wn_entry_type{ this_proc, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts });
+                        }
+                        
+                        // Return whether this block became inaccessible in this release.
+                        if (rel_ret.is_clean) {
+                            // If this block became inaccessible now, the subsequent release operations
+                            // need not to track this block (if it isn't added to the write set again).
+                            clean_ids.push_back(blk_id);
+                        }
+                    }
+                    else {
+                        // There are two cases:
+                        // (1) This block is pinned.
+                        // (2) This block was store-released and released later.
+                        // If this block ID is not in "ordered_ids" but marked as "released",
+                        // it will be released in the next release (not in this time).
+                    }
+                }
+            );
+        
+        if (!wrs_ret.needs_release) {
+            return;
+        }
+        
+        // Union the write notice vector and the release signature.
+        this->rel_sig_.merge(mefdn::move(wn_vec));
+        
+        // Remove the block IDs that were downgraded during this release.
+        this->wr_set_.remove(mefdn::begin(clean_ids), mefdn::end(clean_ids));
+        
+        // TODO: Atomics are not implemented...
+        
+        this->wr_set_.finish_release();
+    }
+    
+    bool progress_release() { return false; }
+    
+    #else
     MEFDN_NODISCARD
     bool progress_release()
     {
@@ -202,6 +271,7 @@ public:
         
         return true;
     }
+    #endif
     
     void barrier()
     {
@@ -217,7 +287,11 @@ public:
         
         // Complete all of the preceding writes in the releaser thread.
         // After releasing all, the releaser thread wakes up this thread.
+        #ifdef MEDSM2_USE_INPLACE_WR_SET
+        this->fence();
+        #else
         this->wr_set_.fence();
+        #endif
         
         const auto sig_size = this->rel_sig_.get_max_size_in_bytes();
         

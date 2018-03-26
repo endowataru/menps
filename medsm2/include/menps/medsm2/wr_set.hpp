@@ -30,6 +30,7 @@ public:
         this->new_ids_.push_back(blk_id);
     }
     
+    #if 0
     void add_ordered(const blk_id_type blk_id)
     {
         // TODO: Because this method is frequently called,
@@ -46,6 +47,7 @@ public:
         // Notify the releaser thread.
         this->start_rel_cv_.notify_one();
     }
+    #endif
     
     void fence()
     {
