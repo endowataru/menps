@@ -103,6 +103,11 @@ public:
     {
         // Indicate that this block must be fetched from the home process.
         bool needs_read;
+        #ifdef MEDSM2_RELEASE_LATEST_READ
+        // Indicate that this process needs to read the latest block from the current owner
+        // because the read timestamp is older than the required value.
+        bool needs_latest_read;
+        #endif
         // Indicate that this block was modified by this process.
         bool is_dirty;
         // The home process indicates the source of reading.
@@ -125,7 +130,11 @@ public:
         
         if (!(le.state == state_type::invalid_clean || le.state == state_type::invalid_dirty)) {
             // This block is not marked as invalid.
+            #ifdef MEDSM2_RELEASE_LATEST_READ
+            return { false, false, false, 0, 0 };
+            #else
             return { false, false, 0, 0 };
+            #endif
         }
         else {
             const auto is_dirty =
@@ -140,10 +149,17 @@ public:
             if (acq_sig.is_valid_rd_ts(cur_rd_ts)) {
                 // The home process written in this process is still valid.
                 // (= before self-invalidation.)
+                #ifdef MEDSM2_RELEASE_LATEST_READ
+                return { true, false, is_dirty, le.home_proc, cur_rd_ts };
+                #else
                 return { true, is_dirty, le.home_proc, cur_rd_ts };
+                #endif
             }
             else {
             #endif
+                #ifdef MEDSM2_RELEASE_LATEST_READ
+                return { true, true, is_dirty, le.home_proc, cur_rd_ts };
+                #else
                 const auto glk_ret =
                     this->lock_global(com, blk_pos, lk);
                 
@@ -157,6 +173,7 @@ public:
                 ge.rd_ts = new_rd_ts;
                 
                 return { true, is_dirty, glk_ret.owner, new_rd_ts };
+                #endif
             #ifndef MEDSM2_FORCE_LATEST_READ
             }
             #endif
@@ -587,8 +604,9 @@ public:
         const auto old_state = le.state;
         auto new_state = old_state;
         
-        MEFDN_ASSERT(old_state != state_type::invalid_clean);
-        MEFDN_ASSERT(old_state != state_type::readonly_clean);
+        // TODO: Invalid blocks are locked when the read timestamp is too old.
+        //MEFDN_ASSERT(old_state != state_type::invalid_clean);
+        //MEFDN_ASSERT(old_state != state_type::readonly_clean);
         MEFDN_ASSERT(old_state != state_type::released);
         MEFDN_ASSERT(old_state != state_type::pinned);
         
@@ -618,6 +636,7 @@ public:
         return { new_wr_ts };
     }
     
+    #ifndef MEDSM2_RELEASE_LATEST_READ
 private:
     void unlock_global_read(
         com_itf_type&               com
@@ -647,6 +666,7 @@ private:
             rma.write(owner, &ge_rptr->lock, &new_lock_val, 1);
         }
     }
+    #endif
     
 public:
     void check_locked(const blk_pos_type blk_pos, const unique_lock_type& lk)

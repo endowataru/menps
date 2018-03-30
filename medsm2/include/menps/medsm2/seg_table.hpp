@@ -100,7 +100,13 @@ public:
         }
     }
     
-    using start_read_result = typename blk_dir_tbl_type::start_read_result;
+    struct start_read_result {
+        // Indicate that this block was invalid and now becomes readable.
+        // This flag is used for upgrading the block in a segmentation fault.
+        bool is_newly_read;
+        // The read timestamp for this block.
+        rd_ts_type rd_ts;
+    };
     
     MEFDN_NODISCARD
     start_read_result start_read(com_itf_type& com, const acq_sig_type& acq_sig, const blk_id_type blk_id)
@@ -112,7 +118,7 @@ public:
     
     struct start_write_result
     {
-        typename blk_dir_tbl_type::start_read_result    read;
+        start_read_result                               read;
         typename blk_dir_tbl_type::start_write_result   write;
     };
     
@@ -195,8 +201,7 @@ public:
     
 private:
     MEFDN_NODISCARD
-    typename blk_dir_tbl_type::start_read_result
-    start_read_locked(com_itf_type& com, const acq_sig_type& acq_sig, const lock_info& info)
+    start_read_result start_read_locked(com_itf_type& com, const acq_sig_type& acq_sig, const lock_info& info)
     {
         // Check whether this block is invalid or not.
         // The home process may be examined by following the probable owners.
@@ -207,22 +212,60 @@ private:
             // This block is inaccessible (= invalidated).
             // The latest data must be read from the home node.
             
-            // If this process is not the home process, read from the home first.
-            // After that, the private area of this block becomes read-only.
-            info.data_tbl.start_read(com, info.blk_pos, info.lk, start_ret.home_proc, start_ret.is_dirty);
-        
-            MEFDN_LOG_DEBUG(
-                "msg:Start reading block.\t"
-                "blk_pos:{}\t"
-                "home_proc:{}\t"
-                "rd_ts:{}"
-            ,   info.blk_pos
-            ,   start_ret.home_proc
-            ,   start_ret.rd_ts
-            );
+            #ifdef MEDSM2_RELEASE_LATEST_READ
+            if (start_ret.needs_latest_read) {
+                // This block was invalidated based on timestamps.
+                
+                const auto glk_ret =
+                    info.dir_tbl.lock_global(com, info.blk_pos, info.lk);
+                
+                // Merge the writes from both the current process and the latest owner.
+                const auto mg_ret =
+                    info.data_tbl.merge_to_public(com, info.blk_pos, info.lk, glk_ret.owner,
+                        false /* needs_protect_before is always false for invalid blocks */);
+                
+                #if 0
+                // Create a new self-invalidation timestamp.
+                // FIXME: Apply this on a release, too.
+                // TODO: Provide a good prediction for each block.
+                const auto new_rd_ts =
+                    acq_sig.make_new_rd_ts(glk_ret.rd_ts);
+                #endif
+                
+                info.dir_tbl.unlock_global(com, info.blk_pos, info.lk, glk_ret, mg_ret);
+                
+                // TODO: Do refactoring and remove this function.
+                info.data_tbl.set_readonly(info.blk_pos, info.lk);
+            }
+            else {
+            #endif
+                // Although this block was invalidated,
+                // its read timestamp for this process is still alive.
+                
+                // If this process is not the home process, read from the home first.
+                // After that, the private area of this block becomes read-only.
+                info.data_tbl.start_read(com, info.blk_pos, info.lk,
+                    start_ret.home_proc, start_ret.is_dirty);
+                
+                MEFDN_LOG_DEBUG(
+                    "msg:Start reading block.\t"
+                    "blk_pos:{}\t"
+                    "home_proc:{}\t"
+                    "rd_ts:{}"
+                ,   info.blk_pos
+                ,   start_ret.home_proc
+                ,   start_ret.rd_ts
+                );
+            #ifdef MEDSM2_RELEASE_LATEST_READ
+            }
+            #endif
         }
         
-        return start_ret;
+        return {
+            start_ret.needs_read
+        ,   start_ret.rd_ts
+            // FIXME: rd_ts must be updated. Return the new value here.
+        };
     }
     
     MEFDN_NODISCARD

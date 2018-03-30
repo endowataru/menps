@@ -116,6 +116,20 @@ public:
         self.set_readonly(blk_pos, blk_size);
     }
     
+    // TODO: Do refactoring and remove this function.
+    void set_readonly(
+        const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ) {
+        auto& self = this->derived();
+        self.check_locked(blk_pos, lk);
+        
+        const auto blk_size = self.get_blk_size();
+        
+        // Call mprotect(PROT_READ).
+        self.set_readonly(blk_pos, blk_size);
+    }
+    
     void start_write(
         const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk

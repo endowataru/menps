@@ -215,7 +215,7 @@ private:
         
         const auto rd_ret = base::start_read(blk_id);
         
-        if (rd_ret.needs_read) {
+        if (rd_ret.is_newly_read) {
             // This block was exactly read at this time.
             return true;
         }
