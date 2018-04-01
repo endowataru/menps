@@ -109,11 +109,14 @@ public:
         const seg_id_type seg_id = 0;
         
         const auto priv_sys_ptr =
-            get_priv_sys_ptr_from_seg(0) + reinterpret_cast<ptrdiff_type>(start_ptr);
-        const auto pub_ptr =
-            get_pub_ptr_from_seg(0) + reinterpret_cast<ptrdiff_type>(start_ptr);
+            static_cast<mefdn::byte*>(this->get_priv_sys_ptr_from_seg(0))
+            + reinterpret_cast<ptrdiff_type>(start_ptr);
         
-        coll_alloc_seg(seg_size, blk_size, seg_id, start_ptr, priv_sys_ptr, pub_ptr);
+        const auto pub_ptr =
+            static_cast<mefdn::byte*>(this->get_pub_ptr_from_seg(0))
+            + reinterpret_cast<ptrdiff_type>(start_ptr);
+        
+        this->coll_alloc_seg(seg_size, blk_size, seg_id, start_ptr, priv_sys_ptr, pub_ptr);
     }
     
 private:

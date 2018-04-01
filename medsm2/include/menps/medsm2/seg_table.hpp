@@ -202,7 +202,7 @@ private:
         // Check whether this block is invalid or not.
         // The home process may be examined by following the probable owners.
         const auto start_ret =
-            info.dir_tbl.start_read(com, acq_sig, info.blk_pos, info.lk);
+            info.dir_tbl.start_read(acq_sig, info.blk_pos, info.lk);
         
         if (start_ret.needs_read) {
             // This block is inaccessible (= invalidated).

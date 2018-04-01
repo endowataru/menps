@@ -60,7 +60,10 @@ public:
             auto& ge = * this->ges_.local(blk_pos);
             
             // The owner of blk_pos is (blk_pos % num_procs).
-            const proc_id_type owner = blk_pos % num_procs;
+            const auto owner =
+                static_cast<proc_id_type>(
+                    blk_pos % static_cast<blk_pos_type>(num_procs)
+                );
             
             const auto lock_val = 
                     owner == this_proc
@@ -115,8 +118,7 @@ public:
     
     MEFDN_NODISCARD
     start_read_result start_read(
-        com_itf_type&           com
-    ,   const acq_sig_type&     acq_sig
+        const acq_sig_type&     acq_sig
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
