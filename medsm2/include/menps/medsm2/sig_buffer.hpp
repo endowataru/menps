@@ -50,6 +50,11 @@ public:
         return sig_buffer(P::make_init_wr_ts(), mefdn::move(wn_vec));
     }
     
+    static sig_buffer create_from_ts(const wr_ts_type min_wr_ts)
+    {
+        return sig_buffer(min_wr_ts, wn_vector_type{});
+    }
+    
     void truncate(const size_type max_size)
     {
         if (this->wn_vec_.size() > max_size) {

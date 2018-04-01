@@ -45,6 +45,14 @@ public:
         return this->sig_.get_min_wr_ts();
     }
     
+    void acquire_barrier_sig(const sig_buffer_type& sig) {
+        const mutex_unique_lock_type lk(this->mtx_);
+        const auto min_wr_ts = sig.get_min_wr_ts();
+        
+        // TODO: Probably, this merge is not necessary for barriers.
+        sig_ = sig_buffer_type::merge(this->sig_, sig_buffer_type::create_from_ts(min_wr_ts));
+    }
+    
     // TODO: atomics are unimplemented
     
 private:

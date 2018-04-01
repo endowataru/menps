@@ -333,6 +333,12 @@ private:
     {
         const auto min_wr_ts = sig.get_min_wr_ts();
         
+        // Increase the acquire timestamp.
+        // Note that write notices are not merged to the acquire signature
+        // because they all are applied to all the processes
+        // and hence they don't need to be transferred from this process to another.
+        this->acq_sig_.acquire_barrier_sig(sig);
+        
         // Self-invalidate all of the old blocks.
         this->rd_set_.self_invalidate(
             min_wr_ts,
