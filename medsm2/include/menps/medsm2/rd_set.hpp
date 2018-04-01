@@ -43,6 +43,12 @@ public:
     template <typename Func>
     void self_invalidate(const rd_ts_type min_rd_ts, Func&& func)
     {
+        MEFDN_LOG_DEBUG(
+            "msg:Start self-invalidating all old blocks.\t"
+            "min_rd_ts:{}\t"
+        ,   min_rd_ts
+        );
+        
         mefdn::vector<blk_id_type> blk_ids;
         
         {
@@ -76,6 +82,16 @@ public:
                 this->pq_.push(e);
             }
         }
+        
+        MEFDN_LOG_DEBUG(
+            "msg:Finish self-invalidating all old blocks.\t"
+            "min_rd_ts:{}\t"
+            "num_old_blks:{}\t"
+            "num_valid_blks:{}\t"
+        ,   min_rd_ts
+        ,   blk_ids.size()
+        ,   new_ents.size()
+        );
     }
     
     template <typename Func>
