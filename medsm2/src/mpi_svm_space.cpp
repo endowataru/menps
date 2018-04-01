@@ -5,7 +5,6 @@
 #include <menps/medsm2/acq_sig.hpp>
 #include <menps/medsm2/rd_set.hpp>
 #include <menps/medsm2/wr_set.hpp>
-#include <menps/medsm2/inplace_wr_set.hpp>
 #include <menps/medsm2/svm/svm_space.hpp>
 #include <menps/medsm2/svm/svm_blk_table.hpp>
 #include <menps/medsm2/svm/svm_seg_table.hpp>
@@ -138,7 +137,7 @@ struct my_space_policy : dsm_base_policy
     using derived_type = svm_space<my_space_policy>;
     using seg_table_type = my_seg_table;
     using blk_tbl_type = my_seg_table_policy::blk_tbl_type;
-    using wr_set_type = inplace_wr_set<dsm_base_policy>;
+    using wr_set_type = wr_set<dsm_base_policy>;
     using rd_set_type = rd_set<dsm_base_policy>;
 };
 
