@@ -117,7 +117,8 @@ public:
     
     void* untyped_allocate(const mefdn::size_t size) {
         const auto p = new mefdn::byte[size];
-        this->req_.win_attach({ win_, p, size });
+        const auto size_aint = static_cast<MPI_Aint>(size);
+        this->req_.win_attach({ win_, p, size_aint });
         return p;
     }
     

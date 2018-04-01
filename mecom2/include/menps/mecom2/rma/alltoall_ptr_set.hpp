@@ -59,7 +59,7 @@ public:
     
     rptr_type remote(const process_id_type proc, const size_type idx) {
         #ifdef MECOM2_ENABLE_DEBUG_ALLTOALL_PTR_SET
-        MEFDN_ASSERT(proc < num_procs_);
+        MEFDN_ASSERT(static_cast<size_type>(proc) < num_procs_);
         MEFDN_ASSERT(idx < num_elems_);
         #endif
         return this->rptrs_[proc] + idx;

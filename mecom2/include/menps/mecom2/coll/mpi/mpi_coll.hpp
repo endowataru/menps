@@ -45,8 +45,9 @@ public:
         auto& self = this->derived();
         auto& mi = self.get_mpi_interface();
         const auto comm = self.get_communicator();
+        const auto num_bytes_int = static_cast<int>(num_bytes);
         
-        mi.allgather({ src_ptr, dest_ptr, num_bytes, comm });
+        mi.allgather({ src_ptr, dest_ptr, num_bytes_int, comm });
     }
     
     void untyped_alltoall(

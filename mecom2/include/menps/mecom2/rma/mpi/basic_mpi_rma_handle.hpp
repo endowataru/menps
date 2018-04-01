@@ -49,7 +49,7 @@ public:
             dest_lptr
         ,   src_proc
         ,   P::to_mpi_aint(src_rptr)
-        ,   size_in_bytes
+        ,   static_cast<int>(size_in_bytes)
         ,   win
         });
     }
@@ -80,7 +80,7 @@ public:
             src_lptr
         ,   dest_proc
         ,   P::to_mpi_aint(dest_rptr)
-        ,   size_in_bytes
+        ,   static_cast<int>(size_in_bytes)
         ,   win
         });
     }
