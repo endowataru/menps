@@ -411,6 +411,7 @@ public:
         bool        is_ignored;
         bool        needs_protect;
         bool        needs_merge;
+        wr_ts_type  wr_ts;
         rd_ts_type  rd_ts;
     };
     
@@ -422,9 +423,10 @@ public:
         const auto ret = this->invalidate(blk_pos, lk, acq_sig.get_min_wr_ts());
         
         auto& ge = * this->ges_.local(blk_pos);
+        const auto wr_ts = ge.wr_ts;
         const auto rd_ts = ge.rd_ts;
         
-        return { ret.is_ignored, ret.needs_protect, ret.needs_merge, rd_ts };
+        return { ret.is_ignored, ret.needs_protect, ret.needs_merge, wr_ts, rd_ts };
     }
     
 public:

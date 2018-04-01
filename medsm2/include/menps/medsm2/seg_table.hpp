@@ -396,17 +396,19 @@ public:
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
             "blk_id:0x{:x}\t"
-            "rd_ts:{}\t"
             "old_wr_ts:{}\t"
+            "old_rd_ts:{}\t"
             "new_wr_ts:{}\t"
+            "new_rd_ts:{}\t"
             "is_migrated:{}\t"
             "is_written:{}\t"
             "is_clean:{}\t"
             "becomes_clean:{}"
         ,   blk_id
-        ,   glk_ret.rd_ts
         ,   glk_ret.wr_ts
+        ,   glk_ret.rd_ts
         ,   gunlk_ret.new_wr_ts
+        ,   gunlk_ret.new_rd_ts
         ,   mg_ret.is_migrated
         ,   mg_ret.is_written
         ,   check_ret.is_clean
@@ -432,10 +434,31 @@ public:
             
             MEFDN_LOG_DEBUG(
                 "msg:Self-invalidated block.\t"
-                "blk_pos:{}"
+                "blk_pos:{}\t"
+                "wr_ts:{}\t"
+                "rd_ts:{}\t"
+                "min_wr_ts:{}"
             ,   info.blk_pos
+            ,   ret.wr_ts
+            ,   ret.rd_ts
+            ,   acq_sig.get_min_wr_ts()
             );
         }
+        else {
+            MEFDN_LOG_DEBUG(
+                "msg:{}.\t"
+                "blk_pos:{}\t"
+                "wr_ts:{}\t"
+                "rd_ts:{}\t"
+                "min_wr_ts:{}"
+            ,   (ret.is_ignored ? "Avoid self-invalidation" : "Self-invalidate invalid block")
+            ,   info.blk_pos
+            ,   ret.wr_ts
+            ,   ret.rd_ts
+            ,   acq_sig.get_min_wr_ts()
+            );
+        }
+        
         if (ret.needs_merge) {
             // FIXME
             throw std::logic_error("unimplemented");
