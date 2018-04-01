@@ -211,23 +211,13 @@ private:
             if (start_ret.needs_latest_read) {
                 // This block was invalidated based on timestamps.
                 
-                const auto glk_ret =
-                    info.dir_tbl.lock_global(com, info.blk_pos, info.lk);
-                
-                // Merge the writes from both the current process and the latest owner.
-                const auto mg_ret =
-                    info.data_tbl.merge_to_public(com, info.blk_pos, info.lk, glk_ret.owner,
-                        false /* needs_protect_before is always false for invalid blocks */);
-                
-                #if 0
-                // Create a new self-invalidation timestamp.
-                // FIXME: Apply this on a release, too.
-                // TODO: Provide a good prediction for each block.
-                const auto new_rd_ts =
-                    acq_sig.make_new_rd_ts(glk_ret.rd_ts);
-                #endif
-                
-                info.dir_tbl.unlock_global(com, acq_sig, info.blk_pos, info.lk, glk_ret, mg_ret);
+                // Read & merge the latest values inside the global critical section.
+                const auto tx_ret =
+                    this->do_transaction(com, acq_sig, info,
+                        false /* needs_protect_before is always false for invalid blocks */
+                        // TODO: This flag complicates the logic.
+                    );
+                // TODO: It is strange that tx_ret is totally ignored in this method.
                 
                 // TODO: Do refactoring and remove this function.
                 info.data_tbl.set_readonly(info.blk_pos, info.lk);
@@ -370,19 +360,9 @@ public:
             return { false, false, check_ret.is_clean, 0, 0 };
         }
         
-        // Lock the latest owner globally.
-        // This is achieved by following the graph of probable owners.
-        const auto glk_ret =
-            info.dir_tbl.lock_global(com, info.blk_pos, info.lk);
-        
-        // Merge the writes from both the current process and the latest owner.
-        const auto mg_ret =
-            info.data_tbl.merge_to_public(com, info.blk_pos, info.lk, glk_ret.owner,
-                check_ret.needs_protect_before);
-        
-        // Unlock the global lock.
-        const auto gunlk_ret =
-            info.dir_tbl.unlock_global(com, acq_sig, info.blk_pos, info.lk, glk_ret, mg_ret);
+        // Merge the written values inside the global critical section.
+        auto tx_ret =
+            this->do_transaction(com, acq_sig, info, check_ret.needs_protect_before);
         
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
@@ -396,19 +376,56 @@ public:
             "is_clean:{}\t"
             "becomes_clean:{}"
         ,   blk_id
-        ,   glk_ret.wr_ts
-        ,   glk_ret.rd_ts
-        ,   gunlk_ret.new_wr_ts
-        ,   gunlk_ret.new_rd_ts
-        ,   mg_ret.is_migrated
-        ,   mg_ret.is_written
+        ,   tx_ret.glk_ret.wr_ts
+        ,   tx_ret.glk_ret.rd_ts
+        ,   tx_ret.gunlk_ret.new_wr_ts
+        ,   tx_ret.gunlk_ret.new_rd_ts
+        ,   tx_ret.mg_ret.is_migrated
+        ,   tx_ret.mg_ret.is_written
         ,   check_ret.is_clean
-        ,   mg_ret.becomes_clean
+        ,   tx_ret.mg_ret.becomes_clean
         );
         
-        return { true, mg_ret.is_written, mg_ret.becomes_clean, gunlk_ret.new_rd_ts, gunlk_ret.new_wr_ts };
+        return {
+            true
+        ,   tx_ret.mg_ret.is_written
+        ,   tx_ret.mg_ret.becomes_clean
+        ,   tx_ret.gunlk_ret.new_rd_ts
+        ,   tx_ret.gunlk_ret.new_wr_ts
+        };
     }
     
+private:
+    struct do_transaction_result {
+        typename blk_dir_tbl_type::lock_global_result   glk_ret;
+        typename blk_data_tbl_type::merge_to_result     mg_ret;
+        typename blk_dir_tbl_type::unlock_global_result gunlk_ret;
+    };
+    
+    do_transaction_result do_transaction(
+        com_itf_type&       com
+    ,   const acq_sig_type& acq_sig
+    ,   const lock_info&    info
+    ,   const bool          needs_protect_before
+    ) {
+        // Lock the latest owner globally.
+        // This is achieved by following the graph of probable owners.
+        const auto glk_ret =
+            info.dir_tbl.lock_global(com, info.blk_pos, info.lk);
+        
+        // Merge the writes from both the current process and the latest owner.
+        const auto mg_ret =
+            info.data_tbl.merge_to_public(com, info.blk_pos, info.lk, glk_ret.owner,
+                needs_protect_before);
+        
+        // Unlock the global lock.
+        const auto gunlk_ret =
+            info.dir_tbl.unlock_global(com, acq_sig, info.blk_pos, info.lk, glk_ret, mg_ret);
+        
+        return { glk_ret, mg_ret, gunlk_ret };
+    }
+    
+public:
     typename blk_dir_tbl_type::self_invalidate_result
     self_invalidate(
         const acq_sig_type&     acq_sig

@@ -502,6 +502,7 @@ public:
         
         // The read timestamp depends on the write timestamp.
         // This calculates new_rd_ts = max(new_wr_ts+lease, old_rd_ts).
+        // TODO: Provide a good prediction for a lease value of each block.
         const auto new_rd_ts =
             acq_sig.make_new_rd_ts(new_wr_ts, glk_ret.rd_ts);
         
