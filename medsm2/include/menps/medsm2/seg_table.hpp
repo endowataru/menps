@@ -208,7 +208,6 @@ private:
             // This block is inaccessible (= invalidated).
             // The latest data must be read from the home node.
             
-            #ifdef MEDSM2_RELEASE_LATEST_READ
             if (start_ret.needs_latest_read) {
                 // This block was invalidated based on timestamps.
                 
@@ -244,7 +243,6 @@ private:
                 );
             }
             else {
-            #endif
                 // Although this block was invalidated,
                 // its read timestamp for this process is still alive.
                 
@@ -262,9 +260,7 @@ private:
                 ,   start_ret.home_proc
                 ,   start_ret.rd_ts
                 );
-            #ifdef MEDSM2_RELEASE_LATEST_READ
             }
-            #endif
         }
         
         return {
