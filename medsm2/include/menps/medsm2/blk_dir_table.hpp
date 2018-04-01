@@ -37,7 +37,6 @@ class blk_dir_table
     ,   readonly_clean
     ,   readonly_dirty
     ,   writable
-    ,   released // special state for store(release)
     ,   pinned   // special state for call stacks
     };
     
@@ -205,8 +204,7 @@ public:
             
             return { true, needs_twin, true };
         }
-        else if (le.state == state_type::writable || le.state == state_type::released
-            || le.state == state_type::pinned)
+        else if (le.state == state_type::writable || le.state == state_type::pinned)
         {
             // This block is already writable.
             return { false, false, true };
@@ -218,28 +216,6 @@ public:
         }
     }
     
-    MEFDN_NODISCARD
-    bool try_set_released(const blk_pos_type blk_pos, const unique_lock_type& lk)
-    {
-        this->check_locked(blk_pos, lk);
-        
-        auto& le = this->les_[blk_pos];
-        // Upgrading is necessary before store-releasing.
-        MEFDN_ASSERT(le.state != state_type::invalid);
-        MEFDN_ASSERT(le.state != state_type::readonly);
-        
-        if (le.state == state_type::released) {
-            // This block was store-released
-            // and the releaser thread has not processed it.
-            return false;
-        }
-        
-        // Set the state to released in order to delay merging this block.
-        le.state = state_type::released;
-        
-        return true;
-    }
-    
     void set_pinned(const blk_pos_type blk_pos, const unique_lock_type& lk)
     {
         this->check_locked(blk_pos, lk);
@@ -247,7 +223,6 @@ public:
         auto& le = this->les_[blk_pos];
         // Upgrading is necessary before store-releasing.
         MEFDN_ASSERT(le.state == state_type::writable);
-        // TODO: Allow "released" blocks to be pinned.
         
         // Set the state to "pinned".
         le.state = state_type::pinned;
@@ -280,23 +255,19 @@ public:
     check_release_result check_release(
         const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
-    ,   const bool              ordered
     ) {
         this->check_locked(blk_pos, lk);
         
         const auto& le = this->les_[blk_pos];
         const auto state = le.state;
         
-        if (state == state_type::writable ||
-            // Under the relaxed semantics, check if the block is marked as "released".
-            (ordered && (state == state_type::released)))
-        {
+        if (state == state_type::writable) {
             // This block should be released now.
             return { true , true , false };
         }
-        else if ((state == state_type::pinned) || (state == state_type::released)) {
-            // Pinned/released blocks must not be released.
-            throw std::logic_error("Releasing pinned/released is unsupported yet!");
+        else if (state == state_type::pinned) {
+            // Pinned blocks must not be released.
+            throw std::logic_error("Releasing pinned block is unsupported yet!");
             return { false, false, false };
         }
         else if (state == state_type::invalid_dirty || state == state_type::readonly_dirty) {
@@ -351,7 +322,7 @@ private:
                 // mprotect(PROT_NONE) must be called immediately.
                 return { false, true, false };
             }
-            else if (le.state == state_type::writable || le.state == state_type::released) {
+            else if (le.state == state_type::writable) {
                 // Set the state to "invalid & dirty".
                 // The next read will be a merge in this state.
                 le.state = state_type::invalid_dirty;
@@ -619,7 +590,6 @@ public:
         // TODO: Invalid blocks are locked when the read timestamp is too old.
         //MEFDN_ASSERT(old_state != state_type::invalid_clean);
         //MEFDN_ASSERT(old_state != state_type::readonly_clean);
-        MEFDN_ASSERT(old_state != state_type::released);
         MEFDN_ASSERT(old_state != state_type::pinned);
         
         if (old_state == state_type::invalid_dirty) {

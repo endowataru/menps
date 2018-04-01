@@ -363,12 +363,11 @@ public:
         com_itf_type&           com
     ,   const acq_sig_type&     acq_sig
     ,   const blk_id_type       blk_id
-    ,   const bool              ordered
     ) {
         const auto info = this->get_local_lock(blk_id);
         
         const auto check_ret =
-            info.dir_tbl.check_release(info.blk_pos, info.lk, ordered);
+            info.dir_tbl.check_release(info.blk_pos, info.lk);
         
         if (!check_ret.needs_release) {
             // This block is not released now.
