@@ -71,11 +71,7 @@ class seg_table
         auto& data_tbl = blk_tbl.get_data_tbl();
         auto& dir_tbl = blk_tbl.get_dir_tbl();
         
-        #if 1
         const auto blk_pos = blk_tbl.get_blk_pos_from_blk_id(blk_id); // TODO
-        #else
-        const auto blk_pos = this->get_blk_pos(blk_tbl, blk_id); // TODO
-        #endif
         
         lock_info info{ dir_tbl.get_local_lock(blk_pos), blk_pos, data_tbl, dir_tbl };
         return info;
