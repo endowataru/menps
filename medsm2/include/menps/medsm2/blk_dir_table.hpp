@@ -543,12 +543,12 @@ public:
         const auto old_owner = glk_ret.owner;
         
         // If the data is written, the timestamp is updated.
-        // make_new_wr_ts() calculates new_wr_ts = max(old_wr_ts+1, acq_ts).
+        // make_new_wr_ts() calculates new_wr_ts = max(old_rd_ts+1, acq_ts).
         // If not, because the data is read from the old owner
         // (that will be the owner again),
         // the timestamp becomes equal to that of the owner.
         const auto new_wr_ts =
-            mg_ret.is_written ? acq_sig.make_new_wr_ts(glk_ret.wr_ts) : glk_ret.wr_ts;
+            mg_ret.is_written ? acq_sig.make_new_wr_ts(glk_ret.rd_ts) : glk_ret.wr_ts;
         
         // The read timestamp depends on the write timestamp.
         // This calculates new_rd_ts = max(new_wr_ts+lease, old_rd_ts).

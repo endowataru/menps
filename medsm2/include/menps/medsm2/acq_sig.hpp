@@ -26,12 +26,12 @@ public:
         return min_wr_ts < rd_ts;
     }
     
-    wr_ts_type make_new_wr_ts(const wr_ts_type wr_ts) const
+    wr_ts_type make_new_wr_ts(const rd_ts_type old_rd_ts) const
     {
         const mutex_unique_lock_type lk(this->mtx_);
         const auto min_wr_ts = this->sig_.get_min_wr_ts();
         
-        return std::max(wr_ts + 1, min_wr_ts);
+        return std::max(old_rd_ts + 1, min_wr_ts);
     }
     
     // TODO: This method doesn't depend on this class.
