@@ -80,11 +80,7 @@ struct dsm_base_policy
         return 0;
     }
     
-    #ifdef MEDSM2_USE_INPLACE_WR_SET
-    using rel_pos_type = mefdn::ptrdiff_t;
-    #else
-    using rel_pos_type = mefdn::size_t;
-    #endif
+    using wr_set_gen_type = mefdn::ptrdiff_t;
     
     using wn_idx_type = mefdn::size_t;
     using wn_vi_type = mefdn::vector<wn_idx_type>;
@@ -142,11 +138,7 @@ struct my_space_policy : dsm_base_policy
     using derived_type = svm_space<my_space_policy>;
     using seg_table_type = my_seg_table;
     using blk_tbl_type = my_seg_table_policy::blk_tbl_type;
-    #ifdef MEDSM2_USE_INPLACE_WR_SET
     using wr_set_type = inplace_wr_set<dsm_base_policy>;
-    #else
-    using wr_set_type = wr_set<dsm_base_policy>;
-    #endif
     using rd_set_type = rd_set<dsm_base_policy>;
 };
 

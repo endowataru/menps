@@ -15,8 +15,7 @@ class inplace_wr_set
 {
     using blk_id_type = typename P::blk_id_type;
     
-    // TODO: rename
-    using rel_pos_type   = typename P::rel_pos_type;
+    using wr_set_gen_type   = typename P::wr_set_gen_type;
     
     using mutex_type        = typename P::mutex_type;
     using cv_type           = typename P::cv_type;
@@ -42,7 +41,7 @@ public:
     template <typename Func>
     start_release_result start_release_for_all_blocks(Func func)
     {
-        MEFDN_STATIC_ASSERT(mefdn::is_signed<rel_pos_type>::value);
+        MEFDN_STATIC_ASSERT(mefdn::is_signed<wr_set_gen_type>::value);
         
         {
             unique_lock_type lk(this->rel_mtx_);
@@ -126,7 +125,7 @@ private:
     mutex_type rel_mtx_;
     cv_type rel_cv_;
     std::unordered_set<blk_id_type> dirty_ids_;
-    rel_pos_type gen_ = 0;
+    wr_set_gen_type gen_ = 0;
     bool is_releasing_ = false;
 };
 
