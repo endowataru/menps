@@ -522,12 +522,14 @@ public:
     }
     
     struct unlock_global_result {
-        wr_ts_type     new_wr_ts;
+        rd_ts_type  new_rd_ts;
+        wr_ts_type  new_wr_ts;
     };
     
     template <typename MergeResult>
     unlock_global_result unlock_global(
         com_itf_type&               com
+    ,   const acq_sig_type&         acq_sig
     ,   const blk_pos_type          blk_pos
     ,   const unique_lock_type&     lk
     ,   const lock_global_result&   glk_ret
@@ -541,11 +543,17 @@ public:
         const auto old_owner = glk_ret.owner;
         
         // If the data is written, the timestamp is updated.
+        // make_new_wr_ts() calculates new_wr_ts = max(old_wr_ts+1, acq_ts).
         // If not, because the data is read from the old owner
         // (that will be the owner again),
         // the timestamp becomes equal to that of the owner.
         const auto new_wr_ts =
-            mg_ret.is_written ? (glk_ret.wr_ts + 1) : glk_ret.wr_ts;
+            mg_ret.is_written ? acq_sig.make_new_wr_ts(glk_ret.wr_ts) : glk_ret.wr_ts;
+        
+        // The read timestamp depends on the write timestamp.
+        // This calculates new_rd_ts = max(new_wr_ts+lease, old_rd_ts).
+        const auto new_rd_ts =
+            acq_sig.make_new_rd_ts(new_wr_ts, glk_ret.rd_ts);
         
         const auto new_owner = mg_ret.is_migrated ? cur_proc : old_owner;
         
@@ -556,11 +564,13 @@ public:
         // The home process is only updated locally.
         le.home_proc = new_owner;
         
-        // Update the write timestamp.
+        // Update the timestamps.
         // Although this value may be read by another writer,
         // this process still has the lock for it.
-        // Also, the write timestamp only increases monotonically.
+        // Also, the timestamps only increases monotonically.
         ge.wr_ts = new_wr_ts;
+        ge.rd_ts = new_rd_ts;
+        
         
         // There are 3 conditions:
         // (1) This process was the (old) owner and is still the (new) owner.
@@ -633,7 +643,7 @@ public:
         
         le.state = new_state;
         
-        return { new_wr_ts };
+        return { new_rd_ts, new_wr_ts };
     }
     
     #ifndef MEDSM2_RELEASE_LATEST_READ

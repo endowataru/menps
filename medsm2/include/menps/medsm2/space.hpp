@@ -160,7 +160,7 @@ public:
                     // and migrate from the old owner if necessary.
                     // TODO: Make this a coroutine.
                     const auto rel_ret =
-                        this->seg_tbl_.release(com, blk_id, false);
+                        this->seg_tbl_.release(com, this->acq_sig_, blk_id, false);
                     
                     if (rel_ret.release_completed) {
                         // This block was not marked as "released"

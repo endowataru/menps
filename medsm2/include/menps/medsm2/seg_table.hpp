@@ -232,10 +232,20 @@ private:
                     acq_sig.make_new_rd_ts(glk_ret.rd_ts);
                 #endif
                 
-                info.dir_tbl.unlock_global(com, info.blk_pos, info.lk, glk_ret, mg_ret);
+                info.dir_tbl.unlock_global(com, acq_sig, info.blk_pos, info.lk, glk_ret, mg_ret);
                 
                 // TODO: Do refactoring and remove this function.
                 info.data_tbl.set_readonly(info.blk_pos, info.lk);
+                
+                MEFDN_LOG_DEBUG(
+                    "msg:Start reading latest block.\t"
+                    "blk_pos:{}\t"
+                    "home_proc:{}\t"
+                    "rd_ts:{}"
+                ,   info.blk_pos
+                ,   start_ret.home_proc
+                ,   start_ret.rd_ts
+                );
             }
             else {
             #endif
@@ -355,6 +365,7 @@ public:
     
     release_result release(
         com_itf_type&           com
+    ,   const acq_sig_type&     acq_sig
     ,   const blk_id_type       blk_id
     ,   const bool              ordered
     ) {
@@ -380,7 +391,7 @@ public:
         
         // Unlock the global lock.
         const auto gunlk_ret =
-            info.dir_tbl.unlock_global(com, info.blk_pos, info.lk, glk_ret, mg_ret);
+            info.dir_tbl.unlock_global(com, acq_sig, info.blk_pos, info.lk, glk_ret, mg_ret);
         
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
@@ -390,7 +401,7 @@ public:
             "new_wr_ts:{}\t"
             "is_migrated:{}\t"
             "is_written:{}\t"
-            "is_clean:{}"
+            "is_clean:{}\t"
             "becomes_clean:{}"
         ,   blk_id
         ,   glk_ret.rd_ts
@@ -402,7 +413,7 @@ public:
         ,   mg_ret.becomes_clean
         );
         
-        return { true, mg_ret.is_written, mg_ret.becomes_clean, glk_ret.rd_ts, gunlk_ret.new_wr_ts };
+        return { true, mg_ret.is_written, mg_ret.becomes_clean, gunlk_ret.new_rd_ts, gunlk_ret.new_wr_ts };
     }
     
     typename blk_dir_tbl_type::self_invalidate_result
