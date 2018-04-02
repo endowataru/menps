@@ -213,10 +213,7 @@ private:
                 
                 // Read & merge the latest values inside the global critical section.
                 const auto tx_ret =
-                    this->do_transaction(com, acq_sig, info,
-                        false /* needs_protect_before is always false for invalid blocks */
-                        // TODO: This flag complicates the logic.
-                    );
+                    this->do_transaction(com, acq_sig, info);
                 // TODO: It is strange that tx_ret is totally ignored in this method.
                 
                 // TODO: Do refactoring and remove this function.
@@ -362,7 +359,7 @@ public:
         
         // Merge the written values inside the global critical section.
         auto tx_ret =
-            this->do_transaction(com, acq_sig, info, check_ret.needs_protect_before);
+            this->do_transaction(com, acq_sig, info);
         
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
@@ -406,7 +403,6 @@ private:
         com_itf_type&       com
     ,   const acq_sig_type& acq_sig
     ,   const lock_info&    info
-    ,   const bool          needs_protect_before
     ) {
         // Lock the latest owner globally.
         // This is achieved by following the graph of probable owners.
@@ -416,7 +412,7 @@ private:
         // Merge the writes from both the current process and the latest owner.
         const auto mg_ret =
             info.data_tbl.merge_to_public(com, info.blk_pos, info.lk, glk_ret.owner,
-                needs_protect_before);
+                glk_ret.needs_protect_before);
         
         // Unlock the global lock.
         const auto gunlk_ret =

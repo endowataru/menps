@@ -223,9 +223,6 @@ public:
     {
         // This block is released after this check.
         bool needs_release;
-        // This block must be write-protected (mprotect(PROT_READ))
-        // before modifying the private data on this process.
-        bool needs_protect_before;
         // If the block is invalid or read-only,
         // it should be removed from the write set.
         bool is_clean;
@@ -242,21 +239,21 @@ public:
         
         if (state == state_type::writable) {
             // This block should be released now.
-            return { true , true , false };
+            return { true , false };
         }
         else if (state == state_type::pinned) {
             // Pinned blocks must not be released.
             throw std::logic_error("Releasing pinned block is unsupported yet!");
-            return { false, false, false };
+            return { false, false };
         }
         else if (state == state_type::invalid_dirty || state == state_type::readonly_dirty) {
             // Although this block is invalid or readonly,
             // it's still dirty and must be released.
-            return { true , false, true  };
+            return { true , true  };
         }
         else {
             // This block is already downgraded (invalid_clean or readonly_clean).
-            return { false, false, true  };
+            return { false, true  };
         }
     }
     
@@ -381,9 +378,15 @@ public:
     
 public:
     struct lock_global_result {
+        // The latest owner's ID.
         proc_id_type    owner;
+        // The read timestamp read from the latest owner.
         rd_ts_type      rd_ts;
+        // The write timestamp read from the latest owner.
         wr_ts_type      wr_ts;
+        // This block must be write-protected (mprotect(PROT_READ))
+        // before modifying the private data on this process.
+        bool            needs_protect_before;
     };
     
     lock_global_result lock_global(
@@ -438,7 +441,12 @@ public:
                 rma.read(prob_proc, ge_rptr, &ge, 1);
                 // TODO: It's better if this read is overlapped with other communications.
                 
-                return { prob_proc, ge.rd_ts, ge.wr_ts };
+                auto& le = this->les_[blk_pos];
+                
+                const auto needs_protect_before =
+                    le.state == state_type::writable;
+                
+                return { prob_proc, ge.rd_ts, ge.wr_ts, needs_protect_before };
             }
             else {
                 // CAS failed because the probable owner was not the latest owner.
