@@ -161,8 +161,7 @@ public:
                         this->seg_tbl_.release(com, this->acq_sig_, blk_id);
                     
                     if (rel_ret.release_completed) {
-                        // This block was not marked as "released"
-                        // and the release operation for it has completed.
+                        // The release operation of this block has been completed.
                         
                         if (rel_ret.is_written) {
                             // Add to the write notices
@@ -178,11 +177,10 @@ public:
                         }
                     }
                     else {
-                        // There are two cases:
-                        // (1) This block is pinned.
-                        // (2) This block was store-released and released later.
-                        // If this block ID is not in "ordered_ids" but marked as "released",
-                        // it will be released in the next release (not in this time).
+                        // There are three cases:
+                        // (1) This block is invalid-clean.
+                        // (2) This block is readonly-clean.
+                        // (3) This block is pinned.
                     }
                 }
             );
