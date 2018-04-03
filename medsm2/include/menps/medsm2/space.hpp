@@ -65,12 +65,7 @@ public:
         // Read the latest block data of the home process
         // into the private area.
         // After that, the private data becomes read-only.
-        const auto ret =
-            this->seg_tbl_.start_read(com, this->rd_set_, blk_id);
-        
-        this->after_read(blk_id, ret);
-        
-        return ret;
+        return this->seg_tbl_.start_read(com, this->rd_set_, blk_id);
     }
     
     using start_write_result = typename seg_table_type::start_write_result;
@@ -83,12 +78,7 @@ public:
         
         // Copy the data of the private area to the public area,
         // and then the private area becomes writable.
-        const auto ret =
-            this->seg_tbl_.start_write(com, this->rd_set_, blk_id);
-        
-        this->after_write(blk_id, ret);
-        
-        return ret;
+        return this->seg_tbl_.start_write(com, this->rd_set_, this->wr_set_, blk_id);
     }
     
     using pin_result = typename seg_table_type::pin_result;
@@ -98,33 +88,9 @@ public:
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
-        const auto ret =
-            this->seg_tbl_.pin(com, this->rd_set_, blk_id);
-        
-        this->after_write(blk_id, ret);
-        
-        return ret;
+        return this->seg_tbl_.pin(com, this->rd_set_, this->wr_set_, blk_id);
     }
     
-private:
-    void after_read(const blk_id_type blk_id, const start_read_result& ret)
-    {
-        // Do nothing.
-    }
-    
-    void after_write(const blk_id_type blk_id, const start_write_result& ret)
-    {
-        this->after_read(blk_id, ret.read);
-        
-        if (ret.write.needs_protect) {
-            // Add to the write set.
-            // This MUST FOLLOW the mprotect(PROT_READ|PROT_WRITE) call
-            // because the write set may be flushed in the reversed order.
-            this->wr_set_.add_writable(blk_id);
-        }
-    }
-    
-public:
     void unpin(const blk_id_type blk_id)
     {
         this->seg_tbl_.unpin(blk_id);
@@ -132,7 +98,6 @@ public:
         this->wr_set_.add_writable(blk_id);
     }
     
-public:
     void fence()
     {
         auto& self = this->derived();

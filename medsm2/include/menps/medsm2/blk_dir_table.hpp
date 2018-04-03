@@ -31,6 +31,7 @@ class blk_dir_table
     using wr_ts_type = typename P::wr_ts_type;
     
     using rd_set_type = typename P::rd_set_type;
+    using wr_set_type = typename P::wr_set_type;
     
     enum class state_type {
         invalid_clean = 0
@@ -183,7 +184,12 @@ public:
     };
     
     MEFDN_NODISCARD
-    start_write_result start_write(const blk_pos_type blk_pos, const unique_lock_type& lk) {
+    start_write_result start_write(
+        wr_set_type&            wr_set
+    ,   const blk_id_type       blk_id
+    ,   const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ) {
         this->check_locked(blk_pos, lk);
         
         auto& le = this->les_[blk_pos];
@@ -194,6 +200,9 @@ public:
             
             // Change the state to writable only when it was read-only.
             le.state = state_type::writable;
+            
+            // Add this block to the write set.
+            wr_set.add_writable(blk_id);
             
             return { true, needs_twin, true };
         }

@@ -115,6 +115,7 @@ struct dsm_base_policy
     
     using rel_sig_type = rel_sig<dsm_base_policy>;
     using rd_set_type = rd_set<dsm_base_policy>;
+    using wr_set_type = wr_set<dsm_base_policy>;
 };
 
 
@@ -136,7 +137,6 @@ struct my_space_policy : dsm_base_policy
     using derived_type = svm_space<my_space_policy>;
     using seg_table_type = my_seg_table;
     using blk_tbl_type = my_seg_table_policy::blk_tbl_type;
-    using wr_set_type = wr_set<dsm_base_policy>;
 };
 
 using my_space = svm_space<my_space_policy>;

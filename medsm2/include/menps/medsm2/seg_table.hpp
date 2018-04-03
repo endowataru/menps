@@ -36,6 +36,7 @@ class seg_table
     using blk_tbl_ptr = mefdn::unique_ptr<blk_tbl_type>;
     
     using rd_set_type = typename P::rd_set_type;
+    using wr_set_type = typename P::wr_set_type;
     
     struct lock_info
     {
@@ -130,6 +131,7 @@ public:
     start_write_result start_write(
         com_itf_type&       com
     ,   rd_set_type&        rd_set
+    ,   wr_set_type&        wr_set
     ,   const blk_id_type   blk_id
     ) {
         const auto info = this->get_local_lock(blk_id);
@@ -139,7 +141,7 @@ public:
         //       because it cannot detect whether the fault is read or write.
         const auto read_ret = this->start_read_locked(com, rd_set, info);
         
-        return { read_ret, this->start_write_locked(info) };
+        return { read_ret, this->start_write_locked(wr_set, info) };
     }
     
     #if 0
@@ -173,6 +175,7 @@ public:
     pin_result pin(
         com_itf_type&       com
     ,   rd_set_type&        rd_set
+    ,   wr_set_type&        wr_set
     ,   const blk_id_type   blk_id
     ) {
         const auto info = this->get_local_lock(blk_id);
@@ -181,7 +184,7 @@ public:
         const auto read_ret = this->start_read_locked(com, rd_set, info);
         
         // Start writing on this block before releasing.
-        const auto write_ret = this->start_write_locked(info);
+        const auto write_ret = this->start_write_locked(wr_set, info);
         
         // Mark this block as "pinned".
         info.dir_tbl.set_pinned(info.blk_pos, info.lk);
@@ -273,9 +276,12 @@ private:
     
     MEFDN_NODISCARD
     typename blk_dir_tbl_type::start_write_result
-    start_write_locked(const lock_info& info)
-    {
-        const auto dir_ret = info.dir_tbl.start_write(info.blk_pos, info.lk);
+    start_write_locked(
+        wr_set_type&        wr_set
+    ,   const lock_info&    info
+    ) {
+        const auto dir_ret =
+            info.dir_tbl.start_write(wr_set, info.blk_id, info.blk_pos, info.lk);
         
         // Check whether this block is read-only.
         if (dir_ret.needs_protect) {
