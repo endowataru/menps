@@ -106,7 +106,7 @@ public:
         const auto this_proc = com.this_proc_id();
         
         wn_vector_type wn_vec;
-        mefdn::vector<blk_id_type> clean_ids;
+        mefdn::vector<blk_id_type> non_writable_ids;
         
         // Iterate all of the writable blocks.
         // If the callback returns false,
@@ -129,11 +129,13 @@ public:
                             wn_vec.push_back(wn_entry_type{ this_proc, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts });
                         }
                         
-                        // Return whether this block became inaccessible in this release.
-                        if (rel_ret.is_clean) {
-                            // If this block became inaccessible now, the subsequent release operations
-                            // need not to track this block (if it isn't added to the write set again).
-                            clean_ids.push_back(blk_id);
+                        // Return whether this block is still writable after this release.
+                        if (!rel_ret.is_still_writable) {
+                            // Because this block is invalid or read-only now,
+                            // the subsequent release operations need not to track this block.
+                            // If it becomes writable in the SIGSEGV handler again,
+                            // the write set will correctly manage it in the next release.
+                            non_writable_ids.push_back(blk_id);
                         }
                     }
                     else {
@@ -153,7 +155,7 @@ public:
         this->rel_sig_.merge(mefdn::move(wn_vec));
         
         // Remove the block IDs that were downgraded during this release.
-        this->wr_set_.remove(mefdn::begin(clean_ids), mefdn::end(clean_ids));
+        this->wr_set_.remove(mefdn::begin(non_writable_ids), mefdn::end(non_writable_ids));
         
         // TODO: Atomics are not implemented...
         

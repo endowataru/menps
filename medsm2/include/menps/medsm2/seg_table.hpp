@@ -357,7 +357,7 @@ public:
         bool release_completed;
         bool is_written;
         // Indicate that this block can be removed from the write set.
-        bool is_clean;
+        bool is_still_writable;
         rd_ts_type new_rd_ts;
         wr_ts_type new_wr_ts;
     };
@@ -374,7 +374,7 @@ public:
         
         if (!check_ret.needs_release) {
             // This block is not released now.
-            return { false, false, check_ret.is_clean, 0, 0 };
+            return { false, false, false, 0, 0 };
         }
         
         // Merge the written values inside the global critical section.
@@ -390,7 +390,7 @@ public:
             "new_rd_ts:{}\t"
             "is_migrated:{}\t"
             "is_written:{}\t"
-            "is_clean:{}\t"
+            "is_still_writable:{}\t"
             "becomes_clean:{}"
         ,   blk_id
         ,   tx_ret.glk_ret.wr_ts
@@ -399,14 +399,14 @@ public:
         ,   tx_ret.gunlk_ret.new_rd_ts
         ,   tx_ret.mg_ret.is_migrated
         ,   tx_ret.mg_ret.is_written
-        ,   check_ret.is_clean
+        ,   tx_ret.gunlk_ret.is_still_writable
         ,   tx_ret.mg_ret.becomes_clean
         );
         
         return {
             true
         ,   tx_ret.mg_ret.is_written
-        ,   tx_ret.mg_ret.becomes_clean
+        ,   tx_ret.gunlk_ret.is_still_writable
         ,   tx_ret.gunlk_ret.new_rd_ts
         ,   tx_ret.gunlk_ret.new_wr_ts
         };

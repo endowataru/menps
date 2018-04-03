@@ -246,9 +246,6 @@ public:
     {
         // This block is released after this check.
         bool needs_release;
-        // If the block is invalid or read-only,
-        // it should be removed from the write set.
-        bool is_clean;
     };
     
     check_release_result check_release(
@@ -262,21 +259,21 @@ public:
         
         if (state == state_type::writable) {
             // This block should be released now.
-            return { true , false };
+            return { true };
         }
         else if (state == state_type::pinned) {
             // Pinned blocks must not be released.
             throw std::logic_error("Releasing pinned block is unsupported yet!");
-            return { false, false };
+            return { false };
         }
         else if (state == state_type::invalid_dirty || state == state_type::readonly_dirty) {
             // Although this block is invalid or readonly,
             // it's still dirty and must be released.
-            return { true , true  };
+            return { true  };
         }
         else {
             // This block is already downgraded (invalid_clean or readonly_clean).
-            return { false, true  };
+            return { false };
         }
     }
     
@@ -514,6 +511,9 @@ public:
     struct unlock_global_result {
         rd_ts_type  new_rd_ts;
         wr_ts_type  new_wr_ts;
+        // Indicate that this block must not be removed from the write set
+        // because the pages are still (PROT_READ|PROT_WRITE).
+        bool        is_still_writable;
     };
     
     template <typename MergeResult>
@@ -614,7 +614,10 @@ public:
             rd_set.add_readable(blk_id, new_rd_ts);
         }
         
-        if (old_state == state_type::writable && !mg_ret.becomes_clean) {
+        const auto is_still_writable =
+            old_state == state_type::writable && !mg_ret.becomes_clean;
+        
+        if (is_still_writable) {
             // This block was not write-protected in this release
             // and still can be written in this process.
         }
@@ -634,7 +637,7 @@ public:
         
         le.state = new_state;
         
-        return { new_rd_ts, new_wr_ts };
+        return { new_rd_ts, new_wr_ts, is_still_writable };
     }
     
 public:
