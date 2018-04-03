@@ -109,11 +109,7 @@ public:
 private:
     void after_read(const blk_id_type blk_id, const start_read_result& ret)
     {
-        if (ret.is_newly_read) {
-            // Add this block to the read set.
-            // TODO: Review concurrent accesses to this block.
-            this->rd_set_.add_readable(blk_id, ret.rd_ts);
-        }
+        // Do nothing.
     }
     
     void after_write(const blk_id_type blk_id, const start_write_result& ret)

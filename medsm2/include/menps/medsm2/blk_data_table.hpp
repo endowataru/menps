@@ -170,6 +170,7 @@ public:
     ,   const unique_lock_type& lk
     ,   const proc_id_type      cur_owner
     ,   const bool              needs_protect_before
+    ,   const bool              needs_protect_after
     ) {
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
@@ -259,6 +260,14 @@ public:
                 r = merge_to_result{ false, false, true };
             }
             #endif
+        }
+        
+        if (needs_protect_after) {
+            // If this block was inaccessible (invalid-clean or invalid-dirty) from the application,
+            // make the block readable now.
+            
+            // Call mprotect(PROT_READ).
+            self.set_readonly(blk_pos, blk_size);
         }
         
         return r;

@@ -25,6 +25,7 @@ class blk_dir_table
     using mutex_type = typename P::mutex_type;
     using unique_lock_type = typename P::unique_lock_type;
     
+    using blk_id_type = typename P::blk_id_type;
     using blk_pos_type = typename P::blk_pos_type;
     using rd_ts_type = typename P::rd_ts_type;
     using wr_ts_type = typename P::wr_ts_type;
@@ -118,7 +119,8 @@ public:
     
     MEFDN_NODISCARD
     start_read_result start_read(
-        const rd_set_type&      rd_set
+        rd_set_type&            rd_set
+    ,   const blk_id_type       blk_id
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
@@ -154,8 +156,17 @@ public:
             const auto is_dirty =
                 le.state == state_type::invalid_dirty;
             
-            // Change the state to read-only only when it was invalid.
-            le.state = is_dirty ? state_type::readonly_dirty : state_type::readonly_clean;
+            if (needs_latest_read) {
+                // Later, the caller updates this block inside the global critical section.
+                // The block state and existence in the read set are handled in unlock_global().
+            }
+            else {
+                // Change the state to read-only only when it was invalid.
+                le.state = is_dirty ? state_type::readonly_dirty : state_type::readonly_clean;
+                
+                // Add this block to the read set.
+                rd_set.add_readable(blk_id, cur_rd_ts);
+            }
             
             return { true, needs_latest_read, is_dirty, le.home_proc, cur_rd_ts };
         }
@@ -390,6 +401,9 @@ public:
         // This block must be write-protected (mprotect(PROT_READ))
         // before modifying the private data on this process.
         bool            needs_protect_before;
+        // This block will become readable (PROT_READ)
+        // after updating the block in this global lock.
+        bool            needs_protect_after;
     };
     
     lock_global_result lock_global(
@@ -445,11 +459,15 @@ public:
                 // TODO: It's better if this read is overlapped with other communications.
                 
                 auto& le = this->les_[blk_pos];
+                const auto state = le.state;
                 
                 const auto needs_protect_before =
-                    le.state == state_type::writable;
+                    state == state_type::writable;
                 
-                return { prob_proc, ge.rd_ts, ge.wr_ts, needs_protect_before };
+                const auto needs_protect_after =
+                    state == state_type::invalid_clean || state == state_type::invalid_dirty;
+                
+                return { prob_proc, ge.rd_ts, ge.wr_ts, needs_protect_before, needs_protect_after };
             }
             else {
                 // CAS failed because the probable owner was not the latest owner.
@@ -492,7 +510,8 @@ public:
     template <typename MergeResult>
     unlock_global_result unlock_global(
         com_itf_type&               com
-    ,   const rd_set_type&          rd_set
+    ,   rd_set_type&                rd_set
+    ,   const blk_id_type           blk_id
     ,   const blk_pos_type          blk_pos
     ,   const unique_lock_type&     lk
     ,   const lock_global_result&   glk_ret
@@ -578,30 +597,30 @@ public:
         const auto old_state = le.state;
         auto new_state = old_state;
         
-        // TODO: Invalid blocks are locked when the read timestamp is too old.
-        //MEFDN_ASSERT(old_state != state_type::invalid_clean);
-        //MEFDN_ASSERT(old_state != state_type::readonly_clean);
+        // TODO: It should be possible to release pinned blocks.
         MEFDN_ASSERT(old_state != state_type::pinned);
         
-        if (old_state == state_type::invalid_dirty) {
-            new_state = state_type::invalid_clean;
+        if (old_state == state_type::invalid_dirty || old_state == state_type::invalid_clean) {
+            // This block was invalid and became readable in this transaction.
+            rd_set.add_readable(blk_id, new_rd_ts);
         }
-        else if (old_state == state_type::readonly_dirty) {
+        
+        if (old_state == state_type::writable && !mg_ret.becomes_clean) {
+            // This block was not write-protected in this release
+            // and still can be written in this process.
+        }
+        else {
+            // (1) If the block was invalid (invalid_clean or invalid_dirty),
+            // the latest block was read from the last owner and it becomes readonly_clean.
+            //
+            // (2) If the block was readonly_dirty, the modification on this block
+            // is merged in this process and it becomes readonly_clean.
+            //
+            // (3) If the block was writable and "becomes clean" (cur_proc != old_owner),
+            // this block is now downgraded to read-only
+            // because the old owner wrote on this block.
+            // The state is updated to readonly_clean because of this downgrading.
             new_state = state_type::readonly_clean;
-        }
-        else if (old_state == state_type::writable) {
-            // Check that cur_proc != old_owner.
-            if (mg_ret.becomes_clean) {
-                // This block was downgraded to read-only
-                // because the old owner wrote on this block.
-                // The state is updated because of this downgrading.
-                new_state = state_type::readonly_clean;
-            }
-            else {
-                // This block was not write-protected in this release
-                // and still can be written in this process.
-                new_state = state_type::writable;
-            }
         }
         
         le.state = new_state;
