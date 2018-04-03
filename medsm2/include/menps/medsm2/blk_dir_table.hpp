@@ -29,7 +29,7 @@ class blk_dir_table
     using rd_ts_type = typename P::rd_ts_type;
     using wr_ts_type = typename P::wr_ts_type;
     
-    using acq_sig_type = typename P::acq_sig_type;
+    using rd_set_type = typename P::rd_set_type;
     
     enum class state_type {
         invalid_clean = 0
@@ -118,7 +118,7 @@ public:
     
     MEFDN_NODISCARD
     start_read_result start_read(
-        const acq_sig_type&     acq_sig
+        const rd_set_type&      rd_set
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
@@ -141,7 +141,7 @@ public:
             const auto cur_rd_ts = ge.rd_ts;
             
             #ifndef MEDSM2_FORCE_LATEST_READ
-            if (acq_sig.is_valid_rd_ts(cur_rd_ts)) {
+            if (rd_set.is_valid_rd_ts(cur_rd_ts)) {
                 // The home process written in this process is still valid.
                 // (= before self-invalidation.)
                 return { true, false, is_dirty, le.home_proc, cur_rd_ts };
@@ -363,11 +363,11 @@ public:
     };
     
     self_invalidate_result self_invalidate(
-        const acq_sig_type&     acq_sig
+        const rd_set_type&      rd_set
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
-        const auto ret = this->invalidate(blk_pos, lk, acq_sig.get_min_wr_ts());
+        const auto ret = this->invalidate(blk_pos, lk, rd_set.get_min_wr_ts());
         
         auto& ge = * this->ges_.local(blk_pos);
         const auto wr_ts = ge.wr_ts;
@@ -489,7 +489,7 @@ public:
     template <typename MergeResult>
     unlock_global_result unlock_global(
         com_itf_type&               com
-    ,   const acq_sig_type&         acq_sig
+    ,   const rd_set_type&          rd_set
     ,   const blk_pos_type          blk_pos
     ,   const unique_lock_type&     lk
     ,   const lock_global_result&   glk_ret
@@ -508,13 +508,13 @@ public:
         // (that will be the owner again),
         // the timestamp becomes equal to that of the owner.
         const auto new_wr_ts =
-            mg_ret.is_written ? acq_sig.make_new_wr_ts(glk_ret.rd_ts) : glk_ret.wr_ts;
+            mg_ret.is_written ? rd_set.make_new_wr_ts(glk_ret.rd_ts) : glk_ret.wr_ts;
         
         // The read timestamp depends on the write timestamp.
         // This calculates new_rd_ts = max(new_wr_ts+lease, old_rd_ts).
         // TODO: Provide a good prediction for a lease value of each block.
         const auto new_rd_ts =
-            acq_sig.make_new_rd_ts(new_wr_ts, glk_ret.rd_ts);
+            rd_set.make_new_rd_ts(new_wr_ts, glk_ret.rd_ts);
         
         const auto new_owner = mg_ret.is_migrated ? cur_proc : old_owner;
         

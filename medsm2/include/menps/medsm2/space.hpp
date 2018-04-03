@@ -27,7 +27,6 @@ class space
     using wr_set_type = typename P::wr_set_type;
     using rd_set_type = typename P::rd_set_type;
     using rel_sig_type = typename P::rel_sig_type;
-    using acq_sig_type = typename P::acq_sig_type;
     
     using wn_entry_type = typename P::wn_entry_type;
     using wn_vector_type = typename P::wn_vector_type;
@@ -67,7 +66,7 @@ public:
         // into the private area.
         // After that, the private data becomes read-only.
         const auto ret =
-            this->seg_tbl_.start_read(com, this->acq_sig_, blk_id);
+            this->seg_tbl_.start_read(com, this->rd_set_, blk_id);
         
         this->after_read(blk_id, ret);
         
@@ -85,7 +84,7 @@ public:
         // Copy the data of the private area to the public area,
         // and then the private area becomes writable.
         const auto ret =
-            this->seg_tbl_.start_write(com, this->acq_sig_, blk_id);
+            this->seg_tbl_.start_write(com, this->rd_set_, blk_id);
         
         this->after_write(blk_id, ret);
         
@@ -100,7 +99,7 @@ public:
         auto& com = self.get_com_itf();
         
         const auto ret =
-            this->seg_tbl_.pin(com, this->acq_sig_, blk_id);
+            this->seg_tbl_.pin(com, this->rd_set_, blk_id);
         
         this->after_write(blk_id, ret);
         
@@ -158,7 +157,7 @@ public:
                     // and migrate from the old owner if necessary.
                     // TODO: Make this a coroutine.
                     const auto rel_ret =
-                        this->seg_tbl_.release(com, this->acq_sig_, blk_id);
+                        this->seg_tbl_.release(com, this->rd_set_, blk_id);
                     
                     if (rel_ret.release_completed) {
                         // The release operation of this block has been completed.
@@ -255,17 +254,12 @@ private:
     {
         const auto min_wr_ts = sig.get_min_wr_ts();
         
-        // Increase the acquire timestamp.
-        // Note that write notices are not merged to the acquire signature
-        // because they all are applied to all the processes
-        // and hence they don't need to be transferred from this process to another.
-        this->acq_sig_.acquire_barrier_sig(sig);
-        
         // Self-invalidate all of the old blocks.
+        // This also increases the acquire timestamp (= minimum read timestamp).
         this->rd_set_.self_invalidate(
             min_wr_ts,
             [&] (const blk_id_type blk_id) {
-                return this->seg_tbl_.self_invalidate(this->acq_sig_, blk_id);
+                return this->seg_tbl_.self_invalidate(this->rd_set_, blk_id);
             }
         );
         
@@ -299,8 +293,6 @@ private:
     rd_set_type     rd_set_;
     
     rel_sig_type    rel_sig_;
-    
-    acq_sig_type    acq_sig_;
 };
 
 } // namespace medsm2

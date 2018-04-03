@@ -35,7 +35,7 @@ class seg_table
     
     using blk_tbl_ptr = mefdn::unique_ptr<blk_tbl_type>;
     
-    using acq_sig_type = typename P::acq_sig_type;
+    using rd_set_type = typename P::rd_set_type;
     
     struct lock_info
     {
@@ -105,11 +105,11 @@ public:
     };
     
     MEFDN_NODISCARD
-    start_read_result start_read(com_itf_type& com, const acq_sig_type& acq_sig, const blk_id_type blk_id)
+    start_read_result start_read(com_itf_type& com, const rd_set_type& rd_set, const blk_id_type blk_id)
     {
         const auto info = this->get_local_lock(blk_id);
         
-        return this->start_read_locked(com, acq_sig, info);
+        return this->start_read_locked(com, rd_set, info);
     }
     
     struct start_write_result
@@ -119,14 +119,14 @@ public:
     };
     
     MEFDN_NODISCARD
-    start_write_result start_write(com_itf_type& com, const acq_sig_type& acq_sig, const blk_id_type blk_id)
+    start_write_result start_write(com_itf_type& com, const rd_set_type& rd_set, const blk_id_type blk_id)
     {
         const auto info = this->get_local_lock(blk_id);
         
         // Before writing the block, read the block first.
         // TODO: This call is not necessary in the current SIGSEGV handler
         //       because it cannot detect whether the fault is read or write.
-        const auto read_ret = this->start_read_locked(com, acq_sig, info);
+        const auto read_ret = this->start_read_locked(com, rd_set, info);
         
         return { read_ret, this->start_write_locked(info) };
     }
@@ -159,12 +159,12 @@ public:
     using pin_result = start_write_result;
     
     MEFDN_NODISCARD
-    pin_result pin(com_itf_type& com, const acq_sig_type& acq_sig, const blk_id_type blk_id)
+    pin_result pin(com_itf_type& com, const rd_set_type& rd_set, const blk_id_type blk_id)
     {
         const auto info = this->get_local_lock(blk_id);
         
         // Start reading on this block before writing.
-        const auto read_ret = this->start_read_locked(com, acq_sig, info);
+        const auto read_ret = this->start_read_locked(com, rd_set, info);
         
         // Start writing on this block before releasing.
         const auto write_ret = this->start_write_locked(info);
@@ -197,12 +197,12 @@ public:
     
 private:
     MEFDN_NODISCARD
-    start_read_result start_read_locked(com_itf_type& com, const acq_sig_type& acq_sig, const lock_info& info)
+    start_read_result start_read_locked(com_itf_type& com, const rd_set_type& rd_set, const lock_info& info)
     {
         // Check whether this block is invalid or not.
         // The home process may be examined by following the probable owners.
         const auto start_ret =
-            info.dir_tbl.start_read(acq_sig, info.blk_pos, info.lk);
+            info.dir_tbl.start_read(rd_set, info.blk_pos, info.lk);
         
         if (start_ret.needs_read) {
             // This block is inaccessible (= invalidated).
@@ -213,7 +213,7 @@ private:
                 
                 // Read & merge the latest values inside the global critical section.
                 const auto tx_ret =
-                    this->do_transaction(com, acq_sig, info);
+                    this->do_transaction(com, rd_set, info);
                 // TODO: It is strange that tx_ret is totally ignored in this method.
                 
                 // TODO: Do refactoring and remove this function.
@@ -344,7 +344,7 @@ public:
     
     release_result release(
         com_itf_type&           com
-    ,   const acq_sig_type&     acq_sig
+    ,   const rd_set_type&      rd_set
     ,   const blk_id_type       blk_id
     ) {
         const auto info = this->get_local_lock(blk_id);
@@ -359,7 +359,7 @@ public:
         
         // Merge the written values inside the global critical section.
         auto tx_ret =
-            this->do_transaction(com, acq_sig, info);
+            this->do_transaction(com, rd_set, info);
         
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
@@ -401,7 +401,7 @@ private:
     
     do_transaction_result do_transaction(
         com_itf_type&       com
-    ,   const acq_sig_type& acq_sig
+    ,   const rd_set_type&  rd_set
     ,   const lock_info&    info
     ) {
         // Lock the latest owner globally.
@@ -416,7 +416,7 @@ private:
         
         // Unlock the global lock.
         const auto gunlk_ret =
-            info.dir_tbl.unlock_global(com, acq_sig, info.blk_pos, info.lk, glk_ret, mg_ret);
+            info.dir_tbl.unlock_global(com, rd_set, info.blk_pos, info.lk, glk_ret, mg_ret);
         
         return { glk_ret, mg_ret, gunlk_ret };
     }
@@ -424,13 +424,13 @@ private:
 public:
     typename blk_dir_tbl_type::self_invalidate_result
     self_invalidate(
-        const acq_sig_type&     acq_sig
+        const rd_set_type&      rd_set
     ,   const blk_id_type       blk_id
     ) {
         const auto info = this->get_local_lock(blk_id);
         
         const auto ret =
-            info.dir_tbl.self_invalidate(acq_sig, info.blk_pos, info.lk);
+            info.dir_tbl.self_invalidate(rd_set, info.blk_pos, info.lk);
         
         if (ret.needs_protect) {
             // Make the data inaccessible from all of the threads.
@@ -445,7 +445,7 @@ public:
             ,   info.blk_pos
             ,   ret.wr_ts
             ,   ret.rd_ts
-            ,   acq_sig.get_min_wr_ts()
+            ,   rd_set.get_min_wr_ts()
             );
         }
         else {
@@ -459,7 +459,7 @@ public:
             ,   info.blk_pos
             ,   ret.wr_ts
             ,   ret.rd_ts
-            ,   acq_sig.get_min_wr_ts()
+            ,   rd_set.get_min_wr_ts()
             );
         }
         
