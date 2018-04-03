@@ -132,29 +132,32 @@ public:
             return { false, false, false, 0, 0 };
         }
         else {
+            // Load the current read timestamp.
+            // This variable is only updated when the local directory lock is acquired.
+            const auto cur_rd_ts = ge.rd_ts;
+            
+            // If the timestamp is older than the minimum read timestamp,
+            // this block must be loaded from the latest owner
+            // because it was self-invalidated via timestamps
+            // and this process doesn't know a valid sharer for it.
+            //
+            // If not, the home process written in this process is still valid.
+            // (= before self-invalidation.)
+            const auto needs_latest_read =
+                #ifdef MEDSM2_FORCE_LATEST_READ
+                true
+                #else
+                ! rd_set.is_valid_rd_ts(cur_rd_ts)
+                #endif
+                ;
+            
             const auto is_dirty =
                 le.state == state_type::invalid_dirty;
             
             // Change the state to read-only only when it was invalid.
             le.state = is_dirty ? state_type::readonly_dirty : state_type::readonly_clean;
             
-            const auto cur_rd_ts = ge.rd_ts;
-            
-            #ifndef MEDSM2_FORCE_LATEST_READ
-            if (rd_set.is_valid_rd_ts(cur_rd_ts)) {
-                // The home process written in this process is still valid.
-                // (= before self-invalidation.)
-                return { true, false, is_dirty, le.home_proc, cur_rd_ts };
-            }
-            else {
-            #endif
-                // This block must be loaded from the latest owner
-                // because it was self-invalidated via timestamps
-                // and this process doesn't know a valid sharer for it.
-                return { true, true, is_dirty, le.home_proc, cur_rd_ts };
-            #ifndef MEDSM2_FORCE_LATEST_READ
-            }
-            #endif
+            return { true, needs_latest_read, is_dirty, le.home_proc, cur_rd_ts };
         }
     }
     
