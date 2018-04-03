@@ -165,7 +165,7 @@ public:
 private:
     mutable mutex_type  mtx_;
     pq_type             pq_;
-    rd_ts_type          min_rd_ts_;
+    rd_ts_type          min_rd_ts_ = 0;
 };
 
 } // namespace medsm2
