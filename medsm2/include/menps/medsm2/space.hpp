@@ -204,7 +204,7 @@ public:
         #ifdef MEDSM2_FORCE_SELF_INVALIDATE_ALL
         this->rd_set_.self_invalidate_all(
             [&] (const blk_id_type blk_id) {
-                return this->seg_tbl_.self_invalidate(this->acq_sig_, blk_id);
+                return this->seg_tbl_.self_invalidate(this->rd_set_, blk_id);
             }
         );
         #endif
