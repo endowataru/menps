@@ -431,38 +431,27 @@ public:
         if (ret.needs_protect) {
             // Make the data inaccessible from all of the threads.
             info.data_tbl.invalidate(info.blk_pos, info.lk);
-            
-            MEFDN_LOG_DEBUG(
-                "msg:Self-invalidated block.\t"
-                "blk_pos:{}\t"
-                "wr_ts:{}\t"
-                "rd_ts:{}\t"
-                "min_wr_ts:{}"
-            ,   info.blk_pos
-            ,   ret.wr_ts
-            ,   ret.rd_ts
-            ,   rd_set.get_min_wr_ts()
-            );
-        }
-        else {
-            MEFDN_LOG_DEBUG(
-                "msg:{}.\t"
-                "blk_pos:{}\t"
-                "wr_ts:{}\t"
-                "rd_ts:{}\t"
-                "min_wr_ts:{}"
-            ,   (ret.is_ignored ? "Avoid self-invalidation" : "Self-invalidate invalid block")
-            ,   info.blk_pos
-            ,   ret.wr_ts
-            ,   ret.rd_ts
-            ,   rd_set.get_min_wr_ts()
-            );
         }
         
         if (ret.needs_merge) {
             // FIXME
             throw std::logic_error("unimplemented");
         }
+        
+        MEFDN_LOG_DEBUG(
+            "msg:{}.\t"
+            "blk_pos:{}\t"
+            "wr_ts:{}\t"
+            "rd_ts:{}\t"
+            "min_wr_ts:{}"
+        ,   (ret.needs_protect ? "Self-invalidated block." :
+                (ret.is_ignored ? "Avoid self-invalidation." :
+                    "Self-invalidate invalid block."))
+        ,   info.blk_pos
+        ,   ret.wr_ts
+        ,   ret.rd_ts
+        ,   rd_set.get_min_wr_ts()
+        );
         
         return ret;
     }
