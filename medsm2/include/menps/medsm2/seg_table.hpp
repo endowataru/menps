@@ -328,6 +328,44 @@ public:
         return ret;
     }
     
+    typename blk_dir_tbl_type::self_invalidate_result
+    self_invalidate(
+        const rd_set_type&      rd_set
+    ,   const blk_id_type       blk_id
+    ) {
+        const auto info = this->get_local_lock(blk_id);
+        
+        const auto ret =
+            info.dir_tbl.self_invalidate(rd_set, info.blk_pos, info.lk);
+        
+        if (ret.needs_protect) {
+            // Make the data inaccessible from all of the threads.
+            info.data_tbl.invalidate(info.blk_pos, info.lk);
+        }
+        
+        if (ret.needs_merge) {
+            // FIXME
+            throw std::logic_error("unimplemented");
+        }
+        
+        MEFDN_LOG_DEBUG(
+            "msg:{}.\t"
+            "blk_pos:{}\t"
+            "wr_ts:{}\t"
+            "rd_ts:{}\t"
+            "min_wr_ts:{}"
+        ,   (ret.needs_protect ? "Self-invalidated block." :
+                (ret.is_ignored ? "Avoid self-invalidation." :
+                    "Self-invalidate invalid block."))
+        ,   info.blk_pos
+        ,   ret.wr_ts
+        ,   ret.rd_ts
+        ,   rd_set.get_min_wr_ts()
+        );
+        
+        return ret;
+    }
+    
     struct release_result {
         bool release_completed;
         bool is_written;
@@ -418,44 +456,6 @@ private:
     }
     
 public:
-    typename blk_dir_tbl_type::self_invalidate_result
-    self_invalidate(
-        const rd_set_type&      rd_set
-    ,   const blk_id_type       blk_id
-    ) {
-        const auto info = this->get_local_lock(blk_id);
-        
-        const auto ret =
-            info.dir_tbl.self_invalidate(rd_set, info.blk_pos, info.lk);
-        
-        if (ret.needs_protect) {
-            // Make the data inaccessible from all of the threads.
-            info.data_tbl.invalidate(info.blk_pos, info.lk);
-        }
-        
-        if (ret.needs_merge) {
-            // FIXME
-            throw std::logic_error("unimplemented");
-        }
-        
-        MEFDN_LOG_DEBUG(
-            "msg:{}.\t"
-            "blk_pos:{}\t"
-            "wr_ts:{}\t"
-            "rd_ts:{}\t"
-            "min_wr_ts:{}"
-        ,   (ret.needs_protect ? "Self-invalidated block." :
-                (ret.is_ignored ? "Avoid self-invalidation." :
-                    "Self-invalidate invalid block."))
-        ,   info.blk_pos
-        ,   ret.wr_ts
-        ,   ret.rd_ts
-        ,   rd_set.get_min_wr_ts()
-        );
-        
-        return ret;
-    }
-    
     void set_blk_table(const seg_id_type seg_id, blk_tbl_ptr blk_tbl)
     {
         MEFDN_ASSERT(seg_id < this->blk_tbls_.size());
