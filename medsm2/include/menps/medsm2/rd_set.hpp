@@ -37,41 +37,41 @@ public:
     {
         const unique_lock_type lk(this->mtx_);
         
-        // Check that (rd_ts >= min_rd_ts).
-        MEFDN_ASSERT(!P::is_greater_rd_ts(this->min_rd_ts_, rd_ts));
+        // Check that (min_wr_ts <= rd_ts).
+        MEFDN_ASSERT(!P::is_greater_rd_ts(this->min_wr_ts_, rd_ts));
         
         // Add a new entry to the priority queue.
         this->pq_.push(entry{ blk_id, rd_ts });
     }
     
     template <typename Func>
-    void self_invalidate(const rd_ts_type min_rd_ts, Func&& func)
+    void self_invalidate(const rd_ts_type min_wr_ts, Func&& func)
     {
         mefdn::vector<blk_id_type> blk_ids;
         
         {
             const unique_lock_type lk(this->mtx_);
             
-            const auto old_min_rd_ts = this->min_rd_ts_;
-            if (!P::is_greater_rd_ts(min_rd_ts, old_min_rd_ts)) {
-                // Because min_rd_ts <= old_min_rd_ts,
+            const auto old_min_wr_ts = this->min_wr_ts_;
+            if (!P::is_greater_rd_ts(min_wr_ts, old_min_wr_ts)) {
+                // Because min_wr_ts <= old_min_wr_ts,
                 // it is unnecessary to self-invalidate blocks for this signature.
                 MEFDN_LOG_VERBOSE(
                     "msg:No need to self-invalidate.\t"
-                    "old_min_rd_ts:{}\t"
-                    "new_min_rd_ts:{}\t"
-                ,   old_min_rd_ts
-                ,   min_rd_ts
+                    "old_min_wr_ts:{}\t"
+                    "new_min_wr_ts:{}\t"
+                ,   old_min_wr_ts
+                ,   min_wr_ts
                 );
                 return;
             }
             
-            // Update the minimum read timestamp.
-            this->min_rd_ts_ = min_rd_ts;
+            // Update the minimum write timestamp.
+            this->min_wr_ts_ = min_wr_ts;
             
             while (! this->pq_.empty()) {
                 auto& e = this->pq_.top();
-                if (!P::is_greater_rd_ts(min_rd_ts, e.rd_ts)) {
+                if (!P::is_greater_rd_ts(min_wr_ts, e.rd_ts)) {
                     // e.rd_ts is still valid.
                     break;
                 }
@@ -85,9 +85,9 @@ public:
         
         MEFDN_LOG_DEBUG(
             "msg:Start self-invalidating all old blocks.\t"
-            "min_rd_ts:{}\t"
+            "min_wr_ts:{}\t"
             "num_blk_ids:{}"
-        ,   min_rd_ts
+        ,   min_wr_ts
         ,   blk_ids.size()
         );
         
@@ -95,7 +95,7 @@ public:
         
         for (const auto& blk_id : blk_ids) {
             const auto ret = func(blk_id);
-            if (!P::is_greater_rd_ts(min_rd_ts, ret.rd_ts)) {
+            if (!P::is_greater_rd_ts(min_wr_ts, ret.rd_ts)) {
                 new_ents.push_back(entry{ blk_id, ret.rd_ts });
             }
         }
@@ -109,10 +109,10 @@ public:
         
         MEFDN_LOG_DEBUG(
             "msg:Finish self-invalidating all old blocks.\t"
-            "min_rd_ts:{}\t"
+            "min_wr_ts:{}\t"
             "num_old_blks:{}\t"
             "num_valid_blks:{}\t"
-        ,   min_rd_ts
+        ,   min_wr_ts
         ,   blk_ids.size()
         ,   new_ents.size()
         );
@@ -141,30 +141,30 @@ public:
     wr_ts_type make_new_wr_ts(const rd_ts_type old_rd_ts) const
     {
         const unique_lock_type lk(this->mtx_);
-        return std::max(old_rd_ts + 1, this->min_rd_ts_);
+        return std::max(old_rd_ts + 1, this->min_wr_ts_);
     }
     
     rd_ts_type make_new_rd_ts(const wr_ts_type wr_ts, const rd_ts_type rd_ts)
     {
         // TODO: Provide a good prediction for a lease value of each block.
-        return std::max(std::max(wr_ts, this->min_rd_ts_) + P::constants_type::lease_ts, rd_ts);
+        return std::max(std::max(wr_ts, this->min_wr_ts_) + P::constants_type::lease_ts, rd_ts);
     }
     
     wr_ts_type get_min_wr_ts() const noexcept {
         const unique_lock_type lk(this->mtx_);
-        return this->min_rd_ts_;
+        return this->min_wr_ts_;
     }
     
     bool is_valid_rd_ts(const rd_ts_type rd_ts) const noexcept {
         const unique_lock_type lk(this->mtx_);
-        // If rd_ts >= min_rd_ts, the block is still valid.
-        return !P::is_greater_rd_ts(this->min_rd_ts_, rd_ts);
+        // If rd_ts >= min_wr_ts, the block is still valid.
+        return !P::is_greater_rd_ts(this->min_wr_ts_, rd_ts);
     }
     
 private:
     mutable mutex_type  mtx_;
     pq_type             pq_;
-    rd_ts_type          min_rd_ts_ = 0;
+    wr_ts_type          min_wr_ts_ = 0;
 };
 
 } // namespace medsm2

@@ -215,13 +215,11 @@ public:
 private:
     void acquire_sig(const sig_buffer_type& sig)
     {
-        const auto min_wr_ts = sig.get_min_wr_ts();
-        
         // Self-invalidate all of the old blocks.
-        // This also increases the acquire timestamp (= minimum read timestamp).
+        // This also increases the acquire timestamp (= minimum write timestamp).
         this->rd_set_.self_invalidate(
-            min_wr_ts,
-            [&] (const blk_id_type blk_id) {
+            sig.get_min_wr_ts()
+        ,   [&] (const blk_id_type blk_id) {
                 return this->seg_tbl_.self_invalidate(this->rd_set_, blk_id);
             }
         );
