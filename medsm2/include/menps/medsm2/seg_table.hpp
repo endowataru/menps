@@ -144,31 +144,6 @@ public:
         return { read_ret, this->start_write_locked(wr_set, info) };
     }
     
-    #if 0
-    template <typename StoreOp>
-    MEFDN_NODISCARD
-    bool try_store_release(com_itf_type& com, const acq_sig_type& acq_sig, const blk_id_type blk_id, StoreOp&& store_op)
-    {
-        const auto info = this->get_local_lock(blk_id);
-        
-        // Start reading on this block before writing.
-        this->start_read_locked(com, acq_sig, info);
-        
-        // Start writing on this block before releasing.
-        this->start_write_locked(info);
-        
-        // Mark this block to be released at last.
-        // If the block is already released, this function will return "false".
-        const bool succeeded =
-            info.dir_tbl.try_set_released(info.blk_pos, info.lk);
-        
-        // Invoke the store operation here before unlocking the block.
-        mefdn::forward<StoreOp>(store_op)();
-        
-        return succeeded;
-    }
-    #endif
-    
     using pin_result = start_write_result;
     
     MEFDN_NODISCARD
