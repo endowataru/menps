@@ -234,10 +234,12 @@ private:
                     "msg:Start reading block.\t"
                     "blk_pos:{}\t"
                     "home_proc:{}\t"
-                    "rd_ts:{}"
+                    "rd_ts:{}\t"
+                    "is_dirty:{}"
                 ,   info.blk_pos
                 ,   start_ret.home_proc
                 ,   start_ret.rd_ts
+                ,   start_ret.is_dirty
                 );
             }
         }
@@ -397,23 +399,21 @@ public:
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
             "blk_id:0x{:x}\t"
+            "blk_pos:{}\t"
             "old_wr_ts:{}\t"
             "old_rd_ts:{}\t"
             "new_wr_ts:{}\t"
             "new_rd_ts:{}\t"
-            "is_migrated:{}\t"
             "is_written:{}\t"
             "is_still_writable:{}\t"
-            "becomes_clean:{}"
         ,   blk_id
+        ,   info.blk_pos
         ,   tx_ret.glk_ret.wr_ts
         ,   tx_ret.glk_ret.rd_ts
         ,   tx_ret.gunlk_ret.new_wr_ts
         ,   tx_ret.gunlk_ret.new_rd_ts
-        ,   tx_ret.mg_ret.is_migrated
         ,   tx_ret.mg_ret.is_written
         ,   tx_ret.gunlk_ret.is_still_writable
-        ,   tx_ret.mg_ret.becomes_clean
         );
         
         return {
@@ -427,9 +427,9 @@ public:
     
 private:
     struct do_transaction_result {
-        typename blk_dir_tbl_type::lock_global_result   glk_ret;
-        typename blk_data_tbl_type::merge_to_result     mg_ret;
-        typename blk_dir_tbl_type::unlock_global_result gunlk_ret;
+        typename blk_dir_tbl_type::lock_global_result       glk_ret;
+        typename blk_data_tbl_type::release_merge_result    mg_ret;
+        typename blk_dir_tbl_type::unlock_global_result     gunlk_ret;
     };
     
     do_transaction_result do_transaction(
@@ -444,8 +444,7 @@ private:
         
         // Merge the writes from both the current process and the latest owner.
         const auto mg_ret =
-            info.data_tbl.merge_to_public(com, info.blk_pos, info.lk, glk_ret.owner,
-                glk_ret.needs_protect_before, glk_ret.needs_protect_after);
+            info.data_tbl.release_merge(com, info.blk_pos, info.lk, glk_ret);
         
         // Unlock the global lock.
         const auto gunlk_ret =

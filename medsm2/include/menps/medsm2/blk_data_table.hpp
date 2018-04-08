@@ -139,24 +139,18 @@ public:
         self.set_writable(blk_pos, blk_size);
     }
     
-    struct merge_to_result {
-        // This block was migrated from the old owner
-        // to the current process.
-        bool is_migrated;
-        // This block was written
+    struct release_merge_result {
+        // This block was written by this process
         // and must be recorded to the write notices.
         bool is_written;
-        // This block was set to read-only (PROT_READ).
-        bool becomes_clean;
     };
     
-    merge_to_result merge_to_public(
+    template <typename LockResult>
+    release_merge_result release_merge(
         com_itf_type&           com
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
-    ,   const proc_id_type      cur_owner
-    ,   const bool              needs_protect_before
-    ,   const bool              needs_protect_after
+    ,   const LockResult&       glk_ret
     ) {
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
@@ -165,34 +159,41 @@ public:
         const auto cur_proc = com.this_proc_id();
         auto& rma = com.get_rma();
         
+        if (glk_ret.needs_protect_before) {
+            // Only when the block was writable and should be protected,
+            // this method write-protects this block
+            // in order to apply the changes to the private data.
+            
+            // Call mprotect(PROT_READ).
+            self.set_readonly(blk_pos, blk_size);
+        }
+        
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
         const auto my_pub = this->get_my_pub_ptr(blk_pos);
         
-        merge_to_result r{};
+        bool is_written = false;
         
-        if (cur_proc == cur_owner) {
+        if (glk_ret.is_dirty) {
             // Compare the private data with the public data.
             // Note that the private data is STILL WRITABLE
             // and can be modified concurrently by other threads in this process.
             // It's OK to read the intermediate states
             // because those writes will be managed by the next release operation.
-            const auto is_written =
-                std::memcmp(my_priv, my_pub, blk_size) != 0;
+            is_written = std::memcmp(my_priv, my_pub, blk_size) != 0;
                 //std::equal(my_priv, my_priv + blk_size, my_pub)
-            
+        }
+        
+        if (! glk_ret.is_remotely_updated) {
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             if (is_written) {
             #endif
                 // Copy to the private data.
                 std::memcpy(my_pub, my_priv, blk_size);
                 //std::copy(my_priv, my_priv + blk_size, my_pub);
-                
-                r = merge_to_result{ false, true, false };
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             }
             else {
                 // The data is not modified.
-                r = merge_to_result{ false, false, false };
             }
             #endif
         }
@@ -204,20 +205,10 @@ public:
             
             const auto other_pub = other_pub_buf.get();
             
+            const auto cur_owner = glk_ret.owner;
+            
             // Read the public data from cur_owner.
             rma.read(cur_owner, this->get_other_pub_ptr(cur_owner, blk_pos), other_pub, blk_size);
-            
-            // Only when the block was writable, this method protects this block
-            // in order to apply the changes to the private data.
-            if (needs_protect_before) {
-                // Call mprotect(PROT_READ).
-                self.set_readonly(blk_pos, blk_size);
-            }
-            
-            // Compare the public data with the private data.
-            const auto is_written =
-                std::memcmp(my_priv, my_pub, blk_size) != 0;
-                //std::equal(my_pub, my_pub + blk_size, my_priv)
             
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             if (is_written) {
@@ -226,7 +217,6 @@ public:
                 // It is necessary to merge them to complete the release.
                 this->write_merge(blk_pos, other_pub, my_priv, my_pub, blk_size);
                 
-                r = merge_to_result{ true, true, true };
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             }
             else {
@@ -240,15 +230,11 @@ public:
                 //std::copy(other_pub, other_pub + blk_size, my_priv);
                 std::memcpy(my_pub , other_pub, blk_size);
                 //std::copy(other_pub, other_pub + blk_size, my_pub);
-                
-                // This block is not written by the current process.
-                // It means that releasing this block now is unnecessary.
-                r = merge_to_result{ false, false, true };
             }
             #endif
         }
         
-        if (needs_protect_after) {
+        if (glk_ret.needs_protect_after) {
             // If this block was inaccessible (invalid-clean or invalid-dirty) from the application,
             // make the block readable now.
             
@@ -256,7 +242,7 @@ public:
             self.set_readonly(blk_pos, blk_size);
         }
         
-        return r;
+        return { is_written };
         
         // The temporary buffer is discarded in its destructor here.
     }
