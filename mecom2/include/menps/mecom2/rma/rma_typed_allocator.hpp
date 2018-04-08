@@ -38,7 +38,8 @@ public:
         const auto p = self.untyped_allocate(size);
         
         // Initialize values (to imitate the behavior of std::make_unique).
-        new (p) element_type[n] {};
+        // Note: Use () instead of {} to support GCC 4.x (buggy versions).
+        new (p) element_type[n] ();
         
         return typename P::template unique_local_ptr<T>(
             P::template static_cast_to<element_type>(p)
