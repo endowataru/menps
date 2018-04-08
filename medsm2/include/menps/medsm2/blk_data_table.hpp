@@ -247,56 +247,6 @@ public:
         // The temporary buffer is discarded in its destructor here.
     }
     
-    #if 0
-    void merge_from_public(
-        com_itf_type&           com
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const proc_id_type      home_proc
-    ) {
-        auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
-        
-        const auto blk_size = self.get_blk_size();
-        auto& rma = com.get_rma();
-        
-        const auto my_priv = this->get_my_priv_ptr(blk_pos);
-        const auto my_pub = this->get_my_pub_ptr(blk_pos);
-    
-        // Create a temporary buffer.
-        // TODO: Reuse this buffer.
-        const auto home_pub_buf =
-            rma.template make_unique<mefdn::byte []>(blk_size);
-        
-        const auto home_pub = home_pub_buf.get();
-        
-        // Read the public data from home_proc.
-        rma.read(
-            home_proc
-        ,   this->get_other_pub_ptr(home_proc, blk_pos)
-        ,   home_pub_buf.get()
-        ,   blk_size
-        );
-        
-        // TODO: Improve performance.
-        for (size_type i = 0; i < blk_size; ++i) {
-            // TODO: Scoped enums cannot do XOR...
-            const auto x =
-                static_cast<unsigned char>(my_pub[i]) ^
-                static_cast<unsigned char>(home_pub[i]);
-            
-            if (x != 0) {
-                my_priv[i] =
-                    static_cast<mefdn::byte>(
-                        static_cast<unsigned char>(my_priv[i]) ^ x
-                    );
-            }
-            
-            my_pub[i] = my_priv[i];
-        }
-    }
-    #endif
-    
     void invalidate(const blk_pos_type blk_pos, const unique_lock_type& lk)
     {
         auto& self = this->derived();
