@@ -472,7 +472,7 @@ public:
                 #endif
                 
                 // Load the latest timestamps.
-                global_entry owner_ge{};
+                global_entry owner_ge;
                 rma.read(prob_proc, ge_rptr, &owner_ge, 1);
                 // TODO: It's better if this read is overlapped with other communications.
                 
@@ -483,7 +483,7 @@ public:
                 auto& ge = * this->ges_.local(blk_pos);
                 
                 const auto state = le.state;
-                const auto cur_wr_ts = ge.wr_ts;
+                //const auto cur_wr_ts = ge.wr_ts;
                 
                 const auto is_remotely_updated =
                     prob_proc != this_proc;

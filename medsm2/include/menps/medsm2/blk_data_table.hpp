@@ -156,7 +156,6 @@ public:
         self.check_locked(blk_pos, lk);
         
         const auto blk_size = self.get_blk_size();
-        const auto cur_proc = com.this_proc_id();
         auto& rma = com.get_rma();
         
         if (glk_ret.needs_protect_before) {
