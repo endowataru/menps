@@ -296,9 +296,14 @@ private:
         auto& le = this->les_[blk_pos];
         auto& ge = * this->ges_.local(blk_pos);
         
+        const auto rd_ts = ge.rd_ts;
+        
         // Check whether the timestamp is newer or not.
         // FIXME: Consider timestamp overflow.
-        if (ge.wr_ts < new_wr_ts) {
+        //if (ge.wr_ts < new_wr_ts) {
+        // If old_rd_ts < new_wr_ts, the read timestamp has expired
+        // and this block was invalidated.
+        if (P::is_greater_rd_ts(new_wr_ts, rd_ts)) {
             if (le.state == state_type::invalid_clean || le.state == state_type::invalid_dirty) {
                 // Although the write is not ignored,
                 // invalidated blocks require neither protection nor merging.
