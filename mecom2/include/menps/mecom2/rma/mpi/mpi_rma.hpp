@@ -139,6 +139,8 @@ public:
     
     void progress()
     {
+        MEFDN_LOG_VERBOSE("msg:Invoke MPI progress.");
+        
         // Call an MPI function to forward the progress.
         this->req_.iprobe({ MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE });
         // TODO: Is this the best implementation?
