@@ -1,4 +1,5 @@
 
+#include <menps/medsm2/sig_table.hpp>
 #include <menps/medsm2/sig_buffer.hpp>
 #include <menps/medsm2/space.hpp>
 #include <menps/medsm2/rel_sig.hpp>
@@ -116,6 +117,8 @@ struct dsm_base_policy
     using rel_sig_type = rel_sig<dsm_base_policy>;
     using rd_set_type = rd_set<dsm_base_policy>;
     using wr_set_type = wr_set<dsm_base_policy>;
+    
+    using sig_id_type = mefdn::size_t;
 };
 
 
@@ -137,6 +140,7 @@ struct my_space_policy : dsm_base_policy
     using derived_type = svm_space<my_space_policy>;
     using seg_table_type = my_seg_table;
     using blk_tbl_type = my_seg_table_policy::blk_tbl_type;
+    using sig_table_type = sig_table<dsm_base_policy>;
 };
 
 using my_space = svm_space<my_space_policy>;
@@ -151,6 +155,8 @@ class mpi_svm_space::impl
     
     struct my_space_conf {
         mpi_com_itf&    com;
+        mefdn::size_t   max_num_sigs;
+        mefdn::size_t   sig_size_in_bytes;
     };
 public:
     explicit impl(
@@ -158,7 +164,14 @@ public:
     ,   mecom2::mpi_coll&   coll
     )
         : com_(com_conf{ rma, coll })
-        , sp_(my_space_conf{ com_ }) // TODO: magic numbers
+        , sp_(
+            my_space_conf{
+                com_
+            ,   1024 // TODO: magic number
+            ,   dsm_base_policy::rel_sig_type::get_max_size_in_bytes()
+                // TODO: Simplify the dependencies
+            }
+        )
     {
         //this->sp_.coll_init(my_space_conf{ com_, 1<<15, 1<<10 }); // TODO: magic numbers
     }
@@ -187,12 +200,23 @@ void mpi_svm_space::coll_alloc_global_var_seg(const size_type seg_size, const si
 {
     return this->impl_->space().coll_alloc_global_var_seg(seg_size, blk_size, start_ptr);
 }
-#if 0
-void mpi_svm_space::store_release(mefdn::uint64_t* const ptr, mefdn::uint64_t val)
-{
-    this->impl_->space().store_release(ptr, val);
+
+bool mpi_svm_space::compare_exchange_strong_acquire(
+    mefdn::uint32_t&        target
+,   mefdn::uint32_t&        expected
+,   const mefdn::uint32_t   desired
+) {
+    return this->impl_->space().compare_exchange_strong_acquire(target, expected, desired);
 }
 
+void mpi_svm_space::store_release(
+    mefdn::uint32_t* const  ptr
+,   const mefdn::uint32_t   val
+) {
+    this->impl_->space().store_release(*ptr, val);
+}
+
+#if 0
 mefdn::uint64_t mpi_svm_space::load_acquire(mefdn::uint64_t* const ptr)
 {
     return this->impl_->space().load_acquire(ptr);

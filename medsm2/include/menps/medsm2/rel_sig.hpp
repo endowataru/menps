@@ -27,10 +27,15 @@ class rel_sig
 public:
     void merge(wn_vector_type wn_vec)
     {
-        const mutex_unique_lock_type lk(this->mtx_);
-        
         // Sort the write notices.
         auto sig = sig_buffer_type::create_from_wns(mefdn::move(wn_vec));
+        
+        this->merge(mefdn::move(sig));
+    }
+    
+    void merge(const sig_buffer_type& sig)
+    {
+        const mutex_unique_lock_type lk(this->mtx_);
         
         // Merge two sorted lists.
         auto merged_sig = sig_buffer_type::merge(this->sig_, sig);
@@ -57,9 +62,18 @@ public:
         return sig_buffer_type::get_size_in_bytes(P::constants_type::max_rel_sig_len);
     }
     
+    sig_buffer_type get_sig() const
+    {
+        const mutex_unique_lock_type lk(this->mtx_);
+        
+        // Copy the signature and return it.
+        // TODO: Reduce this copy.
+        return this->sig_;
+    }
+    
 private:
-    mutex_type      mtx_;
-    sig_buffer_type sig_;
+    mutable mutex_type  mtx_;
+    sig_buffer_type     sig_;
 };
 
 } // namespace medsm2

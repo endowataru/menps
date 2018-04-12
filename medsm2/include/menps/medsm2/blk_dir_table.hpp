@@ -262,9 +262,12 @@ public:
             return { true };
         }
         else if (state == state_type::pinned) {
+            return { true  };
+            #if 0
             // Pinned blocks must not be released.
             throw std::logic_error("Releasing pinned block is unsupported yet!");
             return { false };
+            #endif
         }
         else if (state == state_type::invalid_dirty || state == state_type::readonly_dirty) {
             // Although this block is invalid or readonly,
@@ -499,7 +502,8 @@ public:
                 const auto is_dirty =
                     state == state_type::invalid_dirty ||
                     state == state_type::readonly_dirty ||
-                    state == state_type::writable;
+                    state == state_type::writable ||
+                    state == state_type::pinned;
                 
                 const auto needs_protect_before =
                     state == state_type::writable && is_remotely_updated;
@@ -696,8 +700,10 @@ public:
         const auto old_state = le.state;
         auto new_state = old_state;
         
+        #if 0
         // TODO: It should be possible to release pinned blocks.
         MEFDN_ASSERT(old_state != state_type::pinned);
+        #endif
         
         if (old_state == state_type::invalid_dirty || old_state == state_type::invalid_clean) {
             // This block was invalid and became readable in this transaction.

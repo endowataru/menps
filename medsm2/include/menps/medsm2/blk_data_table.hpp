@@ -256,6 +256,67 @@ public:
         self.set_inaccessible(blk_pos, blk_size);
     }
     
+    // This function is used to implement atomic operations.
+    template <typename Func>
+    void perform_transaction(
+        const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ,   Func&&                  func
+    ) {
+        auto& self = this->derived();
+        self.check_locked(blk_pos, lk);
+        
+        const auto my_priv = this->get_my_priv_ptr(blk_pos);
+        const auto my_pub = this->get_my_pub_ptr(blk_pos);
+        
+        // Perform a transaction on this block.
+        mefdn::forward<Func>(func)(my_priv, my_pub);
+    }
+    
+    template <typename T, typename Func>
+    bool do_amo_at(
+        const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ,   const size_type         offset
+    ,   Func&&                  func
+    ) {
+        auto& self = this->derived();
+        self.check_locked(blk_pos, lk);
+        
+        const auto my_priv = this->get_my_priv_ptr(blk_pos);
+        const auto my_pub = this->get_my_pub_ptr(blk_pos);
+        
+        auto target_priv =
+            reinterpret_cast<T*>(
+                static_cast<mefdn::byte*>(my_priv) + offset
+            );
+        auto target_pub =
+            reinterpret_cast<T*>(
+                static_cast<mefdn::byte*>(my_pub) + offset
+            );
+        
+        // Load the atomic variable.
+        const auto target = *target_pub;
+        // This block must be already clean.
+        MEFDN_ASSERT(*target_priv == target);
+        
+        // Execute the atomic operation.
+        const auto result =
+            mefdn::forward<Func>(func)(target);
+        
+        // Check whether this atomic variable is modified.
+        const bool is_changed = (target != result);
+        
+        if (is_changed) {
+            // Assign the modified value to both the private and public data.
+            *target_priv = result;
+            *target_pub  = result;
+        }
+        
+        return is_changed;
+    }
+    
+    
 private:
     static void read_merge(
         const blk_pos_type          blk_pos

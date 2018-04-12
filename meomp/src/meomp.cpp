@@ -404,6 +404,49 @@ void GOMP_parallel(
     GOMP_parallel_end();
 }
 
+// Just copy the definition from libgomp omp.h.
+typedef struct {
+    unsigned char _x[4]
+    __attribute__((__aligned__(4)));
+}
+omp_lock_t;
+
+extern "C"
+void omp_set_lock(omp_lock_t* const lk)
+{
+    auto* const target =
+        reinterpret_cast<mefdn::uint32_t*>(lk);
+    
+    while (true)
+    {
+        mefdn::uint32_t expected = 0;
+        mefdn::uint32_t desired = 1;
+        
+        if (g_sp->compare_exchange_strong_acquire(*target, expected, desired)) {
+            break;
+        }
+    }
+}
+extern "C"
+void omp_unset_lock(omp_lock_t* const lk)
+{
+    auto* const target =
+        reinterpret_cast<mefdn::uint32_t*>(lk);
+    
+    g_sp->store_release(target, 0);
+}
+extern "C"
+void omp_init_lock(omp_lock_t* const lk) {
+    auto* const target =
+        reinterpret_cast<mefdn::uint32_t*>(lk);
+    
+    *target = 0;
+}
+extern "C"
+void omp_destroy_lock(omp_lock_t* /*lk*/) {
+    // Do nothing.
+}
+
 // LLVM
 
 struct ident;

@@ -27,7 +27,7 @@ class svm_space
     
     using seg_id_type = typename P::seg_id_type;
     using blk_id_type = typename P::blk_id_type;
-    //using syn_id_type = typename P::syn_id_type;
+    using sig_id_type = typename P::sig_id_type;
     
     using thread_type = typename P::thread_type;
     
@@ -155,6 +155,44 @@ public:
         return this->com_;
     }
     
+    template <typename T>
+    bool compare_exchange_strong_acquire(
+        T&      target // TODO: define atomic type
+    ,   T&      expected
+    ,   const T desired
+    ) {
+        const auto blk_id = this->get_blk_id_from_app_ptr(&target);
+        const auto sig_id = this->get_sig_id(blk_id);
+        const auto offset =
+            static_cast<size_type>(
+                reinterpret_cast<mefdn::byte*>(&target)
+                - reinterpret_cast<mefdn::byte*>(blk_id) // TODO
+            );
+        
+        return base::compare_exchange_strong_acquire(
+            sig_id, blk_id, offset, expected, desired);
+    }
+    
+    template <typename T>
+    void store_release(
+        T&      target // TODO: define atomic type
+    ,   const T value
+    ) {
+        const auto blk_id = this->get_blk_id_from_app_ptr(&target);
+        const auto sig_id = this->get_sig_id(blk_id);
+        const auto offset =
+            static_cast<size_type>(
+                reinterpret_cast<mefdn::byte*>(&target)
+                - reinterpret_cast<mefdn::byte*>(blk_id) // TODO
+            );
+        
+        base::store_release(
+            sig_id, blk_id, offset, value);
+    }
+    
+private:
+    
+public:
     #if 0
     syn_id_type get_syn_id(const blk_id_type blk_id)
     {
@@ -275,6 +313,17 @@ private:
         const auto new_diff = diff - (diff % blk_size);
         
         return new_diff;
+    }
+    
+    sig_id_type get_sig_id(const blk_id_type blk_id)
+    {
+        // Calculate the segment ID from the address offset.
+        // TODO: Remove this modulo operation.
+        const auto seg_id = blk_id / this->get_max_seg_size();
+        
+        const auto blk_pos = this->get_blk_pos(seg_id, blk_id);
+        
+        return blk_pos;
     }
     
     template <typename Func>

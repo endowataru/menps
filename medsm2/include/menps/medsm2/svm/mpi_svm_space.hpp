@@ -25,9 +25,15 @@ public:
     
     void coll_alloc_global_var_seg(size_type seg_size, size_type blk_size, void* start_ptr);
     
-    void store_release(mefdn::uint64_t*, mefdn::uint64_t);
+    bool compare_exchange_strong_acquire(
+        mefdn::uint32_t&    target // TODO: define atomic type
+    ,   mefdn::uint32_t&    expected
+    ,   mefdn::uint32_t     desired
+    );
     
-    mefdn::uint64_t load_acquire(mefdn::uint64_t*);
+    void store_release(mefdn::uint32_t*, mefdn::uint32_t);
+    
+    //mefdn::uint64_t load_acquire(mefdn::uint64_t*);
     
     void barrier();
     

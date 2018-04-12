@@ -114,7 +114,7 @@ public:
         return sig_buffer(new_min_wr_ts, mefdn::move(new_wn_vec));
     }
     
-    void serialize_to(void* const dest, const size_type dest_size)
+    void serialize_to(void* const dest, const size_type dest_size) const
     {
         const size_type required =
             sizeof(header) + this->wn_vec_.size() * sizeof(wn_entry_type);
@@ -135,7 +135,7 @@ public:
     
     using serialized_buffer_type = mefdn::unique_ptr<mefdn::byte []>;
     
-    serialized_buffer_type serialize(const size_type size)
+    serialized_buffer_type serialize(const size_type size) const
     {
         const size_type required =
             get_size_in_bytes(this->wn_vec_.size());

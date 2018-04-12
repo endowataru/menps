@@ -22,11 +22,13 @@ class space
     
     using seg_id_type = typename P::seg_id_type;
     using blk_id_type = typename P::blk_id_type;
+    using sig_id_type = typename P::sig_id_type;
     
     using seg_table_type = typename P::seg_table_type;
     using wr_set_type = typename P::wr_set_type;
     using rd_set_type = typename P::rd_set_type;
     using rel_sig_type = typename P::rel_sig_type;
+    using sig_table_type = typename P::sig_table_type;
     
     using wn_entry_type = typename P::wn_entry_type;
     using wn_vector_type = typename P::wn_vector_type;
@@ -40,7 +42,9 @@ public:
     explicit space(const Conf& conf)
         // TODO: move to coll_init()
         : seg_tbl_(conf)
-    { }
+    {
+        sig_tbl_.coll_init(conf);
+    }
     
     ~space()
     {
@@ -98,7 +102,62 @@ public:
         this->wr_set_.add_writable(blk_id);
     }
     
-    void fence()
+    template <typename T>
+    bool compare_exchange_strong_acquire(
+        const sig_id_type   sig_id
+    ,   const blk_id_type   blk_id
+    ,   const size_type     offset
+    ,   T&                  expected
+    ,   const T             desired
+    ) {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        const auto cas_ret =
+            this->seg_tbl_.compare_exchange(
+                com, this->rd_set_, blk_id, offset, expected, desired);
+        
+        this->fence_acquire(sig_id);
+        
+        return cas_ret.is_success;
+    }
+    
+    template <typename T>
+    void store_release(
+        const sig_id_type   sig_id
+    ,   const blk_id_type   blk_id
+    ,   const size_type     offset
+    ,   const T             value
+    ) {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        this->fence_release();
+        
+        auto sig = this->rel_sig_.get_sig();
+        
+        this->sig_tbl_.merge_sig_to(com, sig_id, sig);
+        
+        // Store the specified value to the atomic variable.
+        this->seg_tbl_.atomic_store(com, this->rd_set_, blk_id, offset, value);
+    }
+    
+    void fence_acquire(const sig_id_type sig_id)
+    {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        // Get the signature from the signature table.
+        auto sig_buf = this->sig_tbl_.get_sig(com, sig_id);
+        
+        // Apply the WNs and self-invalidation to this process.
+        this->acquire_sig(sig_buf);
+        
+        // Merge the signature for subsequent releases.
+        this->rel_sig_.merge(sig_buf);
+    }
+    
+    void fence_release()
     {
         auto& self = this->derived();
         auto& com = self.get_com_itf();
@@ -175,7 +234,7 @@ public:
         const auto num_procs = com.get_num_procs();
         
         // Release all of the preceding writes in this thread.
-        this->fence();
+        this->fence_release();
         
         const auto sig_size = this->rel_sig_.get_max_size_in_bytes();
         
@@ -215,12 +274,15 @@ public:
 private:
     void acquire_sig(const sig_buffer_type& sig)
     {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
         // Self-invalidate all of the old blocks.
         // This also increases the acquire timestamp (= minimum write timestamp).
         this->rd_set_.self_invalidate(
             sig.get_min_wr_ts()
         ,   [&] (const blk_id_type blk_id) {
-                return this->seg_tbl_.self_invalidate(this->rd_set_, blk_id);
+                return this->seg_tbl_.self_invalidate(com, this->rd_set_, blk_id);
             }
         );
         
@@ -229,7 +291,7 @@ private:
             [&] (const wn_entry_type& wn) {
                 // Invalidate this block based on the write notice.
                 // If invalidated, the home process ID and the timestamp are recorded.
-                this->seg_tbl_.acquire(wn);
+                this->seg_tbl_.acquire(com, this->rd_set_, wn);
             }
         );
     }
@@ -246,6 +308,11 @@ public:
         return this->seg_tbl_.get_blk_size(seg_id);
     }
     
+    size_type get_blk_pos(const seg_id_type seg_id, const blk_id_type blk_id) {
+        // Just forward to the segment table.
+        return this->seg_tbl_.get_blk_pos(seg_id, blk_id);
+    }
+    
 private:
     seg_table_type  seg_tbl_;
     
@@ -254,6 +321,8 @@ private:
     rd_set_type     rd_set_;
     
     rel_sig_type    rel_sig_;
+    
+    sig_table_type  sig_tbl_;
 };
 
 } // namespace medsm2

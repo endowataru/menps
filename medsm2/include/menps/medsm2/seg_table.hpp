@@ -5,6 +5,8 @@
 #include <menps/mefdn/vector.hpp>
 #include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/utility.hpp>
+#include <menps/mefdn/type_traits.hpp>
+#include <menps/mefdn/external/fmt.hpp>
 #include <stdexcept>
 
 namespace menps {
@@ -215,10 +217,12 @@ private:
                     "msg:Start reading latest block.\t"
                     "blk_pos:{}\t"
                     "home_proc:{}\t"
-                    "rd_ts:{}"
+                    "rd_ts:{}\t"
+                    "{}"
                 ,   info.blk_pos
                 ,   start_ret.home_proc
                 ,   start_ret.rd_ts
+                ,   this->show_transaction_result(tx_ret)
                 );
             }
             else {
@@ -280,8 +284,11 @@ private:
     
 public:
     typename blk_dir_tbl_type::acquire_result
-    acquire(const wn_entry_type& wn)
-    {
+    acquire(
+        com_itf_type&           com
+    ,   rd_set_type&            rd_set
+    ,   const wn_entry_type&    wn
+    ) {
         const auto info = this->get_local_lock(wn.blk_id);
         
         // If the write notice is newer than the current directory's information,
@@ -290,15 +297,24 @@ public:
             info.dir_tbl.acquire(info.blk_pos, info.lk,
                 wn.home_proc, wn.rd_ts, wn.wr_ts);
         
+        if (ret.needs_merge) {
+            // Do a merge for the pinned block.
+            const auto tx_ret =
+                this->do_transaction(com, rd_set, info);
+            
+            // TODO: How to deal with the result of this transaction?
+        }
         // Check whether the protection is necessary based on this write notice.
-        if (ret.needs_protect) {
+        else if (ret.needs_protect) {
             // Make the data inaccessible from all of the threads.
             info.data_tbl.invalidate(info.blk_pos, info.lk);
         }
+        #if 0
         if (ret.needs_merge) {
             // FIXME
             throw std::logic_error("unimplemented");
         }
+        #endif
         
         if (! ret.is_ignored) {
             MEFDN_LOG_DEBUG(
@@ -332,23 +348,33 @@ public:
     
     typename blk_dir_tbl_type::self_invalidate_result
     self_invalidate(
-        const rd_set_type&      rd_set
-    ,   const blk_id_type       blk_id
+        com_itf_type&       com
+    ,   rd_set_type&        rd_set
+    ,   const blk_id_type   blk_id
     ) {
         const auto info = this->get_local_lock(blk_id);
         
         const auto ret =
             info.dir_tbl.self_invalidate(rd_set, info.blk_pos, info.lk);
         
-        if (ret.needs_protect) {
+        if (ret.needs_merge) {
+            // Do a merge for the pinned block.
+            const auto tx_ret =
+                this->do_transaction(com, rd_set, info);
+            
+            // TODO: How to deal with the result of this transaction?
+        }
+        else if (ret.needs_protect) {
             // Make the data inaccessible from all of the threads.
             info.data_tbl.invalidate(info.blk_pos, info.lk);
         }
         
+        #if 0
         if (ret.needs_merge) {
             // FIXME
             throw std::logic_error("unimplemented");
         }
+        #endif
         
         MEFDN_LOG_DEBUG(
             "msg:{}.\t"
@@ -400,20 +426,10 @@ public:
             "msg:Released block.\t"
             "blk_id:0x{:x}\t"
             "blk_pos:{}\t"
-            "old_wr_ts:{}\t"
-            "old_rd_ts:{}\t"
-            "new_wr_ts:{}\t"
-            "new_rd_ts:{}\t"
-            "is_written:{}\t"
-            "is_still_writable:{}\t"
+            "{}"
         ,   blk_id
         ,   info.blk_pos
-        ,   tx_ret.glk_ret.wr_ts
-        ,   tx_ret.glk_ret.rd_ts
-        ,   tx_ret.gunlk_ret.new_wr_ts
-        ,   tx_ret.gunlk_ret.new_rd_ts
-        ,   tx_ret.mg_ret.is_written
-        ,   tx_ret.gunlk_ret.is_still_writable
+        ,   this->show_transaction_result(tx_ret)
         );
         
         return {
@@ -432,10 +448,12 @@ private:
         typename blk_dir_tbl_type::unlock_global_result     gunlk_ret;
     };
     
+    template <typename Func>
     do_transaction_result do_transaction(
         com_itf_type&       com
     ,   rd_set_type&        rd_set
     ,   const lock_info&    info
+    ,   Func&&              func
     ) {
         // Lock the latest owner globally.
         // This is achieved by following the graph of probable owners.
@@ -443,8 +461,17 @@ private:
             info.dir_tbl.lock_global(com, info.blk_pos, info.lk);
         
         // Merge the writes from both the current process and the latest owner.
-        const auto mg_ret =
+        /*const*/ auto mg_ret =
             info.data_tbl.release_merge(com, info.blk_pos, info.lk, glk_ret);
+        
+        // Invoke a special operation on this block.
+        const auto is_changed =
+            mefdn::forward<Func>(func)(info);
+        
+        if (is_changed) {
+            // Set this flag if the atomic operation changed this block.
+            mg_ret.is_written = true;
+        }
         
         // Unlock the global lock.
         const auto gunlk_ret =
@@ -454,7 +481,148 @@ private:
         return { glk_ret, mg_ret, gunlk_ret };
     }
     
+    struct do_transaction_default_functor
+    {
+        bool operator() (const lock_info& /*info*/) const noexcept {
+            // Not changed.
+            return false;
+        }
+    };
+    
+    do_transaction_result do_transaction(
+        com_itf_type&       com
+    ,   rd_set_type&        rd_set
+    ,   const lock_info&    info
+    ) {
+        return do_transaction(com, rd_set, info, do_transaction_default_functor{});
+    }
+    
+    template <typename T, typename Func>
+    do_transaction_result do_amo_at(
+        com_itf_type&       com
+    ,   rd_set_type&        rd_set
+    ,   const lock_info&    info
+    ,   const size_type     offset
+    ,   Func&&              func
+    ) {
+        return this->do_transaction(com, rd_set, info,
+            [&func, offset] (const lock_info& info2) {
+                return info2.data_tbl.template do_amo_at<T>(
+                    info2.blk_pos
+                ,   info2.lk
+                ,   offset
+                ,   mefdn::forward<Func>(func)
+                );
+            });
+    }
+    
+    static std::string show_transaction_result(const do_transaction_result& tx_ret)
+    {
+        return fmt::format(
+            "old_wr_ts:{}\t"
+            "old_rd_ts:{}\t"
+            "new_wr_ts:{}\t"
+            "new_rd_ts:{}\t"
+            "is_written:{}\t"
+            "is_still_writable:{}\t"
+        ,   tx_ret.glk_ret.wr_ts
+        ,   tx_ret.glk_ret.rd_ts
+        ,   tx_ret.gunlk_ret.new_wr_ts
+        ,   tx_ret.gunlk_ret.new_rd_ts
+        ,   tx_ret.mg_ret.is_written
+        ,   tx_ret.gunlk_ret.is_still_writable
+        );
+    }
+    
 public:
+    struct compare_exchange_result
+    {
+        // Indicate that the CAS operation succeeded.
+        bool is_success;
+    };
+    
+    template <typename T>
+    compare_exchange_result compare_exchange(
+        com_itf_type&       com
+    ,   rd_set_type&        rd_set
+    ,   const blk_id_type   blk_id
+    ,   const size_type     offset
+    ,   T&                  expected
+    ,   const T             desired
+    ) {
+        const auto info = this->get_local_lock(blk_id);
+        
+        bool is_success = false;
+        const auto expected_val = expected;
+        
+        const auto tx_ret =
+            this->template do_amo_at<T>(com, rd_set, info, offset,
+                [&expected, desired, &is_success] (const T target) {
+                    if (target == expected) {
+                        is_success = true;
+                        
+                        // Replace the value of the atomic variable with "desired".
+                        return desired;
+                    }
+                    else {
+                        expected = target;
+                        return target;
+                    }
+                });
+        
+        MEFDN_LOG_DEBUG(
+            "msg:{}\t"
+            "blk_id:0x{:x}\t"
+            "blk_pos:{}\t"
+            "offset:0x{}\t"
+            "expected:{}\t"
+            "desired:{}\t"
+            "result:{}\t"
+            "{}"
+        ,   (is_success ? "DSM's CAS succeeded." : "DSM's CAS failed.")
+        ,   blk_id
+        ,   info.blk_pos
+        ,   offset
+        ,   expected_val
+        ,   desired
+        ,   expected
+        ,   this->show_transaction_result(tx_ret)
+        );
+        
+        return { is_success };
+    }
+    
+    template <typename T>
+    void atomic_store(
+        com_itf_type&       com
+    ,   rd_set_type&        rd_set
+    ,   const blk_id_type   blk_id
+    ,   const size_type     offset
+    ,   const T             value
+    ) {
+        const auto info = this->get_local_lock(blk_id);
+        
+        const auto tx_ret =
+            this->template do_amo_at<T>(com, rd_set, info, offset,
+                [value] (const T /*target*/) {
+                    return value;
+                });
+        
+        MEFDN_LOG_DEBUG(
+            "msg:DSM's atomic store.\t"
+            "blk_id:0x{:x}\t"
+            "blk_pos:{}\t"
+            "offset:0x{}\t"
+            "value:{}\t"
+            "{}"
+        ,   blk_id
+        ,   info.blk_pos
+        ,   offset
+        ,   value
+        ,   this->show_transaction_result(tx_ret)
+        );
+    }
+    
     void set_blk_table(const seg_id_type seg_id, blk_tbl_ptr blk_tbl)
     {
         MEFDN_ASSERT(seg_id < this->blk_tbls_.size());
@@ -466,6 +634,13 @@ public:
         MEFDN_ASSERT(this->blk_tbls_[seg_id]);
         return this->blk_tbls_[seg_id]->get_blk_size();
     }
+    size_type get_blk_pos(const seg_id_type seg_id, const blk_id_type blk_id)
+    {
+        MEFDN_ASSERT(seg_id < this->blk_tbls_.size());
+        MEFDN_ASSERT(this->blk_tbls_[seg_id]);
+        return this->blk_tbls_[seg_id]->get_blk_pos_from_blk_id(blk_id);
+    }
+    
     
 private:
     mefdn::vector<blk_tbl_ptr> blk_tbls_;
