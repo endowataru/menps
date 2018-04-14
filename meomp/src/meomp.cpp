@@ -14,6 +14,7 @@
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/arithmetic.hpp>
 #include <stdarg.h>
+#include <menps/meomp.hpp>
 
 #if 0
 extern void* g_watch_ptr;
@@ -446,6 +447,24 @@ extern "C"
 void omp_destroy_lock(omp_lock_t* /*lk*/) {
     // Do nothing.
 }
+
+namespace /*unnamed*/ {
+
+MEOMP_GLOBAL_VAR omp_lock_t g_critical_lock;
+
+} // unnamed namespace
+
+extern "C"
+void GOMP_critical_start() {
+    omp_set_lock(&g_critical_lock);
+}
+
+extern "C"
+void GOMP_critical_end() {
+    omp_unset_lock(&g_critical_lock);
+}
+
+
 
 // LLVM
 
