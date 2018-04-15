@@ -33,6 +33,8 @@ class blk_dir_table
     using rd_set_type = typename P::rd_set_type;
     using wr_set_type = typename P::wr_set_type;
     
+    using wr_count_type = typename P::wr_count_type;
+    
     enum class state_type {
         invalid_clean = 0
     ,   invalid_dirty
@@ -492,6 +494,7 @@ public:
                 
                 const auto state = le.state;
                 //const auto cur_wr_ts = ge.wr_ts;
+                const auto wr_count = le.wr_count;
                 
                 const auto is_remotely_updated =
                     prob_proc != this_proc;
@@ -506,7 +509,8 @@ public:
                     state == state_type::pinned;
                 
                 const auto needs_protect_before =
-                    state == state_type::writable && is_remotely_updated;
+                    state == state_type::writable &&
+                    (is_remotely_updated || wr_count >= P::wr_count_threshold);
                 
                 const auto needs_protect_after =
                     state == state_type::invalid_clean || state == state_type::invalid_dirty;
@@ -730,6 +734,10 @@ public:
             new_state = state_type::readonly_clean;
         }
         
+        // Update the write count.
+        le.wr_count = (glk_ret.is_write_protected || mg_ret.is_written) ? 0 : (le.wr_count + 1);
+        // TODO: May overflow.
+        
         le.state = new_state;
         
         return { new_rd_ts, new_wr_ts, is_still_writable };
@@ -884,6 +892,8 @@ private:
         // The block state indicates the page protection
         // of the local data block.
         state_type      state;
+        // The number of transactions without writing the data.
+        wr_count_type   wr_count;
     };
     
     mefdn::size_t num_blks_ = 0;

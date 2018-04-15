@@ -119,6 +119,9 @@ struct dsm_base_policy
     using wr_set_type = wr_set<dsm_base_policy>;
     
     using sig_id_type = mefdn::size_t;
+    
+    using wr_count_type = size_type;
+    static const wr_count_type wr_count_threshold = 5; // TODO: Magic number
 };
 
 
