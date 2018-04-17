@@ -259,27 +259,14 @@ public:
         const auto& le = this->les_[blk_pos];
         const auto state = le.state;
         
-        if (state == state_type::writable) {
-            // This block should be released now.
-            return { true };
-        }
-        else if (state == state_type::pinned) {
-            return { true  };
-            #if 0
-            // Pinned blocks must not be released.
-            throw std::logic_error("Releasing pinned block is unsupported yet!");
-            return { false };
-            #endif
-        }
-        else if (state == state_type::invalid_dirty || state == state_type::readonly_dirty) {
-            // Although this block is invalid or readonly,
-            // it's still dirty and must be released.
-            return { true  };
-        }
-        else {
-            // This block is already downgraded (invalid_clean or readonly_clean).
-            return { false };
-        }
+        // If this block is clean (invalid_clean or readonly_clean),
+        // this block is already downgraded and needs not to be released.
+        // If not, this block must be released.
+        const auto needs_release =
+            ! (state == state_type::invalid_clean ||
+               state == state_type::readonly_clean);
+        
+        return { needs_release };
     }
     
 private:
@@ -304,8 +291,6 @@ private:
         const auto rd_ts = ge.rd_ts;
         
         // Check whether the timestamp is newer or not.
-        // FIXME: Consider timestamp overflow.
-        //if (ge.wr_ts < new_wr_ts) {
         // If old_rd_ts < new_wr_ts, the read timestamp has expired
         // and this block was invalidated.
         if (P::is_greater_rd_ts(new_wr_ts, rd_ts)) {
@@ -703,11 +688,6 @@ public:
         
         const auto old_state = le.state;
         auto new_state = old_state;
-        
-        #if 0
-        // TODO: It should be possible to release pinned blocks.
-        MEFDN_ASSERT(old_state != state_type::pinned);
-        #endif
         
         if (old_state == state_type::invalid_dirty || old_state == state_type::invalid_clean) {
             // This block was invalid and became readable in this transaction.
