@@ -28,6 +28,7 @@ class seg_table
     using wr_ts_type = typename P::wr_ts_type;
     
     using blk_tbl_type = typename P::blk_tbl_type;
+    using blk_lock_tbl_type = typename blk_tbl_type::lock_table_type;
     using blk_data_tbl_type = typename blk_tbl_type::data_table_type;
     using blk_dir_tbl_type = typename blk_tbl_type::dir_table_type;
     
@@ -45,6 +46,7 @@ class seg_table
         unique_lock_type    lk;
         blk_id_type         blk_id;
         blk_pos_type        blk_pos;
+        blk_lock_tbl_type&  lock_tbl;
         blk_data_tbl_type&  data_tbl;
         blk_dir_tbl_type&   dir_tbl;
         
@@ -80,6 +82,7 @@ class seg_table
             dir_tbl.get_local_lock(blk_pos)
         ,   blk_id
         ,   blk_pos
+        ,   blk_tbl.get_lock_tbl()
         ,   blk_tbl.get_data_tbl()
         ,   dir_tbl
         };
@@ -435,17 +438,18 @@ public:
         return {
             true
         ,   tx_ret.mg_ret.is_written
-        ,   tx_ret.gunlk_ret.is_still_writable
-        ,   tx_ret.gunlk_ret.new_rd_ts
-        ,   tx_ret.gunlk_ret.new_wr_ts
+        ,   tx_ret.et_ret.is_still_writable
+        ,   tx_ret.et_ret.new_rd_ts
+        ,   tx_ret.et_ret.new_wr_ts
         };
     }
     
 private:
     struct do_transaction_result {
-        typename blk_dir_tbl_type::lock_global_result       glk_ret;
+        typename blk_lock_tbl_type::lock_global_result      glk_ret;
+        typename blk_dir_tbl_type::begin_transaction_result bt_ret;
         typename blk_data_tbl_type::release_merge_result    mg_ret;
-        typename blk_dir_tbl_type::unlock_global_result     gunlk_ret;
+        typename blk_dir_tbl_type::end_transaction_result   et_ret;
     };
     
     template <typename Func>
@@ -458,11 +462,15 @@ private:
         // Lock the latest owner globally.
         // This is achieved by following the graph of probable owners.
         const auto glk_ret =
-            info.dir_tbl.lock_global(com, info.blk_pos, info.lk);
+            info.lock_tbl.lock_global(com, info.blk_pos, info.lk);
+        
+        // Begin a transaction.
+        const auto bt_ret =
+            info.dir_tbl.begin_transaction(com, info.blk_pos, info.lk, glk_ret);
         
         // Merge the writes from both the current process and the latest owner.
         /*const*/ auto mg_ret =
-            info.data_tbl.release_merge(com, info.blk_pos, info.lk, glk_ret);
+            info.data_tbl.release_merge(com, info.blk_pos, info.lk, bt_ret);
         
         // Invoke a special operation on this block.
         const auto is_changed =
@@ -474,11 +482,14 @@ private:
         }
         
         // Unlock the global lock.
-        const auto gunlk_ret =
-            info.dir_tbl.unlock_global(com, rd_set,
-                info.blk_id, info.blk_pos, info.lk, glk_ret, mg_ret);
+        const auto et_ret =
+            info.dir_tbl.end_transaction(com, rd_set,
+                info.blk_id, info.blk_pos, info.lk, bt_ret, mg_ret);
         
-        return { glk_ret, mg_ret, gunlk_ret };
+        // Unlock the global lock.
+        info.lock_tbl.unlock_global(com, info.blk_pos, info.lk, glk_ret, et_ret);
+        
+        return { glk_ret, bt_ret, mg_ret, et_ret };
     }
     
     struct do_transaction_default_functor
@@ -525,12 +536,12 @@ private:
             "new_rd_ts:{}\t"
             "is_written:{}\t"
             "is_still_writable:{}\t"
-        ,   tx_ret.glk_ret.wr_ts
-        ,   tx_ret.glk_ret.rd_ts
-        ,   tx_ret.gunlk_ret.new_wr_ts
-        ,   tx_ret.gunlk_ret.new_rd_ts
+        ,   tx_ret.bt_ret.wr_ts
+        ,   tx_ret.bt_ret.rd_ts
+        ,   tx_ret.et_ret.new_wr_ts
+        ,   tx_ret.et_ret.new_rd_ts
         ,   tx_ret.mg_ret.is_written
-        ,   tx_ret.gunlk_ret.is_still_writable
+        ,   tx_ret.et_ret.is_still_writable
         );
     }
     

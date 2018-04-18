@@ -10,7 +10,6 @@
 
 //#define MEDSM2_USE_ONE_MUTEX
 //#define MEDSM2_FORCE_LATEST_READ
-//#define MEDSM2_CHECK_VALID_LOCKED_LINKS
 
 namespace menps {
 namespace medsm2 {
@@ -56,35 +55,6 @@ public:
         auto& coll = conf.com.get_coll();
         
         this->ges_.coll_make(conf.com.get_rma(), coll, conf.num_blks);
-        
-        const auto this_proc = coll.this_proc_id();
-        const auto num_procs = coll.get_num_procs();
-        
-        for (blk_pos_type blk_pos = 0; blk_pos < this->num_blks_; ++blk_pos) {
-            auto& ge = * this->ges_.local(blk_pos);
-            
-            // The owner of blk_pos is (blk_pos % num_procs).
-            const auto owner =
-                static_cast<proc_id_type>(
-                    blk_pos % static_cast<blk_pos_type>(num_procs)
-                );
-            
-            const auto lock_val = 
-                    owner == this_proc
-                ?   this->make_owned_lock_val(owner)
-                :   this->make_linked_lock_val(owner);
-            
-            ge.lock = lock_val;
-        }
-        
-        #if 0
-        // for debugging...
-        for (mefdn::size_t i = 0; i < this->num_blks_; ++i) {
-            //auto lk = get_local_lock(i);
-            //*this->les_[i].mtx.native_handle() = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
-            *this->les_[i].mtx.native_handle() = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-        }
-        #endif
     }
     
     unique_lock_type get_local_lock(const blk_pos_type blk_pos)
@@ -391,8 +361,7 @@ public:
         return { ret.is_ignored, ret.needs_protect, ret.needs_merge, wr_ts, rd_ts };
     }
     
-public:
-    struct lock_global_result {
+    struct begin_transaction_result {
         // The latest owner's ID.
         proc_id_type    owner;
         // The write timestamp read from the latest owner.
@@ -418,179 +387,114 @@ public:
         bool            is_write_protected;
     };
     
-    lock_global_result lock_global(
+    template <typename LockResult>
+    begin_transaction_result begin_transaction(
         com_itf_type&           com
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
+    ,   const LockResult&       glk_ret
     ) {
-        this->check_locked(blk_pos, lk);
-        
         auto& rma = com.get_rma();
         const auto this_proc = com.this_proc_id();
         
-        // Load the probable owner from the "latest write notice".
-        // Although it's possible to load the probable owner of the global entry,
-        // the process which provided the write notice for the latest read
-        // is more likely to be the current latest writer.
-        proc_id_type prob_proc = this->les_[blk_pos].home_proc;
+        const auto owner = glk_ret.owner;
         
-        while (true)
-        {
-            const auto ge_rptr = this->ges_.remote(prob_proc, blk_pos);
-            
-            const auto expected = this->make_owned_lock_val(prob_proc);
-            const auto desired  = this->make_locked_lock_val(prob_proc);
-            
-            MEFDN_LOG_VERBOSE(
-                "msg:Try to lock dir lock.\t"
-                "blk_pos:{}\t"
-                "prob_proc:{}"
-            ,   blk_pos
-            ,   prob_proc
-            );
-            
-            // Try to lock the probable owner.
-            const auto cas_result =
-                rma.compare_and_swap(
-                    prob_proc       // target_proc
-                ,   &ge_rptr->lock  // target_rptr
-                ,   expected        // expected
-                ,   desired         // desired
-                );
-            
-            if (cas_result == expected) {
-                // The probable owner was exactly the latest owner.
-                
-                #ifdef MEDSM2_CHECK_VALID_LOCKED_LINKS
-                // Validate "locked_val" of all of the processes.
-                this->check_valid_locked_links(com, blk_pos, prob_proc);
-                #endif
-                
-                // Load the latest timestamps.
-                global_entry owner_ge;
-                rma.read(prob_proc, ge_rptr, &owner_ge, 1);
-                // TODO: It's better if this read is overlapped with other communications.
-                
-                const auto owner_wr_ts = owner_ge.wr_ts;
-                const auto owner_rd_ts = owner_ge.rd_ts;
-                
-                auto& le = this->les_[blk_pos];
-                auto& ge = * this->ges_.local(blk_pos);
-                
-                const auto state = le.state;
-                //const auto cur_wr_ts = ge.wr_ts;
-                const auto wr_count = le.wr_count;
-                
-                const auto is_remotely_updated =
-                    prob_proc != this_proc;
-                    // TODO: Comparing the write timestamps doesn't work
-                    //       because write notices may update those values.
-                    //cur_wr_ts < owner_wr_ts;
-                
-                const auto is_dirty =
-                    state == state_type::invalid_dirty ||
-                    state == state_type::readonly_dirty ||
-                    state == state_type::writable ||
-                    state == state_type::pinned;
-                
-                const auto needs_protect_before =
-                    state == state_type::writable &&
-                    (is_remotely_updated || wr_count >= P::wr_count_threshold);
-                
-                const auto needs_protect_after =
-                    state == state_type::invalid_clean || state == state_type::invalid_dirty;
-                
-                const bool is_write_protected =
-                    ! (state == state_type::writable || state == state_type::pinned)
-                    || needs_protect_before;
-                
-                MEFDN_LOG_VERBOSE(
-                    "msg:Locked global lock.\t"
-                    "blk_pos:{}\t"
-                    "owner:{}\t"
-                    "cur_wr_ts:{}\t"
-                    "cur_rd_ts:{}\t"
-                    "owner_wr_ts:{}\t"
-                    "owner_rd_ts:{}\t"
-                    "is_remotely_updated:{}\t"
-                    "is_dirty:{}\t"
-                    "needs_protect_before:{}\t"
-                    "needs_protect_after:{}\t"
-                    "is_write_protected:{}\t"
-                ,   blk_pos
-                ,   prob_proc
-                ,   ge.wr_ts
-                ,   ge.rd_ts
-                ,   owner_wr_ts
-                ,   owner_rd_ts
-                ,   is_remotely_updated
-                ,   is_dirty
-                ,   needs_protect_before
-                ,   needs_protect_after
-                ,   is_write_protected
-                );
-                
-                return { prob_proc, owner_wr_ts, owner_rd_ts,
-                    is_remotely_updated, is_dirty,
-                    needs_protect_before, needs_protect_after, is_write_protected };
-            }
-            else {
-                // CAS failed because the probable owner was not the latest owner.
-                // This thread starts to follow the distributed links only with read operations.
-                while (true) {
-                    const auto ge_rptr_2 = this->ges_.remote(prob_proc, blk_pos);
-                    
-                    atomic_int_type lock_val = 0;
-                    rma.read(prob_proc, &ge_rptr_2->lock, &lock_val, 1);
-                    
-                    const auto expected_2 = this->make_owned_lock_val(prob_proc);
-                    if (lock_val == expected_2) {
-                        // The latest owner seems to allow the lock acquisition.
-                        break;
-                    }
-                    
-                    const auto locked = this->make_locked_lock_val(prob_proc);
-                    if (lock_val == locked) {
-                        // The latest owner is being locked now.
-                        // This thread is busy-waiting for this lock
-                        // and needs to forward the MPI progress engine.
-                        rma.progress();
-                    }
-                    
-                    // Follow the link written in the lock variable.
-                    prob_proc = this->get_probable_owner_from_lock_val(prob_proc, lock_val);
-                }
-            }
-            
-            // Follow the link written in the lock variable.
-            prob_proc = this->get_probable_owner_from_lock_val(prob_proc, cas_result);
-        }
+        const auto ge_rptr = this->ges_.remote(owner, blk_pos);
+        
+        // Load the latest timestamps.
+        global_entry owner_ge; // uninitialized
+        rma.read(owner, ge_rptr, &owner_ge, 1);
+        // TODO: It's better if this read is overlapped with other communications.
+        
+        const auto owner_wr_ts = owner_ge.wr_ts;
+        const auto owner_rd_ts = owner_ge.rd_ts;
+        
+        auto& le = this->les_[blk_pos];
+        auto& ge = * this->ges_.local(blk_pos);
+        
+        const auto state = le.state;
+        //const auto cur_wr_ts = ge.wr_ts;
+        const auto wr_count = le.wr_count;
+        
+        const auto is_remotely_updated =
+            owner != this_proc;
+            // TODO: Comparing the write timestamps doesn't work
+            //       because write notices may update those values.
+            //cur_wr_ts < owner_wr_ts;
+        
+        const auto is_dirty =
+            state == state_type::invalid_dirty ||
+            state == state_type::readonly_dirty ||
+            state == state_type::writable ||
+            state == state_type::pinned;
+        
+        const auto needs_protect_before =
+            state == state_type::writable &&
+            (is_remotely_updated || wr_count >= P::wr_count_threshold);
+        
+        const auto needs_protect_after =
+            state == state_type::invalid_clean || state == state_type::invalid_dirty;
+        
+        const bool is_write_protected =
+            ! (state == state_type::writable || state == state_type::pinned)
+            || needs_protect_before;
+        
+        MEFDN_LOG_VERBOSE(
+            "msg:Locked global lock.\t"
+            "blk_pos:{}\t"
+            "owner:{}\t"
+            "cur_wr_ts:{}\t"
+            "cur_rd_ts:{}\t"
+            "owner_wr_ts:{}\t"
+            "owner_rd_ts:{}\t"
+            "is_remotely_updated:{}\t"
+            "is_dirty:{}\t"
+            "needs_protect_before:{}\t"
+            "needs_protect_after:{}\t"
+            "is_write_protected:{}\t"
+        ,   blk_pos
+        ,   owner
+        ,   ge.wr_ts
+        ,   ge.rd_ts
+        ,   owner_wr_ts
+        ,   owner_rd_ts
+        ,   is_remotely_updated
+        ,   is_dirty
+        ,   needs_protect_before
+        ,   needs_protect_after
+        ,   is_write_protected
+        );
+        
+        return { owner, owner_wr_ts, owner_rd_ts,
+            is_remotely_updated, is_dirty,
+            needs_protect_before, needs_protect_after, is_write_protected };
     }
     
-    struct unlock_global_result {
-        rd_ts_type  new_rd_ts;
-        wr_ts_type  new_wr_ts;
+    struct end_transaction_result {
+        proc_id_type    new_owner;
+        rd_ts_type      new_rd_ts;
+        wr_ts_type      new_wr_ts;
         // Indicate that this block must not be removed from the write set
         // because the pages are still (PROT_READ|PROT_WRITE).
-        bool        is_still_writable;
+        bool            is_still_writable;
     };
     
     template <typename MergeResult>
-    unlock_global_result unlock_global(
-        com_itf_type&               com
-    ,   rd_set_type&                rd_set
-    ,   const blk_id_type           blk_id
-    ,   const blk_pos_type          blk_pos
-    ,   const unique_lock_type&     lk
-    ,   const lock_global_result&   glk_ret
-    ,   const MergeResult&          mg_ret
+    end_transaction_result end_transaction(
+        com_itf_type&                   com
+    ,   rd_set_type&                    rd_set
+    ,   const blk_id_type               blk_id
+    ,   const blk_pos_type              blk_pos
+    ,   const unique_lock_type&         lk
+    ,   const begin_transaction_result& bt_ret
+    ,   const MergeResult&              mg_ret
     ) {
         this->check_locked(blk_pos, lk);
         
         auto& rma = com.get_rma();
         
         const auto cur_proc = com.this_proc_id();
-        const auto old_owner = glk_ret.owner;
+        const auto old_owner = bt_ret.owner;
         
         // If the data is written, the timestamp is updated.
         // make_new_wr_ts() calculates new_wr_ts = max(old_rd_ts+1, acq_ts).
@@ -598,13 +502,13 @@ public:
         // (that will be the owner again),
         // the timestamp becomes equal to that of the owner.
         const auto new_wr_ts =
-            mg_ret.is_written ? rd_set.make_new_wr_ts(glk_ret.rd_ts) : glk_ret.wr_ts;
+            mg_ret.is_written ? rd_set.make_new_wr_ts(bt_ret.rd_ts) : bt_ret.wr_ts;
         
         // The read timestamp depends on the write timestamp.
         // This calculates new_rd_ts = max(new_wr_ts+lease, old_rd_ts).
         // TODO: Provide a good prediction for a lease value of each block.
         const auto new_rd_ts =
-            rd_set.make_new_rd_ts(new_wr_ts, glk_ret.rd_ts);
+            rd_set.make_new_rd_ts(new_wr_ts, bt_ret.rd_ts);
         
         const auto new_owner = mg_ret.is_written ? cur_proc : old_owner;
         
@@ -622,68 +526,21 @@ public:
         ge.wr_ts = new_wr_ts;
         ge.rd_ts = new_rd_ts;
         
-        // There are 3 conditions:
-        // (1) This process was the (old) owner and is still the (new) owner.
-        //      is_migrated == false, old_owner == new_owner == cur_proc
-        // (2) The remote process was the (old) owner and is still the (new) owner.
-        //      is_migrated == false, old_owner == new_owner != cur_proc
-        // (3) The remote process was the (old) owner, but this process became a new owner.
-        //      is_migrated == true, old_owner != cur_proc, new_owner == cur_proc
-        //
-        // It is unnecessary to consider (4) where
-        //  "this process was the (old) owner, but the remote process became a new owner"
-        // because this process is currently releasing this block.
-        
-        if (new_owner == cur_proc) {
-            // This process is the new owner.
-            // (1) old_owner == new_owner == cur_proc
-            // (3) old_owner != cur_proc == new_owner
-            
-            // TODO: Call MPI_Win_sync() ?
-            
-            if (old_owner != cur_proc) {
-                // (3) old_owner != cur_proc == new_owner
-                
-                const auto ge_rptr = this->ges_.remote(old_owner, blk_pos);
-                const auto new_lock_val =
-                    this->make_linked_lock_val(new_owner /* == cur_proc */);
-                
-                // Assign a link to the old owner process.
-                rma.write(old_owner, &ge_rptr->lock, &new_lock_val, 1);
-                
-                // TODO: This will create a circular dependency temporarily.
-            }
-            
-            {
-                const auto new_lock_val =
-                    this->make_owned_lock_val(new_owner /* == cur_proc */);
-                
-                // Set the new owner (= this process) as unlocked.
-                ge.lock = new_lock_val;
-            }
-        }
-        else {
+        if (new_owner != cur_proc) {
             // This process is not the new owner.
             // (2) old_owner == new_owner != cur_proc
             
-            MEFDN_ASSERT(new_owner == old_owner);
-            MEFDN_ASSERT(glk_ret.wr_ts == new_wr_ts);
-            
-            const auto ge_rptr =
-                this->ges_.remote(new_owner /* == old_owner */, blk_pos);
+            MEFDN_ASSERT(bt_ret.wr_ts == new_wr_ts);
             
             // If the read timestamp is updated in this transaction,
             // it needs to be written to the owner.
-            if (glk_ret.rd_ts < new_rd_ts) {
+            if (bt_ret.rd_ts < new_rd_ts) {
+                const auto ge_rptr =
+                    this->ges_.remote(new_owner /* == old_owner */, blk_pos);
+                
                 // Write the new read timestamp to the owner.
                 rma.write(new_owner /* == old_owner */, &ge_rptr->rd_ts, &new_rd_ts, 1);
             }
-            
-            const auto new_lock_val =
-                this->make_owned_lock_val(new_owner /* == old_owner */);
-            
-            // Set the owner as unlocked.
-            rma.write(new_owner /* == old_owner */, &ge_rptr->lock, &new_lock_val, 1);
         }
         
         const auto old_state = le.state;
@@ -694,7 +551,7 @@ public:
             rd_set.add_readable(blk_id, new_rd_ts);
         }
         
-        const auto is_still_writable = ! glk_ret.is_write_protected;
+        const auto is_still_writable = ! bt_ret.is_write_protected;
         
         if (is_still_writable) {
             // This block was not write-protected in this release
@@ -715,12 +572,12 @@ public:
         }
         
         // Update the write count.
-        le.wr_count = (glk_ret.is_write_protected || mg_ret.is_written) ? 0 : (le.wr_count + 1);
+        le.wr_count = (bt_ret.is_write_protected || mg_ret.is_written) ? 0 : (le.wr_count + 1);
         // TODO: May overflow.
         
         le.state = new_state;
         
-        return { new_rd_ts, new_wr_ts, is_still_writable };
+        return { new_owner, new_rd_ts, new_wr_ts, is_still_writable };
     }
     
 public:
@@ -735,124 +592,7 @@ public:
     }
     
 private:
-    static atomic_int_type make_owned_lock_val(const proc_id_type /*owner*/) {
-        // 1 means "owned".
-        return 1;
-    }
-    static atomic_int_type make_locked_lock_val(const proc_id_type /*owner*/) {
-        // 2 means "locked".
-        return 2;
-    }
-    static atomic_int_type make_linked_lock_val(const proc_id_type owner) {
-        // Other processes are expressed without 0, 1 & 2.
-        return static_cast<atomic_int_type>(owner) + 3;
-    }
-    static bool is_valid_linked_lock_val(
-        const proc_id_type      num_procs
-    ,   const proc_id_type      lock_val_proc
-    ,   const atomic_int_type   lock_val
-    ) {
-        return 3 <= lock_val && lock_val < (3+num_procs)
-            // Loop should be expressed as "owned" or "locked" instead.
-            && lock_val != (3+lock_val_proc);
-    }
-    static proc_id_type get_probable_owner_from_lock_val(
-        const proc_id_type      lock_val_proc
-    ,   const atomic_int_type   lock_val
-    ) {
-        MEFDN_ASSERT(lock_val != 0);
-        
-        return
-            // Check whether the process of the lock value is the current owner.
-            lock_val <= 2
-            // If so, simply return the process ID.
-        ?   lock_val_proc
-            // Otherwise, do the inverse of make_linked_lock_val.
-        :   static_cast<proc_id_type>(lock_val - 3);
-    }
-    
-    void check_valid_locked_links(
-        com_itf_type&       com
-    ,   const blk_pos_type  blk_pos
-    ,   const proc_id_type  locked_proc
-    ) {
-        // This function can only work when this process is holding the global lock.
-        
-        auto& rma = com.get_rma();
-        //const auto this_proc = com.this_proc_id();
-        const auto num_procs = com.get_num_procs();
-        
-        const auto links_buf =
-            rma.template make_unique<atomic_int_type []>(num_procs);
-        
-        const auto links = links_buf.get();
-        
-        // Load the "lock" values on all of the processes.
-        for (proc_id_type proc = 0; proc < num_procs; ++proc) {
-            const auto ge_rptr = this->ges_.remote(proc, blk_pos);
-            rma.read(proc, &ge_rptr->lock, links + proc, 1);
-        }
-        
-        auto&& produce_error = [&] (const char* const msg) {
-            fmt::MemoryWriter w;
-            w.write("msg:Error of probable owners ({}).\t", msg);
-            w.write("blk_pos:{}\t", blk_pos);
-            w.write("locked_proc:{}\t", locked_proc);
-            w.write("locked_vals:");
-            for (proc_id_type proc = 0; proc < num_procs; ++proc) {
-                w.write("{},", links[proc]);
-            }
-            
-            const auto s = w.str();
-            MEFDN_LOG_FATAL("{}", s);
-            throw std::logic_error(s);
-        };
-        
-        // Validate that there is only one "locked" value.
-        for (proc_id_type proc = 0; proc < num_procs; ++proc) {
-            const auto lock_val = links[proc];
-            if (proc == locked_proc) {
-                if (lock_val != make_locked_lock_val(proc)) {
-                    produce_error("locked_proc doesn't have lock");
-                }
-            }
-            else {
-                if (!is_valid_linked_lock_val(num_procs, proc, lock_val)) {
-                    produce_error("invalid link");
-                }
-            }
-        }
-        
-        // Validate that there is no circular links.
-        for (proc_id_type proc_start = 0; proc_start < num_procs; ++proc_start) {
-            // Avoid using std::vector<bool> (the performance is not serious here, though).
-            mefdn::vector<int> is_visited(num_procs, 0);
-            
-            proc_id_type proc = proc_start;
-            while (true) {
-                const auto lock_val = links[proc];
-                if (lock_val == make_locked_lock_val(proc)) {
-                    // OK, this process reached the locked val.
-                    MEFDN_ASSERT(proc == locked_proc);
-                    break;
-                }
-                
-                is_visited[proc] = true;
-                
-                MEFDN_ASSERT(is_valid_linked_lock_val(num_procs, proc, lock_val));
-                proc = get_probable_owner_from_lock_val(proc, lock_val);
-                
-                if (is_visited[proc]) {
-                    produce_error("circular link detected");
-                }
-            }
-        }
-    }
-    
-private:
     struct global_entry {
-        // A probable owner ID + a lock bit (LSB).
-        atomic_int_type lock;
         // The timestamp when this block must be self-invalidated.
         // If this process is the owner of this block,
         // this member may be modified by other reader processes.

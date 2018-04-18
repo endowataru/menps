@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <menps/medsm2/blk_lock_table.hpp>
 #include <menps/medsm2/blk_data_table.hpp>
 #include <menps/medsm2/blk_dir_table.hpp>
 #include <menps/mefdn/memory/mapped_memory.hpp>
@@ -21,7 +22,8 @@ struct svm_blk_table_policy : P
 
 template <typename P>
 class svm_blk_table
-    : private blk_dir_table<svm_blk_table_policy<P>>
+    : private blk_lock_table<svm_blk_table_policy<P>>
+    , private blk_dir_table<svm_blk_table_policy<P>>
     , private blk_data_table<svm_blk_table_policy<P>>
 {
     using blk_pos_type = typename P::blk_pos_type;
@@ -31,9 +33,12 @@ class svm_blk_table
     using com_itf_type = typename P::com_itf_type;
     using coll_itf_type = typename com_itf_type::coll_itf_type;
     
+    using base_policy_type = svm_blk_table_policy<P>;
+    
 public:
-    using dir_table_type = blk_dir_table<svm_blk_table_policy<P>>;
-    using data_table_type = blk_data_table<svm_blk_table_policy<P>>;
+    using lock_table_type = blk_lock_table<base_policy_type>;
+    using dir_table_type = blk_dir_table<base_policy_type>;
+    using data_table_type = blk_data_table<base_policy_type>;
     
     template <typename Conf>
     void coll_make(const Conf& conf)
@@ -87,9 +92,11 @@ public:
             size_type       num_blks;
         };
         
-        dir_table_type::coll_make(
-            dir_tbl_conf{ conf.com, this->num_blks_ }
-        );
+        const dir_tbl_conf dir_conf{ conf.com, this->num_blks_ };
+        
+        lock_table_type::coll_make(dir_conf);
+        
+        dir_table_type::coll_make(dir_conf);
         
         struct data_tbl_conf {
             com_itf_type&   com;
@@ -125,10 +132,12 @@ public:
         return diff / blk_size_;
     }
     
+    lock_table_type& get_lock_tbl() { return *this; }
     dir_table_type& get_dir_tbl() { return *this; }
     data_table_type& get_data_tbl() { return *this; }
     
 private:
+    friend lock_table_type;
     friend data_table_type;
     
     void set_inaccessible(const blk_pos_type blk_pos, const size_type num_bytes) {
