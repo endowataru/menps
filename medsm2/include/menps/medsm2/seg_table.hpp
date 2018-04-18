@@ -7,7 +7,6 @@
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/external/fmt.hpp>
-#include <stdexcept>
 
 namespace menps {
 namespace medsm2 {
@@ -312,12 +311,6 @@ public:
             // Make the data inaccessible from all of the threads.
             info.data_tbl.invalidate(info.blk_pos, info.lk);
         }
-        #if 0
-        if (ret.needs_merge) {
-            // FIXME
-            throw std::logic_error("unimplemented");
-        }
-        #endif
         
         if (! ret.is_ignored) {
             MEFDN_LOG_DEBUG(
@@ -371,13 +364,6 @@ public:
             // Make the data inaccessible from all of the threads.
             info.data_tbl.invalidate(info.blk_pos, info.lk);
         }
-        
-        #if 0
-        if (ret.needs_merge) {
-            // FIXME
-            throw std::logic_error("unimplemented");
-        }
-        #endif
         
         MEFDN_LOG_DEBUG(
             "msg:{}.\t"
@@ -651,7 +637,6 @@ public:
         MEFDN_ASSERT(this->blk_tbls_[seg_id]);
         return this->blk_tbls_[seg_id]->get_blk_pos_from_blk_id(blk_id);
     }
-    
     
 private:
     mefdn::vector<blk_tbl_ptr> blk_tbls_;
