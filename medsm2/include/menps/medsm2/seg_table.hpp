@@ -448,7 +448,7 @@ private:
         // Lock the latest owner globally.
         // This is achieved by following the graph of probable owners.
         const auto glk_ret =
-            info.lock_tbl.lock_global(com, info.blk_pos, info.lk);
+            info.lock_tbl.lock_global(com, info.blk_id, info.blk_pos, info.lk);
         
         // Begin a transaction.
         const auto bt_ret =
@@ -473,7 +473,7 @@ private:
                 info.blk_id, info.blk_pos, info.lk, bt_ret, mg_ret);
         
         // Unlock the global lock.
-        info.lock_tbl.unlock_global(com, info.blk_pos, info.lk, glk_ret, et_ret);
+        info.lock_tbl.unlock_global(com, info.blk_id, info.blk_pos, info.lk, glk_ret, et_ret);
         
         return { glk_ret, bt_ret, mg_ret, et_ret };
     }

@@ -697,10 +697,12 @@ int main(int argc, char* argv[])
     
     auto rma = mecom2::make_mpi_rma(*mi, win);
     auto coll = mecom2::make_mpi_coll(*mi, MPI_COMM_WORLD);
+    auto p2p = mecom2::make_mpi_p2p(*mi, MPI_COMM_WORLD);
     
     #else
     const auto coll_comm = mi->comm_dup(MPI_COMM_WORLD);
     const auto rma_comm = mi->comm_dup(MPI_COMM_WORLD);
+    const auto p2p_comm = mi->comm_dup(MPI_COMM_WORLD);
     
     /*const*/ auto win =
         mi->win_create_dynamic({ MPI_INFO_NULL, rma_comm });
@@ -709,13 +711,14 @@ int main(int argc, char* argv[])
     
     auto rma = mecom2::make_mpi_rma(*mi, win);
     auto coll = mecom2::make_mpi_coll(*mi, coll_comm);
+    auto p2p = mecom2::make_mpi_p2p(*mi, p2p_comm);
     #endif
     
     g_coll = &coll;
     
     mefdn::logger::set_state_callback(get_state{});
     
-    medsm2::mpi_svm_space sp(rma, coll);
+    medsm2::mpi_svm_space sp(rma, coll, p2p);
     
     g_sp = &sp;
     

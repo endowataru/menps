@@ -13,6 +13,7 @@
 #include <menps/mecom2/rma/mpi/mpi_alltoall_buffer.hpp>
 #include <menps/mecom2/rma/mpi/mpi_alltoall_ptr_set.hpp>
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
+#include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
 #include <menps/mefdn/thread.hpp>
 #include <menps/mefdn/mutex.hpp>
 #include <menps/mefdn/condition_variable.hpp>
@@ -22,6 +23,7 @@ namespace medsm2 {
 
 using mecom2::mpi_rma;
 using mecom2::mpi_coll;
+using mecom2::mpi_p2p;
 using mecom2::mpi_alltoall_buffer;
 using mecom2::mpi_alltoall_ptr_set;
 
@@ -30,11 +32,13 @@ class mpi_com_itf
 public:
     using rma_itf_type = mpi_rma;
     using coll_itf_type = mpi_coll;
+    using p2p_itf_type = mpi_p2p;
     
     template <typename Conf>
     explicit mpi_com_itf(const Conf& conf)
         : rma_(conf.rma)
         , coll_(conf.coll)
+        , p2p_(conf.p2p)
     {
         this->proc_id_ = get_coll().current_process_id();
         this->num_procs_ = get_coll().number_of_processes();
@@ -47,10 +51,12 @@ public:
     
     mpi_rma& get_rma() { return rma_; }
     mpi_coll& get_coll() { return coll_; }
+    mpi_p2p& get_p2p() { return this->p2p_; }
     
 private:
     rma_itf_type& rma_;
     coll_itf_type& coll_;
+    p2p_itf_type& p2p_;
     int proc_id_;
     int num_procs_;
 };
@@ -122,6 +128,14 @@ struct dsm_base_policy
     
     using wr_count_type = size_type;
     static const wr_count_type wr_count_threshold = 5; // TODO: Magic number
+    
+    static constexpr int get_tag_from_blk_id(const blk_id_type blk_id) noexcept {
+        // TODO: This will probably works,
+        //       but at least a magic number should be avoided.
+        
+        // Generate a MPI tag for the specified block.
+        return static_cast<int>(blk_id >> 12);
+    }
 };
 
 
@@ -154,6 +168,7 @@ class mpi_svm_space::impl
     struct com_conf {
         mpi_rma&    rma;
         mpi_coll&   coll;
+        mpi_p2p&    p2p;
     };
     
     struct my_space_conf {
@@ -165,8 +180,9 @@ public:
     explicit impl(
         mecom2::mpi_rma&    rma
     ,   mecom2::mpi_coll&   coll
+    ,   mecom2::mpi_p2p&    p2p
     )
-        : com_(com_conf{ rma, coll })
+        : com_(com_conf{ rma, coll, p2p })
         , sp_(
             my_space_conf{
                 com_
@@ -189,8 +205,9 @@ private:
 mpi_svm_space::mpi_svm_space(
     mecom2::mpi_rma&    rma
 ,   mecom2::mpi_coll&   coll
+,   mecom2::mpi_p2p&    p2p
 )
-    : impl_(new impl(rma, coll))
+    : impl_(new impl(rma, coll, p2p ))
 { }
 
 mpi_svm_space::~mpi_svm_space() = default;

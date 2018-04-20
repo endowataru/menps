@@ -18,6 +18,7 @@ class blk_lock_table
     using proc_id_type = typename com_itf_type::proc_id_type;
     using atomic_int_type = typename P::atomic_int_type;
     
+    using blk_id_type = typename P::blk_id_type;
     using blk_pos_type = typename P::blk_pos_type;
     
     using unique_lock_type = typename P::unique_lock_type;
@@ -68,6 +69,7 @@ public:
     
     lock_global_result lock_global(
         com_itf_type&           com
+    ,   const blk_id_type       blk_id
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
@@ -79,6 +81,85 @@ public:
         
         const auto local_glk = this->glks_.local(blk_pos);
         
+        #ifdef MEDSM2_ENABLE_P2P_LOCK
+        // Read the local lock value first.
+        // TODO: This load must be an "atomic load" in MPI RMA.
+        //       Replace with MPI_Fetch_and_op(MPI_NO_OP).
+        auto link_val = *local_glk;
+        
+        // It is a bug if this process tries to lock again.
+        MEFDN_ASSERT(link_val != this->make_locked_lock_val(this_proc));
+        
+        // If this process seems to be the last releaser,
+        // the lock value must be atomically exchanged to "locked"
+        // because other processes may also replace it concurrently.
+        if (link_val == this->make_owned_lock_val(this_proc))
+        {
+            const auto local_glk_rptr =
+                this->glks_.remote(this_proc, blk_pos);
+            
+            const auto desired =
+                this->make_locked_lock_val(this_proc);
+            
+            const auto cas_result =
+                rma.compare_and_swap(
+                    this_proc       // target_proc
+                ,   local_glk_rptr  // target_rptr
+                ,   link_val        // expected
+                ,   desired         // desired
+                );
+            
+            if (cas_result == link_val) {
+                // Acquired the lock.
+                // This process is both the last releaser and the owner.
+                return { this_proc };
+            }
+            
+            link_val = cas_result;
+        }
+        
+        // Set the local lock value to "locked".
+        // TODO: Replace with MPI_Fetch_and_op(MPI_REPLACE).
+        *local_glk = this->make_locked_lock_val(this_proc);
+        
+        auto proc = this_proc;
+        
+        while (true)
+        {
+            proc = this->get_probable_owner_from_lock_val(proc, link_val);
+            
+            const auto glk_rptr = this->glks_.remote(proc, blk_pos);
+            
+            auto expected = this->make_owned_lock_val(proc);
+            const auto desired = this->make_linked_lock_val(this_proc);
+            
+            link_val = rma.compare_and_swap(proc, glk_rptr, expected, desired);
+            
+            if (link_val == expected) {
+                // Acquired the lock.
+                return { proc };
+            }
+            
+            expected = this->make_owned_lock_val(proc);
+            
+            if (link_val == expected) {
+                // Try to follow the last releaser and become the next.
+                link_val = rma.compare_and_swap(proc, glk_rptr, expected, desired);
+                
+                if (link_val == expected) {
+                    auto& p2p = com.get_p2p();
+                    const auto tag = P::get_tag_from_blk_id(blk_id);
+                    
+                    // Wait for the previous releaser.
+                    p2p.untyped_recv(proc, tag, nullptr, 0);
+                    
+                    // FIXME: This ID is not returned by "end_transaction" of the last releaser.
+                    return { proc };
+                }
+            }
+        }
+        
+        #else
         // Start from the probable owner.
         // TODO: The process which provided the write notice for the latest read
         //       may be a more recent writer.
@@ -152,11 +233,14 @@ public:
         #endif
         
         return { prob_proc };
+        
+        #endif
     }
     
     template <typename EndTransactionResult>
     void unlock_global(
         com_itf_type&               com
+    ,   const blk_id_type           blk_id
     ,   const blk_pos_type          blk_pos
     ,   const unique_lock_type&     lk
     ,   const lock_global_result&   glk_ret
@@ -166,6 +250,51 @@ public:
         self.check_locked(blk_pos, lk);
         
         auto& rma = com.get_rma();
+        
+        #ifdef MEDSM2_ENABLE_P2P_LOCK
+        const auto this_proc = com.this_proc_id();
+        
+        const auto local_glk = this->glks_.local(blk_pos);
+        
+        auto link_val = *local_glk;
+        
+        // It is a bug if this process has already unlocked.
+        MEFDN_ASSERT(link_val != this->make_owned_lock_val(this_proc));
+        
+        if (link_val == this->make_locked_lock_val(this_proc))
+        {
+            const auto local_glk_rptr =
+                this->glks_.remote(this_proc, blk_pos);
+            
+            const auto desired =
+                this->make_owned_lock_val(this_proc);
+            
+            const auto cas_result =
+                rma.compare_and_swap(
+                    this_proc       // target_proc
+                ,   local_glk_rptr  // target_rptr
+                ,   link_val        // expected
+                ,   desired         // desired
+                );
+            
+            if (cas_result == link_val) {
+                // Released the lock.
+                return;
+            }
+            
+            link_val = cas_result;
+        }
+        
+        auto& p2p = com.get_p2p();
+        const auto tag = P::get_tag_from_blk_id(blk_id);
+        
+        const auto next_proc =
+            this->get_probable_owner_from_lock_val(this_proc, link_val);
+        
+        // Transfer the lock to the next acquirer.
+        p2p.untyped_send(next_proc, tag, nullptr, 0);
+        
+        #else
         
         const auto cur_proc = com.this_proc_id();
         const auto old_owner = glk_ret.owner;
@@ -231,6 +360,7 @@ public:
             // Set the owner as unlocked.
             rma.write(new_owner /* == old_owner */, glk_rptr, &new_lock_val, 1);
         }
+        #endif
     }
     
 private:

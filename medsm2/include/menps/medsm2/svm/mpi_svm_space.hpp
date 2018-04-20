@@ -4,6 +4,7 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mecom2/rma/mpi/mpi_rma.hpp>
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
+#include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -17,6 +18,7 @@ public:
     explicit mpi_svm_space(
         mecom2::mpi_rma&    rma
     ,   mecom2::mpi_coll&   coll
+    ,   mecom2::mpi_p2p&    p2p
     );
     
     ~mpi_svm_space();
