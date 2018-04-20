@@ -126,7 +126,23 @@ public:
         
         while (true)
         {
-            proc = this->get_probable_owner_from_lock_val(proc, link_val);
+            const auto next_proc = this->get_probable_owner_from_lock_val(proc, link_val);
+            
+            MEFDN_LOG_VERBOSE(
+                "msg:Follow probable owners.\t"
+                "blk_pos:{}\t"
+                "prev_proc:{}\t"
+                "next_proc:{}\t"
+                "link_val:{}"
+            ,   blk_pos
+            ,   proc
+            ,   next_proc
+            ,   link_val
+            );
+            
+            //MEFDN_ASSERT(next_proc != proc);
+            
+            proc = next_proc;
             
             const auto glk_rptr = this->glks_.remote(proc, blk_pos);
             
@@ -137,10 +153,17 @@ public:
             
             if (link_val == expected) {
                 // Acquired the lock.
+                MEFDN_LOG_VERBOSE(
+                    "msg:Acquired lock.\t"
+                    "blk_pos:{}\t"
+                    "proc:{}"
+                ,   blk_pos
+                ,   proc
+                );
                 return { proc };
             }
             
-            expected = this->make_owned_lock_val(proc);
+            expected = this->make_locked_lock_val(proc);
             
             if (link_val == expected) {
                 // Try to follow the last releaser and become the next.
@@ -150,8 +173,24 @@ public:
                     auto& p2p = com.get_p2p();
                     const auto tag = P::get_tag_from_blk_id(blk_id);
                     
+                    MEFDN_LOG_VERBOSE(
+                        "msg:Wait for the previous releaser.\t"
+                        "blk_pos:{}\t"
+                        "proc:{}"
+                    ,   blk_pos
+                    ,   proc
+                    );
+                    
                     // Wait for the previous releaser.
                     p2p.untyped_recv(proc, tag, nullptr, 0);
+                    
+                    MEFDN_LOG_VERBOSE(
+                        "msg:Acquired transferred lock.\t"
+                        "blk_pos:{}\t"
+                        "proc:{}"
+                    ,   blk_pos
+                    ,   proc
+                    );
                     
                     // FIXME: This ID is not returned by "end_transaction" of the last releaser.
                     return { proc };
