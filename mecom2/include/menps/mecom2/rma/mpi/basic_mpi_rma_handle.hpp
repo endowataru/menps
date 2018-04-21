@@ -135,6 +135,10 @@ public:
         auto& mi = self.get_mpi_interface();
         const auto win = self.get_win();
         
+        MEFDN_LOG_VERBOSE(
+            "msg:Flush RMA requests."
+        );
+        
         mi.win_flush_all({ win });
     }
 };
