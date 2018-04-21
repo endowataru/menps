@@ -22,6 +22,8 @@ public:
         auto& mi = self.get_mpi_interface();
         const auto comm = self.get_communicator();
         
+        MEFDN_LOG_VERBOSE("msg:Call MPI_barrier().");
+        
         mi.barrier({ comm });
     }
     
@@ -33,6 +35,16 @@ public:
         auto& self = this->derived();
         auto& mi = self.get_mpi_interface();
         const auto comm = self.get_communicator();
+        
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Bcast().\t"
+            "root_proc:{}\t"
+            "ptr:0x{:x}\t"
+            "num_bytes:{}\t"
+        ,   root_proc
+        ,   reinterpret_cast<mefdn::intptr_t>(ptr)
+        ,   num_bytes
+        );
         
         mi.broadcast({ ptr, num_bytes, root_proc, comm });
     }
@@ -47,6 +59,16 @@ public:
         const auto comm = self.get_communicator();
         const auto num_bytes_int = static_cast<int>(num_bytes);
         
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Allgather().\t"
+            "src_ptr:0x{:x}\t"
+            "dest_ptr:0x{:x}\t"
+            "num_bytes:{}\t"
+        ,   reinterpret_cast<mefdn::intptr_t>(src_ptr)
+        ,   reinterpret_cast<mefdn::intptr_t>(dest_ptr)
+        ,   num_bytes
+        );
+        
         mi.allgather({ src_ptr, dest_ptr, num_bytes_int, comm });
     }
     
@@ -58,6 +80,16 @@ public:
         auto& self = this->derived();
         auto& mi = self.get_mpi_interface();
         const auto comm = self.get_communicator();
+        
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Alltoall().\t"
+            "src_ptr:0x{:x}\t"
+            "dest_ptr:0x{:x}\t"
+            "num_bytes:{}\t"
+        ,   reinterpret_cast<mefdn::intptr_t>(src_ptr)
+        ,   reinterpret_cast<mefdn::intptr_t>(dest_ptr)
+        ,   num_bytes
+        );
         
         mi.alltoall({ src_ptr, dest_ptr, num_bytes, comm });
     }
