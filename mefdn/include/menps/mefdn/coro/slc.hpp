@@ -171,6 +171,19 @@ struct slc_label_policy
     using child_frame_t = slc_frame<ChildFrame, ChildRetCont, Worker>;
 };
 
+
+template <template <typename> class Frame, typename Worker, typename... Args>
+inline typename slc_frame<Frame, identity_retcont, Worker>::return_type
+call_slc(Worker& wk, Args&&... args)
+{
+    slc_frame<Frame, identity_retcont, Worker> fr(
+        mefdn::forward_as_tuple(mefdn::forward<Args>(args)...)
+    ,   mefdn::forward_as_tuple()
+    );
+    
+    return fr(wk);
+}
+
 } // namespace mefdn
 } // namespace menps
 

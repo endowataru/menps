@@ -252,21 +252,14 @@ TEST(Coro, Fib)
     
     fdn::klt_worker wk;
     
-    {
-        fdn::sfc_frame<fib_coro, identity_retcont, fdn::klt_worker> fr(
-            fdn::make_tuple(10), fdn::make_tuple()
-        );
-        int r = fr(wk);
-        ASSERT_EQ(89, r);
-    }
+    int r = fdn::call_sfc<fib_coro>(wk, 10);
+    ASSERT_EQ(89, r);
     
-    /*{
-        fdn::slc_frame<fib_coro, identity_retcont, fdn::klt_worker> fr(
-            fdn::make_tuple(10), fdn::make_tuple()
-        );
-        int r = fr(wk);
-        ASSERT_EQ(89, r);
-    }*/
+    // TODO: call_ret is unimplemented in slc ?
+    #if 0
+    int r2 = fdn::call_slc<fib_coro>(wk, 10);
+    ASSERT_EQ(89, r);
+    #endif
 }
 
 
