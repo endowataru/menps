@@ -55,6 +55,8 @@ public:
     
     template <typename... Results>
     using task = typename Worker::template task<Results...>;
+    
+    using worker = Worker;
 };
 
 template <template <typename> class Frame, typename RetCont, typename Worker>

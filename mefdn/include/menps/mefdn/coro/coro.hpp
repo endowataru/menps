@@ -53,7 +53,7 @@ private:
 public:
     template <typename... Args>
     return_type set_return(Args&&... args) {
-        // Explicitly cast to the base class.
+        // Implicit cast to the base class.
         ret_cont_type& rc = *this;
         return rc(mefdn::forward<Args>(args)...);
     }
@@ -172,6 +172,13 @@ public:
         auto& self = this->derived();
         return self.get_worker()
             .template join<NextLabel>(self, tk);
+    }
+    
+    template <template <typename> class NextLabel>
+    return_type yield() {
+        auto& self = this->derived();
+        return self.get_worker()
+            .template yield<NextLabel>(self);
     }
     
     template <template <typename> class NextLabel, typename Mutex>

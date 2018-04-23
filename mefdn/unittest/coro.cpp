@@ -3,7 +3,6 @@
 #include <menps/mefdn/coro/slc.hpp>
 #include <menps/mefdn/coro/sfc.hpp>
 #include <menps/mefdn/coro/klt_worker.hpp>
-//#include <menps/mefdn/coro/klt.hpp>
 #include <iostream>
 
 /*

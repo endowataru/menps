@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mefdn/utility.hpp>
+#include <menps/mefdn/thread.hpp>
 
 namespace menps {
 namespace mefdn {
@@ -58,6 +59,14 @@ public:
     {
         tk.th.join();
         return lb.template jump_with_tuple<NextLabel>(tk.ret);
+    }
+    
+    template <template <typename> class NextLabel,
+        typename Label>
+    typename Label::return_type yield(Label& lb)
+    {
+        std::this_thread::yield();
+        return lb.template jump<NextLabel>();
     }
     
 private:

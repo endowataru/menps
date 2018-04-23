@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <thread>
+#include <menps/mefdn/coro/coro.hpp>
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/tuple.hpp>
 #include <menps/mefdn/type_traits/integer_sequence.hpp>
@@ -35,6 +35,8 @@ public:
     
     template <typename... Results>
     using task = typename Worker::template task<Results...>;
+    
+    using worker = Worker;
 };
 
 template <template <typename> class Frame, typename RetCont, typename Worker>
