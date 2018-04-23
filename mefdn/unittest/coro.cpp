@@ -262,7 +262,82 @@ TEST(Coro, Fib)
     #endif
 }
 
+template <typename F>
+struct coro_for_test_child : F
+{
+    using result_type = void;
+    
+    explicit coro_for_test_child(int i, int* r)
+        : i_(i)
+        , r_(r)
+    { }
+    
+    template <typename C>
+    struct start : C {
+        typename C::return_type operator() () {
+            auto& f = this->frame();
+            *f.r_ += f.i_;
+            return this->template yield<finish>();
+        }
+    };
+    
+private:
+    template <typename C>
+    struct finish : C {
+        typename C::return_type operator() () {
+            auto& f = this->frame();
+            *f.r_ += f.i_;
+            return this->set_return();
+        }
+    };
+    
+    int i_;
+    int* r_;
+};
 
+template <typename F>
+struct coro_for_test : F
+{
+    using result_type = void;
+    
+    template <typename C>
+    struct start : C {
+        typename C::return_type operator() () {
+            auto& f = this->frame();
+            return this->template parallel_for<finish, coro_for_test_child>(
+                0, f.n_, 1, &f.r_);
+        }
+    };
+    
+private:
+    template <typename C>
+    struct finish : C {
+        typename C::return_type operator() () {
+            auto& f = this->frame();
+            ASSERT_EQ(2*(f.n_-1)*f.n_/2, f.r_);
+            return this->set_return();
+        }
+    };
+    
+    int n_ = 4;
+    int r_ = 0;
+};
+
+TEST(Coro, For)
+{
+    namespace fdn = menps::mefdn;
+    
+    fdn::klt_worker wk;
+    
+    fdn::call_sfc<coro_for_test>(wk);
+    //ASSERT_EQ(89, r);
+    
+    // TODO: call_ret is unimplemented in slc ?
+    #if 0
+    int r2 = fdn::call_slc<fib_coro>(wk, 10);
+    ASSERT_EQ(89, r);
+    #endif
+}
 
 #if 0
 

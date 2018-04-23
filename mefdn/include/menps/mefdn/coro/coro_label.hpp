@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include <menps/mefdn/utility.hpp>
-#include <menps/mefdn/tuple.hpp>
+#include <menps/mefdn/coro/coro_par_for.hpp>
 #include <menps/mefdn/type_traits/integer_sequence.hpp>
 
 namespace menps {
@@ -10,6 +9,7 @@ namespace mefdn {
 
 template <typename P>
 class basic_coro_label
+    : public basic_par_for_label<P>
 {
     MEFDN_DEFINE_DERIVED(P)
     
@@ -48,7 +48,8 @@ public:
 private:
     template <template <typename> class NextLabel, typename... Args, mefdn::size_t... Ns>
     return_type jump_with_tuple(
-        mefdn::tuple<Args...> t
+        mefdn::tuple<Args...> t MEFDN_MAYBE_UNUSED
+        // unused when sizeof...(Args) == 0
     ,   mefdn::index_sequence<Ns...> /*ignored*/
     ) {
         return this->template jump<NextLabel>( mefdn::get<Ns>(t)... );
@@ -149,10 +150,10 @@ class coro_label
 {
     using base = typename P::user_label_type;
     
-    using frame_type = typename P::frame_type;
-    using worker_type = typename frame_type::worker_type;
-    
 public:
+    using typename base::frame_type;
+    using typename base::worker_type;
+    
     explicit coro_label(frame_type& fr, worker_type& wk)
         : fr_(fr)
         , wk_(wk)

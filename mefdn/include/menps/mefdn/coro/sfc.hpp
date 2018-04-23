@@ -75,6 +75,7 @@ private:
     frame_type& fr_;
 };
 
+#if 0
 struct sfc_cont_rec
 {
     // This is just an identity function.
@@ -84,6 +85,7 @@ struct sfc_cont_rec
         return mefdn::forward<T>(v);
     }
 };
+#endif
 
 template <typename P>
 class sfc_label_base
@@ -124,15 +126,15 @@ public:
         auto& wk = self.get_worker();
         
         // Construct the child frame directly on this thread's stack.
-        sfc_frame<ChildFrame, sfc_cont_rec, worker_type> cf(
+        sfc_frame<ChildFrame, identity_retcont, worker_type> cf(
             mefdn::forward_as_tuple(mefdn::forward<Args>(args)...)
         ,   mefdn::forward_as_tuple()
         );
         
         // ... and then jump to the next label with the child's result.
-        return self.template jump<NextLabel>(
+        return self.template jump_with_tuple<NextLabel>(
             // Execute the child first.
-            cf(wk)
+            mefdn::call_and_make_tuple(cf, wk)
         );
     }
 };

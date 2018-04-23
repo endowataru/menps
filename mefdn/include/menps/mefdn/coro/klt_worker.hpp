@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <menps/mefdn/coro/coro.hpp>
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/thread.hpp>
 
@@ -29,10 +30,13 @@ public:
     typename Label::return_type fork(Label& lb, Task& tk, Args&&... args)
     {
         using child_frame_type =
-            typename Label::template child_frame_t<ChildFrame, fork_ret_cont>;
+            typename Label::template child_frame_t<ChildFrame, identity_retcont>;
+        
+        using worker_type = typename Label::worker_type;
+        auto& wk = lb.worker();
         
         tk.th = std::thread(
-            fork_start<child_frame_type, Task>{ *this, tk }
+            fork_start<child_frame_type, Task, worker_type>{ wk, tk }
         ,   mefdn::forward<Args>(args)...
         );
         return lb.template jump<NextLabel>();
@@ -44,10 +48,13 @@ public:
     typename Label::return_type fork_rec(Label& lb, Task& tk, Args&&... args)
     {
         using child_frame_type =
-            typename Label::template child_frame_t<ChildFrame, fork_ret_cont>;
+            typename Label::template child_frame_t<ChildFrame, identity_retcont>;
+        
+        using worker_type = typename Label::worker_type;
+        auto& wk = lb.worker();
         
         tk.th = std::thread(
-            fork_start<child_frame_type, Task>{ *this, tk }
+            fork_start<child_frame_type, Task, worker_type>{ wk, tk }
         ,   mefdn::forward<Args>(args)...
         );
         return lb.template jump<NextLabel>();
@@ -70,17 +77,12 @@ public:
     }
     
 private:
-    struct fork_ret_cont {
-        template <typename F, typename U>
-        U operator() (F&& /*ignored*/, U&& v) const /*may throw*/ {
-            return mefdn::forward<U>(v);
-        }
-    };
-    
-    template <typename ChildFrame, typename Task>
+    // Worker is a template parameter
+    // because it may be a derived class of this class.
+    template <typename ChildFrame, typename Task, typename Worker>
     struct fork_start {
-        klt_worker& wk;
-        Task&       tk;
+        Worker& wk;
+        Task&   tk;
         
         template <typename... Args>
         void operator() (Args&&... args)
@@ -89,7 +91,8 @@ private:
                 mefdn::forward_as_tuple(mefdn::forward<Args>(args)...)
             ,   mefdn::forward_as_tuple()
             );
-            tk.ret = mefdn::forward_as_tuple( fr(wk) );
+            // Call fr(wk) and assign a tuple as a returned value.
+            tk.ret = mefdn::call_and_make_tuple(fr, wk);
         }
     };
 };
