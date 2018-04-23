@@ -10,7 +10,8 @@ template <typename P>
 class basic_rma_itf
 {
 public:
-    using process_id_type = typename P::process_id_type;
+    using process_id_type = typename P::process_id_type; // TODO: deprecate
+    using proc_id_type = typename P::proc_id_type;
     
     template <typename T>
     using local_ptr = typename P::template local_ptr<T>;

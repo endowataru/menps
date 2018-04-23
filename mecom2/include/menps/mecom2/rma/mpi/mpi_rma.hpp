@@ -5,6 +5,7 @@
 #include <menps/mecom2/rma/basic_unique_local_ptr.hpp>
 #include <menps/mecom2/rma/mpi/basic_mpi_rma_handle.hpp>
 #include <menps/mecom2/rma/rma_blocking_itf.hpp>
+#include <menps/mecom2/rma/rma_coro_itf.hpp>
 #include <menps/medev2/mpi.hpp>
 #include <menps/mefdn/memory/distance_in_bytes.hpp>
 
@@ -75,7 +76,8 @@ struct mpi_rma_policy
 {
     using derived_type = mpi_rma;
     using size_type = mefdn::size_t;
-    using process_id_type = int;
+    using proc_id_type = int;
+    using process_id_type = proc_id_type; // TODO: deprecated
     
     template <typename T>
     using remote_ptr = T*;
@@ -90,13 +92,19 @@ struct mpi_rma_policy
     static U* static_cast_to(T* const p) noexcept {
         return static_cast<U*>(p);
     }
+    
+    using handle_type = mpi_rma_handle;
 };
 
 class mpi_rma
     : public rma_blocking_itf<mpi_rma_policy>
+    , public rma_coro_itf<mpi_rma_policy>
     , public rma_typed_allocator<mpi_rma_policy>
 {
 public:
+    using rma_blocking_itf<mpi_rma_policy>::proc_id_type;
+    // TODO: Remove this temporary solution
+    
     template <typename Conf>
     explicit mpi_rma(Conf&& conf)
         : req_(conf.req)
