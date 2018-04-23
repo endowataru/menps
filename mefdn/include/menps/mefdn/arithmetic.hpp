@@ -46,6 +46,20 @@ constexpr bool is_power_of_2(T x) {
     return x != 0 && ((x & (x-1)) == 0);
 }
 
+
+template <typename T, T... Is>
+struct static_max;
+
+template <typename T, T I, T... Is>
+struct static_max<T, I, Is...>
+    : integral_constant<T,
+        ((I < static_max<T, Is...>::value) ? static_max<T, Is...>::value : I)>
+{ };
+
+template <typename T, T I>
+struct static_max<T, I>
+    : integral_constant<T, I> { };
+
 } // namespace mefdn
 } // namespace menps
 

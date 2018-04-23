@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mefdn/coro/coro.hpp>
+#include <menps/mefdn/arithmetic.hpp>
 
 namespace menps {
 namespace mefdn {
@@ -17,39 +18,52 @@ template <template <typename> class Label,
     template <typename> class Frame, typename RetCont, typename Worker>
 using slc_label = coro_label<slc_label_policy<Label, Frame, RetCont, Worker>>;
 
-template <template <typename> class... ChildFrames>
-class slc_children
+// TODO: Remove this strange class...
+//       It is necessary to get the maximum size for children frames.
+//       Those sizes are depending on those of their return continuations.
+class slc_dummy_ret_cont { };
+
+template <typename Worker, template <typename> class... ChildFrames>
+struct slc_children
 {
 public:
-    template <template <typename> class ChildFrame,
-        typename RetCont, typename Worker, typename... Args>
+    template <template <typename> class ChildFrame, typename RetCont, typename... Args>
     slc_frame<ChildFrame, RetCont, Worker>& construct_child_frame(Args&&... args) {
-        return * new (buf) slc_frame<ChildFrame, RetCont, Worker>(
+        using frame_type = slc_frame<ChildFrame, RetCont, Worker>;
+        MEFDN_STATIC_ASSERT(sizeof(frame_type) <= buf_size);
+        
+        return * new (buf) frame_type(
             mefdn::forward<Args>(args)...
         );
     }
-    
-    template <template <typename> class ChildFrame, typename RetCont, typename Worker>
+
+    template <template <typename> class ChildFrame, typename RetCont>
     static slc_children& destruct_child_frame(slc_frame<ChildFrame, RetCont, Worker>&& cf) {
+        using frame_type = slc_frame<ChildFrame, RetCont, Worker>;
+        MEFDN_STATIC_ASSERT(sizeof(frame_type) <= buf_size);
+        
         cf.~slc_frame();
         // TODO: manipulate offset of buf
         return reinterpret_cast<slc_children&>(cf);
     }
-    
+
 private:
-    char buf[1024]; // TODO : max of children
-    //mefdn::tuple<slc_frame<ChildFrames, >>
+    static constexpr const mefdn::size_t buf_size =
+        mefdn::static_max<mefdn::size_t,
+            sizeof(slc_frame<ChildFrames, slc_dummy_ret_cont, Worker>)...>::value;
+    
+    mefdn::byte buf[buf_size];
 };
 
-template <>
-class slc_children<> { };
+template <typename Worker>
+struct slc_children<Worker> { };
 
 template <typename Worker>
 class slc_frame_base
 {
 public:
     template <template <typename> class... ChildFrames>
-    using define_children = slc_children<ChildFrames...>;
+    using define_children = slc_children<Worker, ChildFrames...>;
     
     using children = define_children<>;
     
@@ -130,7 +144,7 @@ public:
         using ret_cont_type = typename P::template next_cont_t<NextLabel>;
         
         auto& cf =
-            fr.template construct_child_frame<ChildFrame, ret_cont_type, worker_type>(
+            fr.template construct_child_frame<ChildFrame, ret_cont_type>(
                 mefdn::forward_as_tuple(mefdn::forward<Args>(args)...)
             ,   mefdn::forward_as_tuple()
             );
