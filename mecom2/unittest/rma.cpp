@@ -17,14 +17,14 @@ TEST(Rma, Basic)
     auto rma = mecom2::make_mpi_rma(*g_mi, win);
     
     {
-        const auto arr = rma.make_unique<int []>(1);
+        const auto arr = rma->make_unique<int []>(1);
         
         auto p = arr.get();
         
         g_mi->broadcast({ &p, sizeof(p), 0, MPI_COMM_WORLD });
         
         {
-            auto h = rma.make_handle();
+            auto h = rma->make_handle();
             
             int x = 123;
             h.write_nb(0, p, &x, 1);
@@ -55,11 +55,11 @@ TEST(Rma, Alltoall)
     const auto num_procs = coll.get_num_procs();
     
     mecom2::mpi_alltoall_buffer<int> buf;
-    buf.coll_make(rma, coll, num_procs);
+    buf.coll_make(*rma, coll, num_procs);
     
     // 1st
     {
-        auto h = rma.make_handle();
+        auto h = rma->make_handle();
         for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
             const int x = cur_proc + 1;
             h.write_nb(proc, buf.remote(proc, cur_proc), &x, 1);
@@ -80,7 +80,7 @@ TEST(Rma, Alltoall)
     {
         for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
             const int x = cur_proc + 2;
-            rma.write(proc, buf.remote(proc, cur_proc), &x, 1);
+            rma->write(proc, buf.remote(proc, cur_proc), &x, 1);
         }
     }
     
@@ -106,7 +106,7 @@ TEST(Rma, Cas)
     const auto num_procs = coll.get_num_procs();
     
     mecom2::mpi_alltoall_buffer<mefdn::uint64_t> buf;
-    buf.coll_make(rma, coll, 1);
+    buf.coll_make(*rma, coll, 1);
     
     if (cur_proc == 0)
         *buf.local(0) = 0;
@@ -116,7 +116,7 @@ TEST(Rma, Cas)
         const mefdn::uint64_t desired  = cur_proc + 1;
         
         const auto result =
-            rma.compare_and_swap(
+            rma->compare_and_swap(
                 0
             ,   buf.remote(0, 0)
             ,   expected
@@ -232,16 +232,16 @@ TEST(Rma, CoroRead)
     auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
     
     mecom2::mpi_alltoall_buffer<mefdn::uint64_t> a2a_buf;
-    a2a_buf.coll_make(rma, coll, 1);
+    a2a_buf.coll_make(*rma, coll, 1);
     
     const auto num_procs = coll.get_num_procs();
     const auto this_proc = coll.this_proc_id();
     
     *a2a_buf.local(0) = (this_proc+1) * 10;
     
-    const auto lbuf = rma.make_unique<mefdn::uint64_t []>(num_procs);
+    const auto lbuf = rma->make_unique<mefdn::uint64_t []>(num_procs);
     
-    coro_read_vars vars{ rma, coll, a2a_buf, lbuf.get() };
+    coro_read_vars vars{ *rma, coll, a2a_buf, lbuf.get() };
     
     using worker_type = mecom2::com_worker<mefdn::klt_worker>;
     worker_type wk;

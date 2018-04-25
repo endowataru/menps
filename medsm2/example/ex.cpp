@@ -18,7 +18,7 @@ int main(int argc, char** argv)
     auto coll = mecom2::make_mpi_coll(*mi, MPI_COMM_WORLD);
     auto p2p = mecom2::make_mpi_p2p(*mi, MPI_COMM_WORLD);
     
-    medsm2::mpi_svm_space sp(rma, coll, p2p);
+    medsm2::mpi_svm_space sp(*rma, coll, p2p);
     
     auto p = sp.coll_alloc_seg(1<<15, 1<<12);
     

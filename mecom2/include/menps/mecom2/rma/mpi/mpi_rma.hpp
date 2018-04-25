@@ -19,9 +19,12 @@ class mpi_rma_handle;
 struct mpi_rma_policy_base
 {
     using mpi_itf_type = medev2::mpi::direct_requester;
+    using ult_itf_type = default_ult_itf;
     
     using proc_id_type = int;
     using size_type = mefdn::size_t;
+    
+    using rma_sn_type = mefdn::size_t;
     
     template <typename T>
     using remote_ptr = T*;
@@ -175,12 +178,14 @@ MPI_Win mpi_rma_handle::get_win() {
 }
 
 
-inline mpi_rma make_mpi_rma(medev2::mpi::direct_requester& req, MPI_Win win) {
+using mpi_rma_ptr = mefdn::unique_ptr<mpi_rma>;
+
+inline mpi_rma_ptr make_mpi_rma(mpi_rma::mpi_itf_type& req, MPI_Win win) {
     struct conf {
-        medev2::mpi::direct_requester& req;
+        mpi_rma::mpi_itf_type& req;
         MPI_Win win;
     };
-    return mpi_rma(conf{ req, win });
+    return mefdn::make_unique<mpi_rma>(conf{ req, win });
 }
 
 } // namespace mecom2

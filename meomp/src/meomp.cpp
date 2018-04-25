@@ -718,7 +718,7 @@ int main(int argc, char* argv[])
     
     mefdn::logger::set_state_callback(get_state{});
     
-    medsm2::mpi_svm_space sp(rma, coll, p2p);
+    medsm2::mpi_svm_space sp(*rma, coll, p2p);
     
     g_sp = &sp;
     
