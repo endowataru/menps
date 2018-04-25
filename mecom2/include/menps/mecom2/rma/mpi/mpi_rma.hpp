@@ -16,9 +16,10 @@ class mpi_rma;
 
 class mpi_rma_handle;
 
-struct mpi_rma_handle_policy
+struct mpi_rma_policy_base
 {
-    using derived_type = mpi_rma_handle;
+    using mpi_itf_type = medev2::mpi::direct_requester;
+    
     using proc_id_type = int;
     using size_type = mefdn::size_t;
     
@@ -40,15 +41,24 @@ struct mpi_rma_handle_policy
     }
 };
 
+struct mpi_rma_handle_policy : mpi_rma_policy_base
+{
+    using derived_type = mpi_rma_handle;
+};
+
 class mpi_rma_handle
     : public basic_mpi_rma_handle<mpi_rma_handle_policy>
 {
+    using policy_type = mpi_rma_handle_policy;
+    
 public:
+    using mpi_itf_type = policy_type::mpi_itf_type;
+    
     /*implicit*/ mpi_rma_handle(mpi_rma& rma)
         : rma_(rma)
     { }
     
-    inline medev2::mpi::direct_requester& get_mpi_interface();
+    inline mpi_itf_type& get_mpi_interface();
     
     inline MPI_Win get_win();
     
@@ -72,17 +82,9 @@ struct mpi_unique_local_ptr_policy {
 template <typename T>
 using mpi_unique_local_ptr = basic_unique_local_ptr<mpi_unique_local_ptr_policy<T>>;
 
-struct mpi_rma_policy
+struct mpi_rma_policy : mpi_rma_policy_base
 {
     using derived_type = mpi_rma;
-    using size_type = mefdn::size_t;
-    using proc_id_type = int;
-    
-    template <typename T>
-    using remote_ptr = T*;
-    
-    template <typename T>
-    using local_ptr = T*;
     
     template <typename T>
     using unique_local_ptr = mpi_unique_local_ptr<T>;
@@ -100,7 +102,11 @@ class mpi_rma
     , public rma_coro_itf<mpi_rma_policy>
     , public rma_typed_allocator<mpi_rma_policy>
 {
+    using policy_type = mpi_rma_policy;
+    
 public:
+    using mpi_itf_type = policy_type::mpi_itf_type;
+    
     using rma_blocking_itf<mpi_rma_policy>::proc_id_type;
     // TODO: Remove this temporary solution
     
@@ -110,7 +116,7 @@ public:
         , win_(conf.win)
     { }
     
-    medev2::mpi::direct_requester& get_mpi_interface() {
+    mpi_itf_type& get_mpi_interface() {
         return req_;
     }
     
@@ -154,13 +160,13 @@ public:
     }
     
 private:
-    medev2::mpi::direct_requester& req_;
+    mpi_itf_type& req_;
     MPI_Win win_;
 };
 
 
 
-medev2::mpi::direct_requester& mpi_rma_handle::get_mpi_interface() {
+mpi_rma_handle::mpi_itf_type& mpi_rma_handle::get_mpi_interface() {
     return this->rma_.get_mpi_interface();
 }
 
