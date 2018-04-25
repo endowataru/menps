@@ -731,6 +731,18 @@ int main(int argc, char* argv[])
         if (data_size > 0) {
             mefdn::unique_ptr<mefdn::byte []> init_temp(new mefdn::byte[data_size]);
             
+            MEFDN_LOG_VERBOSE(
+                "msg:Start saving global variables in temporary buffer.\t"
+                "init_temp:0x{:x}\t"
+                "data_begin:0x{:x}\t"
+                "data_end:0x{:x}\t"
+                "data_size:0x{:x}\t"
+            ,   reinterpret_cast<mefdn::uintptr_t>(init_temp.get())
+            ,   reinterpret_cast<mefdn::uintptr_t>(data_begin)
+            ,   reinterpret_cast<mefdn::uintptr_t>(data_end)
+            ,   data_size
+            );
+            
             // Copy the initial data to a buffer (before mmap()).
             memcpy(init_temp.get(), data_begin, data_size);
             
