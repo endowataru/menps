@@ -30,7 +30,7 @@ public:
     void coll_make(rma_itf_type& /*rma*/, CollItf& coll, const lptr_type lptr, size_type size)
     // TODO: rma is not used in this function
     {
-        const auto num_procs = coll.number_of_processes();
+        const auto num_procs = coll.get_num_procs();
         
         #ifdef MECOM2_ENABLE_DEBUG_ALLTOALL_PTR_SET
         num_procs_ = num_procs;

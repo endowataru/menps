@@ -50,9 +50,9 @@ TEST(Rma, Alltoall)
     auto rma = mecom2::make_mpi_rma(*g_mi, win);
     auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
     
-    using process_id_type = /*mecom2::mpi_coll::process_id_type*/int;
-    const auto cur_proc = coll.current_process_id();
-    const auto num_procs = coll.number_of_processes();
+    using proc_id_type = mecom2::mpi_coll::proc_id_type;
+    const auto cur_proc = coll.this_proc_id();
+    const auto num_procs = coll.get_num_procs();
     
     mecom2::mpi_alltoall_buffer<int> buf;
     buf.coll_make(rma, coll, num_procs);
@@ -60,7 +60,7 @@ TEST(Rma, Alltoall)
     // 1st
     {
         auto h = rma.make_handle();
-        for (process_id_type proc = 0; proc < coll.number_of_processes(); ++proc) {
+        for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
             const int x = cur_proc + 1;
             h.write_nb(proc, buf.remote(proc, cur_proc), &x, 1);
         }
@@ -69,7 +69,7 @@ TEST(Rma, Alltoall)
     
     coll.barrier();
     
-    for (process_id_type proc = 0; proc < coll.number_of_processes(); ++proc) {
+    for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
         const int x = * buf.local(proc);
         ASSERT_EQ(proc + 1, x);
     }
@@ -78,7 +78,7 @@ TEST(Rma, Alltoall)
     
     // 2nd
     {
-        for (process_id_type proc = 0; proc < coll.number_of_processes(); ++proc) {
+        for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
             const int x = cur_proc + 2;
             rma.write(proc, buf.remote(proc, cur_proc), &x, 1);
         }
@@ -86,7 +86,7 @@ TEST(Rma, Alltoall)
     
     coll.barrier();
     
-    for (process_id_type proc = 0; proc < coll.number_of_processes(); ++proc) {
+    for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
         const int x = * buf.local(proc);
         ASSERT_EQ(proc + 2, x);
     }
@@ -102,9 +102,8 @@ TEST(Rma, Cas)
     auto rma = mecom2::make_mpi_rma(*g_mi, win);
     auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);   
     
-    using process_id_type = /*mecom2::mpi_coll::process_id_type*/int;
-    const auto cur_proc = coll.current_process_id();
-    const auto num_procs = coll.number_of_processes();
+    const auto cur_proc = coll.this_proc_id();
+    const auto num_procs = coll.get_num_procs();
     
     mecom2::mpi_alltoall_buffer<mefdn::uint64_t> buf;
     buf.coll_make(rma, coll, 1);

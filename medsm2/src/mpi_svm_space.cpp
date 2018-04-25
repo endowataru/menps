@@ -40,8 +40,8 @@ public:
         , coll_(conf.coll)
         , p2p_(conf.p2p)
     {
-        this->proc_id_ = get_coll().current_process_id();
-        this->num_procs_ = get_coll().number_of_processes();
+        this->proc_id_ = get_coll().this_proc_id();
+        this->num_procs_ = get_coll().get_num_procs();
     }
     
     using proc_id_type = int;

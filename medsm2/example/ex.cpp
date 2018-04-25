@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     
     //medsm2::mpi_svm_space::rel_id ri{};
     
-    if (coll.current_process_id() == 0) {
+    if (coll.this_proc_id() == 0) {
         *(int*)p = 1;
         //sp.store_release(p);
     }
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     
     sp.barrier();
     
-    std::cout << coll.current_process_id() << " " << *(int*)p << std::endl;
+    std::cout << coll.this_proc_id() << " " << *(int*)p << std::endl;
     
     coll.barrier();
     

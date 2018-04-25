@@ -12,10 +12,12 @@ class basic_mpi_coll
 {
     MEFDN_DEFINE_DERIVED(P)
     
-    using proc_id_type = typename P::proc_id_type;
-    using size_type = typename P::size_type;
+    using base = coll_typed<P>;
     
 public:
+    using typename base::proc_id_type;
+    using typename base::size_type;
+    
     void barrier()
     {
         auto& self = this->derived();
@@ -93,7 +95,6 @@ public:
         
         mi.alltoall({ src_ptr, dest_ptr, num_bytes, comm });
     }
-    
 };
 
 } // namespace mecom2

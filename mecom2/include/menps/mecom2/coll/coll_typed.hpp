@@ -11,10 +11,10 @@ class coll_typed
 {
     MEFDN_DEFINE_DERIVED(P)
     
+public:
     using proc_id_type = typename P::proc_id_type;
     using size_type = typename P::size_type;
     
-public:
     template <typename T>
     void broadcast(
         const proc_id_type  root_proc

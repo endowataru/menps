@@ -46,7 +46,7 @@ struct get_state
         fmt::MemoryWriter w;
         w.write(
             "proc:{}\tthread:{:x}\tlog_id:{}\tclock:{}\t"
-        ,   g_coll->current_process_id()
+        ,   g_coll->this_proc_id()
         ,   reinterpret_cast<mefdn::uintptr_t>(pthread_self())
             // TODO: use mefdn::this_thread::get_id()
         ,   this->number_++
@@ -747,7 +747,7 @@ int main(int argc, char* argv[])
         }
     }
     
-    const auto num_procs = coll.number_of_processes();
+    const auto num_procs = coll.get_num_procs();
     
     const mefdn::size_t stack_size = 128<<10; // TODO
     
