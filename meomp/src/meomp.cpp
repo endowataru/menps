@@ -744,7 +744,15 @@ int main(int argc, char* argv[])
             );
             
             // Copy the initial data to a buffer (before mmap()).
+            #if 1
+            // TODO: There is a performance problem of using memcpy()
+            //       on a program with many global variables.
+            for (mefdn::size_t i = 0; i < data_size; ++i) {
+                init_temp[i] = data_begin[i];
+            }
+            #else
             memcpy(init_temp.get(), data_begin, data_size);
+            #endif
             
             sp.coll_alloc_global_var_seg(data_size, 4096 /*TODO*/, data_begin);
             
