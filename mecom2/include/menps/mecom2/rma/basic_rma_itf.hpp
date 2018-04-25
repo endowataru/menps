@@ -10,7 +10,6 @@ template <typename P>
 class basic_rma_itf
 {
 public:
-    using process_id_type = typename P::process_id_type; // TODO: deprecate
     using proc_id_type = typename P::proc_id_type;
     
     template <typename T>
@@ -21,7 +20,6 @@ public:
     
     template <typename T>
     using unique_local_ptr = typename P::template unique_local_ptr<T>;
-    
 };
 
 } // namespace mecom2

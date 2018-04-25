@@ -13,16 +13,16 @@ class rma_typed_handle
 {
     MEFDN_DEFINE_DERIVED(P)
     
-    using process_id_type = typename P::process_id_type;
-    using size_type       = typename P::size_type;
-    
 public:
+    using proc_id_type = typename P::proc_id_type;
+    using size_type = typename P::size_type;
+    
     template <typename RemotePtr, typename LocalPtr>
     void read_nb(
-        const process_id_type   src_proc
-    ,   RemotePtr&&             src_rptr
-    ,   LocalPtr&&              dest_lptr
-    ,   const size_type         num_elems
+        const proc_id_type  src_proc
+    ,   RemotePtr&&         src_rptr
+    ,   LocalPtr&&          dest_lptr
+    ,   const size_type     num_elems
     ) {
         using remote_ptr_type = mefdn::decay_t<RemotePtr>;
         using local_ptr_type  = mefdn::decay_t<LocalPtr>;
@@ -52,10 +52,10 @@ public:
     
     template <typename RemotePtr, typename LocalPtr>
     void write_nb(
-        const process_id_type   dest_proc
-    ,   RemotePtr&&             dest_rptr
-    ,   LocalPtr&&              src_lptr
-    ,   const size_type         num_elems
+        const proc_id_type  dest_proc
+    ,   RemotePtr&&         dest_rptr
+    ,   LocalPtr&&          src_lptr
+    ,   const size_type     num_elems
     ) {
         using remote_ptr_type = mefdn::decay_t<RemotePtr>;
         using local_ptr_type  = mefdn::decay_t<LocalPtr>;

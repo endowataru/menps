@@ -14,8 +14,7 @@ class basic_mpi_rma_handle
 {
     MEFDN_DEFINE_DERIVED(P)
     
-    using process_id_type = typename P::process_id_type;
-    using size_type       = typename P::size_type;
+    using base = rma_typed_handle<P>;
     
     using void_lptr_type    = typename P::template remote_ptr<void>;
     using void_rptr_type    = typename P::template local_ptr<void>;
@@ -23,11 +22,14 @@ class basic_mpi_rma_handle
     using cvoid_lptr_type   = typename P::template local_ptr<const void>;
     
 public:
+    using typename base::proc_id_type;
+    using typename base::size_type;
+    
     void untyped_read_nb(
-        const process_id_type   src_proc
-    ,   cvoid_rptr_type         src_rptr
-    ,   void_lptr_type          dest_lptr
-    ,   const size_type         size_in_bytes
+        const proc_id_type  src_proc
+    ,   cvoid_rptr_type     src_rptr
+    ,   void_lptr_type      dest_lptr
+    ,   const size_type     size_in_bytes
     ) {
         auto& self = this->derived();
         auto& mi = self.get_mpi_interface();
@@ -55,10 +57,10 @@ public:
     }
     
     void untyped_write_nb(
-        const process_id_type   dest_proc
-    ,   void_rptr_type          dest_rptr
-    ,   cvoid_lptr_type         src_lptr
-    ,   const size_type         size_in_bytes
+        const proc_id_type  dest_proc
+    ,   void_rptr_type      dest_rptr
+    ,   cvoid_lptr_type     src_lptr
+    ,   const size_type     size_in_bytes
     ) {
         auto& self = this->derived();
         auto& mi = self.get_mpi_interface();
@@ -87,11 +89,11 @@ public:
     
     template <typename TargetPtr, typename ExpectedPtr, typename DesiredPtr, typename ResultPtr>
     void compare_and_swap_nb(
-        const process_id_type   target_proc
-    ,   TargetPtr&&             target_rptr
-    ,   ExpectedPtr&&           expected_ptr
-    ,   DesiredPtr&&            desired_ptr
-    ,   ResultPtr&&             result_ptr
+        const proc_id_type  target_proc
+    ,   TargetPtr&&         target_rptr
+    ,   ExpectedPtr&&       expected_ptr
+    ,   DesiredPtr&&        desired_ptr
+    ,   ResultPtr&&         result_ptr
     ) {
         auto& self = this->derived();
         auto& mi = self.get_mpi_interface();

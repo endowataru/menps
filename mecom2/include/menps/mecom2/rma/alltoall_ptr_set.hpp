@@ -14,7 +14,7 @@ class alltoall_ptr_set
     MEFDN_DEFINE_DERIVED(P)
     
     using rma_itf_type = typename P::rma_itf_type;
-    using process_id_type = typename rma_itf_type::process_id_type;
+    using proc_id_type = typename rma_itf_type::proc_id_type;
     
     using element_type = typename P::element_type;
     using size_type = typename P::size_type;
@@ -45,7 +45,7 @@ public:
         this->rptrs_ =
             mefdn::make_unique<rptr_type []>(num_procs);
         
-        for (process_id_type proc = 0; proc < num_procs; ++proc) {
+        for (proc_id_type proc = 0; proc < num_procs; ++proc) {
             this->rptrs_[proc] = lptrs[proc];
         }
     }
@@ -57,7 +57,7 @@ public:
         return this->lptr_ + idx;
     }
     
-    rptr_type remote(const process_id_type proc, const size_type idx) {
+    rptr_type remote(const proc_id_type proc, const size_type idx) {
         #ifdef MECOM2_ENABLE_DEBUG_ALLTOALL_PTR_SET
         MEFDN_ASSERT(static_cast<size_type>(proc) < num_procs_);
         MEFDN_ASSERT(idx < num_elems_);

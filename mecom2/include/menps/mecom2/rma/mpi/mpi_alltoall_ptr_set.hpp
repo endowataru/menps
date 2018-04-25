@@ -17,7 +17,7 @@ struct mpi_alltoall_ptr_set_policy
     
     using rma_itf_type = mpi_rma;
     
-    using process_id_type = mpi_rma_policy::process_id_type; // TODO
+    using proc_id_type = mpi_rma_policy::proc_id_type;
     using size_type = mpi_rma_policy::size_type;
     
     using element_type = Elem;

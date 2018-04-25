@@ -19,8 +19,8 @@ class mpi_rma_handle;
 struct mpi_rma_handle_policy
 {
     using derived_type = mpi_rma_handle;
+    using proc_id_type = int;
     using size_type = mefdn::size_t;
-    using process_id_type = int;
     
     template <typename T>
     using remote_ptr = T*;
@@ -77,7 +77,6 @@ struct mpi_rma_policy
     using derived_type = mpi_rma;
     using size_type = mefdn::size_t;
     using proc_id_type = int;
-    using process_id_type = proc_id_type; // TODO: deprecated
     
     template <typename T>
     using remote_ptr = T*;

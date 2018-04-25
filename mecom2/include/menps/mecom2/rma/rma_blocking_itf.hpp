@@ -17,14 +17,14 @@ class rma_blocking_itf
     using size_type       = typename P::size_type;
     
 public:
-    using typename base::process_id_type;
+    using typename base::proc_id_type;
     
     template <typename RemotePtr, typename LocalPtr>
     void read(
-        const process_id_type   src_proc
-    ,   RemotePtr&&             src_rptr
-    ,   LocalPtr&&              dest_lptr
-    ,   const size_type         num_elems
+        const proc_id_type  src_proc
+    ,   RemotePtr&&         src_rptr
+    ,   LocalPtr&&          dest_lptr
+    ,   const size_type     num_elems
     ) {
         auto& self = this->derived();
         
@@ -42,10 +42,10 @@ public:
     
     template <typename RemotePtr, typename LocalPtr>
     void write(
-        const process_id_type   dest_proc
-    ,   RemotePtr&&             dest_rptr
-    ,   LocalPtr&&              src_lptr
-    ,   const size_type         num_elems
+        const proc_id_type  dest_proc
+    ,   RemotePtr&&         dest_rptr
+    ,   LocalPtr&&          src_lptr
+    ,   const size_type     num_elems
     ) {
         auto& self = this->derived();
         
@@ -63,10 +63,10 @@ public:
     
     template <typename TargetPtr, typename T>
     T compare_and_swap(
-        const process_id_type   target_proc
-    ,   TargetPtr&&             target_rptr
-    ,   const T                 expected
-    ,   const T                 desired
+        const proc_id_type  target_proc
+    ,   TargetPtr&&         target_rptr
+    ,   const T             expected
+    ,   const T             desired
     ) {
         auto& self = this->derived();
         

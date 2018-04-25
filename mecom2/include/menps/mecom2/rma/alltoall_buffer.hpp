@@ -12,7 +12,7 @@ class alltoall_buffer
     MEFDN_DEFINE_DERIVED(P)
     
     using rma_itf_type = typename P::rma_itf_type;
-    using process_id_type = typename rma_itf_type::process_id_type;
+    using proc_id_type = typename rma_itf_type::proc_id_type;
     
     using element_type = typename P::element_type;
     using size_type = typename P::size_type;
@@ -37,7 +37,7 @@ public:
         return this->ptrs_.local(idx);
     }
     
-    rptr_type remote(const process_id_type proc, const size_type idx) {
+    rptr_type remote(const proc_id_type proc, const size_type idx) {
         return this->ptrs_.remote(proc, idx);
     }
     
