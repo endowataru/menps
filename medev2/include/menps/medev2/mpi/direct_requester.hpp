@@ -4,12 +4,6 @@
 #include <menps/medev2/mpi/mpi_params.hpp>
 #include <exception>
 
-#define MEDEV2_SERIALIZE_MPI_CALLS
-
-#ifdef MEDEV2_SERIALIZE_MPI_CALLS
-    #include <menps/mefdn/mutex.hpp>
-#endif
-
 namespace menps {
 namespace medev2 {
 namespace mpi {
@@ -24,14 +18,17 @@ struct mpi_error : std::exception
 };
 
 #ifdef MEDEV2_SERIALIZE_MPI_CALLS
-    #define MPI_CRITICAL    mefdn::lock_guard<mefdn::mutex> lk(this->mtx_);
+    #define MPI_CRITICAL    unique_lock_type lk(this->mtx_);
 #else
     #define MPI_CRITICAL
 #endif
 
-//template <typename P>
 class direct_requester
 {
+    using ult_itf_type = medev2::default_ult_itf;
+    using mutex_type = typename ult_itf_type::mutex;
+    using unique_lock_type = typename ult_itf_type::unique_mutex_lock;
+    
 public:
     explicit direct_requester(int* const argc, char*** const argv)
     {
@@ -330,7 +327,7 @@ public:
     
     #ifdef MEDEV2_SERIALIZE_MPI_CALLS
 private:
-    mefdn::mutex mtx_;
+    mutex_type mtx_;
     #endif
 };
 
