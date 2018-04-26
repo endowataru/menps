@@ -2,6 +2,7 @@
 #pragma once
 
 #include "mth_interface.hpp"
+#include "barrier.hpp"
 
 namespace menps {
 namespace meult {
@@ -45,6 +46,8 @@ struct ult_policy
     struct async_channel_ {
         typedef async_channel<T>    type;
     };
+    
+    using barrier = mth::barrier;
 };
 
 } // namespace mth
