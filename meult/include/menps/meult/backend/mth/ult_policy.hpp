@@ -40,6 +40,11 @@ struct ult_policy
         typedef typename meult::backend::mth::thread_specific<Policy>   type;
     };
     
+    // Note: The type "P" is used to distinguish thread-local storages with the same type.
+    template <typename P>
+    using thread_specific =
+        typename meult::backend::mth::thread_specific<P>;
+    
     typedef meult::backend::mth::uncond_variable    uncond_variable;
     
     template <typename T>

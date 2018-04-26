@@ -7,6 +7,7 @@
 #include <menps/mefdn/condition_variable.hpp>
 #include <menps/mefdn/thread/spinlock.hpp>
 #include <menps/mefdn/thread/sync_flag.hpp>
+#include <menps/mefdn/thread/barrier.hpp>
 
 #include <menps/mefdn/type_traits.hpp>
 
@@ -118,6 +119,8 @@ private:
 
 template <typename Policy>
 MEFDN_THREAD_LOCAL typename Policy::value_type* thread_specific<Policy>::p_ = 0;
+
+using menps::mefdn::barrier;
 
 } // namespace klt
 } // namespace meult
