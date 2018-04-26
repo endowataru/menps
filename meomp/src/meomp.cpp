@@ -1,7 +1,8 @@
 
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include <menps/mectx/generic/single_ult_worker.hpp>
-#include <menps/mectx/generic/thread_local_worker.hpp>
+//#include <menps/mectx/generic/thread_local_worker.hpp>
+#include <menps/mectx/generic/thread_specific_worker.hpp>
 #include "child_worker.hpp"
 #include "dist_worker.hpp"
 #include "child_worker_group.hpp"
@@ -137,6 +138,8 @@ struct my_worker_base_policy
     using derived_type = my_worker_base;
     using ult_ref_type = my_omp_ult_ref;
     
+    using base_ult_itf_type = medsm2::default_ult_itf;
+    
     using context_type = context_t;
     using transfer_type = transfer_t;
     
@@ -165,7 +168,8 @@ struct my_worker_base_policy
 
 class my_worker_base
     : public mectx::single_ult_worker<my_worker_base_policy>
-    , public mectx::thread_local_worker<my_worker_base_policy>
+    //, public mectx::thread_local_worker<my_worker_base_policy>
+    , public mectx::thread_specific_worker<my_worker_base_policy>
     , public mectx::context_policy
     , public omp_worker_base<my_worker_base_policy>
 {
@@ -244,8 +248,10 @@ struct my_child_worker_group_policy
 {
     using derived_type = my_child_worker_group;
     using child_worker_type = my_child_worker;
-    using worker_thread_type = mefdn::thread;
-    using barrier_type = mefdn::barrier;
+    
+    using ult_itf_type = mecom2::default_ult_itf;
+    using worker_thread_type = typename ult_itf_type::thread;
+    using barrier_type = typename ult_itf_type::barrier;
     
     using worker_base_type = my_worker_base;
 };
