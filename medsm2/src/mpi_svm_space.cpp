@@ -14,9 +14,6 @@
 #include <menps/mecom2/rma/mpi/mpi_alltoall_ptr_set.hpp>
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
-#include <menps/mefdn/thread.hpp>
-#include <menps/mefdn/mutex.hpp>
-#include <menps/mefdn/condition_variable.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -92,11 +89,10 @@ struct dsm_base_policy
     
     using ult_itf_type = medsm2::default_ult_itf;
     
-    using mutex_type = mefdn::mutex;
-    using mutex_unique_lock_type = mefdn::unique_lock<mefdn::mutex>;
-    using cv_type = mefdn::condition_variable;
-    using unique_lock_type = mefdn::unique_lock<mefdn::mutex>;
-    using thread_type = mefdn::thread;
+    using mutex_type = typename ult_itf_type::mutex;
+    using mutex_unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
+    using cv_type = typename ult_itf_type::condition_variable;
+    using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
     
     template <typename T>
     using alltoall_buffer = mpi_alltoall_buffer<T>;
