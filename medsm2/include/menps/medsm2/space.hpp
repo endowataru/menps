@@ -37,6 +37,10 @@ class space
     
     using size_type = typename P::size_type;
     
+    using ult_itf_type = typename P::ult_itf_type;
+    using mutex_type = typename ult_itf_type::mutex;
+    using mutex_unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
+    
 public:
     template <typename Conf>
     explicit space(const Conf& conf)
@@ -165,6 +169,7 @@ public:
         const auto this_proc = com.this_proc_id();
         
         wn_vector_type wn_vec;
+        mutex_type wn_vec_mtx;
         
         // Iterate all of the writable blocks.
         // If the callback returns false,
@@ -182,6 +187,10 @@ public:
                         // The release operation of this block has been completed.
                         
                         if (rel_ret.is_written) {
+                            // Protect the shared array of write notices.
+                            // TODO: It seems that a spinlock is more appropriate.
+                            mutex_unique_lock_type lk(wn_vec_mtx);
+                            
                             // Add to the write notices
                             // because the current process modified this block.
                             wn_vec.push_back(wn_entry_type{
