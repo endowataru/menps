@@ -44,6 +44,15 @@ using remove_extent_t = typename remove_extent<T>::type;
 template <typename T>
 using remove_pointer_t = typename remove_pointer<T>::type;
 
+// "identity" metafunction
+// Proposed in P0887R1
+
+template <typename T>
+struct type_identity { using type = T; };
+
+template <typename T>
+using type_identity_t = typename type_identity<T>::type;
+
 } // namespace mefdn
 } // namespace menps
 
