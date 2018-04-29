@@ -29,7 +29,15 @@ class svm_space
     using blk_id_type = typename P::blk_id_type;
     using sig_id_type = typename P::sig_id_type;
     
-    using thread_type = typename P::thread_type;
+    using ult_itf_type = typename P::ult_itf_type;
+    
+    struct tss_policy {
+        using value_type = derived_type;
+    };
+    
+    using tss_type =
+        typename ult_itf_type::
+            template thread_specific<tss_policy>;
     
 public:
     template <typename Conf>
@@ -51,7 +59,9 @@ public:
             mefdn::make_unique<sigsegv_catcher>(
                 sigsegv_catcher::config{
                     [&] (void* const ptr) {
-                        if (is_enabled_) {
+                        const auto tss_ptr = this->is_enabled_.get();
+                        if (tss_ptr != nullptr) {
+                            MEFDN_ASSERT(tss_ptr == this);
                             return this->try_upgrade(ptr);
                         }
                         else {
@@ -249,10 +259,10 @@ public:
     }
     
     void enable_on_this_thread() {
-        is_enabled_ = true;
+        this->is_enabled_.set(&derived());
     }
     void disable_on_this_thread() {
-        is_enabled_ = false;
+        this->is_enabled_.set(nullptr);
     }
     
 private:
@@ -375,11 +385,8 @@ private:
     thread_type th_;
     #endif
     
-    static MEFDN_THREAD_LOCAL bool is_enabled_;
+    tss_type is_enabled_;
 };
-
-template <typename P>
-MEFDN_THREAD_LOCAL bool svm_space<P>::is_enabled_ = false;
 
 } // namespace medsm2
 } // namespace menps
