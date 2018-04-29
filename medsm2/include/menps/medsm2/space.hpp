@@ -165,7 +165,6 @@ public:
         const auto this_proc = com.this_proc_id();
         
         wn_vector_type wn_vec;
-        mefdn::vector<blk_id_type> non_writable_ids;
         
         // Iterate all of the writable blocks.
         // If the callback returns false,
@@ -185,16 +184,9 @@ public:
                         if (rel_ret.is_written) {
                             // Add to the write notices
                             // because the current process modified this block.
-                            wn_vec.push_back(wn_entry_type{ this_proc, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts });
-                        }
-                        
-                        // Return whether this block is still writable after this release.
-                        if (!rel_ret.is_still_writable) {
-                            // Because this block is invalid or read-only now,
-                            // the subsequent release operations need not to track this block.
-                            // If it becomes writable in the SIGSEGV handler again,
-                            // the write set will correctly manage it in the next release.
-                            non_writable_ids.push_back(blk_id);
+                            wn_vec.push_back(wn_entry_type{
+                                this_proc, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts
+                            });
                         }
                     }
                     else {
@@ -203,6 +195,13 @@ public:
                         // (2) This block is readonly-clean.
                         // (3) This block is pinned.
                     }
+                    
+                    // Return whether this block is still writable after this release.
+                    // If this function returns "false",
+                    // the block will not be tracked in the succeeding releases.
+                    // If it becomes writable in the SIGSEGV handler again,
+                    // the write set will correctly manage it in the next release.
+                    return rel_ret.is_still_writable;
                 }
             );
         
@@ -213,11 +212,7 @@ public:
         // Union the write notice vector and the release signature.
         this->rel_sig_.merge(mefdn::move(wn_vec));
         
-        // Remove the block IDs that were downgraded during this release.
-        this->wr_set_.remove(mefdn::begin(non_writable_ids), mefdn::end(non_writable_ids));
-        
-        // TODO: Atomics are not implemented...
-        
+        // Notify the other threads waiting for the finish of the release fence.
         this->wr_set_.finish_release();
     }
     

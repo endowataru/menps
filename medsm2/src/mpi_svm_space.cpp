@@ -90,6 +90,8 @@ struct dsm_base_policy
     using wn_idx_type = mefdn::size_t;
     using wn_vi_type = mefdn::vector<wn_idx_type>;
     
+    using ult_itf_type = medsm2::default_ult_itf;
+    
     using mutex_type = mefdn::mutex;
     using mutex_unique_lock_type = mefdn::unique_lock<mefdn::mutex>;
     using cv_type = mefdn::condition_variable;

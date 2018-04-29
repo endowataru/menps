@@ -6,6 +6,7 @@
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/vector.hpp>
 #include <unordered_set>
+#include <algorithm>
 
 namespace menps {
 namespace medsm2 {
@@ -14,12 +15,16 @@ template <typename P>
 class wr_set
 {
     using blk_id_type = typename P::blk_id_type;
+    using size_type = typename P::size_type;
     
     using wr_set_gen_type   = typename P::wr_set_gen_type;
+    
+    using ult_itf_type      = typename P::ult_itf_type;
     
     using mutex_type        = typename P::mutex_type;
     using cv_type           = typename P::cv_type;
     using unique_lock_type  = typename P::unique_lock_type;
+    
     
 public:
     wr_set() = default;
@@ -79,28 +84,79 @@ public:
             new_ids = mefdn::move(this->new_ids_);
         }
         
-        // Insert the block IDs to unordered_map.
-        // Duplicated IDs are removed here.
-        this->dirty_ids_.insert(mefdn::begin(new_ids), mefdn::end(new_ids));
+        using mefdn::begin;
+        using mefdn::end;
         
-        // Do the release operations.
-        /*parallel*/ for (const auto& blk_id : this->dirty_ids_) {
-            // Call the release function.
-            func(blk_id);
-        }
+        // Sort the newly added IDs to prepare for the following merge.
+        std::sort(begin(new_ids), end(new_ids));
+        
+        // Preallocate a sufficient space to hold new dirty IDs.
+        mefdn::vector<blk_id_type> new_dirty_ids;
+        new_dirty_ids.reserve(this->dirty_ids_.size() + new_ids.size());
+        
+        // Merge the two sorted arrays for dirty IDs.
+        std::merge(
+            begin(this->dirty_ids_), end(this->dirty_ids_),
+            begin(new_ids), end(new_ids),
+            std::back_inserter(new_dirty_ids)
+        );
+        
+        const auto released_first = begin(new_dirty_ids);
+        
+        // Remove the duplicates from the new ID array.
+        // Note that the container itself still holds the duplicated elements.
+        const auto released_last =
+            std::unique(released_first, end(new_dirty_ids));
+        // TODO: This can be simultaneously processed in the previous merge.
+        
+        const auto num_released =
+            static_cast<size_type>(
+                released_last - released_first
+            );
+        
+        // Allocate an array to hold the dirty states.
+        // std::vector<bool> should not be used here
+        // because its elements cannot be assigned in parallel.
+        const auto dirty_flags =
+            mefdn::make_unique<bool []>(num_released);
+        
+        // Do the release operations in parallel.
+        ult_itf_type::for_loop(
+            ult_itf_type::execution::par
+        ,   0, num_released
+        ,   [&dirty_flags, &new_dirty_ids, &func] (const size_type i) {
+                // Call the callback release function.
+                // The returned values are stored in parallel.
+                dirty_flags[i] = func(new_dirty_ids[i]);
+            }
+        );
+        
+        // Remove non-writable blocks from the dirty ID array.
+        const auto dirty_last =
+            std::remove_if(released_first, released_last,
+                [&released_first, &dirty_flags] (const blk_id_type& blk_id) {
+                    // Determine the index for the ID array.
+                    const auto idx =
+                        static_cast<size_type>(
+                            &blk_id - &*released_first
+                            // TODO: Simplify this pointer operation
+                            //       using "induction" of for-loops.
+                        );
+                    
+                    // Check the corresponding flag.
+                    const auto is_dirty = dirty_flags[idx];
+                    
+                    // Remove if the block is/becomes not dirty now.
+                    // remove_if() removes an element if the returned value is true.
+                    return ! is_dirty;
+                });
+        
+        // Update the container to remove the.elements.
+        new_dirty_ids.erase(dirty_last, end(new_dirty_ids));
+        
+        this->dirty_ids_ = mefdn::move(new_dirty_ids);
         
         return { true };
-    }
-    
-    template <typename BlkIdItr>
-    void remove(const BlkIdItr blk_id_first, const BlkIdItr blk_id_last)
-    {
-        MEFDN_ASSERT(this->is_releasing_);
-        
-        for (auto blk_id_itr = blk_id_first; blk_id_itr != blk_id_last; ++blk_id_itr)
-        {
-            this->dirty_ids_.erase(*blk_id_itr);
-        }
     }
     
     void finish_release()
@@ -124,7 +180,7 @@ private:
     
     mutex_type rel_mtx_;
     cv_type rel_cv_;
-    std::unordered_set<blk_id_type> dirty_ids_;
+    mefdn::vector<blk_id_type> dirty_ids_;
     wr_set_gen_type gen_ = 0;
     bool is_releasing_ = false;
 };
