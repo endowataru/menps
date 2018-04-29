@@ -33,6 +33,7 @@ add_library(meult
     ./src/sm/ult_desc_pool.cpp
     ./src/sm/initializer.cpp
     ./src/scheduler_initializer.cpp
+    ./src/constants.cpp
 )
 target_include_directories(meult
     PUBLIC ./include

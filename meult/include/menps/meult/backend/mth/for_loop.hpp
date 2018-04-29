@@ -3,22 +3,16 @@
 
 #include <menps/meult/backend/mth/thread.hpp>
 #include <menps/mefdn/arithmetic.hpp>
+#include <menps/mefdn/execution.hpp>
 
 namespace menps {
 namespace meult {
 namespace backend {
 namespace mth {
 
-struct parallel_execution_policy { };
-
-namespace /*unnamed*/ {
-
-MEFDN_MAYBE_UNUSED parallel_execution_policy par;
-
-} // unnamed namespace
-
 template <typename I, typename S, typename F>
-void for_loop_strided(parallel_execution_policy /*ignored*/, I first, I last, S stride, F func)
+void for_loop_strided(mefdn::execution::parallel_policy par,
+    I first, I last, S stride, F func)
 {
     const auto diff = last - first;
     

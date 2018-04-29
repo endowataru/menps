@@ -2,6 +2,8 @@
 #pragma once
 
 #include <menps/meult/klt/klt.hpp>
+#include <menps/mefdn/execution.hpp>
+#include <menps/mefdn/for_loop.hpp>
 
 namespace menps {
 namespace meult {
@@ -39,6 +41,27 @@ struct klt_policy
         typename meult::klt::thread_specific<P>;
     
     using barrier = meult::klt::barrier;
+    
+    struct execution
+    {
+        static constexpr mefdn::execution::parallel_policy par{};
+    };
+    
+    template <typename ExecutionPolicy,
+        typename I, typename... Rest>
+    static void for_loop(
+        ExecutionPolicy &&              exec
+    ,   const mefdn::type_identity_t<I> start
+    ,   const I                         finish
+    ,   Rest && ...                     rest
+    ) {
+        // Execute sequentially.
+        mefdn::for_loop(
+            start
+        ,   finish
+        ,   mefdn::forward<Rest>(rest)...
+        );
+    }
 };
 
 namespace klt {

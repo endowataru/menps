@@ -53,6 +53,27 @@ struct ult_policy
     };
     
     using barrier = mth::barrier;
+    
+    struct execution
+    {
+        static constexpr mefdn::execution::parallel_policy par{};
+    };
+    
+    template <typename ExecutionPolicy,
+        typename I, typename... Rest>
+    static void for_loop(
+        ExecutionPolicy &&              exec
+    ,   const mefdn::type_identity_t<I> start
+    ,   const I                         finish
+    ,   Rest && ...                     rest
+    ) {
+        mth::for_loop(
+            mefdn::forward<ExecutionPolicy>(exec)
+        ,   start
+        ,   finish
+        ,   mefdn::forward<Rest>(rest)...
+        );
+    }
 };
 
 } // namespace mth
