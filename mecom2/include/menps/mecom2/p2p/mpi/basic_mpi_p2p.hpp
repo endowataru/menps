@@ -4,6 +4,8 @@
 #include <menps/mecom2/common.hpp>
 #include <menps/mefdn/logger.hpp>
 
+//#define MECOM2_USE_BLOCKING_MPI_P2P
+
 namespace menps {
 namespace mecom2 {
 
@@ -15,6 +17,8 @@ class basic_mpi_p2p
     using proc_id_type = typename P::proc_id_type;
     using size_type  = typename P::size_type;
     using tag_type  = typename P::tag_type;
+    
+    using ult_itf_type = typename P::ult_itf_type;
     
 public:
     void untyped_send(
@@ -28,6 +32,8 @@ public:
         
         const auto comm = self.get_comm();
         
+        #ifdef MECOM2_USE_BLOCKING_MPI_P2P
+        
         mi.send({
             buf
         ,   num_bytes
@@ -35,6 +41,24 @@ public:
         ,   tag
         ,   comm
         });
+        
+        #else
+        
+        MPI_Request req;
+        
+        mi.isend({
+            buf
+        ,   num_bytes
+        ,   MPI_BYTE
+        ,   proc
+        ,   tag
+        ,   comm
+        ,   &req
+        });
+        
+        this->wait(&req);
+        
+        #endif
     }
     
     void untyped_recv(
@@ -48,6 +72,8 @@ public:
         
         const auto comm = self.get_comm();
         
+        #ifdef MECOM2_USE_BLOCKING_MPI_P2P
+        
         mi.recv({
             buf
         ,   num_bytes
@@ -57,6 +83,24 @@ public:
         ,   MPI_STATUS_IGNORE
             // TODO: How to deal with status?
         });
+        
+        #else
+        
+        MPI_Request req;
+        
+        mi.irecv({
+            buf
+        ,   num_bytes
+        ,   MPI_BYTE
+        ,   proc
+        ,   tag
+        ,   comm
+        ,   &req
+        });
+        
+        this->wait(&req);
+        
+        #endif
     }
     
     template <typename T>
@@ -66,18 +110,8 @@ public:
     ,   const T* const      buf
     ,   const size_type     num_elems
     ) {
-        auto& self = this->derived();
-        auto& mi = self.get_mpi_itf();
-        
-        const auto comm = self.get_comm();
-        
-        mi.send({
-            buf
-        ,   num_elems * sizeof(T)
-        ,   proc
-        ,   tag
-        ,   comm
-        });
+        this->untyped_send(proc, tag, buf,
+            num_elems * sizeof(T));
     }
     
     template <typename T>
@@ -87,20 +121,26 @@ public:
     ,   T* const            buf
     ,   const size_type     num_elems
     ) {
+        this->untyped_recv(proc, tag, buf,
+            num_elems * sizeof(T));
+    }
+    
+private:
+    void wait(MPI_Request* const req)
+    {
         auto& self = this->derived();
         auto& mi = self.get_mpi_itf();
         
-        const auto comm = self.get_comm();
-        
-        mi.recv({
-            buf
-        ,   num_elems * sizeof(T)
-        ,   proc
-        ,   tag
-        ,   comm
-        ,   MPI_STATUS_IGNORE
+        while (true) {
+            int flag;
+            MPI_Status status;
+            mi.test({ req, &flag, MPI_STATUS_IGNORE });
             // TODO: How to deal with status?
-        });
+            
+            if (flag != 0) { break; }
+            
+            ult_itf_type::this_thread::yield();
+        }
     }
 };
 

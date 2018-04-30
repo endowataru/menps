@@ -16,6 +16,8 @@ struct mpi_p2p_policy
     using size_type = mefdn::size_t;
     using proc_id_type = int;
     using tag_type = int;
+    
+    using ult_itf_type = default_ult_itf;
 };
 
 class mpi_p2p
