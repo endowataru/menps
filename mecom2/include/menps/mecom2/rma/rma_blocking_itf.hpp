@@ -113,10 +113,31 @@ private:
         {
             mutex_unique_lock_type lk(this->mtx_);
             if (sn - this->oldest_sn_ >= 0) {
+                MEFDN_LOG_VERBOSE(
+                    "msg:Execute RMA flush.\t"
+                    "sn:{}\t"
+                    "oldest_sn:{}\t"
+                    "latest_sn:{}"
+                ,   sn
+                ,   this->oldest_sn_
+                ,   this->latest_sn_
+                );
+                
                 // Execute an actual flush.
                 h.flush();
                 
                 this->oldest_sn_ = this->latest_sn_;
+            }
+            else {
+                MEFDN_LOG_VERBOSE(
+                    "msg:Avoid calling RMA flush.\t"
+                    "sn:{}\t"
+                    "oldest_sn:{}\t"
+                    "latest_sn:{}"
+                ,   sn
+                ,   this->oldest_sn_
+                ,   this->latest_sn_
+                );
             }
         }
     }
