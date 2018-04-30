@@ -19,11 +19,11 @@ struct ult_policy
     struct this_thread
     {
         static void yield() {
-            meult::klt::this_thread::yield();
+            meult::backend::mth::this_thread::yield();
         }
         
         static void detach() {
-            meult::klt::this_thread::detach();
+            meult::backend::mth::this_thread::detach();
         }
     };
     
