@@ -24,7 +24,7 @@ struct mpi_rma_policy_base
     using proc_id_type = int;
     using size_type = mefdn::size_t;
     
-    using rma_sn_type = mefdn::size_t;
+    using rma_sn_type = mefdn::ptrdiff_t;
     
     template <typename T>
     using remote_ptr = T*;

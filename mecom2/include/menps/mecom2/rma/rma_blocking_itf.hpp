@@ -27,6 +27,9 @@ private:
     
     using rma_sn_type = typename P::rma_sn_type;
     
+    MEFDN_STATIC_ASSERT_MSG(mefdn::is_signed<rma_sn_type>::value,
+        "rma_sn_type must be signed");
+    
 public:
     template <typename RemotePtr, typename LocalPtr>
     void read(
