@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/medev2/mpi/mpi_params.hpp>
+#include <menps/mefdn/logger.hpp>
 #include <exception>
 
 namespace menps {
@@ -83,6 +84,18 @@ public:
     
     void isend(const isend_params& p)
     {
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Isend().\t"
+            "buf:0x{:x}\t"
+            "count:{}\t"
+            "dest_rank:{}\t"
+            "tag:{}\t"
+        ,   reinterpret_cast<mefdn::intptr_t>(p.buf)
+        ,   p.count
+        ,   p.dest_rank
+        ,   p.tag
+        );
+        
         MPI_CRITICAL
         
         mpi_error::check(
@@ -100,6 +113,18 @@ public:
     
     void irecv(const irecv_params& p)
     {
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Isend().\t"
+            "buf:0x{:x}\t"
+            "count:{}\t"
+            "src_rank:{}\t"
+            "tag:{}\t"
+        ,   reinterpret_cast<mefdn::intptr_t>(p.buf)
+        ,   p.count
+        ,   p.src_rank
+        ,   p.tag
+        );
+        
         MPI_CRITICAL
         
         mpi_error::check(
@@ -117,6 +142,12 @@ public:
     
     void test(const test_params& p)
     {
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Test().\t"
+            "request:0x{:x}"
+        ,   reinterpret_cast<mefdn::intptr_t>(p.request)
+        );
+        
         MPI_CRITICAL
         
         mpi_error::check(
