@@ -114,7 +114,7 @@ public:
     void irecv(const irecv_params& p)
     {
         MEFDN_LOG_VERBOSE(
-            "msg:Call MPI_Isend().\t"
+            "msg:Call MPI_Irecv().\t"
             "buf:0x{:x}\t"
             "count:{}\t"
             "src_rank:{}\t"
