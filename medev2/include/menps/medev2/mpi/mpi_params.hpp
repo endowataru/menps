@@ -7,6 +7,15 @@ namespace menps {
 namespace medev2 {
 namespace mpi {
 
+struct send_params
+{
+    const void* buf;
+    int         num_bytes;
+    int         dest_rank;
+    int         tag;
+    MPI_Comm    comm;
+};
+
 struct recv_params
 {
     void*       buf;
@@ -17,13 +26,33 @@ struct recv_params
     MPI_Status* status_result;
 };
 
-struct send_params
+struct isend_params
 {
-    const void* buf;
-    int         num_bytes;
-    int         dest_rank;
-    int         tag;
-    MPI_Comm    comm;
+    const void*     buf;
+    int             count;
+    MPI_Datatype    datatype;
+    int             dest_rank;
+    int             tag;
+    MPI_Comm        comm;
+    MPI_Request*    request;
+};
+
+struct irecv_params
+{
+    void*           buf;
+    int             count;
+    MPI_Datatype    datatype;
+    int             src_rank;
+    int             tag;
+    MPI_Comm        comm;
+    MPI_Request*    request;
+};
+
+struct test_params
+{
+    MPI_Request*    request;
+    int*            flag_result;
+    MPI_Status*     status_result;
 };
 
 struct probe_params

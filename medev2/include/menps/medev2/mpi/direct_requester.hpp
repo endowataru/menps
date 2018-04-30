@@ -81,6 +81,53 @@ public:
         );
     }
     
+    void isend(const isend_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Isend(
+                p.buf       // buf
+            ,   p.count     // count
+            ,   p.datatype  // datatype
+            ,   p.dest_rank // dest
+            ,   p.tag       // tag
+            ,   p.comm      // comm
+            ,   p.request   // request
+            )
+        );
+    }
+    
+    void irecv(const irecv_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Irecv(
+                p.buf       // buf
+            ,   p.count     // count
+            ,   p.datatype  // datatype
+            ,   p.src_rank  // source
+            ,   p.tag       // tag
+            ,   p.comm      // comm
+            ,   p.request   // request
+            )
+        );
+    }
+    
+    void test(const test_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Test(
+                p.request       // request
+            ,   p.flag_result   // flag
+            ,   p.status_result // status
+            )
+        );
+    }
+    
     void probe(const probe_params& p)
     {
         MPI_CRITICAL
