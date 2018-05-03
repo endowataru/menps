@@ -319,6 +319,67 @@ public:
         );
     }
     
+    void rput(const rput_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Rput(
+                p.origin_addr
+            ,   p.origin_count
+            ,   p.origin_datatype
+            ,   p.target_rank
+            ,   p.target_disp
+            ,   p.target_count
+            ,   p.target_datatype
+            ,   p.win
+            ,   p.request
+            )
+        );
+    }
+    
+    void rget(const rget_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Rget(
+                p.origin_addr
+            ,   p.origin_count
+            ,   p.origin_datatype
+            ,   p.target_rank
+            ,   p.target_disp
+            ,   p.target_count
+            ,   p.target_datatype
+            ,   p.win
+            ,   p.request
+            )
+        );
+    }
+    
+    void rget_accumulate(const rget_accumulate_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Rget_accumulate(
+                p.origin_addr
+            ,   p.origin_count
+            ,   p.origin_datatype
+            ,   p.result_addr
+            ,   p.result_count
+            ,   p.result_datatype
+            ,   p.target_rank
+            ,   p.target_disp
+            ,   p.target_count
+            ,   p.target_datatype
+            ,   p.op
+            ,   p.win
+            ,   p.request
+            )
+        );
+    }
+    
     void win_flush_all(const win_flush_all_params& p)
     {
         MPI_CRITICAL
@@ -333,6 +394,15 @@ public:
         
         mpi_error::check(
             MPI_Win_flush_local_all(p.win)
+        );
+    }
+    
+    void win_flush_local(const win_flush_local_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Win_flush_local(p.rank, p.win)
         );
     }
     

@@ -135,8 +135,57 @@ struct fetch_and_op_params
 };
 #endif
 
+struct rput_params
+{
+    const void*     origin_addr;
+    int             origin_count;
+    MPI_Datatype    origin_datatype;
+    int             target_rank;
+    MPI_Aint        target_disp;
+    int             target_count;
+    MPI_Datatype    target_datatype;
+    MPI_Win         win;
+    MPI_Request*    request;
+};
+
+struct rget_params
+{
+    void*           origin_addr;
+    int             origin_count;
+    MPI_Datatype    origin_datatype;
+    int             target_rank;
+    MPI_Aint        target_disp;
+    int             target_count;
+    MPI_Datatype    target_datatype;
+    MPI_Win         win;
+    MPI_Request*    request;
+};
+
+struct rget_accumulate_params
+{
+    const void*     origin_addr;
+    int             origin_count;
+    MPI_Datatype    origin_datatype;
+    void*           result_addr;
+    int             result_count;
+    MPI_Datatype    result_datatype;
+    int             target_rank;
+    MPI_Aint        target_disp;
+    int             target_count;
+    MPI_Datatype    target_datatype;
+    MPI_Op          op;
+    MPI_Win         win;
+    MPI_Request*    request;
+};
+
 struct win_flush_all_params
 {
+    MPI_Win     win;
+};
+
+struct win_flush_local_params
+{
+    int         rank;
     MPI_Win     win;
 };
 
