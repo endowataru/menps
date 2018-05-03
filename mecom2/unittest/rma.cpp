@@ -115,13 +115,15 @@ TEST(Rma, Cas)
         const mefdn::uint64_t expected = cur_proc;
         const mefdn::uint64_t desired  = cur_proc + 1;
         
-        const auto result =
-            rma->compare_and_swap(
-                0
-            ,   buf.remote(0, 0)
-            ,   expected
-            ,   desired
-            );
+        mefdn::uint64_t result = 0;
+        
+        rma->compare_and_swap(
+            0
+        ,   buf.remote(0, 0)
+        ,   &expected
+        ,   &desired
+        ,   &result
+        );
         
         if (result == expected)
             break;

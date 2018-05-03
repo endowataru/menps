@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include <menps/mecom2/rma/rma_typed_allocator.hpp>
+#include <menps/mecom2/rma/mpi/basic_mpi_rma.hpp>
 #include <menps/mecom2/rma/basic_unique_local_ptr.hpp>
 #include <menps/mecom2/rma/mpi/basic_mpi_rma_handle.hpp>
 #include <menps/mecom2/rma/rma_blocking_itf.hpp>
-#include <menps/mecom2/rma/rma_coro_itf.hpp>
 #include <menps/medev2/mpi.hpp>
 #include <menps/mefdn/memory/distance_in_bytes.hpp>
+
 
 namespace menps {
 namespace mecom2 {
@@ -34,6 +34,13 @@ struct mpi_rma_policy_base
     
     template <typename Ptr>
     using element_type_of = mefdn::remove_pointer_t<Ptr>;
+    
+    using request_type = MPI_Request;
+    
+    template <typename T>
+    static MPI_Datatype get_mpi_datatype() {
+        return medev2::mpi::get_datatype<T>()();
+    }
     
     static MPI_Aint to_mpi_aint(const void* const p) noexcept {
         return reinterpret_cast<MPI_Aint>(p);
@@ -101,17 +108,22 @@ struct mpi_rma_policy : mpi_rma_policy_base
 };
 
 class mpi_rma
+    #if 1
+    : public basic_mpi_rma<mpi_rma_policy>
+    #else
     : public rma_blocking_itf<mpi_rma_policy>
-    , public rma_coro_itf<mpi_rma_policy>
-    , public rma_typed_allocator<mpi_rma_policy>
+    #endif
 {
     using policy_type = mpi_rma_policy;
     
 public:
     using mpi_itf_type = policy_type::mpi_itf_type;
     
+    #if 1
+    #else
     using rma_blocking_itf<mpi_rma_policy>::proc_id_type;
     // TODO: Remove this temporary solution
+    #endif
     
     template <typename Conf>
     explicit mpi_rma(Conf&& conf)
