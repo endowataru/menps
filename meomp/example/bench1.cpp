@@ -12,11 +12,11 @@ int meomp_main(int argc, char** argv)
     using menps::mefdn::get_cpu_clock;
     using menps::mefdn::cpu_clock_t;
     
-    average_accumulator<cpu_clock_t> acc;
+    const auto num_trials = std::atoi(argv[1]);
     
     #pragma omp parallel
     {
-        const auto num_trials = std::atoi(argv[1]);
+        average_accumulator<cpu_clock_t> acc;
         
         for (int i = 0; i < num_trials; ++i) {
             const auto t0 = get_cpu_clock();
@@ -27,9 +27,9 @@ int meomp_main(int argc, char** argv)
             
             acc.add(t1-t0);
         }
+        
+        print("result: {}\n", acc.summary());
     }
-    
-    print("result: {}\n", acc.summary());
     
     return 0;
 }
