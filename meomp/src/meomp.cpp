@@ -775,7 +775,7 @@ int main(int argc, char* argv[])
     
     const auto num_procs = coll.get_num_procs();
     
-    const mefdn::size_t stack_size = 128<<10; // TODO
+    const mefdn::size_t stack_size = 16<<10; // TODO
     
     const auto stack_ptr_start =
         sp.coll_alloc_seg((num_procs*meomp::my_dist_worker::get_threads_per_proc()+1) * stack_size, stack_size);
