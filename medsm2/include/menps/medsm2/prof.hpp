@@ -14,9 +14,13 @@ namespace medsm2 {
 #define MEDSM2_PROF_KINDS(x) \
     x(fence) \
     x(release) \
-    x(rel_merge) \
+    x(lock_global) \
+    x(begin_tx) \
+    x(tx_merge) \
+    x(end_tx) \
+    x(unlock_global) \
+    x(barrier_allgather) \
     x(barrier_acq) \
-    x(barrier_allgather)
 
 #define DEFINE_PROF_KIND(name) name,
 

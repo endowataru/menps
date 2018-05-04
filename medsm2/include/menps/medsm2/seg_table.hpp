@@ -446,14 +446,22 @@ private:
     ,   const lock_info&    info
     ,   Func&&              func
     ) {
+        const auto p_lock_global = prof::start();
+        
         // Lock the latest owner globally.
         // This is achieved by following the graph of probable owners.
         const auto glk_ret =
             info.lock_tbl.lock_global(com, info.blk_id, info.blk_pos, info.lk);
         
+        prof::finish(prof_kind::lock_global, p_lock_global);
+        
+        const auto p_begin_tx = prof::start();
+       
         // Begin a transaction.
         const auto bt_ret =
             info.dir_tbl.begin_transaction(com, info.blk_pos, info.lk, glk_ret);
+        
+        prof::finish(prof_kind::begin_tx, p_begin_tx);
         
         const auto p_mg = prof::start();
         
@@ -470,15 +478,23 @@ private:
             mg_ret.is_written = true;
         }
         
-        prof::finish(prof_kind::rel_merge, p_mg);
+        prof::finish(prof_kind::tx_merge, p_mg);
+        
+        const auto p_end_tx = prof::start();
         
         // Unlock the global lock.
         const auto et_ret =
             info.dir_tbl.end_transaction(com, rd_set,
                 info.blk_id, info.blk_pos, info.lk, bt_ret, mg_ret);
         
+        prof::finish(prof_kind::end_tx, p_end_tx);
+        
+        const auto p_unlock_global = prof::start();
+        
         // Unlock the global lock.
         info.lock_tbl.unlock_global(com, info.blk_id, info.blk_pos, info.lk, glk_ret, et_ret);
+        
+        prof::finish(prof_kind::unlock_global, p_unlock_global);
         
         return { glk_ret, bt_ret, mg_ret, et_ret };
     }
