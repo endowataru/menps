@@ -321,6 +321,20 @@ public:
     
     void rput(const rput_params& p)
     {
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Rput().\t"
+            "origin_addr:0x{:x}\t"
+            "origin_count:{}\t"
+            "target_rank:{}\t"
+            "target_disp:0x{:x}\t"
+            "target_count:{}\t"
+        ,   reinterpret_cast<mefdn::intptr_t>(p.origin_addr)
+        ,   p.origin_count
+        ,   p.target_rank
+        ,   p.target_disp
+        ,   p.target_count
+        );
+        
         MPI_CRITICAL
         
         mpi_error::check(
@@ -340,6 +354,20 @@ public:
     
     void rget(const rget_params& p)
     {
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Rget().\t"
+            "origin_addr:0x{:x}\t"
+            "origin_count:{}\t"
+            "target_rank:{}\t"
+            "target_disp:0x{:x}\t"
+            "target_count:{}\t"
+        ,   reinterpret_cast<mefdn::intptr_t>(p.origin_addr)
+        ,   p.origin_count
+        ,   p.target_rank
+        ,   p.target_disp
+        ,   p.target_count
+        );
+        
         MPI_CRITICAL
         
         mpi_error::check(
