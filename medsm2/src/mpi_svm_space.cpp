@@ -125,7 +125,7 @@ struct dsm_base_policy
     using sig_id_type = mefdn::size_t;
     
     using wr_count_type = size_type;
-    static const wr_count_type wr_count_threshold = 5; // TODO: Magic number
+    static const wr_count_type wr_count_threshold = 2; // TODO: Magic number
     
     static constexpr int get_tag_from_blk_id(const blk_id_type blk_id) noexcept {
         // TODO: This will probably works,
