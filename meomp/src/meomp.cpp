@@ -16,6 +16,7 @@
 #include <menps/mefdn/arithmetic.hpp>
 #include <stdarg.h>
 #include <menps/meomp.hpp>
+#include <menps/medsm2/prof.hpp>
 
 #if 0
 extern void* g_watch_ptr;
@@ -790,6 +791,16 @@ int main(int argc, char* argv[])
     
     // Do a barrier before exiting.
     g_coll->barrier();
+    
+    #ifdef MEDSM2_ENABLE_PROF
+    for (coll_t::proc_id_type proc = 0; proc < num_procs; ++proc) {
+        if (coll.this_proc_id() == proc) {
+            fmt::print("- proc: {}\n", proc);
+            std::cout << medsm2::prof::to_string("    - ");
+        }
+        g_coll->barrier();
+    }
+    #endif
     
     return 0;
 }

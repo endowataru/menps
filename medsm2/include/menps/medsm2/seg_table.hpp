@@ -7,6 +7,7 @@
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/external/fmt.hpp>
+#include <menps/medsm2/prof.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -454,6 +455,8 @@ private:
         const auto bt_ret =
             info.dir_tbl.begin_transaction(com, info.blk_pos, info.lk, glk_ret);
         
+        const auto p_mg = prof::start();
+        
         // Merge the writes from both the current process and the latest owner.
         /*const*/ auto mg_ret =
             info.data_tbl.release_merge(com, info.blk_pos, info.lk, bt_ret);
@@ -466,6 +469,8 @@ private:
             // Set this flag if the atomic operation changed this block.
             mg_ret.is_written = true;
         }
+        
+        prof::finish(prof_kind::rel_merge, p_mg);
         
         // Unlock the global lock.
         const auto et_ret =

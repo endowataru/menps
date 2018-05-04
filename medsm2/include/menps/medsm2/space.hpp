@@ -6,6 +6,7 @@
 #include <menps/mefdn/vector.hpp>
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/logger.hpp>
+#include <menps/medsm2/prof.hpp>
 
 //#define MEDSM2_FORCE_SELF_INVALIDATE_ALL
 
@@ -177,6 +178,8 @@ public:
         const auto wrs_ret =
             this->wr_set_.start_release_for_all_blocks(
                 [&] (const blk_id_type blk_id) {
+                    const auto p = prof::start();
+                    
                     // Write the data to the public area
                     // and migrate from the old owner if necessary.
                     // TODO: Make this a coroutine.
@@ -204,6 +207,8 @@ public:
                         // (2) This block is readonly-clean.
                         // (3) This block is pinned.
                     }
+                    
+                    prof::finish(prof_kind::release, p);
                     
                     // Return whether this block is still writable after this release.
                     // If this function returns "false",
@@ -237,8 +242,14 @@ public:
         
         const auto num_procs = com.get_num_procs();
         
-        // Release all of the preceding writes in this thread.
-        this->fence_release();
+        {
+            const auto p = prof::start();
+            
+            // Release all of the preceding writes in this thread.
+            this->fence_release();
+            
+            prof::finish(prof_kind::fence, p);
+        }
         
         const auto sig_size = this->rel_sig_.get_max_size_in_bytes();
         
@@ -249,19 +260,31 @@ public:
         const auto all_buf =
             mefdn::make_unique_uninitialized<mefdn::byte []>(sig_size * num_procs);
         
-        // Collect the signatures from all of the processes.
-        coll.allgather(this_buf.get(), all_buf.get(), sig_size);
+        {
+            const auto p = prof::start();
+            
+            // Collect the signatures from all of the processes.
+            coll.allgather(this_buf.get(), all_buf.get(), sig_size);
+            
+            prof::finish(prof_kind::barrier_allgather, p);
+        }
         
         MEFDN_LOG_DEBUG("msg:Exchanged signatures for barrier.");
         
-        // Invalidate all of the written blocks in the write notices.
-        /*parallel*/ for (proc_id_type proc_id = 0; proc_id < num_procs; ++proc_id) {
-            if (proc_id != this_proc) {
-                // TODO: Remove deserialization.
-                auto sig = sig_buffer_type::deserialize_from(&all_buf[sig_size * proc_id], sig_size);
-                
-                this->acquire_sig(sig);
+        {
+            const auto p = prof::start();
+            
+            // Invalidate all of the written blocks in the write notices.
+            /*parallel*/ for (proc_id_type proc_id = 0; proc_id < num_procs; ++proc_id) {
+                if (proc_id != this_proc) {
+                    // TODO: Remove deserialization.
+                    auto sig = sig_buffer_type::deserialize_from(&all_buf[sig_size * proc_id], sig_size);
+                    
+                    this->acquire_sig(sig);
+                }
             }
+            
+            prof::finish(prof_kind::barrier_acq, p);
         }
         
         #ifdef MEDSM2_FORCE_SELF_INVALIDATE_ALL

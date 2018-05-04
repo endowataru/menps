@@ -2,6 +2,15 @@ cmake_minimum_required(VERSION 3.0)
 
 project(medsm2)
 
+# Show messages when invoking CMake
+message(STATUS "Generate menps/medsm2/config.h ...")
+
+option(MEDSM2_ENABLE_PROF "Enable profiling" FALSE)
+
+# Generate config.h
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/menps/medsm2/config.h)
+
 
 add_library(medsm2
     ./src/sigsegv_catcher.cpp
@@ -9,6 +18,7 @@ add_library(medsm2
 )
 target_include_directories(medsm2
     PUBLIC  ./include
+    PUBLIC  ${CMAKE_CURRENT_BINARY_DIR}
     PRIVATE ./src
 )
 target_link_libraries(medsm2
