@@ -11,6 +11,8 @@ ExternalProject_Add(UCX
     #    <SOURCE_DIR>/test/mpi/Makefile.am
     
     CONFIGURE_COMMAND <SOURCE_DIR>/contrib/configure-release --prefix=<INSTALL_DIR>
+        --without-cuda
+        # TODO: including <cuda.h> fails on ReedBush
     
     #--with-mpi
     #    --disable-numa

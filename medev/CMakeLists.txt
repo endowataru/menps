@@ -11,13 +11,6 @@ include(CheckSymbolExists)
 
 # Options
 
-if(APPLE)
-    # UCX is not supported in macOS.
-    option(MEDEV_DEVICE_UCX_ENABLED "Enable UCX" FALSE)
-else()
-    option(MEDEV_DEVICE_UCX_ENABLED "Enable UCX" TRUE)
-endif()
-
 set(MEDEV_ULT_NAMESPACE "::menps::meult::klt" CACHE STRING "Namespace for ult" )
 
 # Platform check
@@ -117,9 +110,7 @@ if(${MEDEV_DEVICE_IBV_SUPPORTED})
     )
 endif()
 
-if(${MEDEV_DEVICE_UCX_ENABLED})
-    include(cmake/ucx.cmake)
-    
+if(${MEDEV2_DEVICE_UCX_ENABLED})
     # UCT
     
     add_library(medev-uct

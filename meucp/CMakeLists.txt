@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-if(${MEDEV_DEVICE_UCX_ENABLED})
+if(${MEDEV2_DEVICE_UCX_ENABLED})
 
 project(meucp CXX)
 
