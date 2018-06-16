@@ -89,6 +89,7 @@ private:
         }
     }
     
+protected: // XXX: for meuct's workaround
     thread_type th_;
 };
 
