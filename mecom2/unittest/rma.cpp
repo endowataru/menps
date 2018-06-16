@@ -7,6 +7,14 @@
 #include <menps/mefdn/coro/sfc.hpp>
 #include <menps/mecom2/com/com_worker.hpp>
 
+#ifdef MEDEV2_DEVICE_UCX_ENABLED
+#include <menps/mecom2/rma/ucp/ucp_rma.hpp>
+#include <menps/mecom2/rma/ucp/ucp_alltoall_buffer.hpp>
+
+//#include <menps/mecom2/com/uct/uct_worker_set.hpp>
+#include <menps/mecom2/rma/uct/uct_rma.hpp>
+#endif
+
 TEST(Rma, Basic)
 {
     /*const*/ auto win =
@@ -40,26 +48,24 @@ TEST(Rma, Basic)
     g_mi->win_free(&win);
 }
 
-TEST(Rma, Alltoall)
-{
-    const auto win =
-        g_mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD });
-    
-    g_mi->win_lock_all({ 0, win });
-    
-    auto rma = mecom2::make_mpi_rma(*g_mi, win);
+
+namespace /*unnamed*/ {
+
+template <typename A2Abuffer, typename Rma>
+void do_alltoall_test(Rma& rma) {
     auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
     
     using proc_id_type = mecom2::mpi_coll::proc_id_type;
     const auto cur_proc = coll.this_proc_id();
     const auto num_procs = coll.get_num_procs();
     
-    mecom2::mpi_alltoall_buffer<int> buf;
-    buf.coll_make(*rma, coll, num_procs);
+    A2Abuffer buf;
+    buf.coll_make(rma, coll, num_procs);
     
+    #if 0
     // 1st
     {
-        auto h = rma->make_handle();
+        auto h = rma.make_handle();
         for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
             const int x = cur_proc + 1;
             h.write_nb(proc, buf.remote(proc, cur_proc), &x, 1);
@@ -75,12 +81,15 @@ TEST(Rma, Alltoall)
     }
     
     coll.barrier();
+    #endif
     
     // 2nd
     {
         for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
             const int x = cur_proc + 2;
-            rma->write(proc, buf.remote(proc, cur_proc), &x, 1);
+            /*auto x = rma.template make_private_uninitialized<int []>(1);
+            x[0] = cur_proc + 2;*/
+            rma.buf_write(proc, buf.remote(proc, cur_proc), &x, 1);
         }
     }
     
@@ -91,6 +100,104 @@ TEST(Rma, Alltoall)
         ASSERT_EQ(proc + 2, x);
     }
 }
+
+} // unnamed namespace
+
+TEST(Rma, AlltoallMpi)
+{
+    const auto win =
+        g_mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD });
+    
+    g_mi->win_lock_all({ 0, win });
+    
+    auto rma = mecom2::make_mpi_rma(*g_mi, win);
+    
+    do_alltoall_test<mecom2::mpi_alltoall_buffer<int>>(*rma);
+}
+
+#ifdef MEDEV2_DEVICE_UCX_ENABLED
+
+TEST(Rma, AlltoallUcp)
+{
+    auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
+    
+    using mecom2::rma_ucp_policy;
+    rma_ucp_policy::ucp_facade_type uf;
+    
+    auto conf = rma_ucp_policy::config_type::read(uf, nullptr, nullptr);
+    
+    ucp_params ctx_params = ucp_params();
+    ctx_params.field_mask = UCP_PARAM_FIELD_FEATURES;
+    ctx_params.features   = UCP_FEATURE_RMA;
+    
+    auto ctx = rma_ucp_policy::context_type::init(uf, &ctx_params, conf.get());
+    
+    ucp_worker_params_t wk_params = ucp_worker_params_t();
+    auto wk_set = mecom2::make_ucp_worker_set(uf, ctx, wk_params, coll);
+    
+    auto rma = mecom2::make_ucp_rma(uf, ctx, *wk_set);
+    
+    do_alltoall_test<mecom2::ucp_alltoall_buffer<int>>(*rma);
+}
+
+TEST(Rma, AlltoallUct)
+{
+    auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
+    
+    
+    // TODO
+    const char tl_name[] = "rc_mlx5";
+    const char dev_name[] = "mlx5_0:1";
+    
+    #if 0
+    using mecom2::rma_uct_policy;
+    rma_uct_policy::uct_facade_type uf;
+    
+    auto md = rma_uct_policy::open_md(uf, tl_name, dev_name);
+    
+    auto iface_conf =
+        rma_uct_policy::iface_config_type::read(
+            uf, md.get(), tl_name, nullptr, nullptr);
+    
+    uct_iface_params_t iface_params = uct_iface_params_t();
+    iface_params.open_mode = UCT_IFACE_OPEN_MODE_DEVICE;
+    iface_params.mode.device.tl_name = tl_name;
+    iface_params.mode.device.dev_name = dev_name;
+    iface_params.stats_root = ucs_stats_get_root();
+    iface_params.rx_headroom = 0;
+    
+    auto wk_set =
+        mecom2::make_uct_worker_set(uf, md, iface_conf.get(), &iface_params, coll);
+    
+    auto rma = mecom2::make_uct_rma(uf, md, *wk_set);
+    #endif
+    
+    auto rma_res = mecom2::make_uct_rma_resource(tl_name, dev_name, coll);
+    
+    do_alltoall_test<mecom2::uct_alltoall_buffer<int>>(*rma_res->rma);
+    
+    #if 0
+    
+    auto conf = rma_uct_policy::config_type::read(uf, nullptr, nullptr);
+    
+    uct_params ctx_params = uct_params();
+    ctx_params.field_mask = uct_PARAM_FIELD_FEATURES;
+    ctx_params.features   = uct_FEATURE_RMA;
+    
+    auto ctx = rma_uct_policy::context_type::init(uf, &ctx_params, conf.get());
+    
+    uct_worker_params_t wk_params = uct_worker_params_t();
+    auto wk_set = mecom2::make_uct_worker_set(uf, ctx, wk_params, coll);
+    
+    auto rma = mecom2::make_uct_rma(uf, ctx, *wk_set);
+    
+    do_alltoall_test<mecom2::uct_alltoall_buffer<int>>(*rma);
+    #endif
+}
+
+
+#endif
+
 
 TEST(Rma, Cas)
 {

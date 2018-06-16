@@ -9,6 +9,7 @@ target_include_directories(mecom2
 )
 target_link_libraries(mecom2
     INTERFACE medev2
+    INTERFACE $<$<BOOL:${MECOM2_USE_MEUCT}>:meuct>
 )
 
 
