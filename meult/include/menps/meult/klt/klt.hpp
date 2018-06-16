@@ -95,7 +95,7 @@ inline T suspend_and_call(Func&& func, Args&&... args)
 using mefdn::sync_flag;
 
 inline mefdn::size_t get_num_workers() noexcept {
-    return -1;
+    return std::thread::hardware_concurrency();
 }
 
 

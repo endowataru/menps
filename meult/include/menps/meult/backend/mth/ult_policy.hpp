@@ -52,6 +52,9 @@ struct ult_policy
         typedef async_channel<T>    type;
     };
     
+    template <typename T>
+    using async_channel = mth::async_channel<T>;
+    
     using barrier = mth::barrier;
     
     struct execution
@@ -73,6 +76,15 @@ struct ult_policy
         ,   finish
         ,   mefdn::forward<Rest>(rest)...
         );
+    }
+    
+    static mefdn::size_t get_worker_num() noexcept
+    {
+        return myth_get_worker_num();
+    }
+    static mefdn::size_t get_num_workers() noexcept
+    {
+        return mth::get_num_workers();
     }
 };
 

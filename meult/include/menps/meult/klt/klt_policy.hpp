@@ -62,6 +62,10 @@ struct klt_policy
         ,   mefdn::forward<Rest>(rest)...
         );
     }
+    
+    static mefdn::size_t get_num_workers() noexcept {
+        return klt::get_num_workers();
+    }
 };
 
 namespace klt {
