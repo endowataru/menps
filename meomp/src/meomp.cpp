@@ -716,8 +716,35 @@ int main(int argc, char* argv[])
     
     mi->win_lock_all({ 0, win });
     
-    auto rma = mecom2::make_mpi_rma(*mi, win);
     auto coll = mecom2::make_mpi_coll(*mi, coll_comm);
+    
+    #if defined(MEDSM2_USE_UCT_RMA)
+        // TODO
+        const char tl_name[] = "rc_mlx5";
+        //const char tl_name[] = "rc";
+        const char dev_name[] = "mlx5_0:1";
+        auto rma_res = mecom2::make_uct_rma_resource(tl_name, dev_name, coll);
+        auto* rma = rma_res->rma.get();
+    
+    #elif defined(MEDSM2_USE_UCP_RMA)
+        using mecom2::rma_ucp_policy;
+        rma_ucp_policy::ucp_facade_type uf;
+        
+        auto conf = rma_ucp_policy::config_type::read(uf, nullptr, nullptr);
+        
+        ucp_params ctx_params = ucp_params();
+        ctx_params.field_mask = UCP_PARAM_FIELD_FEATURES;
+        ctx_params.features   = UCP_FEATURE_RMA | UCP_FEATURE_AMO64;
+        
+        auto ctx = rma_ucp_policy::context_type::init(uf, &ctx_params, conf.get());
+        
+        ucp_worker_params_t wk_params = ucp_worker_params_t();
+        auto wk_set = mecom2::make_ucp_worker_set(uf, ctx, wk_params, coll);
+        
+        auto rma = mecom2::make_ucp_rma(uf, ctx, *wk_set);
+    #else
+        auto rma = mecom2::make_mpi_rma(*mi, win);
+    #endif
     auto p2p = mecom2::make_mpi_p2p(*mi, p2p_comm);
     #endif
     
@@ -730,8 +757,12 @@ int main(int argc, char* argv[])
     g_sp = &sp;
     
     {
+        const auto global_var_blk_size = 4 << 10; // TODO
+        
         const auto data_begin = reinterpret_cast<mefdn::byte*>(&_dsm_data_begin);
         const auto data_end   = reinterpret_cast<mefdn::byte*>(&_dsm_data_end);
+        
+        MEFDN_ASSERT(reinterpret_cast<mefdn::uintptr_t>(data_begin) % global_var_blk_size == 0);
         
         const auto data_size = data_end - data_begin;
         
@@ -761,7 +792,7 @@ int main(int argc, char* argv[])
             memcpy(init_temp.get(), data_begin, data_size);
             #endif
             
-            sp.coll_alloc_global_var_seg(data_size, 4096 /*TODO*/, data_begin);
+            sp.coll_alloc_global_var_seg(data_size, global_var_blk_size, data_begin);
             
             if (g_coll->this_proc_id() == 0) {
                 sp.enable_on_this_thread();

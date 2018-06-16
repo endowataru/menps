@@ -2,12 +2,26 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
+#if defined(MEDSM2_USE_UCT_RMA)
+#include <menps/mecom2/rma/uct/uct_rma.hpp>
+#elif defined(MEDSM2_USE_UCP_RMA)
+#include <menps/mecom2/rma/ucp/ucp_rma.hpp>
+#else
 #include <menps/mecom2/rma/mpi/mpi_rma.hpp>
+#endif
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
 
 namespace menps {
 namespace medsm2 {
+
+#if defined(MEDSM2_USE_UCT_RMA)
+using mpi_svm_rma_type = mecom2::uct_rma;
+#elif defined(MEDSM2_USE_UCP_RMA)
+using mpi_svm_rma_type = mecom2::ucp_rma;
+#else
+using mpi_svm_rma_type = mecom2::mpi_rma;
+#endif
 
 class mpi_svm_space
 {
@@ -16,7 +30,7 @@ class mpi_svm_space
     
 public:
     explicit mpi_svm_space(
-        mecom2::mpi_rma&    rma
+        mpi_svm_rma_type&   rma
     ,   mecom2::mpi_coll&   coll
     ,   mecom2::mpi_p2p&    p2p
     );

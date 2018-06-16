@@ -10,24 +10,26 @@
 #include <menps/medsm2/svm/svm_seg_table.hpp>
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include <menps/mecom2/rma/mpi/mpi_rma.hpp>
+#ifdef MEDSM2_USE_UCP_RMA
+#include <menps/mecom2/rma/ucp/ucp_alltoall_buffer.hpp>
+#include <menps/mecom2/rma/ucp/ucp_alltoall_ptr_set.hpp>
+#else
 #include <menps/mecom2/rma/mpi/mpi_alltoall_buffer.hpp>
 #include <menps/mecom2/rma/mpi/mpi_alltoall_ptr_set.hpp>
+#endif
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
 
 namespace menps {
 namespace medsm2 {
 
-using mecom2::mpi_rma;
 using mecom2::mpi_coll;
 using mecom2::mpi_p2p;
-using mecom2::mpi_alltoall_buffer;
-using mecom2::mpi_alltoall_ptr_set;
 
 class mpi_com_itf
 {
 public:
-    using rma_itf_type = mpi_rma;
+    using rma_itf_type = mpi_svm_rma_type;
     using coll_itf_type = mpi_coll;
     using p2p_itf_type = mpi_p2p;
     
@@ -46,7 +48,7 @@ public:
     int this_proc_id() { return proc_id_; }
     int get_num_procs() { return num_procs_; }
     
-    mpi_rma& get_rma() { return rma_; }
+    rma_itf_type& get_rma() { return rma_; }
     mpi_coll& get_coll() { return coll_; }
     mpi_p2p& get_p2p() { return this->p2p_; }
     
@@ -94,11 +96,22 @@ struct dsm_base_policy
     using cv_type = typename ult_itf_type::condition_variable;
     using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
     
+    #if defined(MEDSM2_USE_UCT_RMA)
     template <typename T>
-    using alltoall_buffer = mpi_alltoall_buffer<T>;
-    
+    using alltoall_buffer = mecom2::uct_alltoall_buffer<T>;
     template <typename T>
-    using alltoall_ptr_set = mpi_alltoall_ptr_set<T>;
+    using alltoall_ptr_set = mecom2::uct_alltoall_ptr_set<T>;
+    #elif defined(MEDSM2_USE_UCP_RMA)
+    template <typename T>
+    using alltoall_buffer = mecom2::ucp_alltoall_buffer<T>;
+    template <typename T>
+    using alltoall_ptr_set = mecom2::ucp_alltoall_ptr_set<T>;
+    #else
+    template <typename T>
+    using alltoall_buffer = mecom2::mpi_alltoall_buffer<T>;
+    template <typename T>
+    using alltoall_ptr_set = mecom2::mpi_alltoall_ptr_set<T>;
+    #endif
     
     struct wn_entry_type {
         mpi_com_itf::proc_id_type   home_proc;
@@ -164,9 +177,9 @@ using my_space = svm_space<my_space_policy>;
 class mpi_svm_space::impl
 {
     struct com_conf {
-        mpi_rma&    rma;
-        mpi_coll&   coll;
-        mpi_p2p&    p2p;
+        mpi_svm_rma_type&   rma;
+        mpi_coll&           coll;
+        mpi_p2p&            p2p;
     };
     
     struct my_space_conf {
@@ -176,7 +189,7 @@ class mpi_svm_space::impl
     };
 public:
     explicit impl(
-        mecom2::mpi_rma&    rma
+        mpi_svm_rma_type&   rma
     ,   mecom2::mpi_coll&   coll
     ,   mecom2::mpi_p2p&    p2p
     )
@@ -201,7 +214,7 @@ private:
 };
 
 mpi_svm_space::mpi_svm_space(
-    mecom2::mpi_rma&    rma
+    mpi_svm_rma_type&   rma
 ,   mecom2::mpi_coll&   coll
 ,   mecom2::mpi_p2p&    p2p
 )
