@@ -9,6 +9,7 @@
 #include <menps/medsm2/prof.hpp>
 
 //#define MEDSM2_FORCE_SELF_INVALIDATE_ALL
+#define MEDSM2_SPACE_WN_USE_SPINLOCK
 
 namespace menps {
 namespace medsm2 {
@@ -41,6 +42,7 @@ class space
     using ult_itf_type = typename P::ult_itf_type;
     using mutex_type = typename ult_itf_type::mutex;
     using mutex_unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
+    using spinlock_type = typename ult_itf_type::spinlock;
     
 public:
     template <typename Conf>
@@ -170,7 +172,11 @@ public:
         const auto this_proc = com.this_proc_id();
         
         wn_vector_type wn_vec;
+        #ifdef MEDSM2_SPACE_WN_USE_SPINLOCK
+        spinlock_type wn_vec_lock;
+        #else
         mutex_type wn_vec_mtx;
+        #endif
         
         // Iterate all of the writable blocks.
         // If the callback returns false,
@@ -190,15 +196,26 @@ public:
                         // The release operation of this block has been completed.
                         
                         if (rel_ret.is_written) {
+                            const auto p_push_wn = prof::start();
+                            
+                            {
                             // Protect the shared array of write notices.
                             // TODO: It seems that a spinlock is more appropriate.
+                            #ifdef MEDSM2_SPACE_WN_USE_SPINLOCK
+                            mefdn::lock_guard<spinlock_type> lk(wn_vec_lock);
+                            #else
                             mutex_unique_lock_type lk(wn_vec_mtx);
+                            #endif
                             
                             // Add to the write notices
                             // because the current process modified this block.
                             wn_vec.push_back(wn_entry_type{
                                 this_proc, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts
                             });
+                            
+                            }
+                            
+                            prof::finish(prof_kind::push_wn, p_push_wn);
                         }
                     }
                     else {

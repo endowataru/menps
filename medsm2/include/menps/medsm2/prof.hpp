@@ -21,6 +21,7 @@ namespace medsm2 {
     x(unlock_global) \
     x(barrier_allgather) \
     x(barrier_acq) \
+    x(push_wn)
 
 #define DEFINE_PROF_KIND(name) name,
 
