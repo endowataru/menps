@@ -18,6 +18,7 @@ template <typename P>
 class blk_dir_table
 {
     using com_itf_type = typename P::com_itf_type;
+    using rma_itf_type = typename com_itf_type::rma_itf_type;
     using proc_id_type = typename com_itf_type::proc_id_type;
     using atomic_int_type = typename P::atomic_int_type;
     
@@ -402,9 +403,11 @@ public:
         const auto ge_rptr = this->ges_.remote(owner, blk_pos);
         
         // Load the latest timestamps.
-        global_entry owner_ge; // uninitialized
-        rma.read(owner, ge_rptr, &owner_ge, 1);
+        const auto owner_ge_buf =
+            rma.buf_read(owner, ge_rptr, 1);
         // TODO: It's better if this read is overlapped with other communications.
+        
+        const auto owner_ge = *owner_ge_buf.get();
         
         const auto owner_wr_ts = owner_ge.wr_ts;
         const auto owner_rd_ts = owner_ge.rd_ts;
@@ -539,7 +542,12 @@ public:
                     this->ges_.remote(new_owner /* == old_owner */, blk_pos);
                 
                 // Write the new read timestamp to the owner.
-                rma.write(new_owner /* == old_owner */, &ge_rptr->rd_ts, &new_rd_ts, 1);
+                rma.buf_write(
+                    new_owner /* == old_owner */
+                ,   rma_itf_type::member(ge_rptr, &global_entry::rd_ts)
+                ,   &new_rd_ts
+                ,   1
+                );
             }
         }
         

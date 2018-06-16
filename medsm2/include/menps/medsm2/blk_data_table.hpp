@@ -42,22 +42,24 @@ public:
     template <typename Conf>
     void coll_make(const Conf& conf)
     {
-        this->priv_buf_ = static_cast<mefdn::byte*>(conf.priv_buf);
+        const auto priv = static_cast<mefdn::byte*>(conf.priv_buf);
+        
+        // Attach the private buffer.
+        // TODO: This buffer only works as a local buffer of RDMA.
+        this->priv_ptr_ = conf.com.get_rma().attach(priv, priv + conf.seg_size);
         
         const auto pub = static_cast<mefdn::byte*>(conf.pub_buf);
         
         // Attach the public buffer.
-        conf.com.get_rma().attach(pub, pub + conf.seg_size);
+        this->pub_ptr_ = conf.com.get_rma().attach(pub, pub + conf.seg_size);
         
-        this->pub_buf_.coll_make(conf.com.get_rma(), conf.com.get_coll(), pub, conf.seg_size);
+        this->pub_buf_.coll_make(conf.com.get_rma(), conf.com.get_coll(), this->pub_ptr_, conf.seg_size);
     }
     
     void finalize(com_itf_type& com)
     {
-        void* const pub = pub_buf_.local(0);
-        
         // Detach the public buffer.
-        com.get_rma().detach(pub);
+        com.get_rma().detach(this->pub_ptr_);
     }
     
     void* get_pub_ptr() const noexcept {
@@ -85,18 +87,15 @@ public:
             if (is_dirty) {
                 // Merge the diff in the read.
                 
+                // Read the public data of the home process into a temporary buffer.
                 const auto home_pub_buf =
-                    rma.template make_unique_uninitialized<mefdn::byte []>(blk_size);
+                    rma.buf_read(
+                        home_proc
+                    ,   this->get_other_pub_ptr(home_proc, blk_pos)
+                    ,   blk_size
+                    );
                 
                 const auto home_pub = home_pub_buf.get();
-                
-                // Read the public data of the home process into a temporary buffer.
-                rma.read(
-                    home_proc
-                ,   this->get_other_pub_ptr(home_proc, blk_pos)
-                ,   home_pub_buf.get()
-                ,   blk_size
-                );
                 
                 const auto my_pub = this->get_my_pub_ptr(blk_pos);
                 
@@ -132,7 +131,8 @@ public:
         if (needs_twin) {
             // Copy the private data to the public data.
             // This is a preparation for releasing this block later.
-            std::copy(my_priv, my_priv + blk_size, my_pub);
+            std::memcpy(my_pub, my_priv, blk_size);
+            //std::copy(my_priv, my_priv + blk_size, my_pub);
         }
         
         // Call mprotect(PROT_READ | PROT_WRITE).
@@ -186,7 +186,7 @@ public:
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             if (is_written) {
             #endif
-                // Copy to the private data.
+                // Copy the private data to the public data.
                 std::memcpy(my_pub, my_priv, blk_size);
                 //std::copy(my_priv, my_priv + blk_size, my_pub);
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
@@ -197,17 +197,17 @@ public:
             #endif
         }
         else {
-            // Create a temporary buffer.
-            // TODO: Reuse this buffer.
-            const auto other_pub_buf =
-                rma.template make_unique_uninitialized<mefdn::byte []>(blk_size);
-            
-            const auto other_pub = other_pub_buf.get();
-            
             const auto cur_owner = glk_ret.owner;
             
             // Read the public data from cur_owner.
-            rma.read(cur_owner, this->get_other_pub_ptr(cur_owner, blk_pos), other_pub, blk_size);
+            const auto other_pub_buf =
+                rma.buf_read(
+                    cur_owner
+                ,   this->get_other_pub_ptr(cur_owner, blk_pos)
+                ,   blk_size
+                );
+            
+            const auto other_pub = other_pub_buf.get();
             
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             if (is_written) {
@@ -485,10 +485,11 @@ private:
         return *reinterpret_cast<T*>(ret_pi);
     }
     
-    mefdn::byte* get_my_priv_ptr(const blk_pos_type blk_pos) {
+    typename rma_itf_type::template local_ptr<mefdn::byte>
+    get_my_priv_ptr(const blk_pos_type blk_pos) {
         auto& self = this->derived();
         const auto blk_size = self.get_blk_size();
-        return &this->priv_buf_[blk_size * blk_pos];
+        return this->priv_ptr_ + (blk_size * blk_pos);
     }
     typename rma_itf_type::template local_ptr<mefdn::byte>
     get_my_pub_ptr(const blk_pos_type blk_pos) const noexcept {
@@ -504,10 +505,14 @@ private:
         return this->pub_buf_.remote(proc, blk_size * blk_pos);
     }
     
-    mefdn::byte* priv_buf_ = nullptr;
+    typename rma_itf_type::template local_ptr<mefdn::byte>
+        priv_ptr_;
     
     typename P::template alltoall_ptr_set<mefdn::byte>
         pub_buf_;
+    
+    typename rma_itf_type::template public_ptr<mefdn::byte>
+        pub_ptr_;
 };
 
 } // namespace medsm2

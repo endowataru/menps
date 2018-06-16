@@ -240,8 +240,12 @@ public:
                 while (true) {
                     const auto glk_rptr_2 = this->glks_.remote(prob_proc, blk_pos);
                     
-                    atomic_int_type lock_val = 0;
-                    rma.read(prob_proc, glk_rptr_2, &lock_val, 1);
+                    // Read the link.
+                    // TODO: Reduce this allocation.
+                    const auto lock_buf =
+                        rma.buf_read(prob_proc, glk_rptr_2, 1);
+                    
+                    const auto lock_val = *lock_buf;
                     
                     const auto expected_2 = this->make_owned_lock_val(prob_proc);
                     if (lock_val == expected_2) {
@@ -369,7 +373,8 @@ public:
                     this->make_linked_lock_val(new_owner /* == cur_proc */);
                 
                 // Assign a link to the old owner process.
-                rma.write(old_owner, glk_rptr, &new_lock_val, 1);
+                // TODO: Reduce this allocation.
+                rma.buf_write(old_owner, glk_rptr, &new_lock_val, 1);
                 
                 // TODO: This will create a circular dependency temporarily.
             }
@@ -397,7 +402,7 @@ public:
                 this->make_owned_lock_val(new_owner /* == old_owner */);
             
             // Set the owner as unlocked.
-            rma.write(new_owner /* == old_owner */, glk_rptr, &new_lock_val, 1);
+            rma.buf_write(new_owner /* == old_owner */, glk_rptr, &new_lock_val, 1);
         }
         #endif
     }

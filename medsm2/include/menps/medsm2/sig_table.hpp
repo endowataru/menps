@@ -50,20 +50,16 @@ public:
         
         auto& rma = com.get_rma();
         
-        // Allocate a temporary buffer for reading the signature.
-        // TODO: Reuse this buffer.
+        // Read the signature data.
+        // TODO: Reduce this allocation.
         const auto buf =
-            rma.template make_unique_uninitialized<mefdn::byte []>(sl.sig_bytes);
+            rma.buf_read(
+                sl.proc
+            ,   sl.sig_rptr
+            ,   sl.sig_bytes
+            );
         
         const auto buf_ptr = buf.get();
-        
-        // Read the signature data.
-        rma.read(
-            sl.proc
-        ,   sl.sig_rptr
-        ,   buf_ptr
-        ,   sl.sig_bytes
-        );
         
         // Unlock the signature.
         this->unlock(com, sl);
@@ -86,20 +82,16 @@ public:
         
         auto& rma = com.get_rma();
         
-        // Allocate a temporary buffer for reading the signature.
-        // TODO: Reuse this buffer.
+        // Read the signature data.
+        // TODO: Reduce this allocation.
         const auto buf =
-            rma.template make_unique_uninitialized<mefdn::byte []>(sl.sig_bytes);
+            rma.buf_read(
+                sl.proc
+            ,   sl.sig_rptr
+            ,   sl.sig_bytes
+            );
         
         const auto buf_ptr = buf.get();
-        
-        // Read the signature data.
-        rma.read(
-            sl.proc
-        ,   sl.sig_rptr
-        ,   buf_ptr
-        ,   sl.sig_bytes
-        );
         
         // Deserialize the buffer.
         const auto tbl_sig = sig_buffer_type::deserialize_from(buf_ptr, sl.sig_bytes);
@@ -112,7 +104,7 @@ public:
         const auto ser_buf = merged_sig.serialize(sl.sig_bytes);
         
         // Write the signature data.
-        rma.write(
+        rma.buf_write(
             sl.proc
         ,   sl.sig_rptr
         ,   ser_buf.get()
@@ -191,7 +183,7 @@ private:
         
         // Unlock by writing zero to the lock variable.
         // TODO: Use atomic write (MPI_Accumulate(MPI_REPLACE)).
-        rma.write(sl.proc, sl.lk_rptr, &zero, 1);
+        rma.buf_write(sl.proc, sl.lk_rptr, &zero, 1);
     }
     
     size_type num_sigs_ = 0;
