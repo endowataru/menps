@@ -2,9 +2,10 @@
 #pragma once
 
 #include <menps/mecom2/rma/mpi/basic_mpi_rma.hpp>
-#include <menps/mecom2/rma/basic_unique_local_ptr.hpp>
+#include <menps/mecom2/rma/basic_unique_public_ptr.hpp>
 #include <menps/mecom2/rma/mpi/basic_mpi_rma_handle.hpp>
 #include <menps/mecom2/rma/rma_blocking_itf.hpp>
+#include <menps/mecom2/rma/rma_private_heap_alloc.hpp>
 #include <menps/medev2/mpi.hpp>
 #include <menps/mefdn/memory/distance_in_bytes.hpp>
 
@@ -28,9 +29,10 @@ struct mpi_rma_policy_base
     
     template <typename T>
     using remote_ptr = T*;
-    
     template <typename T>
     using local_ptr = T*;
+    template <typename T>
+    using public_ptr = T*;
     
     template <typename Ptr>
     using element_type_of = mefdn::remove_pointer_t<Ptr>;
@@ -79,25 +81,28 @@ private:
 class mpi_rma;
 
 template <typename T>
-struct mpi_unique_local_ptr_policy {
-    using derived_type = basic_unique_local_ptr<mpi_unique_local_ptr_policy>;
+struct mpi_unique_public_ptr_policy {
+    using derived_type = basic_unique_public_ptr<mpi_unique_public_ptr_policy>;
     //using resource_type = T*;
     using resource_type = mefdn::remove_extent_t<T> *; // TODO
     
-    using deleter_type = unique_local_ptr_deleter<mpi_unique_local_ptr_policy>;
+    using deleter_type = unique_public_ptr_deleter<mpi_unique_public_ptr_policy>;
     
     using allocator_type = mpi_rma;
 };
 
 template <typename T>
-using mpi_unique_local_ptr = basic_unique_local_ptr<mpi_unique_local_ptr_policy<T>>;
+using mpi_unique_public_ptr = basic_unique_public_ptr<mpi_unique_public_ptr_policy<T>>;
 
 struct mpi_rma_policy : mpi_rma_policy_base
 {
     using derived_type = mpi_rma;
     
     template <typename T>
-    using unique_local_ptr = mpi_unique_local_ptr<T>;
+    using unique_local_ptr = mefdn::unique_ptr<T>;
+    
+    template <typename T>
+    using unique_public_ptr = mpi_unique_public_ptr<T>;
     
     template <typename U, typename T>
     static U* static_cast_to(T* const p) noexcept {
@@ -113,11 +118,17 @@ class mpi_rma
     #else
     : public rma_blocking_itf<mpi_rma_policy>
     #endif
+    , public rma_private_heap_alloc<mpi_rma_policy>
 {
     using policy_type = mpi_rma_policy;
     
 public:
     using mpi_itf_type = policy_type::mpi_itf_type;
+    
+    template <typename U, typename T>
+    static U* member(T* const p, U (T::* const q)) noexcept {
+        return &(p->*q);
+    }
     
     #if 1
     #else
@@ -155,7 +166,8 @@ public:
         delete[] static_cast<mefdn::byte*>(p);
     }
     
-    void* attach(void* const first, void* const last) {
+    template <typename T>
+    T* attach(T* const first, T* const last) {
         const auto size = mefdn::distance_in_bytes(first, last);
         this->req_.win_attach({ win_, first, size });
         return first;
@@ -163,6 +175,17 @@ public:
     
     void detach(void* const first) {
         this->req_.win_detach({ win_, first });
+    }
+    
+    size_type serialized_size_in_bytes(void* /*ptr*/) {
+        return sizeof(void*);
+    }
+    void serialize(void* const ptr, void* const buf) {
+        *reinterpret_cast<void**>(buf) = ptr;
+    }
+    template <typename T>
+    T* deserialize(proc_id_type /*proc*/, const void* const buf) {
+        return *reinterpret_cast<T* const *>(buf);
     }
     
     void progress()

@@ -45,7 +45,20 @@ private:
     alltoall_ptr_set<P> ptrs_;
     
     typename rma_itf_type::
-        template unique_local_ptr<element_type []> lptr_;
+        template unique_public_ptr<element_type []> lptr_;
+};
+
+template <typename Rma, typename Elem>
+struct alltoall_buffer_policy
+{
+    using derived_type = alltoall_buffer<alltoall_buffer_policy>;
+    
+    using rma_itf_type = Rma;
+    
+    using proc_id_type = typename rma_itf_type::proc_id_type;
+    using size_type = typename rma_itf_type::size_type;
+    
+    using element_type = Elem;
 };
 
 } // namespace mecom2

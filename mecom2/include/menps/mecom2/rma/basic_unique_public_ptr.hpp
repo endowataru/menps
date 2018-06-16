@@ -11,16 +11,16 @@ namespace menps {
 namespace mecom2 {
 
 template <typename P>
-class unique_local_ptr_deleter
+class unique_public_ptr_deleter
 {
     using allocator_type = typename P::allocator_type;
     using resource_type = typename P::resource_type;
     
 public:
-    unique_local_ptr_deleter() noexcept
+    unique_public_ptr_deleter() noexcept
         : alloc_(nullptr) { }
     
-    /*implicit*/ unique_local_ptr_deleter(allocator_type& alloc)
+    /*implicit*/ unique_public_ptr_deleter(allocator_type& alloc)
         : alloc_(&alloc) { }
     
     void operator() (resource_type p) const {
@@ -33,7 +33,7 @@ private:
 };
 
 template <typename P>
-class basic_unique_local_ptr
+class basic_unique_public_ptr
     : public mefdn::basic_unique_resource<P>
 {
     MEFDN_DEFINE_DERIVED(P)

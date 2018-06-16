@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/rma/rma_typed_itf.hpp>
+#include <menps/mecom2/rma/rma_pass_buf_copier.hpp>
 #include <menps/mecom2/rma/rma_req_block_itf.hpp>
 #include <menps/mecom2/rma/rma_flush_block_itf.hpp>
 #include <menps/mecom2/rma/rma_typed_allocator.hpp>
@@ -20,6 +21,7 @@ class basic_mpi_rma
     // XXX: GCC 4.8 doesn't accept casting from a protected base class ?
     , public rma_coro_itf<P>
     , public rma_typed_allocator<P>
+    , public rma_pass_buf_copier<P>
 {
     MEFDN_DEFINE_DERIVED(P)
     
@@ -36,7 +38,9 @@ public:
     template <typename T>
     using local_ptr = typename P::template local_ptr<T>;
     template <typename T>
-    using unique_local_ptr = typename P::template unique_local_ptr<T>;
+    using public_ptr = typename P::template public_ptr<T>;
+    template <typename T>
+    using unique_public_ptr = typename P::template unique_public_ptr<T>;
     
     // MPI_Rput()
     using rma_req_block_itf<P>::untyped_write;

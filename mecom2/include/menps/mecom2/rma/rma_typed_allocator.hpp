@@ -14,7 +14,7 @@ struct rma_typed_allocator_helper;
 
 template <typename P, typename T>
 struct rma_typed_allocator_helper<P, T []> {
-    using array_type = typename P::template unique_local_ptr<T []>;
+    using array_type = typename P::template unique_public_ptr<T []>;
 };
 
 } // namespace detail
@@ -41,7 +41,7 @@ public:
         // Note: Use () instead of {} to support GCC 4.x (buggy versions).
         new (p) element_type[n] ();
         
-        return typename P::template unique_local_ptr<T>(
+        return typename P::template unique_public_ptr<T>(
             P::template static_cast_to<element_type>(p)
         ,   self
         );
@@ -57,7 +57,7 @@ public:
         const auto size = n * sizeof(element_type);
         const auto p = self.untyped_allocate(size);
         
-        return typename P::template unique_local_ptr<T>(
+        return typename P::template unique_public_ptr<T>(
             P::template static_cast_to<element_type>(p)
         ,   self
         );

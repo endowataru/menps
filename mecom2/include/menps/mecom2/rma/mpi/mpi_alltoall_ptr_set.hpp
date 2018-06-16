@@ -7,27 +7,11 @@
 namespace menps {
 namespace mecom2 {
 
-template <typename Elem>
-class mpi_alltoall_ptr_set;
+// TODO: Remove this header.
 
 template <typename Elem>
-struct mpi_alltoall_ptr_set_policy
-{
-    using derived_type = mpi_alltoall_ptr_set<Elem>;
-    
-    using rma_itf_type = mpi_rma;
-    
-    using proc_id_type = mpi_rma_policy::proc_id_type;
-    using size_type = mpi_rma_policy::size_type;
-    
-    using element_type = Elem;
-};
-
-
-template <typename Elem>
-class mpi_alltoall_ptr_set
-    : public alltoall_ptr_set<mpi_alltoall_ptr_set_policy<Elem>>
-{ };
+using mpi_alltoall_ptr_set =
+    alltoall_ptr_set<alltoall_ptr_set_policy<mpi_rma, Elem>>;
 
 } // namespace mecom2
 } // namespace menps
