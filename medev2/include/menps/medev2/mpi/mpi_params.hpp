@@ -86,12 +86,24 @@ struct allgather_params
 
 struct alltoall_params
 {
-    const void* src;
-    void*       dest;
-    int         num_bytes;
-    MPI_Comm    comm;
+    const void*     sendbuf;
+    int             sendcount;
+    MPI_Datatype    sendtype;
+    void*           recvbuf;
+    int             recvcount;
+    MPI_Datatype    recvtype;
+    MPI_Comm        comm;
 };
 
+struct allreduce_params
+{
+    const void*     sendbuf;
+    void*           recvbuf;
+    int             count;
+    MPI_Datatype    datatype;
+    MPI_Op          op;
+    MPI_Comm        comm;
+};
 
 struct get_params
 {

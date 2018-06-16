@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/coll/mpi/basic_mpi_coll.hpp>
+#include <menps/medev2/mpi/mpi_datatype.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -13,6 +14,11 @@ struct mpi_coll_policy
     using derived_type = mpi_coll;
     using size_type = mefdn::size_t;
     using proc_id_type = int;
+    
+    template <typename T>
+    static MPI_Datatype get_mpi_datatype() {
+        return medev2::mpi::get_datatype<T>()();
+    }
 };
 
 class mpi_coll

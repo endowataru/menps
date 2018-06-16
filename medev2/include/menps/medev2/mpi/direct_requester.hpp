@@ -230,6 +230,37 @@ public:
             )
         );
     }
+    void alltoall(const alltoall_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Alltoall(
+                p.sendbuf
+            ,   p.sendcount
+            ,   p.sendtype
+            ,   p.recvbuf
+            ,   p.recvcount
+            ,   p.recvtype
+            ,   p.comm
+            )
+        );
+    }
+    void allreduce(const allreduce_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Allreduce(
+                p.sendbuf
+            ,   p.recvbuf
+            ,   p.count
+            ,   p.datatype
+            ,   p.op
+            ,   p.comm
+            )
+        );
+    }
     
     int get_count(const MPI_Status& status)
     {

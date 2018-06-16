@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/coll/coll_typed.hpp>
+#include <menps/medev2/mpi.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -93,7 +94,48 @@ public:
         ,   num_bytes
         );
         
-        mi.alltoall({ src_ptr, dest_ptr, num_bytes, comm });
+        mi.alltoall({
+            src_ptr
+        ,   static_cast<int>(num_bytes)
+        ,   MPI_BYTE
+        ,   dest_ptr
+        ,   static_cast<int>(num_bytes)
+        ,   MPI_BYTE
+        ,   comm
+        });
+    }
+    
+    // TODO: Replace this function with more general one
+    template <typename T>
+    void allreduce_max(
+        const T* const  src_ptr
+    ,   T* const        dest_ptr
+    ,   const size_type num_elems
+    ) {
+        auto& self = this->derived();
+        auto& mi = self.get_mpi_interface();
+        const auto comm = self.get_communicator();
+        
+        MEFDN_LOG_VERBOSE(
+            "msg:Call MPI_Allreduce().\t"
+            "src_ptr:0x{:x}\t"
+            "dest_ptr:0x{:x}\t"
+            "num_elems:{}\t"
+        ,   reinterpret_cast<mefdn::intptr_t>(src_ptr)
+        ,   reinterpret_cast<mefdn::intptr_t>(dest_ptr)
+        ,   num_elems
+        );
+        
+        const auto datatype = P::template get_mpi_datatype<T>();
+        
+        mi.allreduce({
+            src_ptr
+        ,   dest_ptr
+        ,   static_cast<int>(num_elems)
+        ,   datatype
+        ,   MPI_MAX
+        ,   comm
+        });
     }
 };
 
