@@ -146,6 +146,7 @@ public:
     
     rd_ts_type make_new_rd_ts(const wr_ts_type wr_ts, const rd_ts_type rd_ts)
     {
+        const unique_lock_type lk(this->mtx_);
         // TODO: Provide a good prediction for a lease value of each block.
         return std::max(std::max(wr_ts, this->min_wr_ts_) + P::constants_type::lease_ts, rd_ts);
     }
