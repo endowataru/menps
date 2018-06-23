@@ -64,6 +64,13 @@ public:
         return *self;
     }
     
+    // Note: This member doesn't do the null check.
+    static derived_type* get_current_worker_ptr()
+    {
+        auto& t = get_tss();
+        return t.get();
+    }
+    
     void check_current_worker()
     {
         MEFDN_ASSERT(this == &get_current_worker());
