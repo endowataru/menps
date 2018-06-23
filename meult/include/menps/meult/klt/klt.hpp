@@ -14,6 +14,8 @@
 #include <menps/meult/async/async_status.hpp>
 #include <menps/meult/async/async_atomic_channel.hpp>
 
+#include <menps/meult/klt/emulated_uncond_variable.hpp>
+
 namespace menps {
 namespace meult {
 namespace klt {

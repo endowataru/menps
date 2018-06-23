@@ -29,11 +29,14 @@ public:
     ) {
         auto& self = this->derived();
         
-        self.initialize_on_this_thread();
-        
-        self.execute(
-            [func, data, this] {
+        self.start_worker(
+            ult_ref_type::make_root()
+        ,   self.make_work_ult()
+        ,   [func, data, &wg, this] {
                 auto& self2 = this->derived();
+                auto& sp = wg.get_dsm_space();
+                
+                sp.enable_on_this_thread();
                 
                 MEFDN_LOG_DEBUG(
                     "msg:Entering parallel region on child worker.\t"
@@ -46,6 +49,8 @@ public:
                 // Enter the code block inside the parallel region.
                 func(data);
                 
+                sp.disable_on_this_thread();
+                
                 // Exit the parallel region in the child worker.
                 // The context of the child worker is abandoned.
                 self2.exit_parallel();
@@ -56,18 +61,16 @@ public:
         
         while (true)
         {
-            const auto& cmd = self.get_cmd_info();
+            auto cmd = self.wait_for_cmd();
             
             if (!this->execute_command(wg, cmd)) {
                 break;
             }
             
-            self.reset_cmd_info();
-            
-            self.resume();
+            self.reset_cmd();
         }
         
-        self.finalize_on_this_thread();
+        self.end_worker();
     }
     
 private:
@@ -89,6 +92,15 @@ private:
                 // Exit this function.
                 MEFDN_LOG_VERBOSE("msg:Exiting parallel region on child worker.");
                 return false;
+            
+            #ifdef MEOMP_SEPARATE_WORKER_THREAD
+            case cmd_code_type::try_upgrade: {
+                if (!wg.get_dsm_space().try_upgrade(cmd.data)) {
+                    abort(); // TODO
+                }
+                break;
+            }
+            #endif
             
             default:
                 // Fatal error.

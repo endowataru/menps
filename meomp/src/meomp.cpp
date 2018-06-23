@@ -1,12 +1,11 @@
 
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include <menps/mectx/generic/single_ult_worker.hpp>
-//#include <menps/mectx/generic/thread_local_worker.hpp>
 #include <menps/mectx/generic/thread_specific_worker.hpp>
 #include "child_worker.hpp"
 #include "dist_worker.hpp"
 #include "child_worker_group.hpp"
-#include "omp_worker_base.hpp"
+#include "omp_worker.hpp"
 #include <menps/mectx/context_policy.hpp>
 #include <menps/mefdn/disable_aslr.hpp>
 #include <menps/mefdn/profiling/clock.hpp> // get_cpu_clock
@@ -17,6 +16,10 @@
 #include <stdarg.h>
 #include <menps/meomp.hpp>
 #include <menps/medsm2/prof.hpp>
+
+#ifdef MEOMP_SEPARATE_WORKER_THREAD
+#include <menps/medsm2/svm/sigsegv_catcher.hpp>
+#endif
 
 #if 0
 extern void* g_watch_ptr;
@@ -71,10 +74,64 @@ private:
 namespace menps {
 namespace meomp {
 
-class my_worker_base;
+struct my_worker_base_policy;
+
+using my_worker_base = omp_worker<my_worker_base_policy>;
 
 using context_t = mectx::context<my_worker_base*>;
 using transfer_t = mectx::transfer<my_worker_base*>;
+
+class my_omp_ult_ref;
+
+struct my_tss_worker_policy
+{
+    using derived_type = my_worker_base;
+    #ifdef MEOMP_SEPARATE_WORKER_THREAD
+    // Kernel threads are used in order to manage
+    // signal handlers separately for each OpenMP worker thread.
+    using base_ult_itf_type = meult::klt_policy;
+    #else
+    using base_ult_itf_type = medsm2::default_ult_itf;
+    #endif
+};
+
+struct my_worker_base_policy
+{
+    using derived_type = my_worker_base;
+    
+    using single_ult_worker_type = mectx::single_ult_worker<my_worker_base_policy>;
+    using ult_switcher_type = mectx::ult_switcher<my_worker_base_policy>;
+    using thread_specific_worker_type = mectx::thread_specific_worker<my_tss_worker_policy>;
+    using context_policy_type = mectx::context_policy;
+    
+    using ult_ref_type = my_omp_ult_ref;
+    
+    using worker_ult_itf_type = my_tss_worker_policy::base_ult_itf_type;
+    
+    using context_type = context_t;
+    using transfer_type = transfer_t;
+    
+    enum class cmd_code_type {
+        none = 0
+    ,   barrier
+    ,   start_parallel
+    ,   end_parallel
+    ,   exit_parallel
+    ,   exit_program
+    #ifdef MEOMP_SEPARATE_WORKER_THREAD
+    ,   try_upgrade
+    #endif
+    };
+    
+    using omp_func_type = void (*)(void*);
+    using omp_data_type = void*;
+    
+    struct cmd_info_type {
+        cmd_code_type   code;
+        omp_func_type   func;
+        omp_data_type   data;
+    };
+};
 
 class my_omp_ult_ref
 {
@@ -134,83 +191,6 @@ private:
     context_t ctx_{};
 };
 
-struct my_worker_base_policy
-{
-    using derived_type = my_worker_base;
-    using ult_ref_type = my_omp_ult_ref;
-    
-    using base_ult_itf_type = medsm2::default_ult_itf;
-    
-    using context_type = context_t;
-    using transfer_type = transfer_t;
-    
-    enum class cmd_code_type {
-        none = 0
-    ,   barrier
-    #ifdef MEOMP_DISABLE_PARALLEL_START
-    ,   do_parallel
-    #else
-    ,   start_parallel
-    ,   end_parallel
-    #endif
-    ,   exit_parallel
-    ,   exit_program
-    };
-    
-    using omp_func_type = void (*)(void*);
-    using omp_data_type = void*;
-    
-    struct cmd_info_type {
-        cmd_code_type   code;
-        omp_func_type   func;
-        omp_data_type   data;
-    };
-};
-
-class my_worker_base
-    : public mectx::single_ult_worker<my_worker_base_policy>
-    //, public mectx::thread_local_worker<my_worker_base_policy>
-    , public mectx::thread_specific_worker<my_worker_base_policy>
-    , public mectx::context_policy
-    , public omp_worker_base<my_worker_base_policy>
-{
-    using context_type = my_worker_base_policy::context_type;
-    
-public:
-    void set_work_ult(my_omp_ult_ref work_th) { work_th_ = work_th; }
-    
-    my_omp_ult_ref& get_root_ult() { return root_th_; }
-    my_omp_ult_ref& get_work_ult() { return work_th_; }
-    
-    void on_before_switch(my_omp_ult_ref& /*from_th*/, my_omp_ult_ref& to_th) {
-        to_th.pin();
-    }
-    void on_after_switch(my_omp_ult_ref& from_th, my_omp_ult_ref& /*to_th*/) {
-        from_th.unpin();
-    }
-    
-    context_type get_context(my_omp_ult_ref& th) {
-        return th.get_context();
-    }
-    void set_context(my_omp_ult_ref& th, context_type ctx) {
-        th.set_context(ctx);
-    }
-    
-    std::string show_ult_ref(my_omp_ult_ref&) {
-        return "";
-    }
-    void* get_stack_ptr(my_omp_ult_ref& th) {
-        return th.get_stack_ptr();
-    }
-    mefdn::size_t get_stack_size(my_omp_ult_ref& th) {
-        return th.get_stack_size();
-    }
-    
-private:
-    my_omp_ult_ref root_th_ = my_omp_ult_ref::make_root();
-    my_omp_ult_ref work_th_;
-};
-
 class my_child_worker;
 class my_child_worker_group;
 class my_dist_worker;
@@ -235,11 +215,11 @@ class my_child_worker
     : public my_worker_base
     , public child_worker<my_child_worker_policy>
 {
+    using ult_ref_type = typename my_child_worker_policy::ult_ref_type;
+    
 public:
-    // TODO: Replacing the same name is not a good convention.
-    void set_thread_num(int num) {
-        my_worker_base::set_thread_num(num);
-        this->set_work_ult(my_omp_ult_ref(1+num));
+    ult_ref_type make_work_ult() {
+        return ult_ref_type(1 + this->get_thread_num());
     }
 };
 
@@ -250,9 +230,7 @@ struct my_child_worker_group_policy
     using derived_type = my_child_worker_group;
     using child_worker_type = my_child_worker;
     
-    using ult_itf_type = mecom2::default_ult_itf;
-    using worker_thread_type = typename ult_itf_type::thread;
-    using barrier_type = typename ult_itf_type::barrier;
+    using comm_ult_itf_type = medsm2::default_ult_itf;
     
     using worker_base_type = my_worker_base;
 };
@@ -274,6 +252,8 @@ struct my_dist_worker_policy
     using cmd_info_type = my_worker_base_policy::cmd_info_type;
     using cmd_code_type = my_worker_base_policy::cmd_code_type;
     
+    using ult_ref_type = my_omp_ult_ref;
+    
     static void fatal_error() {
         throw std::logic_error("Fatal error in distributed worker");
     }
@@ -282,10 +262,11 @@ struct my_dist_worker_policy
 class my_dist_worker
     : public my_worker_base
     , public dist_worker<my_dist_worker_policy>
-    , public mectx::context_policy
 {
     using omp_func_type = void (*)(void*);
     using omp_data_type = void*;
+    
+    using ult_ref_type = typename my_dist_worker_policy::ult_ref_type;
     
 public:
     coll_t& get_comm_coll() {
@@ -300,18 +281,6 @@ public:
         return *g_sp;
     }
     
-    #ifdef MEOMP_DISABLE_PARALLEL_START
-    void start_parallel(
-        const omp_func_type func
-    ,   const omp_data_type data
-    ,   const int           total_num_threads
-    ,   const int           thread_num_first
-    ,   const int           num_threads
-    ) {
-        my_child_worker_group wg;
-        wg.do_parallel(func, data, total_num_threads, thread_num_first, num_threads);
-    }
-    #else
     void start_parallel_on_children(
         const omp_func_type func
     ,   const omp_data_type data
@@ -325,24 +294,18 @@ public:
     void end_parallel_on_children() {
         this->wg_.end_parallel();
     }
-    #endif
     
     void barrier_on_master()
     {
         this->wg_.barrier_on(*this);
     }
     
-    void set_work_ult() {
-        my_worker_base::set_work_ult(my_omp_ult_ref{0});
-    }
-    void unset_work_ult() {
-        my_worker_base::set_work_ult(my_omp_ult_ref{});
+    static ult_ref_type make_work_ult() {
+        return ult_ref_type(0);
     }
     
-    #ifndef MEOMP_DISABLE_PARALLEL_START
 private:
     my_child_worker_group wg_;
-    #endif
 };
 
 } // namespace meomp
@@ -375,17 +338,6 @@ meomp::my_dist_worker* g_dw;
 
 } // unnamed namespace
 
-#ifdef MEOMP_DISABLE_PARALLEL_START
-extern "C"
-void GOMP_parallel(
-    void (* const func)(void*)
-,   void* const data
-,   const unsigned int /*num_threads*/ // TODO
-,   const unsigned int /*flags*/
-) {
-    g_dw->do_parallel(func, data);
-}
-#else
 extern "C"
 void GOMP_parallel_start(
     void (* const func)(void*)
@@ -673,8 +625,6 @@ void __kmpc_for_static_fini(ident* /*loc*/, kmp_int32 /*global_tid*/) {
 }
 
 
-#endif
-
 extern "C" {
 
 extern void* _dsm_data_begin;
@@ -756,6 +706,29 @@ int main(int argc, char* argv[])
     
     g_sp = &sp;
     
+    #ifdef MEOMP_SEPARATE_WORKER_THREAD
+    using medsm2::sigsegv_catcher;
+    auto segv_catch =
+        mefdn::make_unique<sigsegv_catcher>(
+            sigsegv_catcher::config{
+                [&g_sp] (void* const ptr) {
+                    const auto wk_ptr =
+                        meomp::my_worker_base::get_current_worker_ptr();
+                    
+                    if (wk_ptr != nullptr) {
+                        return wk_ptr->try_upgrade(ptr);
+                    }
+                    else {
+                        // Immediately upgrade.
+                        // Used in initialization of global variables.
+                        return g_sp->try_upgrade(ptr);
+                    }
+                }
+            ,   false
+            }
+        );
+    #endif
+    
     {
         const auto global_var_blk_size = 4 << 10; // TODO
         
@@ -799,7 +772,7 @@ int main(int argc, char* argv[])
                 
                 // Restore the initial data to the global buffer.
                 memcpy(data_begin, init_temp.get(), data_size);
-            
+                
                 sp.disable_on_this_thread();
             }
         }
@@ -818,7 +791,7 @@ int main(int argc, char* argv[])
     meomp::my_dist_worker dw;
     g_dw = &dw;
     
-    dw.loop();
+    dw.execute_loop();
     
     // Do a barrier before exiting.
     g_coll->barrier();

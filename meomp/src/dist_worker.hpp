@@ -15,22 +15,20 @@ class dist_worker
     using cmd_info_type = typename P::cmd_info_type;
     using cmd_code_type = typename P::cmd_code_type;
     
+    using ult_ref_type = typename P::ult_ref_type;
+    
 public:
-    void loop()
+    void execute_loop()
     {
         auto& self = this->derived();
         auto& coll = self.get_comm_coll();
         
-        self.initialize_on_this_thread();
-        
         if (coll.this_proc_id() == 0) {
-            this->loop_master();
+            self.loop_master();
         }
         else {
-            this->loop_slave();
+            self.loop_slave();
         }
-        
-        self.finalize_on_this_thread();
     }
     
 private:
@@ -38,10 +36,10 @@ private:
     {
         auto& self = this->derived();
         
-        self.set_work_ult();
-        
-        self.execute(
-            [this] {
+        self.start_worker(
+            ult_ref_type::make_root()
+        ,   self.make_work_ult()
+        ,   [this] {
                 auto& self2 = this->derived();
                 auto& sp = self2.get_dsm_space();
                 
@@ -65,7 +63,7 @@ private:
             auto& coll = self.get_comm_coll();
             auto& sp = self.get_dsm_space();
             
-            auto cmd = self.get_cmd_info();
+            auto cmd = self.wait_for_cmd();
             
             // If the master thread is in the parallel region,
             // it should not broadcast messages for issuing barriers.
@@ -81,12 +79,10 @@ private:
                 break;
             }
             
-            self.reset_cmd_info();
-            
-            self.resume();
+            self.reset_cmd();
         }
         
-        self.unset_work_ult();
+        self.end_worker();
     }
     
     void loop_slave()
@@ -119,24 +115,6 @@ private:
         auto& coll = self.get_comm_coll();
         
         switch (cmd.code) {
-            #ifdef MEOMP_DISABLE_PARALLEL_START
-            case cmd_code_type::do_parallel: {
-                const auto proc_id  = coll.this_proc_id();
-                const auto num_procs = coll.get_num_procs();
-                
-                // Create a worker group.
-                const int threads_per_proc = get_threads_per_proc();
-                const int total_num_threads = num_procs * threads_per_proc;
-                const int thread_num_first = proc_id * threads_per_proc;
-                const int num_threads = threads_per_proc;
-                
-                self.start_parallel(cmd.func, cmd.data,
-                    total_num_threads, thread_num_first, num_threads);
-                
-                break;
-            }
-            
-            #else
             case cmd_code_type::start_parallel: {
                 const auto proc_id  = coll.this_proc_id();
                 const auto num_procs = coll.get_num_procs();
@@ -190,8 +168,6 @@ private:
                 break;
             }
             
-            #endif
-            
             case cmd_code_type::barrier: {
                 self.barrier_on_master();
                 break;
@@ -200,6 +176,15 @@ private:
             case cmd_code_type::exit_program:
                 // Exit this function.
                 return false;
+            
+            #ifdef MEOMP_SEPARATE_WORKER_THREAD
+            case cmd_code_type::try_upgrade: {
+                if (!self.get_dsm_space().try_upgrade(cmd.data)) {
+                    abort(); // TODO
+                }
+                break;
+            }
+            #endif
             
             default:
                 // Fatal error.
@@ -232,4 +217,4 @@ private:
 
 } // namespace meomp
 } // namespace menps
-
+;

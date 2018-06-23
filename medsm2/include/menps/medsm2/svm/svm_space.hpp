@@ -2,7 +2,9 @@
 #pragma once
 
 #include <menps/medsm2/space.hpp>
+#ifndef MEOMP_SEPARATE_WORKER_THREAD
 #include <menps/medsm2/svm/sigsegv_catcher.hpp>
+#endif
 #include <menps/medsm2/svm/shm_object.hpp>
 #include <menps/mefdn/arithmetic.hpp>
 
@@ -29,14 +31,14 @@ class svm_space
     using blk_id_type = typename P::blk_id_type;
     using sig_id_type = typename P::sig_id_type;
     
-    using ult_itf_type = typename P::ult_itf_type;
+    using worker_ult_itf_type = typename P::worker_ult_itf_type;
     
     struct tss_policy {
         using value_type = derived_type;
     };
     
     using tss_type =
-        typename ult_itf_type::
+        typename worker_ult_itf_type::
             template thread_specific<tss_policy>;
     
 public:
@@ -55,6 +57,7 @@ public:
                 }
             );
         
+        #ifndef MEOMP_SEPARATE_WORKER_THREAD
         segv_catch_ =
             mefdn::make_unique<sigsegv_catcher>(
                 sigsegv_catcher::config{
@@ -71,6 +74,7 @@ public:
                 ,   false
                 }
             );
+        #endif
         
         // Note: This code is left because running release operations in background
         //       will be necessary in future.
@@ -265,8 +269,7 @@ public:
         this->is_enabled_.set(nullptr);
     }
     
-private:
-    bool try_upgrade(void* const ptr)
+    bool try_upgrade(void* const ptr) // XXX
     {
         const auto blk_id = this->get_blk_id_from_app_ptr(ptr);
         
@@ -291,6 +294,7 @@ private:
         abort();
     }
     
+private:
     static std::string get_reg_name(const proc_id_type proc) {
         return fmt::format("medsm_cache_{}", proc);
     }
@@ -378,7 +382,9 @@ private:
     seg_id_type new_seg_id_ = 1;
     mefdn::byte* app_ptr_start_ = nullptr;
     
+    #ifndef MEOMP_SEPARATE_WORKER_THREAD
     mefdn::unique_ptr<sigsegv_catcher> segv_catch_;
+    #endif
     mefdn::unique_ptr<shm_object> shm_obj_;
     
     #if 0

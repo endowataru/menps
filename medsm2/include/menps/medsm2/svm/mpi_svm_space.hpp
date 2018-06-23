@@ -61,6 +61,8 @@ public:
     
     void disable_on_this_thread();
     
+    bool try_upgrade(void* ptr);
+    
 private:
     class impl;
     mefdn::unique_ptr<impl> impl_;

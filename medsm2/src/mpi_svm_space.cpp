@@ -20,6 +20,10 @@
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
 
+#ifdef MEOMP_SEPARATE_WORKER_THREAD
+#include <menps/meult/klt.hpp>
+#endif
+
 namespace menps {
 namespace medsm2 {
 
@@ -90,6 +94,11 @@ struct dsm_base_policy
     using wn_vi_type = mefdn::vector<wn_idx_type>;
     
     using ult_itf_type = medsm2::default_ult_itf;
+    #ifdef MEOMP_SEPARATE_WORKER_THREAD
+    using worker_ult_itf_type = meult::klt_policy;
+    #else
+    using worker_ult_itf_type = medsm2::default_ult_itf;
+    #endif
     
     using mutex_type = typename ult_itf_type::mutex;
     using mutex_unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
@@ -275,6 +284,11 @@ void mpi_svm_space::enable_on_this_thread()
 void mpi_svm_space::disable_on_this_thread()
 {
     this->impl_->space().disable_on_this_thread();
+}
+
+bool mpi_svm_space::try_upgrade(void* const ptr)
+{
+    return this->impl_->space().try_upgrade(ptr);
 }
 
 } // namespace medsm2
