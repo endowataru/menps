@@ -4,6 +4,7 @@
 #include <menps/medev2/ucx/uct/uct.hpp>
 #include <menps/medev2/ucx/ucs/ucs.hpp>
 #include <menps/mefdn/memory/unique_ptr.hpp>
+#include <menps/mefdn/logger.hpp>
 
 namespace menps {
 namespace medev2 {

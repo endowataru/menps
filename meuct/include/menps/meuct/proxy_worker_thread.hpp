@@ -3,6 +3,7 @@
 
 #include <menps/meuct/proxy_funcs.hpp>
 #include <menps/medev2/ucx/ucx_error.hpp>
+#include <menps/mefdn/logger.hpp>
 
 namespace menps {
 namespace meuct {
