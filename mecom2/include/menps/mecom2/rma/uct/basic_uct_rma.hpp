@@ -252,7 +252,9 @@ private:
                 mefdn::lock_guard<spinlock_type> lk(info.lock);
                 #endif
                 
-                info.iface.progress();
+                while (info.iface.progress() != 0) {
+                    // Poll until there are completions
+                }
             }
         }
         #else
