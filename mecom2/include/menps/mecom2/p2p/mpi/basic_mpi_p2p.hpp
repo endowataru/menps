@@ -3,6 +3,9 @@
 
 #include <menps/mecom2/common.hpp>
 #include <menps/mefdn/logger.hpp>
+#ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+    #include <menps/mecom2/com/com_signal_state.hpp>
+#endif
 
 //#define MECOM2_USE_BLOCKING_MPI_P2P
 
@@ -139,7 +142,13 @@ private:
             
             if (flag != 0) { break; }
             
+            #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+            if (! com_signal_state::is_in_signal()) {
+                ult_itf_type::this_thread::yield();
+            }
+            #else
             ult_itf_type::this_thread::yield();
+            #endif
         }
     }
 };

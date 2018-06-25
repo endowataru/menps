@@ -100,10 +100,13 @@ struct dsm_base_policy
     using worker_ult_itf_type = medsm2::default_ult_itf;
     #endif
     
+    #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+    using mutex_type = mefdn::spinlock;
+    using unique_lock_type = mefdn::unique_lock<mefdn::spinlock>;
+    #else
     using mutex_type = typename ult_itf_type::mutex;
-    using mutex_unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
-    using cv_type = typename ult_itf_type::condition_variable;
-    using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
+    using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO: rename
+    #endif
     
     #if defined(MEDSM2_USE_UCT_RMA)
     template <typename T>

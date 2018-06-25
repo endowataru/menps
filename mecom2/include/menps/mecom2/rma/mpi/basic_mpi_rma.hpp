@@ -9,6 +9,9 @@
 #include <menps/mecom2/rma/rma_coro_itf.hpp>
 #include <menps/medev2/mpi/mpi_datatype.hpp>
 #include <menps/mefdn/logger.hpp>
+#ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+    #include <menps/mecom2/com/com_signal_state.hpp>
+#endif
 
 namespace menps {
 namespace mecom2 {
@@ -171,7 +174,13 @@ public:
     {
         while (!this->test(req))
         {
+            #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+            if (! com_signal_state::is_in_signal()) {
+                ult_itf_type::this_thread::yield();
+            }
+            #else
             ult_itf_type::this_thread::yield();
+            #endif
         }
     }
     

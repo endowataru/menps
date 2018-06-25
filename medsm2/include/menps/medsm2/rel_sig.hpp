@@ -20,7 +20,7 @@ class rel_sig
     using sig_buffer_type = typename P::sig_buffer_type;
     
     using mutex_type = typename P::mutex_type;
-    using mutex_unique_lock_type = typename P::mutex_unique_lock_type;
+    using unique_lock_type = typename P::unique_lock_type;
     
     using size_type = typename P::size_type;
     
@@ -35,7 +35,7 @@ public:
     
     void merge(const sig_buffer_type& sig)
     {
-        const mutex_unique_lock_type lk(this->mtx_);
+        const unique_lock_type lk(this->mtx_);
         
         // Merge two sorted lists.
         auto merged_sig = sig_buffer_type::merge(this->sig_, sig);
@@ -47,7 +47,7 @@ public:
     
     typename sig_buffer_type::serialized_buffer_type serialize(size_type size) {
         // TODO: lock
-        const mutex_unique_lock_type lk(this->mtx_);
+        const unique_lock_type lk(this->mtx_);
         
         auto ret = sig_.serialize(size);
         
@@ -64,7 +64,7 @@ public:
     
     sig_buffer_type get_sig() const
     {
-        const mutex_unique_lock_type lk(this->mtx_);
+        const unique_lock_type lk(this->mtx_);
         
         // Copy the signature and return it.
         // TODO: Reduce this copy.

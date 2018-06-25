@@ -9,7 +9,6 @@
 #include <menps/medev2/mpi.hpp>
 #include <menps/mefdn/memory/distance_in_bytes.hpp>
 
-
 namespace menps {
 namespace mecom2 {
 

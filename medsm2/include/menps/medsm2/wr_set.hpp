@@ -21,10 +21,15 @@ class wr_set
     
     using ult_itf_type      = typename P::ult_itf_type;
     
-    using mutex_type        = typename P::mutex_type;
-    using cv_type           = typename P::cv_type;
-    using unique_lock_type  = typename P::unique_lock_type;
+    using mutex_type = typename P::mutex_type;
+    using unique_lock_type = typename P::unique_lock_type;
     
+    // This class requires a condition variable to synchronize the threads
+    // which request a release fence.
+    // Spinlocks cannot be applied to this class.
+    using ult_mutex_type        = typename ult_itf_type::mutex;
+    using ult_cv_type           = typename ult_itf_type::condition_variable;
+    using ult_unique_lock_type  = typename ult_itf_type::unique_mutex_lock;
     
 public:
     wr_set() = default;
@@ -49,7 +54,7 @@ public:
         MEFDN_STATIC_ASSERT(mefdn::is_signed<wr_set_gen_type>::value);
         
         {
-            unique_lock_type lk(this->rel_mtx_);
+            ult_unique_lock_type lk(this->rel_mtx_);
             
             // Decide the release position.
             const auto gen = this->gen_ + (this->is_releasing_ ? 1 : 0);
@@ -164,7 +169,7 @@ public:
         MEFDN_ASSERT(this->is_releasing_);
         
         {
-            const unique_lock_type lk(this->rel_mtx_);
+            const ult_unique_lock_type lk(this->rel_mtx_);
             
             this->is_releasing_ = false;
             ++this->gen_;
@@ -178,8 +183,8 @@ private:
     mutex_type new_ids_mtx_;
     mefdn::vector<blk_id_type> new_ids_;
     
-    mutex_type rel_mtx_;
-    cv_type rel_cv_;
+    ult_mutex_type rel_mtx_;
+    ult_cv_type rel_cv_;
     mefdn::vector<blk_id_type> dirty_ids_;
     wr_set_gen_type gen_ = 0;
     bool is_releasing_ = false;

@@ -4,6 +4,9 @@
 #include <menps/medev2/mpi/mpi_params.hpp>
 #include <menps/mefdn/logger.hpp>
 #include <exception>
+#ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+#include <menps/mefdn/thread/spinlock.hpp>
+#endif
 
 namespace menps {
 namespace medev2 {
@@ -26,9 +29,14 @@ struct mpi_error : std::exception
 
 class direct_requester
 {
+    #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+    using mutex_type = mefdn::spinlock;
+    using unique_lock_type = mefdn::unique_lock<mefdn::spinlock>;
+    #else
     using ult_itf_type = medev2::default_ult_itf;
     using mutex_type = typename ult_itf_type::mutex;
     using unique_lock_type = typename ult_itf_type::unique_mutex_lock;
+    #endif
     
 public:
     explicit direct_requester(int* const argc, char*** const argv)

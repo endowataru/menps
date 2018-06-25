@@ -7,6 +7,9 @@
 #endif
 #include <menps/medsm2/svm/shm_object.hpp>
 #include <menps/mefdn/arithmetic.hpp>
+#ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+    #include <menps/mecom2/com/com_signal_state.hpp>
+#endif
 
 namespace menps {
 namespace medsm2 {
@@ -65,7 +68,18 @@ public:
                         const auto tss_ptr = this->is_enabled_.get();
                         if (tss_ptr != nullptr) {
                             MEFDN_ASSERT(tss_ptr == this);
-                            return this->try_upgrade(ptr);
+                            
+                            #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+                            mecom2::com_signal_state::set_entering_signal();
+                            #endif
+                            
+                            const auto ret = this->try_upgrade(ptr);
+                            
+                            #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+                            mecom2::com_signal_state::set_exiting_signal();
+                            #endif
+                            
+                            return ret;
                         }
                         else {
                             return false;

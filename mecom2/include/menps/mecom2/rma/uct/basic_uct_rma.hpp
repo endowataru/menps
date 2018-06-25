@@ -5,9 +5,17 @@
 #include <menps/mecom2/rma/rma_alloc_buf_copier.hpp>
 #include <menps/medev2/ucx/uct/uct.hpp>
 #include <cstring>
+#ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+    #include <menps/mecom2/com/com_signal_state.hpp>
+#endif
 
 #ifndef MECOM2_USE_MEUCT
     #define MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
+#endif
+#if (!defined(MECOM2_USE_MEUCT) || defined(MEDEV2_AVOID_SWITCH_IN_SIGNAL))
+    // If MECOM2_USE_MEUCT is off, explicit progress is required.
+    // If MEDEV2_AVOID_SWITCH_IN_SIGNAL is on,
+    // using uncond var in signal handler is prohibited.
     #define MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
 #endif
 
@@ -245,7 +253,13 @@ private:
                 break;
             }
             
+            #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+            if (! com_signal_state::is_in_signal()) {
+                ult_itf_type::this_thread::yield();
+            }
+            #else
             ult_itf_type::this_thread::yield();
+            #endif
             
             {
                 #ifdef MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
