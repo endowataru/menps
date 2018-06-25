@@ -257,6 +257,13 @@
         const char *, filename, \
         uct_iface_config_t **, config_p) \
     X(__VA_ARGS__, \
+        config_modify, \
+        ucs_status_t, \
+        3, \
+        void*, config, \
+        const char*, name,  \
+        const char*, value) \
+    X(__VA_ARGS__, \
         md_query, \
         ucs_status_t, \
         2, \

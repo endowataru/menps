@@ -295,6 +295,9 @@ struct uct_rma_resource {
             rma_uct_policy::iface_config_type::read(
                 this->uf, md.get(), tl_name, nullptr, nullptr);
         
+        // TODO
+        //iface_conf.modify("IB_TX_QUEUE_LEN", "4096");
+        
         uct_iface_params_t iface_params = uct_iface_params_t();
         iface_params.open_mode = UCT_IFACE_OPEN_MODE_DEVICE;
         iface_params.mode.device.tl_name = tl_name;

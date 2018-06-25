@@ -64,6 +64,18 @@ public:
         
         return iface_config(uf, p);
     }
+    
+    void modify(const char* const name, const char* const value)
+    {
+        auto& uf = * this->get_deleter().uf;
+        
+        const auto ret =
+            uf.config_modify({ this->get(), name, value });
+        
+        if (ret != UCS_OK) {
+            throw ucx_error("uct_config_modify() failed", ret);
+        }
+    }
 };
 
 } // namespace uct
