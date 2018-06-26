@@ -2,10 +2,18 @@ cmake_minimum_required(VERSION 3.0)
 
 project(mecom2)
 
+option(MECOM2_USE_MEUCT "Use meuct for mecom2" FALSE)
+
+# Generate config.h
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/menps/mecom2/config.h)
+
+
 add_library(mecom2 INTERFACE)
 
 target_include_directories(mecom2
     INTERFACE ./include
+    INTERFACE ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_link_libraries(mecom2
     INTERFACE medev2

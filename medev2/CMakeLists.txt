@@ -20,9 +20,6 @@ set(MEDEV2_DEFAULT_ULT_ITF "::menps::meult::klt_policy" CACHE STRING
 
 option(MEDEV2_SERIALIZE_MPI_CALLS "Serialize MPI calls" TRUE)
 
-# TODO: Move to mecom2
-option(MECOM2_USE_MEUCT "Use meuct for mecom2" FALSE)
-
 option(MEDEV2_AVOID_SWITCH_IN_SIGNAL "Avoid using context switch in signal handler" TRUE)
 
 # Generate config.h
