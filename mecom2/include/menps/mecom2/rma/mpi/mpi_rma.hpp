@@ -139,6 +139,8 @@ public:
     explicit mpi_rma(Conf&& conf)
         : req_(conf.req)
         , win_(conf.win)
+        , comm_(conf.comm)
+        , rank_(req_.comm_rank(comm_))
     { }
     
     mpi_itf_type& get_mpi_interface() {
@@ -147,6 +149,10 @@ public:
     
     MPI_Win get_win() {
         return win_;
+    }
+    
+    bool is_local_proc(const int rank) const noexcept {
+        return this->rank_ == rank;
     }
     
     mpi_rma_handle make_handle() {
@@ -199,6 +205,8 @@ public:
 private:
     mpi_itf_type& req_;
     MPI_Win win_;
+    MPI_Comm comm_;
+    int rank_;
 };
 
 
@@ -214,12 +222,13 @@ MPI_Win mpi_rma_handle::get_win() {
 
 using mpi_rma_ptr = mefdn::unique_ptr<mpi_rma>;
 
-inline mpi_rma_ptr make_mpi_rma(mpi_rma::mpi_itf_type& req, MPI_Win win) {
+inline mpi_rma_ptr make_mpi_rma(mpi_rma::mpi_itf_type& req, MPI_Win win, MPI_Comm comm) {
     struct conf {
         mpi_rma::mpi_itf_type& req;
         MPI_Win win;
+        MPI_Comm comm;
     };
-    return mefdn::make_unique<mpi_rma>(conf{ req, win });
+    return mefdn::make_unique<mpi_rma>(conf{ req, win, comm });
 }
 
 } // namespace mecom2

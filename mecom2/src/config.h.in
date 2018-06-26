@@ -1,2 +1,3 @@
+#cmakedefine MECOM2_RMA_ENABLE_LOOPBACK
 #cmakedefine MECOM2_USE_MEUCT
 

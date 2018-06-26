@@ -22,7 +22,7 @@ TEST(Rma, Basic)
     
     g_mi->win_lock_all({ 0, win });
     
-    auto rma = mecom2::make_mpi_rma(*g_mi, win);
+    auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
     
     {
         const auto arr = rma->make_unique<int []>(1);
@@ -110,7 +110,7 @@ TEST(Rma, AlltoallMpi)
     
     g_mi->win_lock_all({ 0, win });
     
-    auto rma = mecom2::make_mpi_rma(*g_mi, win);
+    auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
     
     do_alltoall_test<mecom2::mpi_alltoall_buffer<int>>(*rma);
 }
@@ -206,7 +206,7 @@ TEST(Rma, Cas)
     
     g_mi->win_lock_all({ 0, win });
     
-    auto rma = mecom2::make_mpi_rma(*g_mi, win);
+    auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
     auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);   
     
     const auto cur_proc = coll.this_proc_id();
@@ -337,7 +337,7 @@ TEST(Rma, CoroRead)
     
     g_mi->win_lock_all({ 0, win });
     
-    auto rma = mecom2::make_mpi_rma(*g_mi, win);
+    auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
     auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
     
     mecom2::mpi_alltoall_buffer<mefdn::uint64_t> a2a_buf;

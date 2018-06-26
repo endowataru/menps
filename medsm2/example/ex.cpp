@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     auto rma = mecom2::make_ucp_rma(uf, ctx, *wk_set);
     
     #else
-    auto rma = mecom2::make_mpi_rma(*mi, win);
+    auto rma = mecom2::make_mpi_rma(*mi, win, MPI_COMM_WORLD);
     #endif
     auto p2p = mecom2::make_mpi_p2p(*mi, MPI_COMM_WORLD);
     

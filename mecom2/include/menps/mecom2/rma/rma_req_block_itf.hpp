@@ -30,6 +30,25 @@ public:
     ) {
         auto& self = this->derived();
         
+        #ifndef MECOM2_RMA_ENABLE_LOOPBACK
+        if (self.is_local_proc(dest_proc)) {
+            MEFDN_LOG_VERBOSE(
+                "msg:Local RMA write (memcpy).\t"
+                "dest_rptr:{:x}\t"
+                "src_lptr:{:x}\t"
+                "num_bytes:{}"
+            ,   reinterpret_cast<mefdn::uintptr_t>(dest_rptr)
+            ,   reinterpret_cast<mefdn::uintptr_t>(src_lptr)
+            ,   num_bytes
+            );
+            
+            // Local write.
+            std::memcpy(dest_rptr, src_lptr, num_bytes);
+            
+            return;
+        }
+        #endif
+        
         request_type req;
         
         self.untyped_write_nb(
@@ -50,6 +69,25 @@ public:
     ,   const size_type                 num_bytes
     ) {
         auto& self = this->derived();
+        
+        #ifndef MECOM2_RMA_ENABLE_LOOPBACK
+        if (self.is_local_proc(src_proc)) {
+            MEFDN_LOG_VERBOSE(
+                "msg:Local RMA read (memcpy).\t"
+                "src_rptr:{:x}\t"
+                "dest_lptr:{:x}\t"
+                "num_bytes:{}"
+            ,   reinterpret_cast<mefdn::uintptr_t>(src_rptr)
+            ,   reinterpret_cast<mefdn::uintptr_t>(dest_lptr)
+            ,   num_bytes
+            );
+            
+            // Local read.
+            std::memcpy(dest_lptr, src_rptr, num_bytes);
+            
+            return;
+        }
+        #endif
         
         request_type req;
         
