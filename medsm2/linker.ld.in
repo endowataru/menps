@@ -1,13 +1,13 @@
 
 SECTIONS
 {
-    .dsm_data : ALIGN(0x1000)
+    .dsm_data : ALIGN(${MEDSM2_GLOBAL_VAR_BLOCK_SIZE})
     {
         _dsm_data_begin = .;
         
         *(.dsm_data)
         
-        . = ALIGN(0x1000);
+        . = ALIGN(${MEDSM2_GLOBAL_VAR_BLOCK_SIZE});
         
         _dsm_data_end = .;
     }

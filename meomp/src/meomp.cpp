@@ -730,7 +730,7 @@ int main(int argc, char* argv[])
     #endif
     
     {
-        const auto global_var_blk_size = 4 << 10; // TODO
+        const auto global_var_blk_size = MEDSM2_GLOBAL_VAR_BLOCK_SIZE;
         
         const auto data_begin = reinterpret_cast<mefdn::byte*>(&_dsm_data_begin);
         const auto data_end   = reinterpret_cast<mefdn::byte*>(&_dsm_data_end);
