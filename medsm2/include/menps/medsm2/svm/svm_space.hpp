@@ -124,7 +124,8 @@ public:
         const auto priv_sys_ptr = this->get_priv_sys_ptr_from_seg(seg_id);
         const auto pub_ptr = this->get_pub_ptr_from_seg(seg_id);
         
-        this->coll_alloc_seg(seg_size, blk_size, seg_id, priv_app_ptr, priv_sys_ptr, pub_ptr);
+        this->coll_alloc_seg(seg_size, blk_size, seg_id,
+            priv_app_ptr, priv_sys_ptr, pub_ptr, false);
         
         return priv_app_ptr;
     }
@@ -144,7 +145,8 @@ public:
             static_cast<mefdn::byte*>(this->get_pub_ptr_from_seg(0))
             + reinterpret_cast<ptrdiff_type>(start_ptr);
         
-        this->coll_alloc_seg(seg_size, blk_size, seg_id, start_ptr, priv_sys_ptr, pub_ptr);
+        this->coll_alloc_seg(seg_size, blk_size, seg_id,
+            start_ptr, priv_sys_ptr, pub_ptr, true);
     }
     
 private:
@@ -155,6 +157,7 @@ private:
     ,   void* const         priv_app_ptr
     ,   void* const         priv_sys_ptr
     ,   void* const         pub_app_ptr
+    ,   const bool          is_copied
     ) {
         struct conf {
             com_itf_type&   com;
@@ -164,6 +167,7 @@ private:
             void*           priv_sys_ptr;
             void*           pub_ptr;
             int             fd;
+            bool            is_copied;
         };
         
         const auto num_blks = mefdn::roundup_divide(seg_size, blk_size);
@@ -171,7 +175,9 @@ private:
         auto blk_tbl_ptr = mefdn::make_unique<blk_tbl_type>();
         
         blk_tbl_ptr->coll_make(
-            conf{ this->com_, blk_size, num_blks, priv_app_ptr, priv_sys_ptr, pub_app_ptr, this->shm_obj_->get_fd() }
+            conf{ this->com_, blk_size, num_blks,
+                priv_app_ptr, priv_sys_ptr, pub_app_ptr,
+                this->shm_obj_->get_fd(), is_copied }
         );
         
         base::set_blk_table(seg_id, mefdn::move(blk_tbl_ptr));

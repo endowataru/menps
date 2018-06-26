@@ -754,6 +754,7 @@ int main(int argc, char* argv[])
             ,   data_size
             );
             
+            #if 0
             // Copy the initial data to a buffer (before mmap()).
             #if 1
             // TODO: There is a performance problem of using memcpy()
@@ -764,9 +765,11 @@ int main(int argc, char* argv[])
             #else
             memcpy(init_temp.get(), data_begin, data_size);
             #endif
+            #endif
             
             sp.coll_alloc_global_var_seg(data_size, global_var_blk_size, data_begin);
             
+            #if 0
             if (g_coll->this_proc_id() == 0) {
                 sp.enable_on_this_thread();
                 
@@ -775,6 +778,7 @@ int main(int argc, char* argv[])
                 
                 sp.disable_on_this_thread();
             }
+            #endif
         }
     }
     

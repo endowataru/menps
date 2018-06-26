@@ -50,16 +50,6 @@ public:
         const auto priv_sys_ptr = conf.priv_sys_ptr;
         const auto pub_ptr = conf.pub_ptr;
         const auto num_bytes = this->blk_size_ * this->num_blks_;
-        
-        this->priv_app_map_ =
-            mefdn::mapped_memory::map(
-                priv_app_ptr
-            ,   num_bytes
-            ,   PROT_NONE
-            ,   MAP_FIXED | MAP_SHARED
-            ,   conf.fd
-            ,   reinterpret_cast<mefdn::size_t>(priv_app_ptr) // index_in_file
-            );
        
         this->priv_sys_map_ =
             mefdn::mapped_memory::map(
@@ -81,11 +71,47 @@ public:
             ,   0
             );
         
-        // Initialize the private mapping.
-        // TODO: May be unnecessary
-        memset(priv_sys_ptr, 0, num_bytes);
-        // Initialize the public mapping.
-        memset(pub_ptr, 0, num_bytes);
+        if (conf.is_copied) {
+            // This is used for initializing global variables.
+            
+            MEFDN_LOG_DEBUG(
+                "msg:Start copying global variables.\t"
+                "priv_sys_ptr:{:x}\t"
+                "priv_app_ptr:{:x}\t"
+                "pub_ptr:{:x}\t"
+                "num_bytes:{:x}"
+            ,   reinterpret_cast<mefdn::uintptr_t>(priv_sys_ptr)
+            ,   reinterpret_cast<mefdn::uintptr_t>(priv_app_ptr)
+            ,   reinterpret_cast<mefdn::uintptr_t>(pub_ptr)
+            ,   num_bytes
+            );
+            
+            // Initialize the private area with the original contents.
+            memcpy(priv_sys_ptr, priv_app_ptr, num_bytes);
+            // Initialize the public area with the original contents.
+            memcpy(pub_ptr, priv_app_ptr, num_bytes);
+            
+            MEFDN_LOG_DEBUG(
+                "msg:Finish copying global variables."
+            );
+        }
+        else {
+            // Initialize the private mapping.
+            // TODO: May be unnecessary
+            memset(priv_sys_ptr, 0, num_bytes);
+            // Initialize the public mapping.
+            memset(pub_ptr, 0, num_bytes);
+        }
+        
+        this->priv_app_map_ =
+            mefdn::mapped_memory::map(
+                priv_app_ptr
+            ,   num_bytes
+            ,   PROT_NONE
+            ,   MAP_FIXED | MAP_SHARED
+            ,   conf.fd
+            ,   reinterpret_cast<mefdn::size_t>(priv_app_ptr) // index_in_file
+            );
         
         struct dir_tbl_conf {
             com_itf_type&   com;
@@ -192,9 +218,9 @@ private:
     size_type       blk_size_;
     size_type       num_blks_;
     
-    mefdn::mapped_memory   priv_app_map_;
-    mefdn::mapped_memory   priv_sys_map_;
     mefdn::mapped_memory   pub_map_;
+    mefdn::mapped_memory   priv_sys_map_;
+    mefdn::mapped_memory   priv_app_map_;
 };
 
 } // namespace medsm2
