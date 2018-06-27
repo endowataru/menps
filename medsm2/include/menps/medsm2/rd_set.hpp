@@ -18,6 +18,11 @@ class rd_set
     using mutex_type = typename P::mutex_type;
     using unique_lock_type  = typename P::unique_lock_type;
     
+    using size_type = typename P::size_type;
+    
+    using ult_itf_type = typename P::ult_itf_type;
+    using spinlock_type = typename ult_itf_type::spinlock;
+    
     struct entry {
         blk_id_type blk_id;
         rd_ts_type  rd_ts;
@@ -92,13 +97,24 @@ public:
         );
         
         mefdn::vector<entry> new_ents;
+        spinlock_type new_ents_lock;
         
-        for (const auto& blk_id : blk_ids) {
-            const auto ret = func(blk_id);
-            if (!P::is_greater_rd_ts(min_wr_ts, ret.rd_ts)) {
-                new_ents.push_back(entry{ blk_id, ret.rd_ts });
+        //for (const auto& blk_id : blk_ids) {
+        ult_itf_type::for_loop(
+            ult_itf_type::execution::seq
+            //ult_itf_type::execution::par
+            // TODO: This can be parallelized, but tasks are fine-grained
+        ,   0
+        ,   blk_ids.size()
+        ,   [&func, &blk_ids, &new_ents, &new_ents_lock, min_wr_ts] (const size_type i) {
+                const auto blk_id = blk_ids[i];
+                const auto ret = func(blk_id);
+                if (!P::is_greater_rd_ts(min_wr_ts, ret.rd_ts)) {
+                    mefdn::lock_guard<spinlock_type> lk(new_ents_lock);
+                    new_ents.push_back(entry{ blk_id, ret.rd_ts });
+                }
             }
-        }
+        );
         
         if (!new_ents.empty()) {
             const unique_lock_type lk(this->mtx_);

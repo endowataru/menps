@@ -26,6 +26,8 @@ class space
     using blk_id_type = typename P::blk_id_type;
     using sig_id_type = typename P::sig_id_type;
     
+    using wr_ts_type = typename P::wr_ts_type;
+    
     using seg_table_type = typename P::seg_table_type;
     using wr_set_type = typename P::wr_set_type;
     using rd_set_type = typename P::rd_set_type;
@@ -291,15 +293,38 @@ public:
         {
             const auto p = prof::start();
             
-            // Invalidate all of the written blocks in the write notices.
-            /*parallel*/ for (proc_id_type proc_id = 0; proc_id < num_procs; ++proc_id) {
+            const auto sigs =
+                mefdn::make_unique<sig_buffer_type []>(num_procs);
+            
+            wr_ts_type min_wr_ts = 0;
+            for (proc_id_type proc_id = 0; proc_id < num_procs; ++proc_id) {
                 if (proc_id != this_proc) {
                     // TODO: Remove deserialization.
-                    auto sig = sig_buffer_type::deserialize_from(&all_buf[sig_size * proc_id], sig_size);
+                    sigs[proc_id] =
+                        sig_buffer_type::deserialize_from(
+                            &all_buf[sig_size * proc_id], sig_size);
                     
-                    this->acquire_sig(sig);
+                    // Get the maximum of "minimum write timestamps".
+                    min_wr_ts = std::max(min_wr_ts, sigs[proc_id].get_min_wr_ts());
+                        // TODO: use custom comparator to avoid overflow?
                 }
             }
+            
+            // Invalidate all of the written blocks in the write notices.
+            ///*parallel*/ for (proc_id_type proc_id = 0; proc_id < num_procs; ++proc_id) {
+            ult_itf_type::for_loop(
+                ult_itf_type::execution::par
+            ,   0
+            ,   num_procs
+            ,   [this, &sigs, this_proc] (const proc_id_type proc_id) {
+                    if (proc_id != this_proc) {
+                        this->acquire_wns(sigs[proc_id]);
+                    }
+                }
+            );
+            
+            // Invalidate based on the minimum write timestamp.
+            this->acquire_min_wr_ts(min_wr_ts);
             
             prof::finish(prof_kind::barrier_acq, p);
         }
@@ -318,17 +343,15 @@ public:
 private:
     void acquire_sig(const sig_buffer_type& sig)
     {
+        this->acquire_wns(sig);
+        
+        this->acquire_min_wr_ts(sig.get_min_wr_ts());
+    }
+    
+    void acquire_wns(const sig_buffer_type& sig)
+    {
         auto& self = this->derived();
         auto& com = self.get_com_itf();
-        
-        // Self-invalidate all of the old blocks.
-        // This also increases the acquire timestamp (= minimum write timestamp).
-        this->rd_set_.self_invalidate(
-            sig.get_min_wr_ts()
-        ,   [&] (const blk_id_type blk_id) {
-                return this->seg_tbl_.self_invalidate(com, this->rd_set_, blk_id);
-            }
-        );
         
         // Invalidate the blocks based on write notices.
         sig.for_all_wns(
@@ -336,6 +359,21 @@ private:
                 // Invalidate this block based on the write notice.
                 // If invalidated, the home process ID and the timestamp are recorded.
                 this->seg_tbl_.acquire(com, this->rd_set_, wn);
+            }
+        );
+    }
+    
+    void acquire_min_wr_ts(const wr_ts_type min_wr_ts)
+    {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        // Self-invalidate all of the old blocks.
+        // This also increases the acquire timestamp (= minimum write timestamp).
+        this->rd_set_.self_invalidate(
+            min_wr_ts
+        ,   [&] (const blk_id_type blk_id) {
+                return this->seg_tbl_.self_invalidate(com, this->rd_set_, blk_id);
             }
         );
     }

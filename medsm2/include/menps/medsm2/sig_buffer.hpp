@@ -23,6 +23,8 @@ class sig_buffer
     
     using size_type = typename P::size_type;
     
+    using ult_itf_type = typename P::ult_itf_type;
+    
     struct header {
         wr_ts_type  min_wr_ts;
         size_type   num_entries;
@@ -179,9 +181,18 @@ public:
     template <typename Func>
     void for_all_wns(Func func) const
     {
-        for (auto& wn : wn_vec_) {
-            func(wn);
-        }
+        //for (auto& wn : wn_vec_) {
+        ult_itf_type::for_loop(
+            ult_itf_type::execution::seq
+            //ult_itf_type::execution::par
+            // TODO: This can be parallelized, but tasks are fine-grained
+        ,   0
+        ,   this->wn_vec_.size()
+        ,   [this, &func] (const size_type i) {
+                const auto wn = this->wn_vec_[i];
+                func(wn);
+            }
+        );
     }
     
 private:

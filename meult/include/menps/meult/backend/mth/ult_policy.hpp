@@ -59,6 +59,7 @@ struct ult_policy
     
     struct execution
     {
+        static constexpr mefdn::execution::sequenced_policy seq{};
         static constexpr mefdn::execution::parallel_policy par{};
     };
     
