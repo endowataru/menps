@@ -87,9 +87,9 @@ public:
             );
             
             // Initialize the private area with the original contents.
-            memcpy(priv_sys_ptr, priv_app_ptr, num_bytes);
+            copy_memory(priv_sys_ptr, priv_app_ptr, num_bytes);
             // Initialize the public area with the original contents.
-            memcpy(pub_ptr, priv_app_ptr, num_bytes);
+            copy_memory(pub_ptr, priv_app_ptr, num_bytes);
             
             MEFDN_LOG_DEBUG(
                 "msg:Finish copying global variables."
@@ -135,6 +135,27 @@ public:
             data_tbl_conf{ conf.com, num_bytes, priv_sys_ptr, pub_ptr }
         );
     }
+    
+private:
+    static void copy_memory(void* const dest, const void* const src, const size_type num_bytes)
+    {
+        #if 1
+        // TODO: It's unknown why this stupid code performs better than
+        //       just calling memcpy().
+        //       (glibc's memcpy processes backward. That may be a reason.)
+        
+        const auto dest_byte = static_cast<mefdn::byte*>(dest);
+        const auto src_byte = static_cast<const mefdn::byte*>(src);
+        
+        for (size_type i = 0; i < num_bytes; ++i) {
+            dest_byte[i] = src_byte[i];
+        }
+        #else
+        std::memcpy(dest, src, num_bytes);
+        #endif
+    }
+    
+public:
     
     using data_table_type::finalize; // TODO: finalize dir_table_type too
     
