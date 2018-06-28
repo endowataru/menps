@@ -8,6 +8,9 @@ add_library(meomp STATIC
 target_include_directories(meomp
     PUBLIC ./include
 )
+target_compile_options(meomp
+    PUBLIC -DMEOMP_ENABLED
+)
 target_link_libraries(meomp
     PUBLIC medsm2
     PRIVATE mefdn-options
