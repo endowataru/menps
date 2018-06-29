@@ -181,6 +181,9 @@ public:
                     ,   proc
                     );
                     
+                    // Waiting from the same process is a bug.
+                    MEFDN_ASSERT(proc != this_proc);
+                    
                     // Wait for the previous releaser.
                     p2p.untyped_recv(proc, tag, nullptr, 0);
                     
