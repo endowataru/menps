@@ -327,6 +327,11 @@ int omp_get_num_threads()
 }
 
 extern "C"
+int meomp_get_num_procs() {
+    return g_coll->get_num_procs();
+}
+
+extern "C"
 void GOMP_barrier()
 {
     worker_base_type::get_current_worker().barrier();
