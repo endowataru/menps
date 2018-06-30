@@ -144,6 +144,11 @@ private:
                     
                     self.end_parallel_on_children();
                     
+                    auto& sp = self.get_dsm_space();
+                    // Insert a DSM barrier here because of a observed bug.
+                    // TODO: Refactoring.
+                    sp.barrier();
+                    
                     this->is_parallel_ = false;
                 }
                 
@@ -153,6 +158,11 @@ private:
             case cmd_code_type::end_parallel: {
                 if (is_master) {
                     self.end_parallel_on_children();
+                    
+                    auto& sp = self.get_dsm_space();
+                    // Insert a DSM barrier here because of a observed bug.
+                    // TODO: Refactoring.
+                    sp.barrier();
                     
                     self.set_thread_num(0);
                     self.set_num_threads(1);
