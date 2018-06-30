@@ -158,6 +158,61 @@ public:
         });
     }
     
+    template <typename T>
+    T atomic_read(
+        const proc_id_type          src_proc
+    ,   const remote_ptr<const T>&  src_rptr
+    ) {
+        auto& self = this->derived();
+        auto& mi = self.get_mpi_interface();
+        const auto win = self.get_win();
+        
+        const auto datatype = P::template get_mpi_datatype<T>();
+        
+        T result = T();
+        
+        mi.fetch_and_op({
+            nullptr
+        ,   &result
+        ,   datatype
+        ,   src_proc
+        ,   P::to_mpi_aint(src_rptr)
+        ,   MPI_NO_OP
+        ,   win
+        });
+        
+        this->flush_local(src_proc);
+        
+        return result;
+    }
+    
+    template <typename T>
+    void atomic_write(
+        const proc_id_type          dest_proc
+    ,   const remote_ptr<const T>&  dest_rptr
+    ,   const T&                    value
+    ) {
+        auto& self = this->derived();
+        auto& mi = self.get_mpi_interface();
+        const auto win = self.get_win();
+        
+        const auto datatype = P::template get_mpi_datatype<T>();
+        
+        T result = T();
+        
+        mi.fetch_and_op({
+            &value
+        ,   &result
+        ,   datatype
+        ,   dest_proc
+        ,   P::to_mpi_aint(dest_rptr)
+        ,   MPI_REPLACE
+        ,   win
+        });
+        
+        this->flush_local(dest_proc);
+    }
+    
     MEFDN_NODISCARD
     bool test(request_type* const req)
     {
