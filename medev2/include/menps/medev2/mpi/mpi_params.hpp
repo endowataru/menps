@@ -195,6 +195,12 @@ struct win_flush_all_params
     MPI_Win     win;
 };
 
+struct win_flush_params
+{
+    int         rank;
+    MPI_Win     win;
+};
+
 struct win_flush_local_params
 {
     int         rank;

@@ -464,6 +464,14 @@ public:
         );
     }
     
+    void win_flush(const win_flush_params& p)
+    {
+        MPI_CRITICAL
+        
+        mpi_error::check(
+            MPI_Win_flush(p.rank, p.win)
+        );
+    }
     void win_flush_local(const win_flush_local_params& p)
     {
         MPI_CRITICAL

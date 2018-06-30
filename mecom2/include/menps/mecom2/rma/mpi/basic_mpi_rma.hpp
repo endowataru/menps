@@ -193,6 +193,15 @@ public:
         mi.win_flush_all({ win });
     }
     
+    void flush(const proc_id_type proc)
+    {
+        auto& self = this->derived();
+        auto& mi = self.get_mpi_interface();
+        const auto win = self.get_win();
+        
+        mi.win_flush({ proc, win });
+    }
+    
     void flush_local(const proc_id_type proc)
     {
         auto& self = this->derived();
