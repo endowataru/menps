@@ -40,7 +40,7 @@ public:
         : t_{}
     { }
     
-    basic_unique_resource(basic_unique_resource&& other)
+    basic_unique_resource(basic_unique_resource&& other) MEFDN_DEFAULT_NOEXCEPT
         : t_(other.release(), mefdn::move(other.get_deleter()))
     { 
         
