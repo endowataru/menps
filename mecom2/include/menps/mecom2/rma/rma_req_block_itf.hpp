@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/common.hpp>
+#include <cstring>
 
 namespace menps {
 namespace mecom2 {
