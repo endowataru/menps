@@ -181,7 +181,16 @@ public:
             // and can be modified concurrently by other threads in this process.
             // It's OK to read the intermediate states
             // because those writes will be managed by the next release operation.
+            #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
+            if (glk_ret.needs_local_comp){
+                is_written = std::memcmp(my_priv, my_pub, blk_size) != 0;
+            }
+            else {
+                is_written = true;
+            }
+            #else
             is_written = std::memcmp(my_priv, my_pub, blk_size) != 0;
+            #endif
                 //std::equal(my_priv, my_priv + blk_size, my_pub)
         }
         

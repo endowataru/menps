@@ -395,6 +395,10 @@ public:
         // If needs_protect_before == true, the write protection must be done
         // before modifying the data.
         bool            is_write_protected;
+        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
+        // Indicates that the local data pair will be compared.
+        bool            needs_local_comp;
+        #endif
     };
     
     template <typename LockResult>
@@ -442,7 +446,7 @@ public:
         
         const auto needs_protect_before =
             state == state_type::writable &&
-            (is_remotely_updated || wr_count >= P::wr_count_threshold);
+            (is_remotely_updated || wr_count > P::wr_count_threshold);
         
         const auto needs_protect_after =
             state == state_type::invalid_clean || state == state_type::invalid_dirty;
@@ -450,6 +454,11 @@ public:
         const bool is_write_protected =
             ! (state == state_type::writable || state == state_type::pinned)
             || needs_protect_before;
+        
+        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
+        const bool needs_local_comp =
+            wr_count == P::wr_count_threshold;
+        #endif
         
         MEFDN_LOG_VERBOSE(
             "msg:Locked global lock.\t"
@@ -464,6 +473,9 @@ public:
             "needs_protect_before:{}\t"
             "needs_protect_after:{}\t"
             "is_write_protected:{}\t"
+            #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
+            "needs_local_comp:{}\t"
+            #endif
         ,   blk_pos
         ,   owner
         ,   ge.wr_ts
@@ -475,11 +487,18 @@ public:
         ,   needs_protect_before
         ,   needs_protect_after
         ,   is_write_protected
+        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
+        ,   needs_local_comp
+        #endif
         );
         
         return { owner, owner_wr_ts, owner_rd_ts,
             is_remotely_updated, is_dirty,
-            needs_protect_before, needs_protect_after, is_write_protected };
+            needs_protect_before, needs_protect_after, is_write_protected
+            #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
+            , needs_local_comp
+            #endif
+            };
     }
     
     struct end_transaction_result {
@@ -589,7 +608,14 @@ public:
         }
         
         // Update the write count.
+        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
+        le.wr_count =
+            (bt_ret.is_write_protected ||
+                (bt_ret.needs_local_comp && mg_ret.is_written))
+            ? 0 : (le.wr_count + 1);
+        #else
         le.wr_count = (bt_ret.is_write_protected || mg_ret.is_written) ? 0 : (le.wr_count + 1);
+        #endif
         // TODO: May overflow.
         
         le.state = new_state;
