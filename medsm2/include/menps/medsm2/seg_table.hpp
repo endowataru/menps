@@ -211,10 +211,14 @@ private:
             if (start_ret.needs_latest_read) {
                 // This block was invalidated based on timestamps.
                 
+                const auto p = prof::start();
+                
                 // Read & merge the latest values inside the global critical section.
                 const auto tx_ret =
                     this->do_transaction(com, rd_set, info);
                 // TODO: It is strange that tx_ret is totally ignored in this method.
+                
+                prof::finish(prof_kind::tx_read, p);
                 
                 MEFDN_LOG_DEBUG(
                     "msg:Start reading latest block.\t"

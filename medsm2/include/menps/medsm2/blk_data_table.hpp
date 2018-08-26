@@ -91,6 +91,8 @@ public:
         if (cur_proc != home_proc) {
             #ifndef MEDSM2_DISABLE_READ_MERGE
             if (is_dirty) {
+                const auto p = prof::start();
+                
                 // Merge the diff in the read.
                 
                 // Read the data of the home process into a temporary buffer.
@@ -105,15 +107,20 @@ public:
                     ,   blk_size
                     );
                 
+                
                 const auto home_data = home_data_buf.get();
                 
                 const auto my_pub = this->get_my_pub_ptr(blk_pos);
                 
                 // Apply the changes written in the home into my_priv and my_pub.
                 this->read_merge(blk_pos, home_data, my_priv, my_pub, blk_size);
+                
+                prof::finish(prof_kind::merge_read, p);
             }
             else {
             #endif
+                const auto p = prof::start();
+                
                 // Simply read from the home process.
                 rma.read(
                     home_proc
@@ -125,6 +132,9 @@ public:
                 ,   my_priv
                 ,   blk_size
                 );
+                
+                prof::finish(prof_kind::wn_read, p);
+                
             #ifndef MEDSM2_DISABLE_READ_MERGE
             }
             #endif
@@ -148,10 +158,14 @@ public:
         const auto my_pub = this->get_my_pub_ptr(blk_pos);
         
         if (needs_twin) {
+            const auto p = prof::start();
+            
             // Copy the private data to the public data.
             // This is a preparation for releasing this block later.
             std::memcpy(my_pub, my_priv, blk_size);
             //std::copy(my_priv, my_priv + blk_size, my_pub);
+            
+            prof::finish(prof_kind::start_write_twin, p);
         }
         
         // Call mprotect(PROT_READ | PROT_WRITE).

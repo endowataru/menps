@@ -21,7 +21,11 @@ namespace medsm2 {
     x(unlock_global) \
     x(barrier_allgather) \
     x(barrier_acq) \
-    x(push_wn)
+    x(push_wn) \
+    x(start_write_twin) \
+    x(tx_read) \
+    x(merge_read) \
+    x(wn_read)
 
 #define DEFINE_PROF_KIND(name) name,
 
