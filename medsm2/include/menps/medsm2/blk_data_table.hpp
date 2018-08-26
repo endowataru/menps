@@ -60,6 +60,9 @@ public:
     {
         // Detach the public buffer.
         com.get_rma().detach(this->pub_ptr_);
+        
+        // Detach the public buffer.
+        com.get_rma().detach(this->priv_ptr_);
     }
     
     void* get_pub_ptr() const noexcept {
