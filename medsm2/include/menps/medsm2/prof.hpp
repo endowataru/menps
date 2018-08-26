@@ -25,7 +25,9 @@ namespace medsm2 {
     x(start_write_twin) \
     x(tx_read) \
     x(merge_read) \
-    x(wn_read)
+    x(wn_read) \
+    x(read_upgrade) \
+    x(write_upgrade)
 
 #define DEFINE_PROF_KIND(name) name,
 
