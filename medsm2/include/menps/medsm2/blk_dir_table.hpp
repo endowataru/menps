@@ -48,12 +48,21 @@ public:
     template <typename Conf>
     void coll_make(const Conf& conf)
     {
+        auto& coll = conf.com.get_coll();
+        const auto this_proc = coll.this_proc_id();
+        
         this->num_blks_ = conf.num_blks; // for debugging
         
         // Initialize local entries with zero.
         this->les_ = mefdn::make_unique<local_entry []>(conf.num_blks);
         
-        auto& coll = conf.com.get_coll();
+        for (blk_pos_type blk_pos = 0; blk_pos < conf.num_blks; ++blk_pos) {
+            // Set this process as the "first home".
+            // This means that every reader starts with its data first.
+            // TODO: This is a bit weird
+            //       because "home" is not the current process in general.
+            this->les_[blk_pos].home_proc = this_proc;
+        }
         
         this->ges_.coll_make(conf.com.get_rma(), coll, conf.num_blks);
     }
