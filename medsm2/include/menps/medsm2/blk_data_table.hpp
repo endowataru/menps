@@ -45,8 +45,11 @@ public:
         const auto priv = static_cast<mefdn::byte*>(conf.priv_buf);
         
         // Attach the private buffer.
-        // TODO: This buffer only works as a local buffer of RDMA.
         this->priv_ptr_ = conf.com.get_rma().attach(priv, priv + conf.seg_size);
+        
+        #ifdef MEDSM2_ENABLE_LAZY_MERGE
+        this->priv_buf_.coll_make(conf.com.get_rma(), conf.com.get_coll(), this->priv_ptr_, conf.seg_size);
+        #endif
         
         const auto pub = static_cast<mefdn::byte*>(conf.pub_buf);
         
@@ -90,25 +93,38 @@ public:
             if (is_dirty) {
                 // Merge the diff in the read.
                 
-                // Read the public data of the home process into a temporary buffer.
-                const auto home_pub_buf =
+                // Read the data of the home process into a temporary buffer.
+                const auto home_data_buf =
                     rma.buf_read(
                         home_proc
+                    #ifdef MEDSM2_ENABLE_LAZY_MERGE
+                    ,   this->get_other_priv_ptr(home_proc, blk_pos)
+                    #else
                     ,   this->get_other_pub_ptr(home_proc, blk_pos)
+                    #endif
                     ,   blk_size
                     );
                 
-                const auto home_pub = home_pub_buf.get();
+                const auto home_data = home_data_buf.get();
                 
                 const auto my_pub = this->get_my_pub_ptr(blk_pos);
                 
-                // Apply the changes written in home_pub into my_priv and my_pub.
-                this->read_merge(blk_pos, home_pub, my_priv, my_pub, blk_size);
+                // Apply the changes written in the home into my_priv and my_pub.
+                this->read_merge(blk_pos, home_data, my_priv, my_pub, blk_size);
             }
             else {
             #endif
                 // Simply read from the home process.
-                rma.read(home_proc, this->get_other_pub_ptr(home_proc, blk_pos), my_priv, blk_size);
+                rma.read(
+                    home_proc
+                #ifdef MEDSM2_ENABLE_LAZY_MERGE
+                ,   this->get_other_priv_ptr(home_proc, blk_pos)
+                #else
+                ,   this->get_other_pub_ptr(home_proc, blk_pos)
+                #endif
+                ,   my_priv
+                ,   blk_size
+                );
             #ifndef MEDSM2_DISABLE_READ_MERGE
             }
             #endif
@@ -198,9 +214,11 @@ public:
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             if (is_written) {
             #endif
+                #ifndef MEDSM2_ENABLE_LAZY_MERGE
                 // Copy the private data to the public data.
                 std::memcpy(my_pub, my_priv, blk_size);
                 //std::copy(my_priv, my_priv + blk_size, my_pub);
+                #endif
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             }
             else {
@@ -211,22 +229,36 @@ public:
         else {
             const auto cur_owner = glk_ret.owner;
             
-            // Read the public data from cur_owner.
-            const auto other_pub_buf =
+            // Read the data from cur_owner.
+            const auto other_data_buf =
                 rma.buf_read(
                     cur_owner
+                #ifdef MEDSM2_ENABLE_LAZY_MERGE
+                ,   this->get_other_priv_ptr(cur_owner, blk_pos)
+                #else
                 ,   this->get_other_pub_ptr(cur_owner, blk_pos)
+                #endif
                 ,   blk_size
                 );
             
-            const auto other_pub = other_pub_buf.get();
+            #ifdef MEDSM2_ENABLE_LAZY_MERGE
+            // Write back to cur_owner.
+            rma.write(
+                cur_owner
+            ,   this->get_other_pub_ptr(cur_owner, blk_pos)
+            ,   other_data_buf.get()
+            ,   blk_size
+            );
+            #endif
+            
+            const auto other_data = other_data_buf.get();
             
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             if (is_written) {
             #endif
-                // Three copies (my_pub, my_priv, other_pub) are different with each other.
+                // Three copies (my_pub, my_priv, other_data) are different with each other.
                 // It is necessary to merge them to complete the release.
-                this->write_merge(blk_pos, other_pub, my_priv, my_pub, blk_size);
+                this->write_merge(blk_pos, other_data, my_priv, my_pub, blk_size);
                 
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             }
@@ -237,10 +269,10 @@ public:
                 // because that thread requires this releaser thread
                 // to make the latest modifications visible on this process.
                 // Note: The timestamp should also be updated in the directory later.
-                std::memcpy(my_priv, other_pub, blk_size);
-                //std::copy(other_pub, other_pub + blk_size, my_priv);
-                std::memcpy(my_pub , other_pub, blk_size);
-                //std::copy(other_pub, other_pub + blk_size, my_pub);
+                std::memcpy(my_priv, other_data, blk_size);
+                //std::copy(other_data, other_data + blk_size, my_priv);
+                std::memcpy(my_pub , other_data, blk_size);
+                //std::copy(other_data, other_data + blk_size, my_pub);
             }
             #endif
         }
@@ -510,6 +542,14 @@ private:
         return this->pub_buf_.local(blk_size * blk_pos);
     }
     
+    #ifdef MEDSM2_ENABLE_LAZY_MERGE
+    typename rma_itf_type::template remote_ptr<mefdn::byte>
+    get_other_priv_ptr(const proc_id_type proc, const blk_pos_type blk_pos) {
+        auto& self = this->derived();
+        const auto blk_size = self.get_blk_size();
+        return this->priv_buf_.remote(proc, blk_size * blk_pos);
+    }
+    #endif
     typename rma_itf_type::template remote_ptr<mefdn::byte>
     get_other_pub_ptr(const proc_id_type proc, const blk_pos_type blk_pos) {
         auto& self = this->derived();
@@ -520,11 +560,16 @@ private:
     typename rma_itf_type::template local_ptr<mefdn::byte>
         priv_ptr_;
     
+    #ifdef MEDSM2_ENABLE_LAZY_MERGE
     typename P::template alltoall_ptr_set<mefdn::byte>
-        pub_buf_;
+        priv_buf_;
+    #endif
     
     typename rma_itf_type::template public_ptr<mefdn::byte>
         pub_ptr_;
+    
+    typename P::template alltoall_ptr_set<mefdn::byte>
+        pub_buf_;
 };
 
 } // namespace medsm2

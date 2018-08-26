@@ -5,6 +5,7 @@
 #include <menps/medsm2/config.h>
 
 #define MEDSM2_ENABLE_P2P_LOCK
+#define MEDSM2_ENABLE_LAZY_MERGE
 #define MEDSM2_ENABLE_NEEDS_LOCAL_COMP
 
 //#define MEOMP_SEPARATE_WORKER_THREAD
