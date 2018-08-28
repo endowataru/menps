@@ -9,6 +9,11 @@ option(MEDSM2_ENABLE_PROF "Enable profiling" FALSE)
 option(MEDSM2_USE_UCT_RMA "Use UCT RMA" FALSE)
 option(MEDSM2_USE_UCP_RMA "Use UCP RMA" FALSE)
 set(MEDSM2_GLOBAL_VAR_BLOCK_SIZE "0x1000" CACHE STRING "Block size of global variables")
+set(MEDSM2_MAX_SPACE_SIZE "0x100000000000" CACHE STRING "DSM space size")
+set(MEDSM2_MAX_SEG_SIZE "MEDSM2_MAX_SPACE_SIZE / 4096" CACHE STRING "Maximum DSM segment size")
+set(MEDSM2_LEASE_TS "10" CACHE STRING "Lease value for timestamp-based invalidation")
+set(MEDSM2_REL_SIG_LEN "1024" CACHE STRING "Length of write notice array")
+set(MEDSM2_WR_COUNT_THRESHOLD "2" CACHE STRING "Threshold for downgrading writable blocks")
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in

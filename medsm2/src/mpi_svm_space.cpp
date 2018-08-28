@@ -125,10 +125,10 @@ struct dsm_base_policy
     using wn_vector_type = mefdn::vector<wn_entry_type>;
     
     struct constants_type {
-        static const mefdn::size_t max_space_size = 0x100000000000; // TODO
-        static const mefdn::size_t max_seg_size = max_space_size / 4096; // TODO
-        static const rd_ts_type lease_ts = 10; // TODO
-        static const mefdn::size_t max_rel_sig_len = 1024;
+        static const size_type max_space_size = MEDSM2_MAX_SPACE_SIZE;
+        static const size_type max_seg_size = MEDSM2_MAX_SEG_SIZE;
+        static const rd_ts_type lease_ts = MEDSM2_LEASE_TS;
+        static const size_type max_rel_sig_len = MEDSM2_REL_SIG_LEN;
     };
     
     using sig_buffer_type = sig_buffer<dsm_base_policy>;
@@ -140,7 +140,7 @@ struct dsm_base_policy
     using sig_id_type = mefdn::size_t;
     
     using wr_count_type = size_type;
-    static const wr_count_type wr_count_threshold = 2; // TODO: Magic number
+    static const wr_count_type wr_count_threshold = MEDSM2_WR_COUNT_THRESHOLD;
     
     static constexpr int get_tag_from_blk_id(const blk_id_type blk_id) noexcept {
         // TODO: This will probably works,
