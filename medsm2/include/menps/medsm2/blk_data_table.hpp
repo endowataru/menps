@@ -211,33 +211,24 @@ public:
             // and can be modified concurrently by other threads in this process.
             // It's OK to read the intermediate states
             // because those writes will be managed by the next release operation.
-            #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
             if (glk_ret.needs_local_comp){
                 is_written = std::memcmp(my_priv, my_pub, blk_size) != 0;
+                //std::equal(my_priv, my_priv + blk_size, my_pub)
             }
             else {
                 is_written = true;
             }
-            #else
-            is_written = std::memcmp(my_priv, my_pub, blk_size) != 0;
-            #endif
-                //std::equal(my_priv, my_priv + blk_size, my_pub)
         }
         
         if (! glk_ret.is_remotely_updated) {
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             if (is_written) {
             #endif
-                #ifdef MEDSM2_ENABLE_LAZY_MERGE
                 if (glk_ret.needs_local_copy) {
                     // Copy the private data to the public data.
                     std::memcpy(my_pub, my_priv, blk_size);
+                    //std::copy(my_priv, my_priv + blk_size, my_pub);
                 }
-                #else
-                // Copy the private data to the public data.
-                std::memcpy(my_pub, my_priv, blk_size);
-                //std::copy(my_priv, my_priv + blk_size, my_pub);
-                #endif
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             }
             else {

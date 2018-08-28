@@ -395,14 +395,10 @@ public:
         // If needs_protect_before == true, the write protection must be done
         // before modifying the data.
         bool            is_write_protected;
-        #ifdef MEDSM2_ENABLE_LAZY_MERGE
         // Indicates that the local private data will be copied to the public data.
         bool            needs_local_copy;
-        #endif
-        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
         // Indicates that the local data pair will be compared.
         bool            needs_local_comp;
-        #endif
     };
     
     template <typename LockResult>
@@ -461,14 +457,18 @@ public:
             ! (state == state_type::writable || state == state_type::pinned)
             || needs_protect_before;
         
-        #ifdef MEDSM2_ENABLE_LAZY_MERGE
         const bool needs_local_copy =
+        #ifdef MEDSM2_ENABLE_LAZY_MERGE
             (wr_count+2) >= P::wr_count_threshold;
+        #else
+            true;
         #endif
         
-        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
         const bool needs_local_comp =
+        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
             (wr_count+1) >= P::wr_count_threshold;
+        #else
+            true;
         #endif
         
         MEFDN_LOG_VERBOSE(
@@ -484,12 +484,8 @@ public:
             "needs_protect_before:{}\t"
             "needs_protect_after:{}\t"
             "is_write_protected:{}\t"
-            #ifdef MEDSM2_ENABLE_LAZY_MERGE
             "needs_local_copy:{}\t"
-            #endif
-            #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
             "needs_local_comp:{}\t"
-            #endif
         ,   blk_pos
         ,   owner
         ,   ge.wr_ts
@@ -501,24 +497,14 @@ public:
         ,   needs_protect_before
         ,   needs_protect_after
         ,   is_write_protected
-        #ifdef MEDSM2_ENABLE_LAZY_MERGE
         ,   needs_local_copy
-        #endif
-        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
         ,   needs_local_comp
-        #endif
         );
         
         return { owner, owner_wr_ts, owner_rd_ts,
             is_remotely_updated, is_dirty,
-            needs_protect_before, needs_protect_after, is_write_protected
-            #ifdef MEDSM2_ENABLE_LAZY_MERGE
-            , needs_local_copy
-            #endif
-            #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
-            , needs_local_comp
-            #endif
-            };
+            needs_protect_before, needs_protect_after, is_write_protected,
+            needs_local_copy, needs_local_comp };
     }
     
     struct end_transaction_result {
@@ -628,14 +614,10 @@ public:
         }
         
         // Update the write count.
-        #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
         le.wr_count =
             (bt_ret.is_write_protected ||
                 (bt_ret.needs_local_comp && mg_ret.is_written))
             ? 0 : (le.wr_count + 1);
-        #else
-        le.wr_count = (bt_ret.is_write_protected || mg_ret.is_written) ? 0 : (le.wr_count + 1);
-        #endif
         // TODO: May overflow.
         
         le.state = new_state;
