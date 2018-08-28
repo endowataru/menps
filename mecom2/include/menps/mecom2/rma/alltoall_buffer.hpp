@@ -7,7 +7,7 @@ namespace menps {
 namespace mecom2 {
 
 template <typename P>
-class alltoall_buffer
+class basic_alltoall_buffer
 {
     MEFDN_DEFINE_DERIVED(P)
     
@@ -42,7 +42,7 @@ public:
     }
     
 private:
-    alltoall_ptr_set<P> ptrs_;
+    basic_alltoall_ptr_set<P> ptrs_;
     
     typename rma_itf_type::
         template unique_public_ptr<element_type []> lptr_;
@@ -51,7 +51,7 @@ private:
 template <typename Rma, typename Elem>
 struct alltoall_buffer_policy
 {
-    using derived_type = alltoall_buffer<alltoall_buffer_policy>;
+    using derived_type = basic_alltoall_buffer<alltoall_buffer_policy>;
     
     using rma_itf_type = Rma;
     
@@ -60,6 +60,10 @@ struct alltoall_buffer_policy
     
     using element_type = Elem;
 };
+
+template <typename Rma, typename Elem>
+using alltoall_buffer =
+    basic_alltoall_buffer<alltoall_buffer_policy<Rma, Elem>>;
 
 } // namespace mecom2
 } // namespace menps

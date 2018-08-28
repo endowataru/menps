@@ -327,15 +327,6 @@ inline mefdn::unique_ptr<uct_rma_resource> make_uct_rma_resource(
     return mefdn::make_unique<uct_rma_resource>(tl_name, dev_name, coll);
 }
 
-
-template <typename Elem>
-using uct_alltoall_ptr_set =
-    alltoall_ptr_set<alltoall_ptr_set_policy<uct_rma, Elem>>;
-
-template <typename Elem>
-using uct_alltoall_buffer =
-    alltoall_buffer<alltoall_buffer_policy<uct_rma, Elem>>;
-
 } // namespace mecom2
 } // namespace menps
 

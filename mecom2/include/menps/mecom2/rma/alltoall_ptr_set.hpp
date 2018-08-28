@@ -9,7 +9,7 @@ namespace mecom2 {
 #define MECOM2_ENABLE_DEBUG_ALLTOALL_PTR_SET
 
 template <typename P>
-class alltoall_ptr_set
+class basic_alltoall_ptr_set
 {
     MEFDN_DEFINE_DERIVED(P)
     
@@ -88,7 +88,7 @@ private:
 template <typename Rma, typename Elem>
 struct alltoall_ptr_set_policy
 {
-    using derived_type = alltoall_ptr_set<alltoall_ptr_set_policy>;
+    using derived_type = basic_alltoall_ptr_set<alltoall_ptr_set_policy>;
     
     using rma_itf_type = Rma;
     
@@ -97,6 +97,10 @@ struct alltoall_ptr_set_policy
     
     using element_type = Elem;
 };
+
+template <typename Rma, typename Elem>
+using alltoall_ptr_set =
+    basic_alltoall_ptr_set<alltoall_ptr_set_policy<Rma, Elem>>;
 
 } // namespace mecom2
 } // namespace menps

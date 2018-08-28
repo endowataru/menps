@@ -10,15 +10,9 @@
 #include <menps/medsm2/svm/svm_seg_table.hpp>
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include <menps/mecom2/rma/mpi/mpi_rma.hpp>
-#ifdef MEDSM2_USE_UCP_RMA
-#include <menps/mecom2/rma/ucp/ucp_alltoall_buffer.hpp>
-#include <menps/mecom2/rma/ucp/ucp_alltoall_ptr_set.hpp>
-#else
-#include <menps/mecom2/rma/mpi/mpi_alltoall_buffer.hpp>
-#include <menps/mecom2/rma/mpi/mpi_alltoall_ptr_set.hpp>
-#endif
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
+#include <menps/mecom2/rma/alltoall_buffer.hpp>
 
 #ifdef MEOMP_SEPARATE_WORKER_THREAD
 #include <menps/meult/klt.hpp>
@@ -108,22 +102,18 @@ struct dsm_base_policy
     using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO: rename
     #endif
     
-    #if defined(MEDSM2_USE_UCT_RMA)
-    template <typename T>
-    using alltoall_buffer = mecom2::uct_alltoall_buffer<T>;
-    template <typename T>
-    using alltoall_ptr_set = mecom2::uct_alltoall_ptr_set<T>;
-    #elif defined(MEDSM2_USE_UCP_RMA)
-    template <typename T>
-    using alltoall_buffer = mecom2::ucp_alltoall_buffer<T>;
-    template <typename T>
-    using alltoall_ptr_set = mecom2::ucp_alltoall_ptr_set<T>;
-    #else
-    template <typename T>
-    using alltoall_buffer = mecom2::mpi_alltoall_buffer<T>;
-    template <typename T>
-    using alltoall_ptr_set = mecom2::mpi_alltoall_ptr_set<T>;
-    #endif
+    template <typename Elem>
+    using alltoall_buffer =
+        mecom2::alltoall_buffer<
+            typename com_itf_type::rma_itf_type
+        ,   Elem
+        >;
+    template <typename Elem>
+    using alltoall_ptr_set =
+        mecom2::alltoall_ptr_set<
+            typename com_itf_type::rma_itf_type
+        ,   Elem
+        >;
     
     struct wn_entry_type {
         mpi_com_itf::proc_id_type   home_proc;

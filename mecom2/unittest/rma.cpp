@@ -2,14 +2,13 @@
 #include "unittest.hpp"
 #include <menps/mecom2/rma/mpi/mpi_rma.hpp>
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
-#include <menps/mecom2/rma/mpi/mpi_alltoall_buffer.hpp>
+#include <menps/mecom2/rma/alltoall_buffer.hpp>
 #include <menps/mefdn/coro/klt_worker.hpp>
 #include <menps/mefdn/coro/sfc.hpp>
 #include <menps/mecom2/com/com_worker.hpp>
 
 #ifdef MEDEV2_DEVICE_UCX_ENABLED
 #include <menps/mecom2/rma/ucp/ucp_rma.hpp>
-#include <menps/mecom2/rma/ucp/ucp_alltoall_buffer.hpp>
 
 //#include <menps/mecom2/com/uct/uct_worker_set.hpp>
 #include <menps/mecom2/rma/uct/uct_rma.hpp>
@@ -112,7 +111,7 @@ TEST(Rma, AlltoallMpi)
     
     auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
     
-    do_alltoall_test<mecom2::mpi_alltoall_buffer<int>>(*rma);
+    do_alltoall_test<mecom2::alltoall_buffer<mecom2::mpi_rma, int>>(*rma);
 }
 
 #ifdef MEDEV2_DEVICE_UCX_ENABLED
@@ -137,7 +136,7 @@ TEST(Rma, AlltoallUcp)
     
     auto rma = mecom2::make_ucp_rma(uf, ctx, *wk_set);
     
-    do_alltoall_test<mecom2::ucp_alltoall_buffer<int>>(*rma);
+    do_alltoall_test<mecom2::alltoall_buffer<mecom2::ucp_rma, int>>(*rma);
 }
 
 TEST(Rma, AlltoallUct)
@@ -174,7 +173,7 @@ TEST(Rma, AlltoallUct)
     
     auto rma_res = mecom2::make_uct_rma_resource(tl_name, dev_name, coll);
     
-    do_alltoall_test<mecom2::uct_alltoall_buffer<int>>(*rma_res->rma);
+    do_alltoall_test<mecom2::alltoall_buffer<mecom2::uct_rma, int>>(*rma_res->rma);
     
     #if 0
     
@@ -212,7 +211,7 @@ TEST(Rma, Cas)
     const auto cur_proc = coll.this_proc_id();
     const auto num_procs = coll.get_num_procs();
     
-    mecom2::mpi_alltoall_buffer<mefdn::uint64_t> buf;
+    mecom2::alltoall_buffer<mecom2::mpi_rma, mefdn::uint64_t> buf;
     buf.coll_make(*rma, coll, 1);
     
     if (cur_proc == 0)
@@ -248,7 +247,7 @@ struct coro_read_vars {
     using rptr_type = rma_itf_type::remote_ptr<mefdn::uint64_t>;
     using lptr_type = rma_itf_type::local_ptr<mefdn::uint64_t>;
     using a2a_buf_type =
-        mecom2::mpi_alltoall_buffer<mefdn::uint64_t>;
+        mecom2::alltoall_buffer<mecom2::mpi_rma, mefdn::uint64_t>;
     
     rma_itf_type&   rma;
     coll_itf_type&  coll;
@@ -340,7 +339,7 @@ TEST(Rma, CoroRead)
     auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
     auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
     
-    mecom2::mpi_alltoall_buffer<mefdn::uint64_t> a2a_buf;
+    mecom2::alltoall_buffer<mecom2::mpi_rma, mefdn::uint64_t> a2a_buf;
     a2a_buf.coll_make(*rma, coll, 1);
     
     const auto num_procs = coll.get_num_procs();
