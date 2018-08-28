@@ -2,38 +2,35 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#if defined(MEDSM2_USE_UCT_RMA)
-#include <menps/mecom2/rma/uct/uct_rma.hpp>
-#elif defined(MEDSM2_USE_UCP_RMA)
-#include <menps/mecom2/rma/ucp/ucp_rma.hpp>
-#else
-#include <menps/mecom2/rma/mpi/mpi_rma.hpp>
-#endif
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
+#include <menps/medsm2/dsm_rma.hpp>
+#include <menps/medsm2/dsm_com_itf.hpp>
 
 namespace menps {
 namespace medsm2 {
 
-#if defined(MEDSM2_USE_UCT_RMA)
-using mpi_svm_rma_type = mecom2::uct_rma;
-#elif defined(MEDSM2_USE_UCP_RMA)
-using mpi_svm_rma_type = mecom2::ucp_rma;
-#else
-using mpi_svm_rma_type = mecom2::mpi_rma;
-#endif
+using default_dsm_rma_itf =
+    mecom2::get_rma_type_t<mecom2::rma_id_t::MEDSM2_COM_RMA>;
+
+using default_dsm_com_itf =
+    dsm_com_itf<
+        dsm_com_policy<
+            default_dsm_rma_itf
+        ,   mecom2::mpi_coll
+        ,   mecom2::mpi_p2p
+        >
+    >;
 
 class mpi_svm_space
 {
+    using com_itf_type = default_dsm_com_itf;
+    
     using proc_id_type = int;
     using size_type = mefdn::size_t;
     
 public:
-    explicit mpi_svm_space(
-        mpi_svm_rma_type&   rma
-    ,   mecom2::mpi_coll&   coll
-    ,   mecom2::mpi_p2p&    p2p
-    );
+    explicit mpi_svm_space(com_itf_type& com);
     
     ~mpi_svm_space();
     

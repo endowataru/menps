@@ -742,33 +742,9 @@ int main(int argc, char* argv[])
     
     auto coll = mecom2::make_mpi_coll(*mi, coll_comm);
     
-    #if defined(MEDSM2_USE_UCT_RMA)
-        // TODO
-        const char tl_name[] = "rc_mlx5";
-        //const char tl_name[] = "rc";
-        const char dev_name[] = "mlx5_0:1";
-        auto rma_res = mecom2::make_uct_rma_resource(tl_name, dev_name, coll);
-        auto* rma = rma_res->rma.get();
+    auto rma_info = medsm2::make_dsm_rma_info<mecom2::rma_id_t::MEDSM2_COM_RMA>(*mi, coll);
+    auto& rma = rma_info->rma;
     
-    #elif defined(MEDSM2_USE_UCP_RMA)
-        using mecom2::rma_ucp_policy;
-        rma_ucp_policy::ucp_facade_type uf;
-        
-        auto conf = rma_ucp_policy::config_type::read(uf, nullptr, nullptr);
-        
-        ucp_params ctx_params = ucp_params();
-        ctx_params.field_mask = UCP_PARAM_FIELD_FEATURES;
-        ctx_params.features   = UCP_FEATURE_RMA | UCP_FEATURE_AMO64;
-        
-        auto ctx = rma_ucp_policy::context_type::init(uf, &ctx_params, conf.get());
-        
-        ucp_worker_params_t wk_params = ucp_worker_params_t();
-        auto wk_set = mecom2::make_ucp_worker_set(uf, ctx, wk_params, coll);
-        
-        auto rma = mecom2::make_ucp_rma(uf, ctx, *wk_set);
-    #else
-        auto rma = mecom2::make_mpi_rma(*mi, win, MPI_COMM_WORLD);
-    #endif
     auto p2p = mecom2::make_mpi_p2p(*mi, p2p_comm);
     #endif
     
@@ -776,7 +752,9 @@ int main(int argc, char* argv[])
     
     mefdn::logger::set_state_callback(get_state{});
     
-    medsm2::mpi_svm_space sp(*rma, coll, p2p);
+    medsm2::default_dsm_com_itf com(medsm2::default_dsm_com_itf::conf_t{ *rma, coll, p2p });
+    
+    medsm2::mpi_svm_space sp(com);
     
     g_sp = &sp;
     

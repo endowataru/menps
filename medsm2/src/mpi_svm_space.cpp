@@ -9,9 +9,6 @@
 #include <menps/medsm2/svm/svm_blk_table.hpp>
 #include <menps/medsm2/svm/svm_seg_table.hpp>
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
-#include <menps/mecom2/rma/mpi/mpi_rma.hpp>
-#include <menps/mecom2/coll/mpi/mpi_coll.hpp>
-#include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
 #include <menps/mecom2/rma/alltoall_buffer.hpp>
 
 #ifdef MEOMP_SEPARATE_WORKER_THREAD
@@ -21,46 +18,9 @@
 namespace menps {
 namespace medsm2 {
 
-using mecom2::mpi_coll;
-using mecom2::mpi_p2p;
-
-class mpi_com_itf
-{
-public:
-    using rma_itf_type = mpi_svm_rma_type;
-    using coll_itf_type = mpi_coll;
-    using p2p_itf_type = mpi_p2p;
-    
-    template <typename Conf>
-    explicit mpi_com_itf(const Conf& conf)
-        : rma_(conf.rma)
-        , coll_(conf.coll)
-        , p2p_(conf.p2p)
-    {
-        this->proc_id_ = get_coll().this_proc_id();
-        this->num_procs_ = get_coll().get_num_procs();
-    }
-    
-    using proc_id_type = int;
-    
-    int this_proc_id() { return proc_id_; }
-    int get_num_procs() { return num_procs_; }
-    
-    rma_itf_type& get_rma() { return rma_; }
-    mpi_coll& get_coll() { return coll_; }
-    mpi_p2p& get_p2p() { return this->p2p_; }
-    
-private:
-    rma_itf_type& rma_;
-    coll_itf_type& coll_;
-    p2p_itf_type& p2p_;
-    int proc_id_;
-    int num_procs_;
-};
-
 struct dsm_base_policy
 {
-    using com_itf_type = mpi_com_itf;
+    using com_itf_type = default_dsm_com_itf;
     using atomic_int_type = mefdn::uint64_t;
     using size_type = mefdn::size_t;
     using ptrdiff_type = mefdn::ptrdiff_t;
@@ -116,7 +76,7 @@ struct dsm_base_policy
         >;
     
     struct wn_entry_type {
-        mpi_com_itf::proc_id_type   home_proc;
+        typename com_itf_type::proc_id_type   home_proc;
         blk_id_type                 blk_id;
         rd_ts_type                  rd_ts;
         wr_ts_type                  wr_ts;
@@ -178,24 +138,15 @@ using my_space = svm_space<my_space_policy>;
 
 class mpi_svm_space::impl
 {
-    struct com_conf {
-        mpi_svm_rma_type&   rma;
-        mpi_coll&           coll;
-        mpi_p2p&            p2p;
-    };
-    
     struct my_space_conf {
-        mpi_com_itf&    com;
+        com_itf_type&   com;
         mefdn::size_t   max_num_sigs;
         mefdn::size_t   sig_size_in_bytes;
     };
+    
 public:
-    explicit impl(
-        mpi_svm_rma_type&   rma
-    ,   mecom2::mpi_coll&   coll
-    ,   mecom2::mpi_p2p&    p2p
-    )
-        : com_(com_conf{ rma, coll, p2p })
+    explicit impl(com_itf_type& com)
+        : com_(com)
         , sp_(
             my_space_conf{
                 com_
@@ -211,16 +162,12 @@ public:
     my_space& space() { return sp_; }
     
 private:
-    mpi_com_itf com_;
+    com_itf_type& com_;
     my_space sp_;
 };
 
-mpi_svm_space::mpi_svm_space(
-    mpi_svm_rma_type&   rma
-,   mecom2::mpi_coll&   coll
-,   mecom2::mpi_p2p&    p2p
-)
-    : impl_(new impl(rma, coll, p2p ))
+mpi_svm_space::mpi_svm_space(com_itf_type& com)
+    : impl_(new impl(com))
 { }
 
 mpi_svm_space::~mpi_svm_space() = default;
