@@ -289,8 +289,8 @@ public:
     ,   const blk_id_type           blk_id
     ,   const blk_pos_type          blk_pos
     ,   const unique_lock_type&     lk
-    ,   const lock_global_result&   glk_ret
-    ,   const EndTransactionResult& et_ret
+    ,   const lock_global_result&   glk_ret MEFDN_MAYBE_UNUSED
+    ,   const EndTransactionResult& et_ret MEFDN_MAYBE_UNUSED
     ) {
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);

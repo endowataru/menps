@@ -51,7 +51,7 @@ public:
         
         mi.isend({
             buf
-        ,   num_bytes
+        ,   static_cast<int>(num_bytes)
         ,   MPI_BYTE
         ,   proc
         ,   tag
@@ -93,7 +93,7 @@ public:
         
         mi.irecv({
             buf
-        ,   num_bytes
+        ,   static_cast<int>(num_bytes)
         ,   MPI_BYTE
         ,   proc
         ,   tag
@@ -136,7 +136,6 @@ private:
         
         while (true) {
             int flag;
-            MPI_Status status;
             mi.test({ req, &flag, MPI_STATUS_IGNORE });
             // TODO: How to deal with status?
             

@@ -6,7 +6,9 @@
 namespace menps {
 namespace mefdn {
 
-class MEFDN_DEPRECATED sync_flag
+// TODO: Marking this class produces lots of unimportant warnings.
+//       This class is no longer maintained, though.
+class /*MEFDN_DEPRECATED*/ sync_flag
 {
 public:
     sync_flag()

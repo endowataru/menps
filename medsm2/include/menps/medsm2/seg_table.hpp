@@ -214,7 +214,7 @@ private:
                 const auto p = prof::start();
                 
                 // Read & merge the latest values inside the global critical section.
-                const auto tx_ret =
+                const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
                     this->do_transaction(com, rd_set, info);
                 // TODO: It is strange that tx_ret is totally ignored in this method.
                 
@@ -306,7 +306,7 @@ public:
         
         if (ret.needs_merge) {
             // Do a merge for the pinned block.
-            const auto tx_ret =
+            const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
                 this->do_transaction(com, rd_set, info);
             
             // TODO: How to deal with the result of this transaction?
@@ -360,7 +360,7 @@ public:
         
         if (ret.needs_merge) {
             // Do a merge for the pinned block.
-            const auto tx_ret =
+            const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
                 this->do_transaction(com, rd_set, info);
             
             // TODO: How to deal with the result of this transaction?
@@ -575,9 +575,9 @@ public:
         const auto info = this->get_local_lock(blk_id);
         
         bool is_success = false;
-        const auto expected_val = expected;
+        const auto expected_val MEFDN_MAYBE_UNUSED = expected;
         
-        const auto tx_ret =
+        const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
             this->template do_amo_at<T>(com, rd_set, info, offset,
                 [&expected, desired, &is_success] (const T target) {
                     if (target == expected) {
@@ -624,7 +624,7 @@ public:
     ) {
         const auto info = this->get_local_lock(blk_id);
         
-        const auto tx_ret =
+        const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
             this->template do_amo_at<T>(com, rd_set, info, offset,
                 [value] (const T /*target*/) {
                     return value;

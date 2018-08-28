@@ -102,6 +102,10 @@ private:
             }
             #endif
             
+            case cmd_code_type::none:
+            case cmd_code_type::start_parallel:
+            case cmd_code_type::end_parallel:
+            case cmd_code_type::exit_program:
             default:
                 // Fatal error.
                 P::fatal_error();

@@ -179,7 +179,7 @@ public:
         const uct_unpack_callback_t unpack_cb
     ,   void * const                arg
     ,   const mefdn::size_t         length
-    ,   const mefdn::int64_t        remote_addr
+    ,   const mefdn::uint64_t       remote_addr
     ,   const uct_rkey_t            rkey
     ,   uct_completion_t* const     comp
     ) {

@@ -164,6 +164,7 @@ private:
                 MEDEV2_UCT_EP_FUNCS_ASYNC_STATUS_COMPLETION(D, /*dummy*/)
                 #undef REPLACE
             
+            #undef AFTER_EXEC
             #undef AFTER_EXEC_POST
             
             // async flush

@@ -27,7 +27,9 @@ public:
         
         const auto comm = self.get_reply_comm();
         
-        mi.send({ msg.header(), msg.total_size_in_bytes(),
+        mi.send({
+            msg.header(),
+            static_cast<int>(msg.total_size_in_bytes()),
             proc, tag, comm });
     }
     
@@ -38,7 +40,7 @@ public:
         
         const auto comm = self.get_reply_comm();
         
-        MPI_Status status{};
+        MPI_Status status = MPI_Status();
         mi.probe({ proc, tag, comm, &status });
         
         const auto count = mi.get_count(status);

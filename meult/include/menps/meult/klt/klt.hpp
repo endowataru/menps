@@ -120,7 +120,7 @@ private:
 };
 
 template <typename Policy>
-MEFDN_THREAD_LOCAL typename Policy::value_type* thread_specific<Policy>::p_ = 0;
+MEFDN_THREAD_LOCAL typename Policy::value_type* thread_specific<Policy>::p_ = nullptr;
 
 using menps::mefdn::barrier;
 

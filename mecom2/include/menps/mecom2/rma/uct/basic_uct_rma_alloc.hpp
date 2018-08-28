@@ -91,7 +91,6 @@ private:
     public_ptr_t<void> make_public_minfo(memory_type mem)
     {
         auto& self = this->derived();
-        auto& md = self.get_md();
         const auto& md_attr = self.get_md_attr();
         
         auto rkey_buf =
@@ -128,7 +127,7 @@ public:
         std::memcpy(ptr_buf+1, minfo->rkey_buf.get(), size);
     }
     template <typename T>
-    remote_ptr_t<T> deserialize(const proc_id_type proc, const void* const buf)
+    remote_ptr_t<T> deserialize(const proc_id_type /*proc*/, const void* const buf)
     {
         auto& self = this->derived();
         auto& uf = self.get_uct_facade();

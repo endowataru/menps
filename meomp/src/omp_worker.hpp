@@ -125,7 +125,7 @@ public:
     // Called on #pragma omp barrier.
     void barrier()
     {
-        cmd_info_type info{};
+        cmd_info_type info = cmd_info_type();
         info.code = cmd_code_type::barrier;
         
         this->set_cmd_and_suspend(info);
@@ -136,7 +136,7 @@ public:
         const omp_func_type func
     ,   const omp_data_type data
     ) {
-        cmd_info_type info{};
+        cmd_info_type info = cmd_info_type();
         info.code = cmd_code_type::start_parallel;
         info.func = func;
         info.data = data;
@@ -147,7 +147,7 @@ public:
     // Called at the end of #pragma omp parallel on a distributed worker.
     void end_parallel()
     {
-        cmd_info_type info{};
+        cmd_info_type info = cmd_info_type();
         info.code = cmd_code_type::end_parallel;
         
         this->set_cmd_and_suspend(info);
@@ -156,7 +156,7 @@ public:
     // Called at the end of #pragma omp parallel on child workers.
     void exit_parallel()
     {
-        cmd_info_type info{};
+        cmd_info_type info = cmd_info_type();
         info.code = cmd_code_type::exit_parallel;
         
         this->set_cmd_and_exit(info);
@@ -164,7 +164,7 @@ public:
     
     void exit_program()
     {
-        cmd_info_type info{};
+        cmd_info_type info = cmd_info_type();
         info.code = cmd_code_type::exit_program;
         
         this->set_cmd_and_exit(info);
@@ -173,7 +173,7 @@ public:
     #ifdef MEOMP_SEPARATE_WORKER_THREAD
     bool try_upgrade(void* const ptr)
     {
-        cmd_info_type info{};
+        cmd_info_type info = cmd_info_type();
         info.code = cmd_code_type::try_upgrade;
         info.data = ptr;
         
@@ -204,7 +204,7 @@ public:
         MEFDN_ASSERT(this->is_cmd_ready_);
         
         const auto cmd = this->cmd_info_;
-        this->cmd_info_ = cmd_info_type{};
+        this->cmd_info_ = cmd_info_type();
         return cmd;
         #endif
     }
@@ -225,7 +225,7 @@ public:
         }
         
         #else
-        this->cmd_info_ = cmd_info_type{};
+        this->cmd_info_ = cmd_info_type();
         MEFDN_ASSERT(this->is_cmd_ready_);
         this->is_cmd_ready_ = false;
         
@@ -328,12 +328,12 @@ private:
     global_ult_ref_type& get_work_ult() { return this->work_gu_; }
     
     // Used in mectx::ult_switcher.
-    void on_before_switch(global_ult_ref_type& /*from_th*/, global_ult_ref_type& to_th) {
+    void on_before_switch(global_ult_ref_type& /*from_th*/, global_ult_ref_type& to_th MEFDN_MAYBE_UNUSED) {
         #ifdef MEOMP_CALL_PIN_ON_WORKER_THREAD
         to_th.pin();
         #endif
     }
-    void on_after_switch(global_ult_ref_type& from_th, global_ult_ref_type& /*to_th*/) {
+    void on_after_switch(global_ult_ref_type& from_th MEFDN_MAYBE_UNUSED, global_ult_ref_type& /*to_th*/) {
         #ifdef MEOMP_CALL_PIN_ON_WORKER_THREAD
         from_th.unpin();
         #endif
@@ -371,7 +371,7 @@ private:
     klt_mutex_type  cmd_mtx_;
     klt_cv_type     cmd_cv_;
     #endif
-    cmd_info_type   cmd_info_{};
+    cmd_info_type   cmd_info_ = cmd_info_type();
     bool            is_cmd_ready_ = false;
 };
 

@@ -10,6 +10,7 @@ namespace mefdn = menps::mefdn;
 
 typedef mefdn::uint64_t    fib_int_t;
 
+fib_int_t fib(const fib_int_t n);
 fib_int_t fib(const fib_int_t n)
 {
     if (n == 0 || n == 1) {
@@ -25,6 +26,7 @@ fib_int_t fib(const fib_int_t n)
     return r1 + r2;
 }
 
+fib_int_t fib_seq(const fib_int_t n);
 fib_int_t fib_seq(const fib_int_t n)
 {
     fib_int_t r1 = 0;
@@ -39,6 +41,7 @@ fib_int_t fib_seq(const fib_int_t n)
     return r1;
 }
 
+int fib_main(const int argc, char** const argv);
 int fib_main(const int argc, char** const argv)
 {
     if (argc != 2) {

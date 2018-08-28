@@ -412,6 +412,8 @@ public:
     ,   const unique_lock_type& lk
     ,   const LockResult&       glk_ret
     ) {
+        this->check_locked(blk_pos, lk);
+        
         auto& rma = com.get_rma();
         const auto this_proc = com.this_proc_id();
         
@@ -430,7 +432,7 @@ public:
         const auto owner_rd_ts = owner_ge.rd_ts;
         
         auto& le = this->les_[blk_pos];
-        auto& ge = * this->ges_.local(blk_pos);
+        auto& ge MEFDN_MAYBE_UNUSED = * this->ges_.local(blk_pos);
         
         const auto state = le.state;
         //const auto cur_wr_ts = ge.wr_ts;

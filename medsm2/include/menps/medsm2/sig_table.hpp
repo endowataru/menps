@@ -130,7 +130,7 @@ private:
     ,   const sig_id_type   sig_id
     ) {
         const auto num_procs = com.get_num_procs();
-        const auto proc_id = sig_id % num_procs;
+        const auto proc_id = static_cast<proc_id_type>(sig_id % num_procs);
         // sig_pos must be smaller than this->num_sigs_.
         const auto sig_pos = sig_id / num_procs % this->num_sigs_;
         

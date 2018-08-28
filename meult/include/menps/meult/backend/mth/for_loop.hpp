@@ -12,7 +12,7 @@ namespace backend {
 namespace mth {
 
 template <typename I, typename S, typename F>
-void for_loop_strided(mefdn::execution::sequenced_policy seq,
+void for_loop_strided(mefdn::execution::sequenced_policy /*seq*/,
     I first, I last, S stride, F func)
 {
     mefdn::for_loop_strided(first, last, stride, func);

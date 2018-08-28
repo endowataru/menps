@@ -118,7 +118,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         #-Wchkp # Undocumented warning option
         $<$<BOOL:${MEFDN_GCC_SUPPORTS_WCONDITINALLY_SUPPORTED}>:-Wconditionally-supported>
         -Wconversion
-        $<$<VERSION_GREATER:${MEFDN_COMPILER_GCC_VERSION},4.5>:-Wctor-dtor-privacy> # #pragma GCC diagnostic is required
+        #$<$<VERSION_GREATER:${MEFDN_COMPILER_GCC_VERSION},4.5>:-Wctor-dtor-privacy> # #pragma GCC diagnostic is required
+            # Disabled since it seems useless
         #-Wdate-time # Seems useless
         $<$<BOOL:${MEFDN_GCC_SUPPORTS_WDELETE_NON_VIRTUAL_DTOR}>:-Wdelete-non-virtual-dtor>
         $<$<BOOL:${MEFDN_GCC_SUPPORTS_WDOUBLE_PROMOTION}>:-Wdouble-promotion>

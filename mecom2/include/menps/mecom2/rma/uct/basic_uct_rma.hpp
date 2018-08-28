@@ -70,7 +70,7 @@ class basic_uct_rma
     private:
         static void on_complete(
             uct_completion_t* const comp
-        ,   const ucs_status_t      status
+        ,   const ucs_status_t      status MEFDN_MAYBE_UNUSED
         ) {
             // Static downcast.
             auto& self = *static_cast<completion*>(comp);
@@ -240,8 +240,6 @@ private:
     ,   const ucs_status_t      st
     ,   completion* const       comp
     ) {
-        auto& self = this->derived();
-        
         if (st == UCS_OK) {
             return;
         }

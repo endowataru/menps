@@ -94,7 +94,7 @@ private:
             auto& coll = self.get_comm_coll();
             auto& sp = self.get_dsm_space();
             
-            cmd_info_type cmd{};
+            cmd_info_type cmd = cmd_info_type();
         
             // Load the function pointer and the data from the master process.
             coll.broadcast(0, &cmd, 1);
@@ -196,6 +196,8 @@ private:
             }
             #endif
             
+            case cmd_code_type::none:
+            case cmd_code_type::exit_parallel:
             default:
                 // Fatal error.
                 P::fatal_error();
@@ -227,4 +229,4 @@ private:
 
 } // namespace meomp
 } // namespace menps
-;
+

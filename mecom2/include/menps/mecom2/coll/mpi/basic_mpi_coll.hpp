@@ -49,7 +49,7 @@ public:
         ,   num_bytes
         );
         
-        mi.broadcast({ ptr, num_bytes, root_proc, comm });
+        mi.broadcast({ ptr, static_cast<int>(num_bytes), root_proc, comm });
     }
     
     void untyped_allgather(

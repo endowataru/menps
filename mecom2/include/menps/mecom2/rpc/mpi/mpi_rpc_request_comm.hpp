@@ -27,7 +27,8 @@ public:
         const auto tag = self.get_request_tag();
         const auto comm = self.get_request_comm();
         
-        mi.send({ msg.header(), msg.total_size_in_bytes(),
+        mi.send({ msg.header(),
+            static_cast<int>(msg.total_size_in_bytes()),
             proc, tag, comm });
     }
     
@@ -42,7 +43,7 @@ public:
         const auto tag = self.get_request_tag();
         const auto comm = self.get_request_comm();
         
-        MPI_Status status{};
+        MPI_Status status = MPI_Status();
         if (! mi.iprobe({ MPI_ANY_SOURCE, tag, comm, &status })) {
             return false;
         }

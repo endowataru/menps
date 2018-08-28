@@ -131,6 +131,7 @@ MEUCT_UCT_NON_PROXY_FUNCS(D, /*dummy*/)
     tr meuct_ ## name ( \
         MEDEV2_UCT_EXPAND_PARAMS(P, PL, num, __VA_ARGS__) \
     ) { \
+        (void)iface; /* TODO: Comment out the parameter */ \
         /*menps::meuct::proxy_policy::ult_itf_type::this_thread::yield();*/ \
         return 0; \
     }

@@ -188,7 +188,7 @@ private:
         // -2: invalid
         // -1: root
         // >=0: work
-    context_t ctx_{};
+    context_t ctx_ = context_t();
 };
 
 class my_child_worker;
@@ -315,11 +315,15 @@ using worker_base_type = menps::meomp::my_worker_base;
 using child_worker_type = menps::meomp::my_child_worker;
 
 extern "C"
+int omp_get_thread_num();
+extern "C"
 int omp_get_thread_num()
 {
     return worker_base_type::get_current_worker().get_thread_num();
 }
 
+extern "C"
+int omp_get_num_threads();
 extern "C"
 int omp_get_num_threads()
 {
@@ -331,6 +335,8 @@ int meomp_get_num_procs() {
     return g_coll->get_num_procs();
 }
 
+extern "C"
+void GOMP_barrier();
 extern "C"
 void GOMP_barrier()
 {
@@ -347,16 +353,32 @@ extern "C"
 void GOMP_parallel_start(
     void (* const func)(void*)
 ,   void* const data
+,   const unsigned int num_threads
+);
+extern "C"
+void GOMP_parallel_start(
+    void (* const func)(void*)
+,   void* const data
 ,   const unsigned int /*num_threads*/ // TODO
 ) {
     g_dw->start_parallel(func, data);
 }
+
+extern "C"
+void GOMP_parallel_end();
 extern "C"
 void GOMP_parallel_end()
 {
     g_dw->end_parallel();
 }
 
+extern "C"
+void GOMP_parallel(
+    void (* const func)(void*)
+,   void* const data
+,   const unsigned int num_threads
+,   const unsigned int /*flags*/
+);
 extern "C"
 void GOMP_parallel(
     void (* const func)(void*)
@@ -377,6 +399,8 @@ typedef struct {
 omp_lock_t;
 
 extern "C"
+void omp_set_lock(omp_lock_t* const lk);
+extern "C"
 void omp_set_lock(omp_lock_t* const lk)
 {
     auto* const target =
@@ -393,6 +417,8 @@ void omp_set_lock(omp_lock_t* const lk)
     }
 }
 extern "C"
+void omp_unset_lock(omp_lock_t* const lk);
+extern "C"
 void omp_unset_lock(omp_lock_t* const lk)
 {
     auto* const target =
@@ -401,12 +427,16 @@ void omp_unset_lock(omp_lock_t* const lk)
     g_sp->store_release(target, 0);
 }
 extern "C"
+void omp_init_lock(omp_lock_t* const lk);
+extern "C"
 void omp_init_lock(omp_lock_t* const lk) {
     auto* const target =
         reinterpret_cast<mefdn::uint32_t*>(lk);
     
     *target = 0;
 }
+extern "C"
+void omp_destroy_lock(omp_lock_t* /*lk*/);
 extern "C"
 void omp_destroy_lock(omp_lock_t* /*lk*/) {
     // Do nothing.
@@ -419,10 +449,14 @@ MEOMP_GLOBAL_VAR omp_lock_t g_critical_lock;
 } // unnamed namespace
 
 extern "C"
+void GOMP_critical_start();
+extern "C"
 void GOMP_critical_start() {
     omp_set_lock(&g_critical_lock);
 }
 
+extern "C"
+void GOMP_critical_end();
 extern "C"
 void GOMP_critical_end() {
     omp_unset_lock(&g_critical_lock);
@@ -491,10 +525,12 @@ struct kmp_invoker
 } // namespace menps
 
 extern "C"
+void __kmpc_fork_call(ident* /*id*/, const kmp_int32 argc, const kmpc_micro microtask, ...);
+extern "C"
 void __kmpc_fork_call(ident* /*id*/, const kmp_int32 argc, const kmpc_micro microtask, ...) {
     using menps::meomp::kmp_invoker;
     
-    kmp_invoker inv{};
+    kmp_invoker inv = kmp_invoker();
     inv.func = microtask;
     inv.argc = argc;
     
@@ -514,21 +550,30 @@ void __kmpc_fork_call(ident* /*id*/, const kmp_int32 argc, const kmpc_micro micr
     g_dw->end_parallel();
 }
 
+
+extern "C"
+kmp_int32 __kmpc_global_thread_num(ident* id);
 extern "C"
 kmp_int32 __kmpc_global_thread_num(ident* /*id*/) {
     return worker_base_type::get_current_worker().get_thread_num();
 }
 
 extern "C"
+kmp_int32 __kmpc_global_num_threads(ident* id);
+extern "C"
 kmp_int32 __kmpc_global_num_threads(ident* /*id*/) {
     return worker_base_type::get_current_worker().get_num_threads();
 }
 
 extern "C"
+void __kmpc_barrier(ident* id, kmp_int32 global_tid);
+extern "C"
 void __kmpc_barrier(ident* /*id*/, kmp_int32 /*global_tid*/) {
     worker_base_type::get_current_worker().barrier();
 }
 
+extern "C"
+kmp_int32 __kmpc_ok_to_fork(ident* id);
 extern "C"
 kmp_int32 __kmpc_ok_to_fork(ident* /*id*/) {
     // Always returns TRUE as the official documentation says.
@@ -536,9 +581,14 @@ kmp_int32 __kmpc_ok_to_fork(ident* /*id*/) {
 }
 
 extern "C"
+void __kmpc_serialized_parallel(ident* id, kmp_int32 global_tid);
+extern "C"
 void __kmpc_serialized_parallel(ident* /*id*/, kmp_int32 /*global_tid*/) {
     // Do nothing.
 }
+
+extern "C"
+void __kmpc_end_serialized_parallel(ident* id, kmp_int32 global_tid);
 extern "C"
 void __kmpc_end_serialized_parallel(ident* /*id*/, kmp_int32 /*global_tid*/) {
     // Do nothing.
@@ -546,9 +596,13 @@ void __kmpc_end_serialized_parallel(ident* /*id*/, kmp_int32 /*global_tid*/) {
 
 
 extern "C"
+kmp_int32 __kmpc_master(ident* loc, kmp_int32 global_tid);
+extern "C"
 kmp_int32 __kmpc_master(ident* /*loc*/, kmp_int32 /*global_tid*/) {
     return worker_base_type::get_current_worker().get_thread_num() == 0;
 }
+extern "C"
+void __kmpc_end_master(ident* loc, kmp_int32 global_tid);
 extern "C"
 void __kmpc_end_master(ident* /*loc*/, kmp_int32 /*global_tid*/) {
     // Do nothing.
@@ -620,10 +674,25 @@ void __kmpc_for_static_init_4(
 ,   kmp_int32* const    pstride
 ,   const kmp_int32     incr
 ,   const kmp_int32     chunk
+);
+extern "C"
+void __kmpc_for_static_init_4(
+    ident* const        loc
+,   const kmp_int32     gtid
+,   const kmp_int32     schedtype
+,   kmp_int32* const    plastiter
+,   kmp_int32* const    plower
+,   kmp_int32* const    pupper
+,   kmp_int32* const    pstride
+,   const kmp_int32     incr
+,   const kmp_int32     chunk
 ) {
     kmpc_for_static_init_4(loc, gtid, schedtype, plastiter, plower, pupper, pstride, incr, chunk);
 }
 
+
+extern "C"
+void __kmpc_for_static_fini(ident* loc, kmp_int32 global_tid);
 extern "C"
 void __kmpc_for_static_fini(ident* /*loc*/, kmp_int32 /*global_tid*/) {
     // Do nothing.
