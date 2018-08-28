@@ -9,11 +9,6 @@ int main(int argc, char** argv)
     auto mi =
         mefdn::make_unique<medev2::mpi::direct_requester>(&argc, &argv);
     
-    /*const*/ auto win =
-        mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD });
-    
-    mi->win_lock_all({ 0, win });
-    
     auto coll = mecom2::make_mpi_coll(*mi, MPI_COMM_WORLD);
     
     auto rma_info = medsm2::make_dsm_rma_info<mecom2::rma_id_t::MEDSM2_COM_RMA>(*mi, coll);
