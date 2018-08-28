@@ -748,7 +748,7 @@ int main(int argc, char* argv[])
             mefdn::unique_ptr<mefdn::byte []> init_temp(new mefdn::byte[data_size]);
             
             MEFDN_LOG_VERBOSE(
-                "msg:Start saving global variables in temporary buffer.\t"
+                "msg:Initialize global variables.\t"
                 "init_temp:0x{:x}\t"
                 "data_begin:0x{:x}\t"
                 "data_end:0x{:x}\t"
@@ -759,31 +759,7 @@ int main(int argc, char* argv[])
             ,   data_size
             );
             
-            #if 0
-            // Copy the initial data to a buffer (before mmap()).
-            #if 1
-            // TODO: There is a performance problem of using memcpy()
-            //       on a program with many global variables.
-            for (mefdn::size_t i = 0; i < data_size; ++i) {
-                init_temp[i] = data_begin[i];
-            }
-            #else
-            memcpy(init_temp.get(), data_begin, data_size);
-            #endif
-            #endif
-            
             sp.coll_alloc_global_var_seg(data_size, global_var_blk_size, data_begin);
-            
-            #if 0
-            if (g_coll->this_proc_id() == 0) {
-                sp.enable_on_this_thread();
-                
-                // Restore the initial data to the global buffer.
-                memcpy(data_begin, init_temp.get(), data_size);
-                
-                sp.disable_on_this_thread();
-            }
-            #endif
         }
     }
     
