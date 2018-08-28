@@ -745,15 +745,11 @@ int main(int argc, char* argv[])
         const auto data_size = data_end - data_begin;
         
         if (data_size > 0) {
-            mefdn::unique_ptr<mefdn::byte []> init_temp(new mefdn::byte[data_size]);
-            
             MEFDN_LOG_VERBOSE(
                 "msg:Initialize global variables.\t"
-                "init_temp:0x{:x}\t"
                 "data_begin:0x{:x}\t"
                 "data_end:0x{:x}\t"
                 "data_size:0x{:x}\t"
-            ,   reinterpret_cast<mefdn::uintptr_t>(init_temp.get())
             ,   reinterpret_cast<mefdn::uintptr_t>(data_begin)
             ,   reinterpret_cast<mefdn::uintptr_t>(data_end)
             ,   data_size
