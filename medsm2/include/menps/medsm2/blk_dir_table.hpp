@@ -395,6 +395,10 @@ public:
         // If needs_protect_before == true, the write protection must be done
         // before modifying the data.
         bool            is_write_protected;
+        #ifdef MEDSM2_ENABLE_LAZY_MERGE
+        // Indicates that the local private data will be copied to the public data.
+        bool            needs_local_copy;
+        #endif
         #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
         // Indicates that the local data pair will be compared.
         bool            needs_local_comp;
@@ -446,7 +450,7 @@ public:
         
         const auto needs_protect_before =
             state == state_type::writable &&
-            (is_remotely_updated || wr_count > P::wr_count_threshold);
+            (is_remotely_updated || wr_count >= P::wr_count_threshold);
         
         const auto needs_protect_after =
             state == state_type::invalid_clean || state == state_type::invalid_dirty;
@@ -455,9 +459,14 @@ public:
             ! (state == state_type::writable || state == state_type::pinned)
             || needs_protect_before;
         
+        #ifdef MEDSM2_ENABLE_LAZY_MERGE
+        const bool needs_local_copy =
+            (wr_count+2) >= P::wr_count_threshold;
+        #endif
+        
         #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
         const bool needs_local_comp =
-            wr_count == P::wr_count_threshold;
+            (wr_count+1) >= P::wr_count_threshold;
         #endif
         
         MEFDN_LOG_VERBOSE(
@@ -473,6 +482,9 @@ public:
             "needs_protect_before:{}\t"
             "needs_protect_after:{}\t"
             "is_write_protected:{}\t"
+            #ifdef MEDSM2_ENABLE_LAZY_MERGE
+            "needs_local_copy:{}\t"
+            #endif
             #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
             "needs_local_comp:{}\t"
             #endif
@@ -487,6 +499,9 @@ public:
         ,   needs_protect_before
         ,   needs_protect_after
         ,   is_write_protected
+        #ifdef MEDSM2_ENABLE_LAZY_MERGE
+        ,   needs_local_copy
+        #endif
         #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
         ,   needs_local_comp
         #endif
@@ -495,6 +510,9 @@ public:
         return { owner, owner_wr_ts, owner_rd_ts,
             is_remotely_updated, is_dirty,
             needs_protect_before, needs_protect_after, is_write_protected
+            #ifdef MEDSM2_ENABLE_LAZY_MERGE
+            , needs_local_copy
+            #endif
             #ifdef MEDSM2_ENABLE_NEEDS_LOCAL_COMP
             , needs_local_comp
             #endif

@@ -228,7 +228,12 @@ public:
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             if (is_written) {
             #endif
-                #ifndef MEDSM2_ENABLE_LAZY_MERGE
+                #ifdef MEDSM2_ENABLE_LAZY_MERGE
+                if (glk_ret.needs_local_copy) {
+                    // Copy the private data to the public data.
+                    std::memcpy(my_pub, my_priv, blk_size);
+                }
+                #else
                 // Copy the private data to the public data.
                 std::memcpy(my_pub, my_priv, blk_size);
                 //std::copy(my_priv, my_priv + blk_size, my_pub);
