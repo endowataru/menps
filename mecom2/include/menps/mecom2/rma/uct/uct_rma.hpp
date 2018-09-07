@@ -50,6 +50,9 @@ struct uct_remote_ptr_policy
 struct uct_rma_public_minfo {
     rma_uct_policy::memory_type         mem;
     rma_uct_policy::rkey_buffer_type    rkey_buf;
+    #ifdef MECOM2_USE_WORKER_LOCAL_ALLOCATOR
+    mefdn::size_t                       alloc_id;
+    #endif
 };
 
 template <typename T>
