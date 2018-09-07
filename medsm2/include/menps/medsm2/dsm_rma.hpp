@@ -11,6 +11,18 @@ template <mecom2::rma_id_t Id>
 struct dsm_rma_info;
 
 template <>
+struct dsm_rma_info<mecom2::rma_id_t::single>
+{
+    mecom2::single_rma_ptr  rma;
+    
+    template <typename Coll>
+    explicit dsm_rma_info(medev2::mpi::direct_requester& /*mi*/, Coll& /*coll*/)
+    {
+        rma = mecom2::make_single_rma();
+    }
+};
+
+template <>
 struct dsm_rma_info<mecom2::rma_id_t::mpi>
 {
     MPI_Comm            comm;
