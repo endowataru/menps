@@ -5,7 +5,11 @@ include(ExternalProject)
 set(MEULT_MASSIVETHREADS_CC ${CMAKE_C_COMPILER})
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(MEULT_MASSIVETHREADS_CFLAGS "-O0 -g")
+    set(MEULT_MASSIVETHREADS_CFLAGS "-O0 -g -ftls-model=initial-exec -Wall")
+elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+    set(MEULT_MASSIVETHREADS_CFLAGS "-O3 -g -DNDEBUG -ftls-model=initial-exec -Wall")
+else()
+    set(MEULT_MASSIVETHREADS_CFLAGS "-O3 -DNDEBUG -ftls-model=initial-exec -Wall")
 endif()
 
 configure_file(cmake/massivethreads-configure.sh.in massivethreads-configure.sh @ONLY)
