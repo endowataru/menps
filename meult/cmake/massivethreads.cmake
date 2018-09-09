@@ -12,6 +12,10 @@ else()
     set(MEULT_MASSIVETHREADS_CFLAGS "-O3 -DNDEBUG -ftls-model=initial-exec -Wall")
 endif()
 
+if(NOT ${MEFDN_ENABLE_FOMIT_FRAME_POINTER})
+    set(MEULT_MASSIVETHREADS_CFLAGS "${MEULT_MASSIVETHREADS_CFLAGS} -fno-omit-frame-pointer")
+endif()
+
 configure_file(cmake/massivethreads-configure.sh.in massivethreads-configure.sh @ONLY)
 
 ExternalProject_Add(MassiveThreads
