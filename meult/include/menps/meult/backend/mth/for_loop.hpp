@@ -19,6 +19,13 @@ void for_loop_strided(mefdn::execution::sequenced_policy /*seq*/,
 }
 
 template <typename I, typename S, typename F>
+struct for_loop_data {
+    mefdn::execution::parallel_policy par;
+    I first; I last; S stride; F func;
+    static inline void* f(void*);
+};
+
+template <typename I, typename S, typename F>
 void for_loop_strided(mefdn::execution::parallel_policy par,
     I first, I last, S stride, F func)
 {
@@ -31,19 +38,21 @@ void for_loop_strided(mefdn::execution::parallel_policy par,
         func(first);
     }
     else {
-        struct starter {
-            mefdn::execution::parallel_policy par;
-            I first; I last; S stride; F func;
-            void operator() () {
-                for_loop_strided(par, first, last, stride, func);
-            }
-        };
         const auto half = diff / 2 / stride * stride;
-        thread t(starter{ par, first, first + half, stride, func });
+        using data_type = for_loop_data<I, S, F>;
+        data_type d{ par, first, first + half, stride, func };
+        auto t = thread(fork_fast(&data_type::f, &d));
         //for_loop_strided(par, first, first + half, stride, func);
         for_loop_strided(par, first + half, last, stride, func);
         t.join();
     }
+}
+
+template <typename I, typename S, typename F>
+void* for_loop_data<I, S, F>::f(void* d_) {
+    const auto d = static_cast<for_loop_data*>(d_);
+    for_loop_strided(d->par, d->first, d->last, d->stride, d->func);
+    return nullptr;
 }
 
 template <typename ExecutionPolicy, typename I, typename F>
