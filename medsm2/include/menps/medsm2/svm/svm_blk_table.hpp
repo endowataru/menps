@@ -46,6 +46,11 @@ public:
         this->blk_size_ = conf.blk_size;
         this->num_blks_ = conf.num_blks;
         
+        this->ln2_blk_size_ =
+                mefdn::is_power_of_2(this->blk_size_)
+            ?   mefdn::floor_log2(this->blk_size_)
+            :   0;
+        
         const auto priv_app_ptr = conf.priv_app_ptr;
         const auto priv_sys_ptr = conf.priv_sys_ptr;
         const auto pub_ptr = conf.pub_ptr;
@@ -176,7 +181,15 @@ public:
         const auto diff = ptr - priv_app_ptr;
         
         // TODO: Remove this division operation.
-        return diff / blk_size_;
+        const auto ln2_blk_size = this->ln2_blk_size_;
+        if (ln2_blk_size > 0) {
+            const auto ret = diff >> ln2_blk_size;
+            MEFDN_ASSERT(ret == diff / blk_size_);
+            return ret;
+        }
+        else {
+            return diff / blk_size_;
+        }
     }
     
     lock_table_type& get_lock_tbl() { return *this; }
@@ -238,6 +251,7 @@ private:
     
     size_type       blk_size_;
     size_type       num_blks_;
+    size_type       ln2_blk_size_;
     
     mefdn::mapped_memory   pub_map_;
     mefdn::mapped_memory   priv_sys_map_;
