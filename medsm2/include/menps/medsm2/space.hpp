@@ -31,6 +31,7 @@ class space
     using seg_table_type = typename P::seg_table_type;
     using wr_set_type = typename P::wr_set_type;
     using rd_set_type = typename P::rd_set_type;
+    using rd_ts_state_type = typename P::rd_ts_state_type;
     using rel_sig_type = typename P::rel_sig_type;
     using sig_table_type = typename P::sig_table_type;
     
@@ -173,6 +174,8 @@ public:
         
         const auto this_proc = com.this_proc_id();
         
+        const auto rd_ts_st = this->rd_set_.get_ts_state();
+        
         wn_vector_type wn_vec;
         #ifdef MEDSM2_SPACE_WN_USE_SPINLOCK
         spinlock_type wn_vec_lock;
@@ -192,7 +195,7 @@ public:
                     // and migrate from the old owner if necessary.
                     // TODO: Make this a coroutine.
                     const auto rel_ret =
-                        this->seg_tbl_.release(com, this->rd_set_, blk_id);
+                        this->seg_tbl_.release(com, rd_ts_st, blk_id);
                     
                     if (rel_ret.release_completed) {
                         // The release operation of this block has been completed.
@@ -353,12 +356,14 @@ private:
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
+        const auto rd_ts_st = this->rd_set_.get_ts_state();
+        
         // Invalidate the blocks based on write notices.
         sig.for_all_wns(
             [&] (const wn_entry_type& wn) {
                 // Invalidate this block based on the write notice.
                 // If invalidated, the home process ID and the timestamp are recorded.
-                this->seg_tbl_.acquire(com, this->rd_set_, wn);
+                this->seg_tbl_.acquire(com, rd_ts_st, wn);
             }
         );
     }
@@ -372,8 +377,8 @@ private:
         // This also increases the acquire timestamp (= minimum write timestamp).
         this->rd_set_.self_invalidate(
             min_wr_ts
-        ,   [&] (const blk_id_type blk_id) {
-                return this->seg_tbl_.self_invalidate(com, this->rd_set_, blk_id);
+        ,   [&] (const rd_ts_state_type& rd_ts_st, const blk_id_type blk_id) {
+                return this->seg_tbl_.self_invalidate(com, rd_ts_st, blk_id);
             }
         );
     }

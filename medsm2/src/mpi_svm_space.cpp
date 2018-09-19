@@ -4,6 +4,7 @@
 #include <menps/medsm2/space.hpp>
 #include <menps/medsm2/rel_sig.hpp>
 #include <menps/medsm2/rd_set.hpp>
+#include <menps/medsm2/rd_ts_state.hpp>
 #include <menps/medsm2/wr_set.hpp>
 #include <menps/medsm2/svm/svm_space.hpp>
 #include <menps/medsm2/svm/svm_blk_table.hpp>
@@ -95,6 +96,7 @@ struct dsm_base_policy
     
     using rel_sig_type = rel_sig<dsm_base_policy>;
     using rd_set_type = rd_set<dsm_base_policy>;
+    using rd_ts_state_type = rd_ts_state<dsm_base_policy>;
     using wr_set_type = wr_set<dsm_base_policy>;
     
     using sig_id_type = mefdn::size_t;

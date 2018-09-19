@@ -11,6 +11,8 @@ namespace medsm2 {
 template <typename P>
 class rd_set
 {
+    using rd_ts_state_type = typename P::rd_ts_state_type;
+    
     using blk_id_type = typename P::blk_id_type;
     using rd_ts_type = typename P::rd_ts_type;
     using wr_ts_type = typename P::wr_ts_type;
@@ -99,6 +101,8 @@ public:
         mefdn::vector<entry> new_ents;
         spinlock_type new_ents_lock;
         
+        const rd_ts_state_type rd_ts_st(*this, min_wr_ts);
+        
         //for (const auto& blk_id : blk_ids) {
         ult_itf_type::for_loop(
             ult_itf_type::execution::seq
@@ -106,9 +110,9 @@ public:
             // TODO: This can be parallelized, but tasks are fine-grained
         ,   0
         ,   blk_ids.size()
-        ,   [&func, &blk_ids, &new_ents, &new_ents_lock, min_wr_ts] (const size_type i) {
+        ,   [&func, &blk_ids, &new_ents, &new_ents_lock, min_wr_ts, &rd_ts_st] (const size_type i) {
                 const auto blk_id = blk_ids[i];
-                const auto ret = func(blk_id);
+                const auto ret = func(rd_ts_st, blk_id);
                 if (!P::is_greater_rd_ts(min_wr_ts, ret.rd_ts)) {
                     mefdn::lock_guard<spinlock_type> lk(new_ents_lock);
                     new_ents.push_back(entry{ blk_id, ret.rd_ts });
@@ -154,28 +158,10 @@ public:
         }
     }
     
-    wr_ts_type make_new_wr_ts(const rd_ts_type old_rd_ts) const
+    rd_ts_state_type get_ts_state()
     {
         const unique_lock_type lk(this->mtx_);
-        return std::max(old_rd_ts + 1, this->min_wr_ts_);
-    }
-    
-    rd_ts_type make_new_rd_ts(const wr_ts_type wr_ts, const rd_ts_type rd_ts)
-    {
-        const unique_lock_type lk(this->mtx_);
-        // TODO: Provide a good prediction for a lease value of each block.
-        return std::max(std::max(wr_ts, this->min_wr_ts_) + P::constants_type::lease_ts, rd_ts);
-    }
-    
-    wr_ts_type get_min_wr_ts() const noexcept {
-        const unique_lock_type lk(this->mtx_);
-        return this->min_wr_ts_;
-    }
-    
-    bool is_valid_rd_ts(const rd_ts_type rd_ts) const noexcept {
-        const unique_lock_type lk(this->mtx_);
-        // If rd_ts >= min_wr_ts, the block is still valid.
-        return !P::is_greater_rd_ts(this->min_wr_ts_, rd_ts);
+        return rd_ts_state_type(*this, this->min_wr_ts_);
     }
     
 private:

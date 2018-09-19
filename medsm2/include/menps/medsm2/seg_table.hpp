@@ -41,6 +41,8 @@ class seg_table
     using rd_set_type = typename P::rd_set_type;
     using wr_set_type = typename P::wr_set_type;
     
+    using rd_ts_state_type = typename P::rd_ts_state_type;
+    
     struct lock_info
     {
         unique_lock_type    lk;
@@ -213,9 +215,11 @@ private:
                 
                 const auto p = prof::start();
                 
+                const auto rd_ts_st = rd_set.get_ts_state();
+                
                 // Read & merge the latest values inside the global critical section.
                 const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
-                    this->do_transaction(com, rd_set, info);
+                    this->do_transaction(com, rd_ts_st, info);
                 // TODO: It is strange that tx_ret is totally ignored in this method.
                 
                 prof::finish(prof_kind::tx_read, p);
@@ -293,7 +297,7 @@ public:
     typename blk_dir_tbl_type::acquire_result
     acquire(
         com_itf_type&           com
-    ,   rd_set_type&            rd_set
+    ,   const rd_ts_state_type& rd_ts_st
     ,   const wn_entry_type&    wn
     ) {
         const auto info = this->get_local_lock(wn.blk_id);
@@ -307,7 +311,7 @@ public:
         if (ret.needs_merge) {
             // Do a merge for the pinned block.
             const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
-                this->do_transaction(com, rd_set, info);
+                this->do_transaction(com, rd_ts_st, info);
             
             // TODO: How to deal with the result of this transaction?
         }
@@ -349,19 +353,19 @@ public:
     
     typename blk_dir_tbl_type::self_invalidate_result
     self_invalidate(
-        com_itf_type&       com
-    ,   rd_set_type&        rd_set
-    ,   const blk_id_type   blk_id
+        com_itf_type&           com
+    ,   const rd_ts_state_type& rd_ts_st
+    ,   const blk_id_type       blk_id
     ) {
         const auto info = this->get_local_lock(blk_id);
         
         const auto ret =
-            info.dir_tbl.self_invalidate(rd_set, info.blk_pos, info.lk);
+            info.dir_tbl.self_invalidate(rd_ts_st, info.blk_pos, info.lk);
         
         if (ret.needs_merge) {
             // Do a merge for the pinned block.
             const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
-                this->do_transaction(com, rd_set, info);
+                this->do_transaction(com, rd_ts_st, info);
             
             // TODO: How to deal with the result of this transaction?
         }
@@ -382,7 +386,7 @@ public:
         ,   info.blk_pos
         ,   ret.wr_ts
         ,   ret.rd_ts
-        ,   rd_set.get_min_wr_ts()
+        ,   rd_ts_st.get_min_wr_ts()
         );
         
         return ret;
@@ -398,9 +402,9 @@ public:
     };
     
     release_result release(
-        com_itf_type&       com
-    ,   rd_set_type&        rd_set
-    ,   const blk_id_type   blk_id
+        com_itf_type&           com
+    ,   const rd_ts_state_type& rd_ts_st
+    ,   const blk_id_type       blk_id
     ) {
         const auto info = this->get_local_lock(blk_id);
         
@@ -414,7 +418,7 @@ public:
         
         // Merge the written values inside the global critical section.
         auto tx_ret =
-            this->do_transaction(com, rd_set, info);
+            this->do_transaction(com, rd_ts_st, info);
         
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
@@ -445,10 +449,10 @@ private:
     
     template <typename Func>
     do_transaction_result do_transaction(
-        com_itf_type&       com
-    ,   rd_set_type&        rd_set
-    ,   const lock_info&    info
-    ,   Func&&              func
+        com_itf_type&           com
+    ,   const rd_ts_state_type& rd_ts_st
+    ,   const lock_info&        info
+    ,   Func&&                  func
     ) {
         const auto p_lock_global = prof::start();
         
@@ -488,7 +492,7 @@ private:
         
         // Unlock the global lock.
         const auto et_ret =
-            info.dir_tbl.end_transaction(com, rd_set,
+            info.dir_tbl.end_transaction(com, rd_ts_st,
                 info.blk_id, info.blk_pos, info.lk, bt_ret, mg_ret);
         
         prof::finish(prof_kind::end_tx, p_end_tx);
@@ -512,22 +516,22 @@ private:
     };
     
     do_transaction_result do_transaction(
-        com_itf_type&       com
-    ,   rd_set_type&        rd_set
-    ,   const lock_info&    info
+        com_itf_type&           com
+    ,   const rd_ts_state_type& rd_ts_st
+    ,   const lock_info&        info
     ) {
-        return do_transaction(com, rd_set, info, do_transaction_default_functor{});
+        return do_transaction(com, rd_ts_st, info, do_transaction_default_functor{});
     }
     
     template <typename T, typename Func>
     do_transaction_result do_amo_at(
-        com_itf_type&       com
-    ,   rd_set_type&        rd_set
-    ,   const lock_info&    info
-    ,   const size_type     offset
-    ,   Func&&              func
+        com_itf_type&           com
+    ,   const rd_ts_state_type& rd_ts_st
+    ,   const lock_info&        info
+    ,   const size_type         offset
+    ,   Func&&                  func
     ) {
-        return this->do_transaction(com, rd_set, info,
+        return this->do_transaction(com, rd_ts_st, info,
             [&func, offset] (const lock_info& info2) {
                 return info2.data_tbl.template do_amo_at<T>(
                     info2.blk_pos
@@ -577,8 +581,10 @@ public:
         bool is_success = false;
         const auto expected_val MEFDN_MAYBE_UNUSED = expected;
         
+        const auto rd_ts_st = rd_set.get_ts_state();
+        
         const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
-            this->template do_amo_at<T>(com, rd_set, info, offset,
+            this->template do_amo_at<T>(com, rd_ts_st, info, offset,
                 [&expected, desired, &is_success] (const T target) {
                     if (target == expected) {
                         is_success = true;
@@ -624,8 +630,10 @@ public:
     ) {
         const auto info = this->get_local_lock(blk_id);
         
+        const auto rd_ts_st = rd_set.get_ts_state();
+        
         const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
-            this->template do_amo_at<T>(com, rd_set, info, offset,
+            this->template do_amo_at<T>(com, rd_ts_st, info, offset,
                 [value] (const T /*target*/) {
                     return value;
                 });

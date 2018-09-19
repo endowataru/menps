@@ -32,6 +32,7 @@ class blk_dir_table
     
     using rd_set_type = typename P::rd_set_type;
     using wr_set_type = typename P::wr_set_type;
+    using rd_ts_state_type = typename P::rd_ts_state_type;
     
     using wr_count_type = typename P::wr_count_type;
     
@@ -121,6 +122,8 @@ public:
             // This variable is only updated when the local directory lock is acquired.
             const auto cur_rd_ts = ge.rd_ts;
             
+            const auto rd_ts_st = rd_set.get_ts_state();
+            
             // If the timestamp is older than the minimum read timestamp,
             // this block must be loaded from the latest owner
             // because it was self-invalidated via timestamps
@@ -132,7 +135,7 @@ public:
                 #ifdef MEDSM2_FORCE_LATEST_READ
                 true
                 #else
-                ! rd_set.is_valid_rd_ts(cur_rd_ts)
+                ! rd_ts_st.is_valid_rd_ts(cur_rd_ts)
                 #endif
                 ;
             
@@ -358,11 +361,11 @@ public:
     };
     
     self_invalidate_result self_invalidate(
-        const rd_set_type&      rd_set
+        const rd_ts_state_type& rd_ts_st
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
-        const auto ret = this->invalidate(blk_pos, lk, rd_set.get_min_wr_ts());
+        const auto ret = this->invalidate(blk_pos, lk, rd_ts_st.get_min_wr_ts());
         
         auto& ge = * this->ges_.local(blk_pos);
         const auto wr_ts = ge.wr_ts;
@@ -519,7 +522,7 @@ public:
     template <typename MergeResult>
     end_transaction_result end_transaction(
         com_itf_type&                   com
-    ,   rd_set_type&                    rd_set
+    ,   const rd_ts_state_type&         rd_ts_st
     ,   const blk_id_type               blk_id
     ,   const blk_pos_type              blk_pos
     ,   const unique_lock_type&         lk
@@ -539,13 +542,13 @@ public:
         // (that will be the owner again),
         // the timestamp becomes equal to that of the owner.
         const auto new_wr_ts =
-            mg_ret.is_written ? rd_set.make_new_wr_ts(bt_ret.rd_ts) : bt_ret.wr_ts;
+            mg_ret.is_written ? rd_ts_st.make_new_wr_ts(bt_ret.rd_ts) : bt_ret.wr_ts;
         
         // The read timestamp depends on the write timestamp.
         // This calculates new_rd_ts = max(new_wr_ts+lease, old_rd_ts).
         // TODO: Provide a good prediction for a lease value of each block.
         const auto new_rd_ts =
-            rd_set.make_new_rd_ts(new_wr_ts, bt_ret.rd_ts);
+            rd_ts_st.make_new_rd_ts(new_wr_ts, bt_ret.rd_ts);
         
         const auto new_owner = mg_ret.is_written ? cur_proc : old_owner;
         
@@ -589,6 +592,8 @@ public:
         auto new_state = old_state;
         
         if (old_state == state_type::invalid_dirty || old_state == state_type::invalid_clean) {
+            auto& rd_set = rd_ts_st.get_rd_set();
+            
             // This block was invalid and became readable in this transaction.
             rd_set.add_readable(blk_id, new_rd_ts);
         }
