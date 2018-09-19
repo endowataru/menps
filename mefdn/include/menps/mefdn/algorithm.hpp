@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <menps/mefdn/lang.hpp>
 #include <algorithm>
 
 namespace menps {
