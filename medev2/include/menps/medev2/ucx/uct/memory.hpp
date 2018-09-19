@@ -115,7 +115,7 @@ public:
         return this->size_;
     }
     
-    void pack_rkey(void* const rkey_buf) const noexcept
+    void pack_rkey(void* const rkey_buf) const
     {
         const auto& del = this->get_deleter();
         const auto uf = del.uf;

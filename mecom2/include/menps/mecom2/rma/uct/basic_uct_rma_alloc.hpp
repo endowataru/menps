@@ -98,7 +98,11 @@ private:
         
         const auto addr = mem.get_address();
         const auto minfo_ptr =
-            new public_minfo_type{ mefdn::move(mem), mefdn::move(rkey_buf) };
+            new public_minfo_type{ mefdn::move(mem), mefdn::move(rkey_buf)
+                #ifdef MECOM2_USE_WORKER_LOCAL_ALLOCATOR
+                , 0
+                #endif
+            };
         
         return public_ptr_t<void>(addr, minfo_ptr);
     }

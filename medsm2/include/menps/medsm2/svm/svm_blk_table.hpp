@@ -35,6 +35,8 @@ class svm_blk_table
     
     using base_policy_type = svm_blk_table_policy<P>;
     
+    using ptrdiff_type = typename P::ptrdiff_type;
+    
 public:
     using lock_table_type = blk_lock_table<base_policy_type>;
     using dir_table_type = blk_dir_table<base_policy_type>;
@@ -184,7 +186,7 @@ public:
         const auto ln2_blk_size = this->ln2_blk_size_;
         if (ln2_blk_size > 0) {
             const auto ret = diff >> ln2_blk_size;
-            MEFDN_ASSERT(ret == diff / blk_size_);
+            MEFDN_ASSERT(ret == static_cast<ptrdiff_type>(diff / blk_size_));
             return ret;
         }
         else {

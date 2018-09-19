@@ -186,12 +186,12 @@ public:
     
     MEFDN_NODISCARD
     bool try_start_rma(
-        const worker_num_type   wk_num
-    ,   const proc_id_type      proc
+        const worker_num_type   wk_num MEFDN_MAYBE_UNUSED
+    ,   const proc_id_type      proc MEFDN_MAYBE_UNUSED
     ) {
+        #ifdef MECOM2_UCT_RMA_ENABLE_CONCURRENT_LIMIT
         auto& ei = this->wis_[wk_num].eis[proc];
         
-        #ifdef MECOM2_UCT_RMA_ENABLE_CONCURRENT_LIMIT
         mefdn::lock_guard<spinlock_type> lk(ei.lock);
         if (ei.num_ongoing < ei.max_num_ongoing) {
             ++ei.num_ongoing;
@@ -211,12 +211,12 @@ public:
         #endif
     }
     void finish_rma(
-        const worker_num_type   wk_num
-    ,   const proc_id_type      proc
+        const worker_num_type   wk_num MEFDN_MAYBE_UNUSED
+    ,   const proc_id_type      proc MEFDN_MAYBE_UNUSED
     ) {
+        #ifdef MECOM2_UCT_RMA_ENABLE_CONCURRENT_LIMIT
         auto& ei = this->wis_[wk_num].eis[proc];
         
-        #ifdef MECOM2_UCT_RMA_ENABLE_CONCURRENT_LIMIT
         mefdn::lock_guard<spinlock_type> lk(ei.lock);
         MEFDN_ASSERT(ei.num_ongoing > 0);
         --ei.num_ongoing;

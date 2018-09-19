@@ -6,6 +6,8 @@ option(MECOM2_RMA_ENABLE_LOOPBACK "Enable loopback RMA read/write" FALSE)
 
 option(MECOM2_USE_MEUCT "Use meuct for mecom2" FALSE)
 
+option(MECOM2_USE_WORKER_LOCAL_ALLOCATOR "Use worker-local RMA allocator" TRUE)
+
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/menps/mecom2/config.h)

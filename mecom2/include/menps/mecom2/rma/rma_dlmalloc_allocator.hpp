@@ -5,8 +5,6 @@
 #include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/external/malloc.h>
 
-#define MECOM2_USE_WORKER_LOCAL_ALLOCATOR
-
 namespace menps {
 namespace mecom2 {
 

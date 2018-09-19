@@ -236,7 +236,7 @@ public:
     
 private:
     void wait(
-        const rkey_info_type&   info
+        const rkey_info_type&   info MEFDN_MAYBE_UNUSED
     ,   const ucs_status_t      st
     ,   completion* const       comp
     ) {

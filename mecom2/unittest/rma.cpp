@@ -237,8 +237,9 @@ TEST(Rma, Cas)
     
     coll.barrier();
     
-    if (cur_proc == 0)
+    if (cur_proc == 0) {
         ASSERT_EQ(num_procs, *buf.local(0));
+    }
 }
 
 struct coro_read_vars {

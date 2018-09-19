@@ -119,7 +119,7 @@ public:
     }
     
     void write(
-        const proc_id_type              dest_proc
+        const proc_id_type              /*dest_proc*/
     ,   const remote_ptr<void>&         dest_rptr
     ,   const local_ptr<const void>&    src_lptr
     ,   const size_type                 num_bytes
@@ -128,7 +128,7 @@ public:
     }
     
     void read(
-        const proc_id_type              src_proc
+        const proc_id_type              /*src_proc*/
     ,   const remote_ptr<const void>&   src_rptr
     ,   const local_ptr<void>&          dest_lptr
     ,   const size_type                 num_bytes
