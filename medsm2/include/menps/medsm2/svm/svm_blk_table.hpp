@@ -184,7 +184,7 @@ public:
         
         // TODO: Remove this division operation.
         const auto ln2_blk_size = this->ln2_blk_size_;
-        if (ln2_blk_size > 0) {
+        if (MEFDN_LIKELY(ln2_blk_size > 0)) {
             const auto ret = diff >> ln2_blk_size;
             MEFDN_ASSERT(ret == static_cast<ptrdiff_type>(diff / blk_size_));
             return ret;
