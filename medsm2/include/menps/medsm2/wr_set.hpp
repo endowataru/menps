@@ -5,8 +5,8 @@
 #include <menps/mefdn/iterator.hpp>
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/vector.hpp>
+#include <menps/mefdn/algorithm.hpp>
 #include <unordered_set>
-#include <algorithm>
 
 namespace menps {
 namespace medsm2 {
@@ -125,14 +125,21 @@ public:
         const auto dirty_flags =
             mefdn::make_unique<bool []>(num_released);
         
+        const auto num_workers = ult_itf_type::get_num_workers();
+        auto stride = num_released * 4 / num_workers; // TODO: magic number
+        if (stride == 0) { stride = 1; }
+        
         // Do the release operations in parallel.
-        ult_itf_type::for_loop(
+        ult_itf_type::for_loop_strided(
             ult_itf_type::execution::par
-        ,   0, num_released
-        ,   [&dirty_flags, &new_dirty_ids, &func] (const size_type i) {
-                // Call the callback release function.
-                // The returned values are stored in parallel.
-                dirty_flags[i] = func(new_dirty_ids[i]);
+        ,   0, num_released, stride
+        ,   [&dirty_flags, &new_dirty_ids, &func, num_released, stride] (const size_type first) {
+                const auto last = mefdn::min(first + stride, num_released);
+                for (size_type i = first; i < last; ++i) {
+                    // Call the callback release function.
+                    // The returned values are stored in parallel.
+                    dirty_flags[i] = func(new_dirty_ids[i]);
+                }
             }
         );
         
