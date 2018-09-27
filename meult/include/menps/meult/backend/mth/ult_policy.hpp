@@ -63,6 +63,25 @@ struct ult_policy
         static constexpr mefdn::execution::parallel_policy par{};
     };
     
+    
+    template <typename ExecutionPolicy,
+        typename I, typename S, typename... Rest>
+    static void for_loop_strided(
+        ExecutionPolicy &&              exec
+    ,   const mefdn::type_identity_t<I> start
+    ,   const I                         finish
+    ,   const S                         stride
+    ,   Rest && ...                     rest
+    ) {
+        mth::for_loop_strided(
+            mefdn::forward<ExecutionPolicy>(exec)
+        ,   start
+        ,   finish
+        ,   stride
+        ,   mefdn::forward<Rest>(rest)...
+        );
+    }
+    
     template <typename ExecutionPolicy,
         typename I, typename... Rest>
     static void for_loop(
