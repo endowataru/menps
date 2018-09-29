@@ -120,7 +120,7 @@ public:
         else {
             // Load the current read timestamp.
             // This variable is only updated when the local directory lock is acquired.
-            const auto cur_rd_ts = ge.rd_ts;
+            const auto cur_rd_ts = ge.home_rd_ts;
             
             const auto rd_ts_st = rd_set.get_ts_state();
             
@@ -171,6 +171,7 @@ public:
     MEFDN_NODISCARD
     start_write_result start_write(
         wr_set_type&            wr_set
+    ,   const rd_ts_state_type& rd_ts_st
     ,   const blk_id_type       blk_id
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
@@ -188,6 +189,11 @@ public:
             
             // Add this block to the write set.
             wr_set.add_writable(blk_id);
+            
+            #ifdef MEDSM2_ENABLE_FAST_RELEASE
+            // Update the timestamps locally.
+            this->update_ts(rd_ts_st, blk_pos);
+            #endif
             
             return { true, needs_twin, true };
         }
@@ -252,6 +258,29 @@ public:
         return { needs_release };
     }
     
+    #ifdef MEDSM2_ENABLE_FAST_RELEASE
+    
+    struct fast_release_result
+    {
+        wr_ts_type  new_wr_ts;
+        rd_ts_type  new_rd_ts;
+    };
+    
+    fast_release_result fast_release(
+        const rd_ts_state_type& rd_ts_st
+    ,   const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ) {
+        this->check_locked(blk_pos, lk);
+        
+        const auto new_ts =
+            this->update_ts(rd_ts_st, blk_pos);
+        
+        return { new_ts.wr_ts, new_ts.rd_ts };
+    }
+    
+    #endif
+    
 private:
     struct invalidate_result {
         bool    is_ignored;
@@ -271,7 +300,7 @@ private:
         auto& le = this->les_[blk_pos];
         auto& ge = * this->ges_.local(blk_pos);
         
-        const auto rd_ts = ge.rd_ts;
+        const auto rd_ts = ge.home_rd_ts;
         
         // Check whether the timestamp is newer or not.
         // If old_rd_ts < new_wr_ts, the read timestamp has expired
@@ -341,12 +370,15 @@ public:
             
             // Update the home process.
             le.home_proc = new_home_proc;
-            // Update the self-invalidation timestamp.
-            // FIXME: Consider overwriting this member
-            // when this block is writable on this process.
-            ge.rd_ts = new_rd_ts;
-            // Update the writer timestamp.
-            ge.wr_ts = new_wr_ts;
+            // Update the read timestamp.
+            // Note: It is not trivial that these timestamp variables
+            //       can be used for storing the timestamps of "another writer process".
+            //       This is safe because this process is not the home process
+            //       if another writer writes on this block.
+            ge.home_rd_ts = new_rd_ts;
+            
+            // Update the write timestamp.
+            ge.home_wr_ts = new_wr_ts;
         }
         
         return ret;
@@ -368,8 +400,8 @@ public:
         const auto ret = this->invalidate(blk_pos, lk, rd_ts_st.get_min_wr_ts());
         
         auto& ge = * this->ges_.local(blk_pos);
-        const auto wr_ts = ge.wr_ts;
-        const auto rd_ts = ge.rd_ts;
+        const auto wr_ts = ge.home_wr_ts;
+        const auto rd_ts = ge.home_rd_ts;
         
         return { ret.is_ignored, ret.needs_protect, ret.needs_merge, wr_ts, rd_ts };
     }
@@ -427,8 +459,8 @@ public:
         
         const auto owner_ge = *owner_ge_buf.get();
         
-        const auto owner_wr_ts = owner_ge.wr_ts;
-        const auto owner_rd_ts = owner_ge.rd_ts;
+        const auto owner_wr_ts = owner_ge.home_wr_ts;
+        const auto owner_rd_ts = owner_ge.home_rd_ts;
         
         auto& le = this->les_[blk_pos];
         auto& ge MEFDN_MAYBE_UNUSED = * this->ges_.local(blk_pos);
@@ -491,8 +523,8 @@ public:
             "needs_local_comp:{}\t"
         ,   blk_pos
         ,   owner
-        ,   ge.wr_ts
-        ,   ge.rd_ts
+        ,   ge.home_wr_ts
+        ,   ge.home_rd_ts
         ,   owner_wr_ts
         ,   owner_rd_ts
         ,   is_remotely_updated
@@ -531,26 +563,26 @@ public:
     ) {
         this->check_locked(blk_pos, lk);
         
+        #ifndef MEDSM2_ENABLE_FAST_RELEASE
         auto& rma = com.get_rma();
+        #endif
         
         const auto cur_proc = com.this_proc_id();
+        #ifndef MEDSM2_ENABLE_FAST_RELEASE
         const auto old_owner = bt_ret.owner;
+        #endif
         
-        // If the data is written, the timestamp is updated.
-        // make_new_wr_ts() calculates new_wr_ts = max(old_rd_ts+1, acq_ts).
-        // If not, because the data is read from the old owner
-        // (that will be the owner again),
-        // the timestamp becomes equal to that of the owner.
-        const auto new_wr_ts =
-            mg_ret.is_written ? rd_ts_st.make_new_wr_ts(bt_ret.rd_ts) : bt_ret.wr_ts;
+        // Generate new timestamp values.
+        const auto new_ts =
+            this->make_new_ts(
+                rd_ts_st, mg_ret.is_written, bt_ret.wr_ts, bt_ret.rd_ts
+            );
         
-        // The read timestamp depends on the write timestamp.
-        // This calculates new_rd_ts = max(new_wr_ts+lease, old_rd_ts).
-        // TODO: Provide a good prediction for a lease value of each block.
-        const auto new_rd_ts =
-            rd_ts_st.make_new_rd_ts(new_wr_ts, bt_ret.rd_ts);
-        
+        #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        const auto new_owner = cur_proc;
+        #else
         const auto new_owner = mg_ret.is_written ? cur_proc : old_owner;
+        #endif
         
         auto& le = this->les_[blk_pos];
         auto& ge = * this->ges_.local(blk_pos);
@@ -563,30 +595,32 @@ public:
         // Although this value may be read by another writer,
         // this process still has the lock for it.
         // Also, the timestamps only increases monotonically.
-        ge.wr_ts = new_wr_ts;
-        ge.rd_ts = new_rd_ts;
+        ge.home_wr_ts = new_ts.wr_ts;
+        ge.home_rd_ts = new_ts.rd_ts;
         
+        #ifndef MEDSM2_ENABLE_FAST_RELEASE
         if (new_owner != cur_proc) {
             // This process is not the new owner.
             // (2) old_owner == new_owner != cur_proc
             
-            MEFDN_ASSERT(bt_ret.wr_ts == new_wr_ts);
+            MEFDN_ASSERT(bt_ret.wr_ts == new_ts.wr_ts);
             
             // If the read timestamp is updated in this transaction,
             // it needs to be written to the owner.
-            if (bt_ret.rd_ts < new_rd_ts) {
+            if (bt_ret.rd_ts < new_ts.rd_ts) {
                 const auto ge_rptr =
                     this->ges_.remote(new_owner /* == old_owner */, blk_pos);
                 
                 // Write the new read timestamp to the owner.
                 rma.buf_write(
                     new_owner /* == old_owner */
-                ,   rma_itf_type::member(ge_rptr, &global_entry::rd_ts)
-                ,   &new_rd_ts
+                ,   rma_itf_type::member(ge_rptr, &global_entry::home_rd_ts)
+                ,   &new_ts.rd_ts
                 ,   1
                 );
             }
         }
+        #endif
         
         const auto old_state = le.state;
         auto new_state = old_state;
@@ -595,7 +629,7 @@ public:
             auto& rd_set = rd_ts_st.get_rd_set();
             
             // This block was invalid and became readable in this transaction.
-            rd_set.add_readable(blk_id, new_rd_ts);
+            rd_set.add_readable(blk_id, new_ts.rd_ts);
         }
         
         const auto is_still_writable = ! bt_ret.is_write_protected;
@@ -627,7 +661,56 @@ public:
         
         le.state = new_state;
         
-        return { new_owner, new_rd_ts, new_wr_ts, is_still_writable };
+        return { new_owner, new_ts.rd_ts, new_ts.wr_ts, is_still_writable };
+    }
+    
+private:
+    struct make_new_ts_result {
+        wr_ts_type  wr_ts;
+        rd_ts_type  rd_ts;
+    };
+    
+    make_new_ts_result make_new_ts(
+        const rd_ts_state_type& rd_ts_st
+    ,   const bool              is_written
+    ,   const wr_ts_type        wr_ts
+    ,   const rd_ts_type        rd_ts
+    ) {
+        // If the data is written, the timestamp is updated.
+        // make_new_wr_ts() calculates new_wr_ts = max(old_rd_ts+1, acq_ts).
+        // If not, because the data is read from the old owner
+        // (that will be the owner again),
+        // the timestamp becomes equal to that of the owner.
+        const auto new_wr_ts =
+            is_written ? rd_ts_st.make_new_wr_ts(rd_ts) : wr_ts;
+        
+        // The read timestamp depends on the write timestamp.
+        // This calculates new_rd_ts = max(new_wr_ts+lease, old_rd_ts).
+        // TODO: Provide a good prediction for a lease value of each block.
+        const auto new_rd_ts =
+            rd_ts_st.make_new_rd_ts(new_wr_ts, rd_ts);
+        
+        return { new_wr_ts, new_rd_ts };
+    }
+    
+    make_new_ts_result update_ts(
+        const rd_ts_state_type& rd_ts_st
+    ,   const blk_pos_type      blk_pos
+    ) {
+        auto& ge = * this->ges_.local(blk_pos);
+        
+        const auto old_wr_ts = ge.home_wr_ts;
+        const auto old_rd_ts = ge.home_rd_ts;
+        
+        const auto new_ts =
+            this->make_new_ts(rd_ts_st, true, old_wr_ts, old_rd_ts);
+        
+        ge.home_wr_ts = new_ts.wr_ts;
+        ge.home_rd_ts = new_ts.rd_ts;
+        
+        // Return the "old" timestamps
+        // which can be used for write notices.
+        return { old_wr_ts, old_rd_ts };
     }
     
 public:
@@ -646,10 +729,13 @@ private:
         // The timestamp when this block must be self-invalidated.
         // If this process is the owner of this block,
         // this member may be modified by other reader processes.
-        rd_ts_type  rd_ts;
+        rd_ts_type  home_rd_ts;
         // The timestamp that can be read by other writers.
         // Only modified by the local process.
-        wr_ts_type  wr_ts;
+        wr_ts_type  home_wr_ts;
+        
+        rd_ts_type  wn_rd_ts;
+        wr_ts_type  wn_wr_ts;
     };
     
     struct local_entry {

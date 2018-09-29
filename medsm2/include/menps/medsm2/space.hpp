@@ -183,6 +183,12 @@ public:
         mutex_type wn_vec_mtx;
         #endif
         
+        #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        // Before loading the link values of blk_lock_table,
+        // it is necessary to complete all the writes in this process.
+        mefdn::atomic_thread_fence(mefdn::memory_order_seq_cst);
+        #endif
+        
         // Iterate all of the writable blocks.
         // If the callback returns false,
         // the corresponding block will be removed in the next release.

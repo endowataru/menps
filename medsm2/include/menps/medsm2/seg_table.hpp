@@ -148,7 +148,9 @@ public:
         //       because it cannot detect whether the fault is read or write.
         const auto read_ret = this->start_read_locked(com, rd_set, info);
         
-        return { read_ret, this->start_write_locked(wr_set, info) };
+        const auto rd_ts_st = rd_set.get_ts_state();
+        
+        return { read_ret, this->start_write_locked(wr_set, rd_ts_st, info) };
     }
     
     using pin_result = start_write_result;
@@ -165,8 +167,10 @@ public:
         // Start reading on this block before writing.
         const auto read_ret = this->start_read_locked(com, rd_set, info);
         
+        const auto rd_ts_st = rd_set.get_ts_state();
+        
         // Start writing on this block before releasing.
-        const auto write_ret = this->start_write_locked(wr_set, info);
+        const auto write_ret = this->start_write_locked(wr_set, rd_ts_st, info);
         
         // Mark this block as "pinned".
         info.dir_tbl.set_pinned(info.blk_pos, info.lk);
@@ -269,11 +273,12 @@ private:
     MEFDN_NODISCARD
     typename blk_dir_tbl_type::start_write_result
     start_write_locked(
-        wr_set_type&        wr_set
-    ,   const lock_info&    info
+        wr_set_type&            wr_set
+    ,   const rd_ts_state_type& rd_ts_st
+    ,   const lock_info&        info
     ) {
         const auto dir_ret =
-            info.dir_tbl.start_write(wr_set, info.blk_id, info.blk_pos, info.lk);
+            info.dir_tbl.start_write(wr_set, rd_ts_st, info.blk_id, info.blk_pos, info.lk);
         
         // Check whether this block is read-only.
         if (dir_ret.needs_protect) {
@@ -415,6 +420,18 @@ public:
             // This block is not released now.
             return { false, false, false, 0, 0 };
         }
+        
+        #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        // Check whether the data is still owned by this process.
+        if (info.lock_tbl.check_owned(com, info.blk_pos, info.lk)) {
+            // Load and update the local timestamp values.
+            // The updated values may be used in the next release.
+            const auto fast_ret =
+                info.dir_tbl.fast_release(rd_ts_st, info.blk_pos, info.lk);
+            
+            return { true, true, true, fast_ret.new_rd_ts, fast_ret.new_wr_ts };
+        }
+        #endif
         
         // Merge the written values inside the global critical section.
         auto tx_ret =

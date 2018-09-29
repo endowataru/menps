@@ -415,6 +415,27 @@ public:
         #endif
     }
     
+    bool check_owned(
+        com_itf_type&           com
+    ,   const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ) {
+        auto& self = this->derived();
+        self.check_locked(blk_pos, lk);
+        
+        const auto this_proc = com.this_proc_id();
+        
+        const auto local_glk = this->glks_.local(blk_pos);
+        
+        // Load the lock value of this process.
+        const auto lock_val = *local_glk;
+        
+        // This process isn't locking this block.
+        MEFDN_ASSERT(lock_val != this->make_locked_lock_val(this_proc));
+        
+        return lock_val == this->make_owned_lock_val(this_proc);
+    }
+    
 private:
     static atomic_int_type make_owned_lock_val(const proc_id_type /*owner*/) {
         // 1 means "owned".
