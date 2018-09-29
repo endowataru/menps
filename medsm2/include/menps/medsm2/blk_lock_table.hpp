@@ -297,6 +297,11 @@ public:
         
         auto& rma = com.get_rma();
         
+        #ifdef MEDSM2_ENABLE_LAZY_MERGE
+        // Complete writing on the previous owner.
+        rma.flush(glk_ret.owner);
+        #endif
+        
         #ifdef MEDSM2_ENABLE_P2P_LOCK
         const auto this_proc = com.this_proc_id();
         

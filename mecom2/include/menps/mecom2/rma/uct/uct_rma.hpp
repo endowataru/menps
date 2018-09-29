@@ -262,6 +262,11 @@ public:
         this->wk_set_.finish_rma(info.wk_num, info.proc);
     }
     
+    void flush(const proc_id_type /*proc*/)
+    {
+        // FIXME: There's no way to accomplish remote completion in UCT
+    }
+    
 private:
     uct_facade_type&    uf_;
     memory_domain_type& md_;
