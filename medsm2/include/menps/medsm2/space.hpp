@@ -9,7 +9,6 @@
 #include <menps/medsm2/prof.hpp>
 
 //#define MEDSM2_FORCE_SELF_INVALIDATE_ALL
-#define MEDSM2_SPACE_WN_USE_SPINLOCK
 
 namespace menps {
 namespace medsm2 {
@@ -172,16 +171,7 @@ public:
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
-        const auto this_proc = com.this_proc_id();
-        
         const auto rd_ts_st = this->rd_set_.get_ts_state();
-        
-        wn_vector_type wn_vec;
-        #ifdef MEDSM2_SPACE_WN_USE_SPINLOCK
-        spinlock_type wn_vec_lock;
-        #else
-        mutex_type wn_vec_mtx;
-        #endif
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
         // Before loading the link values of blk_lock_table,
@@ -192,59 +182,9 @@ public:
         // Iterate all of the writable blocks.
         // If the callback returns false,
         // the corresponding block will be removed in the next release.
-        const auto wrs_ret =
+        auto wrs_ret =
             this->wr_set_.start_release_for_all_blocks(
-                [&] (const blk_id_type blk_id) {
-                    const auto p = prof::start();
-                    
-                    // Write the data to the public area
-                    // and migrate from the old owner if necessary.
-                    // TODO: Make this a coroutine.
-                    const auto rel_ret =
-                        this->seg_tbl_.release(com, rd_ts_st, blk_id);
-                    
-                    if (rel_ret.release_completed) {
-                        // The release operation of this block has been completed.
-                        
-                        if (rel_ret.is_written) {
-                            const auto p_push_wn = prof::start();
-                            
-                            {
-                            // Protect the shared array of write notices.
-                            // TODO: It seems that a spinlock is more appropriate.
-                            #ifdef MEDSM2_SPACE_WN_USE_SPINLOCK
-                            mefdn::lock_guard<spinlock_type> lk(wn_vec_lock);
-                            #else
-                            mutex_unique_lock_type lk(wn_vec_mtx);
-                            #endif
-                            
-                            // Add to the write notices
-                            // because the current process modified this block.
-                            wn_vec.push_back(wn_entry_type{
-                                this_proc, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts
-                            });
-                            
-                            }
-                            
-                            prof::finish(prof_kind::push_wn, p_push_wn);
-                        }
-                    }
-                    else {
-                        // There are three cases:
-                        // (1) This block is invalid-clean.
-                        // (2) This block is readonly-clean.
-                        // (3) This block is pinned.
-                    }
-                    
-                    prof::finish(prof_kind::release, p);
-                    
-                    // Return whether this block is still writable after this release.
-                    // If this function returns "false",
-                    // the block will not be tracked in the succeeding releases.
-                    // If it becomes writable in the SIGSEGV handler again,
-                    // the write set will correctly manage it in the next release.
-                    return rel_ret.is_still_writable;
-                }
+                com, rd_ts_st, this->seg_tbl_
             );
         
         if (!wrs_ret.needs_release) {
@@ -252,7 +192,7 @@ public:
         }
         
         // Union the write notice vector and the release signature.
-        this->rel_sig_.merge(mefdn::move(wn_vec));
+        this->rel_sig_.merge(mefdn::move(wrs_ret.wn_vec));
         
         // Notify the other threads waiting for the finish of the release fence.
         this->wr_set_.finish_release();
