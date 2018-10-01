@@ -160,6 +160,8 @@ public:
         
         const auto this_proc = com.this_proc_id();
         wn_vector_type wn_vec;
+        // Pre-allocate the write notice vector.
+        wn_vec.reserve(num_released);
         
         // Check all of the release results sequentially.
         for (size_type i = 0; i < num_released; ++i) {

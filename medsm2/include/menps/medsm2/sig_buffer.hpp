@@ -72,6 +72,8 @@ public:
     static sig_buffer merge(const sig_buffer& sig_a, const sig_buffer& sig_b)
     {
         mefdn::vector<wn_entry_type> new_wn_vec;
+        // Pre-allocate the merged vector.
+        new_wn_vec.reserve(sig_a.wn_vec_.size() + sig_b.wn_vec_.size());
         
         // Merge two sorted lists of write notices based on their write timestamps.
         std::merge(
