@@ -1,0 +1,4 @@
+#!/bin/sh
+export "CFLAGS=@MEDEV2_UCX_CFLAGS@"
+export "CXXFLAGS=@MEDEV2_UCX_CFLAGS@ @MEDEV2_UCX_CXXFLAGS@"
+eval "$*"
