@@ -2,11 +2,18 @@ cmake_minimum_required(VERSION 3.0)
 
 project(meomp)
 
+set(MEOMP_DEF_STKSIZE 32768 CACHE STRING "Default stack size")
+
+# Generate config.h
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/menps/meomp/config.h)
+
 add_library(meomp STATIC
     ./src/meomp.cpp
 )
 target_include_directories(meomp
     PUBLIC ./include
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_compile_options(meomp
     PUBLIC -DMEOMP_ENABLED
