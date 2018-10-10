@@ -19,7 +19,6 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
         --enable-debug-data
         #--enable-mt                # Disabled
     )
-    set(MEDEV2_UCX_CFLAGS "-ftls-model=initial-exec -Wall")
 elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
     set(MEDEV2_UCX_CONFIGURE_FLAGS
         --enable-compiler-opt
@@ -31,7 +30,6 @@ elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
         --disable-assertions
         --disable-params-check
     )
-    set(MEDEV2_UCX_CFLAGS "-ftls-model=initial-exec -Wall")
 else()
     set(MEDEV2_UCX_CONFIGURE_FLAGS
         --enable-compiler-opt
@@ -43,8 +41,12 @@ else()
         --disable-assertions
         --disable-params-check
     )
-    set(MEDEV2_UCX_CFLAGS "-ftls-model=initial-exec -Wall")
 endif()
+
+set(MEDEV2_UCX_CFLAGS ${MEFDN_GLOBAL_CFLAGS} -Wall)
+
+# Convert from list to string
+string(REPLACE ";" " " MEDEV2_UCX_CFLAGS "${MEDEV2_UCX_CFLAGS}")
 
 list(APPEND MEDEV2_UCX_CONFIGURE_FLAGS --without-cuda)
 # TODO: Including <cuda.h> fails on ReedBush

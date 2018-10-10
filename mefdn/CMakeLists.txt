@@ -29,6 +29,15 @@ set(error_limit 3)
 
 add_library(mefdn-options INTERFACE)
 
+set(MEFDN_GLOBAL_CFLAGS -ftls-model=initial-exec)
+
+if (NOT ${MEFDN_ENABLE_FOMIT_FRAME_POINTER})
+    list(APPEND MEFDN_GLOBAL_CFLAGS -fno-omit-frame-pointer)
+endif()
+
+# Publish to all sub-directories
+set(MEFDN_GLOBAL_CFLAGS ${MEFDN_GLOBAL_CFLAGS} PARENT_SCOPE)
+
 target_compile_options(mefdn-options INTERFACE
     # C++ Standard
     $<$<COMPILE_LANGUAGE:CXX>:
@@ -41,8 +50,7 @@ target_compile_options(mefdn-options INTERFACE
     -DGTEST_HAS_TR1_TUPLE=0
     -Wno-variadic-macros
     
-    -ftls-model=initial-exec
-    $<$<NOT:$<BOOL:${MEFDN_ENABLE_FOMIT_FRAME_POINTER}>>:-fno-omit-frame-pointer>
+    ${MEFDN_GLOBAL_CFLAGS}
 )
 if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"))
     target_compile_options(mefdn-options INTERFACE

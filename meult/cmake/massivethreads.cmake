@@ -4,17 +4,18 @@ include(ExternalProject)
 
 set(MEULT_MASSIVETHREADS_CC ${CMAKE_C_COMPILER})
 
+set(MEULT_MASSIVETHREADS_CFLAGS ${MEFDN_GLOBAL_CFLAGS} -Wall)
+
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(MEULT_MASSIVETHREADS_CFLAGS "-O0 -g -ftls-model=initial-exec -Wall")
+    list(APPEND MEULT_MASSIVETHREADS_CFLAGS -O0 -g)
 elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-    set(MEULT_MASSIVETHREADS_CFLAGS "-O3 -g -DNDEBUG -ftls-model=initial-exec -Wall")
+    list(APPEND MEULT_MASSIVETHREADS_CFLAGS -O3 -g -DNDEBUG)
 else()
-    set(MEULT_MASSIVETHREADS_CFLAGS "-O3 -DNDEBUG -ftls-model=initial-exec -Wall")
+    list(APPEND MEULT_MASSIVETHREADS_CFLAGS -O3 -DNDEBUG)
 endif()
 
-if(NOT ${MEFDN_ENABLE_FOMIT_FRAME_POINTER})
-    set(MEULT_MASSIVETHREADS_CFLAGS "${MEULT_MASSIVETHREADS_CFLAGS} -fno-omit-frame-pointer")
-endif()
+# Convert from list to string
+string(REPLACE ";" " " MEULT_MASSIVETHREADS_CFLAGS "${MEULT_MASSIVETHREADS_CFLAGS}")
 
 configure_file(cmake/massivethreads-configure.sh.in massivethreads-configure.sh @ONLY)
 
