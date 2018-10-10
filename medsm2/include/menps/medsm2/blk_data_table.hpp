@@ -6,12 +6,15 @@
 #include <menps/mefdn/external/fmt.hpp>
 #include <cstring>
 
+#ifdef MEDSM2_USE_SIMD_DIFF
+    #include <immintrin.h>
+#endif
+
 namespace menps {
 namespace medsm2 {
 
 #define MEDSM2_USE_COMPARE_DIFF
 //#define MEDSM2_DISABLE_READ_MERGE
-//#define MEDSM2_USE_SIMD_DIFF
 //#define MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
 //#define MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
 
@@ -414,38 +417,57 @@ private:
     ,   const size_type             blk_size
     ) {
         #ifdef MEDSM2_USE_SIMD_DIFF
-        #define VECTOR_LEN  32
-        using vec_buf_type = unsigned char __attribute__((vector_size(VECTOR_LEN)));
+        //#define VECTOR_LEN  32
+        //using vec_buf_type = unsigned char __attribute__((vector_size(VECTOR_LEN)));
         
-        MEFDN_ASSERT(blk_size % VECTOR_LEN == 0);
+        using vec_buf_type = __m256i;
+        #define VECTOR_LEN  sizeof(vec_buf_type)
+        #define UNROLL_LEN  8
         
-        //__asm__ __volatile__ ("# merge starts");
+        MEFDN_ASSERT(blk_size % (VECTOR_LEN * UNROLL_LEN) == 0);
         
-        for (size_type i = 0; i < blk_size; i += VECTOR_LEN) {
-            auto* other_pub_vec = reinterpret_cast<const vec_buf_type*>(&other_pub[i]);
-            auto* my_priv_vec   = reinterpret_cast<vec_buf_type*>(&my_priv[i]);
-            auto* my_pub_vec    = reinterpret_cast<vec_buf_type*>(&my_pub[i]);
+        auto* other_pub_vec = reinterpret_cast<const vec_buf_type*>(other_pub);
+        auto* my_priv_vec   = reinterpret_cast<vec_buf_type*>(my_priv);
+        auto* my_pub_vec    = reinterpret_cast<vec_buf_type*>(my_pub);
+        
+        // __asm__ __volatile__ ("# write_merge() starts");
+        
+        for (size_type i = 0; i < blk_size / VECTOR_LEN; i += UNROLL_LEN) {
+            vec_buf_type other_pub_regs[UNROLL_LEN];
+            vec_buf_type my_priv_regs[UNROLL_LEN];
+            vec_buf_type my_pub_regs[UNROLL_LEN];
+            vec_buf_type result_regs[UNROLL_LEN];
             
-            const auto other_pub_val = *other_pub_vec;
-            const auto my_priv_val   = *my_priv_vec;
-            const auto my_pub_val    = *my_pub_vec;
-            
-            const auto other_diff = other_pub_val ^ my_pub_val;
-            const auto my_diff    = my_priv_val   ^ my_pub_val;
-            
-            const auto result = my_diff ^ other_pub_val;
-            #if 0
-            const auto racy = other_diff & my_diff;
-            
-            if (racy != zero) {
-                report_data_race(blk_pos, other_pub, my_priv, my_pub, blk_size);
+            for (size_type j = 0; j < UNROLL_LEN; j++) {
+                other_pub_regs[j] = _mm256_loadu_si256(&other_pub_vec[i+j]); // TODO
+                my_priv_regs[j]   = my_priv_vec[i+j];
+                my_pub_regs[j]    = my_pub_vec[i+j];
             }
-            #endif
             
-            *my_priv_vec = result;
-            *my_pub_vec = result;
+            for (size_type j = 0; j < UNROLL_LEN; j++) {
+                const auto other_diff = other_pub_regs[j] ^ my_pub_regs[j];
+                const auto my_diff    = my_priv_regs[j]   ^ my_pub_regs[j];
+                
+                result_regs[j] = my_diff ^ other_pub_regs[j];
+                
+                #if 1
+                // if ((other_diff & my_diff) != zero)
+                if (MEFDN_UNLIKELY(!_mm256_testz_si256(other_diff, my_diff))) {
+                    report_data_race(blk_pos, i * (blk_size / VECTOR_LEN), other_pub, my_priv, my_pub, blk_size);
+                }
+                #endif
+            }
+            
+            for (size_type j = 0; j < UNROLL_LEN; j++) {
+                my_priv_vec[i+j] = result_regs[j];
+                my_pub_vec[i+j]  = result_regs[j];
+            }
         }
-        //__asm__ __volatile__ ("# merge ends");
+        
+        // __asm__ __volatile__ ("# write_merge() ends");
+        
+        #undef VECTOR_LEN
+        #undef UNROLL_LEN
         
         #else
         for (size_type i = 0; i < blk_size; ++i) {
