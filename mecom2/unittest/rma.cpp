@@ -29,12 +29,10 @@ TEST(Rma, Basic)
         g_mi->broadcast({ &p, sizeof(p), 0, MPI_COMM_WORLD });
         
         {
-            auto h = rma->make_handle();
-            
             int x = 123;
-            h.write_nb(0, p, &x, 1);
+            rma->write(0, p, &x, 1);
             
-            h.flush();
+            rma->flush();
         }
         
         ASSERT_EQ(123, *p);

@@ -3,7 +3,6 @@
 
 #include <menps/mecom2/rma/mpi/basic_mpi_rma.hpp>
 #include <menps/mecom2/rma/basic_unique_public_ptr.hpp>
-#include <menps/mecom2/rma/mpi/basic_mpi_rma_handle.hpp>
 #include <menps/mecom2/rma/rma_private_heap_alloc.hpp>
 #include <menps/medev2/mpi.hpp>
 #include <menps/mefdn/memory/distance_in_bytes.hpp>
@@ -12,8 +11,6 @@ namespace menps {
 namespace mecom2 {
 
 class mpi_rma;
-
-class mpi_rma_handle;
 
 struct mpi_rma_policy_base
 {
@@ -51,31 +48,6 @@ struct mpi_rma_policy_base
     }
 };
 
-struct mpi_rma_handle_policy : mpi_rma_policy_base
-{
-    using derived_type = mpi_rma_handle;
-};
-
-class mpi_rma_handle
-    : public basic_mpi_rma_handle<mpi_rma_handle_policy>
-{
-    using policy_type = mpi_rma_handle_policy;
-    
-public:
-    using mpi_itf_type = policy_type::mpi_itf_type;
-    
-    /*implicit*/ mpi_rma_handle(mpi_rma& rma)
-        : rma_(rma)
-    { }
-    
-    inline mpi_itf_type& get_mpi_interface();
-    
-    inline MPI_Win get_win();
-    
-private:
-    mpi_rma& rma_;
-};
-
 class mpi_rma;
 
 template <typename T>
@@ -106,8 +78,6 @@ struct mpi_rma_policy : mpi_rma_policy_base
     static U* static_cast_to(T* const p) noexcept {
         return static_cast<U*>(p);
     }
-    
-    using handle_type = mpi_rma_handle;
 };
 
 class mpi_rma
@@ -142,10 +112,6 @@ public:
     
     bool is_local_proc(const int rank) const noexcept {
         return this->rank_ == rank;
-    }
-    
-    mpi_rma_handle make_handle() {
-        return mpi_rma_handle(*this);
     }
     
     void* untyped_allocate(const mefdn::size_t size) {
@@ -197,16 +163,6 @@ private:
     MPI_Comm comm_;
     int rank_;
 };
-
-
-
-mpi_rma_handle::mpi_itf_type& mpi_rma_handle::get_mpi_interface() {
-    return this->rma_.get_mpi_interface();
-}
-
-MPI_Win mpi_rma_handle::get_win() {
-    return this->rma_.get_win();
-}
 
 
 using mpi_rma_ptr = mefdn::unique_ptr<mpi_rma>;
