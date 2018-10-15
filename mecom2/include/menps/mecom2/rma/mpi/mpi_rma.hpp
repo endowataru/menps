@@ -4,7 +4,6 @@
 #include <menps/mecom2/rma/mpi/basic_mpi_rma.hpp>
 #include <menps/mecom2/rma/basic_unique_public_ptr.hpp>
 #include <menps/mecom2/rma/mpi/basic_mpi_rma_handle.hpp>
-#include <menps/mecom2/rma/rma_blocking_itf.hpp>
 #include <menps/mecom2/rma/rma_private_heap_alloc.hpp>
 #include <menps/medev2/mpi.hpp>
 #include <menps/mefdn/memory/distance_in_bytes.hpp>
@@ -112,11 +111,7 @@ struct mpi_rma_policy : mpi_rma_policy_base
 };
 
 class mpi_rma
-    #if 1
     : public basic_mpi_rma<mpi_rma_policy>
-    #else
-    : public rma_blocking_itf<mpi_rma_policy>
-    #endif
     , public rma_private_heap_alloc<mpi_rma_policy>
 {
     using policy_type = mpi_rma_policy;
@@ -128,12 +123,6 @@ public:
     static U* member(T* const p, U (T::* const q)) noexcept {
         return &(p->*q);
     }
-    
-    #if 1
-    #else
-    using rma_blocking_itf<mpi_rma_policy>::proc_id_type;
-    // TODO: Remove this temporary solution
-    #endif
     
     template <typename Conf>
     explicit mpi_rma(Conf&& conf)
