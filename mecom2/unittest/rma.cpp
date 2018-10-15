@@ -3,7 +3,6 @@
 #include <menps/mecom2/rma/mpi/mpi_rma.hpp>
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/rma/alltoall_buffer.hpp>
-#include <menps/mecom2/com/com_worker.hpp>
 
 #ifdef MEDEV2_DEVICE_UCX_ENABLED
 #include <menps/mecom2/rma/ucp/ucp_rma.hpp>
