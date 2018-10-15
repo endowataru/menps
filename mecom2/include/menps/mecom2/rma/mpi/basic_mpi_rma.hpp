@@ -6,7 +6,6 @@
 #include <menps/mecom2/rma/rma_req_block_itf.hpp>
 #include <menps/mecom2/rma/rma_flush_block_itf.hpp>
 #include <menps/mecom2/rma/rma_typed_allocator.hpp>
-#include <menps/mecom2/rma/rma_coro_itf.hpp>
 #include <menps/medev2/mpi/mpi_datatype.hpp>
 #include <menps/mefdn/logger.hpp>
 #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
@@ -22,7 +21,6 @@ class basic_mpi_rma
     , public/*protected*/ rma_req_block_itf<P>
     , public/*protected*/ rma_flush_block_itf<P>
     // XXX: GCC 4.8 doesn't accept casting from a protected base class ?
-    , public rma_coro_itf<P>
     , public rma_typed_allocator<P>
     , public rma_pass_buf_copier<P>
 {
