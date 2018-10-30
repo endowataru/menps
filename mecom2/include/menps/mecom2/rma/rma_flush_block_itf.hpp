@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <menps/mecom2/rma/basic_rma_itf.hpp>
+#include <menps/mecom2/common.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -10,8 +10,6 @@ template <typename P>
 class rma_flush_block_itf
 {
     MEFDN_DEFINE_DERIVED(P)
-    
-    using base = basic_rma_itf<P>;
     
     using proc_id_type = typename P::proc_id_type;
     using size_type = typename P::size_type;
