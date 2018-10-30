@@ -136,7 +136,7 @@ public:
         mefdn::vector<release_result_type> rel_results(num_released);
         
         const auto num_workers = ult_itf_type::get_num_workers();
-        auto stride = num_released * 4 / num_workers; // TODO: magic number
+        auto stride = num_released / (16 * num_workers); // TODO: magic number
         if (stride == 0) { stride = 1; }
         
         // Do the release operations in parallel.
