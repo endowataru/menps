@@ -3,9 +3,7 @@
 
 #include <menps/mecom2/common.hpp>
 #include <menps/medev2/mpi.hpp>
-#if 0
 #include <menps/meqdc/mpi.hpp>
-#endif
 
 namespace menps {
 namespace mecom2 {
@@ -22,13 +20,11 @@ template <>
 struct get_mpi_itf_type<mpi_id_t::direct>
     : mefdn::type_identity<medev2::mpi::default_direct_mpi_itf> { };
 
-#if 0
 template <>
 struct get_mpi_itf_type<mpi_id_t::qdc>
     : mefdn::type_identity<
         meqdc::proxy_mpi_itf<medev2::mpi::default_direct_mpi_itf>
     > { };
-#endif
 
 template <mpi_id_t Id>
 using get_mpi_itf_type_t = typename get_mpi_itf_type<Id>::type;
