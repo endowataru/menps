@@ -25,6 +25,10 @@ struct ult_policy
         static void detach() {
             meult::backend::mth::this_thread::detach();
         }
+        
+        static myth_thread_t native_handle() {
+            return myth_self();
+        }
     };
     
     static myth_thread_t fork_fast(void* (* const func)(void*), void* const arg) {

@@ -24,6 +24,10 @@ struct klt_policy
         static void detach() {
             meult::klt::this_thread::detach();
         }
+        
+        static pthread_t native_handle() {
+            return pthread_self();
+        }
     };
     
     typedef meult::klt::spinlock            spinlock;

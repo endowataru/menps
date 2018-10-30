@@ -50,10 +50,13 @@ struct get_state
     {
         fmt::MemoryWriter w;
         w.write(
-            "proc:{}\tthread:{:x}\tlog_id:{}\tclock:{}\t"
+            "proc:{}\tthread:{:x}\tult:{:x}\tlog_id:{}\tclock:{}\t"
         ,   g_coll->this_proc_id()
         ,   reinterpret_cast<mefdn::uintptr_t>(pthread_self())
             // TODO: use mefdn::this_thread::get_id()
+        ,   reinterpret_cast<mefdn::uintptr_t>(
+                medev2::default_ult_itf::this_thread::native_handle()
+            )
         ,   this->number_++
         ,   mefdn::get_cpu_clock() // TODO
         );
