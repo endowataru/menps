@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <iostream>
+#include <string>
 
 namespace menps {
 namespace mefdn {
@@ -127,6 +128,16 @@ void logger_not_defined(...);
 #define MEFDN_LOG_INFO(...)    MEFDN_LOGGER_OUTPUT(MEFDN_LOG_LEVEL_INFO   , __VA_ARGS__)
 #define MEFDN_LOG_WARN(...)    MEFDN_LOGGER_OUTPUT(MEFDN_LOG_LEVEL_WARN   , __VA_ARGS__)
 #define MEFDN_LOG_FATAL(...)   MEFDN_LOGGER_OUTPUT(MEFDN_LOG_LEVEL_FATAL  , __VA_ARGS__)
+
+
+template <typename T>
+inline T show_param(const T& val) {
+    return val;
+}
+template <typename T>
+inline std::string show_param(T* const val) {
+    return fmt::format("0x{:x}", reinterpret_cast<mefdn::uintptr_t>(val));
+}
 
 } // namespace mefdn
 } // namespace menps
