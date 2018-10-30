@@ -234,6 +234,7 @@ public:
                     state
                 ,   proxy_request_state_type::waiting
                 ,   mefdn::memory_order_acq_rel
+                ,   mefdn::memory_order_relaxed
                 );
             
             if (needs_wait) { MEFDN_ASSERT(state == proxy_request_state_type::created); }
@@ -322,6 +323,7 @@ private:
                         state
                     ,   proxy_request_state_type::finished
                     ,   mefdn::memory_order_acq_rel
+                    ,   mefdn::memory_order_relaxed
                     );
                 
                 if (waiting) { MEFDN_ASSERT(state == proxy_request_state_type::waiting); }
