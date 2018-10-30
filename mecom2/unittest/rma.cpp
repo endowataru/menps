@@ -11,21 +11,24 @@
 #include <menps/mecom2/rma/uct/uct_rma.hpp>
 #endif
 
+using mpi_rma_policy_t = mecom2::mpi_rma_policy<medev2::mpi::default_direct_mpi_itf>;
+using mpi_coll_policy_t = mecom2::mpi_coll_policy<medev2::mpi::default_direct_mpi_itf>;
+
 TEST(Rma, Basic)
 {
-    /*const*/ auto win =
-        g_mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD });
+    MPI_Win win = MPI_Win();
+    g_mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD, &win });
     
     g_mi->win_lock_all({ 0, win });
     
-    auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
+    auto rma = mecom2::make_mpi_rma<mpi_rma_policy_t>(*g_mi, win, MPI_COMM_WORLD);
     
     {
         const auto arr = rma->make_unique<int []>(1);
         
         auto p = arr.get();
         
-        g_mi->broadcast({ &p, sizeof(p), 0, MPI_COMM_WORLD });
+        g_mi->bcast({ &p, sizeof(p), MPI_BYTE, 0, MPI_COMM_WORLD });
         
         {
             int x = 123;
@@ -39,7 +42,7 @@ TEST(Rma, Basic)
         g_mi->win_unlock_all({ win });
     }
     
-    g_mi->win_free(&win);
+    g_mi->win_free({ &win });
 }
 
 
@@ -47,14 +50,14 @@ namespace /*unnamed*/ {
 
 template <typename A2Abuffer, typename Rma>
 void do_alltoall_test(Rma& rma) {
-    auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
+    auto coll = mecom2::make_mpi_coll<mpi_coll_policy_t>(*g_mi, MPI_COMM_WORLD);
     
-    using proc_id_type = mecom2::mpi_coll::proc_id_type;
-    const auto cur_proc = coll.this_proc_id();
-    const auto num_procs = coll.get_num_procs();
+    using proc_id_type = int;
+    const auto cur_proc = coll->this_proc_id();
+    const auto num_procs = coll->get_num_procs();
     
     A2Abuffer buf;
-    buf.coll_make(rma, coll, num_procs);
+    buf.coll_make(rma, *coll, num_procs);
     
     #if 0
     // 1st
@@ -79,7 +82,7 @@ void do_alltoall_test(Rma& rma) {
     
     // 2nd
     {
-        for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
+        for (proc_id_type proc = 0; proc < num_procs; ++proc) {
             const int x = cur_proc + 2;
             /*auto x = rma.template make_private_uninitialized<int []>(1);
             x[0] = cur_proc + 2;*/
@@ -87,9 +90,9 @@ void do_alltoall_test(Rma& rma) {
         }
     }
     
-    coll.barrier();
+    coll->barrier();
     
-    for (proc_id_type proc = 0; proc < coll.get_num_procs(); ++proc) {
+    for (proc_id_type proc = 0; proc < num_procs; ++proc) {
         const int x = * buf.local(proc);
         ASSERT_EQ(proc + 2, x);
     }
@@ -99,21 +102,21 @@ void do_alltoall_test(Rma& rma) {
 
 TEST(Rma, AlltoallMpi)
 {
-    const auto win =
-        g_mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD });
+    MPI_Win win = MPI_Win();
+    g_mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD, &win });
     
     g_mi->win_lock_all({ 0, win });
     
-    auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
+    auto rma = mecom2::make_mpi_rma<mpi_rma_policy_t>(*g_mi, win, MPI_COMM_WORLD);
     
-    do_alltoall_test<mecom2::alltoall_buffer<mecom2::mpi_rma, int>>(*rma);
+    do_alltoall_test<mecom2::alltoall_buffer<mecom2::mpi_rma<mpi_rma_policy_t>, int>>(*rma);
 }
 
 #ifdef MEDEV2_DEVICE_UCX_ENABLED
 
 TEST(Rma, AlltoallUcp)
 {
-    auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
+    auto coll = mecom2::make_mpi_coll<mpi_coll_policy_t>(*g_mi, MPI_COMM_WORLD);
     
     using mecom2::rma_ucp_policy;
     rma_ucp_policy::ucp_facade_type uf;
@@ -127,7 +130,7 @@ TEST(Rma, AlltoallUcp)
     auto ctx = rma_ucp_policy::context_type::init(uf, &ctx_params, conf.get());
     
     ucp_worker_params_t wk_params = ucp_worker_params_t();
-    auto wk_set = mecom2::make_ucp_worker_set(uf, ctx, wk_params, coll);
+    auto wk_set = mecom2::make_ucp_worker_set(uf, ctx, wk_params, *coll);
     
     auto rma = mecom2::make_ucp_rma(uf, ctx, *wk_set);
     
@@ -136,7 +139,7 @@ TEST(Rma, AlltoallUcp)
 
 TEST(Rma, AlltoallUct)
 {
-    auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);
+    auto coll = mecom2::make_mpi_coll<mpi_coll_policy_t>(*g_mi, MPI_COMM_WORLD);
     
     
     // TODO
@@ -166,7 +169,7 @@ TEST(Rma, AlltoallUct)
     auto rma = mecom2::make_uct_rma(uf, md, *wk_set);
     #endif
     
-    auto rma_res = mecom2::make_uct_rma_resource(tl_name, dev_name, coll);
+    auto rma_res = mecom2::make_uct_rma_resource(tl_name, dev_name, *coll);
     
     do_alltoall_test<mecom2::alltoall_buffer<mecom2::uct_rma, int>>(*rma_res->rma);
     
@@ -195,19 +198,19 @@ TEST(Rma, AlltoallUct)
 
 TEST(Rma, Cas)
 {
-    const auto win =
-        g_mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD });
+    MPI_Win win = MPI_Win();
+    g_mi->win_create_dynamic({ MPI_INFO_NULL, MPI_COMM_WORLD, &win });
     
     g_mi->win_lock_all({ 0, win });
     
-    auto rma = mecom2::make_mpi_rma(*g_mi, win, MPI_COMM_WORLD);
-    auto coll = mecom2::make_mpi_coll(*g_mi, MPI_COMM_WORLD);   
+    auto rma = mecom2::make_mpi_rma<mpi_rma_policy_t>(*g_mi, win, MPI_COMM_WORLD);
+    auto coll = mecom2::make_mpi_coll<mpi_coll_policy_t>(*g_mi, MPI_COMM_WORLD);
     
-    const auto cur_proc = coll.this_proc_id();
-    const auto num_procs = coll.get_num_procs();
+    const auto cur_proc = coll->this_proc_id();
+    const auto num_procs = coll->get_num_procs();
     
-    mecom2::alltoall_buffer<mecom2::mpi_rma, mefdn::uint64_t> buf;
-    buf.coll_make(*rma, coll, 1);
+    mecom2::alltoall_buffer<mecom2::mpi_rma<mpi_rma_policy_t>, mefdn::uint64_t> buf;
+    buf.coll_make(*rma, *coll, 1);
     
     if (cur_proc == 0)
         *buf.local(0) = 0;
@@ -230,7 +233,7 @@ TEST(Rma, Cas)
             break;
     }
     
-    coll.barrier();
+    coll->barrier();
     
     if (cur_proc == 0) {
         ASSERT_EQ(num_procs, *buf.local(0));

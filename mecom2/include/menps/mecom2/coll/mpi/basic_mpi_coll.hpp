@@ -49,7 +49,7 @@ public:
         ,   num_bytes
         );
         
-        mi.broadcast({ ptr, static_cast<int>(num_bytes), root_proc, comm });
+        mi.bcast({ ptr, static_cast<int>(num_bytes), MPI_BYTE, root_proc, comm });
     }
     
     void untyped_allgather(
@@ -72,7 +72,8 @@ public:
         ,   num_bytes
         );
         
-        mi.allgather({ src_ptr, dest_ptr, num_bytes_int, comm });
+        mi.allgather({ src_ptr, num_bytes_int, MPI_BYTE,
+            dest_ptr, num_bytes_int, MPI_BYTE, comm });
     }
     
     void untyped_alltoall(

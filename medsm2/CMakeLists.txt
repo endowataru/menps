@@ -7,6 +7,7 @@ message(STATUS "Generate menps/medsm2/config.h ...")
 
 option(MEDSM2_ENABLE_PROF "Enable profiling" FALSE)
 set(MEDSM2_COM_RMA "mpi" CACHE STRING "RMA module for DSM")
+set(MEDSM2_COM_MPI "direct" CACHE STRING "MPI module for DSM")
 set(MEDSM2_GLOBAL_VAR_BLOCK_SIZE "0x1000" CACHE STRING "Block size of global variables")
 set(MEDSM2_MAX_SPACE_SIZE "0x100000000000" CACHE STRING "DSM space size")
 set(MEDSM2_MAX_SEG_SIZE "MEDSM2_MAX_SPACE_SIZE / 4096" CACHE STRING "Maximum DSM segment size")

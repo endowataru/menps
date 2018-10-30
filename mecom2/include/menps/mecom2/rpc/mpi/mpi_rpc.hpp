@@ -9,7 +9,6 @@
 #include <menps/mecom2/rpc/default_message.hpp>
 #include <menps/mecom2/rpc/blocking_tag_allocator.hpp>
 #include <menps/mecom2/rpc/rpc_typed_handler.hpp>
-#include <menps/medev2/mpi/direct_requester.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -86,6 +85,9 @@ class mpi_rpc_comm
     , public mpi_rpc_reply_comm<mpi_rpc_comm_policy>
     , public default_message_allocator<mpi_rpc_comm_policy>
 {
+    using mpi_itf_type = medev2::mpi::default_direct_mpi_itf; // TODO
+    using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
+    
 public:
     template <typename Conf>
     explicit mpi_rpc_comm(Conf&& conf)
@@ -105,12 +107,12 @@ public:
         return rank_;
     }
     
-    medev2::mpi::direct_requester& get_mpi_interface() const noexcept {
+    mpi_facade_type& get_mpi_interface() const noexcept {
         return mi_;
     }
     
 private:
-    medev2::mpi::direct_requester& mi_;
+    mpi_facade_type& mi_;
     const MPI_Comm comm_;
     /*const*/ int rank_;
     const int req_tag_;

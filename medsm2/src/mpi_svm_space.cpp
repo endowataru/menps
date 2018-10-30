@@ -21,7 +21,7 @@ namespace medsm2 {
 
 struct dsm_base_policy
 {
-    using com_itf_type = default_dsm_com_itf;
+    using com_itf_type = dsm_com_creator::dsm_com_itf_type;
     using atomic_int_type = mefdn::uint64_t;
     using size_type = mefdn::size_t;
     using ptrdiff_type = mefdn::ptrdiff_t;

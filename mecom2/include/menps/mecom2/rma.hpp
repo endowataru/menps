@@ -17,27 +17,27 @@ enum class rma_id_t
 ,   ucp
 };
 
-template <rma_id_t Id>
+template <rma_id_t Id, typename MpiItf>
 struct get_rma_type;
 
-template <>
-struct get_rma_type<rma_id_t::single>
+template <typename MpiItf>
+struct get_rma_type<rma_id_t::single, MpiItf>
     : mefdn::type_identity<single_rma> { };
 
-template <>
-struct get_rma_type<rma_id_t::mpi>
-    : mefdn::type_identity<mpi_rma> { };
+template <typename MpiItf>
+struct get_rma_type<rma_id_t::mpi, MpiItf>
+    : mefdn::type_identity<mpi_rma<mpi_rma_policy<MpiItf>>> { };
 
-template <>
-struct get_rma_type<rma_id_t::uct>
+template <typename MpiItf>
+struct get_rma_type<rma_id_t::uct, MpiItf>
     : mefdn::type_identity<uct_rma> { };
 
-template <>
-struct get_rma_type<rma_id_t::ucp>
+template <typename MpiItf>
+struct get_rma_type<rma_id_t::ucp, MpiItf>
     : mefdn::type_identity<ucp_rma> { };
 
-template <rma_id_t Id>
-using get_rma_type_t = typename get_rma_type<Id>::type;
+template <rma_id_t Id, typename MpiItf>
+using get_rma_type_t = typename get_rma_type<Id, MpiItf>::type;
 
 } // namespace menps
 } // namespace mecom2

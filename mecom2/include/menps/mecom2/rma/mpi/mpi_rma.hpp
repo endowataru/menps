@@ -10,84 +10,17 @@
 namespace menps {
 namespace mecom2 {
 
-class mpi_rma;
-
-struct mpi_rma_policy_base
-{
-    using mpi_itf_type = medev2::mpi::direct_requester;
-    using ult_itf_type = default_ult_itf;
-    
-    using proc_id_type = int;
-    using size_type = mefdn::size_t;
-    
-    using rma_sn_type = mefdn::ptrdiff_t;
-    
-    template <typename T>
-    using remote_ptr = T*;
-    template <typename T>
-    using local_ptr = T*;
-    template <typename T>
-    using public_ptr = T*;
-    
-    template <typename Ptr>
-    using element_type_of = mefdn::remove_pointer_t<Ptr>;
-    
-    using request_type = MPI_Request;
-    
-    template <typename T>
-    static MPI_Datatype get_mpi_datatype() {
-        return medev2::mpi::get_datatype<T>()();
-    }
-    
-    static MPI_Aint to_mpi_aint(const void* const p) noexcept {
-        return reinterpret_cast<MPI_Aint>(p);
-    }
-    
-    static mefdn::intptr_t to_intptr(const void* const p) noexcept {
-        return reinterpret_cast<mefdn::intptr_t>(p);
-    }
-};
-
-class mpi_rma;
-
-template <typename T>
-struct mpi_unique_public_ptr_policy {
-    using derived_type = basic_unique_public_ptr<mpi_unique_public_ptr_policy>;
-    //using resource_type = T*;
-    using resource_type = mefdn::remove_extent_t<T> *; // TODO
-    
-    using deleter_type = unique_public_ptr_deleter<mpi_unique_public_ptr_policy>;
-    
-    using allocator_type = mpi_rma;
-};
-
-template <typename T>
-using mpi_unique_public_ptr = basic_unique_public_ptr<mpi_unique_public_ptr_policy<T>>;
-
-struct mpi_rma_policy : mpi_rma_policy_base
-{
-    using derived_type = mpi_rma;
-    
-    template <typename T>
-    using unique_local_ptr = mefdn::unique_ptr<T>;
-    
-    template <typename T>
-    using unique_public_ptr = mpi_unique_public_ptr<T>;
-    
-    template <typename U, typename T>
-    static U* static_cast_to(T* const p) noexcept {
-        return static_cast<U*>(p);
-    }
-};
-
+template <typename P>
 class mpi_rma
-    : public basic_mpi_rma<mpi_rma_policy>
-    , public rma_private_heap_alloc<mpi_rma_policy>
+    : public basic_mpi_rma<P>
+    , public rma_private_heap_alloc<P>
 {
-    using policy_type = mpi_rma_policy;
+    using mpi_itf_type = typename P::mpi_itf_type;
+    using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
     
 public:
-    using mpi_itf_type = policy_type::mpi_itf_type;
+    using proc_id_type = typename P::proc_id_type;
+    using size_type = typename P::size_type;
     
     template <typename U, typename T>
     static U* member(T* const p, U (T::* const q)) noexcept {
@@ -99,10 +32,12 @@ public:
         : req_(conf.req)
         , win_(conf.win)
         , comm_(conf.comm)
-        , rank_(req_.comm_rank(comm_))
-    { }
+        , rank_(0)
+    {
+        this->req_.comm_rank({ this->comm_, &this->rank_ });
+    }
     
-    mpi_itf_type& get_mpi_interface() {
+    mpi_facade_type& get_mpi_interface() {
         return req_;
     }
     
@@ -150,31 +85,96 @@ public:
     
     void progress()
     {
-        MEFDN_LOG_VERBOSE("msg:Invoke MPI progress.");
-        
-        // Call an MPI function to forward the progress.
-        this->req_.iprobe({ MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE });
-        // TODO: Is this the best implementation?
+        this->req_.progress();
     }
     
 private:
-    mpi_itf_type& req_;
+    mpi_facade_type& req_;
     MPI_Win win_;
     MPI_Comm comm_;
     int rank_;
 };
 
+template <typename P>
+using mpi_rma_ptr = mefdn::unique_ptr<mpi_rma<P>>;
 
-using mpi_rma_ptr = mefdn::unique_ptr<mpi_rma>;
-
-inline mpi_rma_ptr make_mpi_rma(mpi_rma::mpi_itf_type& req, MPI_Win win, MPI_Comm comm) {
+template <typename P>
+inline mpi_rma_ptr<P> make_mpi_rma(
+    typename P::mpi_itf_type::mpi_facade_type&  req
+,   const MPI_Win                               win
+,   const MPI_Comm                              comm
+) {
     struct conf {
-        mpi_rma::mpi_itf_type& req;
-        MPI_Win win;
-        MPI_Comm comm;
+        typename P::mpi_itf_type::mpi_facade_type&  req;
+        MPI_Win                                     win;
+        MPI_Comm                                    comm;
     };
-    return mefdn::make_unique<mpi_rma>(conf{ req, win, comm });
+    return mefdn::make_unique<mpi_rma<P>>(conf{ req, win, comm });
 }
+
+
+
+template <typename MpiItf>
+struct mpi_rma_policy;
+
+template <typename MpiItf, typename T>
+struct mpi_unique_public_ptr_policy {
+    using derived_type = basic_unique_public_ptr<mpi_unique_public_ptr_policy>;
+    //using resource_type = T*;
+    using resource_type = mefdn::remove_extent_t<T> *; // TODO
+    
+    using deleter_type = unique_public_ptr_deleter<mpi_unique_public_ptr_policy>;
+    
+    using allocator_type = mpi_rma<mpi_rma_policy<MpiItf>>;
+};
+
+template <typename MpiItf>
+struct mpi_rma_policy
+{
+    using derived_type = mpi_rma<mpi_rma_policy>;
+    
+    using mpi_itf_type = MpiItf;
+    using ult_itf_type = typename mpi_itf_type::ult_itf_type;
+    
+    using proc_id_type = int;
+    using size_type = mefdn::size_t;
+    
+    template <typename T>
+    using remote_ptr = T*;
+    template <typename T>
+    using local_ptr = T*;
+    template <typename T>
+    using public_ptr = T*;
+    
+    template <typename Ptr>
+    using element_type_of = mefdn::remove_pointer_t<Ptr>;
+    
+    using request_type = MPI_Request;
+    
+    template <typename T>
+    static MPI_Datatype get_mpi_datatype() {
+        return medev2::mpi::get_datatype<T>()();
+    }
+    
+    static MPI_Aint to_mpi_aint(const void* const p) noexcept {
+        return reinterpret_cast<MPI_Aint>(p);
+    }
+    
+    static mefdn::intptr_t to_intptr(const void* const p) noexcept {
+        return reinterpret_cast<mefdn::intptr_t>(p);
+    }
+    
+    template <typename T>
+    using unique_local_ptr = mefdn::unique_ptr<T>;
+    
+    template <typename T>
+    using unique_public_ptr = basic_unique_public_ptr<mpi_unique_public_ptr_policy<MpiItf, T>>;
+    
+    template <typename U, typename T>
+    static U* static_cast_to(T* const p) noexcept {
+        return static_cast<U*>(p);
+    }
+};
 
 } // namespace mecom2
 } // namespace menps

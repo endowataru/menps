@@ -4,27 +4,14 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
-#include <menps/medsm2/dsm_rma.hpp>
-#include <menps/medsm2/dsm_com_itf.hpp>
+#include <menps/medsm2/com/dsm_com_creator.hpp>
 
 namespace menps {
 namespace medsm2 {
 
-using default_dsm_rma_itf =
-    mecom2::get_rma_type_t<mecom2::rma_id_t::MEDSM2_COM_RMA>;
-
-using default_dsm_com_itf =
-    dsm_com_itf<
-        dsm_com_policy<
-            default_dsm_rma_itf
-        ,   mecom2::mpi_coll
-        ,   mecom2::mpi_p2p
-        >
-    >;
-
 class mpi_svm_space
 {
-    using com_itf_type = default_dsm_com_itf;
+    using com_itf_type = dsm_com_creator::dsm_com_itf_type;
     
     using proc_id_type = int;
     using size_type = mefdn::size_t;

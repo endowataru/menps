@@ -31,7 +31,7 @@ public:
     ,   const size_type     num_bytes
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_itf();
+        auto& mi = self.get_mpi_facade();
         
         const auto comm = self.get_comm();
         
@@ -71,7 +71,7 @@ public:
     ,   const size_type     num_bytes
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_itf();
+        auto& mi = self.get_mpi_facade();
         
         const auto comm = self.get_comm();
         
@@ -132,7 +132,7 @@ private:
     void wait(MPI_Request* const req)
     {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_itf();
+        auto& mi = self.get_mpi_facade();
         
         while (true) {
             int flag;

@@ -7,5 +7,5 @@
 
 using namespace menps;
 
-extern medev2::mpi::direct_requester* g_mi;
+extern medev2::mpi::default_direct_mpi_itf::mpi_facade_type* g_mi;
 

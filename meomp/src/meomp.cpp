@@ -32,7 +32,7 @@ namespace /*unnamed*/ {
 
 using namespace menps;
 
-using coll_t = menps::mecom2::mpi_coll;
+using coll_t = menps::medsm2::dsm_com_creator::dsm_com_itf_type::coll_itf_type;
 using space_t = menps::medsm2::mpi_svm_space;
 
 coll_t* g_coll;
@@ -715,27 +715,12 @@ int main(int argc, char* argv[])
     
     mefdn::disable_aslr(argc, argv);
     
-    auto mi =
-        mefdn::make_unique<medev2::mpi::direct_requester>(&argc, &argv);
-    
-    g_argc = argc;
-    g_argv = argv;
-    
-    const auto coll_comm = mi->comm_dup(MPI_COMM_WORLD);
-    const auto p2p_comm = mi->comm_dup(MPI_COMM_WORLD);
-    
-    auto coll = mecom2::make_mpi_coll(*mi, coll_comm);
-    
-    auto rma_info = medsm2::make_dsm_rma_info<mecom2::rma_id_t::MEDSM2_COM_RMA>(*mi, coll);
-    auto& rma = rma_info->rma;
-    
-    auto p2p = mecom2::make_mpi_p2p(*mi, p2p_comm);
-    
+    medsm2::dsm_com_creator cc(&argc, &argv);
+    auto& com = cc.get_dsm_com_itf();
+    auto& coll = com.get_coll();
     g_coll = &coll;
     
     mefdn::logger::set_state_callback(get_state{});
-    
-    medsm2::default_dsm_com_itf com(medsm2::default_dsm_com_itf::conf_t{ *rma, coll, p2p });
     
     medsm2::mpi_svm_space sp(com);
     

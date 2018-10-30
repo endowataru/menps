@@ -29,6 +29,7 @@ public:
         
         mi.send({ msg.header(),
             static_cast<int>(msg.total_size_in_bytes()),
+            MPI_BYTE,
             proc, tag, comm });
     }
     
@@ -44,19 +45,24 @@ public:
         const auto comm = self.get_request_comm();
         
         MPI_Status status = MPI_Status();
-        if (! mi.iprobe({ MPI_ANY_SOURCE, tag, comm, &status })) {
+        int flag = 0;
+        
+        mi.iprobe({ MPI_ANY_SOURCE, tag, comm, &flag, &status });
+        
+        if (!flag) {
             return false;
         }
         
         const auto src_rank = status.MPI_SOURCE;
-        const auto count = mi.get_count(status);
+        int count = 0;
+        mi.get_count({ &status, MPI_BYTE, &count });
         
         const auto data_size =
             count - server_request_message_type::header_size();
         
         auto msg = self.allocate_server_request(data_size);
         
-        mi.recv({ msg.header(), count,
+        mi.recv({ msg.header(), count, MPI_BYTE,
             src_rank, tag, comm, &status });
         
         *out_msg = mefdn::move(msg);

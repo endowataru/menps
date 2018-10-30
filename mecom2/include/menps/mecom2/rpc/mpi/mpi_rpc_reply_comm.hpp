@@ -30,6 +30,7 @@ public:
         mi.send({
             msg.header(),
             static_cast<int>(msg.total_size_in_bytes()),
+            MPI_BYTE,
             proc, tag, comm });
     }
     
@@ -43,11 +44,12 @@ public:
         MPI_Status status = MPI_Status();
         mi.probe({ proc, tag, comm, &status });
         
-        const auto count = mi.get_count(status);
+        int count = 0;
+        mi.get_count({ &status, MPI_BYTE, &count });
         
         auto msg = self.allocate_client_reply(count);
         
-        mi.recv({ msg.header(), count,
+        mi.recv({ msg.header(), count, MPI_BYTE,
             proc, tag, comm, &status });
         
         return msg;

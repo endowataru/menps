@@ -28,7 +28,7 @@ struct test_handler {
 TEST(Rpc, Base)
 {
     struct conf {
-        medev2::mpi::direct_requester& mi;
+        medev2::mpi::default_direct_mpi_itf::mpi_facade_type& mi;
         MPI_Comm comm;
         mefdn::size_t max_num_handlers;
         int reply_tag_start;
@@ -51,7 +51,7 @@ TEST(Rpc, Base)
     int x = 1000;
     int* px = &x;
     
-    g_mi->broadcast({ &px, sizeof(px), 0, MPI_COMM_WORLD });
+    g_mi->bcast({ &px, sizeof(px), MPI_BYTE, 0, MPI_COMM_WORLD });
     
     r.call<test_handler>(0, px);
     
