@@ -59,8 +59,13 @@ struct dsm_base_policy
     using mutex_type = mefdn::spinlock;
     using unique_lock_type = mefdn::unique_lock<mefdn::spinlock>;
     #else
+    #ifdef MECOM2_USE_QDLOCK
+    using mutex_type = menps::meult::qdlock_mutex<ult_itf_type>;
+    using unique_lock_type = mefdn::unique_lock<mutex_type>; // TODO: rename
+    #else
     using mutex_type = typename ult_itf_type::mutex;
     using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO: rename
+    #endif
     #endif
     
     template <typename Elem>
