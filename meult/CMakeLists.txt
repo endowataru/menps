@@ -63,6 +63,7 @@ endif()
 add_executable(meult-unittest
     unittest/unittest.cpp
     unittest/fcontext.cpp
+    unittest/qdlock.cpp
 )
 target_link_libraries(meult-unittest
     meult
