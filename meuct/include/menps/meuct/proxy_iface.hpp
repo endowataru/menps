@@ -70,7 +70,7 @@ private:
         prefix, proxy_iface_type, uf, method, name, tr, num, ...) \
     extern "C" \
     tr prefix ## name( \
-        MEDEV2_UCT_EXPAND_PARAMS( \
+        MEDEV2_EXPAND_PARAMS( \
             MEUCT_DEFINE_PROXY_IFACE_API_PARAM \
         ,   MEUCT_DEFINE_PROXY_IFACE_API_PARAM_LAST \
         ,   num, __VA_ARGS__ \
@@ -80,7 +80,7 @@ private:
         auto& pr_wk = pr_iface.get_proxy_worker(); \
         \
         return pr_wk.method ## name({ \
-            MEDEV2_UCT_EXPAND_PARAMS( \
+            MEDEV2_EXPAND_PARAMS( \
                 MEUCT_DEFINE_PROXY_IFACE_API_ARG \
             ,   MEUCT_DEFINE_PROXY_IFACE_API_ARG_LAST \
             ,   num, __VA_ARGS__ \

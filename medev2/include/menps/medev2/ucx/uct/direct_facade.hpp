@@ -11,20 +11,15 @@ namespace uct {
 class direct_facade
 {
 public:
-    #define A(i, t, a)      p.a,
-    #define AL(i, t, a)     p.a
-    
     #define D(dummy, name, tr, num, ...) \
         static tr name(const name##_params& p) { \
             return uct_##name( \
-                MEDEV2_UCT_EXPAND_PARAMS(A, AL, num, __VA_ARGS__) \
+                MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS(num, __VA_ARGS__) \
             ); \
         }
     
     MEDEV2_UCT_FUNCS_ALL(D, /*dummy*/)
     
-    #undef A
-    #undef AL
     #undef D
 };
 

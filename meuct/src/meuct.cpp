@@ -112,10 +112,10 @@ MEUCT_DEFINE_PROXY_EP_API(meuct_, menps::meuct::proxy_policy::proxy_endpoint_typ
 #define D(dummy, name, tr, num, ...) \
     extern "C" \
     tr meuct_ ## name ( \
-        MEDEV2_UCT_EXPAND_PARAMS(P, PL, num, __VA_ARGS__) \
+        MEDEV2_EXPAND_PARAMS(P, PL, num, __VA_ARGS__) \
     ) { \
         return menps::meuct::g_orig_uf.name({ \
-            MEDEV2_UCT_EXPAND_PARAMS(A, AL, num, __VA_ARGS__) \
+            MEDEV2_EXPAND_PARAMS(A, AL, num, __VA_ARGS__) \
         }); \
     }
 
@@ -129,7 +129,7 @@ MEUCT_UCT_NON_PROXY_FUNCS(D, /*dummy*/)
 #define D(ret, name, tr, num, ...) \
     extern "C" \
     tr meuct_ ## name ( \
-        MEDEV2_UCT_EXPAND_PARAMS(P, PL, num, __VA_ARGS__) \
+        MEDEV2_EXPAND_PARAMS(P, PL, num, __VA_ARGS__) \
     ) { \
         (void)iface; /* TODO: Comment out the parameter */ \
         /*menps::meuct::proxy_policy::ult_itf_type::this_thread::yield();*/ \

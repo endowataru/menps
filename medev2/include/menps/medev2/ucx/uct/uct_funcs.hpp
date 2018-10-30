@@ -409,36 +409,19 @@
     MEDEV2_UCT_OTHER_FUNCS_SYNC_VOID(X, __VA_ARGS__)
 
 
-#define MEDEV2_UCT_EXPAND_PARAMS_1(i, X, XL, t0, a0)      XL(i, t0, a0)
-#define MEDEV2_UCT_EXPAND_PARAMS_2(i, X, XL, t0, a0, ...) X(i, t0, a0) MEDEV2_UCT_EXPAND_PARAMS_1(i+1, X, XL, __VA_ARGS__)
-#define MEDEV2_UCT_EXPAND_PARAMS_3(i, X, XL, t0, a0, ...) X(i, t0, a0) MEDEV2_UCT_EXPAND_PARAMS_2(i+1, X, XL, __VA_ARGS__)
-#define MEDEV2_UCT_EXPAND_PARAMS_4(i, X, XL, t0, a0, ...) X(i, t0, a0) MEDEV2_UCT_EXPAND_PARAMS_3(i+1, X, XL, __VA_ARGS__)
-#define MEDEV2_UCT_EXPAND_PARAMS_5(i, X, XL, t0, a0, ...) X(i, t0, a0) MEDEV2_UCT_EXPAND_PARAMS_4(i+1, X, XL, __VA_ARGS__)
-#define MEDEV2_UCT_EXPAND_PARAMS_6(i, X, XL, t0, a0, ...) X(i, t0, a0) MEDEV2_UCT_EXPAND_PARAMS_5(i+1, X, XL, __VA_ARGS__)
-#define MEDEV2_UCT_EXPAND_PARAMS_7(i, X, XL, t0, a0, ...) X(i, t0, a0) MEDEV2_UCT_EXPAND_PARAMS_6(i+1, X, XL, __VA_ARGS__)
-#define MEDEV2_UCT_EXPAND_PARAMS_8(i, X, XL, t0, a0, ...) X(i, t0, a0) MEDEV2_UCT_EXPAND_PARAMS_7(i+1, X, XL, __VA_ARGS__)
-#define MEDEV2_UCT_EXPAND_PARAMS_9(i, X, XL, t0, a0, ...) X(i, t0, a0) MEDEV2_UCT_EXPAND_PARAMS_8(i+1, X, XL, __VA_ARGS__)
-
-#define MEDEV2_UCT_EXPAND_PARAMS(X, XL, num, ...) \
-    MEDEV2_UCT_EXPAND_PARAMS_ ## num(0, X, XL, __VA_ARGS__)
-
-
 namespace menps {
 namespace medev2 {
 namespace ucx {
 namespace uct {
 
-#define P(i, t, a)  t a;
-
 #define D(dummy, name, tr, num, ...) \
     struct name##_params { \
-        MEDEV2_UCT_EXPAND_PARAMS(P, P, num, __VA_ARGS__) \
+        MEDEV2_EXPAND_PARAMS_TO_DECL(num, __VA_ARGS__) \
     };
 
 MEDEV2_UCT_FUNCS_ALL(D, /*dummy*/)
 
 #undef D
-#undef P
 
 } // namespace uct
 } // namespace ucx

@@ -9,7 +9,7 @@
 #define D(prefix, name, tr, num, ...) \
     extern "C" \
     tr prefix ## name( \
-        MEDEV2_UCT_EXPAND_PARAMS(A, AL, num, __VA_ARGS__) \
+        MEDEV2_EXPAND_PARAMS(A, AL, num, __VA_ARGS__) \
     );
 
 
@@ -31,7 +31,7 @@ public:
     #define D(prefix, name, tr, num, ...) \
         static tr name(const medev2::ucx::uct::name##_params& p) { \
             return meuct_##name( \
-                MEDEV2_UCT_EXPAND_PARAMS(A, AL, num, __VA_ARGS__) \
+                MEDEV2_EXPAND_PARAMS(A, AL, num, __VA_ARGS__) \
             ); \
         }
     
