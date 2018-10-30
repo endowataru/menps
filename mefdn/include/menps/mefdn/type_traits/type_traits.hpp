@@ -44,6 +44,9 @@ using remove_extent_t = typename remove_extent<T>::type;
 template <typename T>
 using remove_pointer_t = typename remove_pointer<T>::type;
 
+template <bool Condition, class T = void>
+using enable_if_t = typename enable_if<Condition,T>::type;
+
 // "identity" metafunction
 // Proposed in P0887R1
 
