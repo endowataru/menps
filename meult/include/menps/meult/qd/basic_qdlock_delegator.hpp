@@ -172,7 +172,7 @@ private:
                 this->is_active_ = del_exec_func(*head);
             }
             else {
-                MEFDN_LOG_VERBOSE("Awake next thread trying to lock qdlock.");
+                MEFDN_LOG_VERBOSE("msg:Awake next thread trying to lock qdlock.");
                 
                 // The next thread is trying to lock the mutex.
                 head->uv->notify();
