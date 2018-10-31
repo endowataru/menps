@@ -87,21 +87,6 @@ public:
         
         MEFDN_ASSERT(num_ongoing + num_completed == num_reqs);
         
-        #if 0
-        auto num_ongoing = num_reqs;
-        
-        for (size_type i = 0; i < num_completed; ++i) {
-            const auto index = static_cast<size_type>(this->indices_[i]);
-            
-            // Move the last request element to the completed position.
-            this->proxy_reqs_[index] = this->proxy_reqs_[num_ongoing - 1];
-            this->orig_reqs_[index]  = this->orig_reqs_[num_ongoing - 1];
-            
-            MEFDN_ASSERT(num_ongoing > 0);
-            --num_ongoing;
-        }
-        #endif
-        
         // Remove completed requests from the arrays.
         this->proxy_reqs_.resize(num_ongoing);
         this->orig_reqs_.resize(num_ongoing);
