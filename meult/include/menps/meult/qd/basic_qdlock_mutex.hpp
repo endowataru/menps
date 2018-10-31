@@ -31,7 +31,7 @@ public:
         this->core_.lock_and_wait(
             cur
         ,   [&uv] (qdlock_node_type& n) { n.uv = &uv; }
-        ,   [&uv] { /*fmt::print("wait\n");*/ uv.wait(); }
+        ,   [&uv] { uv.wait(); }
         );
     }
     
@@ -42,18 +42,14 @@ public:
         
         if (const auto old_head = this->core_.try_unlock()) {
             pool.deallocate(old_head);
-            //fmt::print("deallocate\n");
             return;
         }
-        
-        //const auto head = this->core_.get_head();
         
         while (true) {
             const auto old_head = this->core_.try_follow_head();
             if (old_head != nullptr) {
                 const auto next_head = this->core_.get_head();
                 
-                //fmt::print("notify\n");
                 MEFDN_ASSERT(next_head->uv != nullptr);
                 next_head->uv->notify();
                 
@@ -64,19 +60,6 @@ public:
             
             ult_itf_type::this_thread::yield();
         }
-        
-        #if 0
-        this->tail_.spin_unlock(
-            [] { ult_itf_type::this_thread::yield(); }
-        );
-        
-        if (next != nullptr) {
-            MEFDN_ASSERT(next->uv != nullptr);
-            next->uv->notify();
-        }
-        
-        pool.deallocate(cur);
-        #endif
     }
     
 protected:
