@@ -225,6 +225,7 @@ public:
     
     void wait(request_type* const req)
     {
+        #ifdef MECOM2_AVOID_MPI_WAIT
         while (!this->test(req))
         {
             #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
@@ -235,6 +236,14 @@ public:
             ult_itf_type::this_thread::yield();
             #endif
         }
+        #else
+        
+        auto& self = this->derived();
+        auto& mi = self.get_mpi_interface();
+        
+        mi.wait({ req, MPI_STATUS_IGNORE });
+        
+        #endif
     }
     
     void flush()
