@@ -33,6 +33,8 @@ struct dsm_base_policy
     using rd_ts_type = mefdn::uint64_t;
     using wr_ts_type = mefdn::uint64_t;
     
+    using atomic_wr_ts_type = mefdn::atomic<wr_ts_type>;
+    
     static constexpr bool is_greater_rd_ts(const rd_ts_type a, const rd_ts_type b) noexcept {
         return a > b;
     }

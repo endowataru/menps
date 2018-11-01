@@ -16,6 +16,7 @@ class rd_set
     using blk_id_type = typename P::blk_id_type;
     using rd_ts_type = typename P::rd_ts_type;
     using wr_ts_type = typename P::wr_ts_type;
+    using atomic_wr_ts_type = typename P::atomic_wr_ts_type;
     
     using mutex_type = typename P::mutex_type;
     using unique_lock_type  = typename P::unique_lock_type;
@@ -40,12 +41,16 @@ class rd_set
         std::priority_queue<entry, mefdn::vector<entry>, greater_ts>;
     
 public:
+    rd_set()
+        : min_wr_ts_()
+    { }
+    
     void add_readable(const blk_id_type blk_id, const rd_ts_type rd_ts)
     {
         const unique_lock_type lk(this->mtx_);
         
         // Check that (min_wr_ts <= rd_ts).
-        MEFDN_ASSERT(!P::is_greater_rd_ts(this->min_wr_ts_, rd_ts));
+        MEFDN_ASSERT(!P::is_greater_rd_ts(this->min_wr_ts_.load(), rd_ts));
         
         // Add a new entry to the priority queue.
         this->pq_.push(entry{ blk_id, rd_ts });
@@ -59,7 +64,9 @@ public:
         {
             const unique_lock_type lk(this->mtx_);
             
-            const auto old_min_wr_ts = this->min_wr_ts_;
+            const auto old_min_wr_ts =
+                this->min_wr_ts_.load(mefdn::memory_order_relaxed);
+            
             if (!P::is_greater_rd_ts(min_wr_ts, old_min_wr_ts)) {
                 // Because min_wr_ts <= old_min_wr_ts,
                 // it is unnecessary to self-invalidate blocks for this signature.
@@ -74,7 +81,7 @@ public:
             }
             
             // Update the minimum write timestamp.
-            this->min_wr_ts_ = min_wr_ts;
+            this->min_wr_ts_.store(min_wr_ts, mefdn::memory_order_relaxed);
             
             while (! this->pq_.empty()) {
                 auto& e = this->pq_.top();
@@ -160,14 +167,18 @@ public:
     
     rd_ts_state_type get_ts_state()
     {
-        const unique_lock_type lk(this->mtx_);
-        return rd_ts_state_type(*this, this->min_wr_ts_);
+        // The minimum timestamp might be loaded concurrently with another writer.
+        // To avoid a race condition, this class uses an atomic variable.
+        const auto min_wr_ts =
+            this->min_wr_ts_.load(mefdn::memory_order_relaxed);
+        
+        return rd_ts_state_type(*this, min_wr_ts);
     }
     
 private:
     mutable mutex_type  mtx_;
     pq_type             pq_;
-    wr_ts_type          min_wr_ts_ = 0;
+    atomic_wr_ts_type   min_wr_ts_;
 };
 
 } // namespace medsm2
