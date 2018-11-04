@@ -134,6 +134,7 @@ private:
         auto& self = this->derived();
         auto& mi = self.get_mpi_facade();
         
+        #ifdef MECOM2_AVOID_MPI_WAIT
         while (true) {
             int flag;
             mi.test({ req, &flag, MPI_STATUS_IGNORE });
@@ -149,6 +150,11 @@ private:
             ult_itf_type::this_thread::yield();
             #endif
         }
+        
+        #else
+        mi.wait({ req, MPI_STATUS_IGNORE });
+        
+        #endif
     }
 };
 
