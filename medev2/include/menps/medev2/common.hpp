@@ -4,17 +4,6 @@
 #include <menps/mefdn/lang.hpp>
 #include <menps/medev2/config.h>
 
-#include MEDEV2_DEFAULT_ULT_HEADER
-
-namespace menps {
-namespace medev2 {
-
-using default_ult_itf = MEDEV2_DEFAULT_ULT_ITF;
-
-} // namespace medev2
-} // namespace menps
-
-
 #define MEDEV2_EXPAND_PARAMS_1(i, X, XL, t0, a0)       XL(i, t0, a0)
 #define MEDEV2_EXPAND_PARAMS_2(i, X, XL, t0, a0, ...)  X(i, t0, a0) MEDEV2_EXPAND_PARAMS_1(i+1, X, XL, __VA_ARGS__)
 #define MEDEV2_EXPAND_PARAMS_3(i, X, XL, t0, a0, ...)  X(i, t0, a0) MEDEV2_EXPAND_PARAMS_2(i+1, X, XL, __VA_ARGS__)

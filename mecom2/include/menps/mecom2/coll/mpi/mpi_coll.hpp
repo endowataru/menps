@@ -3,6 +3,7 @@
 
 #include <menps/mecom2/coll/mpi/basic_mpi_coll.hpp>
 #include <menps/medev2/mpi/mpi_datatype.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace mecom2 {

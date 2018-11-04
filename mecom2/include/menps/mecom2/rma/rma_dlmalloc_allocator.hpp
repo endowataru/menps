@@ -4,6 +4,7 @@
 #include <menps/mecom2/common.hpp>
 #include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/external/malloc.h>
+#include <menps/mefdn/mutex.hpp>
 
 namespace menps {
 namespace mecom2 {

@@ -102,6 +102,18 @@ struct uct_policy
     }
 };
 
+struct direct_uct_itf_policy
+{
+    using uct_facade_type = direct_facade;
+};
+
+template <typename UltItf>
+struct direct_uct_itf
+    : uct_policy<direct_uct_itf_policy>
+{
+    using ult_itf_type = UltItf;
+};
+
 } // namespace uct
 } // namespace ucx
 } // namespace medev2

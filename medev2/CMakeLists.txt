@@ -12,12 +12,6 @@ else()
     option(MEDEV2_DEVICE_UCX_ENABLED "Enable UCX" TRUE)
 endif()
 
-set(MEDEV2_DEFAULT_ULT_HEADER "<menps/meult/klt.hpp>" CACHE STRING
-    "Ult header for menps::medev2::default_ult_itf")
-
-set(MEDEV2_DEFAULT_ULT_ITF "::menps::meult::klt_policy" CACHE STRING
-    "Ult interface as menps::medev2::default_ult_itf" )
-
 option(MEDEV2_SERIALIZE_MPI_CALLS "Serialize MPI calls" TRUE)
 
 option(MEDEV2_AVOID_SWITCH_IN_SIGNAL "Avoid using context switch in signal handler" FALSE)

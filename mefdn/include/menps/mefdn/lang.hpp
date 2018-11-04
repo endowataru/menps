@@ -179,3 +179,9 @@ enum class byte : unsigned char {}; // added in C++17
 } // namespace mefdn
 } // namespace menps
 
+
+// from Boost.Preprocessors
+
+#define MEFDN_PP_CAT(x, y)      MEFDN_PP_CAT_AUX(x, y)
+#define MEFDN_PP_CAT_AUX(x, y)  x ## y
+

@@ -4,6 +4,7 @@
 #include <menps/meult/klt/klt.hpp>
 #include <menps/mefdn/execution.hpp>
 #include <menps/mefdn/for_loop.hpp>
+#include <menps/meult/ult_itf_id.hpp>
 
 namespace menps {
 namespace meult {
@@ -86,6 +87,13 @@ namespace klt {
 typedef klt_policy  ult_policy;
 
 } // namespace klt
+
+template <>
+struct get_ult_itf_type<ult_itf_id_t::KLT>
+    : mefdn::type_identity<
+        klt_policy
+    >
+{ };
 
 } // namespace meult
 } // namespace menps

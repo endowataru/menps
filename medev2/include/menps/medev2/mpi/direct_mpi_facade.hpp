@@ -107,15 +107,17 @@ private:
     #endif
 };
 
-struct default_direct_mpi_facade_policy
+template <typename UltItf>
+struct direct_mpi_facade_policy
 {
-    using ult_itf_type = medev2::default_ult_itf;
+    using ult_itf_type = UltItf;
 };
 
-struct default_direct_mpi_itf
+template <typename UltItf>
+struct direct_mpi_itf
 {
-    using mpi_facade_type = direct_mpi_facade<default_direct_mpi_facade_policy>;
-    using ult_itf_type = default_direct_mpi_facade_policy::ult_itf_type;
+    using mpi_facade_type = direct_mpi_facade<direct_mpi_facade_policy<UltItf>>;
+    using ult_itf_type = UltItf;
 };
 
 } // namespace mpi

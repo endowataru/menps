@@ -10,8 +10,12 @@
 #include <menps/meult/offload/basic_uncond_offload_queue.hpp>
 #include <menps/meult/offload/basic_cv_offload_thread.hpp>
 
+#include <menps/meult/backend/mth.hpp>
+
 namespace menps {
 namespace meuct {
+
+using default_ult_itf = meult::backend::mth::ult_policy; // TODO
 
 enum class worker_command_code {
 
@@ -37,7 +41,7 @@ struct worker_command
 
 
 struct worker_command_queue_policy
-    : medev2::default_ult_itf
+    : default_ult_itf
 {
     typedef worker_command     command_type;
     
@@ -61,7 +65,7 @@ struct proxy_completion
 };
 
 struct offload_thread_policy
-    : medev2::default_ult_itf
+    : default_ult_itf
 {
     using derived_type = proxy_worker_thread<proxy_policy>;
 };
@@ -71,7 +75,7 @@ struct proxy_policy
     using orig_uct_itf_type =
         medev2::ucx::uct::uct_policy<medev2::ucx::uct::direct_facade_policy>;
     
-    using ult_itf_type = medev2::default_ult_itf;
+    using ult_itf_type = default_ult_itf;
     
     using command_type = worker_command;
     using command_code_type = worker_command_code;

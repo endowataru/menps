@@ -4,6 +4,8 @@
 #include <menps/meqdc/common.hpp>
 #include <menps/medev2/mpi/mpi_funcs.hpp>
 #include <menps/mefdn/force_integer_cast.hpp>
+#include <menps/mefdn/atomic.hpp>
+#include <menps/mefdn/logger.hpp>
 
 namespace menps {
 namespace meqdc {

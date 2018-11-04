@@ -3,6 +3,7 @@
 
 #include <menps/meult/common.hpp>
 #include <menps/mefdn/memory/get_container_of.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace meult {

@@ -13,21 +13,25 @@ enum class mpi_id_t {
 ,   qdc
 };
 
-template <mpi_id_t Id>
+template <mpi_id_t Id, typename UltItf>
 struct get_mpi_itf_type;
 
-template <>
-struct get_mpi_itf_type<mpi_id_t::direct>
-    : mefdn::type_identity<medev2::mpi::default_direct_mpi_itf> { };
-
-template <>
-struct get_mpi_itf_type<mpi_id_t::qdc>
+template <typename UltItf>
+struct get_mpi_itf_type<mpi_id_t::direct, UltItf>
     : mefdn::type_identity<
-        meqdc::proxy_mpi_itf<medev2::mpi::default_direct_mpi_itf>
+        medev2::mpi::direct_mpi_itf<UltItf>
     > { };
 
-template <mpi_id_t Id>
-using get_mpi_itf_type_t = typename get_mpi_itf_type<Id>::type;
+template <typename UltItf>
+struct get_mpi_itf_type<mpi_id_t::qdc, UltItf>
+    : mefdn::type_identity<
+        meqdc::proxy_mpi_itf<
+            medev2::mpi::direct_mpi_itf<UltItf>
+        >
+    > { };
+
+template <mpi_id_t Id, typename UltItf>
+using get_mpi_itf_type_t = typename get_mpi_itf_type<Id, UltItf>::type;
 
 #if 0
 template <typename P>

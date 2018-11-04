@@ -4,21 +4,29 @@
 #include <menps/medsm2/com/dsm_rma.hpp>
 #include <menps/medsm2/com/dsm_com_itf.hpp>
 #include <menps/mecom2/com/mpi/mpi.hpp>
+#include <menps/meult/ult_itf_id.hpp>
+
+#include MEFDN_PP_CAT(MEULT_ULT_ITF_HEADER_, MEDSM2_ULT_ITF)
 
 namespace menps {
 namespace medsm2 {
 
 class dsm_com_creator
 {
+public:
+    using ult_itf_type =
+        meult::get_ult_itf_type_t<meult::ult_itf_id_t::MEDSM2_ULT_ITF>;
+    
+private:
     using mpi_itf_type =
-        mecom2::get_mpi_itf_type_t<mecom2::mpi_id_t::MEDSM2_COM_MPI>;
+        mecom2::get_mpi_itf_type_t<mecom2::mpi_id_t::MEDSM2_MPI_ITF, ult_itf_type>;
     
     using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
     
     using mpi_coll_policy_type = mecom2::mpi_coll_policy<mpi_itf_type>;
     using mpi_p2p_policy_type = mecom2::mpi_p2p_policy<mpi_itf_type>;
     
-    static constexpr mecom2::rma_id_t used_rma_id = mecom2::rma_id_t::MEDSM2_COM_RMA;
+    static constexpr mecom2::rma_id_t used_rma_id = mecom2::rma_id_t::MEDSM2_RMA_ITF;
     
     using rma_type = mecom2::get_rma_type_t<used_rma_id, mpi_itf_type>;
     

@@ -11,6 +11,7 @@
 //#define MEOMP_SEPARATE_WORKER_THREAD
     // TODO: Rename
 
+#if 0
 namespace menps {
 namespace medsm2 {
 
@@ -18,4 +19,5 @@ using default_ult_itf = mecom2::default_ult_itf;
 
 } // namespace medsm2
 } // namespace menps
+#endif
 

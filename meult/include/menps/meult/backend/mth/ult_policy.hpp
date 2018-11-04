@@ -3,9 +3,11 @@
 
 #include "mth_interface.hpp"
 #include "barrier.hpp"
+#include <menps/meult/ult_itf_id.hpp>
 
 namespace menps {
 namespace meult {
+
 namespace backend {
 namespace mth {
 
@@ -114,6 +116,14 @@ struct ult_policy
 
 } // namespace mth
 } // namespace backend
+
+template <>
+struct get_ult_itf_type<ult_itf_id_t::MTH>
+    : mefdn::type_identity<
+        backend::mth::ult_policy
+    >
+{ };
+
 } // namespace meult
 } // namespace menps
 

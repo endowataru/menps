@@ -29,7 +29,7 @@ target_link_libraries(mecom2
 
 add_executable(mecom2-test
     ./unittest/unittest.cpp
-    ./unittest/rpc.cpp
+    #./unittest/rpc.cpp
     ./unittest/rma.cpp
     #./src/compile.cpp
 )

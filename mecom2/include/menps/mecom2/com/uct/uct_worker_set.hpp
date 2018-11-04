@@ -4,7 +4,6 @@
 #include <menps/mecom2/com/uct/basic_uct_worker_set.hpp>
 #include <menps/mecom2/com/ucp/basic_ucp_worker_selector.hpp>
 #include <menps/medev2/ucx/uct/uct_policy.hpp>
-#include <menps/medev2/ucx/uct/direct_facade.hpp>
 #ifdef MECOM2_USE_MEUCT
     #include <menps/meuct/meuct.hpp>
 #endif
@@ -12,36 +11,19 @@
 namespace menps {
 namespace mecom2 {
 
-#ifdef MECOM2_USE_MEUCT
-using default_uct_policy =
-    medev2::ucx::uct::uct_policy<meuct::proxy_facade_policy>;
-#else
-using default_uct_policy =
-    medev2::ucx::uct::uct_policy<medev2::ucx::uct::direct_facade_policy>;
-#endif
-
-struct uct_worker_set_policy
-{
-    using uct_itf_type = default_uct_policy;
-    using ult_itf_type = default_ult_itf;
-    using worker_num_type = mefdn::size_t;
-    using proc_id_type = mefdn::size_t;
-    using size_type = mefdn::size_t;
-};
-
+template <typename P>
 class uct_worker_set
-    : public basic_uct_worker_set<uct_worker_set_policy>
-    , public basic_ucp_worker_selector<uct_worker_set_policy>
+    : public basic_uct_worker_set<P>
+    , public basic_ucp_worker_selector<P>
 {
-    using policy_type = uct_worker_set_policy;
-    using base_set = basic_uct_worker_set<policy_type>;
-    using base_selector = basic_ucp_worker_selector<policy_type>;
+    using base_set = basic_uct_worker_set<P>;
+    using base_selector = basic_ucp_worker_selector<P>;
     
-    using uct_itf_type = typename policy_type::uct_itf_type;
+    using uct_itf_type = typename P::uct_itf_type;
     using uct_facade_type = typename uct_itf_type::uct_facade_type;
     using memory_domain_type = typename uct_itf_type::memory_domain_type;
     
-    using ult_itf_type = typename policy_type::ult_itf_type;
+    using ult_itf_type = typename P::ult_itf_type;
     
     template <typename Coll>
     struct set_conf {
@@ -75,23 +57,37 @@ private:
     }
 };
 
-template <typename Coll>
-inline mefdn::unique_ptr<uct_worker_set> make_uct_worker_set(
-    uct_worker_set_policy::uct_itf_type::uct_facade_type&       uf
-,   uct_worker_set_policy::uct_itf_type::memory_domain_type&    md
-,   const uct_iface_config_t* const                             iface_conf
-,   const uct_iface_params_t* const                             iface_params
-,   Coll&                                                       coll
+template <typename UctItf>
+struct uct_worker_set_policy
+{
+    using uct_itf_type = UctItf;
+    using ult_itf_type = typename UctItf::ult_itf_type;
+    using worker_num_type = mefdn::size_t;
+    using proc_id_type = mefdn::size_t;
+    using size_type = mefdn::size_t;
+};
+
+template <typename UctItf>
+using uct_worker_set_ptr = mefdn::unique_ptr<uct_worker_set<uct_worker_set_policy<UctItf>>>;
+
+template <typename UctItf, typename Coll>
+inline uct_worker_set_ptr<UctItf>
+make_uct_worker_set(
+    typename UctItf::uct_facade_type&       uf
+,   typename UctItf::memory_domain_type&    md
+,   const uct_iface_config_t* const         iface_conf
+,   const uct_iface_params_t* const         iface_params
+,   Coll&                                   coll
 ) {
     struct conf {
-        uct_worker_set_policy::uct_itf_type::uct_facade_type&       uf;
-        uct_worker_set_policy::uct_itf_type::memory_domain_type&    md;
-        const uct_iface_config_t*                                   iface_conf;
-        const uct_iface_params_t*                                   iface_params;
-        Coll&                                                       coll;
+        typename UctItf::uct_facade_type&       uf;
+        typename UctItf::memory_domain_type&    md;
+        const uct_iface_config_t*               iface_conf;
+        const uct_iface_params_t*               iface_params;
+        Coll&                                   coll;
     };
     
-    return mefdn::make_unique<uct_worker_set>(
+    return mefdn::make_unique<uct_worker_set<uct_worker_set_policy<UctItf>>>(
         conf{ uf, md, iface_conf, iface_params, coll });
 }
 

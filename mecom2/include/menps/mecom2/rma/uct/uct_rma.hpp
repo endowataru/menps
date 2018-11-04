@@ -15,165 +15,24 @@
 namespace menps {
 namespace mecom2 {
 
-using rma_uct_policy = default_uct_policy;
-using worker_num_t = mefdn::size_t;
-
-struct uct_rma_remote_minfo {
-    rma_uct_policy::remote_key_type     rkey;
-};
-
-template <typename T>
-struct uct_remote_ptr_policy;
-
-template <typename T>
-using uct_remote_ptr = basic_remote_rma_ptr<uct_remote_ptr_policy<T>>;
-
-template <typename T>
-struct uct_remote_ptr_policy
-{
-    using derived_type = uct_remote_ptr<T>;
-    using element_type = T;
-    using minfo_type = uct_rma_remote_minfo;
-    
-    using size_type = mefdn::size_t;
-    using difference_type = mefdn::ptrdiff_t;
-    
-    template <typename U>
-    using rebind_t = uct_remote_ptr<U>;
-    
-    using uct_itf_type = rma_uct_policy;
-    
-    using remote_addr_type = mefdn::uint64_t;
-};
-
-
-struct uct_rma_public_minfo {
-    rma_uct_policy::memory_type         mem;
-    rma_uct_policy::rkey_buffer_type    rkey_buf;
-    #ifdef MECOM2_USE_WORKER_LOCAL_ALLOCATOR
-    mefdn::size_t                       alloc_id;
-    #endif
-};
-
-template <typename T>
-struct uct_public_ptr_policy;
-
-template <typename T>
-using uct_public_ptr = basic_public_rma_ptr<uct_public_ptr_policy<T>>;
-
-template <typename T>
-struct uct_public_ptr_policy
-{
-    using derived_type = uct_public_ptr<T>;
-    using element_type = T;
-    using minfo_type = uct_rma_public_minfo;
-    
-    using size_type = mefdn::size_t;
-    using difference_type = mefdn::ptrdiff_t;
-    
-    template <typename U>
-    using rebind_t = uct_public_ptr<U>;
-};
-
-class uct_rma;
-
-template <typename T>
-struct uct_unique_public_ptr_policy {
-    using derived_type = basic_unique_public_ptr<uct_unique_public_ptr_policy>;
-    using resource_type =
-        uct_public_ptr< mefdn::remove_extent_t<T> >;
-        // TODO: Necessary for arrays, but this should be generalized.
-    
-    using deleter_type = unique_public_ptr_deleter<uct_unique_public_ptr_policy>;
-    
-    using allocator_type = uct_rma;
-};
-
-template <typename T>
-using uct_unique_public_ptr = basic_unique_public_ptr<uct_unique_public_ptr_policy<T>>;
-
-
-
-struct uct_rkey_info
-{
-    worker_num_t                        wk_num;
-    mefdn::size_t                       proc; // TODO: Use proc_id_type
-    rma_uct_policy::worker_type&        wk;
-    rma_uct_policy::interface_type&     iface;
-    rma_uct_policy::endpoint_type&      ep;
-    rma_uct_policy::remote_key_type&    rkey;
-    default_ult_itf::spinlock&          lock;
-};
-
-
-template <typename T>
-struct uct_rma_element_type_of
-    : mefdn::type_identity<typename T::element_type>
-{ };
-
-template <typename U>
-struct uct_rma_element_type_of<U*>
-    : mefdn::type_identity<U>
-{ };
-
-struct uct_rma_policy
-{
-    using derived_type = uct_rma;
-    
-    using proc_id_type = mefdn::size_t;
-    using size_type = mefdn::size_t;
-    
-    using ult_itf_type = default_ult_itf;
-    
-    template <typename T>
-    using remote_ptr = uct_remote_ptr<T>;
-    template <typename T>
-    using local_ptr = uct_public_ptr<T>;
-    template <typename T>
-    using unique_local_ptr = uct_unique_public_ptr<T>;
-    template <typename T>
-    using public_ptr = uct_public_ptr<T>;
-    template <typename T>
-    using unique_public_ptr = uct_unique_public_ptr<T>;
-    
-    template <typename Ptr>
-    using element_type_of = typename uct_rma_element_type_of<Ptr>::type;
-    
-    using public_minfo_type = uct_rma_public_minfo;
-    using remote_minfo_type = uct_rma_remote_minfo;
-    
-    using rkey_info_type = uct_rkey_info;
-    using worker_num_type = worker_num_t;
-    
-    using uct_itf_type = rma_uct_policy;
-    
-    template <typename U, typename Ptr>
-    static auto static_cast_to(const Ptr& ptr)
-        -> decltype(ptr.template static_cast_to<U>())
-    {
-        return ptr.template static_cast_to<U>();
-    }
-    
-    static void throw_error(const char* const msg, const ucs_status_t status) {
-        throw medev2::ucx::ucx_error(msg, status);
-    }
-};
-
+template <typename P>
 class uct_rma
-    : public basic_uct_rma<uct_rma_policy>
-    , public basic_uct_rma_alloc<uct_rma_policy>
+    : public basic_uct_rma<P>
+    , public basic_uct_rma_alloc<P>
     #ifdef MECOM2_RMA_USE_DLMALLOC_ALLOCATOR
-    , public rma_dlmalloc_allocator<uct_rma_policy>
+    , public rma_dlmalloc_allocator<P>
     #endif
 {
-    using policy_type = uct_rma_policy;
+    using policy_type = P;
     
     using uct_itf_type = typename policy_type::uct_itf_type;
     using uct_facade_type = typename uct_itf_type::uct_facade_type;
     using memory_domain_type = typename uct_itf_type::memory_domain_type;
     using endpoint_type = typename uct_itf_type::endpoint_type;
     
-    using worker_set_type = uct_worker_set;
+    using worker_set_type = typename P::worker_set_type;
+    
+    using uct_rkey_info_type = typename policy_type::uct_rkey_info_type;
     
 public:
     using proc_id_type = typename policy_type::proc_id_type;
@@ -236,7 +95,7 @@ public:
         return this->md_attr_;
     }
     
-    uct_rkey_info lock_rma(
+    uct_rkey_info_type lock_rma(
         const proc_id_type              proc
     ,   const remote_ptr<const void>&   rptr
     ) {
@@ -257,7 +116,7 @@ public:
         ,   this->wk_set_.get_worker_lock(wk_num)
         };
     }
-    void unlock_rma(uct_rkey_info& info)
+    void unlock_rma(uct_rkey_info_type& info)
     {
         this->wk_set_.finish_rma(info.wk_num, info.proc);
     }
@@ -274,33 +133,193 @@ private:
     uct_md_attr_t       md_attr_;
 };
 
+template <typename P>
+using uct_rma_ptr = mefdn::unique_ptr<uct_rma<P>>;
 
-using uct_rma_ptr = mefdn::unique_ptr<uct_rma>;
-
-inline uct_rma_ptr make_uct_rma(
-    uct_rma_policy::uct_itf_type::uct_facade_type&      uf
-,   uct_rma_policy::uct_itf_type::memory_domain_type&   md
-,   uct_worker_set&                                     wk_set
+template <typename P>
+inline uct_rma_ptr<P> make_uct_rma(
+    typename P::uct_itf_type::uct_facade_type&      uf
+,   typename P::uct_itf_type::memory_domain_type&   md
+,   typename P::worker_set_type&                    wk_set
 ) {
     struct conf {
-        uct_rma_policy::uct_itf_type::uct_facade_type&      uf;
-        uct_rma_policy::uct_itf_type::memory_domain_type&   md;
-        uct_worker_set&                                     wk_set;
+        typename P::uct_itf_type::uct_facade_type&      uf;
+        typename P::uct_itf_type::memory_domain_type&   md;
+        typename P::worker_set_type&                    wk_set;
     };
-    return mefdn::make_unique<uct_rma>(conf{ uf, md, wk_set });
+    return mefdn::make_unique<uct_rma<P>>(conf{ uf, md, wk_set });
 }
 
+
+
+using worker_num_t = mefdn::size_t;
+
+template <typename UctItf>
+struct uct_rma_remote_minfo {
+    typename UctItf::remote_key_type    rkey;
+};
+
+template <typename UctItf, typename T>
+struct uct_remote_ptr_policy;
+
+template <typename UctItf, typename T>
+using uct_remote_ptr = basic_remote_rma_ptr<uct_remote_ptr_policy<UctItf, T>>;
+
+template <typename UctItf, typename T>
+struct uct_remote_ptr_policy
+{
+    using derived_type = uct_remote_ptr<UctItf, T>;
+    using element_type = T;
+    using minfo_type = uct_rma_remote_minfo<UctItf>;
+    
+    using size_type = mefdn::size_t;
+    using difference_type = mefdn::ptrdiff_t;
+    
+    template <typename U>
+    using rebind_t = uct_remote_ptr<UctItf, U>;
+    
+    using uct_itf_type = UctItf;
+    
+    using remote_addr_type = mefdn::uint64_t;
+};
+
+
+template <typename UctItf>
+struct uct_rma_public_minfo {
+    typename UctItf::memory_type        mem;
+    typename UctItf::rkey_buffer_type   rkey_buf;
+    #ifdef MECOM2_USE_WORKER_LOCAL_ALLOCATOR
+    mefdn::size_t                       alloc_id;
+    #endif
+};
+
+template <typename UctItf, typename T>
+struct uct_public_ptr_policy;
+
+template <typename UctItf, typename T>
+using uct_public_ptr = basic_public_rma_ptr<uct_public_ptr_policy<UctItf, T>>;
+
+template <typename UctItf, typename T>
+struct uct_public_ptr_policy
+{
+    using derived_type = uct_public_ptr<UctItf, T>;
+    using element_type = T;
+    using minfo_type = uct_rma_public_minfo<UctItf>;
+    
+    using size_type = mefdn::size_t;
+    using difference_type = mefdn::ptrdiff_t;
+    
+    template <typename U>
+    using rebind_t = uct_public_ptr<UctItf, U>;
+};
+
+
+template <typename UctItf>
+struct uct_rma_policy;
+
+
+template <typename UctItf, typename T>
+struct uct_unique_public_ptr_policy {
+    using derived_type = basic_unique_public_ptr<uct_unique_public_ptr_policy>;
+    using resource_type =
+        uct_public_ptr<UctItf, mefdn::remove_extent_t<T>>;
+        // TODO: Necessary for arrays, but this should be generalized.
+    
+    using deleter_type = unique_public_ptr_deleter<uct_unique_public_ptr_policy>;
+    
+    using allocator_type = uct_rma<uct_rma_policy<UctItf>>;
+};
+
+template <typename UctItf, typename T>
+using uct_unique_public_ptr = basic_unique_public_ptr<uct_unique_public_ptr_policy<UctItf, T>>;
+
+
+template <typename UctItf>
+struct uct_rkey_info
+{
+    worker_num_t                                wk_num;
+    mefdn::size_t                               proc; // TODO: Use proc_id_type
+    typename UctItf::worker_type&               wk;
+    typename UctItf::interface_type&            iface;
+    typename UctItf::endpoint_type&             ep;
+    typename UctItf::remote_key_type&           rkey;
+    typename UctItf::ult_itf_type::spinlock&    lock;
+};
+
+
+template <typename T>
+struct uct_rma_element_type_of
+    : mefdn::type_identity<typename T::element_type>
+{ };
+
+template <typename U>
+struct uct_rma_element_type_of<U*>
+    : mefdn::type_identity<U>
+{ };
+
+
+template <typename UctItf>
+struct uct_rma_policy
+{
+    using derived_type = uct_rma<uct_rma_policy>;
+    
+    using proc_id_type = mefdn::size_t; // TODO
+    using size_type = mefdn::size_t;
+    
+    using ult_itf_type = typename UctItf::ult_itf_type;
+    
+    template <typename T>
+    using remote_ptr = uct_remote_ptr<UctItf, T>;
+    template <typename T>
+    using local_ptr = uct_public_ptr<UctItf, T>;
+    template <typename T>
+    using unique_local_ptr = uct_unique_public_ptr<UctItf, T>;
+    template <typename T>
+    using public_ptr = uct_public_ptr<UctItf, T>;
+    template <typename T>
+    using unique_public_ptr = uct_unique_public_ptr<UctItf, T>;
+    
+    template <typename Ptr>
+    using element_type_of = typename uct_rma_element_type_of<Ptr>::type;
+    
+    using public_minfo_type = uct_rma_public_minfo<UctItf>;
+    using remote_minfo_type = uct_rma_remote_minfo<UctItf>;
+    
+    using rkey_info_type = uct_rkey_info<UctItf>;
+    using worker_num_type = worker_num_t;
+    
+    using uct_itf_type = UctItf;
+    
+    using worker_set_type = uct_worker_set<uct_worker_set_policy<UctItf>>;
+    
+    using uct_rkey_info_type = uct_rkey_info<UctItf>;
+    
+    template <typename U, typename Ptr>
+    static auto static_cast_to(const Ptr& ptr)
+        -> decltype(ptr.template static_cast_to<U>())
+    {
+        return ptr.template static_cast_to<U>();
+    }
+    
+    static void throw_error(const char* const msg, const ucs_status_t status) {
+        throw medev2::ucx::ucx_error(msg, status);
+    }
+};
+
+template <typename UctItf>
 struct uct_rma_resource {
+    using uct_itf_type = UctItf;
+    
     template <typename Coll>
     explicit uct_rma_resource(
         const char* const   tl_name
     ,   const char* const   dev_name
     ,   Coll&               coll
     ) {
-        this->md = rma_uct_policy::open_md(this->uf, tl_name, dev_name);
+        this->md = uct_itf_type::open_md(this->uf, tl_name, dev_name);
         
         auto iface_conf =
-            rma_uct_policy::iface_config_type::read(
+            uct_itf_type::iface_config_type::read(
                 this->uf, md.get(), tl_name, nullptr, nullptr);
         
         // TODO
@@ -314,25 +333,28 @@ struct uct_rma_resource {
         iface_params.rx_headroom = 0;
         
         this->wk_set =
-            mecom2::make_uct_worker_set(this->uf, this->md, iface_conf.get(), &iface_params, coll);
+            mecom2::make_uct_worker_set<uct_itf_type>(
+                this->uf, this->md, iface_conf.get(), &iface_params, coll);
         
-        this->rma = make_uct_rma(this->uf, this->md, *this->wk_set);
+        this->rma = make_uct_rma<uct_rma_policy<UctItf>>(
+            this->uf, this->md, *this->wk_set);
     }
     
-    uct_rma_policy::uct_itf_type::uct_facade_type       uf;
-    uct_rma_policy::uct_itf_type::memory_domain_type    md;
-    mefdn::unique_ptr<uct_worker_set>                   wk_set;
-    uct_rma_ptr                                         rma;
+    typename uct_itf_type::uct_facade_type      uf;
+    typename uct_itf_type::memory_domain_type   md;
+    uct_worker_set_ptr<UctItf>                  wk_set;
+    uct_rma_ptr<uct_rma_policy<UctItf>>         rma;
 };
 
 
-template <typename Coll>
-inline mefdn::unique_ptr<uct_rma_resource> make_uct_rma_resource(
+template <typename UctItf, typename Coll>
+inline mefdn::unique_ptr<uct_rma_resource<UctItf>>
+make_uct_rma_resource(
     const char* const   tl_name
 ,   const char* const   dev_name
 ,   Coll&               coll
 ) {
-    return mefdn::make_unique<uct_rma_resource>(tl_name, dev_name, coll);
+    return mefdn::make_unique<uct_rma_resource<UctItf>>(tl_name, dev_name, coll);
 }
 
 } // namespace mecom2

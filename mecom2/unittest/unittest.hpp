@@ -7,5 +7,10 @@
 
 using namespace menps;
 
-extern medev2::mpi::default_direct_mpi_itf::mpi_facade_type* g_mi;
+#include <menps/meult/backend/mth/ult_policy.hpp>
+
+using uit_itf_t = meult::backend::mth::ult_policy; // TODO
+using direct_mpi_itf_t = medev2::mpi::direct_mpi_itf<uit_itf_t>;
+
+extern direct_mpi_itf_t::mpi_facade_type* g_mi;
 

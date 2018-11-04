@@ -55,7 +55,7 @@ struct get_state
         ,   reinterpret_cast<mefdn::uintptr_t>(pthread_self())
             // TODO: use mefdn::this_thread::get_id()
         ,   reinterpret_cast<mefdn::uintptr_t>(
-                medev2::default_ult_itf::this_thread::native_handle()
+                medsm2::dsm_com_creator::ult_itf_type::this_thread::native_handle()
             )
         ,   this->number_++
         ,   mefdn::get_cpu_clock() // TODO
@@ -94,7 +94,7 @@ struct my_tss_worker_policy
     // signal handlers separately for each OpenMP worker thread.
     using base_ult_itf_type = meult::klt_policy;
     #else
-    using base_ult_itf_type = medsm2::default_ult_itf;
+    using base_ult_itf_type = medsm2::dsm_com_creator::ult_itf_type;
     #endif
 };
 
@@ -233,7 +233,7 @@ struct my_child_worker_group_policy
     using derived_type = my_child_worker_group;
     using child_worker_type = my_child_worker;
     
-    using comm_ult_itf_type = medsm2::default_ult_itf;
+    using comm_ult_itf_type = medsm2::dsm_com_creator::ult_itf_type;
     
     using worker_base_type = my_worker_base;
 };

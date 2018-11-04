@@ -62,7 +62,7 @@ struct mpi_p2p_policy
     
     using mpi_itf_type = MpiItf;
     
-    using ult_itf_type = default_ult_itf;
+    using ult_itf_type = typename MpiItf::ult_itf_type;
 };
 
 } // namespace mecom2

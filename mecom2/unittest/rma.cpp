@@ -5,14 +5,21 @@
 #include <menps/mecom2/rma/alltoall_buffer.hpp>
 
 #ifdef MEDEV2_DEVICE_UCX_ENABLED
+#if 0
 #include <menps/mecom2/rma/ucp/ucp_rma.hpp>
+#endif
 
 //#include <menps/mecom2/com/uct/uct_worker_set.hpp>
 #include <menps/mecom2/rma/uct/uct_rma.hpp>
 #endif
 
+#if 1
+using mpi_rma_policy_t = mecom2::mpi_rma_policy<direct_mpi_itf_t>;
+using mpi_coll_policy_t = mecom2::mpi_coll_policy<direct_mpi_itf_t>;
+#else
 using mpi_rma_policy_t = mecom2::mpi_rma_policy<medev2::mpi::default_direct_mpi_itf>;
 using mpi_coll_policy_t = mecom2::mpi_coll_policy<medev2::mpi::default_direct_mpi_itf>;
+#endif
 
 TEST(Rma, Basic)
 {
@@ -114,6 +121,7 @@ TEST(Rma, AlltoallMpi)
 
 #ifdef MEDEV2_DEVICE_UCX_ENABLED
 
+#if 0
 TEST(Rma, AlltoallUcp)
 {
     auto coll = mecom2::make_mpi_coll<mpi_coll_policy_t>(*g_mi, MPI_COMM_WORLD);
@@ -136,6 +144,7 @@ TEST(Rma, AlltoallUcp)
     
     do_alltoall_test<mecom2::alltoall_buffer<mecom2::ucp_rma, int>>(*rma);
 }
+#endif
 
 TEST(Rma, AlltoallUct)
 {
@@ -169,9 +178,11 @@ TEST(Rma, AlltoallUct)
     auto rma = mecom2::make_uct_rma(uf, md, *wk_set);
     #endif
     
-    auto rma_res = mecom2::make_uct_rma_resource(tl_name, dev_name, *coll);
+    using uct_itf_t = medev2::ucx::uct::direct_uct_itf<uit_itf_t>;
     
-    do_alltoall_test<mecom2::alltoall_buffer<mecom2::uct_rma, int>>(*rma_res->rma);
+    auto rma_res = mecom2::make_uct_rma_resource<uct_itf_t>(tl_name, dev_name, *coll);
+    
+    do_alltoall_test<mecom2::alltoall_buffer<mecom2::uct_rma<mecom2::uct_rma_policy<uct_itf_t>>, int>>(*rma_res->rma);
     
     #if 0
     

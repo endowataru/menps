@@ -50,11 +50,11 @@ struct dsm_base_policy
     using wn_idx_type = mefdn::size_t;
     using wn_vi_type = mefdn::vector<wn_idx_type>;
     
-    using ult_itf_type = medsm2::default_ult_itf;
+    using ult_itf_type = dsm_com_creator::ult_itf_type;
     #ifdef MEOMP_SEPARATE_WORKER_THREAD
     using worker_ult_itf_type = meult::klt_policy;
     #else
-    using worker_ult_itf_type = medsm2::default_ult_itf;
+    using worker_ult_itf_type = ult_itf_type;
     #endif
     
     #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL

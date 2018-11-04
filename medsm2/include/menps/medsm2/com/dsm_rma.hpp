@@ -50,9 +50,10 @@ template <typename MpiItf>
 struct dsm_rma_info<mecom2::rma_id_t::uct, MpiItf>
 {
     using mpi_facade_type = typename MpiItf::mpi_facade_type;
+    using ult_itf_type = typename MpiItf::ult_itf_type;
     
-    mefdn::unique_ptr<mecom2::uct_rma_resource> rma_res;
-    mecom2::uct_rma*                    rma;
+    mefdn::unique_ptr<mecom2::uct_rma_resource<ult_itf_type>> rma_res;
+    mecom2::uct_rma<ult_itf_type>*                    rma;
     
     template <typename Coll>
     explicit dsm_rma_info(mpi_facade_type& /*mf*/, Coll& coll)
@@ -67,6 +68,7 @@ struct dsm_rma_info<mecom2::rma_id_t::uct, MpiItf>
     }
 };
 
+#if 0
 template <typename MpiItf>
 struct dsm_rma_info<mecom2::rma_id_t::ucp, MpiItf>
 {
@@ -96,6 +98,7 @@ struct dsm_rma_info<mecom2::rma_id_t::ucp, MpiItf>
         rma = mecom2::make_ucp_rma(uf, ctx, *wk_set);
     }
 };
+#endif
 
 template <mecom2::rma_id_t Id, typename MpiItf, typename Coll>
 inline mefdn::unique_ptr<dsm_rma_info<Id, MpiItf>>

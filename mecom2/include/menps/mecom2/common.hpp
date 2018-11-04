@@ -10,11 +10,3 @@
     #include <menps/meult/qd/qdlock_mutex.hpp>
 #endif
 
-namespace menps {
-namespace mecom2 {
-
-using default_ult_itf = medev2::default_ult_itf;
-
-} // namespace mecom2
-} // namespace menps
-

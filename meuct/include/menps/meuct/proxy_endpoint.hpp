@@ -2,6 +2,8 @@
 #pragma once
 
 #include <menps/meuct/proxy_funcs.hpp>
+#include <menps/mefdn/utility.hpp>
+#include <menps/mefdn/assert.hpp>
 
 namespace menps {
 namespace meuct {
