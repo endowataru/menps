@@ -116,9 +116,12 @@ void logger_not_defined(...);
 
 } // namespace detail
 
+#define MEFDN_LOGGER_OUTPUT_ALWAYS(level, ...) \
+    ::menps::mefdn::logger::add_log(level, __VA_ARGS__)
+
 #ifdef MEFDN_ENABLE_LOG
     #define MEFDN_LOGGER_OUTPUT(level, ...) \
-        ::menps::mefdn::logger::add_log(level, __VA_ARGS__)
+        MEFDN_LOGGER_OUTPUT_ALWAYS(level, __VA_ARGS__)
 #else
     #define MEFDN_LOGGER_OUTPUT(level, ...)
 #endif
@@ -127,7 +130,7 @@ void logger_not_defined(...);
 #define MEFDN_LOG_DEBUG(...)   MEFDN_LOGGER_OUTPUT(MEFDN_LOG_LEVEL_DEBUG  , __VA_ARGS__)
 #define MEFDN_LOG_INFO(...)    MEFDN_LOGGER_OUTPUT(MEFDN_LOG_LEVEL_INFO   , __VA_ARGS__)
 #define MEFDN_LOG_WARN(...)    MEFDN_LOGGER_OUTPUT(MEFDN_LOG_LEVEL_WARN   , __VA_ARGS__)
-#define MEFDN_LOG_FATAL(...)   MEFDN_LOGGER_OUTPUT(MEFDN_LOG_LEVEL_FATAL  , __VA_ARGS__)
+#define MEFDN_LOG_FATAL(...)   MEFDN_LOGGER_OUTPUT_ALWAYS(MEFDN_LOG_LEVEL_FATAL, __VA_ARGS__)
 
 
 template <typename T>
