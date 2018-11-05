@@ -95,7 +95,7 @@ struct intrusive_forward_list_traits<meult::qdlock_delegator_node<Func, UltItf>>
         return x.next.load(mefdn::memory_order_relaxed);
     }
     static void set_next(node_base_type& x, const node_pointer_type next) noexcept {
-        x.next = next;
+        x.next.store(next, mefdn::memory_order_relaxed);
     }
     
     static reference from_base(const node_pointer_type x) noexcept {
