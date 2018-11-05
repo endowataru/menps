@@ -88,7 +88,8 @@ class basic_uct_rma
             #ifdef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
             self.flag.store(true, mefdn::memory_order_release);
             #else
-            self.uv.notify();
+            // Prefer returning to the progress thread immediately.
+            self.uv.notify_signal();
             #endif
         }
     };

@@ -42,9 +42,22 @@ public:
     
     void notify()
     {
+        this->notify_signal();
+    }
+    
+    void notify_signal()
+    {
         if (myth_uncond_signal(&this->u_) != 0)
-        //if (myth_uncond_signal_enter(&this->u_) != 0)
-            throw uncond_variable_error();  
+            throw uncond_variable_error();
+    }
+    void notify_enter()
+    {
+        #ifdef MEULT_ENABLE_MTH_UNCOND_ENTER
+        if (myth_uncond_enter(&this->u_) != 0)
+            throw uncond_variable_error();
+        #else
+        this->notify_signal();
+        #endif
     }
     
 private:

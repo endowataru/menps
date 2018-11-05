@@ -51,7 +51,9 @@ public:
                 const auto next_head = this->core_.get_head();
                 
                 MEFDN_ASSERT(next_head->uv != nullptr);
-                next_head->uv->notify();
+                // Awake the next thread.
+                // Prefer executing the next thread immediately.
+                next_head->uv->notify_enter();
                 
                 pool.deallocate(old_head);
                 

@@ -112,7 +112,8 @@ public:
                 
                 pool.deallocate(old_head);
                 
-                uv->notify();
+                // Enter the next thread immediately.
+                uv->notify_enter();
                 
                 MEFDN_LOG_VERBOSE(
                     "msg:Finished unlocking delegator by awaking next thread.\t"
@@ -122,7 +123,9 @@ public:
             }
         }
         
-        this->th_.notify();
+        // Awake the helper thread.
+        // Prefer executing the succeeding critical sections now.
+        this->th_.notify_enter();
         
         MEFDN_LOG_VERBOSE(
             "msg:Finished unlocking delegator by awaking helper thread.\t"
@@ -175,7 +178,8 @@ private:
                 MEFDN_LOG_VERBOSE("msg:Awake next thread trying to lock qdlock.");
                 
                 // The next thread is trying to lock the mutex.
-                head->uv->notify();
+                // Prefer entering the next thread immediately.
+                head->uv->notify_enter();
                 
                 // This helper thread starts to suspend.
                 awake = false;

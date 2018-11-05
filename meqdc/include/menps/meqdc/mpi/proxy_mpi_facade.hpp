@@ -333,7 +333,9 @@ private:
             }
             
             if (waiting) {
-                proxy_req->uv.notify();
+                // Wake the waiting thread.
+                // Prefer returning to the progress thread immediately.
+                proxy_req->uv.notify_signal();
             }
         }
     };

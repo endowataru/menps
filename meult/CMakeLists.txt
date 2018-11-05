@@ -7,6 +7,7 @@ set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
 # Options
 option(MEULT_ENABLE_MTH "Build MassiveThreads" ON)
+option(MEULT_ENABLE_MTH_UNCOND_ENTER "Enable myth_uncond_enter" OFF)
 set(MEULT_EXECUTOR_LIFETIME_CYCLES "0 " CACHE STRING "Run executors during at least this time")
 
 # Show messages invoking CMake
