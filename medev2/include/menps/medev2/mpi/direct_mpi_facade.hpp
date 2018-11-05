@@ -40,13 +40,14 @@ class direct_mpi_facade
     #endif
     
 public:
-    explicit direct_mpi_facade(int* const argc, char*** const argv)
-    {
-        int level = 0;
-        
+    explicit direct_mpi_facade(
+        int* const      argc
+    ,   char*** const   argv
+    ,   const int       required
+    ,   int* const      provided
+    ) {
         mpi_error::check(
-            //MPI_Init(argc, argv)
-            MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &level)
+            MPI_Init_thread(argc, argv, required, provided)
         );
     }
     

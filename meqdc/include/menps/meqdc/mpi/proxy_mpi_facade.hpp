@@ -29,13 +29,17 @@ public:
     explicit proxy_mpi_facade(
         int* const      argc
     ,   char*** const   argv
+    ,   const int       /*required*/ // TODO: ignored
+    ,   int* const      provided
     )
-        : orig_mf_(argc, argv)
+        : orig_mf_(argc, argv, MPI_THREAD_SERIALIZED, &orig_level_)
         , req_pool_(P::max_num_requests)
         , req_hld_()
         , qd_pool_()
         , qd_(this->qd_pool_)
     {
+        *provided = MPI_THREAD_MULTIPLE;
+        
         this->qd_.start_consumer(
             [this] (qdlock_node_type& n) {
                 return this->execute_delegated(n);
@@ -363,6 +367,7 @@ private:
         #endif
     }
     
+    int                     orig_level_;
     orig_mpi_facade_type    orig_mf_;
     request_pool_type       req_pool_;
     request_holder_type     req_hld_;

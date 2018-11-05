@@ -41,7 +41,13 @@ public:
         int* const      argc
     ,   char*** const   argv
     ) {
-        this->mf_ = mefdn::make_unique<mpi_facade_type>(argc, argv);
+        int provided = 0;
+        
+        this->mf_ =
+            mefdn::make_unique<mpi_facade_type>(
+                argc, argv, MPI_THREAD_MULTIPLE, &provided);
+        
+        MEFDN_ASSERT(provided == MPI_THREAD_MULTIPLE);
         
         // Duplicate communicators.
         this->mf_->comm_dup({ MPI_COMM_WORLD, &this->coll_comm_ });

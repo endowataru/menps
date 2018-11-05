@@ -8,8 +8,11 @@ int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);
     
+    int provided = 0;
+    
     auto mi =
-        mefdn::make_unique<direct_mpi_itf_t::mpi_facade_type>(&argc, &argv);
+        mefdn::make_unique<direct_mpi_itf_t::mpi_facade_type>(
+            &argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     
     g_mi = mi.get();
     
