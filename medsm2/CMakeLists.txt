@@ -16,6 +16,8 @@ set(MEDSM2_LEASE_TS "10" CACHE STRING "Lease value for timestamp-based invalidat
 set(MEDSM2_REL_SIG_LEN "1024" CACHE STRING "Length of write notice array")
 set(MEDSM2_WR_COUNT_THRESHOLD "2" CACHE STRING "Threshold for downgrading writable blocks")
 option(MEDSM2_ENABLE_FAST_RELEASE "Enable skipping critical sections if data is not migrating" ON)
+option(MEDSM2_ENABLE_LAZY_MERGE "Enable lazy merge" ON)
+option(MEDSM2_ENABLE_NEEDS_LOCAL_COMP "Reduce local comparison in data merge" ON)
 option(MEDSM2_USE_SIMD_DIFF "Use SIMD to accelerate diff merge" ON)
 
 # Generate config.h
