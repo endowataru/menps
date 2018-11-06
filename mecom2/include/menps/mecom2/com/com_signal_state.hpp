@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/common.hpp>
+#include <menps/meult/klt.hpp>
 
 namespace menps {
 namespace mecom2 {

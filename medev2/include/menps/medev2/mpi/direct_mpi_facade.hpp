@@ -6,6 +6,7 @@
 #include <exception>
 #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
 #include <menps/mefdn/thread/spinlock.hpp>
+#include <menps/mefdn/mutex.hpp>
 #endif
 
 namespace menps {
