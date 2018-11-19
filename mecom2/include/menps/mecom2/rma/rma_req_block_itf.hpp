@@ -35,11 +35,11 @@ public:
         if (self.is_local_proc(dest_proc)) {
             MEFDN_LOG_VERBOSE(
                 "msg:Local RMA write (memcpy).\t"
-                "dest_rptr:{:x}\t"
-                "src_lptr:{:x}\t"
+                "dest_rptr:{}\t"
+                "src_lptr:{}\t"
                 "num_bytes:{}"
-            ,   reinterpret_cast<mefdn::uintptr_t>(dest_rptr)
-            ,   reinterpret_cast<mefdn::uintptr_t>(src_lptr)
+            ,   mefdn::show_param(dest_rptr)
+            ,   mefdn::show_param(src_lptr)
             ,   num_bytes
             );
             
@@ -75,11 +75,11 @@ public:
         if (self.is_local_proc(src_proc)) {
             MEFDN_LOG_VERBOSE(
                 "msg:Local RMA read (memcpy).\t"
-                "src_rptr:{:x}\t"
-                "dest_lptr:{:x}\t"
+                "src_rptr:{}\t"
+                "dest_lptr:{}\t"
                 "num_bytes:{}"
-            ,   reinterpret_cast<mefdn::uintptr_t>(src_rptr)
-            ,   reinterpret_cast<mefdn::uintptr_t>(dest_lptr)
+            ,   mefdn::show_param(src_rptr)
+            ,   mefdn::show_param(dest_lptr)
             ,   num_bytes
             );
             

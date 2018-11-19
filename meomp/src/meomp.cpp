@@ -479,7 +479,7 @@ using microtask_t = void (*)(int*, int*, ...);
 namespace menps {
 namespace meomp {
 
-constexpr mefdn::size_t max_num_kmp_args = 4;
+constexpr mefdn::size_t max_num_kmp_args = 15;
 
 struct kmp_invoker
 {
@@ -517,8 +517,52 @@ struct kmp_invoker
                 self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3]);
                 break;
             
+            case 5:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4]);
+                break;
+            
+            case 6:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5]);
+                break;
+            
+            case 7:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6]);
+                break;
+            
+            case 8:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6], self.ptrs[7]);
+                break;
+            
+            case 9:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6], self.ptrs[7], self.ptrs[8]);
+                break;
+            
+            case 10:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6], self.ptrs[7], self.ptrs[8], self.ptrs[9]);
+                break;
+            
+            case 11:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6], self.ptrs[7], self.ptrs[8], self.ptrs[9], self.ptrs[10]);
+                break;
+            
+            case 12:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6], self.ptrs[7], self.ptrs[8], self.ptrs[9], self.ptrs[10], self.ptrs[11]);
+                break;
+            
+            case 13:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6], self.ptrs[7], self.ptrs[8], self.ptrs[9], self.ptrs[10], self.ptrs[11], self.ptrs[12]);
+                break;
+            
+            case 14:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6], self.ptrs[7], self.ptrs[8], self.ptrs[9], self.ptrs[10], self.ptrs[11], self.ptrs[12], self.ptrs[13]);
+                break;
+            
+            case 15:
+                self.func(&gtid, &btid, self.ptrs[0], self.ptrs[1], self.ptrs[2], self.ptrs[3], self.ptrs[4], self.ptrs[5], self.ptrs[6], self.ptrs[7], self.ptrs[8], self.ptrs[9], self.ptrs[10], self.ptrs[11], self.ptrs[12], self.ptrs[13], self.ptrs[14]);
+                break;
+            
             default:
-                throw std::runtime_error("Too many arguments");
+                throw std::runtime_error("Too many arguments: " + std::to_string(self.argc));
                 break;
         }
     }
@@ -700,6 +744,37 @@ extern "C"
 void __kmpc_for_static_fini(ident* /*loc*/, kmp_int32 /*global_tid*/) {
     // Do nothing.
 }
+
+extern "C"
+void __kmpc_set_lock(omp_lock_t* const lk);
+extern "C"
+void __kmpc_set_lock(omp_lock_t* const lk)
+{
+    omp_set_lock(lk);
+}
+extern "C"
+void __kmpc_unset_lock(omp_lock_t* const lk);
+extern "C"
+void __kmpc_unset_lock(omp_lock_t* const lk)
+{
+    omp_unset_lock(lk);
+}
+
+extern "C"
+void __kmpc_critical();
+extern "C"
+void __kmpc_critical() {
+    GOMP_critical_start();
+}
+
+extern "C"
+void __kmpc_end_critical();
+extern "C"
+void __kmpc_end_critical() {
+    GOMP_critical_end();
+}
+
+
 
 
 extern "C" {
