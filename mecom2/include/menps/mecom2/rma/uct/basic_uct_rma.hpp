@@ -19,6 +19,8 @@
     #define MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
 #endif
 
+#define MECOM2_AVOID_UCT_DEADLOCK
+
 namespace menps {
 namespace mecom2 {
 
@@ -54,6 +56,15 @@ class basic_uct_rma
         return arg.num_bytes;
     }
     
+    #ifdef MECOM2_AVOID_UCT_DEADLOCK
+    enum class completion_state
+    {
+        created = 1
+    ,   waiting
+    ,   finished
+    };
+    #endif
+    
     struct completion
         : uct_completion_t
     {
@@ -64,7 +75,40 @@ class basic_uct_rma
         #ifdef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
         mefdn::atomic<bool> flag{false};
         #else
+        #ifdef MECOM2_AVOID_UCT_DEADLOCK
+        mefdn::atomic<completion_state> state{completion_state::created};
+        #endif
         typename ult_itf_type::uncond_variable uv;
+        #endif
+        
+        #ifndef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
+        void wait()
+        {
+            #ifdef MECOM2_AVOID_UCT_DEADLOCK
+            bool needs_wait = false;
+            
+            auto st = this->state.load(mefdn::memory_order_acquire);
+            
+            if (st != completion_state::finished) {
+                MEFDN_ASSERT(st == completion_state::created);
+                
+                needs_wait =
+                    this->state.compare_exchange_strong(
+                        st
+                    ,   completion_state::waiting
+                    ,   mefdn::memory_order_acq_rel
+                    ,   mefdn::memory_order_relaxed
+                    );
+            }
+            
+            if (needs_wait) {
+                this->uv.wait();
+            }
+            
+            #else
+            this->uv.wait();
+            #endif
+        }
         #endif
         
     private:
@@ -87,9 +131,34 @@ class basic_uct_rma
             
             #ifdef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
             self.flag.store(true, mefdn::memory_order_release);
+            
+            #else
+            #ifdef MECOM2_AVOID_UCT_DEADLOCK
+            auto st = self.state.load(mefdn::memory_order_acquire);
+            
+            bool waiting = (st == completion_state::waiting);
+            
+            if (!waiting) {
+                MEFDN_ASSERT(st == completion_state::created);
+                
+                waiting =
+                    ! self.state.compare_exchange_strong(
+                        st
+                    ,   completion_state::finished
+                    ,   mefdn::memory_order_acq_rel
+                    ,   mefdn::memory_order_relaxed
+                    );
+            }
+            
+            if (waiting) {
+                // Prefer returning to the progress thread immediately.
+                self.uv.notify_signal();
+            }
+            
             #else
             // Prefer returning to the progress thread immediately.
             self.uv.notify_signal();
+            #endif
             #endif
         }
     };
@@ -159,32 +228,36 @@ public:
         
         completion comp;
         
-        #if 1
-        uct_iov iov = uct_iov();
-        iov.buffer = dest_lptr.get();
-        iov.length = num_bytes;
-        iov.memh = dest_lptr.get_minfo()->mem.get();
-        iov.stride = 0;
-        iov.count = 1;
-        
         ucs_status_t st = UCS_OK;
-        {
-            #ifdef MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
-            mefdn::lock_guard<spinlock_type> lk(info.lock);
-            #endif
-            
-            st = info.ep.get_zcopy(
-                &iov
-            ,   1
-            ,   src_rptr.get_addr()
-            ,   info.rkey.get().rkey
-            ,   &comp
-            );
-        }
         
-        #else
-        const auto st =
-            info.ep.get_bcopy(
+        // TODO: Read threshold from UCT config
+        if (num_bytes > MECOM2_RMA_UCT_GET_ZCOPY_SIZE)
+        {
+            uct_iov iov = uct_iov();
+            iov.buffer = dest_lptr.get();
+            iov.length = num_bytes;
+            iov.memh = dest_lptr.get_minfo()->mem.get();
+            iov.stride = 0;
+            iov.count = 1;
+            
+            
+            {
+                #ifdef MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
+                mefdn::lock_guard<spinlock_type> lk(info.lock);
+                #endif
+                
+                st = info.ep.get_zcopy(
+                    &iov
+                ,   1
+                ,   src_rptr.get_addr()
+                ,   info.rkey.get().rkey
+                ,   &comp
+                );
+            }
+        }
+        else
+        {
+            st = info.ep.get_bcopy(
                 reinterpret_cast<uct_unpack_callback_t>(&std::memcpy)
             ,   dest_lptr
             ,   num_bytes
@@ -192,7 +265,7 @@ public:
             ,   info.rkey.get().rkey
             ,   &comp
             );
-        #endif
+        }
         
         this->wait(info, st, &comp);
         //this->flush(info, UCS_INPROGRESS);
@@ -271,7 +344,7 @@ private:
             }
         }
         #else
-        comp->uv.wait();
+        comp->wait();
         #endif
     }
     

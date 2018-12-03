@@ -12,7 +12,7 @@ class direct_facade
 {
 public:
     #define D(dummy, name, tr, num, ...) \
-        static tr name(const name##_params& p) { \
+        tr name(const name##_params& p) { \
             return uct_##name( \
                 MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS(num, __VA_ARGS__) \
             ); \

@@ -12,5 +12,7 @@ target_include_directories(meqdc
 target_link_libraries(meqdc
     PUBLIC medev2
     PRIVATE mefdn-options
+    PUBLIC meuct
+        # TODO: remove dependency
 )
 

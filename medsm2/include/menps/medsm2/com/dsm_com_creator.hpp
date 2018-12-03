@@ -7,20 +7,33 @@
 #include <menps/meult/ult_itf_id.hpp>
 
 #include MEFDN_PP_CAT(MEULT_ULT_ITF_HEADER_, MEDSM2_ULT_ITF)
+#include MEFDN_PP_CAT(MEDEV2_UCT_ITF_HEADER_, MEDSM2_UCT_ITF)
 
 namespace menps {
 namespace medsm2 {
 
-class dsm_com_creator
+struct dsm_com_policy_base
 {
-public:
     using ult_itf_type =
         meult::get_ult_itf_type_t<meult::ult_itf_id_t::MEDSM2_ULT_ITF>;
     
-private:
     using mpi_itf_type =
         mecom2::get_mpi_itf_type_t<mecom2::mpi_id_t::MEDSM2_MPI_ITF, ult_itf_type>;
     
+    using uct_itf_type =
+        medev2::ucx::uct::get_uct_itf_type_t<
+            medev2::ucx::uct::uct_itf_id_t::MEDSM2_UCT_ITF
+        ,   dsm_com_policy_base
+        >;
+};
+
+class dsm_com_creator
+{
+public:
+    using ult_itf_type = typename dsm_com_policy_base::ult_itf_type;
+    
+private:
+    using mpi_itf_type = typename dsm_com_policy_base::mpi_itf_type;
     using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
     
     using mpi_coll_policy_type = mecom2::mpi_coll_policy<mpi_itf_type>;
@@ -28,7 +41,7 @@ private:
     
     static constexpr mecom2::rma_id_t used_rma_id = mecom2::rma_id_t::MEDSM2_RMA_ITF;
     
-    using rma_type = mecom2::get_rma_type_t<used_rma_id, mpi_itf_type>;
+    using rma_type = mecom2::get_rma_type_t<used_rma_id, dsm_com_policy_base>;
     
     using mpi_coll_type = mecom2::mpi_coll<mpi_coll_policy_type>;
     using mpi_p2p_type = mecom2::mpi_p2p<mpi_p2p_policy_type>;
@@ -56,7 +69,7 @@ public:
         this->coll_ = mecom2::make_mpi_coll<mpi_coll_policy_type>(*this->mf_, this->coll_comm_);
         this->p2p_ = mecom2::make_mpi_p2p<mpi_p2p_policy_type>(*this->mf_, this->p2p_comm_);
         
-        this->rma_info_ = make_dsm_rma_info<used_rma_id, mpi_itf_type>(*this->mf_, *this->coll_);
+        this->rma_info_ = make_dsm_rma_info<used_rma_id, dsm_com_policy_base>(*this->mf_, *this->coll_);
         
         this->com_itf_ = mefdn::make_unique<dsm_com_itf_type>(
             dsm_com_itf_type::conf_t{
@@ -76,7 +89,7 @@ private:
     MPI_Comm p2p_comm_ = MPI_COMM_NULL;
     mecom2::mpi_coll_ptr<mpi_coll_policy_type>  coll_;
     mecom2::mpi_p2p_ptr<mpi_p2p_policy_type>    p2p_;
-    mefdn::unique_ptr<dsm_rma_info<used_rma_id, mpi_itf_type>>     rma_info_;
+    mefdn::unique_ptr<dsm_rma_info<used_rma_id, dsm_com_policy_base>>     rma_info_;
     mefdn::unique_ptr<dsm_com_itf_type>         com_itf_;
 };
 

@@ -7,13 +7,14 @@
 namespace menps {
 namespace medsm2 {
 
-template <mecom2::rma_id_t Id, typename MpiItf>
+template <mecom2::rma_id_t Id, typename P>
 struct dsm_rma_info;
 
-template <typename MpiItf>
-struct dsm_rma_info<mecom2::rma_id_t::single, MpiItf>
+template <typename P>
+struct dsm_rma_info<mecom2::rma_id_t::single, P>
 {
-    using mpi_facade_type = typename MpiItf::mpi_facade_type;
+    using mpi_itf_type = typename P::mpi_itf_type;
+    using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
     
     mecom2::single_rma_ptr  rma;
     
@@ -24,11 +25,12 @@ struct dsm_rma_info<mecom2::rma_id_t::single, MpiItf>
     }
 };
 
-template <typename MpiItf>
-struct dsm_rma_info<mecom2::rma_id_t::mpi, MpiItf>
+template <typename P>
+struct dsm_rma_info<mecom2::rma_id_t::mpi, P>
 {
-    using mpi_facade_type = typename MpiItf::mpi_facade_type;
-    using mpi_rma_policy_type = mecom2::mpi_rma_policy<MpiItf>;
+    using mpi_itf_type = typename P::mpi_itf_type;
+    using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
+    using mpi_rma_policy_type = mecom2::mpi_rma_policy<mpi_itf_type>;
     
     MPI_Comm    comm;
     MPI_Win     win;
@@ -46,14 +48,15 @@ struct dsm_rma_info<mecom2::rma_id_t::mpi, MpiItf>
     }
 };
 
-template <typename MpiItf>
-struct dsm_rma_info<mecom2::rma_id_t::uct, MpiItf>
+template <typename P>
+struct dsm_rma_info<mecom2::rma_id_t::uct, P>
 {
-    using mpi_facade_type = typename MpiItf::mpi_facade_type;
-    using ult_itf_type = typename MpiItf::ult_itf_type;
+    using mpi_itf_type = typename P::mpi_itf_type;
+    using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
+    using uct_itf_type = typename P::uct_itf_type;
     
-    mefdn::unique_ptr<mecom2::uct_rma_resource<ult_itf_type>> rma_res;
-    mecom2::uct_rma<ult_itf_type>*                    rma;
+    mefdn::unique_ptr<mecom2::uct_rma_resource<uct_itf_type>>   rma_res;
+    mecom2::uct_rma<mecom2::uct_rma_policy<uct_itf_type>>*      rma;
     
     template <typename Coll>
     explicit dsm_rma_info(mpi_facade_type& /*mf*/, Coll& coll)
@@ -63,7 +66,7 @@ struct dsm_rma_info<mecom2::rma_id_t::uct, MpiItf>
         //const char tl_name[] = "rc";
         const char dev_name[] = "mlx5_0:1";
         
-        rma_res = mecom2::make_uct_rma_resource(tl_name, dev_name, coll);
+        rma_res = mecom2::make_uct_rma_resource<uct_itf_type>(tl_name, dev_name, coll);
         rma = rma_res->rma.get();
     }
 };
@@ -100,11 +103,11 @@ struct dsm_rma_info<mecom2::rma_id_t::ucp, MpiItf>
 };
 #endif
 
-template <mecom2::rma_id_t Id, typename MpiItf, typename Coll>
-inline mefdn::unique_ptr<dsm_rma_info<Id, MpiItf>>
-make_dsm_rma_info(typename MpiItf::mpi_facade_type& mf, Coll& coll)
+template <mecom2::rma_id_t Id, typename P, typename Coll>
+inline mefdn::unique_ptr<dsm_rma_info<Id, P>>
+make_dsm_rma_info(typename P::mpi_itf_type::mpi_facade_type& mf, Coll& coll)
 {
-    return mefdn::make_unique<dsm_rma_info<Id, MpiItf>>(mf, coll);
+    return mefdn::make_unique<dsm_rma_info<Id, P>>(mf, coll);
 }
 
 } // namespace medsm2

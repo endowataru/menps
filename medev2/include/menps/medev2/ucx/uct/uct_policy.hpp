@@ -14,6 +14,7 @@
 #include <menps/medev2/ucx/uct/endpoint.hpp>
 #include <menps/medev2/ucx/uct/address_buffer.hpp>
 #include <menps/medev2/ucx/uct/remote_key.hpp>
+#include <menps/medev2/ucx/uct/uct_itf_id.hpp>
 
 namespace menps {
 namespace medev2 {
@@ -113,6 +114,14 @@ struct direct_uct_itf
 {
     using ult_itf_type = UltItf;
 };
+
+
+template <typename P>
+struct get_uct_itf_type<uct_itf_id_t::DIRECT, P>
+    : mefdn::type_identity<
+        direct_uct_itf<typename P::ult_itf_type>
+    >
+{ };
 
 } // namespace uct
 } // namespace ucx

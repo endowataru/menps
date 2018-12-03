@@ -21,20 +21,24 @@ enum class rma_id_t
 #endif
 };
 
-template <rma_id_t Id, typename MpiItf>
+template <rma_id_t Id, typename P>
 struct get_rma_type;
 
-template <typename MpiItf>
-struct get_rma_type<rma_id_t::single, MpiItf>
+template <typename P>
+struct get_rma_type<rma_id_t::single, P>
     : mefdn::type_identity<single_rma> { };
 
-template <typename MpiItf>
-struct get_rma_type<rma_id_t::mpi, MpiItf>
-    : mefdn::type_identity<mpi_rma<mpi_rma_policy<MpiItf>>> { };
+template <typename P>
+struct get_rma_type<rma_id_t::mpi, P>
+    : mefdn::type_identity<
+        mpi_rma<mpi_rma_policy<typename P::mpi_itf_type>>
+    > { };
 
-template <typename MpiItf>
-struct get_rma_type<rma_id_t::uct, MpiItf>
-    : mefdn::type_identity<uct_rma<typename MpiItf::ult_itf_type>> { };
+template <typename P>
+struct get_rma_type<rma_id_t::uct, P>
+    : mefdn::type_identity<
+        uct_rma<uct_rma_policy<typename P::uct_itf_type>>
+    > { };
 
 #if 0
 template <typename MpiItf>
@@ -42,8 +46,8 @@ struct get_rma_type<rma_id_t::ucp, MpiItf>
     : mefdn::type_identity<ucp_rma> { };
 #endif
 
-template <rma_id_t Id, typename MpiItf>
-using get_rma_type_t = typename get_rma_type<Id, MpiItf>::type;
+template <rma_id_t Id, typename P>
+using get_rma_type_t = typename get_rma_type<Id, P>::type;
 
 } // namespace menps
 } // namespace mecom2
