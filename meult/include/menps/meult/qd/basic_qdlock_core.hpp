@@ -5,7 +5,6 @@
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/atomic.hpp>
 #include <menps/mefdn/assert.hpp>
-#include <menps/mefdn/external/fmt.hpp>
 #include <menps/mefdn/logger.hpp>
 
 namespace menps {
@@ -52,8 +51,6 @@ public:
         else {
             // This thread couldn't lock the mutex immediately.
             mefdn::forward<DelegateFunc>(delegate_func)(*cur);
-            
-            //fmt::print("set_next\n");
             
             this->set_next(prev, cur);
             
