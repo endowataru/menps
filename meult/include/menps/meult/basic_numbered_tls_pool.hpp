@@ -63,7 +63,9 @@ public:
             {
                 mefdn::lock_guard<spinlock_type> lk(this->mtx_);
                 num = this->num_++;
-                MEFDN_ASSERT(num < this->max_num_elems_);
+                if (num >= this->max_num_elems_) {
+                    throw std::bad_alloc();
+                }
             }
             
             n->num = num; // for pointer-to-number

@@ -3,6 +3,15 @@
 #include <menps/meult/backend/mth.hpp>
 #include <menps/meult/qd/qdlock_mutex.hpp>
 
+struct del_exec_result {
+    bool is_executed;
+    bool is_active;
+};
+
+struct progress_result {
+    bool is_active;
+};
+
 int main()
 {
     using lock_t = menps::meult::qdlock_delegator<int, menps::meult::backend::mth::ult_policy>;
@@ -12,11 +21,11 @@ int main()
     l.start_consumer(
         [] (lock_t::qdlock_node_type& n) {
             fmt::print("del: {}\n", n.func);
-            return false;
+            return del_exec_result{ true, false };
         },
         [] () {
             fmt::print("prog\n");
-            return false;
+            return progress_result{ false };
         }
     );
     

@@ -20,6 +20,10 @@ public:
     proxy_mpi_request_holder(const proxy_mpi_request_holder&) = delete;
     proxy_mpi_request_holder& operator = (const proxy_mpi_request_holder&) = delete;
     
+    bool is_available() const noexcept {
+        return this->proxy_reqs_.size() < P::max_num_ongoing;
+    }
+    
     void add(
         proxy_request_type* const   proxy_req
     ,   const MPI_Request           orig_req

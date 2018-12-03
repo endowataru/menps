@@ -7,7 +7,6 @@
 #include <menps/medev2/mpi/mpi_funcs.hpp>
 #include <menps/meult/basic_numbered_tls_pool.hpp>
 #include <menps/meult/qd/qdlock_delegator.hpp>
-#include <menps/meult/qd/uncond_qdlock_thread.hpp>
 
 namespace menps {
 namespace meqdc {
@@ -27,6 +26,8 @@ union proxy_mpi_params {
 };
 
 enum class proxy_mpi_code {
+    inv_op = 0,
+    
     #define D(dummy, name, Name, tr, num, ...) \
         name,
     
@@ -115,6 +116,7 @@ struct proxy_mpi_policy
         >;
     
     static constexpr mefdn::size_t max_num_requests = 1<<18; // TODO
+    static constexpr mefdn::size_t max_num_ongoing = 256; // TODO
     static constexpr mefdn::size_t mpi_request_offset = 1; // TODO
 };
 

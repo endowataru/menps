@@ -60,6 +60,10 @@ public:
     {
         this->uv_.notify_enter();
     }
+    void notify_signal()
+    {
+        this->uv_.notify_signal();
+    }
     
 private:
     template <typename Func>

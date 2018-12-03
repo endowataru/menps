@@ -67,8 +67,11 @@ public:
             );
         
         if (is_locked) {
-            this->is_active_ =
+            const auto ret =
                 mefdn::forward<ImmExecFunc>(imm_exec_func)();
+            
+            this->is_executed_ = ret.is_executed;
+            this->is_active_   = ret.is_active;
             
             this->unlock();
         }
@@ -80,6 +83,9 @@ public:
     {
         auto& self = this->derived();
         auto& pool = self.get_pool();
+        
+        // We completed the execution of the current critical section.
+        this->is_executed_ = true;
         
         MEFDN_LOG_VERBOSE(
             "msg:Start unlocking delegator.\t"
@@ -123,13 +129,13 @@ public:
             }
         }
         
-        // Awake the helper thread.
-        // Prefer executing the succeeding critical sections now.
-        this->th_.notify_enter();
-        
         MEFDN_LOG_VERBOSE(
             "msg:Finished unlocking delegator by awaking helper thread.\t"
         );
+        
+        // Awake the helper thread.
+        // Prefer executing the succeeding critical sections now.
+        this->th_.notify_enter();
     }
     
     template <typename DelExecFunc, typename ProgressFunc>
@@ -157,22 +163,69 @@ private:
         auto& self = this->derived();
         auto& pool = self.get_pool();
         
+        bool is_executed = this->is_executed_;
+        bool is_active   = this->is_active_;
+        
         MEFDN_LOG_VERBOSE(
-            "msg:Start consuming qdlock delegations."
+            "msg:Start consuming qdlock delegations.\t"
+            "is_executed:{}\t"
+            "is_active:{}"
+        ,   is_executed
+        ,   is_active
         );
         
-        bool awake = true;
+        if (is_executed) {
+            // Check if there are remaining delegated critical sections.
+            if (const auto old_head = this->core_.try_follow_head()) {
+                // Free the old entry because we now got the next pointer.
+                pool.deallocate(old_head);
+                
+                is_executed = false;
+            }
+        }
         
-        if (const auto old_head = this->core_.try_follow_head())
-        {
-            // 
-            pool.deallocate(old_head);
+        // True if the helper thread will sleep after returning this function.
+        bool awake = true;
+        // True if the progress function is executed.
+        bool do_progress = false;
+        
+        if (is_executed) {
+            // The "head" entry was already executed.
             
+            if (is_active) {
+                // The progress is enabled.
+                do_progress = true;
+            }
+            else {
+                // The progress is disabled.
+                // Try to unlock the mutex to suspend.
+                if (const auto old_head = this->core_.try_unlock()) {
+                    // Important: This thread already released the lock here.
+                    
+                    // Release the resource.
+                    pool.deallocate(old_head);
+                    
+                    // Now this helper thread starts to suspend.
+                    awake = false;
+                }
+            }
+        }
+        else {
+            // Load the head pointer to be executed now.
             const auto head = this->core_.get_head();
+            MEFDN_ASSERT(head != nullptr);
             
+            // Check whether the current entry means a lock delegation or a lock transfer.
             if (head->uv == nullptr) {
-                // Execute the delegated function.
-                this->is_active_ = del_exec_func(*head);
+                // Execute the delegated function again.
+                const auto ret = del_exec_func(*head);
+                
+                is_executed = ret.is_executed;
+                is_active   = ret.is_active;
+                
+                // If the delegation function fails,
+                // the progress is required to complete the function again.
+                do_progress = !is_executed;
             }
             else {
                 MEFDN_LOG_VERBOSE("msg:Awake next thread trying to lock qdlock.");
@@ -181,31 +234,38 @@ private:
                 // Prefer entering the next thread immediately.
                 head->uv->notify_enter();
                 
+                // Important: This thread already released the lock here.
                 // This helper thread starts to suspend.
                 awake = false;
             }
         }
-        else {
-            if (this->is_active_) {
-                this->is_active_ = progress_func();
+        
+        if (awake) {
+            if (do_progress) {
+                // Call the progress function.
+                const auto ret = progress_func();
+                
+                is_active = ret.is_active;
             }
             
-            if (!this->is_active_) {
-                // This helper thread needs not to do progress.
-                
-                // Try to unlock the mutex to suspend.
-                if (const auto old_head = this->core_.try_unlock()) {
-                    pool.deallocate(old_head);
-                    
-                    // Now this helper thread starts to suspend.
-                    awake = false;
-                }
-            }
+            // Store the flags back to the class members.
+            this->is_executed_ = is_executed;
+            this->is_active_ = is_active;
+        }
+        else {
+            // Doing the progress while unlocking the mutex is wrong.
+            MEFDN_ASSERT(!do_progress);
         }
         
         MEFDN_LOG_VERBOSE(
             "msg:Finish consuming qdlock delegations.\t"
-            "awake:{}\t"
+            "is_executed:{}\t"
+            "is_active:{}\t"
+            "do_progress:{}\t"
+            "awake:{}"
+        ,   is_executed
+        ,   is_active
+        ,   do_progress
         ,   awake
         );
         
@@ -214,6 +274,7 @@ private:
     
     qdlock_core_type    core_;
     qdlock_thread_type  th_;
+    bool                is_executed_ = false;
     bool                is_active_ = false;
 };
 

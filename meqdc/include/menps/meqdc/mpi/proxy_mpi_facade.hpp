@@ -56,6 +56,12 @@ public:
     }
     
 private:
+    struct execute_imm_result
+    {
+        bool    is_executed;
+        bool    is_active;
+    };
+    
     template <typename Params>
     struct execute_imm_nb
     {
@@ -64,23 +70,30 @@ private:
         const Params& real_p;
         proxy_request_type* proxy_req_ptr;
         
-        bool operator() ()
+        execute_imm_result operator() ()
         {
-            (self.orig_mf_.*f)(real_p);
+            // Check if it is allowed to establish a new request.
+            const bool is_executed =
+                self.req_hld_.is_available();
             
-            if (proxy_req_ptr != nullptr)
-            {
-                self.req_hld_.add(proxy_req_ptr, proxy_req_ptr->orig_req);
+            if (is_executed) {
+                // Call the original function directly.
+                (self.orig_mf_.*f)(real_p);
+                
+                if (proxy_req_ptr != nullptr)
+                {
+                    self.req_hld_.add(proxy_req_ptr, proxy_req_ptr->orig_req);
+                }
             }
             
-            return self.is_active();
+            return { is_executed, self.is_active() };
         }
     };
     
     template <typename Params>
     struct delegate_nb
     {
-        proxy_mpi_facade& self;
+        proxy_mpi_facade& self; // TODO: unused
         command_code_type code;
         Params proxy_params_type::*mem;
         const Params& real_p;
@@ -266,14 +279,16 @@ public:
     }
     
 private:
-    bool execute_delegated(const qdlock_node_type& n)
+    execute_imm_result execute_delegated(const qdlock_node_type& n)
     {
+        execute_imm_result ret = execute_imm_result();
+        
         auto& func = n.func;
         
         switch (func.code) {
             #define D(dummy, name, Name, tr, num, ...) \
                 case command_code_type::name: { \
-                    proxy_mpi_facade::execute_imm_nb<medev2::mpi::name##_params>{ \
+                    ret = proxy_mpi_facade::execute_imm_nb<medev2::mpi::name##_params>{ \
                         *this \
                     ,   &orig_mpi_facade_type::name \
                     ,   func.params.name \
@@ -290,12 +305,26 @@ private:
             MEDEV2_MPI_RMA_FUNCS(D, /*dummy*/)
             
             #undef D
+            
+            case command_code_type::inv_op:
+            default: {
+                MEFDN_LOG_FATAL(
+                    "msg:Undefined proxy MPI operation code.\t"
+                    "code:{}"
+                ,   static_cast<int>(func.code)
+                );
+                std::abort();
+            }
         }
         
-        return this->is_active();
+        return ret;
     }
     
-    bool do_progress()
+    struct do_progress_result {
+        bool is_active;
+    };
+    
+    do_progress_result do_progress()
     {
         MEFDN_LOG_VERBOSE("msg:Entering progress of proxy MPI.");
         
@@ -303,7 +332,7 @@ private:
         
         MEFDN_LOG_VERBOSE("msg:Exiting progress of proxy MPI.");
         
-        return this->is_active();
+        return { this->is_active() };
     }
     
     struct complete_request
