@@ -110,6 +110,7 @@ struct dsm_base_policy
     
     using wr_count_type = size_type;
     static const wr_count_type wr_count_threshold = MEDSM2_WR_COUNT_THRESHOLD;
+    static const wr_count_type max_fast_rel_threshold = MEDSM2_MAX_FAST_REL_THRESHOLD;
     
     static constexpr int get_tag_from_blk_id(const blk_id_type blk_id) noexcept {
         // TODO: This will probably works,
@@ -119,6 +120,8 @@ struct dsm_base_policy
         return static_cast<int>(blk_id >> 12);
     }
 };
+
+const dsm_base_policy::wr_count_type dsm_base_policy::max_fast_rel_threshold;
 
 
 struct my_blk_table_policy : dsm_base_policy

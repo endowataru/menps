@@ -63,6 +63,10 @@ public:
             // TODO: This is a bit weird
             //       because "home" is not the current process in general.
             this->les_[blk_pos].home_proc = this_proc;
+            
+            #ifdef MEDSM2_ENABLE_FAST_RELEASE
+            this->les_[blk_pos].fast_rel_threshold = 1;
+            #endif
         }
         
         this->ges_.coll_make(conf.com.get_rma(), coll, conf.num_blks);
@@ -237,6 +241,10 @@ public:
     {
         // This block is released after this check.
         bool needs_release;
+        #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        // This block can use "fast release".
+        bool is_fast_released;
+        #endif
     };
     
     check_release_result check_release(
@@ -255,7 +263,14 @@ public:
             ! (state == state_type::invalid_clean ||
                state == state_type::readonly_clean);
         
+        #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        const auto is_fast_released =
+            le.fast_rel_count < le.fast_rel_threshold;
+        
+        return { needs_release, is_fast_released };
+        #else
         return { needs_release };
+        #endif
     }
     
     #ifdef MEDSM2_ENABLE_FAST_RELEASE
@@ -275,6 +290,9 @@ public:
         
         const auto new_ts =
             this->update_ts(rd_ts_st, blk_pos);
+        
+        auto& le = this->les_[blk_pos];
+        ++le.fast_rel_count;
         
         return { new_ts.wr_ts, new_ts.rd_ts };
     }
@@ -652,12 +670,36 @@ public:
             new_state = state_type::readonly_clean;
         }
         
+        #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        if (bt_ret.is_write_protected) {
+            // Reset the counts.
+            le.wr_count = 0;
+            le.fast_rel_threshold = 1;
+        }
+        else if (bt_ret.needs_local_comp && mg_ret.is_written) {
+            // The block is written.
+            le.wr_count = 0;
+            le.fast_rel_threshold =
+                std::min(
+                    le.fast_rel_threshold * 2
+                ,   P::max_fast_rel_threshold
+                );
+        }
+        else {
+            // The block is not modified.
+            le.wr_count += le.fast_rel_count + 1;
+            le.fast_rel_threshold = 1;
+        }
+        le.fast_rel_count = 0;
+        // TODO: May overflow.
+        #else
         // Update the write count.
         le.wr_count =
             (bt_ret.is_write_protected ||
                 (bt_ret.needs_local_comp && mg_ret.is_written))
             ? 0 : (le.wr_count + 1);
         // TODO: May overflow.
+        #endif
         
         le.state = new_state;
         
@@ -750,6 +792,12 @@ private:
         state_type      state;
         // The number of transactions without writing the data.
         wr_count_type   wr_count;
+        
+        #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        wr_count_type   fast_rel_count;
+        
+        wr_count_type   fast_rel_threshold;
+        #endif
     };
     
     mefdn::size_t num_blks_ = 0;

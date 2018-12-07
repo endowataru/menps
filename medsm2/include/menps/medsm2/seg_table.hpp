@@ -423,7 +423,9 @@ public:
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
         // Check whether the data is still owned by this process.
-        if (info.lock_tbl.check_owned(com, info.blk_pos, info.lk)) {
+        if (check_ret.is_fast_released
+            && info.lock_tbl.check_owned(com, info.blk_pos, info.lk))
+        {
             // Load and update the local timestamp values.
             // The updated values may be used in the next release.
             const auto fast_ret =
