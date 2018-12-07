@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/com/uct/basic_uct_worker_set.hpp>
-#include <menps/mecom2/com/ucp/basic_ucp_worker_selector.hpp>
+#include <menps/mecom2/com/basic_worker_selector.hpp>
 #include <menps/medev2/ucx/uct/uct_policy.hpp>
 #ifdef MECOM2_USE_MEUCT
     #include <menps/meuct/meuct.hpp>
@@ -14,10 +14,10 @@ namespace mecom2 {
 template <typename P>
 class uct_worker_set
     : public basic_uct_worker_set<P>
-    , public basic_ucp_worker_selector<P>
+    , public basic_worker_selector<P>
 {
     using base_set = basic_uct_worker_set<P>;
-    using base_selector = basic_ucp_worker_selector<P>;
+    using base_selector = basic_worker_selector<P>;
     
     using uct_itf_type = typename P::uct_itf_type;
     using uct_facade_type = typename uct_itf_type::uct_facade_type;

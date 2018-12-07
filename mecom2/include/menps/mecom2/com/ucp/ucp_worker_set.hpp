@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/com/ucp/basic_ucp_worker_set.hpp>
-#include <menps/mecom2/com/ucp/basic_ucp_worker_selector.hpp>
+#include <menps/mecom2/com/basic_worker_selector.hpp>
 #include <menps/medev2/ucx/ucp/ucp_policy.hpp>
 #include <menps/medev2/ucx/ucp/direct_facade.hpp>
 
@@ -23,11 +23,11 @@ struct ucp_worker_set_policy
 
 class ucp_worker_set
     : public basic_ucp_worker_set<ucp_worker_set_policy>
-    , public basic_ucp_worker_selector<ucp_worker_set_policy>
+    , public basic_worker_selector<ucp_worker_set_policy>
 {
     using policy_type = ucp_worker_set_policy;
     using base_set = basic_ucp_worker_set<policy_type>;
-    using base_selector = basic_ucp_worker_selector<policy_type>;
+    using base_selector = basic_worker_selector<policy_type>;
     
     using ult_itf_type = typename policy_type::ult_itf_type;
     using ucp_itf_type = typename policy_type::ucp_itf_type;
