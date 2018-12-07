@@ -8,6 +8,8 @@
 #include <menps/mefdn/thread/spinlock.hpp>
 #include <menps/mefdn/mutex.hpp>
 #endif
+#include <menps/medev2/mpi/mpi_itf_id.hpp>
+#include <menps/mefdn/type_traits.hpp>
 
 namespace menps {
 namespace medev2 {
@@ -123,6 +125,13 @@ struct direct_mpi_itf
 };
 
 } // namespace mpi
+
+template <typename UltItf>
+struct get_mpi_itf_type<mpi_itf_id_t::DIRECT, UltItf>
+    : mefdn::type_identity<
+        medev2::mpi::direct_mpi_itf<UltItf>
+    > { };
+
 } // namespace medev2
 } // namespace menps
 

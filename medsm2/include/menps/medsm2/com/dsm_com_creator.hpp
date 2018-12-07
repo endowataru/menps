@@ -3,10 +3,10 @@
 
 #include <menps/medsm2/com/dsm_rma.hpp>
 #include <menps/medsm2/com/dsm_com_itf.hpp>
-#include <menps/mecom2/com/mpi/mpi.hpp>
 #include <menps/meult/ult_itf_id.hpp>
 
 #include MEFDN_PP_CAT(MEULT_ULT_ITF_HEADER_, MEDSM2_ULT_ITF)
+#include MEFDN_PP_CAT(MEDEV2_MPI_ITF_HEADER_, MEDSM2_MPI_ITF)
 #include MEFDN_PP_CAT(MEDEV2_UCT_ITF_HEADER_, MEDSM2_UCT_ITF)
 
 namespace menps {
@@ -18,7 +18,10 @@ struct dsm_com_policy_base
         meult::get_ult_itf_type_t<meult::ult_itf_id_t::MEDSM2_ULT_ITF>;
     
     using mpi_itf_type =
-        mecom2::get_mpi_itf_type_t<mecom2::mpi_id_t::MEDSM2_MPI_ITF, ult_itf_type>;
+        medev2::get_mpi_itf_type_t<
+            medev2::mpi_itf_id_t::MEDSM2_MPI_ITF
+        ,   ult_itf_type
+        >;
     
     using uct_itf_type =
         medev2::ucx::uct::get_uct_itf_type_t<

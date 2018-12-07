@@ -7,6 +7,8 @@
 #include <menps/medev2/mpi/mpi_funcs.hpp>
 #include <menps/meult/basic_numbered_tls_pool.hpp>
 #include <menps/meult/qd/qdlock_delegator.hpp>
+#include <menps/medev2/mpi/mpi_itf_id.hpp>
+#include <menps/medev2/mpi/direct_mpi_facade.hpp>
 
 namespace menps {
 namespace meqdc {
@@ -128,5 +130,18 @@ struct proxy_mpi_itf
 };
 
 } // namespace meqdc
+
+namespace medev2 {
+
+template <typename UltItf>
+struct get_mpi_itf_type<mpi_itf_id_t::QDC, UltItf>
+    : mefdn::type_identity<
+        meqdc::proxy_mpi_itf<
+            medev2::mpi::direct_mpi_itf<UltItf>
+        >
+    > { };
+
+} // namespace medev2
+
 } // namespace menps
 
