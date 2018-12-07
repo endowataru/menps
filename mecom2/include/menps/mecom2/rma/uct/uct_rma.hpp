@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <menps/mecom2/rma/rma_itf_id.hpp>
 #include <menps/mecom2/rma/uct/basic_uct_rma.hpp>
 #include <menps/mecom2/rma/uct/basic_uct_rma_alloc.hpp>
 #include <menps/mecom2/rma/basic_public_rma_ptr.hpp>
@@ -356,6 +357,13 @@ make_uct_rma_resource(
 ) {
     return mefdn::make_unique<uct_rma_resource<UctItf>>(tl_name, dev_name, coll);
 }
+
+
+template <typename P>
+struct get_rma_itf_type<rma_itf_id_t::UCT, P>
+    : mefdn::type_identity<
+        uct_rma<uct_rma_policy<typename P::uct_itf_type>>
+    > { };
 
 } // namespace mecom2
 } // namespace menps

@@ -39,9 +39,9 @@ private:
     using mpi_coll_policy_type = mecom2::mpi_coll_policy<mpi_itf_type>;
     using mpi_p2p_policy_type = mecom2::mpi_p2p_policy<mpi_itf_type>;
     
-    static constexpr mecom2::rma_id_t used_rma_id = mecom2::rma_id_t::MEDSM2_RMA_ITF;
+    static constexpr mecom2::rma_itf_id_t used_rma_id = mecom2::rma_itf_id_t::MEDSM2_RMA_ITF;
     
-    using rma_type = mecom2::get_rma_type_t<used_rma_id, dsm_com_policy_base>;
+    using rma_type = mecom2::get_rma_itf_type_t<used_rma_id, dsm_com_policy_base>;
     
     using mpi_coll_type = mecom2::mpi_coll<mpi_coll_policy_type>;
     using mpi_p2p_type = mecom2::mpi_p2p<mpi_p2p_policy_type>;

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <menps/mecom2/rma/rma_itf_id.hpp>
 #include <menps/mecom2/rma/rma_typed_itf.hpp>
 #include <menps/mecom2/rma/rma_pass_buf_copier.hpp>
 #include <menps/mecom2/rma/rma_typed_allocator.hpp>
@@ -146,6 +147,11 @@ public:
     T* deserialize(proc_id_type /*proc*/, const void* const buf) {
         return *reinterpret_cast<T* const *>(buf);
     }
+    
+    void flush(proc_id_type /*proc*/)
+    {
+        // TODO
+    }
 };
 
 using single_rma_ptr = mefdn::unique_ptr<single_rma>;
@@ -153,6 +159,10 @@ using single_rma_ptr = mefdn::unique_ptr<single_rma>;
 inline single_rma_ptr make_single_rma() {
     return mefdn::make_unique<single_rma>();
 }
+
+template <typename P>
+struct get_rma_itf_type<rma_itf_id_t::SINGLE, P>
+    : mefdn::type_identity<single_rma> { };
 
 } // namespace mecom2
 } // namespace menps

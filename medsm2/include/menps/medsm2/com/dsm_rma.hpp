@@ -2,16 +2,22 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mecom2/rma.hpp>
+#include <menps/mecom2/rma/rma_itf_id.hpp>
+
+// TODO: Because dsm_rma_info is specialzing the interface,
+//       we need to include all headers...
+#include MECOM2_RMA_ITF_HEADER_SINGLE
+#include MECOM2_RMA_ITF_HEADER_MPI
+#include MECOM2_RMA_ITF_HEADER_UCT
 
 namespace menps {
 namespace medsm2 {
 
-template <mecom2::rma_id_t Id, typename P>
+template <mecom2::rma_itf_id_t Id, typename P>
 struct dsm_rma_info;
 
 template <typename P>
-struct dsm_rma_info<mecom2::rma_id_t::single, P>
+struct dsm_rma_info<mecom2::rma_itf_id_t::SINGLE, P>
 {
     using mpi_itf_type = typename P::mpi_itf_type;
     using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
@@ -26,7 +32,7 @@ struct dsm_rma_info<mecom2::rma_id_t::single, P>
 };
 
 template <typename P>
-struct dsm_rma_info<mecom2::rma_id_t::mpi, P>
+struct dsm_rma_info<mecom2::rma_itf_id_t::MPI, P>
 {
     using mpi_itf_type = typename P::mpi_itf_type;
     using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
@@ -49,7 +55,7 @@ struct dsm_rma_info<mecom2::rma_id_t::mpi, P>
 };
 
 template <typename P>
-struct dsm_rma_info<mecom2::rma_id_t::uct, P>
+struct dsm_rma_info<mecom2::rma_itf_id_t::UCT, P>
 {
     using mpi_itf_type = typename P::mpi_itf_type;
     using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
@@ -73,7 +79,7 @@ struct dsm_rma_info<mecom2::rma_id_t::uct, P>
 
 #if 0
 template <typename MpiItf>
-struct dsm_rma_info<mecom2::rma_id_t::ucp, MpiItf>
+struct dsm_rma_info<mecom2::rma_itf_id_t::ucp, MpiItf>
 {
     using mpi_facade_type = typename MpiItf::mpi_facade_type;
     
@@ -103,7 +109,7 @@ struct dsm_rma_info<mecom2::rma_id_t::ucp, MpiItf>
 };
 #endif
 
-template <mecom2::rma_id_t Id, typename P, typename Coll>
+template <mecom2::rma_itf_id_t Id, typename P, typename Coll>
 inline mefdn::unique_ptr<dsm_rma_info<Id, P>>
 make_dsm_rma_info(typename P::mpi_itf_type::mpi_facade_type& mf, Coll& coll)
 {

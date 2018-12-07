@@ -7,6 +7,7 @@
 #include <menps/mecom2/rma/basic_remote_rma_ptr.hpp>
 #include <menps/mecom2/rma/basic_unique_public_ptr.hpp>
 #include <menps/mecom2/com/ucp/ucp_worker_set.hpp>
+#include <menps/mecom2/rma/rma_itf_id.hpp>
 #include <menps/mefdn/ptr_facade.hpp>
 
 namespace menps {

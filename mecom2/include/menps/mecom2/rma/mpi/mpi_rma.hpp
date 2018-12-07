@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <menps/mecom2/rma/rma_itf_id.hpp>
 #include <menps/mecom2/rma/mpi/basic_mpi_rma.hpp>
 #include <menps/mecom2/rma/basic_unique_public_ptr.hpp>
 #include <menps/mecom2/rma/rma_private_heap_alloc.hpp>
@@ -175,6 +176,13 @@ struct mpi_rma_policy
         return static_cast<U*>(p);
     }
 };
+
+
+template <typename P>
+struct get_rma_itf_type<rma_itf_id_t::MPI, P>
+    : mefdn::type_identity<
+        mpi_rma<mpi_rma_policy<typename P::mpi_itf_type>>
+    > { };
 
 } // namespace mecom2
 } // namespace menps
