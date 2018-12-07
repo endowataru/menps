@@ -16,6 +16,7 @@
 #include <stdarg.h>
 #include <menps/meomp.hpp>
 #include <menps/medsm2/prof.hpp>
+#include <menps/mefdn/profiling/time.hpp>
 
 #ifdef MEOMP_SEPARATE_WORKER_THREAD
 #include <menps/medsm2/svm/sigsegv_catcher.hpp>
@@ -326,6 +327,11 @@ int omp_get_thread_num()
 }
 
 extern "C"
+int omp_get_thread_num_() {
+    return omp_get_thread_num();
+}
+
+extern "C"
 int omp_get_num_threads();
 extern "C"
 int omp_get_num_threads()
@@ -334,8 +340,33 @@ int omp_get_num_threads()
 }
 
 extern "C"
+int omp_get_num_threads_() { return omp_get_num_threads(); }
+
+extern "C"
+int omp_get_max_threads();
+extern "C"
+int omp_get_max_threads()
+{
+    return g_coll->get_num_procs() * meomp::my_dist_worker::get_threads_per_proc();
+}
+
+extern "C"
+int omp_get_max_threads_() { return omp_get_max_threads(); }
+
+extern "C"
 int meomp_get_num_procs() {
     return g_coll->get_num_procs();
+}
+
+extern "C"
+double omp_get_wtime()
+{
+    return menps::mefdn::get_current_sec();
+}
+
+extern "C"
+double omp_get_wtime_() {
+    return omp_get_wtime();
 }
 
 extern "C"
