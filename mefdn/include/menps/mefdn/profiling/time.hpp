@@ -13,7 +13,7 @@ inline double get_current_sec()
     
     gettimeofday(&t, NULL);
     
-    return t.tv_sec + t.tv_usec * 1e-9;
+    return t.tv_sec + t.tv_usec * 1e-6;
 }
 
 } // namespace mefdn
