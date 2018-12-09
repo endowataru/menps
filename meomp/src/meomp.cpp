@@ -45,6 +45,8 @@ char** g_argv;
 void* g_stack_ptr;
 mefdn::size_t g_stack_size;
 
+void* g_heap_ptr;
+
 struct get_state
 {
     std::string operator() ()
@@ -506,6 +508,9 @@ namespace /*unnamed*/ {
 
 MEOMP_GLOBAL_VAR omp_lock_t g_critical_lock;
 
+MEOMP_GLOBAL_VAR omp_lock_t g_heap_lock;
+MEOMP_GLOBAL_VAR mspace g_heap_ms;
+
 } // unnamed namespace
 
 extern "C"
@@ -831,8 +836,21 @@ void __kmpc_end_critical() {
     GOMP_critical_end();
 }
 
+extern "C" {
 
+void* meomp_malloc(const menps::mefdn::size_t size_in_bytes) {
+    omp_set_lock(&g_heap_lock);
+    void* ptr = mspace_malloc(g_heap_ms, size_in_bytes);
+    omp_unset_lock(&g_heap_lock);
+    return ptr;
+}
+void meomp_free(void* const ptr) {
+    omp_set_lock(&g_heap_lock);
+    mspace_free(g_heap_ms, ptr);
+    omp_unset_lock(&g_heap_lock);
+}
 
+}
 
 extern "C" {
 
@@ -916,6 +934,20 @@ int main(int argc, char* argv[])
     g_stack_ptr = stack_ptr_start;
     g_stack_size = stack_size;
     
+    g_heap_ptr =
+        sp.coll_alloc_seg(MEOMP_HEAP_SIZE, 4096 /*TODO*/);
+    
+    if (coll.this_proc_id() == 0) {
+        sp.enable_on_this_thread();
+        
+        g_heap_ms = create_mspace_with_base(g_heap_ptr, MEOMP_HEAP_SIZE, 1);
+        
+        omp_init_lock(&g_critical_lock);
+        omp_init_lock(&g_heap_lock);
+        
+        sp.disable_on_this_thread();
+    }
+    
     meomp::my_dist_worker dw;
     g_dw = &dw;
     
@@ -933,6 +965,20 @@ int main(int argc, char* argv[])
         g_coll->barrier();
     }
     #endif
+    
+    if (coll.this_proc_id() == 0) {
+        sp.enable_on_this_thread();
+        
+        destroy_mspace(g_heap_ms);
+        
+        omp_destroy_lock(&g_heap_lock);
+        omp_destroy_lock(&g_critical_lock);
+        
+        sp.disable_on_this_thread();
+    }
+    
+    // Do a barrier before destroying the resources.
+    g_coll->barrier();
     
     return 0;
 }
