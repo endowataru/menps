@@ -425,6 +425,8 @@ void GOMP_parallel(
     GOMP_parallel_end();
 }
 
+#define MEOMP_USE_MEDSM_MUTEX
+
 // Just copy the definition from libgomp omp.h.
 typedef struct {
     unsigned char _x[4]
@@ -437,6 +439,11 @@ void omp_set_lock(omp_lock_t* const lk);
 extern "C"
 void omp_set_lock(omp_lock_t* const lk)
 {
+    #ifdef MEOMP_USE_MEDSM_MUTEX
+    const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
+    g_sp->lock_mutex(mtx_id);
+    
+    #else
     auto* const target =
         reinterpret_cast<mefdn::uint32_t*>(lk);
     
@@ -449,31 +456,50 @@ void omp_set_lock(omp_lock_t* const lk)
             break;
         }
     }
+    #endif
 }
 extern "C"
 void omp_unset_lock(omp_lock_t* const lk);
 extern "C"
 void omp_unset_lock(omp_lock_t* const lk)
 {
+    #ifdef MEOMP_USE_MEDSM_MUTEX
+    const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
+    g_sp->unlock_mutex(mtx_id);
+    
+    #else
     auto* const target =
         reinterpret_cast<mefdn::uint32_t*>(lk);
     
     g_sp->store_release(target, 0);
+    #endif
 }
 extern "C"
 void omp_init_lock(omp_lock_t* const lk);
 extern "C"
 void omp_init_lock(omp_lock_t* const lk) {
+    #ifdef MEOMP_USE_MEDSM_MUTEX
+    const auto mtx_id_ptr = reinterpret_cast<space_t::mutex_id_t*>(lk);
+    *mtx_id_ptr = g_sp->allocate_mutex();
+    
+    #else
     auto* const target =
         reinterpret_cast<mefdn::uint32_t*>(lk);
     
     *target = 0;
+    #endif
 }
 extern "C"
 void omp_destroy_lock(omp_lock_t* /*lk*/);
 extern "C"
-void omp_destroy_lock(omp_lock_t* /*lk*/) {
+void omp_destroy_lock(omp_lock_t* const lk) {
+    #ifdef MEOMP_USE_MEDSM_MUTEX
+    const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
+    g_sp->deallocate_mutex(mtx_id);
+    
+    #else
     // Do nothing.
+    #endif
 }
 
 namespace /*unnamed*/ {
