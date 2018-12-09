@@ -7,8 +7,8 @@ message(STATUS "Generate menps/medsm2/config.h ...")
 
 option(MEDSM2_ENABLE_PROF "Enable profiling" FALSE)
 set(MEDSM2_ULT_ITF "MTH" CACHE STRING "ULT module for DSM")
-set(MEDSM2_MPI_ITF "DIRECT" CACHE STRING "MPI module for DSM")
-set(MEDSM2_UCT_ITF "DIRECT" CACHE STRING "UCT module for DSM")
+set(MEDSM2_MPI_ITF "QDC" CACHE STRING "MPI module for DSM")
+set(MEDSM2_UCT_ITF "QDC" CACHE STRING "UCT module for DSM")
 set(MEDSM2_RMA_ITF "MPI" CACHE STRING "RMA module for DSM")
 set(MEDSM2_GLOBAL_VAR_BLOCK_SIZE "0x1000" CACHE STRING "Block size of global variables")
 set(MEDSM2_MAX_SPACE_SIZE "0x100000000000" CACHE STRING "DSM space size")
@@ -19,7 +19,7 @@ set(MEDSM2_WR_COUNT_THRESHOLD "2" CACHE STRING "Threshold for downgrading writab
 set(MEDSM2_MAX_FAST_REL_THRESHOLD "64" CACHE STRING "Threshold for fast release")
 option(MEDSM2_ENABLE_FAST_RELEASE "Enable skipping critical sections if data is not migrating" ON)
 option(MEDSM2_ENABLE_LAZY_MERGE "Enable lazy merge" ON)
-option(MEDSM2_ENABLE_NEEDS_LOCAL_COMP "Reduce local comparison in data merge" ON)
+option(MEDSM2_ENABLE_NEEDS_LOCAL_COMP "Reduce local comparison in data merge" OFF)
 option(MEDSM2_USE_SIMD_DIFF "Use SIMD to accelerate diff merge" ON)
 
 # Generate config.h
