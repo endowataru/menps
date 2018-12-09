@@ -859,6 +859,30 @@ extern void* _dsm_data_end;
 
 } // extern "C"
 
+
+inline char** pack_argv(int argc, char* argv[])
+{
+    mefdn::size_t size = sizeof(char*)*argc;
+    for (int i = 0; i < argc; ++i) {
+        size += std::strlen(argv[i])+1;
+    }
+    
+    const auto ptr = meomp_malloc(size);
+    const auto global_argv = static_cast<char**>(ptr);
+    auto str_buf = reinterpret_cast<char*>(&global_argv[argc]);
+    
+    for (int i = 0; i < argc; ++i) {
+        global_argv[i] = str_buf;
+        std::strcpy(str_buf, argv[i]);
+        str_buf += std::strlen(argv[i])+1;
+    }
+    
+    MEFDN_ASSERT(str_buf - static_cast<char*>(ptr) == size);
+    
+    return global_argv;
+}
+
+
 int main(int argc, char* argv[])
 {
     using namespace menps;
@@ -945,6 +969,9 @@ int main(int argc, char* argv[])
         omp_init_lock(&g_critical_lock);
         omp_init_lock(&g_heap_lock);
         
+        g_argc = argc;
+        g_argv = pack_argv(argc, argv);
+        
         sp.disable_on_this_thread();
     }
     
@@ -968,6 +995,8 @@ int main(int argc, char* argv[])
     
     if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();
+        
+        meomp_free(g_argv);
         
         destroy_mspace(g_heap_ms);
         
