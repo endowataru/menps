@@ -11,6 +11,9 @@
 #include <menps/medsm2/svm/svm_seg_table.hpp>
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include <menps/mecom2/rma/alltoall_buffer.hpp>
+#include <menps/medsm2/basic_lock_table.hpp>
+#include <menps/medsm2/mtx_table.hpp>
+#include <menps/medsm2/id_allocator.hpp>
 
 #ifdef MEOMP_SEPARATE_WORKER_THREAD
 #include <menps/meult/klt.hpp>
@@ -119,6 +122,18 @@ struct dsm_base_policy
         // Generate a MPI tag for the specified block.
         return static_cast<int>(blk_id >> 12);
     }
+    
+    using mtx_id_type = size_type;
+    
+    using p2p_tag_type = int;
+    
+    using lock_table_type = basic_lock_table<dsm_base_policy>;
+    using mtx_table_type = mtx_table<dsm_base_policy>;
+    using id_allocator_type = id_allocator<dsm_base_policy>;
+    
+    static p2p_tag_type get_tag_from_lock_id(const size_type lk_id) {
+        return lk_id;
+    }
 };
 
 const dsm_base_policy::wr_count_type dsm_base_policy::max_fast_rel_threshold;
@@ -154,6 +169,7 @@ class mpi_svm_space::impl
         com_itf_type&   com;
         mefdn::size_t   max_num_sigs;
         mefdn::size_t   sig_size_in_bytes;
+        mefdn::size_t   max_num_locks;
     };
     
 public:
@@ -165,6 +181,7 @@ public:
             ,   1024 // TODO: magic number
             ,   dsm_base_policy::rel_sig_type::get_max_size_in_bytes()
                 // TODO: Simplify the dependencies
+            ,   1024 // TODO: magic number
             }
         )
     {
@@ -192,6 +209,23 @@ void mpi_svm_space::coll_alloc_global_var_seg(const size_type seg_size, const si
 {
     return this->impl_->space().coll_alloc_global_var_seg(seg_size, blk_size, start_ptr);
 }
+
+
+mpi_svm_space::mutex_id_t mpi_svm_space::allocate_mutex()
+{
+    return this->impl_->space().allocate_mutex();
+}
+void mpi_svm_space::deallocate_mutex(const mutex_id_t mtx_id) {
+    this->impl_->space().deallocate_mutex(mtx_id);
+}
+
+void mpi_svm_space::lock_mutex(const mutex_id_t mtx_id) {
+    this->impl_->space().lock_mutex(mtx_id);
+}
+void mpi_svm_space::unlock_mutex(const mutex_id_t mtx_id) {
+    this->impl_->space().unlock_mutex(mtx_id);
+}
+
 
 bool mpi_svm_space::compare_exchange_strong_acquire(
     mefdn::uint32_t&        target

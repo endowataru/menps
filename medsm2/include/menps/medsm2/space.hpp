@@ -46,6 +46,10 @@ class space
     using mutex_unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
     using spinlock_type = typename ult_itf_type::spinlock;
     
+    using mtx_table_type = typename P::mtx_table_type;
+    using id_allocator_type = typename P::id_allocator_type;
+    using mtx_id_type = typename P::mtx_id_type;
+    
 public:
     template <typename Conf>
     explicit space(const Conf& conf)
@@ -53,6 +57,9 @@ public:
         : seg_tbl_(conf)
     {
         sig_tbl_.coll_init(conf);
+        
+        mtx_tbl_.coll_init(conf);
+        mtx_id_alloc_.coll_make(conf.com, conf.max_num_locks);
     }
     
     ~space()
@@ -109,6 +116,46 @@ public:
         this->seg_tbl_.unpin(blk_id);
         
         this->wr_set_.add_writable(blk_id);
+    }
+    
+    mtx_id_type allocate_mutex() {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        return this->mtx_id_alloc_.allocate(com);
+    }
+    void deallocate_mutex(const mtx_id_type mtx_id)
+    {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        this->mtx_id_alloc_.deallocate(com, mtx_id);
+    }
+    
+    void lock_mutex(const mtx_id_type mtx_id)
+    {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        const auto lk_ret = this->mtx_tbl_.lock(com, mtx_id);
+        
+        // Apply the WNs and self-invalidation to this process.
+        this->acquire_sig(lk_ret.sig_buf);
+        
+        // Merge the signature for subsequent releases.
+        this->rel_sig_.merge(lk_ret.sig_buf);
+    }
+    
+    void unlock_mutex(const mtx_id_type mtx_id)
+    {
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        
+        this->fence_release();
+        
+        auto sig = this->rel_sig_.get_sig();
+        
+        this->mtx_tbl_.unlock(com, mtx_id, sig);
     }
     
     template <typename T>
@@ -356,6 +403,10 @@ private:
     rel_sig_type    rel_sig_;
     
     sig_table_type  sig_tbl_;
+    
+    mtx_table_type  mtx_tbl_;
+    
+    id_allocator_type   mtx_id_alloc_;
 };
 
 } // namespace medsm2

@@ -71,6 +71,7 @@ public:
         
         this->coll_ = mecom2::make_mpi_coll<mpi_coll_policy_type>(*this->mf_, this->coll_comm_);
         this->p2p_ = mecom2::make_mpi_p2p<mpi_p2p_policy_type>(*this->mf_, this->p2p_comm_);
+        this->p2p_lock_ = mecom2::make_mpi_p2p<mpi_p2p_policy_type>(*this->mf_, this->p2p_comm_);
         
         this->rma_info_ = make_dsm_rma_info<used_rma_id, dsm_com_policy_base>(*this->mf_, *this->coll_);
         
@@ -79,6 +80,7 @@ public:
                 *this->rma_info_->rma
             ,   *this->coll_
             ,   *this->p2p_
+            ,   *this->p2p_lock_
             });
     }
     
@@ -92,6 +94,7 @@ private:
     MPI_Comm p2p_comm_ = MPI_COMM_NULL;
     mecom2::mpi_coll_ptr<mpi_coll_policy_type>  coll_;
     mecom2::mpi_p2p_ptr<mpi_p2p_policy_type>    p2p_;
+    mecom2::mpi_p2p_ptr<mpi_p2p_policy_type>    p2p_lock_;
     mefdn::unique_ptr<dsm_rma_info<used_rma_id, dsm_com_policy_base>>     rma_info_;
     mefdn::unique_ptr<dsm_com_itf_type>         com_itf_;
 };

@@ -25,6 +25,16 @@ public:
     
     void coll_alloc_global_var_seg(size_type seg_size, size_type blk_size, void* start_ptr);
     
+    using mutex_id_t = mefdn::uint32_t;
+    
+    mutex_id_t allocate_mutex();
+    
+    void deallocate_mutex(mutex_id_t);
+    
+    void lock_mutex(mutex_id_t);
+    
+    void unlock_mutex(mutex_id_t);
+    
     bool compare_exchange_strong_acquire(
         mefdn::uint32_t&    target // TODO: define atomic type
     ,   mefdn::uint32_t&    expected
