@@ -269,9 +269,12 @@ public:
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             if (is_written) {
             #endif
+                // Use SIMD if the private data is write-protected.
+                const bool use_simd = glk_ret.is_write_protected;
+                
                 // Three copies (my_pub, my_priv, other_data) are different with each other.
                 // It is necessary to merge them to complete the release.
-                this->write_merge(blk_pos, other_data, my_priv, my_pub, blk_size);
+                this->write_merge(blk_pos, other_data, my_priv, my_pub, blk_size, use_simd);
                 
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             }
@@ -415,11 +418,28 @@ private:
     ,         mefdn::byte* const    my_priv
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
+    ,   const bool                  use_simd MEFDN_MAYBE_UNUSED
     ) {
         #ifdef MEDSM2_USE_SIMD_DIFF
-        //#define VECTOR_LEN  32
-        //using vec_buf_type = unsigned char __attribute__((vector_size(VECTOR_LEN)));
-        
+        if (use_simd) {
+            write_merge_simd(blk_pos, other_pub, my_priv, my_pub, blk_size);
+        }
+        else {
+        #endif
+            write_merge_byte(blk_pos, other_pub, my_priv, my_pub, blk_size);
+        #ifdef MEDSM2_USE_SIMD_DIFF
+        }
+        #endif
+    }
+    
+    #ifdef MEDSM2_USE_SIMD_DIFF
+    static void write_merge_simd(
+        const blk_pos_type          blk_pos
+    ,   const mefdn::byte* const    other_pub
+    ,         mefdn::byte* const    my_priv
+    ,         mefdn::byte* const    my_pub
+    ,   const size_type             blk_size
+    ) {
         using vec_buf_type = __m256i;
         #define VECTOR_LEN  sizeof(vec_buf_type)
         #define UNROLL_LEN  8
@@ -468,8 +488,16 @@ private:
         
         #undef VECTOR_LEN
         #undef UNROLL_LEN
-        
-        #else
+    }
+    #endif
+    
+    static void write_merge_byte(
+        const blk_pos_type          blk_pos
+    ,   const mefdn::byte* const    other_pub
+    ,         mefdn::byte* const    my_priv
+    ,         mefdn::byte* const    my_pub
+    ,   const size_type             blk_size
+    ) {
         for (size_type i = 0; i < blk_size; ++i) {
             #ifdef MEDSM2_USE_COMPARE_DIFF
             if (my_priv[i] != my_pub[i]) {
@@ -494,7 +522,6 @@ private:
             my_pub[i] = my_priv[i];
             #endif
         }
-        #endif
     }
     
     static void report_data_race(
