@@ -9,6 +9,8 @@ MEOMP_GLOBAL_VAR int var = 0;
 extern "C"
 int meomp_main(int argc, char** argv)
 {
+    omp_init_lock(&lk);
+    
     #pragma omp parallel
     {
         for (int i = 0; i < 100; ++i) {
@@ -20,6 +22,8 @@ int meomp_main(int argc, char** argv)
     }
     
     fmt::print("ret={}\n", var);
+    
+    omp_destroy_lock(&lk);
     
     return 0;
 }
