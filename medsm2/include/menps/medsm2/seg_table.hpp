@@ -32,6 +32,7 @@ class seg_table
     using blk_data_tbl_type = typename blk_tbl_type::data_table_type;
     using blk_dir_tbl_type = typename blk_tbl_type::dir_table_type;
     
+    using mutex_type = typename P::mutex_type;
     using unique_lock_type = typename P::unique_lock_type;
     
     using wn_entry_type = typename P::wn_entry_type;
@@ -690,8 +691,48 @@ public:
         return this->blk_tbls_[seg_id]->get_blk_pos_from_blk_id(blk_id);
     }
     
+    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    unique_lock_type get_flags_lock() {
+        return unique_lock_type(this->flags_mtx_);
+    }
+    
+    bool try_set_flag(const blk_id_type blk_id) {
+        auto& self = this->derived();
+        
+        const auto seg_id = self.get_seg_id(blk_id);
+        
+        MEFDN_ASSERT(this->blk_tbls_[seg_id]);
+        
+        auto& blk_tbl = * this->blk_tbls_[seg_id];
+        auto& flag_tbl = blk_tbl.get_flag_tbl();
+        
+        const auto blk_pos = blk_tbl.get_blk_pos_from_blk_id(blk_id); // TODO
+        
+        return flag_tbl.try_set(blk_pos);
+    }
+    
+    void unset_flag(const blk_id_type blk_id) {
+        auto& self = this->derived();
+        
+        const auto seg_id = self.get_seg_id(blk_id);
+        
+        MEFDN_ASSERT(this->blk_tbls_[seg_id]);
+        
+        auto& blk_tbl = * this->blk_tbls_[seg_id];
+        auto& flag_tbl = blk_tbl.get_flag_tbl();
+        
+        const auto blk_pos = blk_tbl.get_blk_pos_from_blk_id(blk_id); // TODO
+        
+        flag_tbl.unset(blk_pos);
+    }
+    #endif
+    
 private:
     mefdn::vector<blk_tbl_ptr> blk_tbls_;
+    
+    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    mutex_type flags_mtx_;
+    #endif
 };
 
 } // namespace medsm2

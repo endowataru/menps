@@ -9,3 +9,5 @@
 //#define MEOMP_SEPARATE_WORKER_THREAD
     // TODO: Rename
 
+#define MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+

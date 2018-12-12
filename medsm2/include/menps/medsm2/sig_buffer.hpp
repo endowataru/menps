@@ -25,6 +25,10 @@ class sig_buffer
     
     using ult_itf_type = typename P::ult_itf_type;
     
+    /*#ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    using seg_table_type = typename P::seg_table_type;
+    #endif*/
+    
     struct header {
         wr_ts_type  min_wr_ts;
         size_type   num_entries;
@@ -69,12 +73,59 @@ public:
     }
     
     // Merge two signature and return a merged signature.
+    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    template <typename SegTable> // TODO
+    static sig_buffer merge(SegTable& seg_tbl,
+        const sig_buffer& sig_a, const sig_buffer& sig_b)
+    #else
     static sig_buffer merge(const sig_buffer& sig_a, const sig_buffer& sig_b)
+    #endif
     {
-        mefdn::vector<wn_entry_type> new_wn_vec;
+        wn_vector_type new_wn_vec;
         // Pre-allocate the merged vector.
         new_wn_vec.reserve(sig_a.wn_vec_.size() + sig_b.wn_vec_.size());
         
+        #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+        auto sig_a_itr = sig_a.wn_vec_.begin();
+        auto sig_b_itr = sig_b.wn_vec_.begin();
+        const auto sig_a_last = sig_a.wn_vec_.end();
+        const auto sig_b_last = sig_b.wn_vec_.end();
+        
+        {
+            const auto lk = seg_tbl.get_flags_lock();
+            
+            while (sig_a_itr != sig_a_last || sig_b_itr != sig_b_last)
+            {
+                bool use_a = false;
+                if (sig_a_itr != sig_a_last && sig_b_itr != sig_b_last) {
+                    use_a = greater_wn{}(*sig_a_itr, *sig_b_itr);
+                }
+                else {
+                    use_a = sig_a_itr != sig_a_last;
+                }
+                
+                const auto& wn = use_a ? *sig_a_itr : *sig_b_itr;
+                const auto blk_id = wn.blk_id;
+                
+                if (seg_tbl.try_set_flag(blk_id)) {
+                    // Add to new_wn_vec.
+                    new_wn_vec.push_back(wn);
+                }
+                else {
+                    // Ignore.
+                }
+                
+                if (use_a)  ++sig_a_itr;
+                else        ++sig_b_itr;
+            }
+            
+            for (const auto& wn : new_wn_vec) {
+                seg_tbl.unset_flag(wn.blk_id);
+            }
+        }
+        
+        
+        #else
         // Merge two sorted lists of write notices based on their write timestamps.
         std::merge(
             sig_a.wn_vec_.begin(), sig_a.wn_vec_.end(),
@@ -111,6 +162,7 @@ public:
             // Remove the duplicated entries.
             new_wn_vec.erase(nwv_result, nwv_last);
         }
+        #endif
         
         // TODO: Use the policy's comparator.
         const auto new_min_wr_ts = std::max(sig_a.min_wr_ts_, sig_b.min_wr_ts_);

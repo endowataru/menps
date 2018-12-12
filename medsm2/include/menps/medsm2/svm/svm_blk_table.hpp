@@ -4,6 +4,9 @@
 #include <menps/medsm2/blk_lock_table.hpp>
 #include <menps/medsm2/blk_data_table.hpp>
 #include <menps/medsm2/blk_dir_table.hpp>
+#ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    #include <menps/medsm2/blk_flag_table.hpp>
+#endif
 #include <menps/mefdn/memory/mapped_memory.hpp>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -41,6 +44,9 @@ public:
     using lock_table_type = blk_lock_table<base_policy_type>;
     using dir_table_type = blk_dir_table<base_policy_type>;
     using data_table_type = blk_data_table<base_policy_type>;
+    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    using flag_table_type = blk_flag_table<base_policy_type>;
+    #endif
     
     template <typename Conf>
     void coll_make(const Conf& conf)
@@ -141,6 +147,10 @@ public:
         data_table_type::coll_make(
             data_tbl_conf{ conf.com, num_bytes, priv_sys_ptr, pub_ptr }
         );
+        
+        #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+        this->flag_tbl_.init(this->num_blks_);
+        #endif
     }
     
 private:
@@ -197,6 +207,9 @@ public:
     lock_table_type& get_lock_tbl() { return *this; }
     dir_table_type& get_dir_tbl() { return *this; }
     data_table_type& get_data_tbl() { return *this; }
+    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    flag_table_type& get_flag_tbl() { return this->flag_tbl_; }
+    #endif
     
 private:
     friend lock_table_type;
@@ -258,6 +271,10 @@ private:
     mefdn::mapped_memory   pub_map_;
     mefdn::mapped_memory   priv_sys_map_;
     mefdn::mapped_memory   priv_app_map_;
+    
+    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    flag_table_type flag_tbl_;
+    #endif
 };
 
 } // namespace medsm2
