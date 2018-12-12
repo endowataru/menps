@@ -19,7 +19,7 @@ option(MEFDN_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MEFDN_LOGGER_USE_LOCK "Use lock in logger" ON)
 option(MEFDN_ENABLE_EXPONENTIAL_BACKOFF "Use exponential backoff" OFF)
 option(MEFDN_DISABLE_ALIGN_CHECK_SIZE "Disable size check in mefdn::align_*_nocheck" ON)
-set(MEFDN_ENABLE_FOMIT_FRAME_POINTER true CACHE BOOL "Remove -fno-omit-frame-pointer")
+option(MEFDN_ENABLE_FRAME_POINTER "Add -fno-omit-frame-pointer" ON)
 
 set(MEFDN_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
@@ -31,7 +31,7 @@ add_library(mefdn-options INTERFACE)
 
 set(MEFDN_GLOBAL_CFLAGS -ftls-model=initial-exec)
 
-if (NOT ${MEFDN_ENABLE_FOMIT_FRAME_POINTER})
+if (${MEFDN_ENABLE_FRAME_POINTER})
     list(APPEND MEFDN_GLOBAL_CFLAGS -fno-omit-frame-pointer)
 endif()
 
