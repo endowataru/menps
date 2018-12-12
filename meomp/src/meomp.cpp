@@ -959,7 +959,7 @@ int main(int argc, char* argv[])
     g_stack_size = stack_size;
     
     g_heap_ptr =
-        sp.coll_alloc_seg(MEOMP_HEAP_SIZE, 4096 /*TODO*/);
+        sp.coll_alloc_seg(MEOMP_HEAP_SIZE, MEOMP_HEAP_BLOCK_SIZE);
     
     if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();
