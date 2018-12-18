@@ -50,7 +50,7 @@ public:
     ,   int* const      provided
     ) {
         mpi_error::check(
-            MPI_Init_thread(argc, argv, required, provided)
+            PMPI_Init_thread(argc, argv, required, provided)
         );
     }
     
@@ -59,7 +59,7 @@ public:
     
     ~direct_mpi_facade()
     {
-        MPI_Finalize();
+        PMPI_Finalize();
     }
     
     #define D(dummy, name, Name, tr, num, ...) \
@@ -72,7 +72,7 @@ public:
             { \
                 MPI_CRITICAL \
                 mpi_error::check( \
-                    MPI_##Name( \
+                    PMPI_##Name( \
                         MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS(num, __VA_ARGS__) \
                     ) \
                 ); \

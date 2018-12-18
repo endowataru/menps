@@ -3,7 +3,7 @@
 
 #include <menps/medev2/mpi/mpi.hpp>
 
-#define MEDEV2_MPI_P2P_BLOCK_FUNCS(X, ...) \
+#define MEDEV2_MPI_P2P_BLOCK_SEND_FUNCS(X, ...) \
     X(__VA_ARGS__, \
         send, \
         Send, \
@@ -15,6 +15,9 @@
         int, dest, \
         int, tag, \
         MPI_Comm, comm) \
+
+#define MEDEV2_MPI_P2P_BLOCK_FUNCS(X, ...) \
+    MEDEV2_MPI_P2P_BLOCK_SEND_FUNCS(X, __VA_ARGS__) \
     X(__VA_ARGS__, \
         recv, \
         Recv, \
@@ -79,7 +82,9 @@
         int, \
         2, \
         MPI_Request *, request, \
-        MPI_Status *, status) \
+        MPI_Status *, status)
+
+#define MEDEV2_MPI_PROBE_FUNCS(X, ...) \
     X(__VA_ARGS__, \
         probe, \
         Probe, \
@@ -348,6 +353,7 @@
     MEDEV2_MPI_P2P_BLOCK_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_P2P_NONBLOCK_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_TEST_FUNCS(X, __VA_ARGS__) \
+    MEDEV2_MPI_PROBE_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_COLLECTIVE_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_RMA_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_REQ_BASED_RMA_FUNCS(X, __VA_ARGS__) \

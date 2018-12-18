@@ -186,12 +186,23 @@ public:
             ,   &proxy_req \
             }; \
             this->i##name(nb_proxy_p); \
-            this->wait(&proxy_req); \
+            this->wait({ &proxy_req, MPI_STATUS_IGNORE }); \
         }
     
-    MEDEV2_MPI_P2P_BLOCK_FUNCS(D, /*dummy*/) 
+    MEDEV2_MPI_P2P_BLOCK_SEND_FUNCS(D, /*dummy*/) 
     
     #undef D
+    
+    void recv(const medev2::mpi::recv_params& p) {
+        MPI_Request proxy_req = MPI_Request();
+        medev2::mpi::irecv_params nb_proxy_p{
+            p.buf, p.count, p.datatype, p.source, p.tag, p.comm
+            // Note: p.status is not listed here.
+        ,   &proxy_req
+        };
+        this->irecv(nb_proxy_p);
+        this->wait({ &proxy_req, p.status });
+    }
     
     // blocking calls without non-blocking alternative
     
@@ -202,6 +213,7 @@ public:
             this->qd_.unlock(); \
         }
     
+    MEDEV2_MPI_PROBE_FUNCS(D, /*dummy*/)
     MEDEV2_MPI_COLLECTIVE_FUNCS(D, /*dummy*/)
     MEDEV2_MPI_RMA_WIN_FUNCS(D, /*dummy*/)
     MEDEV2_MPI_OTHER_FUNCS(D, /*dummy*/)
@@ -231,6 +243,24 @@ public:
             MEFDN_ASSERT(state == proxy_request_state_type::created);
             *proxy_p.flag = false;
         }
+    }
+    
+    void testsome(const medev2::mpi::testsome_params& proxy_p)
+    {
+        const auto incount = proxy_p.incount;
+        int outcount = 0;
+        for (int i = 0; i < incount; ++i) {
+            const auto req_ptr = &proxy_p.array_of_requests[i];
+            int flag = 0;
+            MPI_Status status = MPI_Status();
+            this->test({ req_ptr, &flag, &status });
+            if (flag) {
+                proxy_p.array_of_indices[outcount] = i;
+                proxy_p.array_of_statuses[outcount] = status;
+                ++outcount;
+            }
+        }
+        *proxy_p.outcount = outcount;
     }
     
     void wait(const medev2::mpi::wait_params& proxy_p)

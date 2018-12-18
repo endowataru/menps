@@ -30,6 +30,27 @@
         MEDEV2_EXPAND_PARAMS_TO_DECL_AUX, \
         num, __VA_ARGS__)
 
+
+#define MEDEV2_EXPAND_PARAMS_TO_PARAMS_AUX(i, t, a)         t a,
+#define MEDEV2_EXPAND_PARAMS_TO_PARAMS_AUX_LAST(i, t, a)    t a
+
+#define MEDEV2_EXPAND_PARAMS_TO_PARAMS(num, ...) \
+    MEDEV2_EXPAND_PARAMS( \
+        MEDEV2_EXPAND_PARAMS_TO_PARAMS_AUX, \
+        MEDEV2_EXPAND_PARAMS_TO_PARAMS_AUX_LAST, \
+        num, __VA_ARGS__)
+
+
+#define MEDEV2_EXPAND_PARAMS_TO_ARGS_AUX(i, t, a)       a,
+#define MEDEV2_EXPAND_PARAMS_TO_ARGS_AUX_LAST(i, t, a)  a
+
+#define MEDEV2_EXPAND_PARAMS_TO_ARGS(num, ...) \
+    MEDEV2_EXPAND_PARAMS( \
+        MEDEV2_EXPAND_PARAMS_TO_ARGS_AUX, \
+        MEDEV2_EXPAND_PARAMS_TO_ARGS_AUX_LAST, \
+        num, __VA_ARGS__)
+
+
 #define MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS_AUX(i, t, a)         p.a,
 #define MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS_AUX_LAST(i, t, a)    p.a
 
@@ -39,6 +60,7 @@
         MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS_AUX_LAST, \
         num, __VA_ARGS__)
 
+
 #define MEDEV2_EXPAND_PARAMS_TO_LOG_FMT_AUX(i, t, a)    #a ":{}\t"
 
 #define MEDEV2_EXPAND_PARAMS_TO_LOG_FMT(num, ...) \
@@ -46,6 +68,7 @@
         MEDEV2_EXPAND_PARAMS_TO_LOG_FMT_AUX, \
         MEDEV2_EXPAND_PARAMS_TO_LOG_FMT_AUX, \
         num, __VA_ARGS__)
+
 
 #define MEDEV2_EXPAND_PARAMS_TO_LOG_P_DOT_ARGS_AUX(i, t, a)        ::menps::mefdn::show_param((p.a)),
 #define MEDEV2_EXPAND_PARAMS_TO_LOG_P_DOT_ARGS_AUX_LAST(i, t, a)   ::menps::mefdn::show_param((p.a))
