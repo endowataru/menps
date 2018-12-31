@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/medev2/mpi/mpi_funcs.hpp>
+#include <menps/medev2/mpi/prof.hpp>
 #include <menps/mefdn/logger.hpp>
 #include <exception>
 #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
@@ -69,6 +70,7 @@ public:
                 MEDEV2_EXPAND_PARAMS_TO_LOG_FMT(num, __VA_ARGS__) \
             ,   MEDEV2_EXPAND_PARAMS_TO_LOG_P_DOT_ARGS(num, __VA_ARGS__) \
             ); \
+            const auto prof_val = prof::start(); \
             { \
                 MPI_CRITICAL \
                 mpi_error::check( \
@@ -77,6 +79,7 @@ public:
                     ) \
                 ); \
             } \
+            prof::finish(prof_kind::name, prof_val); \
             MEFDN_LOG_DEBUG( \
                 "msg:Exiting MPI_" #Name ".\t" \
                 MEDEV2_EXPAND_PARAMS_TO_LOG_FMT(num, __VA_ARGS__) \

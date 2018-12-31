@@ -2,11 +2,7 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mefdn/profiling/average_accumulator.hpp>
-#include <menps/mefdn/profiling/clock.hpp>
-#include <menps/mefdn/assert.hpp>
-#include <menps/mefdn/external/fmt.hpp>
-#include <menps/mefdn/thread/spinlock.hpp>
+#include <menps/mefdn/basic_prof.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -38,66 +34,31 @@ enum class prof_kind {
 
 #undef DEFINE_PROF_KIND
 
-class prof
+struct prof_policy
 {
-#ifdef MEDSM2_ENABLE_PROF
-private:
-    using spinlock_type = mefdn::spinlock;
-    using accumulator_type = mefdn::average_accumulator<mefdn::cpu_clock_t>;
+    static const bool is_enabled =
+        #ifdef MEDSM2_ENABLE_PROF
+            true;
+        #else
+            false;
+        #endif
     
-    struct entry {
-        spinlock_type       lock;
-        accumulator_type    acc;
-    };
+    using prof_kind_type = prof_kind;
     
-    static entry& get(const prof_kind k) {
-        static entry arr[static_cast<mefdn::size_t>(prof_kind::end)];
-        MEFDN_ASSERT(k < prof_kind::end);
-        return arr[static_cast<mefdn::size_t>(k)];
-    }
-    
-public:
-    static mefdn::cpu_clock_t start()
+    static const char* get_name(const prof_kind_type k)
     {
-        return mefdn::get_cpu_clock();
-    }
-    
-    static void finish(const prof_kind k, mefdn::cpu_clock_t c)
-    {
-        const auto now = mefdn::get_cpu_clock();
-        auto& e = prof::get(k);
-        mefdn::lock_guard<spinlock_type> lk(e.lock);
-        e.acc.add(now-c);
-    }
-    
-    static std::string to_string(const char* const head)
-    {
-        fmt::MemoryWriter w;
+        #define DEFINE_NAME(name)   #name ,
         
-        #define WRITE(name) \
-            w.write("{}" #name ": {}\n", head, prof::get(prof_kind::name).acc);
+        static const char* names[] =
+            { MEDSM2_PROF_KINDS(DEFINE_NAME) "end" };
         
-        MEDSM2_PROF_KINDS(WRITE)
+        #undef DEFINE_NAME
         
-        #undef WRITE
-        
-        return w.str();
+        return names[static_cast<mefdn::size_t>(k)];
     }
-#else
-public:
-    static mefdn::cpu_clock_t start() {
-        return 0;
-    }
-    
-    static void finish(const prof_kind /*k*/, mefdn::cpu_clock_t /*c*/) {
-        // Do nothing.
-    }
-    
-    static std::string to_string(const char* const /*head*/) {
-        return "";
-    }
-#endif
 };
+
+using prof = mefdn::basic_prof<prof_policy>;
 
 } // namespace medsm2
 } // namespace menps
