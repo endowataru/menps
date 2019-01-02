@@ -808,6 +808,17 @@ void __kmpc_for_static_fini(ident* /*loc*/, kmp_int32 /*global_tid*/) {
 }
 
 extern "C"
+void __kmpc_init_lock(omp_lock_t* const lk)
+{
+    omp_init_lock(lk);
+}
+extern "C"
+void __kmpc_destroy_lock(omp_lock_t* const lk)
+{
+    omp_destroy_lock(lk);
+}
+
+extern "C"
 void __kmpc_set_lock(omp_lock_t* const lk);
 extern "C"
 void __kmpc_set_lock(omp_lock_t* const lk)
