@@ -8,8 +8,12 @@ namespace menps {
 namespace medsm2 {
 
 #define MEDSM2_PROF_KINDS(x) \
+    x(omp_barrier) \
+    x(barrier) \
     x(fence) \
     x(release) \
+    x(release_fast) \
+    x(release_tx) \
     x(lock_global) \
     x(begin_tx) \
     x(tx_merge) \

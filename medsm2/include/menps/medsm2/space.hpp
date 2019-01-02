@@ -269,6 +269,8 @@ public:
         
         const auto this_proc = com.this_proc_id();
         
+        const auto p_all = prof::start();
+        
         MEFDN_LOG_DEBUG("msg:Entering DSM barrier.");
         
         const auto num_procs = com.get_num_procs();
@@ -348,6 +350,8 @@ public:
             }
         );
         #endif
+        
+        prof::finish(prof_kind::barrier, p_all);
         
         MEFDN_LOG_DEBUG("msg:Exiting DSM barrier.");
     }

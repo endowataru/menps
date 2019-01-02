@@ -3,6 +3,7 @@
 
 #include <menps/meomp/common.hpp>
 #include <menps/mefdn/memory/unique_ptr.hpp>
+#include <menps/medsm2/prof.hpp>
 
 namespace menps {
 namespace meomp {
@@ -80,6 +81,11 @@ public:
     {
         auto& self = this->derived();
         
+        using medsm2::prof;
+        using medsm2::prof_kind;
+        
+        const auto p = prof::start();
+        
         // Check whether this function is called inside a parallel region.
         if (bar_) {
             // Do a barrier in this process to complete preceding memory writes.
@@ -95,6 +101,8 @@ public:
             // Do a barrier in this process again to ensure the freshness of subsequent memory loads.
             this->bar_->arrive_and_wait();
         }
+        
+        prof::finish(prof_kind::omp_barrier, p);
     }
     
 private:

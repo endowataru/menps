@@ -412,6 +412,8 @@ public:
     ,   const rd_ts_state_type& rd_ts_st
     ,   const blk_id_type       blk_id
     ) {
+        const auto p = prof::start();
+        
         const auto info = this->get_local_lock(blk_id);
         
         const auto check_ret =
@@ -432,6 +434,8 @@ public:
             const auto fast_ret =
                 info.dir_tbl.fast_release(rd_ts_st, info.blk_pos, info.lk);
             
+            prof::finish(prof_kind::release_fast, p);
+            
             return { true, true, true, fast_ret.new_rd_ts, fast_ret.new_wr_ts };
         }
         #endif
@@ -439,6 +443,8 @@ public:
         // Merge the written values inside the global critical section.
         auto tx_ret =
             this->do_transaction(com, rd_ts_st, info);
+        
+        prof::finish(prof_kind::release_tx, p);
         
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
