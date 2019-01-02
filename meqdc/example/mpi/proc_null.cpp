@@ -12,7 +12,13 @@ int g_num_calls;
 void* thread_main(void*)
 {
     for (int i = 0; i < g_num_calls; ++i) {
+        #if 1
         MPI_Send(nullptr, 0, MPI_BYTE, MPI_PROC_NULL, 0, MPI_COMM_WORLD);
+        #else
+        MPI_Request req = MPI_Request();
+        MPI_Isend(nullptr, 0, MPI_BYTE, MPI_PROC_NULL, 0, MPI_COMM_WORLD, &req);
+        MPI_Wait(&req, MPI_STATUS_IGNORE);
+        #endif
     }
 }
 
