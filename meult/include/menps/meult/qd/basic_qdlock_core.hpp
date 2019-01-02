@@ -221,7 +221,11 @@ private:
     // The atomic pointer to the latest node.
     atomic_node_ptr_type tail_; // atomic<qdlock_node_type*>
     
+    mefdn::byte pad1_[MEFDN_CACHE_LINE_SIZE - sizeof(atomic_node_ptr_type)];
+    
     qdlock_node_type* head_;
+    
+    mefdn::byte pad2_[MEFDN_CACHE_LINE_SIZE - sizeof(qdlock_node_type*)];
 };
 
 } // namespace meult
