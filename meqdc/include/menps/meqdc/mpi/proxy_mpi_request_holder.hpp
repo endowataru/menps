@@ -3,6 +3,7 @@
 
 #include <menps/meqdc/common.hpp>
 #include <menps/medev2/mpi/mpi.hpp>
+#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace meqdc {
@@ -15,35 +16,39 @@ class proxy_mpi_request_holder
     using size_type = typename P::size_type;
     
 public:
-    proxy_mpi_request_holder() = default;
+    proxy_mpi_request_holder()
+        : num_reqs_(0)
+        , proxy_reqs_(mefdn::make_unique<proxy_request_type* []>(P::max_num_ongoing))
+        , orig_reqs_(mefdn::make_unique<MPI_Request []>(P::max_num_ongoing))
+        , indices_(mefdn::make_unique<int []>(P::max_num_ongoing))
+        , statuses_(mefdn::make_unique<MPI_Status []>(P::max_num_ongoing))
+    { }
     
     proxy_mpi_request_holder(const proxy_mpi_request_holder&) = delete;
     proxy_mpi_request_holder& operator = (const proxy_mpi_request_holder&) = delete;
-    
-    bool is_available() const noexcept {
-        return this->proxy_reqs_.size() < P::max_num_ongoing;
-    }
     
     void add(
         proxy_request_type* const   proxy_req
     ,   const MPI_Request           orig_req
     ) {
-        this->proxy_reqs_.push_back(proxy_req);
-        this->orig_reqs_.push_back(orig_req);
-        this->indices_.push_back(0);
-        this->statuses_.push_back(MPI_Status()); // TODO
+        const auto num_reqs = this->num_reqs_;
+        
+        this->proxy_reqs_[num_reqs] = proxy_req;
+        this->orig_reqs_[num_reqs] = orig_req;
+        
+        this->num_reqs_ = num_reqs+1;
         
         MEFDN_LOG_VERBOSE(
             "msg:Added new request in proxy MPI.\t"
             "num_reqs:{}"
-        ,   this->proxy_reqs_.size()
+        ,   this->num_reqs_
         );
     }
     
     template <typename ProgFunc>
     size_type progress(orig_mpi_facade_type& orig_mf, ProgFunc prog_func)
     {
-        const auto num_reqs = this->proxy_reqs_.size();
+        const auto num_reqs = this->num_reqs_;
         
         if (num_reqs == 0) {
             MEFDN_LOG_VERBOSE(
@@ -92,10 +97,7 @@ public:
         MEFDN_ASSERT(num_ongoing + num_completed == num_reqs);
         
         // Remove completed requests from the arrays.
-        this->proxy_reqs_.resize(num_ongoing);
-        this->orig_reqs_.resize(num_ongoing);
-        this->indices_.resize(num_ongoing);
-        this->statuses_.resize(num_ongoing);
+        this->num_reqs_ = num_ongoing;
         
         MEFDN_LOG_VERBOSE(
             "msg:Completed requests in proxy MPI.\t"
@@ -110,14 +112,19 @@ public:
     
     size_type get_num_ongoing() const noexcept
     {
-        return this->proxy_reqs_.size();
+        return this->num_reqs_;
+    }
+    
+    bool is_available() const noexcept {
+        return this->get_num_ongoing() < P::max_num_ongoing;
     }
     
 private:
-    std::vector<proxy_request_type*>    proxy_reqs_;
-    std::vector<MPI_Request>            orig_reqs_;
-    std::vector<int>                    indices_;
-    std::vector<MPI_Status>             statuses_;
+    size_type                                   num_reqs_ = 0;
+    mefdn::unique_ptr<proxy_request_type* []>   proxy_reqs_;
+    mefdn::unique_ptr<MPI_Request []>           orig_reqs_;
+    mefdn::unique_ptr<int []>                   indices_;
+    mefdn::unique_ptr<MPI_Status []>            statuses_;
 };
 
 } // namespace meqdc
