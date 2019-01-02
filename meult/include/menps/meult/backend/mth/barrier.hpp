@@ -2,6 +2,7 @@
 #pragma once
 
 #include "mth.hpp"
+#include <menps/meult/prof.hpp>
 
 namespace menps {
 namespace meult {
@@ -35,10 +36,14 @@ public:
     
     void arrive_and_wait() noexcept
     {
+        const auto p = prof::start();
+        
         if (myth_barrier_wait(&this->bar_) != 0) {
             // We cannot throw exception from this method
             // (decided by the standard draft).
         }
+        
+        prof::finish(prof_kind::myth_barrier_wait, p);
     }
     
 private:

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "mth.hpp"
+#include <menps/meult/prof.hpp>
 
 #define MEULT_AVOID_MYTH_UNCOND_SETUP
 
@@ -36,8 +37,12 @@ public:
     
     void wait()
     {
+        const auto p = prof::start();
+        
         if (myth_uncond_wait(&this->u_) != 0)
             throw uncond_variable_error();
+        
+        prof::finish(prof_kind::myth_uncond_wait, p);
     }
     
     void notify()
@@ -47,17 +52,25 @@ public:
     
     void notify_signal()
     {
+        const auto p = prof::start();
+        
         if (myth_uncond_signal(&this->u_) != 0)
             throw uncond_variable_error();
+        
+        prof::finish(prof_kind::myth_uncond_signal, p);
     }
     void notify_enter()
     {
+        const auto p = prof::start();
+        
         #ifdef MEULT_ENABLE_MTH_UNCOND_ENTER
         if (myth_uncond_enter(&this->u_) != 0)
             throw uncond_variable_error();
         #else
         this->notify_signal();
         #endif
+        
+        prof::finish(prof_kind::myth_uncond_enter, p);
     }
     
 private:

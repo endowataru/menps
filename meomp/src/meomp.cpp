@@ -983,7 +983,7 @@ int main(int argc, char* argv[])
     // Do a barrier before exiting.
     g_coll->barrier();
     
-    #if (defined(MEDSM2_ENABLE_PROF) || defined(MEDEV2_ENABLE_PROF))
+    #if (defined(MEDSM2_ENABLE_PROF) || defined(MEDEV2_ENABLE_PROF) || defined(MEULT_ENABLE_PROF))
     for (coll_t::proc_id_type proc = 0; proc < num_procs; ++proc) {
         if (coll.this_proc_id() == proc) {
             fmt::print("- proc: {}\n", proc);
@@ -992,6 +992,9 @@ int main(int argc, char* argv[])
             #endif
             #ifdef MEDEV2_ENABLE_PROF
             std::cout << medev2::mpi::prof::to_string("    - ");
+            #endif
+            #ifdef MEULT_ENABLE_PROF
+            std::cout << meult::prof::to_string("    - ");
             #endif
         }
         g_coll->barrier();
