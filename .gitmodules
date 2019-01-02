@@ -7,9 +7,9 @@
 [submodule "mefdn/external/googletest"]
 	path = mefdn/external/googletest
 	url = https://github.com/google/googletest.git
-[submodule "mgult/external/massivethreads"]
+[submodule "meult/external/massivethreads"]
 	path = meult/external/massivethreads
-	url = https://github.com/massivethreads/massivethreads
+	url = https://github.com/endowataru/massivethreads
 [submodule "medev2/external/ucx"]
 	path = medev2/external/ucx
 	url = https://github.com/openucx/ucx.git
