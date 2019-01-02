@@ -5,7 +5,6 @@
 #include <menps/meult/qd/uncond_qdlock_thread.hpp>
 #include <menps/meult/qd/basic_qdlock_core.hpp>
 #include <menps/meult/qd/basic_qdlock_mutex.hpp>
-#include <menps/meult/qd/basic_qdlock_mutex.hpp>
 #include <menps/mefdn/container/intrusive_forward_list.hpp>
 
 namespace menps {
