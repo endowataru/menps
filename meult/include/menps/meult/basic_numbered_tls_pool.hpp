@@ -27,7 +27,7 @@ public:
         : max_num_elems_(max_num_elems)
         , num_(0)
         , ls_(
-            mefdn::make_unique<node* []>(
+            mefdn::make_unique<entry []>(
                 ult_itf_type::get_num_workers()
             )
         )
@@ -42,9 +42,10 @@ public:
     {
         const auto nwks = ult_itf_type::get_num_workers();
         for (size_type i = 0; i < nwks; ++i) {
-            while (this->ls_[i] != nullptr) {
-                const auto p = this->ls_[i];
-                this->ls_[i] = p->next;
+            auto& l = this->ls_[i].first;
+            while (l != nullptr) {
+                const auto p = l;
+                l = p->next;
                 delete p;
             }
         }
@@ -110,9 +111,14 @@ public:
     }
     
 private:
+    struct entry {
+        node* first;
+        mefdn::byte pad[MEFDN_CACHE_LINE_SIZE - sizeof(node*)];
+    };
+    
     node*& get_local() const noexcept {
         const auto i = ult_itf_type::get_worker_num();
-        return this->ls_[i];
+        return this->ls_[i].first;
     }
     
     node* to_node(element_type* const e)
@@ -125,7 +131,7 @@ private:
     spinlock_type mtx_;
     size_type num_;
     
-    mefdn::unique_ptr<node* []> ls_;
+    mefdn::unique_ptr<entry []> ls_;
     
     // Converts a node number to the node pointer.
     mefdn::unique_ptr<node* []> nodes_;
