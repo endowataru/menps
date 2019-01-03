@@ -995,9 +995,11 @@ int main(int argc, char* argv[])
     g_coll->barrier();
     
     #if (defined(MEDSM2_ENABLE_PROF) || defined(MEDEV2_ENABLE_PROF) || defined(MEULT_ENABLE_PROF))
+    std::cout << std::flush;
+    g_coll->barrier();
     for (coll_t::proc_id_type proc = 0; proc < num_procs; ++proc) {
         if (coll.this_proc_id() == proc) {
-            fmt::print("- proc: {}\n", proc);
+            std::cout << fmt::format("- proc: {}\n", proc);
             #ifdef MEDSM2_ENABLE_PROF
             std::cout << medsm2::prof::to_string("    - ");
             #endif
@@ -1007,6 +1009,7 @@ int main(int argc, char* argv[])
             #ifdef MEULT_ENABLE_PROF
             std::cout << meult::prof::to_string("    - ");
             #endif
+            std::cout << std::flush;
         }
         g_coll->barrier();
     }
