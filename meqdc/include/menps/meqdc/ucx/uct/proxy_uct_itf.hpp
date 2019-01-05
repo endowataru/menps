@@ -3,8 +3,8 @@
 
 #include <menps/meqdc/ucx/uct/proxy_uct_facade.hpp>
 #include <menps/meqdc/ucx/uct/proxy_uct_worker.hpp>
-#include <menps/meuct/proxy_iface.hpp>
-#include <menps/meuct/proxy_endpoint.hpp>
+#include <menps/meqdc/ucx/uct/proxy_uct_iface.hpp>
+#include <menps/meqdc/ucx/uct/proxy_uct_endpoint.hpp>
 #include <menps/meuct/proxy_completion_pool.hpp>
 #include <menps/meult/qd/qdlock_delegator.hpp>
 #include <menps/medev2/ucx/uct/uct_policy.hpp>
@@ -66,17 +66,17 @@ public:
 };
 
 template <typename OrigUctItf, typename UltItf>
-struct proxy_itf_policy
+struct proxy_uct_facade_policy
 {
     using orig_uct_itf_type = OrigUctItf;
-    using proxy_uct_facade_type = proxy_uct_facade<proxy_itf_policy>;
-    using proxy_worker_type = proxy_uct_worker<proxy_itf_policy>;
-    using proxy_iface_type = meuct::proxy_iface<proxy_itf_policy>;
-    using proxy_endpoint_type = meuct::proxy_endpoint<proxy_itf_policy>;
+    using proxy_uct_facade_type = proxy_uct_facade<proxy_uct_facade_policy>;
+    using proxy_worker_type = proxy_uct_worker<proxy_uct_facade_policy>;
+    using proxy_iface_type = proxy_uct_iface<proxy_uct_facade_policy>;
+    using proxy_endpoint_type = proxy_uct_endpoint<proxy_uct_facade_policy>;
     
-    using proxy_completion_type = proxy_uct_completion<proxy_itf_policy>;
+    using proxy_completion_type = proxy_uct_completion<proxy_uct_facade_policy>;
     using proxy_completion_pool_type =
-        meuct::proxy_completion_pool<proxy_itf_policy>;
+        meuct::proxy_completion_pool<proxy_uct_facade_policy>;
     
     using ult_itf_type = UltItf;
     using size_type = mefdn::size_t;
@@ -92,7 +92,7 @@ template <typename OrigUctItf, typename UltItf>
 struct proxy_uct_itf_policy
 {
     using uct_facade_type =
-        proxy_uct_facade<proxy_itf_policy<OrigUctItf, UltItf>>;
+        proxy_uct_facade<proxy_uct_facade_policy<OrigUctItf, UltItf>>;
 };
 
 template <typename OrigUctItf, typename UltItf>
