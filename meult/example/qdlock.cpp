@@ -3,29 +3,40 @@
 #include <menps/meult/backend/mth.hpp>
 #include <menps/meult/qd/qdlock_mutex.hpp>
 
+using ult_itf_t = menps::meult::backend::mth::ult_policy;
+
 struct del_exec_result {
     bool is_executed;
     bool is_active;
+    bool needs_awake;
+    ult_itf_t::uncond_variable* awake_uv;
 };
 
 struct progress_result {
     bool is_active;
+    bool needs_awake;
+    ult_itf_t::uncond_variable* awake_uv;
+};
+
+struct del_result {
+    bool needs_wait;
+    ult_itf_t::uncond_variable* wait_uv;
 };
 
 int main()
 {
-    using lock_t = menps::meult::qdlock_delegator<int, menps::meult::backend::mth::ult_policy>;
+    using lock_t = menps::meult::qdlock_delegator<int, ult_itf_t>;
     lock_t::qdlock_pool_type p;
     lock_t l(p);
     
     l.start_consumer(
         [] (lock_t::qdlock_node_type& n) {
             fmt::print("del: {}\n", n.func);
-            return del_exec_result{ true, false };
+            return del_exec_result{ true, false, false, nullptr };
         },
         [] () {
             fmt::print("prog\n");
-            return progress_result{ false };
+            return progress_result{ false, false, nullptr };
         }
     );
     
@@ -33,6 +44,7 @@ int main()
     if (l.lock_or_delegate(
         [] (lock_t::qdlock_node_type& n) {
             fmt::print("del: {}\n", n.func);
+            return del_result{ false, nullptr };
         }))
     {
         fmt::print("locked\n");
@@ -41,7 +53,7 @@ int main()
     }
     l.unlock();
     
-    using lock2_t = menps::meult::qdlock_mutex<menps::meult::backend::mth::ult_policy>;
+    using lock2_t = menps::meult::qdlock_mutex<ult_itf_t>;
     lock2_t l2;
     l2.lock();
     l2.unlock();

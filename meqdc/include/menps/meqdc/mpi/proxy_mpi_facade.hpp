@@ -24,6 +24,8 @@ class proxy_mpi_facade
     using qdlock_node_type = typename qdlock_delegator_type::qdlock_node_type;
     using proxy_params_type = typename P::proxy_params_type;
     using size_type = typename P::size_type;
+    using ult_itf_type = typename P::ult_itf_type;
+    using uncond_variable_type = typename ult_itf_type::uncond_variable;
     
 public:
     explicit proxy_mpi_facade(
@@ -60,6 +62,8 @@ private:
     {
         bool    is_executed;
         bool    is_active;
+        bool    needs_wait;
+        uncond_variable_type* wait_uv;
     };
     
     template <typename Params>
@@ -69,6 +73,7 @@ private:
         void (orig_mpi_facade_type::*f)(const Params&);
         const Params& real_p;
         proxy_request_type* proxy_req_ptr;
+        bool needs_wait;
         
         execute_imm_result operator() ()
         {
@@ -86,8 +91,22 @@ private:
                 }
             }
             
-            return { is_executed, self.is_active() };
+            if (needs_wait) {
+                proxy_req_ptr->state.store(
+                    proxy_request_state_type::waiting
+                ,   mefdn::memory_order_relaxed
+                );
+                return { is_executed, self.is_active(), true, &proxy_req_ptr->uv };
+            }
+            else {
+                return { is_executed, self.is_active(), false, nullptr };
+            }
         }
+    };
+    
+    struct delegate_result {
+        bool                    needs_wait;
+        uncond_variable_type*   wait_uv;
     };
     
     template <typename Params>
@@ -98,17 +117,64 @@ private:
         Params proxy_params_type::*mem;
         const Params& real_p;
         proxy_request_type* proxy_req_ptr;
+        bool needs_wait;
         
-        void operator() (qdlock_node_type& cur)
+        delegate_result operator() (qdlock_node_type& cur)
         {
             cur.func.code = code;
             cur.func.params.*mem = real_p;
             cur.func.proxy_req = proxy_req_ptr;
+            if (needs_wait) {
+                proxy_req_ptr->state.store(
+                    proxy_request_state_type::waiting
+                ,   mefdn::memory_order_relaxed
+                );
+                return { true, &proxy_req_ptr->uv };
+            }
+            else {
+                return { false, nullptr };
+            }
         }
     };
     
     template <typename Params>
     void execute_or_delegate_req_nb(
+        const command_code_type code
+    ,   void (orig_mpi_facade_type::*f)(const Params&)
+    ,   Params proxy_params_type::*mem
+    ,   const Params& proxy_p
+    ,   const bool needs_wait
+    ) {
+        const auto proxy_req_ptr = this->req_pool_.allocate();
+        
+        auto real_p = proxy_p;
+        real_p.request = &proxy_req_ptr->orig_req;
+        
+        *proxy_p.request = this->to_mpi_request(proxy_req_ptr);
+        
+        this->qd_.execute_or_delegate(
+            execute_imm_nb<Params>{ *this, f, real_p, proxy_req_ptr, needs_wait }
+        ,   delegate_nb<Params>{ *this, code, mem, real_p, proxy_req_ptr, needs_wait }
+        );
+    }
+    
+    template <typename Params>
+    void execute_or_delegate_noreq_nb(
+        const command_code_type code
+    ,   void (orig_mpi_facade_type::*f)(const Params&)
+    ,   Params proxy_params_type::*mem
+    ,   const Params& real_p
+    ,   const bool needs_wait
+    ) {
+        this->qd_.execute_or_delegate(
+            execute_imm_nb<Params>{ *this, f, real_p, nullptr, needs_wait }
+        ,   delegate_nb<Params>{ *this, code, mem, real_p, nullptr, needs_wait }
+        );
+    }
+    
+    template <typename Params>
+    MEFDN_NODISCARD
+    proxy_request_type* execute_or_delegate_req_b(
         const command_code_type code
     ,   void (orig_mpi_facade_type::*f)(const Params&)
     ,   Params proxy_params_type::*mem
@@ -122,22 +188,11 @@ private:
         *proxy_p.request = this->to_mpi_request(proxy_req_ptr);
         
         this->qd_.execute_or_delegate(
-            execute_imm_nb<Params>{ *this, f, real_p, proxy_req_ptr }
-        ,   delegate_nb<Params>{ *this, code, mem, real_p, proxy_req_ptr }
+            execute_imm_nb<Params>{ *this, f, real_p, proxy_req_ptr, true }
+        ,   delegate_nb<Params>{ *this, code, mem, real_p, proxy_req_ptr, true }
         );
-    }
-    
-    template <typename Params>
-    void execute_or_delegate_noreq_nb(
-        const command_code_type code
-    ,   void (orig_mpi_facade_type::*f)(const Params&)
-    ,   Params proxy_params_type::*mem
-    ,   const Params& real_p
-    ) {
-        this->qd_.execute_or_delegate(
-            execute_imm_nb<Params>{ *this, f, real_p, nullptr }
-        ,   delegate_nb<Params>{ *this, code, mem, real_p, nullptr }
-        );
+        
+        return proxy_req_ptr;
     }
     
 public:
@@ -150,6 +205,7 @@ public:
             ,   &orig_mpi_facade_type::name \
             ,   &proxy_params_type::name \
             ,   proxy_p \
+            ,   false \
             ); \
         }
     
@@ -167,6 +223,7 @@ public:
             ,   &orig_mpi_facade_type::name \
             ,   &proxy_params_type::name \
             ,   proxy_p \
+            ,   false \
             ); \
         }
     
@@ -177,6 +234,52 @@ public:
     #undef EXECUTE_OR_DELEGATE
     
     // blocking calls with non-blocking alternative
+    
+    #if 1
+    #define D(dummy, name, Name, tr, num, ...) \
+        void name(const medev2::mpi::name##_params& p) { \
+            MPI_Request proxy_req = MPI_Request(); \
+            medev2::mpi::i##name##_params nb_proxy_p{ \
+                MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS(num, __VA_ARGS__) \
+            ,   &proxy_req \
+            }; \
+            const auto proxy_req_ptr = \
+                this->execute_or_delegate_req_b( \
+                    command_code_type::i##name \
+                ,   &orig_mpi_facade_type::i##name \
+                ,   &proxy_params_type::i##name \
+                ,   nb_proxy_p \
+                ); \
+            this->req_pool_.deallocate(proxy_req_ptr); \
+        }
+    
+    MEDEV2_MPI_P2P_BLOCK_SEND_FUNCS(D, /*dummy*/) 
+    
+    #undef D
+    
+    void recv(const medev2::mpi::recv_params& p) {
+        MPI_Request proxy_req = MPI_Request();
+        medev2::mpi::irecv_params nb_proxy_p{
+            p.buf, p.count, p.datatype, p.source, p.tag, p.comm
+            // Note: p.status is not listed here.
+        ,   &proxy_req
+        };
+        const auto proxy_req_ptr =
+            this->execute_or_delegate_req_b(
+                command_code_type::irecv
+            ,   &orig_mpi_facade_type::irecv
+            ,   &proxy_params_type::irecv
+            ,   nb_proxy_p
+            );
+        
+        if (p.status != MPI_STATUS_IGNORE) {
+            *p.status = proxy_req_ptr->status;
+        }
+        
+        this->req_pool_.deallocate(proxy_req_ptr);
+    }
+    
+    #else
     
     #define D(dummy, name, Name, tr, num, ...) \
         void name(const medev2::mpi::name##_params& p) { \
@@ -203,6 +306,7 @@ public:
         this->irecv(nb_proxy_p);
         this->wait({ &proxy_req, p.status });
     }
+    #endif
     
     // blocking calls without non-blocking alternative
     
@@ -263,12 +367,35 @@ public:
         *proxy_p.outcount = outcount;
     }
     
+private:
+    struct wait_func {
+        proxy_request_type* proxy_req;
+        bool* is_blocked;
+        
+        bool operator () () const noexcept
+        {
+            auto expected = proxy_request_state_type::created;
+            
+            if (proxy_req->state.compare_exchange_strong(
+                expected
+            ,   proxy_request_state_type::waiting
+            ,   mefdn::memory_order_acq_rel
+            ,   mefdn::memory_order_relaxed
+            )) {
+                return true;
+            }
+            else {
+                *is_blocked = false;
+                return false;
+            }
+        }
+    };
+    
+public:
     void wait(const medev2::mpi::wait_params& proxy_p)
     {
         const auto proxy_req =
             this->to_proxy_request_pointer(*proxy_p.request);
-        
-        bool needs_wait = false;
         
         auto state = proxy_req->state.load(mefdn::memory_order_acquire);
         
@@ -278,20 +405,9 @@ public:
         else {
             MEFDN_ASSERT(state == proxy_request_state_type::created);
             
-            needs_wait =
-                proxy_req->state.compare_exchange_strong(
-                    state
-                ,   proxy_request_state_type::waiting
-                ,   mefdn::memory_order_acq_rel
-                ,   mefdn::memory_order_relaxed
-                );
-            
-            if (needs_wait) { MEFDN_ASSERT(state == proxy_request_state_type::created); }
-            else            { MEFDN_ASSERT(state == proxy_request_state_type::finished); }
-        }
-        
-        if (needs_wait) {
-            proxy_req->uv.wait();
+            // Block until the completion.
+            bool is_blocked = true;
+            proxy_req->uv.wait_with(wait_func{ proxy_req, &is_blocked });
         }
         
         if (proxy_p.status != MPI_STATUS_IGNORE) {
@@ -309,7 +425,14 @@ public:
     }
     
 private:
-    execute_imm_result execute_delegated(const qdlock_node_type& n)
+    struct del_exec_result {
+        bool    is_executed;
+        bool    is_active;
+        bool    needs_awake;
+        uncond_variable_type*   awake_uv;
+    };
+    
+    del_exec_result execute_delegated(const qdlock_node_type& n)
     {
         execute_imm_result ret = execute_imm_result();
         
@@ -323,6 +446,7 @@ private:
                     ,   &orig_mpi_facade_type::name \
                     ,   func.params.name \
                     ,   func.proxy_req \
+                    ,   false \
                     }(); \
                     break; \
                 }
@@ -347,27 +471,37 @@ private:
             }
         }
         
-        return ret;
+        return { ret.is_executed, ret.is_active, false, nullptr };
     }
     
     struct do_progress_result {
         bool is_active;
+        bool needs_awake;
+        uncond_variable_type* awake_uv;
     };
     
     do_progress_result do_progress()
     {
         MEFDN_LOG_VERBOSE("msg:Entering progress of proxy MPI.");
         
-        this->req_hld_.progress(this->orig_mf_, complete_request());
+        const auto ret =
+            this->req_hld_.progress(this->orig_mf_, complete_request());
+        
+        #ifdef MEQDC_MPI_ENABLE_STATIC_OFFLOADING
+        if (ret.num_ongoing == 0) {
+            this->orig_mf_.progress();
+        }
+        #endif
         
         MEFDN_LOG_VERBOSE("msg:Exiting progress of proxy MPI.");
         
-        return { this->is_active() };
+        return { this->is_active(), (ret.awake_uv != nullptr), ret.awake_uv};
     }
     
     struct complete_request
     {
-        void operator() (
+        MEFDN_NODISCARD
+        bool operator() (
             proxy_request_type* const   proxy_req
         ,   const MPI_Status&           status
         ) {
@@ -395,17 +529,19 @@ private:
                 else         { MEFDN_ASSERT(state == proxy_request_state_type::created); }
             }
             
-            if (waiting) {
-                // Wake the waiting thread.
-                // Prefer returning to the progress thread immediately.
-                proxy_req->uv.notify_signal();
-            }
+            // If there's a thread waiting for this request,
+            // the uncond variable of "proxy_req" is awaken by the callee.
+            return waiting;
         }
     };
     
     bool is_active() const noexcept
     {
+        #ifdef MEQDC_MPI_ENABLE_STATIC_OFFLOADING
+        return true;
+        #else
         return this->req_hld_.get_num_ongoing() > 0;
+        #endif
     }
     
     proxy_request_type* to_proxy_request_pointer(const MPI_Request req) {

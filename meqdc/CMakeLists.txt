@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(meqdc)
 
 set(MEQDC_MPI_ULT_ITF "MTH" CACHE STRING "Default ULT interface for meqdc-wrap-mpi")
+option(MEQDC_MPI_ENABLE_STATIC_OFFLOADING "Enable static offloading in MPI" FALSE)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/menps/meqdc/config.h)

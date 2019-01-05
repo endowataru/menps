@@ -64,6 +64,15 @@ public:
         delete pr_iface;
     }
     
+    ucs_status_t iface_progress(const medev2::ucx::uct::iface_progress_params& p)
+    {
+        // Do nothing.
+        
+        MEFDN_LOG_VERBOSE("msg:Called proxy UCT progress (do nothing).");
+        
+        return UCS_OK;
+    }
+    
     ucs_status_t ep_create(const medev2::ucx::uct::ep_create_params& p)
     {
         auto& pr_iface = *reinterpret_cast<proxy_iface_type*>(p.iface);

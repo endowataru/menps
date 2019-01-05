@@ -28,11 +28,17 @@ public:
         
         uncond_variable_type uv;
         
-        this->core_.lock_and_wait(
-            cur
-        ,   [&uv] (qdlock_node_type& n) { n.uv = &uv; }
-        ,   [&uv] { uv.wait(); }
-        );
+        const auto prev = this->core_.start_lock(cur);
+        
+        if (prev != nullptr) {
+            cur->uv = &uv;
+            uv.wait_with(
+                [this, prev, cur] {
+                    this->core_.set_next(prev, cur);
+                    return true;
+                }
+            );
+        }
     }
     
     void unlock()
@@ -40,27 +46,34 @@ public:
         auto& self = this->derived();
         auto& pool = self.get_pool();
         
-        if (const auto old_head = this->core_.try_unlock()) {
-            pool.deallocate(old_head);
+        const auto head = this->core_.get_head();
+        
+        if (this->core_.try_unlock(head)) {
+            pool.deallocate(head);
             return;
         }
         
         while (true) {
-            const auto old_head = this->core_.try_follow_head();
-            if (old_head != nullptr) {
-                const auto next_head = this->core_.get_head();
+            if (const auto next_head = this->core_.get_next_head(head)) {
+                this->core_.follow_head(head, next_head);
                 
                 MEFDN_ASSERT(next_head->uv != nullptr);
                 // Awake the next thread.
+                #ifdef MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
                 // Prefer executing the next thread immediately.
                 next_head->uv->notify_enter();
+                #else
+                next_head->uv->notify_signal();
+                #endif
                 
-                pool.deallocate(old_head);
+                pool.deallocate(head);
                 
                 return;
             }
             
+            #if 0
             ult_itf_type::this_thread::yield();
+            #endif
         }
     }
     

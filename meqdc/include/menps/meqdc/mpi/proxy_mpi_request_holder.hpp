@@ -14,6 +14,8 @@ class proxy_mpi_request_holder
     using orig_mpi_facade_type = typename P::orig_mpi_facade_type;
     using proxy_request_type = typename P::proxy_request_type;
     using size_type = typename P::size_type;
+    using ult_itf_type = typename P::ult_itf_type;
+    using uncond_variable_type = typename ult_itf_type::uncond_variable;
     
 public:
     proxy_mpi_request_holder()
@@ -45,8 +47,14 @@ public:
         );
     }
     
-    template <typename ProgFunc>
-    size_type progress(orig_mpi_facade_type& orig_mf, ProgFunc prog_func)
+    struct progress_result {
+        size_type               num_ongoing;
+        size_type               num_completed;
+        uncond_variable_type*   awake_uv;
+    };
+    
+    template <typename CompFunc>
+    progress_result progress(orig_mpi_facade_type& orig_mf, CompFunc comp_func)
     {
         const auto num_reqs = this->num_reqs_;
         
@@ -54,7 +62,7 @@ public:
             MEFDN_LOG_VERBOSE(
                 "msg:No request for progress in proxy MPI"
             );
-            return 0;
+            return { 0, 0, nullptr };
         }
         
         const auto incount = static_cast<int>(num_reqs);
@@ -72,15 +80,25 @@ public:
                 "num_reqs:{}"
             ,   num_reqs
             );
-            return 0;
+            return { num_reqs, 0, nullptr };
         }
+        
+        uncond_variable_type* awake_uv = nullptr;
         
         for (size_type i = 0; i < num_completed; ++i) {
             const auto index = static_cast<size_type>(this->indices_[i]);
             MEFDN_LOG_VERBOSE("msg:Found completion.\tindex:{}", index);
             MEFDN_ASSERT(0 <= index && index < num_reqs);
             
-            prog_func(this->proxy_reqs_[index], this->statuses_[index]);
+            auto& proxy_req = this->proxy_reqs_[index];
+            const bool waiting = comp_func(proxy_req, this->statuses_[index]);
+            
+            if (waiting) {
+                if (awake_uv != nullptr) {
+                    awake_uv->notify_signal();
+                }
+                awake_uv = &proxy_req->uv;
+            }
         }
         
         size_type num_ongoing = 0;
@@ -107,7 +125,7 @@ public:
         ,   num_completed
         );
         
-        return num_completed;
+        return { num_reqs, num_completed, awake_uv };
     }
     
     size_type get_num_ongoing() const noexcept

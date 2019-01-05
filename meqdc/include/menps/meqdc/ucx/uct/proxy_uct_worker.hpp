@@ -23,6 +23,7 @@ class proxy_uct_worker
     using proxy_params_type = typename P::proxy_params_type;
     
     using ult_itf_type = typename P::ult_itf_type;
+    using uncond_variable_type = typename ult_itf_type::uncond_variable;
     
     using size_type = typename P::size_type;
     
@@ -164,6 +165,8 @@ private:
     {
         bool is_executed;
         bool is_active;
+        bool needs_wait;
+        uncond_variable_type* wait_uv;
     };
     
     template <typename Params>
@@ -195,6 +198,8 @@ private:
             return {
                 st != UCS_ERR_NO_RESOURCE
             ,   self.is_active()
+            ,   false // TODO
+            ,   nullptr
             };
         }
     };
@@ -247,7 +252,7 @@ private:
             
             *ret_st = st;
             
-            return { true, self.is_active() };
+            return { true, self.is_active(), false, nullptr };
         }
     };
     
@@ -271,8 +276,13 @@ private:
             
             *ret_st = st;
             
-            return { true, self.is_active() };
+            return { true, self.is_active(), false, nullptr };
         }
+    };
+    
+    struct delegate_result {
+        bool                    needs_wait;
+        uncond_variable_type*   wait_uv;
     };
     
     template <typename Params>
@@ -282,10 +292,11 @@ private:
         Params proxy_params_type::*mem;
         const Params& proxy_p;
         
-        void operator() (qdlock_node_type& cur)
+        delegate_result operator() (qdlock_node_type& cur)
         {
             cur.func.code = code;
             cur.func.params.*mem = proxy_p;
+            return { false, nullptr };
         }
     };
     
@@ -356,11 +367,18 @@ public:
     #undef D
     
 private:
+    struct del_exec_result {
+        bool    is_executed;
+        bool    is_active;
+        bool    needs_awake;
+        uncond_variable_type*   awake_uv;
+    };
+    
     struct execute_delegated
     {
         proxy_uct_worker& self;
         
-        execute_imm_result operator() (const qdlock_node_type& n) const
+        del_exec_result operator() (const qdlock_node_type& n) const
         {
             execute_imm_result ret = execute_imm_result();
             ucs_status_t st = UCS_OK;
@@ -408,12 +426,14 @@ private:
                 throw medev2::ucx::ucx_error("error in offloading", st);
             }
             
-            return ret;
+            return { ret.is_executed, ret.is_active, false, nullptr };
         }
     };
     
     struct do_progress_result {
         bool is_active;
+        bool needs_awake;
+        uncond_variable_type* awake_uv;
     };
     
     struct do_progress
@@ -426,7 +446,7 @@ private:
                 // Poll until there are completions
             }
             
-            return { self.is_active() };
+            return { self.is_active(), false, nullptr };
         }
     };
     

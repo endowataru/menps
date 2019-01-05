@@ -40,29 +40,25 @@ public:
         );
     }
     
+    void set_finished()
+    {
+        this->finished_.store(true);
+    }
+    
     void stop()
     {
         if (th_.joinable())
         {
-            this->finished_.store(true);
-            
-            this->uv_.notify();
+            MEFDN_ASSERT(this->finished_.load());
             
             this->th_.join();
+            
+            this->finished_.store(false);
         }
     }
     
-    void notify()
-    {
-        this->uv_.notify();
-    }
-    void notify_enter()
-    {
-        this->uv_.notify_enter();
-    }
-    void notify_signal()
-    {
-        this->uv_.notify_signal();
+    uncond_variable_type& get_uv() noexcept {
+        return this->uv_;
     }
     
 private:
@@ -78,11 +74,7 @@ private:
             
             while (!self.finished_.load(mefdn::memory_order_relaxed))
             {
-                if (!func()) {
-                    MEFDN_LOG_VERBOSE("msg:Qdlock thread starts to sleep.");
-                    self.uv_.wait();
-                    MEFDN_LOG_VERBOSE("msg:Qdlock thread resumed.");
-                }
+                func();
             }
         }
     };
