@@ -9,6 +9,8 @@
 #include <menps/meult/qd/qdlock_delegator.hpp>
 #include <menps/medev2/mpi/mpi_itf_id.hpp>
 #include <menps/medev2/mpi/direct_mpi_facade.hpp>
+#include <menps/meult/basic_numbered_pool.hpp>
+#include <menps/meult/basic_balanced_tls_pool.hpp>
 
 namespace menps {
 namespace meqdc {
@@ -77,6 +79,19 @@ struct proxy_mpi_request_pool_policy
     using element_type = proxy_mpi_request<P>;
     using ult_itf_type = typename P::ult_itf_type;
     using size_type = typename P::size_type;
+    
+    #ifdef MEULT_ENABLE_BALANCED_POOL
+    using base_pool_type =
+        meult::basic_balanced_tls_pool<proxy_mpi_request_pool_policy>;
+    
+    template <typename Node>
+    static void deallocate(Node* const n) {
+        // Note: No need to call "delete" here for basic_numbered_pool.
+    }
+    static size_type get_pool_threshold(base_pool_type& /*pool*/) {
+        return MEULT_BALANCED_POOL_MAX_ENTRIES;
+    }
+    #endif
 };
 
 template <typename P>
@@ -105,8 +120,14 @@ struct proxy_mpi_policy
     
     using proxy_request_type = proxy_mpi_request<policy_base_type>;
     using proxy_request_state_type = proxy_mpi_request_state;
+    
+    #ifdef MEULT_ENABLE_BALANCED_POOL
+    using request_pool_type =
+        meult::basic_numbered_pool<proxy_mpi_request_pool_policy<policy_base_type>>;
+    #else
     using request_pool_type =
         meult::basic_numbered_tls_pool<proxy_mpi_request_pool_policy<policy_base_type>>;
+    #endif
     using request_holder_type = proxy_mpi_request_holder<proxy_mpi_policy>;
     using command_code_type = proxy_mpi_code;
     using proxy_params_type = proxy_mpi_params;

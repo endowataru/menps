@@ -5,9 +5,13 @@
 #include <menps/meqdc/ucx/uct/proxy_uct_worker.hpp>
 #include <menps/meqdc/ucx/uct/proxy_uct_iface.hpp>
 #include <menps/meqdc/ucx/uct/proxy_uct_endpoint.hpp>
-#include <menps/meuct/proxy_completion_pool.hpp>
 #include <menps/meult/qd/qdlock_delegator.hpp>
 #include <menps/medev2/ucx/uct/uct_policy.hpp>
+#ifdef MEULT_ENABLE_BALANCED_POOL
+#include <menps/meult/basic_balanced_tls_pool.hpp>
+#else
+#include <menps/meult/basic_tls_pool.hpp>
+#endif
 
 namespace menps {
 namespace meqdc {
@@ -66,6 +70,28 @@ public:
 };
 
 template <typename OrigUctItf, typename UltItf>
+struct proxy_uct_facade_policy;
+
+template <typename OrigUctItf, typename UltItf>
+struct proxy_uct_completion_pool_policy {
+    using element_type = proxy_uct_completion<proxy_uct_facade_policy<OrigUctItf, UltItf>>;
+    using ult_itf_type = UltItf;
+    using size_type = mefdn::size_t;
+    
+    #ifdef MEULT_ENABLE_BALANCED_POOL
+    template <typename Node>
+    static void deallocate(Node* const n) {
+        delete n;
+    }
+    static size_type get_pool_threshold(
+        meult::basic_balanced_tls_pool<proxy_uct_completion_pool_policy>& /*pool*/
+    ) {
+        return MEULT_BALANCED_POOL_MAX_ENTRIES;
+    }
+    #endif
+};
+
+template <typename OrigUctItf, typename UltItf>
 struct proxy_uct_facade_policy
 {
     using orig_uct_itf_type = OrigUctItf;
@@ -76,7 +102,11 @@ struct proxy_uct_facade_policy
     
     using proxy_completion_type = proxy_uct_completion<proxy_uct_facade_policy>;
     using proxy_completion_pool_type =
-        meuct::proxy_completion_pool<proxy_uct_facade_policy>;
+    #ifdef MEULT_ENABLE_BALANCED_POOL
+        meult::basic_balanced_tls_pool<proxy_uct_completion_pool_policy<OrigUctItf, UltItf>>;
+    #else
+        meult::basic_tls_pool<proxy_uct_completion_pool_policy<OrigUctItf, UltItf>>;
+    #endif
     
     using ult_itf_type = UltItf;
     using size_type = mefdn::size_t;

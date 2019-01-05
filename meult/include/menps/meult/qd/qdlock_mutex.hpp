@@ -6,6 +6,7 @@
 #include <menps/meult/qd/basic_qdlock_core.hpp>
 #include <menps/meult/qd/basic_qdlock_mutex.hpp>
 #include <menps/mefdn/container/intrusive_forward_list.hpp>
+#include <menps/meult/basic_balanced_tls_pool.hpp>
 
 namespace menps {
 namespace meult {
@@ -18,11 +19,30 @@ struct qdlock_mutex_node
 };
 
 template <typename UltItf>
+struct qdlock_mutex_pool_policy {
+    using element_type = qdlock_mutex_node<UltItf>;
+    using ult_itf_type = UltItf;
+    using size_type = mefdn::size_t;
+    
+    template <typename Node>
+    static void deallocate(Node* const n) {
+        delete n;
+    }
+    static size_type get_pool_threshold(basic_balanced_tls_pool<qdlock_mutex_pool_policy>&) {
+        return MEULT_BALANCED_POOL_MAX_ENTRIES;
+    }
+};
+
+template <typename UltItf>
 struct qdlock_mutex_policy_base
 {
     using policy_type = qdlock_mutex_policy_base<UltItf>;
     
+    #ifdef MEULT_ENABLE_BALANCED_POOL
+    using qdlock_pool_type = basic_balanced_tls_pool<qdlock_mutex_pool_policy<UltItf>>;
+    #else
     using qdlock_pool_type = basic_qdlock_pool<policy_type>;
+    #endif
     using qdlock_core_type = basic_qdlock_core<policy_type>;
     using qdlock_node_type = qdlock_mutex_node<UltItf>;
     using qdlock_thread_type = uncond_qdlock_thread<policy_type>;
