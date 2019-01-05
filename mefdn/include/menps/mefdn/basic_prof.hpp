@@ -87,6 +87,10 @@ public:
         // Do nothing.
     }
     
+    static void add(const prof_kind_type /*k*/, mefdn::cpu_clock_t /*c*/) {
+        // Do nothing.
+    }
+    
     static std::string to_string(const char* const /*head*/) {
         return "";
     }
