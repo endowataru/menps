@@ -4,9 +4,6 @@
 #include <menps/mecom2/com/uct/basic_uct_worker_set.hpp>
 #include <menps/mecom2/com/basic_worker_selector.hpp>
 #include <menps/medev2/ucx/uct/uct_policy.hpp>
-#ifdef MECOM2_USE_MEUCT
-    #include <menps/meuct/meuct.hpp>
-#endif
 
 namespace menps {
 namespace mecom2 {

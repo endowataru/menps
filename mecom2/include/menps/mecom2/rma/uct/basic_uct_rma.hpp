@@ -5,21 +5,6 @@
 #include <menps/mecom2/rma/rma_alloc_buf_copier.hpp>
 #include <menps/medev2/ucx/uct/uct.hpp>
 #include <cstring>
-#ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-    #include <menps/mecom2/com/com_signal_state.hpp>
-#endif
-
-#ifndef MECOM2_USE_MEUCT
-    #define MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
-#endif
-#if (!defined(MECOM2_USE_MEUCT) || defined(MEDEV2_AVOID_SWITCH_IN_SIGNAL))
-    // If MECOM2_USE_MEUCT is off, explicit progress is required.
-    // If MEDEV2_AVOID_SWITCH_IN_SIGNAL is on,
-    // using uncond var in signal handler is prohibited.
-    #define MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
-#endif
-
-#define MECOM2_AVOID_UCT_DEADLOCK
 
 namespace menps {
 namespace mecom2 {
@@ -44,6 +29,8 @@ class basic_uct_rma
     
     using rkey_info_type = typename P::rkey_info_type;
     
+    using completion_type = typename P::completion_type;
+    
     struct write_arg {
         const void* src_ptr;
         size_type   num_bytes;
@@ -56,113 +43,6 @@ class basic_uct_rma
         return arg.num_bytes;
     }
     
-    #ifdef MECOM2_AVOID_UCT_DEADLOCK
-    enum class completion_state
-    {
-        created = 1
-    ,   waiting
-    ,   finished
-    };
-    #endif
-    
-    struct completion
-        : uct_completion_t
-    {
-        completion()
-            : uct_completion_t{ &on_complete, 1 }
-        { }
-        
-        #ifdef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
-        mefdn::atomic<bool> flag{false};
-        #else
-        #ifdef MECOM2_AVOID_UCT_DEADLOCK
-        mefdn::atomic<completion_state> state{completion_state::created};
-        #endif
-        typename ult_itf_type::uncond_variable uv;
-        #endif
-        
-        #ifndef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
-        void wait()
-        {
-            #ifdef MECOM2_AVOID_UCT_DEADLOCK
-            bool needs_wait = false;
-            
-            auto st = this->state.load(mefdn::memory_order_acquire);
-            
-            if (st != completion_state::finished) {
-                MEFDN_ASSERT(st == completion_state::created);
-                
-                needs_wait =
-                    this->state.compare_exchange_strong(
-                        st
-                    ,   completion_state::waiting
-                    ,   mefdn::memory_order_acq_rel
-                    ,   mefdn::memory_order_relaxed
-                    );
-            }
-            
-            if (needs_wait) {
-                this->uv.wait();
-            }
-            
-            #else
-            this->uv.wait();
-            #endif
-        }
-        #endif
-        
-    private:
-        static void on_complete(
-            uct_completion_t* const comp
-        ,   const ucs_status_t      status MEFDN_MAYBE_UNUSED
-        ) {
-            // Static downcast.
-            auto& self = *static_cast<completion*>(comp);
-            
-            MEFDN_LOG_VERBOSE(
-                "msg:Completion function was called.\t"
-                "self:0x{:x}\t"
-                "count:{}\t"
-                "status:{}\t"
-            ,   reinterpret_cast<mefdn::intptr_t>(&self)
-            ,   self.count
-            ,   status
-            );
-            
-            #ifdef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
-            self.flag.store(true, mefdn::memory_order_release);
-            
-            #else
-            #ifdef MECOM2_AVOID_UCT_DEADLOCK
-            auto st = self.state.load(mefdn::memory_order_acquire);
-            
-            bool waiting = (st == completion_state::waiting);
-            
-            if (!waiting) {
-                MEFDN_ASSERT(st == completion_state::created);
-                
-                waiting =
-                    ! self.state.compare_exchange_strong(
-                        st
-                    ,   completion_state::finished
-                    ,   mefdn::memory_order_acq_rel
-                    ,   mefdn::memory_order_relaxed
-                    );
-            }
-            
-            if (waiting) {
-                // Prefer returning to the progress thread immediately.
-                self.uv.notify_signal();
-            }
-            
-            #else
-            // Prefer returning to the progress thread immediately.
-            self.uv.notify_signal();
-            #endif
-            #endif
-        }
-    };
-    
 public:
     void untyped_write(
         const proc_id_type              dest_proc
@@ -174,7 +54,7 @@ public:
         auto info = self.lock_rma(dest_proc, dest_rptr);
         
         #if 1
-        completion comp;
+        completion_type comp;
         
         uct_iov iov = uct_iov();
         iov.buffer = const_cast<void*>(src_lptr.get());
@@ -194,7 +74,7 @@ public:
             ,   1
             ,   dest_rptr.get_addr()
             ,   info.rkey.get().rkey
-            ,   &comp
+            ,   comp.get_ptr()
             );
         }
         
@@ -226,7 +106,7 @@ public:
         auto& self = this->derived();
         auto info = self.lock_rma(src_proc, src_rptr);
         
-        completion comp;
+        completion_type comp;
         
         ucs_status_t st = UCS_OK;
         
@@ -251,7 +131,7 @@ public:
                 ,   1
                 ,   src_rptr.get_addr()
                 ,   info.rkey.get().rkey
-                ,   &comp
+                ,   comp.get_ptr()
                 );
             }
         }
@@ -263,7 +143,7 @@ public:
             ,   num_bytes
             ,   src_rptr.get_addr()
             ,   info.rkey.get().rkey
-            ,   &comp
+            ,   comp.get_ptr()
             );
         }
         
@@ -285,7 +165,7 @@ public:
         auto& self = this->derived();
         auto info = self.lock_rma(target_proc, target_rptr);
         
-        completion comp;
+        completion_type comp;
         
         ucs_status_t st = UCS_OK;
         {
@@ -299,7 +179,7 @@ public:
             ,   target_rptr.get_addr()  // remote_addr
             ,   info.rkey.get().rkey    // rkey
             ,   result_lptr             // result
-            ,   &comp                   // comp
+            ,   comp.get_ptr()          // comp
             );
         }
         
@@ -312,40 +192,13 @@ private:
     void wait(
         const rkey_info_type&   info MEFDN_MAYBE_UNUSED
     ,   const ucs_status_t      st
-    ,   completion* const       comp
+    ,   completion_type* const  comp
     ) {
         if (st == UCS_OK) {
             return;
         }
         
-        #ifdef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
-        while (true)
-        {
-            if (comp->flag.load(mefdn::memory_order_acquire)) {
-                break;
-            }
-            
-            #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-            if (! com_signal_state::is_in_signal()) {
-                ult_itf_type::this_thread::yield();
-            }
-            #else
-            ult_itf_type::this_thread::yield();
-            #endif
-            
-            {
-                #ifdef MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
-                mefdn::lock_guard<spinlock_type> lk(info.lock);
-                #endif
-                
-                while (info.iface.progress() != 0) {
-                    // Poll until there are completions
-                }
-            }
-        }
-        #else
-        comp->wait();
-        #endif
+        comp->wait(info);
     }
     
     void flush(
@@ -356,7 +209,7 @@ private:
             return;
         }
         
-        completion comp;
+        completion_type comp;
         
         const auto ret =
             info.ep.flush(UCT_FLUSH_FLAG_LOCAL, &comp);

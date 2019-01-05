@@ -4,10 +4,6 @@
 #include <menps/mecom2/common.hpp>
 #include <menps/medev2/ucx/uct/uct.hpp>
 
-#ifndef MECOM2_USE_MEUCT
-    #define MECOM2_UCT_RMA_ENABLE_CONCURRENT_LIMIT
-#endif
-
 namespace menps {
 namespace mecom2 {
 

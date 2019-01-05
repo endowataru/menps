@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/rma/rma_itf_id.hpp>
+#include <menps/mecom2/rma/uct/basic_uct_completion.hpp>
 #include <menps/mecom2/rma/uct/basic_uct_rma.hpp>
 #include <menps/mecom2/rma/uct/basic_uct_rma_alloc.hpp>
 #include <menps/mecom2/rma/basic_public_rma_ptr.hpp>
@@ -248,6 +249,25 @@ struct uct_rkey_info
 };
 
 
+template <typename UctItf>
+struct uct_completion_policy
+{
+    enum class comp_state_type
+    {
+        created = 1
+    ,   waiting
+    ,   finished
+    };
+    
+    using atomic_comp_state_type = mefdn::atomic<comp_state_type>;
+    
+    using uct_itf_type = UctItf;
+    using ult_itf_type = typename UctItf::ult_itf_type;
+    
+    using rkey_info_type = uct_rkey_info<UctItf>;
+};
+
+
 template <typename T>
 struct uct_rma_element_type_of
     : mefdn::type_identity<typename T::element_type>
@@ -294,6 +314,8 @@ struct uct_rma_policy
     using worker_set_type = uct_worker_set<uct_worker_set_policy<UctItf>>;
     
     using uct_rkey_info_type = uct_rkey_info<UctItf>;
+    
+    using completion_type = basic_uct_completion<uct_completion_policy<UctItf>>;
     
     template <typename U, typename Ptr>
     static auto static_cast_to(const Ptr& ptr)
