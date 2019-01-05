@@ -15,8 +15,6 @@ option(MECOM2_USE_WORKER_LOCAL_ALLOCATOR "Use worker-local RMA allocator" TRUE)
 
 option(MECOM2_AVOID_MPI_WAIT "Avoid using MPI_Wait()" FALSE)
 
-option(MECOM2_USE_QDLOCK "Use qdlock for communication" FALSE)
-
 set(MECOM2_RMA_UCT_GET_ZCOPY_SIZE "64" CACHE STRING "Threshold size for uct_ep_get_zcopy()")
 
 # Generate config.h

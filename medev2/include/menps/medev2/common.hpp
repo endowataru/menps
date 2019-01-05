@@ -4,6 +4,10 @@
 #include <menps/mefdn/lang.hpp>
 #include <menps/medev2/config.h>
 
+#ifdef MEDEV2_USE_QDLOCK
+    #include <menps/meult/qd/qdlock_mutex.hpp>
+#endif
+
 #define MEDEV2_EXPAND_PARAMS_1(i, X, XL, t0, a0)       XL(i, t0, a0)
 #define MEDEV2_EXPAND_PARAMS_2(i, X, XL, t0, a0, ...)  X(i, t0, a0) MEDEV2_EXPAND_PARAMS_1(i+1, X, XL, __VA_ARGS__)
 #define MEDEV2_EXPAND_PARAMS_3(i, X, XL, t0, a0, ...)  X(i, t0, a0) MEDEV2_EXPAND_PARAMS_2(i+1, X, XL, __VA_ARGS__)
