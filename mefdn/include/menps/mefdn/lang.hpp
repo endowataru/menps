@@ -106,6 +106,8 @@
     #define MEFDN_ALWAYS_INLINE     inline
 #endif
 
+#define MEFDN_NOINLINE      __attribute__((noinline))
+
 #define MEFDN_MAY_ALIAS     __attribute__((may_alias))
 
 #define MEFDN_LIKELY(x)     __builtin_expect(!!(x), 1)
