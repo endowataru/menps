@@ -31,12 +31,7 @@ public:
         
         const auto mtx = lk.release();
         
-        e.uv.wait_with(
-            [mtx] () {
-                mtx->unlock();
-                return true;
-            }
-        );
+        mtx->unlock_and_wait(e.uv);
         
         // Lock again here.
         lk = qdlock_unique_lock_type(*mtx);

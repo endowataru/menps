@@ -77,6 +77,63 @@ public:
         }
     }
     
+    void unlock_and_wait(uncond_variable_type& saved_uv)
+    {
+        auto& self = this->derived();
+        auto& pool = self.get_pool();
+        
+        const auto head = this->core_.get_head();
+        
+        if (this->core_.is_unlockable(head)) {
+            bool is_unlocked = true;
+            saved_uv.wait_with(try_unlock_functor{ self, head, &is_unlocked });
+            
+            if (is_unlocked) { return; }
+        }
+        
+        while (true) {
+            if (const auto next_head = this->core_.get_next_head(head)) {
+                this->core_.follow_head(head, next_head);
+                
+                pool.deallocate(head);
+                
+                MEFDN_ASSERT(next_head->uv != nullptr);
+                // Awake the next thread.
+                saved_uv.swap(*next_head->uv);
+                
+                return;
+            }
+        }
+    }
+    
+private:
+    struct try_unlock_functor
+    {
+        derived_type&       self;
+        qdlock_node_type*   head;
+        bool*               is_unlocked;
+        
+        MEFDN_NODISCARD
+        bool operator() () {
+            // Try to unlock the mutex to suspend.
+            if (this->self.core_.try_unlock(this->head)) {
+                // Important: This thread already released the lock here.
+                
+                auto& pool = this->self.get_pool();
+                // Release the resource.
+                pool.deallocate(this->head);
+                
+                return true;
+            }
+            else {
+                // Reset this flag.
+                *this->is_unlocked = false;
+                
+                return false;
+            }
+        }
+    };
+    
 protected:
     qdlock_core_type    core_;
 };
