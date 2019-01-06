@@ -57,6 +57,8 @@ public:
             if (const auto next_head = this->core_.get_next_head(head)) {
                 this->core_.follow_head(head, next_head);
                 
+                pool.deallocate(head);
+                
                 MEFDN_ASSERT(next_head->uv != nullptr);
                 // Awake the next thread.
                 #ifdef MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
@@ -65,8 +67,6 @@ public:
                 #else
                 next_head->uv->notify_signal();
                 #endif
-                
-                pool.deallocate(head);
                 
                 return;
             }
