@@ -66,8 +66,8 @@ int main(int argc, char ** argv)
             printf("OK\n");
             printf("%ld thread creation/join in %.9f sec (%.3f per sec)\n",
                     nthreads, dt, nthreads / dt);
-            printf("\%e sec per barrier, ", dt / (nthreads * n_per_th));
-            printf("\%e barriers per sec\n", (nthreads * n_per_th) / dt);
+            printf("\%e sec per barrier, ", dt / n_per_th);
+            printf("\%e barriers per sec\n", n_per_th / dt);
         } else {
             printf("NG\n");
             return 1;
