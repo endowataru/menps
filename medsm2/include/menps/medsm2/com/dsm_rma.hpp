@@ -54,6 +54,16 @@ struct dsm_rma_info<mecom2::rma_itf_id_t::MPI, P>
     }
 };
 
+inline int get_procs_per_node() {
+    if (const auto str = std::getenv("MEDSM2_NUM_PROCS_PER_NODE")) {
+        const auto ret = std::atoi(str);
+        MEFDN_ASSERT(ret > 0);
+        return ret;
+    }
+    else
+        return 1;
+}
+
 template <typename P>
 struct dsm_rma_info<mecom2::rma_itf_id_t::UCT, P>
 {
@@ -67,10 +77,25 @@ struct dsm_rma_info<mecom2::rma_itf_id_t::UCT, P>
     template <typename Coll>
     explicit dsm_rma_info(mpi_facade_type& /*mf*/, Coll& coll)
     {
+        const auto procs_per_node =
+            static_cast<mefdn::size_t>(get_procs_per_node());
+        
         // TODO
         const char tl_name[] = "rc_mlx5";
         //const char tl_name[] = "rc";
+        #if 1
+        const auto hca_num = coll.this_proc_id() % procs_per_node;
+        const auto dev_name_str = fmt::format("mlx5_{}:1", hca_num);
+        const auto dev_name = dev_name_str.c_str();
+        #else
         const char dev_name[] = "mlx5_0:1";
+        #endif
+        
+        MEFDN_LOG_DEBUG(
+            "msg:Set up UCT."
+            "dev_name:{}"
+        ,   dev_name
+        );
         
         rma_res = mecom2::make_uct_rma_resource<uct_itf_type>(tl_name, dev_name, coll);
         rma = rma_res->rma.get();
