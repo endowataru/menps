@@ -19,6 +19,12 @@ namespace medsm2 {
     x(tx_merge) \
     x(end_tx) \
     x(unlock_global) \
+    x(tx_merge_memcmp) \
+    x(tx_merge_local_memcpy) \
+    x(tx_merge_remote_memcpy) \
+    x(write_merge_simd) \
+    x(write_merge_byte) \
+    x(read_merge) \
     x(barrier_allgather) \
     x(barrier_acq) \
     x(push_wn) \
@@ -27,7 +33,12 @@ namespace medsm2 {
     x(merge_read) \
     x(wn_read) \
     x(read_upgrade) \
-    x(write_upgrade)
+    x(write_upgrade) \
+    x(mprotect_invalidate) \
+    x(mprotect_start_read) \
+    x(mprotect_start_write) \
+    x(mprotect_tx_before) \
+    x(mprotect_tx_after)
 
 #define DEFINE_PROF_KIND(name) name,
 

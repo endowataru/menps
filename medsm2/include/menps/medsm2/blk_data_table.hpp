@@ -143,8 +143,12 @@ public:
             #endif
         }
         
+        const auto p = prof::start();
+        
         // Call mprotect(PROT_READ).
         self.set_readonly(blk_pos, blk_size);
+        
+        prof::finish(prof_kind::mprotect_start_read, p);
     }
     
     void start_write(
@@ -171,8 +175,12 @@ public:
             prof::finish(prof_kind::start_write_twin, p);
         }
         
+        const auto p = prof::start();
+        
         // Call mprotect(PROT_READ | PROT_WRITE).
         self.set_writable(blk_pos, blk_size);
+        
+        prof::finish(prof_kind::mprotect_start_write, p);
     }
     
     struct release_merge_result {
@@ -199,8 +207,12 @@ public:
             // this method write-protects this block
             // in order to apply the changes to the private data.
             
+            const auto p = prof::start();
+            
             // Call mprotect(PROT_READ).
             self.set_readonly(blk_pos, blk_size);
+            
+            prof::finish(prof_kind::mprotect_tx_before, p);
         }
         
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
@@ -215,8 +227,12 @@ public:
             // It's OK to read the intermediate states
             // because those writes will be managed by the next release operation.
             if (glk_ret.needs_local_comp){
+                const auto p = prof::start();
+                
                 is_written = std::memcmp(my_priv, my_pub, blk_size) != 0;
                 //std::equal(my_priv, my_priv + blk_size, my_pub)
+                
+                prof::finish(prof_kind::tx_merge_memcmp, p);
             }
             else {
                 is_written = true;
@@ -228,9 +244,13 @@ public:
             if (is_written) {
             #endif
                 if (glk_ret.needs_local_copy) {
+                    const auto p = prof::start();
+                    
                     // Copy the private data to the public data.
                     std::memcpy(my_pub, my_priv, blk_size);
                     //std::copy(my_priv, my_priv + blk_size, my_pub);
+                    
+                    prof::finish(prof_kind::tx_merge_local_memcpy, p);
                 }
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             }
@@ -279,6 +299,8 @@ public:
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             }
             else {
+                const auto p = prof::start();
+                
                 // Although this process doesn't release this block at this time,
                 // the buffer read from the current owner can be utilized.
                 // This is important when an acquire on this block is on-going
@@ -289,16 +311,22 @@ public:
                 //std::copy(other_data, other_data + blk_size, my_priv);
                 std::memcpy(my_pub , other_data, blk_size);
                 //std::copy(other_data, other_data + blk_size, my_pub);
+                
+                prof::finish(prof_kind::tx_merge_remote_memcpy, p);
             }
             #endif
         }
         
         if (glk_ret.needs_protect_after) {
+            const auto p = prof::start();
+            
             // If this block was inaccessible (invalid-clean or invalid-dirty) from the application,
             // make the block readable now.
             
             // Call mprotect(PROT_READ).
             self.set_readonly(blk_pos, blk_size);
+            
+            prof::finish(prof_kind::mprotect_tx_after, p);
         }
         
         return { is_written };
@@ -312,8 +340,12 @@ public:
         self.check_locked(blk_pos, lk);
         const auto blk_size = self.get_blk_size();
         
+        const auto p = prof::start();
+        
         // Call mprotect(PROT_NONE).
         self.set_inaccessible(blk_pos, blk_size);
+        
+        prof::finish(prof_kind::mprotect_invalidate, p);
     }
     
     // This function is used to implement atomic operations.
@@ -385,6 +417,8 @@ private:
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
     ) {
+        const auto p = prof::start();
+        
         for (size_type i = 0; i < blk_size; ++i) {
             #ifdef MEDSM2_USE_COMPARE_DIFF
             if (my_priv[i] != my_pub[i]) {
@@ -410,6 +444,8 @@ private:
             my_pub[i] = home_pub[i];
             #endif
         }
+        
+        prof::finish(prof_kind::read_merge, p);
     }
     
     static void write_merge(
@@ -422,11 +458,19 @@ private:
     ) {
         #ifdef MEDSM2_USE_SIMD_DIFF
         if (use_simd) {
+            const auto p = prof::start();
+            
             write_merge_simd(blk_pos, other_pub, my_priv, my_pub, blk_size);
+            
+            prof::finish(prof_kind::write_merge_simd, p);
         }
         else {
         #endif
+            const auto p = prof::start();
+            
             write_merge_byte(blk_pos, other_pub, my_priv, my_pub, blk_size);
+            
+            prof::finish(prof_kind::write_merge_byte, p);
         #ifdef MEDSM2_USE_SIMD_DIFF
         }
         #endif
