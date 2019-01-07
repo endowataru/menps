@@ -7,6 +7,7 @@ set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
 # Options
 option(MEULT_ENABLE_MTH "Build MassiveThreads" ON)
+option(MEULT_ENABLE_MTH_WORKER_CACHE "Enable caching for worker numbers" ON)
 option(MEULT_ENABLE_MTH_UNCOND_ENTER "Enable myth_uncond_enter" ON)
 option(MEULT_ENABLE_BALANCED_POOL "Use balanced memory pool" ON)
 set(MEULT_BALANCED_POOL_MAX_ENTRIES 128 CACHE STRING "Max of entries pooled for remote workers")

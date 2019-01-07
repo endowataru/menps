@@ -104,10 +104,23 @@ struct ult_policy
         );
     }
     
+    #ifdef MEULT_ENABLE_MTH_WORKER_CACHE
+    static mefdn::size_t get_worker_num() noexcept
+    {
+        static MEFDN_THREAD_LOCAL mefdn::size_t wk_num_ = 0;
+        auto wk_num = wk_num_;
+        if (MEFDN_UNLIKELY(wk_num == 0)) {
+            wk_num = static_cast<mefdn::size_t>(myth_get_worker_num())+1;
+            wk_num_ = wk_num;
+        }
+        return wk_num-1;
+    }
+    #else
     static mefdn::size_t get_worker_num() noexcept
     {
         return myth_get_worker_num();
     }
+    #endif
     static mefdn::size_t get_num_workers() noexcept
     {
         return mth::get_num_workers();
