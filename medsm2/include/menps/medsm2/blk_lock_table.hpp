@@ -3,6 +3,7 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/assert.hpp>
+#include <menps/medsm2/prof.hpp>
 
 //#define MEDSM2_CHECK_VALID_LOCKED_LINKS
 
@@ -433,7 +434,11 @@ public:
         // This process isn't locking this block.
         MEFDN_ASSERT(lock_val != this->make_locked_lock_val(this_proc));
         
-        return lock_val == this->make_owned_lock_val(this_proc);
+        const auto ret = lock_val == this->make_owned_lock_val(this_proc);
+        if (!ret) {
+            prof::add(prof_kind::tx_migrate, 1);
+        }
+        return ret;
     }
     
 private:

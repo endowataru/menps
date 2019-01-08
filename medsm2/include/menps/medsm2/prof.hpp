@@ -19,6 +19,7 @@ namespace medsm2 {
     x(tx_merge) \
     x(end_tx) \
     x(unlock_global) \
+    x(tx_migrate) \
     x(tx_merge_memcmp) \
     x(tx_merge_local_memcpy) \
     x(tx_merge_remote_memcpy) \
