@@ -13,9 +13,15 @@ class direct_facade
 public:
     #define D(dummy, name, tr, num, ...) \
         tr name(const name##_params& p) { \
-            return uct_##name( \
-                MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS(num, __VA_ARGS__) \
+            MEFDN_LOG_DEBUG( \
+                "msg:Entering uct_" #name ".\t" \
+                MEDEV2_EXPAND_PARAMS_TO_LOG_FMT(num, __VA_ARGS__) \
+            ,   MEDEV2_EXPAND_PARAMS_TO_LOG_P_DOT_ARGS(num, __VA_ARGS__) \
             ); \
+            return \
+                uct_##name( \
+                    MEDEV2_EXPAND_PARAMS_TO_P_DOT_ARGS(num, __VA_ARGS__) \
+                ); \
         }
     
     MEDEV2_UCT_FUNCS_ALL(D, /*dummy*/)
