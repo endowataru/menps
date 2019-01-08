@@ -4,6 +4,7 @@
 #include <menps/medsm2/com/dsm_rma.hpp>
 #include <menps/medsm2/com/dsm_com_itf.hpp>
 #include <menps/meult/ult_itf_id.hpp>
+#include <menps/mefdn/profiling/clock.hpp> // get_cpu_clock
 
 #include MEFDN_PP_CAT(MEULT_ULT_ITF_HEADER_, MEDSM2_ULT_ITF)
 #include MEFDN_PP_CAT(MEDEV2_MPI_ITF_HEADER_, MEDSM2_MPI_ITF)
@@ -73,6 +74,8 @@ public:
         this->p2p_ = mecom2::make_mpi_p2p<mpi_p2p_policy_type>(*this->mf_, this->p2p_comm_);
         this->p2p_lock_ = mecom2::make_mpi_p2p<mpi_p2p_policy_type>(*this->mf_, this->p2p_comm_);
         
+        mefdn::logger::set_state_callback(get_state{ *this });
+        
         this->rma_info_ = make_dsm_rma_info<used_rma_id, dsm_com_policy_base>(*this->mf_, *this->coll_);
         
         this->com_itf_ = mefdn::make_unique<dsm_com_itf_type>(
@@ -84,11 +87,43 @@ public:
             });
     }
     
+    ~dsm_com_creator() {
+        mefdn::logger::set_state_callback(mefdn::logger::state_callback_type{});
+    }
+    
     dsm_com_itf_type& get_dsm_com_itf() {
         return *this->com_itf_;
     }
     
 private:
+    struct get_state
+    {
+        explicit get_state(dsm_com_creator& self)
+            : self_(self)
+        { }
+        
+        std::string operator() ()
+        {
+            fmt::MemoryWriter w;
+            w.write(
+                "proc:{}\tthread:{:x}\tult:{:x}\tlog_id:{}\tclock:{}\t"
+            ,   self_.coll_->this_proc_id()
+            ,   reinterpret_cast<mefdn::uintptr_t>(pthread_self())
+                // TODO: use mefdn::this_thread::get_id()
+            ,   reinterpret_cast<mefdn::uintptr_t>(
+                    ult_itf_type::this_thread::native_handle()
+                )
+            ,   this->number_++
+            ,   mefdn::get_cpu_clock() // TODO
+            );
+            return w.str();
+        }
+        
+    private:
+        dsm_com_creator& self_;
+        mefdn::size_t number_ = 0;
+    };
+    
     mefdn::unique_ptr<mpi_facade_type> mf_;
     MPI_Comm coll_comm_ = MPI_COMM_NULL;
     MPI_Comm p2p_comm_ = MPI_COMM_NULL;

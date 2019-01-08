@@ -47,6 +47,7 @@ mefdn::size_t g_stack_size;
 
 void* g_heap_ptr;
 
+#if 0
 struct get_state
 {
     std::string operator() ()
@@ -74,6 +75,7 @@ struct get_state
 private:
     mefdn::size_t number_ = 0;
 };
+#endif
 
 } // unnamed namespace
 
@@ -905,7 +907,9 @@ int main(int argc, char* argv[])
     auto& coll = com.get_coll();
     g_coll = &coll;
     
+    #if 0
     mefdn::logger::set_state_callback(get_state{});
+    #endif
     
     medsm2::mpi_svm_space sp(com);
     
