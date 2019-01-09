@@ -412,38 +412,18 @@ public:
 private:
     static void read_merge(
         const blk_pos_type          blk_pos
-    ,   const mefdn::byte* const    home_pub
+    ,   const mefdn::byte* const    other_pub
     ,         mefdn::byte* const    my_priv
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
     ) {
         const auto p = prof::start();
         
-        for (size_type i = 0; i < blk_size; ++i) {
-            #ifdef MEDSM2_USE_COMPARE_DIFF
-            if (my_priv[i] != my_pub[i]) {
-                if (my_pub[i] != home_pub[i]) {
-                    report_data_race(blk_pos, i, home_pub, my_priv, my_pub, blk_size);
-                }
-            }
-            else {
-                my_pub[i] = home_pub[i];
-                my_priv[i] = home_pub[i];
-            }
-            
-            #else
-            // TODO: Scoped enums cannot do XOR...
-            const auto changed =
-                static_cast<unsigned char>(my_pub[i]) ^
-                static_cast<unsigned char>(home_pub[i])
-            
-            my_priv[i] =
-                static_cast<mefdn::byte>(
-                    static_cast<unsigned char>(my_priv[i]) ^ changed
-                );
-            my_pub[i] = home_pub[i];
-            #endif
-        }
+        #ifdef MEDSM2_USE_SIMD_DIFF
+        read_merge_simd(blk_pos, other_pub, my_priv, my_pub, blk_size);
+        #else
+        read_merge_byte(blk_pos, other_pub, my_priv, my_pub, blk_size);
+        #endif
         
         prof::finish(prof_kind::read_merge, p);
     }
@@ -476,64 +456,39 @@ private:
         #endif
     }
     
-    #ifdef MEDSM2_USE_SIMD_DIFF
-    static void write_merge_simd(
+    static void read_merge_byte(
         const blk_pos_type          blk_pos
-    ,   const mefdn::byte* const    other_pub
+    ,   const mefdn::byte* const    home_pub
     ,         mefdn::byte* const    my_priv
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
     ) {
-        using vec_buf_type = __m256i;
-        #define VECTOR_LEN  sizeof(vec_buf_type)
-        #define UNROLL_LEN  8
-        
-        MEFDN_ASSERT(blk_size % (VECTOR_LEN * UNROLL_LEN) == 0);
-        
-        auto* other_pub_vec = reinterpret_cast<const vec_buf_type*>(other_pub);
-        auto* my_priv_vec   = reinterpret_cast<vec_buf_type*>(my_priv);
-        auto* my_pub_vec    = reinterpret_cast<vec_buf_type*>(my_pub);
-        
-        // __asm__ __volatile__ ("# write_merge() starts");
-        
-        for (size_type i = 0; i < blk_size / VECTOR_LEN; i += UNROLL_LEN) {
-            vec_buf_type other_pub_regs[UNROLL_LEN];
-            vec_buf_type my_priv_regs[UNROLL_LEN];
-            vec_buf_type my_pub_regs[UNROLL_LEN];
-            vec_buf_type result_regs[UNROLL_LEN];
-            
-            for (size_type j = 0; j < UNROLL_LEN; j++) {
-                other_pub_regs[j] = _mm256_loadu_si256(&other_pub_vec[i+j]); // TODO
-                my_priv_regs[j]   = my_priv_vec[i+j];
-                my_pub_regs[j]    = my_pub_vec[i+j];
-            }
-            
-            for (size_type j = 0; j < UNROLL_LEN; j++) {
-                const auto other_diff = other_pub_regs[j] ^ my_pub_regs[j];
-                const auto my_diff    = my_priv_regs[j]   ^ my_pub_regs[j];
-                
-                result_regs[j] = my_diff ^ other_pub_regs[j];
-                
-                #if 1
-                // if ((other_diff & my_diff) != zero)
-                if (MEFDN_UNLIKELY(!_mm256_testz_si256(other_diff, my_diff))) {
-                    report_data_race(blk_pos, i * (blk_size / VECTOR_LEN), other_pub, my_priv, my_pub, blk_size);
+        for (size_type i = 0; i < blk_size; ++i) {
+            #ifdef MEDSM2_USE_COMPARE_DIFF
+            if (my_priv[i] != my_pub[i]) {
+                if (my_pub[i] != home_pub[i]) {
+                    report_data_race(blk_pos, i, home_pub, my_priv, my_pub, blk_size);
                 }
-                #endif
+            }
+            else {
+                my_pub[i] = home_pub[i];
+                my_priv[i] = home_pub[i];
             }
             
-            for (size_type j = 0; j < UNROLL_LEN; j++) {
-                my_priv_vec[i+j] = result_regs[j];
-                my_pub_vec[i+j]  = result_regs[j];
-            }
+            #else
+            // TODO: Scoped enums cannot do XOR...
+            const auto changed =
+                static_cast<unsigned char>(my_pub[i]) ^
+                static_cast<unsigned char>(home_pub[i])
+            
+            my_priv[i] =
+                static_cast<mefdn::byte>(
+                    static_cast<unsigned char>(my_priv[i]) ^ changed
+                );
+            my_pub[i] = home_pub[i];
+            #endif
         }
-        
-        // __asm__ __volatile__ ("# write_merge() ends");
-        
-        #undef VECTOR_LEN
-        #undef UNROLL_LEN
     }
-    #endif
     
     static void write_merge_byte(
         const blk_pos_type          blk_pos
@@ -567,6 +522,106 @@ private:
             #endif
         }
     }
+    
+    #ifdef MEDSM2_USE_SIMD_DIFF
+    static void read_merge_simd(
+        const blk_pos_type          blk_pos
+    ,   const mefdn::byte* const    other_pub
+    ,         mefdn::byte* const    my_priv
+    ,         mefdn::byte* const    my_pub
+    ,   const size_type             blk_size
+    ) {
+        merge_simd(blk_pos, other_pub, my_priv, my_pub, blk_size, false);
+    }
+    
+    static void write_merge_simd(
+        const blk_pos_type          blk_pos
+    ,   const mefdn::byte* const    other_pub
+    ,         mefdn::byte* const    my_priv
+    ,         mefdn::byte* const    my_pub
+    ,   const size_type             blk_size
+    ) {
+        merge_simd(blk_pos, other_pub, my_priv, my_pub, blk_size, true);
+    }
+    
+    static void merge_simd(
+        const blk_pos_type          blk_pos
+    ,   const mefdn::byte* const    other_pub
+    ,         mefdn::byte* const    my_priv
+    ,         mefdn::byte* const    my_pub
+    ,   const size_type             blk_size
+    ,   const bool                  is_write
+    ) {
+        using vec_buf_type = __m256i;
+        #define VECTOR_LEN  sizeof(vec_buf_type)
+        #define UNROLL_LEN  8
+        
+        MEFDN_ASSERT(blk_size % (VECTOR_LEN * UNROLL_LEN) == 0);
+        
+        auto* other_pub_vec = reinterpret_cast<const vec_buf_type*>(other_pub);
+        auto* my_priv_vec   = reinterpret_cast<vec_buf_type*>(my_priv);
+        auto* my_pub_vec    = reinterpret_cast<vec_buf_type*>(my_pub);
+        
+        // __asm__ __volatile__ ("# merge_simd() starts");
+        
+        for (size_type i = 0; i < blk_size / VECTOR_LEN; i += UNROLL_LEN) {
+            vec_buf_type other_pub_regs[UNROLL_LEN];
+            vec_buf_type my_priv_regs[UNROLL_LEN];
+            vec_buf_type my_pub_regs[UNROLL_LEN];
+            vec_buf_type result_regs[UNROLL_LEN];
+            
+            #ifdef MEDSM2_ENABLE_RACE_DETECTION
+            int dr_flags[UNROLL_LEN];
+            #endif
+            
+            for (size_type j = 0; j < UNROLL_LEN; j++) {
+                other_pub_regs[j] = _mm256_loadu_si256(&other_pub_vec[i+j]); // TODO
+                my_priv_regs[j]   = my_priv_vec[i+j];
+                my_pub_regs[j]    = my_pub_vec[i+j];
+            }
+            
+            for (size_type j = 0; j < UNROLL_LEN; j++) {
+                const auto other_diff = other_pub_regs[j] ^ my_pub_regs[j];
+                const auto my_diff    = my_priv_regs[j]   ^ my_pub_regs[j];
+                
+                result_regs[j] = my_diff ^ other_pub_regs[j];
+                
+                #ifdef MEDSM2_ENABLE_RACE_DETECTION
+                // True if (other_diff & my_diff) == 0.
+                dr_flags[j] = _mm256_testz_si256(other_diff, my_diff);
+                #endif
+            }
+            
+            #ifdef MEDSM2_ENABLE_RACE_DETECTION
+            bool dr_flag = dr_flags[0];
+            for (size_type j = 1; j < UNROLL_LEN; ++j) {
+                dr_flag = dr_flag && (dr_flags[j] != 0);
+            }
+            if (MEFDN_UNLIKELY(!dr_flag)) {
+                report_data_race(blk_pos, 0, other_pub, my_priv, my_pub, blk_size);
+            }
+            #endif
+            
+            for (size_type j = 0; j < UNROLL_LEN; j++) {
+                const auto new_pub_vec =
+                    is_write ? result_regs[j] : other_pub_regs[j];
+                
+                #if 1
+                _mm256_stream_si256(&my_priv_vec[i+j], result_regs[j]);
+                _mm256_stream_si256(&my_pub_vec[i+j] , new_pub_vec);
+                #else
+                my_priv_vec[i+j] = result_regs[j];
+                my_pub_vec[i+j]  = new_pub_vec;
+                #endif
+            }
+        }
+        
+        // __asm__ __volatile__ ("# merge_simd() ends");
+        
+        #undef VECTOR_LEN
+        #undef UNROLL_LEN
+    }
+    #endif
     
     static void report_data_race(
         const blk_pos_type          blk_pos
