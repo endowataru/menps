@@ -11,7 +11,7 @@ option(MEULT_ENABLE_MTH_WORKER_CACHE "Enable caching for worker numbers" ON)
 option(MEULT_ENABLE_MTH_UNCOND_ENTER "Enable myth_uncond_enter" ON)
 option(MEULT_ENABLE_BALANCED_POOL "Use balanced memory pool" ON)
 set(MEULT_BALANCED_POOL_MAX_ENTRIES 128 CACHE STRING "Max of entries pooled for remote workers")
-option(MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER "Use myth_uncond_enter for lock transfers in QD" OFF)
+option(MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER "Use myth_uncond_enter for lock transfers in QD" ON)
 option(MEULT_QD_ENABLE_ATOMIC_COUNT "Enable counting in QD for debugging" OFF)
 set(MEULT_EXECUTOR_LIFETIME_CYCLES "0 " CACHE STRING "Run executors during at least this time")
 
