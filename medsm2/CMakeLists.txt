@@ -21,6 +21,7 @@ option(MEDSM2_ENABLE_FAST_RELEASE "Enable skipping critical sections if data is 
 option(MEDSM2_ENABLE_LAZY_MERGE "Enable lazy merge" ON)
 option(MEDSM2_ENABLE_NEEDS_LOCAL_COMP "Reduce local comparison in data merge" OFF)
 option(MEDSM2_USE_SIMD_DIFF "Use SIMD to accelerate diff merge" ON)
+option(MEDSM2_ENABLE_MAP_POPULATE "Enable MAP_POPULATE in mmap" ON)
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in

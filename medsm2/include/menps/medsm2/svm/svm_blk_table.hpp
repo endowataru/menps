@@ -70,6 +70,9 @@ public:
             ,   num_bytes
             ,   PROT_READ | PROT_WRITE
             ,   MAP_FIXED | MAP_SHARED
+                #ifdef MEDSM2_ENABLE_MAP_POPULATE
+                | MAP_POPULATE
+                #endif
             ,   conf.fd
             ,   reinterpret_cast<mefdn::size_t>(priv_app_ptr) // index_in_file
             );
@@ -80,6 +83,9 @@ public:
             ,   num_bytes
             ,   PROT_READ | PROT_WRITE
             ,   MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+                #ifdef MEDSM2_ENABLE_MAP_POPULATE
+                | MAP_POPULATE
+                #endif
             ,   -1
             ,   0
             );
@@ -122,6 +128,9 @@ public:
             ,   num_bytes
             ,   PROT_NONE
             ,   MAP_FIXED | MAP_SHARED
+                #ifdef MEDSM2_ENABLE_MAP_POPULATE
+                | MAP_POPULATE
+                #endif
             ,   conf.fd
             ,   reinterpret_cast<mefdn::size_t>(priv_app_ptr) // index_in_file
             );
@@ -156,10 +165,16 @@ public:
 private:
     static void copy_memory(void* const dest, const void* const src, const size_type num_bytes)
     {
-        #if 1
-        // TODO: It's unknown why this stupid code performs better than
-        //       just calling memcpy().
-        //       (glibc's memcpy processes backward. That may be a reason.)
+        #ifdef MEDSM2_ENABLE_MAP_POPULATE
+        // Simply call memcpy if MAP_POPULATE is enabled.
+        std::memcpy(dest, src, num_bytes);
+        
+        #else
+        // Note: glibc's memcpy processes the memory backward.
+        //       If MAP_POPULATE is not added to the mmap argument,
+        //       memcpy() becomes really slower than the code below
+        //       due to the implementation of Linux page tables.
+        //       Thanks to Mr. Hiroki Nakazawa for solving this issue.
         
         const auto dest_byte = static_cast<mefdn::byte*>(dest);
         const auto src_byte = static_cast<const mefdn::byte*>(src);
@@ -167,8 +182,6 @@ private:
         for (size_type i = 0; i < num_bytes; ++i) {
             dest_byte[i] = src_byte[i];
         }
-        #else
-        std::memcpy(dest, src, num_bytes);
         #endif
     }
     
