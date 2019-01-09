@@ -10,6 +10,8 @@ option(MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
     "Enable explicit progress for UCT workers" OFF)
 option(MECOM2_UCT_RMA_ENABLE_CONCURRENT_LIMIT
     "Enable concurrent limit for UCT workers" OFF)
+option(MECOM2_UCT_ENABLE_PARALLEL_INIT_WORKER_SET
+    "Enable parallel initialization of UCT workers (may cause bugs)" OFF)
 
 option(MECOM2_USE_WORKER_LOCAL_ALLOCATOR "Use worker-local RMA allocator" TRUE)
 

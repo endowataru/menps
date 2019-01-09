@@ -35,6 +35,7 @@ public:
         const auto* const iface_params = conf.iface_params;
         
         auto& coll = conf.coll;
+        const auto this_proc = coll.this_proc_id();
         const auto num_procs = coll.get_num_procs();
         
         const auto num_wks = conf.num_wks;
@@ -45,39 +46,55 @@ public:
         size_type cur_dev_addr_size = 0;
         size_type cur_ep_addr_size = 0;
         
-        for (worker_num_type wk_num = 0; wk_num < num_wks; ++wk_num)
+        #ifndef MECOM2_UCT_ENABLE_PARALLEL_INIT_WORKER_SET
+        for (proc_id_type init_proc = 0; init_proc < num_procs; ++init_proc)
         {
-            auto& wi = this->wis_[wk_num];
+            // TODO: Initializing the workers inside the same compute node may cause
+            //       deadlocks when calling uct_md_open() between the processes.
+            //       This code allows only one process to do the initialization at the same time.
             
-            // Create a UCT async context.
-            wi.async_ctx = async_context_type::create(UCS_ASYNC_MODE_THREAD);
-            // Create a UCT worker.
-            wi.wk = worker_type::create(uf, wi.async_ctx.get(), UCS_THREAD_MODE_MULTI);
-            // Open a UCT interface.
-            wi.iface = interface_type::open(uf, md.get(), wi.wk.get(),
-                iface_params, iface_conf);
+            coll.barrier();
             
-            // Get some information about the UCT interface.
-            wi.iface_attr = wi.iface.query();
-            wi.dev_addr = uct_itf_type::get_device_address(wi.iface, wi.iface_attr);
-            
-            cur_dev_addr_size = std::max(cur_dev_addr_size, wi.dev_addr.size_in_bytes());
-            
-            wi.eis = mefdn::make_unique<endpoint_info []>(num_procs);
-            
-            for (proc_id_type proc = 0; proc < num_procs; ++proc)
+            if (init_proc == this_proc)
             {
-                auto& ei = wi.eis[proc];
-                
-                ei.ep = endpoint_type::create(uf, wi.iface.get());
-                ei.ep_addr = uct_itf_type::get_ep_address(ei.ep, wi.iface_attr);
-                
-                ei.num_ongoing = 0;
-                ei.max_num_ongoing = 256; // TODO;
-                
-                cur_ep_addr_size = std::max(cur_ep_addr_size, ei.ep_addr.size_in_bytes());
+        #endif
+                for (worker_num_type wk_num = 0; wk_num < num_wks; ++wk_num)
+                {
+                    auto& wi = this->wis_[wk_num];
+                    
+                    // Create a UCT async context.
+                    wi.async_ctx = async_context_type::create(UCS_ASYNC_MODE_THREAD);
+                    // Create a UCT worker.
+                    wi.wk = worker_type::create(uf, wi.async_ctx.get(), UCS_THREAD_MODE_MULTI);
+                    // Open a UCT interface.
+                    wi.iface = interface_type::open(uf, md.get(), wi.wk.get(),
+                        iface_params, iface_conf);
+                    
+                    // Get some information about the UCT interface.
+                    wi.iface_attr = wi.iface.query();
+                    wi.dev_addr = uct_itf_type::get_device_address(wi.iface, wi.iface_attr);
+                    
+                    cur_dev_addr_size = std::max(cur_dev_addr_size, wi.dev_addr.size_in_bytes());
+                    
+                    wi.eis = mefdn::make_unique<endpoint_info []>(num_procs);
+                    
+                    for (proc_id_type proc = 0; proc < num_procs; ++proc)
+                    {
+                        auto& ei = wi.eis[proc];
+                        
+                        ei.ep = endpoint_type::create(uf, wi.iface.get());
+                        ei.ep_addr = uct_itf_type::get_ep_address(ei.ep, wi.iface_attr);
+                        
+                        ei.num_ongoing = 0;
+                        ei.max_num_ongoing = 256; // TODO;
+                        
+                        cur_ep_addr_size = std::max(cur_ep_addr_size, ei.ep_addr.size_in_bytes());
+                    }
+                }
+        #ifndef MECOM2_UCT_ENABLE_PARALLEL_INIT_WORKER_SET
             }
         }
+        #endif
         
         size_type max_dev_addr_size = 0;
         coll.allreduce_max(&cur_dev_addr_size, &max_dev_addr_size, 1);
