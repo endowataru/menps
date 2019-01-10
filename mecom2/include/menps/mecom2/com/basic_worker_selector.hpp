@@ -22,12 +22,25 @@ public:
     template <typename Conf>
     explicit basic_worker_selector(const Conf& conf)
         : max_num_(conf.max_wk_num)
-    { }
+    {
+        #ifdef MECOM2_USE_ULT_WORKER_NUM
+        const auto num_ths = ult_itf_type::get_num_workers();
+        this->wk_nums_ = mefdn::make_unique<worker_num_type []>(num_ths);
+        
+        const auto nums_ths_per_wk = mefdn::roundup_divide(num_ths, this->max_num_);
+        MEFDN_ASSERT(nums_ths_per_wk > 0);
+        for (worker_num_type i = 0; i < num_ths; ++i) {
+            this->wk_nums_[i] = i / nums_ths_per_wk;
+            MEFDN_ASSERT(this->wk_nums_[i] < this->max_num_);
+        }
+        #endif
+    }
     
     worker_num_type current_worker_num()
     {
         #ifdef MECOM2_USE_ULT_WORKER_NUM
-        return ult_itf_type::get_worker_num();
+        return this->wk_nums_[ult_itf_type::get_worker_num()];
+        //return ult_itf_type::get_worker_num();
         
         #else
         // Load the TLS.
@@ -51,14 +64,18 @@ public:
     }
     
 private:
-    #ifndef MECOM2_USE_ULT_WORKER_NUM
+    worker_num_type max_num_ = 0;
+    
+    #ifdef MECOM2_USE_ULT_WORKER_NUM
+    mefdn::unique_ptr<worker_num_type []> wk_nums_;
+    
+    #else
     // Note: Valid numbers start from 1.
     static MEFDN_THREAD_LOCAL worker_num_type cur_num_;
-    #endif
     
     mutex_type mtx_;
     worker_num_type alloc_num_ = 0;
-    worker_num_type max_num_ = 0;
+    #endif
 };
 
 #ifndef MECOM2_USE_ULT_WORKER_NUM

@@ -49,8 +49,13 @@ public:
 private:
     static mefdn::size_t calc_num_uct_wks()
     {
-        const auto num_ult_wks = ult_itf_type::get_num_workers();
-        return std::max(num_ult_wks, 1ul);
+        if (const auto str = std::getenv("MEDSM2_NUM_UCT_WORKERS")) {
+            const auto ret = std::atoi(str);
+            MEFDN_ASSERT(ret > 0);
+            return ret;
+        }
+        else
+            return ult_itf_type::get_num_workers();
     }
 };
 
