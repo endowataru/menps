@@ -872,6 +872,7 @@ extern void* _dsm_data_end;
 
 } // extern "C"
 
+namespace /*unnamed*/ {
 
 inline char** pack_argv(int argc, char* argv[])
 {
@@ -895,6 +896,19 @@ inline char** pack_argv(int argc, char* argv[])
     return global_argv;
 }
 
+inline mefdn::size_t get_stack_size()
+{
+    mefdn::size_t ret = MEOMP_DEF_STKSIZE;
+    if (const auto str = std::getenv("MEOMP_DEF_STKSIZE")) {
+        ret = static_cast<mefdn::size_t>(std::atoi(str));
+    }
+    if (ret % 0x1000 != 0 || ret <= 0) {
+        throw std::invalid_argument("Invalid MEOMP_DEF_STKSIZE");
+    }
+    return ret;
+}
+
+} // unnamed namespace
 
 int main(int argc, char* argv[])
 {
@@ -965,7 +979,7 @@ int main(int argc, char* argv[])
     
     const auto num_procs = coll.get_num_procs();
     
-    const mefdn::size_t stack_size = MEOMP_DEF_STKSIZE;
+    const mefdn::size_t stack_size = get_stack_size();
     
     const auto stack_ptr_start =
         sp.coll_alloc_seg((num_procs*meomp::my_dist_worker::get_threads_per_proc()+1) * stack_size, stack_size);
