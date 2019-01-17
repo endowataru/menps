@@ -14,6 +14,8 @@ set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 # BUILD_SHARED_LIBS is a common flag in CMake that decides shared/static libs.
 # I don't know whether it's correct to use it as an option.
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(MEFDN_ENABLE_ASSERT "Enable assertion explicitly" OFF)
+option(MEFDN_ENABLE_LOG "Enable logging explicitly" OFF)
 option(MEFDN_PROFILER_USE_GPROF "Use Gprof" OFF)
 option(MEFDN_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MEFDN_LOGGER_USE_LOCK "Use lock in logger" ON)
