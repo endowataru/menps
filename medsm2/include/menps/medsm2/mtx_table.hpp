@@ -61,8 +61,7 @@ public:
         
         const auto tag = P::get_tag_from_lock_id(mtx_id);
         
-        const auto lk_ret =
-            this->lk_tbl_.lock_global(com, mtx_id, tag);
+        this->lk_tbl_.lock_global(com, mtx_id, tag);
         
         const auto sl = this->get_sig_location(com, mtx_id);
         

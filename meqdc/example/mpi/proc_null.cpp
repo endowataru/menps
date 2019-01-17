@@ -1,5 +1,5 @@
 
-#include <mpi.h>
+#include <menps/medev2/mpi/mpi.hpp>
 #include <iostream>
 #include <myth/myth.h>
 #include <stdint.h>

@@ -132,7 +132,7 @@ struct dsm_base_policy
     using id_allocator_type = id_allocator<dsm_base_policy>;
     
     static p2p_tag_type get_tag_from_lock_id(const size_type lk_id) {
-        return lk_id;
+        return static_cast<p2p_tag_type>(lk_id);
     }
 };
 
@@ -213,7 +213,9 @@ void mpi_svm_space::coll_alloc_global_var_seg(const size_type seg_size, const si
 
 mpi_svm_space::mutex_id_t mpi_svm_space::allocate_mutex()
 {
-    return this->impl_->space().allocate_mutex();
+    return static_cast<mpi_svm_space::mutex_id_t>(
+        this->impl_->space().allocate_mutex()
+    );
 }
 void mpi_svm_space::deallocate_mutex(const mutex_id_t mtx_id) {
     this->impl_->space().deallocate_mutex(mtx_id);

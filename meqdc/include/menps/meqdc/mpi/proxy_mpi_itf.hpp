@@ -85,7 +85,7 @@ struct proxy_mpi_request_pool_policy
         meult::basic_balanced_tls_pool<proxy_mpi_request_pool_policy>;
     
     template <typename Node>
-    static void deallocate(Node* const n) {
+    static void deallocate(Node* const /*n*/) {
         // Note: No need to call "delete" here for basic_numbered_pool.
     }
     static size_type get_pool_threshold(base_pool_type& /*pool*/) {

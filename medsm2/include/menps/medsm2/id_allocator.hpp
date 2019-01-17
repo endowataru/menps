@@ -75,7 +75,7 @@ public:
     }
     
     void deallocate(
-        com_itf_type&   com
+        com_itf_type&   /*com*/
     ,   const size_type /*id*/
     ) {
         // TODO
