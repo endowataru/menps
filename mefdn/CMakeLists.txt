@@ -22,6 +22,7 @@ option(MEFDN_LOGGER_USE_LOCK "Use lock in logger" ON)
 option(MEFDN_ENABLE_EXPONENTIAL_BACKOFF "Use exponential backoff" OFF)
 option(MEFDN_DISABLE_ALIGN_CHECK_SIZE "Disable size check in mefdn::align_*_nocheck" ON)
 option(MEFDN_ENABLE_FRAME_POINTER "Add -fno-omit-frame-pointer" ON)
+set(MEFDN_MCMODEL "small" CACHE STRING "Memory model specified as -mcmodel=")
 
 set(MEFDN_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
@@ -31,7 +32,7 @@ set(error_limit 3)
 
 add_library(mefdn-options INTERFACE)
 
-set(MEFDN_GLOBAL_CFLAGS -ftls-model=initial-exec)
+set(MEFDN_GLOBAL_CFLAGS -ftls-model=initial-exec -mcmodel=${MEFDN_MCMODEL})
 
 if (${MEFDN_ENABLE_FRAME_POINTER})
     list(APPEND MEFDN_GLOBAL_CFLAGS -fno-omit-frame-pointer)
