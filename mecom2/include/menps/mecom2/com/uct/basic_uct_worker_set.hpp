@@ -65,7 +65,7 @@ public:
                     // Create a UCT async context.
                     wi.async_ctx = async_context_type::create(UCS_ASYNC_MODE_THREAD);
                     // Create a UCT worker.
-                    wi.wk = worker_type::create(uf, wi.async_ctx.get(), UCS_THREAD_MODE_MULTI);
+                    wi.wk = worker_type::create(uf, wi.async_ctx.get(), UCS_THREAD_MODE_SERIALIZED);
                     // Open a UCT interface.
                     wi.iface = interface_type::open(uf, md.get(), wi.wk.get(),
                         iface_params, iface_conf);
