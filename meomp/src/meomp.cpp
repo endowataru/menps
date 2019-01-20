@@ -46,6 +46,7 @@ void* g_stack_ptr;
 mefdn::size_t g_stack_size;
 
 void* g_heap_ptr;
+mefdn::size_t g_heap_size;
 
 #if 0
 struct get_state
@@ -516,7 +517,11 @@ namespace /*unnamed*/ {
 MEOMP_GLOBAL_VAR omp_lock_t g_critical_lock;
 
 MEOMP_GLOBAL_VAR omp_lock_t g_heap_lock;
+#ifdef MEOMP_ENABLE_LINEAR_ALLOCATOR
+MEOMP_GLOBAL_VAR mefdn::size_t g_heap_used;
+#else
 MEOMP_GLOBAL_VAR mspace g_heap_ms;
+#endif
 
 } // unnamed namespace
 
@@ -858,14 +863,25 @@ extern "C" {
 
 void* meomp_malloc(const menps::mefdn::size_t size_in_bytes) {
     omp_set_lock(&g_heap_lock);
+    #ifdef MEOMP_ENABLE_LINEAR_ALLOCATOR
+    const auto ptr = static_cast<mefdn::byte*>(g_heap_ptr) + g_heap_used;
+    // Fix alignment.
+    g_heap_used += mefdn::roundup_divide(size_in_bytes, 16ul) * 16ul; // TODO: avoid magic number
+    if (g_heap_used >= g_heap_size) {
+        throw std::bad_alloc();
+    }
+    #else
     void* ptr = mspace_malloc(g_heap_ms, size_in_bytes);
+    #endif
     omp_unset_lock(&g_heap_lock);
     return ptr;
 }
 void meomp_free(void* const ptr) {
+    #ifndef MEOMP_ENABLE_LINEAR_ALLOCATOR
     omp_set_lock(&g_heap_lock);
     mspace_free(g_heap_ms, ptr);
     omp_unset_lock(&g_heap_lock);
+    #endif
 }
 
 }
@@ -992,13 +1008,16 @@ int main(int argc, char* argv[])
     g_stack_ptr = stack_ptr_start;
     g_stack_size = stack_size;
     
+    g_heap_size = MEOMP_HEAP_SIZE;
     g_heap_ptr =
-        sp.coll_alloc_seg(MEOMP_HEAP_SIZE, MEOMP_HEAP_BLOCK_SIZE);
+        sp.coll_alloc_seg(g_heap_size, MEOMP_HEAP_BLOCK_SIZE);
     
     if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();
         
+        #ifndef MEOMP_ENABLE_LINEAR_ALLOCATOR
         g_heap_ms = create_mspace_with_base(g_heap_ptr, MEOMP_HEAP_SIZE, 1);
+        #endif
         
         omp_init_lock(&g_critical_lock);
         omp_init_lock(&g_heap_lock);
@@ -1043,7 +1062,9 @@ int main(int argc, char* argv[])
         
         meomp_free(g_argv);
         
+        #ifndef MEOMP_ENABLE_LINEAR_ALLOCATOR
         destroy_mspace(g_heap_ms);
+        #endif
         
         omp_destroy_lock(&g_heap_lock);
         omp_destroy_lock(&g_critical_lock);

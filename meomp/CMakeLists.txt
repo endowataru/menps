@@ -6,6 +6,7 @@ set(MEOMP_DEF_STKSIZE 32768 CACHE STRING "Default stack size")
 set(MEOMP_HEAP_SIZE 1048576 CACHE STRING "Default heap size")
 set(MEOMP_HEAP_BLOCK_SIZE 32768 CACHE STRING "Default heap block size")
 option(MEOMP_ENABLE_QDLOCK_BARRIER "Use qdlock_barrier in meomp" ON)
+option(MEOMP_ENABLE_LINEAR_ALLOCATOR "Use linear allocator" ON)
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
