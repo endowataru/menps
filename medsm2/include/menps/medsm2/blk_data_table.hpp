@@ -466,9 +466,11 @@ private:
         for (size_type i = 0; i < blk_size; ++i) {
             #ifdef MEDSM2_USE_COMPARE_DIFF
             if (my_priv[i] != my_pub[i]) {
+                #ifdef MEDSM2_ENABLE_RACE_DETECTION
                 if (my_pub[i] != home_pub[i]) {
                     report_data_race(blk_pos, i, home_pub, my_priv, my_pub, blk_size);
                 }
+                #endif
             }
             else {
                 my_pub[i] = home_pub[i];
@@ -500,9 +502,11 @@ private:
         for (size_type i = 0; i < blk_size; ++i) {
             #ifdef MEDSM2_USE_COMPARE_DIFF
             if (my_priv[i] != my_pub[i]) {
+                #ifdef MEDSM2_ENABLE_RACE_DETECTION
                 if (my_pub[i] != other_pub[i]) {
                     report_data_race(blk_pos, i, other_pub, my_priv, my_pub, blk_size);
                 }
+                #endif
                 my_pub[i] = my_priv[i];
             }
             else {
