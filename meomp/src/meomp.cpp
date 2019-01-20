@@ -363,6 +363,11 @@ int meomp_get_num_procs() {
 }
 
 extern "C"
+int meomp_get_local_thread_num() {
+    return omp_get_thread_num() % meomp_get_num_procs();
+}
+
+extern "C"
 double omp_get_wtime()
 {
     return menps::mefdn::get_current_sec();
