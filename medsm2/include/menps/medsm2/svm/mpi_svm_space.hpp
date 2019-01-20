@@ -55,6 +55,10 @@ public:
     
     void disable_on_this_thread();
     
+    void start_release_thread();
+    
+    void stop_release_thread();
+    
     bool try_upgrade(void* ptr);
     
 private:

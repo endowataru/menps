@@ -1031,6 +1031,8 @@ int main(int argc, char* argv[])
     meomp::my_dist_worker dw;
     g_dw = &dw;
     
+    sp.start_release_thread();
+    
     dw.execute_loop();
     
     // Do a barrier before exiting.
@@ -1056,6 +1058,8 @@ int main(int argc, char* argv[])
         g_coll->barrier();
     }
     #endif
+    
+    sp.stop_release_thread();
     
     if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();

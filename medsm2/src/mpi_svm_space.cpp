@@ -14,6 +14,9 @@
 #include <menps/medsm2/basic_lock_table.hpp>
 #include <menps/medsm2/mtx_table.hpp>
 #include <menps/medsm2/id_allocator.hpp>
+#ifdef MEDSM2_ENABLE_REL_THREAD
+#include <menps/medsm2/rel_thread.hpp>
+#endif
 
 #ifdef MEOMP_SEPARATE_WORKER_THREAD
 #include <menps/meult/klt.hpp>
@@ -134,6 +137,10 @@ struct dsm_base_policy
     static p2p_tag_type get_tag_from_lock_id(const size_type lk_id) {
         return static_cast<p2p_tag_type>(lk_id);
     }
+    
+    #ifdef MEDSM2_ENABLE_REL_THREAD
+    using rel_thread_type = rel_thread<dsm_base_policy>;
+    #endif
 };
 
 const dsm_base_policy::wr_count_type dsm_base_policy::max_fast_rel_threshold;
@@ -272,6 +279,15 @@ void mpi_svm_space::enable_on_this_thread()
 void mpi_svm_space::disable_on_this_thread()
 {
     this->impl_->space().disable_on_this_thread();
+}
+
+void mpi_svm_space::start_release_thread()
+{
+    this->impl_->space().start_release_thread();
+}
+void mpi_svm_space::stop_release_thread()
+{
+    this->impl_->space().stop_release_thread();
 }
 
 bool mpi_svm_space::try_upgrade(void* const ptr)

@@ -23,6 +23,9 @@ option(MEDSM2_ENABLE_NEEDS_LOCAL_COMP "Reduce local comparison in data merge" OF
 option(MEDSM2_USE_SIMD_DIFF "Use SIMD to accelerate diff merge" ON)
 option(MEDSM2_ENABLE_RACE_DETECTION "Enable dynamic race detection" ON)
 option(MEDSM2_ENABLE_MAP_POPULATE "Enable MAP_POPULATE in mmap" OFF)
+option(MEDSM2_ENABLE_REL_THREAD "Enable releaser thread" OFF)
+# Note: MEDSM2_WR_COUNT_THRESHOLD should be incresed if MEDSM2_ENABLE_REL_THREAD == ON
+set(MEDSM2_REL_THREAD_USEC "10000000" CACHE STRING "Fence period for releaser thread")
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in

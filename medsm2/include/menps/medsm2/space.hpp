@@ -50,6 +50,10 @@ class space
     using id_allocator_type = typename P::id_allocator_type;
     using mtx_id_type = typename P::mtx_id_type;
     
+    #ifdef MEDSM2_ENABLE_REL_THREAD
+    using rel_thread_type = typename P::rel_thread_type;
+    #endif
+    
 public:
     template <typename Conf>
     explicit space(const Conf& conf)
@@ -66,12 +70,26 @@ public:
     {
         auto& self = this->derived();
         auto& com = self.get_com_itf();
+        
         seg_tbl_.finalize(com);
     }
     
     void finalize()
     {
         this->wr_set_.finalize();
+    }
+    
+    void start_release_thread()
+    {
+        #ifdef MEDSM2_ENABLE_REL_THREAD
+        this->rel_th_.start([this] { this->fence_release(); }, MEDSM2_REL_THREAD_USEC);
+        #endif
+    }
+    void stop_release_thread()
+    {
+        #ifdef MEDSM2_ENABLE_REL_THREAD
+        this->rel_th_.stop();
+        #endif
     }
     
     using start_read_result = typename seg_table_type::start_read_result;
@@ -427,6 +445,10 @@ private:
     mtx_table_type  mtx_tbl_;
     
     id_allocator_type   mtx_id_alloc_;
+    
+    #ifdef MEDSM2_ENABLE_REL_THREAD
+    rel_thread_type rel_th_;
+    #endif
 };
 
 } // namespace medsm2
