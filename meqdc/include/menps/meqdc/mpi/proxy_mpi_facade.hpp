@@ -211,6 +211,7 @@ public:
     
     MEDEV2_MPI_P2P_NONBLOCK_FUNCS(D, /*dummy*/)
     MEDEV2_MPI_REQ_BASED_RMA_FUNCS(D, /*dummy*/)
+    MEDEV2_MPI_COLLECTIVE_NONBLOCK_FUNCS(D, /*dummy*/)
     
     #undef D
     
@@ -253,7 +254,8 @@ public:
             this->req_pool_.deallocate(proxy_req_ptr); \
         }
     
-    MEDEV2_MPI_P2P_BLOCK_SEND_FUNCS(D, /*dummy*/) 
+    MEDEV2_MPI_P2P_BLOCK_SEND_FUNCS(D, /*dummy*/)
+    MEDEV2_MPI_COLLECTIVE_BLOCK_FUNCS(D, /*dummy*/)
     
     #undef D
     
@@ -318,7 +320,6 @@ public:
         }
     
     MEDEV2_MPI_PROBE_FUNCS(D, /*dummy*/)
-    MEDEV2_MPI_COLLECTIVE_FUNCS(D, /*dummy*/)
     MEDEV2_MPI_RMA_WIN_FUNCS(D, /*dummy*/)
     MEDEV2_MPI_OTHER_FUNCS(D, /*dummy*/)
     
@@ -454,6 +455,7 @@ private:
             // request-based non-blocking calls
             MEDEV2_MPI_P2P_NONBLOCK_FUNCS(D, /*dummy*/)
             MEDEV2_MPI_REQ_BASED_RMA_FUNCS(D, /*dummy*/)
+            MEDEV2_MPI_COLLECTIVE_NONBLOCK_FUNCS(D, /*dummy*/)
             
             // non-request-based non-blocking calls
             MEDEV2_MPI_RMA_FUNCS(D, /*dummy*/)

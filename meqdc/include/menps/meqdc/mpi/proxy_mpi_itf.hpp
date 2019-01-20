@@ -22,6 +22,7 @@ union proxy_mpi_params {
     // request-based non-blocking calls
     MEDEV2_MPI_P2P_NONBLOCK_FUNCS(D, /*dummy*/)
     MEDEV2_MPI_REQ_BASED_RMA_FUNCS(D, /*dummy*/)
+    MEDEV2_MPI_COLLECTIVE_NONBLOCK_FUNCS(D, /*dummy*/)
     
     // non-request-based non-blocking calls
     MEDEV2_MPI_RMA_FUNCS(D, /*dummy*/)
@@ -38,6 +39,7 @@ enum class proxy_mpi_code {
     // request-based non-blocking calls
     MEDEV2_MPI_P2P_NONBLOCK_FUNCS(D, /*dummy*/)
     MEDEV2_MPI_REQ_BASED_RMA_FUNCS(D, /*dummy*/)
+    MEDEV2_MPI_COLLECTIVE_NONBLOCK_FUNCS(D, /*dummy*/)
     
     // non-request-based non-blocking calls
     MEDEV2_MPI_RMA_FUNCS(D, /*dummy*/)

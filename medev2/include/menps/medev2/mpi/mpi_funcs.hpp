@@ -105,7 +105,8 @@
         int *, flag,  \
         MPI_Status *, status)
 
-#define MEDEV2_MPI_COLLECTIVE_FUNCS(X, ...) \
+
+#define MEDEV2_MPI_COLLECTIVE_BLOCK_FUNCS(X, ...) \
     X(__VA_ARGS__, \
         barrier, \
         Barrier, \
@@ -157,6 +158,64 @@
         MPI_Datatype, datatype, \
         MPI_Op, op, \
         MPI_Comm, comm)
+
+#define MEDEV2_MPI_COLLECTIVE_NONBLOCK_FUNCS(X, ...) \
+    X(__VA_ARGS__, \
+        ibarrier, \
+        Ibarrier, \
+        int, \
+        2, \
+        MPI_Comm, comm, \
+        MPI_Request*, request) \
+    X(__VA_ARGS__, \
+        ibcast, \
+        Ibcast, \
+        int, \
+        6, \
+        void *, buffer, \
+        int, count, \
+        MPI_Datatype, datatype, \
+        int, root,  \
+        MPI_Comm, comm, \
+        MPI_Request*, request) \
+    X(__VA_ARGS__, \
+        iallgather, \
+        Iallgather, \
+        int, \
+        8, \
+        const void *, sendbuf, \
+        int, sendcount, \
+        MPI_Datatype, sendtype, \
+        void *, recvbuf, \
+        int, recvcount, \
+        MPI_Datatype, recvtype, \
+        MPI_Comm, comm, \
+        MPI_Request*, request) \
+    X(__VA_ARGS__, \
+        ialltoall, \
+        Ialltoall, \
+        int, \
+        8, \
+        const void *, sendbuf, \
+        int, sendcount, \
+        MPI_Datatype, sendtype, \
+        void *, recvbuf, \
+        int, recvcount, \
+        MPI_Datatype, recvtype, \
+        MPI_Comm, comm, \
+        MPI_Request*, request) \
+    X(__VA_ARGS__, \
+        iallreduce, \
+        Iallreduce, \
+        int, \
+        7, \
+        const void *, sendbuf, \
+        void *, recvbuf, \
+        int, count, \
+        MPI_Datatype, datatype, \
+        MPI_Op, op, \
+        MPI_Comm, comm, \
+        MPI_Request*, request) \
 
 
 #define MEDEV2_MPI_RMA_FUNCS(X, ...) \
@@ -354,7 +413,8 @@
     MEDEV2_MPI_P2P_NONBLOCK_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_TEST_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_PROBE_FUNCS(X, __VA_ARGS__) \
-    MEDEV2_MPI_COLLECTIVE_FUNCS(X, __VA_ARGS__) \
+    MEDEV2_MPI_COLLECTIVE_BLOCK_FUNCS(X, __VA_ARGS__) \
+    MEDEV2_MPI_COLLECTIVE_NONBLOCK_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_RMA_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_REQ_BASED_RMA_FUNCS(X, __VA_ARGS__) \
     MEDEV2_MPI_RMA_WIN_FUNCS(X, __VA_ARGS__) \
