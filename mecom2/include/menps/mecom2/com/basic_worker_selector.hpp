@@ -3,6 +3,7 @@
 
 #include <menps/mecom2/common.hpp>
 #include <menps/medev2/ucx/ucp/ucp.hpp>
+#include <menps/mefdn/arithmetic.hpp>
 
 #define MECOM2_USE_ULT_WORKER_NUM
 

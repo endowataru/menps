@@ -3,6 +3,7 @@
 
 #include <menps/mefdn/lang.hpp>
 #include <menps/medev2/config.h>
+#include <menps/mefdn/logger.hpp>
 
 #ifdef MEDEV2_USE_QDLOCK
     #include <menps/meult/qd/qdlock_mutex.hpp>
