@@ -581,24 +581,12 @@ public:
     ) {
         this->check_locked(blk_pos, lk);
         
-        #ifndef MEDSM2_ENABLE_FAST_RELEASE
-        auto& rma = com.get_rma();
-        #endif
-        
         const auto cur_proc = com.this_proc_id();
-        #ifndef MEDSM2_ENABLE_FAST_RELEASE
-        const auto old_owner = bt_ret.owner;
-        #endif
-        
-        // Generate new timestamp values.
-        const auto new_ts =
-            this->make_new_ts(
-                rd_ts_st, mg_ret.is_written, bt_ret.wr_ts, bt_ret.rd_ts
-            );
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
         const auto new_owner = cur_proc;
         #else
+        const auto old_owner = bt_ret.owner;
         const auto new_owner = mg_ret.is_written ? cur_proc : old_owner;
         #endif
         
@@ -609,6 +597,31 @@ public:
         // The home process is only updated locally.
         le.home_proc = new_owner;
         
+        const auto old_state = le.state;
+        auto new_state = old_state;
+        
+        auto my_rd_ts_st = rd_ts_st;
+        
+        if (old_state == state_type::invalid_dirty || old_state == state_type::invalid_clean) {
+            auto& rd_set = my_rd_ts_st.get_rd_set();
+            
+            // Reload the timestamp state.
+            my_rd_ts_st = rd_set.get_ts_state();
+        }
+        
+        // Generate new timestamp values.
+        const auto new_ts =
+            this->make_new_ts(
+                my_rd_ts_st, mg_ret.is_written, bt_ret.wr_ts, bt_ret.rd_ts
+            );
+        
+        if (old_state == state_type::invalid_dirty || old_state == state_type::invalid_clean) {
+            auto& rd_set = my_rd_ts_st.get_rd_set();
+            
+            // This block was invalid and became readable in this transaction.
+            rd_set.add_readable(blk_id, new_ts.rd_ts);
+        }
+        
         // Update the timestamps.
         // Although this value may be read by another writer,
         // this process still has the lock for it.
@@ -618,6 +631,8 @@ public:
         
         #ifndef MEDSM2_ENABLE_FAST_RELEASE
         if (new_owner != cur_proc) {
+            auto& rma = com.get_rma();
+            
             // This process is not the new owner.
             // (2) old_owner == new_owner != cur_proc
             
@@ -639,16 +654,6 @@ public:
             }
         }
         #endif
-        
-        const auto old_state = le.state;
-        auto new_state = old_state;
-        
-        if (old_state == state_type::invalid_dirty || old_state == state_type::invalid_clean) {
-            auto& rd_set = rd_ts_st.get_rd_set();
-            
-            // This block was invalid and became readable in this transaction.
-            rd_set.add_readable(blk_id, new_ts.rd_ts);
-        }
         
         const auto is_still_writable = ! bt_ret.is_write_protected;
         

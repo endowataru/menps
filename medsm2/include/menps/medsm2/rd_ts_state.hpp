@@ -17,7 +17,7 @@ class rd_ts_state
     
 public:
     explicit rd_ts_state(rd_set_type& rd_set, const wr_ts_type min_wr_ts)
-        : rd_set_(rd_set)
+        : rd_set_(&rd_set)
         , min_wr_ts_(min_wr_ts)
     { }
     
@@ -25,7 +25,7 @@ public:
     rd_ts_state& operator = (const rd_ts_state&) = default;
     
     rd_set_type& get_rd_set() const noexcept {
-        return this->rd_set_;
+        return *this->rd_set_;
     }
     
     wr_ts_type make_new_wr_ts(const rd_ts_type old_rd_ts) const noexcept {
@@ -48,7 +48,7 @@ public:
     }
     
 private:
-    rd_set_type&    rd_set_;
+    rd_set_type*    rd_set_;
     wr_ts_type      min_wr_ts_;
 };
 
