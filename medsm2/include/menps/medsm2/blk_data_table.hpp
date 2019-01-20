@@ -13,7 +13,6 @@
 namespace menps {
 namespace medsm2 {
 
-#define MEDSM2_USE_COMPARE_DIFF
 //#define MEDSM2_DISABLE_READ_MERGE
 //#define MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
 //#define MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
@@ -458,37 +457,27 @@ private:
     
     static void read_merge_byte(
         const blk_pos_type          blk_pos
-    ,   const mefdn::byte* const    home_pub
+    ,   const mefdn::byte* const    other_pub
     ,         mefdn::byte* const    my_priv
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
     ) {
         for (size_type i = 0; i < blk_size; ++i) {
-            #ifdef MEDSM2_USE_COMPARE_DIFF
-            if (my_priv[i] != my_pub[i]) {
-                #ifdef MEDSM2_ENABLE_RACE_DETECTION
-                if (my_pub[i] != home_pub[i]) {
-                    report_data_race(blk_pos, i, home_pub, my_priv, my_pub, blk_size);
-                }
-                #endif
+            // Check that there is no remote modification on this block.
+            if (my_pub[i] == other_pub[i]) {
+                // Preserve the diff between my_pub and my_priv
+                // to merge them in the next transaction.
             }
             else {
-                my_pub[i] = home_pub[i];
-                my_priv[i] = home_pub[i];
+                #ifdef MEDSM2_ENABLE_RACE_DETECTION
+                if (my_priv[i] != other_pub[i]) {
+                    report_data_race(blk_pos, i, other_pub, my_priv, my_pub, blk_size);
+                }
+                #endif
+                // Other processes have modified this block.
+                my_pub[i] = other_pub[i];
+                my_priv[i] = other_pub[i];
             }
-            
-            #else
-            // TODO: Scoped enums cannot do XOR...
-            const auto changed =
-                static_cast<unsigned char>(my_pub[i]) ^
-                static_cast<unsigned char>(home_pub[i])
-            
-            my_priv[i] =
-                static_cast<mefdn::byte>(
-                    static_cast<unsigned char>(my_priv[i]) ^ changed
-                );
-            my_pub[i] = home_pub[i];
-            #endif
         }
     }
     
@@ -500,30 +489,22 @@ private:
     ,   const size_type             blk_size
     ) {
         for (size_type i = 0; i < blk_size; ++i) {
-            #ifdef MEDSM2_USE_COMPARE_DIFF
-            if (my_priv[i] != my_pub[i]) {
-                #ifdef MEDSM2_ENABLE_RACE_DETECTION
-                if (my_pub[i] != other_pub[i]) {
-                    report_data_race(blk_pos, i, other_pub, my_priv, my_pub, blk_size);
-                }
-                #endif
+            // Check that there is no remote modification on this block.
+            if (my_pub[i] == other_pub[i]) {
+                // Any changes prior to this merge are
+                // considered as merged in this transaction.
                 my_pub[i] = my_priv[i];
             }
             else {
+                #ifdef MEDSM2_ENABLE_RACE_DETECTION
+                if (my_priv[i] != my_pub[i]) {
+                    report_data_race(blk_pos, i, other_pub, my_priv, my_pub, blk_size);
+                }
+                #endif
+                // Other processes have modified this block.
                 my_pub[i] = other_pub[i];
                 my_priv[i] = other_pub[i];
             }
-            
-            #else
-            // TODO: Scoped enums cannot do XOR...
-            my_priv[i] =
-                static_cast<mefdn::byte>(
-                    static_cast<unsigned char>(my_priv[i]) ^
-                    static_cast<unsigned char>(my_pub[i]) ^
-                    static_cast<unsigned char>(other_pub[i])
-                );
-            my_pub[i] = my_priv[i];
-            #endif
         }
     }
     
