@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/medev2/ucx/uct/uct_funcs.hpp>
+#include <menps/mefdn/logger.hpp>
 
 namespace menps {
 namespace medev2 {
