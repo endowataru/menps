@@ -28,30 +28,44 @@ struct for_loop_par_params {
 template <typename I, typename S, typename F>
 void* for_loop_par_aux(void* const arg)
 {
-    using params_type = for_loop_par_params<I, S, F>;
-    const auto& p = static_cast<const params_type*>(arg);
-    
-    const auto first = p->first;
-    const auto a = p->a;
-    const auto b = p->b;
-    const auto stride = p->stride;
-    const auto& func = p->func;
-    
-    const auto d = b - a;
-    MEFDN_ASSERT(d > 0);
-    
-    if (d == 1) {
-        func(first + a * stride);
+    try {
+        using params_type = for_loop_par_params<I, S, F>;
+        const auto& p = static_cast<const params_type*>(arg);
+        
+        const auto first = p->first;
+        const auto a = p->a;
+        const auto b = p->b;
+        const auto stride = p->stride;
+        const auto& func = p->func;
+        
+        const auto d = b - a;
+        MEFDN_ASSERT(d > 0);
+        
+        if (d == 1) {
+            func(first + a * stride);
+        }
+        else {
+            const auto c = a + d / 2;
+            params_type p0{ first, a, c, stride, func };
+            auto t = thread(fork_fast(&for_loop_par_aux<I, S, F>, &p0));
+            
+            params_type p1{ first, c, b, stride, func };
+            for_loop_par_aux<I, S, F>(&p1);
+            
+            t.join();
+        }
     }
-    else {
-        const auto c = a + d / 2;
-        params_type p0{ first, a, c, stride, func };
-        auto t = thread(fork_fast(&for_loop_par_aux<I, S, F>, &p0));
-        
-        params_type p1{ first, c, b, stride, func };
-        for_loop_par_aux<I, S, F>(&p1);
-        
-        t.join();
+    catch (std::exception& e) {
+        MEFDN_LOG_FATAL(
+            "msg:An exception thrown in mth::for_loop(par)!\t"
+            "what:{}"
+        ,   e.what()
+        );
+        throw;
+    }
+    catch (...) {
+        MEFDN_LOG_FATAL("msg:An unknown exception thrown in mth::for_loop(par)!");
+        throw;
     }
     
     return nullptr;

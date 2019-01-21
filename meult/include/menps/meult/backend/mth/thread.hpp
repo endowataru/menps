@@ -29,11 +29,25 @@ struct thread_functor
     
     static void* invoke(void* const p)
     {
-        const auto self = static_cast<thread_functor*>(p);
+        try {
+            const auto self = static_cast<thread_functor*>(p);
         
-        mefdn::apply(self->func, self->args);
-        
-        delete self;
+            mefdn::apply(self->func, self->args);
+            
+            delete self;
+        }
+        catch (std::exception& e) {
+            MEFDN_LOG_FATAL(
+                "msg:An exception thrown in mth::thread()!\t"
+                "what:{}"
+            ,   e.what()
+            );
+            throw;
+        }
+        catch (...) {
+            MEFDN_LOG_FATAL("msg:An unknown exception thrown in mth::thread()!");
+            throw;
+        }
         
         return nullptr;
     }
