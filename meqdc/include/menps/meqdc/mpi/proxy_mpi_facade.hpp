@@ -81,17 +81,32 @@ private:
             const bool is_executed =
                 self.req_hld_.is_available();
             
+            bool do_wait = needs_wait;
+            
             if (is_executed) {
                 // Call the original function directly.
                 (self.orig_mf_.*f)(real_p);
                 
                 if (proxy_req_ptr != nullptr)
                 {
-                    self.req_hld_.add(proxy_req_ptr, proxy_req_ptr->orig_req);
+                    if (proxy_req_ptr->orig_req == MPI_REQUEST_NULL) {
+                        // When the MPI function returns MPI_REQUEST_NULL,
+                        // this code treats it as the request completion.
+                        // This behavior is observed in calling MPI_Ibarrier()
+                        // with a single process communicator on Intel MPI.
+                        proxy_req_ptr->state.store(
+                            proxy_request_state_type::finished
+                        ,   mefdn::memory_order_relaxed
+                        );
+                        do_wait = false;
+                    }
+                    else {
+                        self.req_hld_.add(proxy_req_ptr, proxy_req_ptr->orig_req);
+                    }
                 }
             }
             
-            if (needs_wait) {
+            if (do_wait) {
                 proxy_req_ptr->state.store(
                     proxy_request_state_type::waiting
                 ,   mefdn::memory_order_relaxed
