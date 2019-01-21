@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/meqdc/common.hpp>
-#include <menps/medev2/mpi/mpi.hpp>
+#include <menps/medev2/mpi/direct_mpi_facade.hpp>
 #include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
@@ -34,6 +34,7 @@ public:
     ,   const MPI_Request           orig_req
     ) {
         const auto num_reqs = this->num_reqs_;
+        MEFDN_ASSERT(num_reqs < P::max_num_ongoing);
         
         this->proxy_reqs_[num_reqs] = proxy_req;
         this->orig_reqs_[num_reqs] = orig_req;
@@ -72,7 +73,12 @@ public:
         orig_mf.testsome({ incount, &this->orig_reqs_[0],
             &outcount, &this->indices_[0], &this->statuses_[0] });
         
+        if (MEFDN_UNLIKELY(outcount < 0)) {
+            throw medev2::mpi::mpi_error();
+        }
+        
         const auto num_completed = static_cast<size_type>(outcount);
+        MEFDN_ASSERT(num_completed <= num_reqs);
         
         if (num_completed == 0) {
             MEFDN_LOG_VERBOSE(
