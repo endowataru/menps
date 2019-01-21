@@ -546,6 +546,7 @@ void GOMP_critical_end() {
 struct ident;
 
 using kmp_int32 = mefdn::int32_t;
+using kmp_int64 = mefdn::int64_t;
 
 using kmpc_micro = void (*)(kmp_int32* , kmp_int32*, ...);
 using microtask_t = void (*)(int*, int*, ...);
@@ -732,7 +733,7 @@ void __kmpc_end_master(ident* /*loc*/, kmp_int32 /*global_tid*/) {
 namespace /*unnamed*/ {
 
 template <typename T, typename SignedT>
-void kmpc_for_static_init_4(
+void kmpc_for_static_init(
     ident* const        /*loc*/
 ,   const kmp_int32     gtid
 ,   const kmp_int32     /*schedtype*/
@@ -748,7 +749,7 @@ void kmpc_for_static_init_4(
     MEFDN_STATIC_ASSERT(mefdn::is_signed<SignedT>::value);
     
     const auto& wk = worker_base_type::get_current_worker();
-    const auto num_threads = wk.get_num_threads();
+    const auto num_threads = static_cast<T>(wk.get_num_threads());
     MEFDN_ASSERT(gtid == wk.get_thread_num());
     const auto tid = gtid;
     
@@ -808,7 +809,23 @@ void __kmpc_for_static_init_4(
 ,   const kmp_int32     incr
 ,   const kmp_int32     chunk
 ) {
-    kmpc_for_static_init_4(loc, gtid, schedtype, plastiter, plower, pupper, pstride, incr, chunk);
+    kmpc_for_static_init(loc, gtid, schedtype, plastiter, plower, pupper, pstride, incr, chunk);
+}
+
+
+extern "C"
+void __kmpc_for_static_init_8(
+    ident* const        loc
+,   const kmp_int32     gtid
+,   const kmp_int32     schedtype
+,   kmp_int32* const    plastiter
+,   kmp_int64* const    plower
+,   kmp_int64* const    pupper
+,   kmp_int64* const    pstride
+,   const kmp_int64     incr
+,   const kmp_int64     chunk
+) {
+    kmpc_for_static_init(loc, gtid, schedtype, plastiter, plower, pupper, pstride, incr, chunk);
 }
 
 
