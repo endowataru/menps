@@ -53,14 +53,6 @@ struct ult_policy
     
     typedef meult::backend::mth::uncond_variable    uncond_variable;
     
-    template <typename T>
-    struct async_channel_ {
-        typedef async_channel<T>    type;
-    };
-    
-    template <typename T>
-    using async_channel = mth::async_channel<T>;
-    
     using barrier = mth::barrier;
     
     struct execution

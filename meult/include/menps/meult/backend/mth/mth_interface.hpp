@@ -8,10 +8,6 @@
 #include <menps/meult/backend/mth/thread_specific.hpp>
 #include <menps/meult/backend/mth/for_loop.hpp>
 #include <menps/meult/backend/mth/uncond_variable.hpp>
-#include <menps/meult/backend/mth/async_channel.hpp>
-
-#include <menps/meult/async/async_status.hpp>
-#include <menps/meult/async/async_atomic_channel.hpp>
 
 #include <menps/meult/klt.hpp>
 
@@ -114,10 +110,6 @@ inline T suspend_and_call(Func&& func, Args&&... args)
         return ch.get();
     }
 }
-
-using meult::async_status;
-using meult::make_async_ready;
-using meult::make_async_deferred;
 
 using mefdn::unique_lock;
 using mefdn::lock_guard;

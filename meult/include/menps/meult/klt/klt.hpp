@@ -11,9 +11,6 @@
 
 #include <menps/mefdn/type_traits.hpp>
 
-#include <menps/meult/async/async_status.hpp>
-#include <menps/meult/async/async_atomic_channel.hpp>
-
 #include <menps/meult/klt/emulated_uncond_variable.hpp>
 
 namespace menps {
@@ -45,10 +42,7 @@ inline void detach()
 
 using mefdn::spinlock;
 
-using meult::async_status;
-using meult::make_async_ready;
-using meult::make_async_deferred;
-
+#if 0
 namespace detail {
 
 template <typename T>
@@ -93,8 +87,7 @@ inline T suspend_and_call(Func&& func, Args&&... args)
         return async_get(mefdn::move(ch), klt::this_thread::yield);
     }
 }
-
-using mefdn::sync_flag;
+#endif
 
 inline mefdn::size_t get_num_workers() noexcept {
     return std::thread::hardware_concurrency();

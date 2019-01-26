@@ -77,9 +77,6 @@ struct klt_policy
     }
     
     using uncond_variable = klt::emulated_uncond_variable;
-    
-    template <typename T>
-    using async_channel = async_atomic_channel<T>;
 };
 
 namespace klt {
