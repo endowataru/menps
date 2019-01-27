@@ -41,11 +41,6 @@ struct ult_policy
     
     typedef meult::backend::mth::thread thread;
     
-    template <typename Policy>
-    struct thread_specific_ {
-        typedef typename meult::backend::mth::thread_specific<Policy>   type;
-    };
-    
     // Note: The type "P" is used to distinguish thread-local storages with the same type.
     template <typename P>
     using thread_specific =

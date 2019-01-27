@@ -16,6 +16,8 @@ namespace meult {
 namespace backend {
 namespace mth {
 
+#if 0
+
 namespace detail {
 
 template <typename T>
@@ -111,10 +113,10 @@ inline T suspend_and_call(Func&& func, Args&&... args)
     }
 }
 
+#endif
+
 using mefdn::unique_lock;
 using mefdn::lock_guard;
-
-using mefdn::sync_flag;
 
 inline mefdn::size_t get_num_workers() noexcept
 {
