@@ -35,11 +35,6 @@ struct klt_policy
     
     typedef meult::klt::thread              thread;
     
-    template <typename Policy>
-    struct thread_specific_ {
-        typedef typename meult::klt::thread_specific<Policy>    type;
-    };
-    
     // Note: The type "P" is used to distinguish thread-local storages with the same type.
     template <typename P>
     using thread_specific =
