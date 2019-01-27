@@ -1,15 +1,18 @@
 
 #pragma once
 
-#include <menps/mefdn/lang.hpp>
+#include <menps/mefdn/nontype.hpp>
 
 namespace menps {
 namespace meult {
 
-template <typename Policy>
+template <typename P>
 class basic_scheduler_initializer
 {
-    typedef typename Policy::derived_type   derived_type;
+    MEFDN_DEFINE_DERIVED(P)
+    
+    using context_type = typename P::context_type;
+    using transfer_type = typename P::transfer_type;
     
 public:
     void initialize()
@@ -18,75 +21,84 @@ public:
         
         const auto stack_size = self.get_stack_size();
         
-        call_stack_.reset(new mefdn::uint8_t[stack_size]);
+        this->call_stack_.reset(new mefdn::uint8_t[stack_size]);
         
-        const auto ctx =
-            self.make_context(
-                call_stack_.get() + stack_size
-            ,   stack_size
-            ,   &call_loop
-            );
-        
-        const auto r = self.template jump_context<derived_type>(ctx, &self);
-        
-        this->ctx_ =
-            self.template cast_context<derived_type, derived_type>(
-                r.fctx
-            );
+        self.save_context(
+            call_stack_.get() + stack_size
+        ,   stack_size
+        ,   MEFDN_NONTYPE_TEMPLATE(&basic_scheduler_initializer::call_loop)
+        ,   &self
+        );
+        // <-- (A) -->
     }
     
     void finalize()
     {
         auto& self = this->derived();
         
-        self.template jump_context<derived_type>(ctx_, &self);
+        self.swap_context(
+            self.exit_ctx_ // (B)
+        ,   MEFDN_NONTYPE_TEMPLATE(&basic_scheduler_initializer::on_swap_fin)
+        ,   &self
+        );
+        // <-- (C) -->
         
-        call_stack_.reset();
+        this->call_stack_.reset();
     }
     
 private:
+    static transfer_type on_restore_exit(void* const /*ignored*/) {
+        return { nullptr };
+    }
+    
     MEFDN_NORETURN
-    static void call_loop(typename Policy::template context_argument<derived_type, derived_type>::type arg)
+    static transfer_type call_loop(const context_type init_ctx, derived_type* const self)
     {
-        auto& self = *arg.data;
+        self->loop(functor{ *self, init_ctx });
         
-        const auto ctx =
-            self.template cast_context<derived_type, derived_type>(
-                arg.fctx
-            );
+        void* const null = nullptr;
+        self->restore_context(
+            self->fin_ctx_ // (C)
+        ,   MEFDN_NONTYPE_TEMPLATE(&basic_scheduler_initializer::on_restore_exit)
+        ,   null
+        );
         
-        self.ctx_ = ctx;
-        
-        self.loop(functor{self});
-        
-        self.template jump_context<derived_type>(self.ctx_, &self);
-        
-        // this context is abandoned.
-        
+        // This context is abandoned.
         MEFDN_UNREACHABLE();
+    }
+    
+    static transfer_type on_init_swap(const context_type exit_ctx, derived_type* const self)
+    {
+        self->exit_ctx_ = exit_ctx /* (B) */;
+        
+        return { nullptr };
     }
     
     struct functor
     {
-        derived_type& self;
+        derived_type&   self;
+        context_type    init_ctx;
         
         void operator() ()
         {
-            const auto r =
-                self.template jump_context<derived_type>(self.ctx_, &self);
-            
-            self.ctx_ =
-                self.template cast_context<derived_type, derived_type>(
-                    r.fctx
-                );
+            self.swap_context(
+                init_ctx // (A)
+            ,   MEFDN_NONTYPE_TEMPLATE(&basic_scheduler_initializer::on_init_swap)
+            ,   &self
+            );
+            // <-- (B) -->
         }
     };
     
-    derived_type& derived() noexcept {
-        return static_cast<derived_type&>(*this);
+    static transfer_type on_swap_fin(const context_type fin_ctx, derived_type* const self)
+    {
+        self->fin_ctx_ = fin_ctx /* (C) */;
+        
+        return { nullptr };
     }
     
-    typename Policy::template context<derived_type, derived_type>::type ctx_;
+    context_type exit_ctx_;
+    context_type fin_ctx_;
     
     mefdn::unique_ptr<mefdn::uint8_t []> call_stack_;
 };

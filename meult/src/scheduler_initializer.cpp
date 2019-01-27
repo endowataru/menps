@@ -1,7 +1,7 @@
 
 #include <menps/meult/scheduler_initializer.hpp>
 #include <menps/meult/generic/basic_scheduler_initializer.hpp>
-#include <menps/meult/generic/fcontext_worker_base.hpp>
+#include <menps/mectx/context_policy.hpp>
 #include <menps/mefdn/utility.hpp>
 
 namespace menps {
@@ -12,14 +12,16 @@ namespace /*unnamed*/ {
 class initializer_impl;
 
 struct initializer_traits
-    : fcontext_worker_traits_base
 {
     typedef initializer_impl    derived_type;
+    
+    using context_type = mectx::context<void*>;
+    using transfer_type = mectx::transfer<void*>;
 };
 
 class initializer_impl
     : public basic_scheduler_initializer<initializer_traits>
-    , public fcontext_worker_base
+    , public mectx::context_policy
 {
 public:
     explicit initializer_impl(root_scheduler& sched)
