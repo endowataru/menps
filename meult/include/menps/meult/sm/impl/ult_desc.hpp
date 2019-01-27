@@ -2,7 +2,6 @@
 #pragma once
 
 #include "sm_common.hpp"
-#include <menps/meult/fcontext.hpp>
 #include <menps/mefdn/thread/spinlock.hpp>
 
 namespace menps {
