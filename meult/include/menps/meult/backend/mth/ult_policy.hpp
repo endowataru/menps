@@ -13,6 +13,8 @@ namespace mth {
 
 struct ult_policy
 {
+    struct initializer { };
+    
     typedef meult::backend::mth::mutex              mutex;
     typedef meult::backend::mth::condition_variable condition_variable;
     

@@ -50,6 +50,7 @@ target_include_directories(medsm2
 )
 target_link_libraries(medsm2
     PUBLIC mecom2
+    PUBLIC cmpth
     PRIVATE mefdn-options
 )
 

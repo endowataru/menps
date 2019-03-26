@@ -1,22 +1,19 @@
 
 #pragma once
 
-#include <menps/meult/common.hpp>
-#include <menps/mefdn/memory/get_container_of.hpp>
-#include <menps/mefdn/arithmetic.hpp>
-#include <menps/mefdn/mutex.hpp>
+#include <cmpth/common.hpp>
 
-namespace menps {
-namespace meult {
+namespace cmpth {
 
 template <typename P>
-class basic_balanced_tls_pool
+class basic_return_pool
 {
-    using element_type = typename P::element_type;
-    using ult_itf_type = typename P::ult_itf_type;
-    using size_type = typename P::size_type;
+    CMPTH_DEFINE_DERIVED(P)
     
-    using spinlock_type = typename ult_itf_type::spinlock;
+    using element_type = typename P::element_type;
+    using spinlock_type = typename P::spinlock_type;
+    
+    using size_type = fdn::size_t;
     
 public:
     struct node {
@@ -34,80 +31,77 @@ private:
     
     struct wk_entry {
         // Owned by the worker thread.
-        pro_entry*      pros;
-        node*           con_local;
-        mefdn::byte     pad1[
-            MEFDN_CACHE_LINE_SIZE - sizeof(pro_entry*) - sizeof(node*)
+        pro_entry*  pros;
+        node*       con_local;
+        fdn::byte   pad1[
+            fdn::calc_padding(sizeof(pro_entry*) + sizeof(node*))
         ];
         
         // Shared with other workers.
         spinlock_type   lock;
         node*           con_remote;
-        mefdn::byte     pad2[
-            MEFDN_CACHE_LINE_SIZE - sizeof(spinlock_type) - sizeof(node*)
+        fdn::byte       pad2[
+            fdn::calc_padding(sizeof(spinlock_type) + sizeof(node*))
         ];
     };
     
 public:
-    basic_balanced_tls_pool()
+    explicit basic_return_pool(const size_type n_wks)
+        : n_wks_(n_wks)
     {
-        const auto n_wks = ult_itf_type::get_num_workers();
-        
         const auto min_n_pes = 
-            mefdn::roundup_divide<size_type>(MEFDN_CACHE_LINE_SIZE, sizeof(pro_entry));
+            fdn::roundup_divide<size_type>(CMPTH_CACHE_LINE_SIZE, sizeof(pro_entry));
         
         const auto n_pes_per_wk =
-            mefdn::roundup_divide<size_type>(n_wks, min_n_pes) * min_n_pes;
+            fdn::roundup_divide(n_wks, min_n_pes) * min_n_pes;
         
-        this->wes_ = mefdn::make_unique<wk_entry []>(n_wks);
-        this->pes_ = mefdn::make_unique<pro_entry []>(n_wks * n_pes_per_wk);
+        this->wes_ = fdn::make_oa_unique<wk_entry []>(n_wks);
+        this->pes_ = fdn::make_oa_unique<pro_entry []>(n_wks * n_pes_per_wk);
         
         for (size_type i = 0; i < n_wks; ++i) {
             this->wes_[i].pros = &this->pes_[i * n_pes_per_wk];
         }
     }
     
-    ~basic_balanced_tls_pool()
+    ~basic_return_pool()
     {
-        const auto n_wks = ult_itf_type::get_num_workers();
+        const auto n_wks = this->n_wks_;
         
         for (size_type i = 0; i < n_wks; ++i) {
             auto& we = this->wes_[i];
-            deallocate_all(we.con_local);
-            deallocate_all(we.con_remote);
+            this->destroy_all(we.con_local);
+            this->destroy_all(we.con_remote);
             
             for (size_type j = 0; j < n_wks; ++j) {
                 auto pe = we.pros[j];
-                deallocate_all(pe.first);
+                this->destroy_all(pe.first);
             }
         }
     }
     
-    basic_balanced_tls_pool(const basic_balanced_tls_pool&) = delete;
-    basic_balanced_tls_pool& operator = (const basic_balanced_tls_pool&) = delete;
+    basic_return_pool(const basic_return_pool&) = delete;
+    basic_return_pool& operator = (const basic_return_pool&) = delete;
     
 private:
-    static void deallocate_all(node* n) {
+    static void destroy_all(node* n) {
         while (n != nullptr) {
             const auto next = n->next;
-            P::deallocate(n);
+            derived_type::destroy(n);
             n = next;
         }
     }
     
 public:
-    
     template <typename AllocFunc>
-    //MEFDN_NOINLINE
-    element_type* allocate(AllocFunc alloc_func)
+    element_type* allocate(size_type cur_wk_num, AllocFunc&& alloc_func)
     {
-        const auto cur_wk_num = ult_itf_type::get_worker_num();
+        //const auto cur_wk_num = ult_itf_type::get_worker_num();
         auto& cur_we = this->wes_[cur_wk_num];
         
         // Try to consume local entries.
         auto ret = cur_we.con_local;
         
-        if (MEFDN_LIKELY(ret != nullptr)) {
+        if (CMPTH_LIKELY(ret != nullptr)) {
             // Consumed one entry.
             cur_we.con_local = ret->next;
             
@@ -120,10 +114,10 @@ public:
         
         {
             // Try to consume remote entries.
-            mefdn::unique_lock<spinlock_type> lk(cur_we.lock);
+            fdn::unique_lock<spinlock_type> lk(cur_we.lock);
             ret = cur_we.con_remote;
             
-            if (MEFDN_LIKELY(ret != nullptr)) {
+            if (CMPTH_LIKELY(ret != nullptr)) {
                 cur_we.con_remote = nullptr;
                 lk.unlock();
                 
@@ -137,27 +131,28 @@ public:
             }
         }
         
-        ret = alloc_func();
+        ret = fdn::forward<AllocFunc>(alloc_func)();
         ret->wk_num = cur_wk_num;
         
         return &ret->elem;
     }
     
-    element_type* allocate()
+    #if 0
+    element_type* allocate(size_type cur_wk_num)
     {
-        return this->allocate([] { return new node; });
+        return this->allocate(cur_wk_num, [] { return new node; });
     }
+    #endif
     
-    //MEFDN_NOINLINE
-    void deallocate(element_type* const e)
+    void deallocate(size_type cur_wk_num, element_type* const e)
     {
         // Destruct the element. No overhead for PODs.
         e->~element_type();
         
-        const auto n = mefdn::get_container_of(e, &node::elem);
+        const auto n = fdn::get_container_of(e, &node::elem);
         const auto alloc_wk_num = n->wk_num;
         
-        const auto cur_wk_num = ult_itf_type::get_worker_num();
+        //const auto cur_wk_num = ult_itf_type::get_worker_num();
         auto& we = this->wes_[cur_wk_num];
         
         if (alloc_wk_num == cur_wk_num) {
@@ -169,29 +164,31 @@ public:
             auto& pe = we.pros[alloc_wk_num];
             const auto pe_num = pe.num;
             if (pe_num < P::get_pool_threshold(*this)) {
+                // Store remote entries to the local list.
                 if (pe_num == 0) {
-                    MEFDN_ASSERT(pe.first == nullptr);
-                    MEFDN_ASSERT(pe.last == nullptr);
+                    CMPTH_P_ASSERT(P, pe.first == nullptr);
+                    CMPTH_P_ASSERT(P, pe.last == nullptr);
                     pe.last = n;
                 }
                 else {
-                    MEFDN_ASSERT(pe.first != nullptr);
-                    MEFDN_ASSERT(pe.last != nullptr);
+                    CMPTH_P_ASSERT(P, pe.first != nullptr);
+                    CMPTH_P_ASSERT(P, pe.last != nullptr);
                 }
                 n->next = pe.first;
                 pe.first = n;
                 pe.num = pe_num + 1;
             }
             else {
+                // Put remote entries back to the remote list.
                 auto& alloc_we = this->wes_[alloc_wk_num];
                 
                 const auto pe_first = pe.first;
                 const auto pe_last = pe.last;
-                MEFDN_ASSERT(pe_first != nullptr);
-                MEFDN_ASSERT(pe_last != nullptr);
+                CMPTH_P_ASSERT(P, pe_first != nullptr);
+                CMPTH_P_ASSERT(P, pe_last != nullptr);
                 
                 {
-                    mefdn::lock_guard<spinlock_type> lk(alloc_we.lock);
+                    fdn::lock_guard<spinlock_type> lk(alloc_we.lock);
                     pe_last->next = alloc_we.con_remote;
                     alloc_we.con_remote = pe_first;
                 }
@@ -208,14 +205,14 @@ public:
         return &n->elem;
     }
     static node* to_node(element_type* const e) noexcept {
-        return mefdn::get_container_of(e, &node::elem);
+        return fdn::get_container_of(e, &node::elem);
     }
     
 private:
-    mefdn::unique_ptr<wk_entry []>  wes_;
-    mefdn::unique_ptr<pro_entry []> pes_;
+    size_type                           n_wks_ = 0;
+    fdn::oa_unique_ptr<wk_entry []>     wes_;
+    fdn::oa_unique_ptr<pro_entry []>    pes_;
 };
 
-} // namespace meult
-} // namespace menps
+} // namespace cmpth
 

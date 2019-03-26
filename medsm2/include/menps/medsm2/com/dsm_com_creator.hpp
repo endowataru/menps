@@ -58,6 +58,8 @@ public:
         int* const      argc
     ,   char*** const   argv
     ) {
+        this->ult_init_ = mefdn::make_unique<typename ult_itf_type::initializer>();
+        
         int provided = 0;
         
         this->mf_ =
@@ -124,6 +126,7 @@ private:
         mefdn::size_t number_ = 0;
     };
     
+    mefdn::unique_ptr<typename ult_itf_type::initializer> ult_init_;
     mefdn::unique_ptr<mpi_facade_type> mf_;
     MPI_Comm coll_comm_ = MPI_COMM_NULL;
     MPI_Comm p2p_comm_ = MPI_COMM_NULL;
