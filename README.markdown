@@ -3,7 +3,7 @@ MENPS
 =====
 
 MENPS is a distributed shared memory library designed for high-performance computing.
-The term MENPS is an acronym of "__ME__nps is __N__ot a __P__GAS __S__ystem".
+The term MENPS is an acronym of "__ME__ NPS is __N__ ot a __P__ GAS __S__ ystem".
 
 Components
 ----------
@@ -17,7 +17,7 @@ This repository is composed of multiple modules for distributed-memory programmi
 - mecom2
     - Portable low-level communication library
 - meqdc
-    - __Q__ueue-__d__elegated __c__ommunication device wrapper
+    - __Q__ ueue- __d__ elegated __c__ ommunication device wrapper
 - medev2
     - Communication device wrapper library
 - meult
