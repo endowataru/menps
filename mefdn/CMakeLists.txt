@@ -318,8 +318,6 @@ add_executable(mefdn-unittest
     unittest/index_list.cpp
     unittest/tuple.cpp
     #unittest/callback.cpp
-    #unittest/deferred.cpp
-    #unittest/callback_function.cpp
     unittest/spinlock.cpp
     #unittest/condition_variable.cpp
     #unittest/optional.cpp
