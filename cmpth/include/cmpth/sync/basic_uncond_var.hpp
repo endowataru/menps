@@ -92,13 +92,22 @@ private:
         ,   basic_uncond_var* const self
         ,   Args* const ...         args
         ) {
+            // Put the continuation to the uncond variable.
+            // It may be used within Func.
+            self->cont_ = fdn::move(cont);
+            
             // Execute the user-defined function.
             if (Func{}(wk, args...)) {
                 // Switch to "next_uv".
-                self->cont_ = fdn::move(cont);
                 return wk;
             }
             else {
+                // The continuation must not be consumed.
+                CMPTH_P_ASSERT(P, self->cont_);
+                
+                // Take the continuation to execute.
+                cont = fdn::move(self->cont_);
+                
                 // Switch back to the original thread.
                 wk.exit_to_cont_imm(fdn::move(cont));
             }
@@ -135,13 +144,22 @@ private:
         ,   basic_uncond_var* const self
         ,   Args* const ...         args
         ) {
+            // Put the continuation to the uncond variable.
+            // It may be used within Func.
+            self->cont_ = fdn::move(cont);
+            
             // Execute the user-defined function.
             if (Func{}(wk, args...)) {
                 // Switch to "next_uv".
-                self->cont_ = fdn::move(cont);
                 return wk;
             }
             else {
+                // The continuation must not be consumed.
+                CMPTH_P_ASSERT(P, self->cont_);
+                
+                // Take the continuation to execute.
+                cont = fdn::move(self->cont_);
+                
                 // Return to the original thread.
                 wk.template cancel_suspend<
                     basic_uncond_var::on_wait_with_ret
