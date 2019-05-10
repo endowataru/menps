@@ -59,7 +59,15 @@ public:
         this->pes_ = fdn::make_oa_unique<pro_entry []>(n_wks * n_pes_per_wk);
         
         for (size_type i = 0; i < n_wks; ++i) {
+            CMPTH_P_ASSERT(P, this->wes_[i].con_local == nullptr);
+            CMPTH_P_ASSERT(P, this->wes_[i].con_remote == nullptr);
+            CMPTH_P_ASSERT(P, this->wes_[i].pros == nullptr);
             this->wes_[i].pros = &this->pes_[i * n_pes_per_wk];
+            for (size_type j = 0; j < n_pes_per_wk; ++j) {
+                CMPTH_P_ASSERT(P, this->wes_[i].pros[j].first == nullptr);
+                CMPTH_P_ASSERT(P, this->wes_[i].pros[j].last == nullptr);
+                CMPTH_P_ASSERT(P, this->wes_[i].pros[j].num == 0);
+            }
         }
     }
     
