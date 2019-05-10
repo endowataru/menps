@@ -77,7 +77,7 @@ private:
             const auto& func = params->func;
             
             const auto d = b - a;
-            MEFDN_ASSERT(d > 0);
+            CMPTH_P_ASSERT(P, d > 0);
             
             if (d == 1) {
                 func(first + a * stride);
@@ -106,8 +106,6 @@ private:
             CMPTH_P_LOG_FATAL(P, "msg:An unknown exception thrown in mth::for_loop(par)!", 0);
             throw;
         }
-        
-        //return nullptr;
     }
 };
 
