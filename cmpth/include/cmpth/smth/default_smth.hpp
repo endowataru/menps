@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cmpth/smth/smth.hpp>
+#include <cmpth/ult_tag.hpp>
 #include <cmpth/pool/basic_return_pool.hpp>
 #include <cmpth/ctx/x86_64_context_policy.hpp>
 #include <cmpth/wrap/klt_itf.hpp>
@@ -113,6 +114,11 @@ struct default_smth_policy
 };
 
 using default_smth_itf = smth_itf<default_smth_policy>;
+
+
+template <>
+struct get_ult_itf_type<ult_tag_t::SMTH>
+    : fdn::type_identity<default_smth_itf> { };
 
 } // namespace cmpth
 
