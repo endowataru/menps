@@ -9,6 +9,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <functional>
 
 #if !defined(NDEBUG) && !defined(CMPTH_DEBUG)
     #define CMPTH_DEBUG
@@ -46,6 +47,8 @@ using std::size_t;
 using std::ptrdiff_t;
 using std::int32_t;
 using std::int64_t;
+using std::uint32_t;
+using std::uint64_t;
 using std::uintptr_t;
 using std::intptr_t;
 
@@ -421,10 +424,12 @@ struct parallel_unsequenced_policy { };
 
 } // namespace execution
 
+
+// <exception>
+
+using std::exception;
+
 } // namespace fdn
 
 } // namespace cmpth
-
-#include <cmpth/fdn/log.hpp>
-#include <cmpth/fdn/assert.hpp>
 

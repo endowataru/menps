@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <cmpth/fdn/fdn.hpp>
 #include <cstdlib>
 
 #define CMPTH_P_ASSERT(P, x)    \
