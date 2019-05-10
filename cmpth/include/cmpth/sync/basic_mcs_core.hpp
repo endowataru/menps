@@ -12,6 +12,13 @@ class basic_mcs_core
     using atomic_node_ptr_type = typename P::atomic_node_ptr_type;
     
 public:
+    basic_mcs_core() noexcept
+        : tail_{nullptr}
+    { }
+    
+    basic_mcs_core(const basic_mcs_core&) = delete;
+    basic_mcs_core& operator = (const basic_mcs_core&) = delete;
+    
     CMPTH_NODISCARD
     mcs_node_type* start_lock(mcs_node_type* const cur) noexcept
     {
@@ -24,7 +31,8 @@ public:
         
         if (prev == nullptr) {
             // This thread locked the mutex immediately.
-            
+            CMPTH_P_ASSERT(P, this->head_ == nullptr);
+            this->head_ = cur;
         }
         else {
             // This thread couldn't lock the mutex immediately.
@@ -48,6 +56,7 @@ public:
         prev->next.store(cur, fdn::memory_order_release);
     }
     
+    #if 0
     static mcs_node_type* load_next(
         mcs_node_type* const cur
     ) noexcept
@@ -55,6 +64,7 @@ public:
         CMPTH_P_ASSERT(P, cur != nullptr);
         return cur->next.load(fdn::memory_order_acquire);
     }
+    #endif
     
     CMPTH_NODISCARD
     bool try_unlock(mcs_node_type* const head) noexcept
@@ -62,11 +72,32 @@ public:
         /*if (this->tail_.load(fdn::memory_order_relaxed) != head) {
             return false;
         }*/
+        CMPTH_P_ASSERT(P, this->head_ == head);
+        this->head_ = nullptr;
+        
         auto expected = head;
         
-        return this->tail_.compare_exchange_strong(
-            expected, nullptr, fdn::memory_order_release
-        );
+        const bool ret =
+            this->tail_.compare_exchange_strong(
+                expected, nullptr, fdn::memory_order_release
+            );
+        
+        if (ret) {
+            CMPTH_P_LOG_DEBUG(P,
+                "Successfully unlocked MCS core.", 1
+            ,   "old_head", head
+            );
+            return true;
+        }
+        else {
+            CMPTH_P_LOG_DEBUG(P,
+                "Failed to unlock MCS core.", 2
+            ,   "head", head
+            ,   "tail", this->tail_.load(fdn::memory_order_relaxed)
+            );
+            this->head_ = head;
+            return false;
+        }
     }
     
     bool is_unlockable(mcs_node_type* const head) const noexcept
@@ -74,8 +105,40 @@ public:
         return this->tail_.load(fdn::memory_order_relaxed) == head;
     }
     
+    mcs_node_type* get_head() const noexcept
+    {
+        CMPTH_P_LOG_DEBUG(P,
+            "Reading qdlock head.", 2
+        ,   "head", this->head_
+        ,   "tail", this->tail_.load(fdn::memory_order_relaxed)
+        );
+        
+        // This thread must be locking this lock.
+        const auto head = this->head_;
+        CMPTH_P_ASSERT(P, head != nullptr);
+        return head;
+    }
+    
+    mcs_node_type* try_follow_head(mcs_node_type* const head) noexcept
+    {
+        CMPTH_P_ASSERT(P, head != nullptr);
+        CMPTH_P_ASSERT(P, this->head_ == head);
+        
+        const auto next = head->next.load(fdn::memory_order_acquire);
+        if (next != nullptr) {
+            this->head_ = next;
+        }
+        return next;
+    }
+    
 private:
-    atomic_node_ptr_type tail_{nullptr};
+    atomic_node_ptr_type tail_;
+    
+    fdn::byte pad1_[CMPTH_CACHE_LINE_SIZE - sizeof(atomic_node_ptr_type)];
+    
+    mcs_node_type* head_ = nullptr;
+    
+    fdn::byte pad2_[CMPTH_CACHE_LINE_SIZE - sizeof(mcs_node_type*)];
 };
 
 #if 0

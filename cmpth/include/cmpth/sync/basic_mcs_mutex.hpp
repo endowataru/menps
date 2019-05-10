@@ -5,6 +5,8 @@
 
 namespace cmpth {
 
+#define CMPTH_MCS_MUTEX_USE_NEXT_UV
+
 template <typename P>
 class basic_mcs_mutex
 {
@@ -21,9 +23,15 @@ public:
         
         if (prev != nullptr)
         {
+            #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
+            cur->uv.template wait_with<
+                basic_mcs_mutex::on_lock
+            >(wk, prev, cur);
+            #else
             prev->uv.template wait_with<
                 basic_mcs_mutex::on_lock
             >(wk, prev, cur);
+            #endif
         }
     }
     
@@ -32,33 +40,43 @@ private:
         CMPTH_NODISCARD
         bool operator() (
             worker_type&            /*wk*/
+        ,   mcs_node_type* const    prev
         ,   mcs_node_type* const    cur
-        ,   mcs_node_type* const    next
         ) {
-            mcs_core_type::set_next(cur, next);
+            mcs_core_type::set_next(prev, cur);
             
             return true;
         }
     };
     
 public:
-    void unlock(worker_type& wk, mcs_node_type* const cur)
+    mcs_node_type* unlock(worker_type& wk)
     {
+        const auto cur = this->core_.get_head();
+        
         if (CMPTH_LIKELY(this->core_.try_unlock(cur))) {
-            return;
+            return cur;
         }
         
         mcs_node_type* next = nullptr;
         do {
-            next = mcs_core_type::load_next(cur);
+            next = this->core_.try_follow_head(cur);
         }
         while (next == nullptr);
         
+        #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
+        next->uv.notify(wk);
+        #else
         cur->uv.notify(wk);
+        #endif
+        
+        return cur;
     }
     
-    void unlock_and_wait(worker_type& wk, mcs_node_type* const cur, uncond_var_type& saved_uv)
+    mcs_node_type* unlock_and_wait(worker_type& wk, uncond_var_type& saved_uv)
     {
+        const auto cur = this->core_.get_head();
+        
         if (CMPTH_LIKELY(
             this->core_.is_unlockable(cur)
         )) {
@@ -69,17 +87,24 @@ public:
             >
             (wk, this, cur, &is_unlocked);
             
-            if (CMPTH_LIKELY(is_unlocked)) { return; }
+            if (CMPTH_LIKELY(is_unlocked)) { return cur; }
         }
         
         mcs_node_type* next = nullptr;
         do {
-            next = mcs_core_type::load_next(cur);
+            next = this->core_.try_follow_head(cur);
         }
         while (next == nullptr);
         
+        #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
+        // Save the current context to saved_uv and switch to next->uv.
+        saved_uv.swap(wk, next->uv);
+        #else
         // Save the current context to saved_uv and switch to cur-uv.
         saved_uv.swap(wk, cur->uv);
+        #endif
+        
+        return cur;
     }
     
 private:

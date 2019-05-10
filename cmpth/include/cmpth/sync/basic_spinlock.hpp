@@ -13,7 +13,9 @@ class basic_spinlock
     using atomic_bool_type = typename P::atomic_bool_type;
     
 public:
-    basic_spinlock() noexcept = default;
+    basic_spinlock() noexcept
+        : flag_{false}
+    { }
     
     basic_spinlock(const basic_spinlock&) = delete;
     basic_spinlock& operator = (const basic_spinlock&) = delete;
@@ -52,7 +54,7 @@ public:
     }
     
 private:
-    atomic_bool_type flag_{false};
+    atomic_bool_type flag_;
 };
 
 } // namespace cmpth

@@ -17,6 +17,7 @@
 #include <cmpth/sync/basic_mcs_spinlock.hpp>
 #include <cmpth/sync/basic_mcs_mutex.hpp>
 #include <cmpth/sync/basic_mcs_cv.hpp>
+#include <cmpth/sync/basic_cv_barrier.hpp>
 #include <cmpth/sync/basic_spinlock.hpp>
 #include <cmpth/sync/basic_uncond_var.hpp>
 #include <cmpth/sync/basic_pool_mcs_mutex.hpp>
@@ -202,6 +203,16 @@ struct smth_cv_policy
     using uncond_var_type = basic_uncond_var<smth_uncond_var_policy<P>>;
 };
 
+
+template <typename P>
+struct smth_barrier_policy {
+    using ptrdiff_type = fdn::ptrdiff_t;
+    using mutex_type = basic_pool_mcs_mutex<smth_mutex_policy<P>>;
+    using cv_type = basic_mcs_cv<smth_cv_policy<P>>;
+    using unique_lock_type = fdn::unique_lock<mutex_type>;
+};
+
+
 template <typename P>
 struct smth_thread_specific_policy
     : smth_base_policy<P>
@@ -233,7 +244,7 @@ public:
     smth_initializer()
         : sched_{}
     {
-        sched_.make_workers(4); // FIXME
+        sched_.make_workers(2); // FIXME
         
         this->init_ = fdn::make_unique<initializer>(this->sched_);
     }
@@ -257,6 +268,7 @@ private:
     using worker_num_type = typename base_policy::worker_num_type;
     using worker_type = typename base_policy::worker_type;
     using scheduler_type = smth_scheduler<P>;
+    using base_ult_itf_type = typename P::base_ult_itf_type;
     
 public:
     using initializer = smth_initializer<P>;
@@ -268,6 +280,11 @@ public:
     using condition_variable = basic_mcs_cv<smth_cv_policy<P>>;
     
     using unique_mutex_lock = fdn::unique_lock<mutex>;
+    
+    using barrier = basic_cv_barrier<smth_barrier_policy<P>>;
+    
+    template <typename T>
+    using atomic = typename base_ult_itf_type::template atomic<T>;
     
     using spinlock = typename P::spinlock_type;
     
@@ -296,7 +313,9 @@ public:
         auto& wk = worker_type::get_cur_worker();
         return wk.get_worker_num();
     }
+    
+    using assert_policy = typename P::assert_policy_type;
+    using log_policy = typename P::log_policy_type;
 };
 
 } // namespace cmpth
-

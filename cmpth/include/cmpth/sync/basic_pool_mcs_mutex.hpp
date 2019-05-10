@@ -23,18 +23,14 @@ public:
         const auto cur = pool.allocate(wk);
         
         this->mtx_.lock(wk, cur);
-        
-        this->cur_ = cur;
     }
     
     void unlock()
     {
-        const auto cur = this->cur_;
-        this->cur_ = nullptr;
-        
         auto& wk = worker_type::get_cur_worker();
-        this->mtx_.unlock(wk, cur);
+        const auto cur = this->mtx_.unlock(wk);
         
+        // Important: Renew the worker because it may change.
         auto& wk2 = worker_type::get_cur_worker();
         
         auto& pool = P::get_node_pool();
@@ -43,12 +39,10 @@ public:
     
     void unlock_and_wait(uncond_var_type& saved_uv)
     {
-        const auto cur = this->cur_;
-        this->cur_ = nullptr;
-        
         auto& wk = worker_type::get_cur_worker();
-        this->mtx_.unlock_and_wait(wk, cur, saved_uv);
+        const auto cur = this->mtx_.unlock_and_wait(wk, saved_uv);
         
+        // Important: Renew the worker because it may change.
         auto& wk2 = worker_type::get_cur_worker();
         
         auto& pool = P::get_node_pool();
@@ -57,10 +51,6 @@ public:
     
 private:
     mcs_mutex_type  mtx_;
-    fdn::byte       pad1_[CMPTH_CACHE_LINE_SIZE - sizeof(mcs_mutex_type)];
-    
-    mcs_node_type*  cur_;
-    fdn::byte       pad2_[CMPTH_CACHE_LINE_SIZE - sizeof(mcs_node_type*)];
 };
 
 } // namespace cmpth
