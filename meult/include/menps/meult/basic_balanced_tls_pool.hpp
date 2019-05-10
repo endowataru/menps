@@ -52,6 +52,7 @@ public:
     basic_balanced_tls_pool()
     {
         const auto n_wks = ult_itf_type::get_num_workers();
+        this->n_wks_ = n_wks;
         
         const auto min_n_pes = 
             mefdn::roundup_divide<size_type>(MEFDN_CACHE_LINE_SIZE, sizeof(pro_entry));
@@ -69,7 +70,7 @@ public:
     
     ~basic_balanced_tls_pool()
     {
-        const auto n_wks = ult_itf_type::get_num_workers();
+        const auto n_wks = this->n_wks_;
         
         for (size_type i = 0; i < n_wks; ++i) {
             auto& we = this->wes_[i];
@@ -212,6 +213,7 @@ public:
     }
     
 private:
+    size_type                       n_wks_;
     mefdn::unique_ptr<wk_entry []>  wes_;
     mefdn::unique_ptr<pro_entry []> pes_;
 };
