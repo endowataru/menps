@@ -45,7 +45,8 @@ install(TARGETS meult
 
 # MassiveThreads support
 if (${MEULT_ENABLE_MTH})
-    include(cmake/massivethreads.cmake)
+    #include(cmake/massivethreads.cmake)
+    # massivethreads is now build on cmpth
     
     target_link_libraries(meult
         PUBLIC massivethreads

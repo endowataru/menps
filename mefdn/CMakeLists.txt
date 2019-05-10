@@ -280,6 +280,7 @@ target_compile_definitions(mefdn
 )
 target_link_libraries(mefdn
     PUBLIC ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
+    PUBLIC cmpth # now mefdn depends on cmpth
     PRIVATE mefdn-options
 )
 install(TARGETS mefdn
