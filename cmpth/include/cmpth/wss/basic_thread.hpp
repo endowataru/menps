@@ -5,8 +5,6 @@
 
 namespace cmpth {
 
-struct ptr_fork_t { };
-
 template <typename P>
 class basic_thread
 {
