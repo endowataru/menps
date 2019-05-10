@@ -13,3 +13,6 @@
 [submodule "medev2/external/ucx"]
 	path = medev2/external/ucx
 	url = https://github.com/openucx/ucx.git
+[submodule "cmpth/external/doctest"]
+	path = cmpth/external/doctest
+	url = https://github.com/onqtam/doctest.git
