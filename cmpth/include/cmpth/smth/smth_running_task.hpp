@@ -19,7 +19,8 @@ class smth_running_task
     
 public:
     smth_running_task() noexcept
-        : root_desc_{}
+        : root_desc_()
+        // Note: GCC 4.8 does NOT zero-fill empty {}
         , tk_{&this->root_desc_}
     { }
     
@@ -77,7 +78,7 @@ public:
     }
     
 private:
-    task_desc_type          root_desc_{};
+    task_desc_type          root_desc_;
     unique_task_ptr_type    tk_;
 };
 

@@ -179,7 +179,8 @@ class basic_scheduler<P>::initializer
     
 public:
     explicit initializer(derived_type& sched)
-        : sched_{sched}
+        : sched_(sched)
+        // Note: GCC 4.8 cannot use {} for initializing a reference
     {
         this->sched_.start_workers();
         
