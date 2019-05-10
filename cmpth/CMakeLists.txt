@@ -20,19 +20,81 @@ target_compile_options(cmpth-options INTERFACE
     -Wall -Wextra ${CMPTH_GLOBAL_CFLAGS}
 )
 
+#add_executable(cmpth-test
+#    ./example/test.cpp
+#)
+#target_link_libraries(cmpth-test
+#    cmpth
+#    cmpth-options
+#)
+#set_target_properties(cmpth-test PROPERTIES
+#    CXX_STANDARD 11
+#    CXX_EXTENTIONS OFF
+#    CXX_STANDARD_REQUIRED ON)
 
-add_executable(cmpth-test
-    ./example/test.cpp
+
+add_executable(cmpth-mth-test
+    ./example/mth-test.cpp
 )
-target_link_libraries(cmpth-test
+target_link_libraries(cmpth-mth-test
     cmpth
     cmpth-options
 )
+set_target_properties(cmpth-mth-test PROPERTIES
+    CXX_STANDARD 11
+    CXX_EXTENTIONS OFF
+    CXX_STANDARD_REQUIRED ON)
+
+
+add_executable(cmpth_test_smth
+    ./src/test_smth.cpp
+)
+target_link_libraries(cmpth_test_smth
+    cmpth
+    cmpth-options
+)
+target_include_directories(cmpth_test_smth
+    PUBLIC ./external/doctest/doctest
+)
+set_target_properties(cmpth_test_smth PROPERTIES
+    CXX_STANDARD 11
+    CXX_EXTENTIONS OFF
+    CXX_STANDARD_REQUIRED ON)
+
+enable_testing()
+
+add_test(
+    NAME cmpth_test_smth
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_sweep.sh
+        CMPTH_NUM_WORKERS $<TARGET_FILE:cmpth_test_smth>
+)
+
 
 if (${CMPTH_ENABLE_MTH})
     include(./cmake/massivethreads.cmake)
     
     target_link_libraries(cmpth INTERFACE massivethreads)
+    
+    add_executable(cmpth_test_mth
+        ./src/test_mth.cpp
+    )
+    target_link_libraries(cmpth_test_mth
+        cmpth
+        cmpth-options
+    )
+    target_include_directories(cmpth_test_mth
+        PUBLIC ./external/doctest/doctest
+    )
+    set_target_properties(cmpth_test_mth PROPERTIES
+        CXX_STANDARD 11
+        CXX_EXTENTIONS OFF
+        CXX_STANDARD_REQUIRED ON)
+    
+    add_test(
+        NAME cmpth_test_mth
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_sweep.sh
+            MYTH_NUM_WORKERS $<TARGET_FILE:cmpth_test_mth>
+    )
 endif()
 
 

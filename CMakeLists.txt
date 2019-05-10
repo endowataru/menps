@@ -18,3 +18,5 @@ add_subdirectory(./meomp)
 #add_subdirectory(./meth)
 #add_subdirectory(./meuct)
 
+enable_testing()
+

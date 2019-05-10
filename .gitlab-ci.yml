@@ -11,10 +11,26 @@ before_script:
 stages:
     - test
 
-test_job:
+test_debug_job:
     stage: test
     script:
         - ./cmake.sh Debug
         - ./make.sh Debug VERBOSE=1
-        - MGCOM_DEVICE=mpi3 mpirun -n 2 --allow-run-as-root ./build/Debug/mgth/mgth-fib2 20
+        - ./ctest.sh Debug -V
+
+test_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.sh RelWithDebInfo
+        - ./make.sh RelWithDebInfo VERBOSE=1
+        - ./ctest.sh RelWithDebInfo -V
+
+test_release_job:
+    stage: test
+    script:
+        - ./cmake.sh Release
+        - ./make.sh Release VERBOSE=1
+        - ./ctest.sh Release -V
+
+#        - MGCOM_DEVICE=mpi3 mpirun -n 2 --allow-run-as-root ./build/Debug/mgth/mgth-fib2 20
 
