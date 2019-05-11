@@ -15,7 +15,7 @@ else()
 endif()
 
 option(MEDEV2_SERIALIZE_MPI_CALLS "Serialize MPI calls" FALSE)
-option(MEDEV2_USE_QDLOCK "Use qdlock_mutex instead of normal mutex" TRUE)
+option(MEDEV2_USE_QDLOCK "Use qdlock_mutex instead of normal mutex" $<BOOL:${MEFDN_ENABLE_MEULT}>)
 
 option(MEDEV2_AVOID_SWITCH_IN_SIGNAL "Avoid using context switch in signal handler" FALSE)
 
@@ -37,7 +37,8 @@ target_include_directories(medev2
     INTERFACE ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_link_libraries(medev2
-    INTERFACE meult
+    INTERFACE mefdn
+    INTERFACE $<$<BOOL:${MEFDN_ENABLE_MEULT}>:meult>
     INTERFACE $<$<BOOL:${MEDEV2_DEVICE_UCX_ENABLED}>:ucp>
     INTERFACE $<$<BOOL:${MEDEV2_DEVICE_UCX_ENABLED}>:uct>
     INTERFACE $<$<BOOL:${MEDEV2_DEVICE_UCX_ENABLED}>:ucs>

@@ -25,7 +25,7 @@ public:
         : max_num_(conf.max_wk_num)
     {
         #ifdef MECOM2_USE_ULT_WORKER_NUM
-        const auto num_ths = ult_itf_type::get_num_workers();
+        const auto num_ths = static_cast<mefdn::size_t>(ult_itf_type::get_num_workers());
         this->wk_nums_ = mefdn::make_unique<worker_num_type []>(num_ths);
         
         const auto nums_ths_per_wk = mefdn::roundup_divide(num_ths, this->max_num_);

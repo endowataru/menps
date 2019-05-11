@@ -26,6 +26,8 @@ set(MEFDN_MCMODEL "small" CACHE STRING "Memory model specified as -mcmodel=")
 
 set(MEFDN_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
+option(MEFDN_ENABLE_MEULT "Build MEULT" ON)
+
 set(error_limit 3)
 
 # mefdn-options : INTERFACE target to set options individually

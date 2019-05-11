@@ -3,6 +3,7 @@
 
 #include <menps/meqdc/common.hpp>
 #include <menps/medev2/ucx/uct/uct_funcs.hpp>
+#include <menps/mefdn/utility.hpp>
 
 namespace menps {
 namespace meqdc {

@@ -178,7 +178,7 @@ TEST(Rma, AlltoallUct)
     auto rma = mecom2::make_uct_rma(uf, md, *wk_set);
     #endif
     
-    using uct_itf_t = medev2::ucx::uct::direct_uct_itf<uit_itf_t>;
+    using uct_itf_t = medev2::ucx::uct::direct_uct_itf<ult_itf_t>;
     
     auto rma_res = mecom2::make_uct_rma_resource<uct_itf_t>(tl_name, dev_name, *coll);
     

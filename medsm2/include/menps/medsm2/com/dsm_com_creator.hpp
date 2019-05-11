@@ -3,10 +3,18 @@
 
 #include <menps/medsm2/com/dsm_rma.hpp>
 #include <menps/medsm2/com/dsm_com_itf.hpp>
-#include <menps/meult/ult_itf_id.hpp>
+#include <cmpth/ult_tag.hpp>
+#include <cmpth/ult_ext_itf.hpp>
+#ifdef MEFDN_ENABLE_MEULT
+    #include <menps/meult/ult_itf_id.hpp>
+#endif
 #include <menps/mefdn/profiling/clock.hpp> // get_cpu_clock
 
-#include MEFDN_PP_CAT(MEULT_ULT_ITF_HEADER_, MEDSM2_ULT_ITF)
+#ifdef MEFDN_ENABLE_MEULT
+    #include MEFDN_PP_CAT(MEULT_ULT_ITF_HEADER_, MEDSM2_ULT_ITF)
+#else
+    #include MEFDN_PP_CAT(CMPTH_ULT_HEADER_, MEDSM2_ULT_ITF)
+#endif
 #include MEFDN_PP_CAT(MEDEV2_MPI_ITF_HEADER_, MEDSM2_MPI_ITF)
 #include MEFDN_PP_CAT(MEDEV2_UCT_ITF_HEADER_, MEDSM2_UCT_ITF)
 
@@ -16,7 +24,11 @@ namespace medsm2 {
 struct dsm_com_policy_base
 {
     using ult_itf_type =
+        #ifdef MEFDN_ENABLE_MEULT
         meult::get_ult_itf_type_t<meult::ult_itf_id_t::MEDSM2_ULT_ITF>;
+        #else
+        cmpth::get_ult_ext_itf_t<cmpth::ult_tag_t::MEDSM2_ULT_ITF>;
+        #endif
     
     using mpi_itf_type =
         medev2::get_mpi_itf_type_t<
@@ -76,6 +88,9 @@ public:
         this->p2p_ = mecom2::make_mpi_p2p<mpi_p2p_policy_type>(*this->mf_, this->p2p_comm_);
         this->p2p_lock_ = mecom2::make_mpi_p2p<mpi_p2p_policy_type>(*this->mf_, this->p2p_comm_);
         
+        #ifndef MEFDN_ENABLE_MEULT
+        ult_itf_type::log_policy::set_state_callback(get_state{ *this });
+        #endif
         mefdn::logger::set_state_callback(get_state{ *this });
         
         this->rma_info_ = make_dsm_rma_info<used_rma_id, dsm_com_policy_base>(*this->mf_, *this->coll_);

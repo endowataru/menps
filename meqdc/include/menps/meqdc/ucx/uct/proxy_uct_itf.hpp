@@ -5,12 +5,16 @@
 #include <menps/meqdc/ucx/uct/proxy_uct_worker.hpp>
 #include <menps/meqdc/ucx/uct/proxy_uct_iface.hpp>
 #include <menps/meqdc/ucx/uct/proxy_uct_endpoint.hpp>
+#ifdef MEFDN_ENABLE_MEULT
 #include <menps/meult/qd/qdlock_delegator.hpp>
+#endif
 #include <menps/medev2/ucx/uct/uct_policy.hpp>
+#ifdef MEFDN_ENABLE_MEULT
 #ifdef MEULT_ENABLE_BALANCED_POOL
 #include <menps/meult/basic_balanced_tls_pool.hpp>
 #else
 #include <menps/meult/basic_tls_pool.hpp>
+#endif
 #endif
 
 namespace menps {
@@ -78,6 +82,9 @@ struct proxy_uct_completion_pool_policy {
     using ult_itf_type = UltItf;
     using size_type = mefdn::size_t;
     
+    #ifndef MEFDN_ENABLE_MEULT
+    
+    #else
     #ifdef MEULT_ENABLE_BALANCED_POOL
     template <typename Node>
     static void deallocate(Node* const n) {
@@ -88,6 +95,8 @@ struct proxy_uct_completion_pool_policy {
     ) {
         return MEULT_BALANCED_POOL_MAX_ENTRIES;
     }
+    #endif
+    
     #endif
 };
 
@@ -101,11 +110,17 @@ struct proxy_uct_facade_policy
     using proxy_endpoint_type = proxy_uct_endpoint<proxy_uct_facade_policy>;
     
     using proxy_completion_type = proxy_uct_completion<proxy_uct_facade_policy>;
+    #ifndef MEFDN_ENABLE_MEULT
+    using proxy_completion_pool_type =
+        typename UltItf::template pool_t<proxy_uct_completion_pool_policy<OrigUctItf, UltItf>>;
+    
+    #else
     using proxy_completion_pool_type =
     #ifdef MEULT_ENABLE_BALANCED_POOL
         meult::basic_balanced_tls_pool<proxy_uct_completion_pool_policy<OrigUctItf, UltItf>>;
     #else
         meult::basic_tls_pool<proxy_uct_completion_pool_policy<OrigUctItf, UltItf>>;
+    #endif
     #endif
     
     using ult_itf_type = UltItf;
@@ -114,8 +129,14 @@ struct proxy_uct_facade_policy
     using command_code_type = proxy_uct_code;
     using proxy_params_type = proxy_uct_params;
     
+    #ifndef MEFDN_ENABLE_MEULT
+    using qdlock_delegator_type =
+        typename ult_itf_type::template delegator_t<proxy_uct_qdlock_func>;
+    
+    #else
     using qdlock_delegator_type =
         meult::qdlock_delegator<proxy_uct_qdlock_func, ult_itf_type>;
+    #endif
 };
 
 template <typename OrigUctItf, typename UltItf>

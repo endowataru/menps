@@ -2,8 +2,14 @@ cmake_minimum_required(VERSION 3.0)
 
 project(meqdc)
 
-set(MEQDC_MPI_ULT_ITF "MTH" CACHE STRING "Default ULT interface for meqdc-wrap-mpi")
+if (${MEFDN_ENABLE_MEULT})
+    set(MEQDC_MPI_ULT_ITF "MTH" CACHE STRING "Default ULT interface for meqdc-wrap-mpi")
+else()
+    set(MEQDC_MPI_ULT_ITF "SMTH" CACHE STRING "Default ULT interface for meqdc-wrap-mpi")
+endif()
 option(MEQDC_MPI_ENABLE_STATIC_OFFLOADING "Enable static offloading in MPI" FALSE)
+set(MEQDC_MPI_REQUEST_POOL_MAX_ENTRIES 128 CACHE STRING "Pool threshold for MPI requests")
+set(MEQDC_MPI_DELEGATOR_POOL_MAX_ENTRIES 128 CACHE STRING "Pool threshold for MPI delegator")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/menps/meqdc/config.h)
