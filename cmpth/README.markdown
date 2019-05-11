@@ -15,6 +15,15 @@ A composable, policy-based user-level thread library.
       while providing flexible components in each layer.
     - Every layer ensures type safety to reduce the bugs.
 
+## Features
+
+- Context switching.
+- Work-stealing scheduler.
+- Locking.
+    - MCS spinlocks/mutexes.
+    - MCS lock delegator.
+- Multi-threaded object pool.
+    - Free from resource exhaustion due to thread migrations.
 
 ## Why I need a new library
 
@@ -31,15 +40,5 @@ Implementing user-level threading is not as complicated as many people expect.
 To help those people understand the implementation methods easily
 and modify the features for individual motivations,
 I started to build a new library ComposableThreads.
-
-## Features
-
-- Context switching.
-- Work-stealing scheduler.
-- Locking.
-    - MCS spinlocks/mutexes.
-    - MCS lock delegator.
-- Multi-threaded object pool.
-    - Free from resource exhaustion due to thread migrations.
 
 
