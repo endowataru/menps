@@ -17,7 +17,7 @@ set(CMPTH_GLOBAL_CFLAGS -ftls-model=initial-exec)
 add_library(cmpth-options INTERFACE)
 
 target_compile_options(cmpth-options INTERFACE
-    -Wall -Wextra ${CMPTH_GLOBAL_CFLAGS}
+    -Wall -Wextra -pedantic ${CMPTH_GLOBAL_CFLAGS}
 )
 
 #add_executable(cmpth-test
@@ -29,7 +29,7 @@ target_compile_options(cmpth-options INTERFACE
 #)
 #set_target_properties(cmpth-test PROPERTIES
 #    CXX_STANDARD 11
-#    CXX_EXTENTIONS OFF
+#    CXX_EXTENSIONS OFF
 #    CXX_STANDARD_REQUIRED ON)
 
 
@@ -42,7 +42,7 @@ target_link_libraries(cmpth-mth-test
 )
 set_target_properties(cmpth-mth-test PROPERTIES
     CXX_STANDARD 11
-    CXX_EXTENTIONS OFF
+    CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON)
 
 
@@ -58,7 +58,7 @@ target_include_directories(cmpth_test_smth
 )
 set_target_properties(cmpth_test_smth PROPERTIES
     CXX_STANDARD 11
-    CXX_EXTENTIONS OFF
+    CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON)
 
 enable_testing()
@@ -87,7 +87,7 @@ if (${CMPTH_ENABLE_MTH})
     )
     set_target_properties(cmpth_test_mth PROPERTIES
         CXX_STANDARD 11
-        CXX_EXTENTIONS OFF
+        CXX_EXTENSIONS OFF
         CXX_STANDARD_REQUIRED ON)
     
     add_test(
