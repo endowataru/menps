@@ -1,6 +1,110 @@
 
 #pragma once
 
+#if 1
+#include <menps/medsm2/basic_lock_table.hpp>
+#include <menps/medsm2/prof.hpp>
+
+namespace menps {
+namespace medsm2 {
+
+template <typename P>
+class blk_lock_table;
+
+template <typename P>
+struct blk_lock_table_policy
+{
+    using com_itf_type = typename P::com_itf_type;
+    using atomic_int_type = typename P::atomic_int_type;
+    
+    // A lock index corresponds to a block position.
+    using lock_pos_type = typename P::blk_pos_type;
+    
+    using size_type = typename P::size_type;
+    using p2p_tag_type = typename P::p2p_tag_type;
+    
+    template <typename Elem>
+    using alltoall_buffer = typename P::template alltoall_buffer<Elem>;
+};
+
+template <typename P>
+class blk_lock_table
+    : private basic_lock_table<blk_lock_table_policy<P>>
+{
+    MEFDN_DEFINE_DERIVED(P)
+    
+    using base = basic_lock_table<blk_lock_table_policy<P>>;
+    
+    using com_itf_type = typename P::com_itf_type;
+    using blk_id_type = typename P::blk_id_type;
+    using blk_pos_type = typename P::blk_pos_type;
+    using unique_lock_type = typename P::unique_lock_type;
+    
+public:
+    template <typename Conf>
+    void coll_make(const Conf& conf)
+    {
+        base::coll_make(conf.com, conf.num_blks);
+    }
+    
+    using typename base::lock_global_result;
+    lock_global_result lock_global(
+        com_itf_type&           com
+    ,   const blk_id_type       blk_id
+    ,   const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ) {
+        auto& self = this->derived();
+        self.check_locked(blk_pos, lk);
+        
+        const auto tag = P::get_tag_from_blk_id(blk_id);
+        return base::lock_global(com, blk_pos, tag);
+    }
+    
+    template <typename EndTransactionResult>
+    void unlock_global(
+        com_itf_type&               com
+    ,   const blk_id_type           blk_id
+    ,   const blk_pos_type          blk_pos
+    ,   const unique_lock_type&     lk
+    ,   const lock_global_result&   glk_ret MEFDN_MAYBE_UNUSED
+    ,   const EndTransactionResult& /*et_ret*/
+    ) {
+        auto& self = this->derived();
+        self.check_locked(blk_pos, lk);
+        
+        #ifdef MEDSM2_ENABLE_LAZY_MERGE
+        auto& rma = com.get_rma();
+        
+        // Complete writing on the previous owner.
+        rma.flush(glk_ret.owner);
+        #endif
+        
+        const auto tag = P::get_tag_from_blk_id(blk_id);
+        base::unlock_global(com, blk_pos, tag);
+    }
+    
+    bool check_owned(
+        com_itf_type&           com
+    ,   const blk_pos_type      blk_pos
+    ,   const unique_lock_type& lk
+    ) {
+        auto& self = this->derived();
+        self.check_locked(blk_pos, lk);
+        
+        const bool ret = base::check_owned(com, blk_pos);
+        if (!ret) {
+            prof::add(prof_kind::tx_migrate, 1);
+        }
+        return ret;
+    }
+};
+
+} // namespace medsm2
+} // namespace menps
+
+#else
+
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/assert.hpp>
 #include <menps/medsm2/prof.hpp>
@@ -562,4 +666,6 @@ private:
 
 } // namespace medsm2
 } // namespace menps
+
+#endif
 

@@ -16,7 +16,7 @@ class basic_lock_table
     
     using size_type = typename P::size_type;
     
-    using lock_pos_type = size_type; // TODO
+    using lock_pos_type = typename P::lock_pos_type;
     
     using p2p_tag_type = typename P::p2p_tag_type;
     
@@ -230,6 +230,23 @@ public:
         
         // Transfer the lock to the next acquirer.
         p2p.untyped_send(next_proc, tag, nullptr, 0);
+    }
+    
+    bool check_owned(
+        com_itf_type&           com
+    ,   const lock_pos_type     lk_pos
+    ) {
+        const auto this_proc = com.this_proc_id();
+        
+        const auto local_glk = this->glks_.local(lk_pos);
+        
+        // Load the lock value of this process.
+        const auto lock_val = *local_glk;
+        
+        // This process isn't locking this block.
+        MEFDN_ASSERT(lock_val != this->make_locked_lock_val(this_proc));
+        
+        return lock_val == this->make_owned_lock_val(this_proc);
     }
     
 private:

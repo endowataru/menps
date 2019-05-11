@@ -127,6 +127,7 @@ struct dsm_base_policy
     }
     
     using mtx_id_type = size_type;
+    using lock_pos_type = size_type; // TODO: define only for mtx_table
     
     using p2p_tag_type = int;
     
