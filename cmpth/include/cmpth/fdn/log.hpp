@@ -12,13 +12,19 @@ struct log_policy
 {
     static const bool is_enabled = IsEnabled;
     
-    static int get_log_level() {
+    enum class log_level {
+        verbose = 0
+    ,   debug   = 1
+    ,   info    = 10
+    ,   warn    = 100
+    ,   fatal   = 1000
+    };
+    
+    static log_level get_log_level() {
         static const char* const log_level_str = std::getenv("CMPTH_LOG_LEVEL");
-        static const int log_level = log_level_str ? std::atoi(log_level_str) : 100;
-        return log_level;
-    }
-    static bool is_debug_level() {
-        return get_log_level() <= 1;
+        static const int log_level_int = log_level_str ? std::atoi(log_level_str) : 100;
+        
+        return static_cast<log_level>(log_level_int);
     }
     
     using state_callback_type = std::function<std::string ()>;
@@ -38,49 +44,104 @@ struct log_policy
     static std::string get_state() {
         return get_state_callback()();
     }
+    
+    template <typename... Rest>
+    static void print_verbose_log(Rest&&... rest) {
+        print_log(log_level::verbose, fdn::forward<Rest>(rest)...);
+    }
+    template <typename... Rest>
+    static void print_debug_log(Rest&&... rest) {
+        print_log(log_level::debug, fdn::forward<Rest>(rest)...);
+    }
+    template <typename... Rest>
+    static void print_info_log(Rest&&... rest) {
+        print_log(log_level::info, fdn::forward<Rest>(rest)...);
+    }
+    template <typename... Rest>
+    static void print_warn_log(Rest&&... rest) {
+        print_log(log_level::warn, fdn::forward<Rest>(rest)...);
+    }
+    template <typename... Rest>
+    static void print_fatal_log(Rest&&... rest) {
+        print_log(log_level::fatal, fdn::forward<Rest>(rest)...);
+    }
+    
+    template <typename... Rest>
+    static void print_log(const log_level level, const char* const msg, int /*num_params*/, Rest&&... rest)
+    {
+        if (level < get_log_level()) { return; }
+        
+        std::ostringstream os;
+        os << get_state();
+        os << "\tlevel:" << static_cast<int>(level);
+        os << "\tmsg:" << msg;
+        print_var_list(os, fdn::forward<Rest>(rest)...);
+        os << std::endl;
+        
+        const auto str = os.str();
+        
+        if (level == log_level::fatal) {
+            std::cerr << str;
+            std::cout << str;
+        }
+        else {
+            std::cout << str;
+        }
+    }
+    
+private:
+    static void print_var_list(std::ostringstream& /*os*/) { }
+    
+    template <typename T, typename... Rest>
+    static void print_var_list(std::ostringstream& os, const char* const name, T&& var, Rest&&... rest) {
+        os << "\t" << name << ":";
+        print_var(os, fdn::forward<T>(var));
+        print_var_list(os, fdn::forward<Rest>(rest)...);
+    }
+    
+    template <typename T>
+    static void print_var(std::ostringstream& os, const T& var) {
+        os << var;
+    }
+    template <typename T>
+    static void print_var(std::ostringstream& os, T* const ptr) {
+        os << "0x" << reinterpret_cast<fdn::intptr_t>(ptr);
+    }
 };
-
-#if 0
-template <typename T>
-inline fdn::string make_log_val_str(const char* const name, const T& val) {
-    std::ostringstream os;
-    os << name << ":" << val;
-    return os.str();
-}
-template <typename T>
-inline fdn::string make_log_val_str(const char* const name, const T& val) {
-    std::ostringstream os;
-    os << name << ":" << val;
-    return os.str();
-}
-#endif
 
 } // namespace cmpth
 
-#define CMPTH_P_LOG_ARGS_0()
-#define CMPTH_P_LOG_ARGS_1(name, val, ...)  << name << ":" << val << "\t" CMPTH_P_LOG_ARGS_0(__VA_ARGS__)
-#define CMPTH_P_LOG_ARGS_2(name, val, ...)  << name << ":" << val << "\t" CMPTH_P_LOG_ARGS_1(__VA_ARGS__)
-#define CMPTH_P_LOG_ARGS_3(name, val, ...)  << name << ":" << val << "\t" CMPTH_P_LOG_ARGS_2(__VA_ARGS__)
-
-#define CMPTH_P_LOG_DEBUG(P, msg, n, ...) \
+#define CMPTH_P_LOG_VERBOSE(P, ...) \
     do { \
         if (P::log_policy_type::is_enabled) { \
-            if (P::log_policy_type::is_debug_level()) { \
-                std::cerr << \
-                    P::log_policy_type::get_state() << "\t" << \
-                    "msg:" << msg << "\t" \
-                    CMPTH_P_LOG_ARGS_##n(__VA_ARGS__) \
-                    << std::endl; \
-            } \
+            P::log_policy_type::print_verbose_log(__VA_ARGS__); \
         } \
-    } while (false) \
+    } while (false)
 
-#define CMPTH_P_LOG_FATAL(P, msg, n, ...) \
+#define CMPTH_P_LOG_DEBUG(P, ...) \
     do { \
-        std::cerr << \
-            P::log_policy_type::get_state() << "\t" << \
-            "msg:" << msg << "\t" \
-            CMPTH_P_LOG_ARGS_##n(__VA_ARGS__) \
-            << std::endl; \
-    } while (false) \
+        if (P::log_policy_type::is_enabled) { \
+            P::log_policy_type::print_debug_log(__VA_ARGS__); \
+        } \
+    } while (false)
+
+#define CMPTH_P_LOG_INFO(P, ...) \
+    do { \
+        if (P::log_policy_type::is_enabled) { \
+            P::log_policy_type::print_info_log(__VA_ARGS__); \
+        } \
+    } while (false)
+
+#define CMPTH_P_LOG_WARN(P, ...) \
+    do { \
+        if (P::log_policy_type::is_enabled) { \
+            P::log_policy_type::print_warn_log(__VA_ARGS__); \
+        } \
+    } while (false)
+
+#define CMPTH_P_LOG_FATAL(P, ...) \
+    do { \
+        P::log_policy_type::print_fatal_log(__VA_ARGS__); \
+    } while (false)
+
 
