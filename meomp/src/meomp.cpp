@@ -22,10 +22,6 @@
 #include <menps/medsm2/svm/sigsegv_catcher.hpp>
 #endif
 
-#if 0
-extern void* g_watch_ptr;
-#endif
-
 extern "C"
 int meomp_main(int argc, char** argv);
 
@@ -47,36 +43,6 @@ mefdn::size_t g_stack_size;
 
 void* g_heap_ptr;
 mefdn::size_t g_heap_size;
-
-#if 0
-struct get_state
-{
-    std::string operator() ()
-    {
-        fmt::MemoryWriter w;
-        w.write(
-            "proc:{}\tthread:{:x}\tult:{:x}\tlog_id:{}\tclock:{}\t"
-        ,   g_coll->this_proc_id()
-        ,   reinterpret_cast<mefdn::uintptr_t>(pthread_self())
-            // TODO: use mefdn::this_thread::get_id()
-        ,   reinterpret_cast<mefdn::uintptr_t>(
-                medsm2::dsm_com_creator::ult_itf_type::this_thread::native_handle()
-            )
-        ,   this->number_++
-        ,   mefdn::get_cpu_clock() // TODO
-        );
-        #if 0
-        if (g_watch_ptr != nullptr)
-            w.write("val:0x{:x}\t", *(uint64_t*)g_watch_ptr);
-        #endif
-        
-        return w.str();
-    }
-    
-private:
-    mefdn::size_t number_ = 0;
-};
-#endif
 
 } // unnamed namespace
 
@@ -958,10 +924,6 @@ int main(int argc, char* argv[])
     auto& com = cc.get_dsm_com_itf();
     auto& coll = com.get_coll();
     g_coll = &coll;
-    
-    #if 0
-    mefdn::logger::set_state_callback(get_state{});
-    #endif
     
     medsm2::mpi_svm_space sp(com);
     
