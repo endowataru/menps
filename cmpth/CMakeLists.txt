@@ -20,17 +20,11 @@ target_compile_options(cmpth-options INTERFACE
     -Wall -Wextra -pedantic ${CMPTH_GLOBAL_CFLAGS}
 )
 
-#add_executable(cmpth-test
-#    ./example/test.cpp
-#)
-#target_link_libraries(cmpth-test
-#    cmpth
-#    cmpth-options
-#)
-#set_target_properties(cmpth-test PROPERTIES
-#    CXX_STANDARD 11
-#    CXX_EXTENSIONS OFF
-#    CXX_STANDARD_REQUIRED ON)
+
+add_library(doctest INTERFACE)
+target_include_directories(doctest INTERFACE
+    ./external/doctest/doctest
+)
 
 
 add_executable(cmpth-mth-test
@@ -52,9 +46,7 @@ add_executable(cmpth_test_smth
 target_link_libraries(cmpth_test_smth
     cmpth
     cmpth-options
-)
-target_include_directories(cmpth_test_smth
-    PUBLIC ./external/doctest/doctest
+    doctest
 )
 set_target_properties(cmpth_test_smth PROPERTIES
     CXX_STANDARD 11
@@ -81,9 +73,7 @@ if (${CMPTH_ENABLE_MTH})
     target_link_libraries(cmpth_test_mth
         cmpth
         cmpth-options
-    )
-    target_include_directories(cmpth_test_mth
-        PUBLIC ./external/doctest/doctest
+        doctest
     )
     set_target_properties(cmpth_test_mth PROPERTIES
         CXX_STANDARD 11
