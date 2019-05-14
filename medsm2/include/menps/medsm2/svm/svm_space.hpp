@@ -89,16 +89,6 @@ public:
                 }
             );
         #endif
-        
-        // Note: This code is left because running release operations in background
-        //       will be necessary in future.
-        #if 0
-        th_ = thread_type(
-            [&] {
-                while (this->progress_release()) { }
-            }
-        );
-        #endif
     }
     
     ~svm_space()
@@ -106,10 +96,6 @@ public:
         // Destroy wr_set.
         // TODO: Use a better naming convention for initialization/finalization.
         base::finalize();
-        
-        #if 0
-        th_.join();
-        #endif
     }
     
     void* coll_alloc_seg(
@@ -414,10 +400,6 @@ private:
     mefdn::unique_ptr<sigsegv_catcher> segv_catch_;
     #endif
     mefdn::unique_ptr<shm_object> shm_obj_;
-    
-    #if 0
-    thread_type th_;
-    #endif
     
     tss_type is_enabled_;
 };

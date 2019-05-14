@@ -35,7 +35,6 @@ public:
     template <typename Conf>
     explicit svm_seg_table(const Conf& conf)
         : base(conf)
-        //, max_seg_size_(conf.max_seg_size)
         , max_seg_size_(P::constants_type::max_seg_size) // TODO
         , ln2_max_seg_size_(mefdn::floor_log2(max_seg_size_))
     {
