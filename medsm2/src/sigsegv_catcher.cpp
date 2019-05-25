@@ -48,6 +48,8 @@ public:
     ~sigsegv_catcher_impl()
     {
         restore_old();
+        
+        MEFDN_LOG_DEBUG("msg:Restored original SIGSEGV handler.");
     }
     
     static void handle_signal(const int /*signum*/, siginfo_t* const si, void* const /*uc*/)

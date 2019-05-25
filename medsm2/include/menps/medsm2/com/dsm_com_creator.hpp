@@ -3,6 +3,8 @@
 
 #include <menps/medsm2/com/dsm_rma.hpp>
 #include <menps/medsm2/com/dsm_com_itf.hpp>
+#include <menps/mecom2/coll/mpi/mpi_coll.hpp>
+#include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
 #include <cmpth/ult_tag.hpp>
 #include <cmpth/ult_ext_itf.hpp>
 #ifdef MEFDN_ENABLE_MEULT
