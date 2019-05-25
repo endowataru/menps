@@ -62,6 +62,8 @@ private:
         }
     };
     
+public:
+    // TODO: This constructor should be private, but it's not accepted by GCC 5.4.
     explicit basic_wrap_thread(const thread_ptr_type t) noexcept
         : t_{t}
     { }

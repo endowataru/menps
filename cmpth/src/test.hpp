@@ -81,7 +81,7 @@ void fib_ptr_rec(void* const arg)
     fib_arg arg1{ &r1, n-1 };
     fib_arg arg2{ &r2, n-2 };
     
-    ult_itf::thread th{ &fib_ptr_rec, &arg1 };
+    auto th = ult_itf::thread::ptr_fork(&fib_ptr_rec, &arg1);
     fib_ptr_rec(&arg2);
     th.join();
     
