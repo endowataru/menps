@@ -29,6 +29,8 @@ using std::remove_pointer;
 using std::add_lvalue_reference;
 using std::is_signed;
 
+using std::is_trivial;
+
 template <typename T>
 using decay_t = typename decay<T>::type;
 
