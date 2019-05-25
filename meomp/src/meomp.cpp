@@ -1,5 +1,5 @@
 
-#include <menps/medsm2/svm/mpi_svm_space.hpp>
+#include <menps/medsm2/itf/dsm_facade.hpp>
 #include <menps/mectx/generic/single_ult_worker.hpp>
 #include <menps/mectx/generic/thread_specific_worker.hpp>
 #include "child_worker.hpp"
@@ -15,8 +15,7 @@
 #include <menps/mefdn/arithmetic.hpp>
 #include <stdarg.h>
 #include <menps/meomp.hpp>
-#include <menps/medsm2/prof.hpp>
-#include <menps/mefdn/profiling/time.hpp>
+#include <menps/mefdn/profiling/time.hpp> // get_current_sec
 
 #ifdef MEOMP_SEPARATE_WORKER_THREAD
 #include <menps/medsm2/svm/sigsegv_catcher.hpp>
@@ -28,6 +27,9 @@ int meomp_main(int argc, char** argv);
 namespace /*unnamed*/ {
 
 using namespace menps;
+
+using dsm_facade_t = menps::medsm2::dsm_facade;
+dsm_facade_t* g_df;
 
 using coll_t = menps::medsm2::dsm_com_creator::dsm_com_itf_type::coll_itf_type;
 using space_t = menps::medsm2::mpi_svm_space;
@@ -482,11 +484,13 @@ namespace /*unnamed*/ {
 
 MEOMP_GLOBAL_VAR omp_lock_t g_critical_lock;
 
+#if 0
 MEOMP_GLOBAL_VAR omp_lock_t g_heap_lock;
 #ifdef MEOMP_ENABLE_LINEAR_ALLOCATOR
 MEOMP_GLOBAL_VAR mefdn::size_t g_heap_used;
 #else
 MEOMP_GLOBAL_VAR mspace g_heap_ms;
+#endif
 #endif
 
 } // unnamed namespace
@@ -845,26 +849,10 @@ void __kmpc_end_critical() {
 extern "C" {
 
 void* meomp_malloc(const menps::mefdn::size_t size_in_bytes) {
-    omp_set_lock(&g_heap_lock);
-    #ifdef MEOMP_ENABLE_LINEAR_ALLOCATOR
-    const auto ptr = static_cast<mefdn::byte*>(g_heap_ptr) + g_heap_used;
-    // Fix alignment.
-    g_heap_used += mefdn::roundup_divide(size_in_bytes, 16ul) * 16ul; // TODO: avoid magic number
-    if (g_heap_used >= g_heap_size) {
-        throw std::bad_alloc();
-    }
-    #else
-    void* ptr = mspace_malloc(g_heap_ms, size_in_bytes);
-    #endif
-    omp_unset_lock(&g_heap_lock);
-    return ptr;
+    return g_df->allocate(size_in_bytes);
 }
 void meomp_free(void* const ptr) {
-    #ifndef MEOMP_ENABLE_LINEAR_ALLOCATOR
-    omp_set_lock(&g_heap_lock);
-    mspace_free(g_heap_ms, ptr);
-    omp_unset_lock(&g_heap_lock);
-    #endif
+    g_df->deallocate(ptr);
 }
 
 }
@@ -920,14 +908,14 @@ int main(int argc, char* argv[])
     
     mefdn::disable_aslr(argc, argv);
     
-    medsm2::dsm_com_creator cc(&argc, &argv);
-    auto& com = cc.get_dsm_com_itf();
-    auto& coll = com.get_coll();
-    g_coll = &coll;
+    dsm_facade_t df{&argc, &argv};
+    g_df = &df;
     
-    medsm2::mpi_svm_space sp(com);
-    
+    auto& sp = df.get_space();
     g_sp = &sp;
+    
+    auto& coll = df.get_com_itf().get_coll();
+    g_coll = &coll;
     
     #ifdef MEOMP_SEPARATE_WORKER_THREAD
     using medsm2::sigsegv_catcher;
@@ -952,30 +940,7 @@ int main(int argc, char* argv[])
         );
     #endif
     
-    {
-        const auto global_var_blk_size = MEDSM2_GLOBAL_VAR_BLOCK_SIZE;
-        
-        const auto data_begin = reinterpret_cast<mefdn::byte*>(&_dsm_data_begin);
-        const auto data_end   = reinterpret_cast<mefdn::byte*>(&_dsm_data_end);
-        
-        MEFDN_ASSERT(reinterpret_cast<mefdn::uintptr_t>(data_begin) % global_var_blk_size == 0);
-        
-        const auto data_size = data_end - data_begin;
-        
-        if (data_size > 0) {
-            MEFDN_LOG_VERBOSE(
-                "msg:Initialize global variables.\t"
-                "data_begin:0x{:x}\t"
-                "data_end:0x{:x}\t"
-                "data_size:0x{:x}\t"
-            ,   reinterpret_cast<mefdn::uintptr_t>(data_begin)
-            ,   reinterpret_cast<mefdn::uintptr_t>(data_end)
-            ,   data_size
-            );
-            
-            sp.coll_alloc_global_var_seg(data_size, global_var_blk_size, data_begin);
-        }
-    }
+    df.init_global_var_seg(&_dsm_data_begin, &_dsm_data_end, MEDSM2_GLOBAL_VAR_BLOCK_SIZE);
     
     const auto num_procs = coll.get_num_procs();
     
@@ -988,18 +953,12 @@ int main(int argc, char* argv[])
     g_stack_size = stack_size;
     
     g_heap_size = MEOMP_HEAP_SIZE;
-    g_heap_ptr =
-        sp.coll_alloc_seg(g_heap_size, MEOMP_HEAP_BLOCK_SIZE);
+    g_heap_ptr = df.init_heap_seg(MEOMP_HEAP_SIZE, MEOMP_HEAP_BLOCK_SIZE);
     
     if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();
         
-        #ifndef MEOMP_ENABLE_LINEAR_ALLOCATOR
-        g_heap_ms = create_mspace_with_base(g_heap_ptr, MEOMP_HEAP_SIZE, 1);
-        #endif
-        
         omp_init_lock(&g_critical_lock);
-        omp_init_lock(&g_heap_lock);
         
         g_argc = argc;
         g_argv = pack_argv(argc, argv);
@@ -1017,39 +976,15 @@ int main(int argc, char* argv[])
     // Do a barrier before exiting.
     g_coll->barrier();
     
-    #if (defined(MEDSM2_ENABLE_PROF) || defined(MEDEV2_ENABLE_PROF) || defined(MEULT_ENABLE_PROF))
-    std::cout << std::flush;
-    g_coll->barrier();
-    for (coll_t::proc_id_type proc = 0; proc < num_procs; ++proc) {
-        if (coll.this_proc_id() == proc) {
-            std::cout << fmt::format("- proc: {}\n", proc);
-            #ifdef MEDSM2_ENABLE_PROF
-            std::cout << medsm2::prof::to_string("    - ");
-            #endif
-            #ifdef MEDEV2_ENABLE_PROF
-            std::cout << medev2::mpi::prof::to_string("    - ");
-            #endif
-            #ifdef MEULT_ENABLE_PROF
-            std::cout << meult::prof::to_string("    - ");
-            #endif
-            std::cout << std::flush;
-        }
-        g_coll->barrier();
-    }
-    #endif
-    
     sp.stop_release_thread();
+    
+    df.print_prof();
     
     if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();
         
         meomp_free(g_argv);
         
-        #ifndef MEOMP_ENABLE_LINEAR_ALLOCATOR
-        destroy_mspace(g_heap_ms);
-        #endif
-        
-        omp_destroy_lock(&g_heap_lock);
         omp_destroy_lock(&g_critical_lock);
         
         sp.disable_on_this_thread();
