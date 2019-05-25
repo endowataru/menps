@@ -3,7 +3,7 @@ MENPS
 =====
 
 MENPS is a distributed shared memory library designed for high-performance computing.
-The term MENPS is an acronym of "__ME__ NPS is __N__ ot a __P__ GAS __S__ ystem".
+MENPS means that "<b>ME</b>NPS is <b>N</b>ot a <b>P</b>GAS <b>S</b>ystem".
 
 Components
 ----------
@@ -17,7 +17,7 @@ This repository is composed of multiple modules for distributed-memory programmi
 - mecom2
     - Portable low-level communication library
 - meqdc
-    - __Q__ ueue- __d__ elegated __c__ ommunication device wrapper
+    - <b>Q</b>ueue-<b>d</b>elegated <b>c</b>ommunication device wrapper
 - medev2
     - Communication device wrapper library
 - meult
@@ -44,37 +44,6 @@ This repository is composed of multiple modules for distributed-memory programmi
 |        meult        | -> will be replaced with cmpth
 +---------------------+
 |        mectx        | -> will be replaced with cmpth
-+---------------------+
-|        mefdn        |
-+---------------------+
-```
-
-Here are some old modules that are not maintained any more.
-
-- meth
-    - DSM + distributed work-stealing scheduler
-- medsm
-    - Distributed Shared Memory (DSM)
-- mecom
-    - Portable low-level communication library
-- medev
-    - Communication device wrapper library
-
-This is an old figure that describes the dependencies.
-
-```
-+---------------------+
-|         meth        |
-+---------+           |
-|  medsm  |           |
-+---------+-----+     |
-|      mecom    |     |
-+---------------+     |
-|      medev    |     |
-+---------------+-----+
-|        meult        |
-+---------------------+
-|        mectx        |
 +---------------------+
 |        mefdn        |
 +---------------------+
