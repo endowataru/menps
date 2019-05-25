@@ -69,6 +69,24 @@ target_link_libraries(medsm2-exec-options
 )
 
 
+add_executable(medsm2-test
+    ./tests/test.cpp
+)
+target_link_libraries(medsm2-test
+    PUBLIC medsm2
+    PRIVATE mefdn-options
+    PRIVATE medsm2-exec-options
+    PUBLIC doctest
+)
+
+enable_testing()
+
+add_test(
+    NAME medsm2-test
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_sweep.bash $<TARGET_FILE:medsm2-test>
+)
+
+
 add_executable(medsm2-ex
     ./example/ex.cpp
 )
@@ -77,4 +95,5 @@ target_link_libraries(medsm2-ex
     PRIVATE mefdn-options
     PRIVATE medsm2-exec-options
 )
+
 
