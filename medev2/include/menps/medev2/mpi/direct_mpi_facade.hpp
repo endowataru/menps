@@ -119,6 +119,8 @@ private:
     #endif
 };
 
+#undef MPI_CRITICAL
+
 template <typename UltItf>
 struct direct_mpi_facade_policy
 {
