@@ -305,10 +305,7 @@ add_executable(mefdn-unittest
     unittest/intrusive.cpp
     unittest/index_list.cpp
     unittest/tuple.cpp
-    #unittest/callback.cpp
     unittest/spinlock.cpp
-    #unittest/condition_variable.cpp
-    #unittest/optional.cpp
 )
 
 target_link_libraries(mefdn-unittest
