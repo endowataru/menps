@@ -232,19 +232,6 @@ struct X { explicit operator bool(); };
 int main() { return 0; }
 " MEFDN_CXX11_EXPLICIT_CONVERSION_OPERATORS_SUPPORTED)
 
-CHECK_CXX_SOURCE_COMPILES("
-template <typename T> T r(T x) { return x; }
-
-template <typename F, typename... T>
-inline auto f(F&& f, T&&... x) -> decltype(r(f)(x...)) { return f(x...); }
-
-int g(int);
-
-decltype(f(&g, 123)) x;
-
-int main() { return 0; }
-" MEFDN_CXX_SFINAE_EXPR)
-
 message(STATUS "Generate menps/mefdn/config.h ...")
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 message(STATUS "MEFDN_PROFILER_USE_GPROF=${MEFDN_PROFILER_USE_GPROF}")

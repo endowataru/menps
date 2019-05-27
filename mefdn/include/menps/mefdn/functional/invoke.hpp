@@ -3,8 +3,6 @@
 
 #include <menps/mefdn/utility.hpp>
 
-#ifdef MEFDN_CXX_SFINAE_EXPR
-
 namespace menps {
 namespace mefdn {
 
@@ -48,24 +46,4 @@ inline auto invoke(PMF&& pmf, Pointer&& ptr, Args&&... args) ->
 
 } // namespace mefdn
 } // namespace menps
-
-#else
-
-#include "result_of.hpp"
-
-namespace menps {
-namespace mefdn {
-
-template <typename F, typename... Args>
-typename mefdn::result_of<
-    F (Args...)
->::type
-invoke(F&& f, Args&&... args) {
-    return mefdn::forward<F>(f)(mefdn::forward<Args>(args)...);
-}
-
-} // namespace mefdn
-} // namespace menps
-
-#endif
 
