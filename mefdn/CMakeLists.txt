@@ -52,7 +52,6 @@ target_compile_options(mefdn-options INTERFACE
     $<$<COMPILE_LANGUAGE:C>:-std=c99>
     
     #$<$<COMPILE_LANGUAGE:CXX>:-std=c++03> # TODO: COMPILE_LANGUAGE doesn't work on old CMake versions
-    -DGTEST_HAS_TR1_TUPLE=0
     -Wno-variadic-macros
     
     ${MEFDN_GLOBAL_CFLAGS}
@@ -285,7 +284,6 @@ add_library(googletest
 target_compile_options(googletest
     PRIVATE
     -w # Suppress ALL warnings
-    -DGTEST_HAS_TR1_TUPLE=0
 )
 target_include_directories(googletest
     PUBLIC ./external/googletest/googletest
