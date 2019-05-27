@@ -6,7 +6,6 @@
 #include <menps/mefdn/mutex.hpp>
 #include <menps/mefdn/condition_variable.hpp>
 #include <menps/mefdn/thread/spinlock.hpp>
-#include <menps/mefdn/thread/sync_flag.hpp>
 #include <menps/mefdn/thread/barrier.hpp>
 
 #include <menps/mefdn/type_traits.hpp>
