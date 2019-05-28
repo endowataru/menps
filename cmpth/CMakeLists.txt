@@ -41,7 +41,7 @@ set_target_properties(cmpth-mth-test PROPERTIES
 
 
 add_executable(cmpth_test_smth
-    ./src/test_smth.cpp
+    ./tests/test_smth.cpp
 )
 target_link_libraries(cmpth_test_smth
     cmpth
@@ -68,7 +68,7 @@ if (${CMPTH_ENABLE_MTH})
     target_link_libraries(cmpth INTERFACE massivethreads)
     
     add_executable(cmpth_test_mth
-        ./src/test_mth.cpp
+        ./tests/test_mth.cpp
     )
     target_link_libraries(cmpth_test_mth
         cmpth
