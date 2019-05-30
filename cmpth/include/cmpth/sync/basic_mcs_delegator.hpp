@@ -122,7 +122,6 @@ public:
         );
         
         const auto head = this->core_.get_head();
-        auto& consumer_uv = this->th_.get_uv();
         
         if (!this->is_active_) {
             if (this->core_.try_unlock(head)) {
@@ -165,6 +164,8 @@ public:
             "Finished unlocking delegator by awaking helper thread.", 0
         );
         
+        auto& consumer_uv = this->th_.get_uv();
+        
         // Awake the helper thread.
         // Prefer executing the succeeding critical sections now.
         #ifdef MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
@@ -188,7 +189,6 @@ public:
         );
         
         const auto head = this->core_.get_head();
-        auto& consumer_uv = this->th_.get_uv();
         
         if (!this->is_active_) {
             if (this->try_unlock_and_wait(wait_uv, head)) {
@@ -223,6 +223,8 @@ public:
         CMPTH_P_LOG_DEBUG(P,
             "Finished unlocking delegator by awaking helper thread.", 0
         );
+        
+        auto& consumer_uv = this->th_.get_uv();
         
         // Awake the helper thread.
         // Prefer executing the succeeding critical sections now.
