@@ -332,6 +332,11 @@ int meomp_get_num_procs() {
 }
 
 extern "C"
+int meomp_get_proc_num() {
+    return g_coll->this_proc_id();
+}
+
+extern "C"
 int meomp_get_local_thread_num() {
     return omp_get_thread_num() % meomp::my_dist_worker::get_threads_per_proc();
 }

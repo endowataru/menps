@@ -11,6 +11,8 @@ extern "C" {
 
 extern int meomp_get_num_procs(void);
 
+extern int meomp_get_proc_num();
+
 extern int meomp_get_local_thread_num(void);
 
 extern void* meomp_malloc(size_t);
