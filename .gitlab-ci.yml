@@ -14,43 +14,43 @@ stages:
 test_smth_debug_job:
     stage: test
     script:
-        - ./cmake.sh Debug -D MEFDN_ENABLE_MEULT=OFF
-        - ./make.sh Debug VERBOSE=1
-        - ./ctest.sh Debug -V
+        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF
+        - ./make.bash Debug VERBOSE=1
+        - ./ctest.bash Debug -V
 
 test_smth_relwithdebinfo_job:
     stage: test
     script:
-        - ./cmake.sh RelWithDebInfo -D MEFDN_ENABLE_MEULT=OFF
-        - ./make.sh RelWithDebInfo VERBOSE=1
-        - ./ctest.sh RelWithDebInfo -V
+        - ./cmake.bash RelWithDebInfo -D MEFDN_ENABLE_MEULT=OFF
+        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./ctest.bash RelWithDebInfo -V
 
 test_smth_release_job:
     stage: test
     script:
-        - ./cmake.sh Release -D MEFDN_ENABLE_MEULT=OFF
-        - ./make.sh Release VERBOSE=1
-        - ./ctest.sh Release -V
+        - ./cmake.bash Release -D MEFDN_ENABLE_MEULT=OFF
+        - ./make.bash Release VERBOSE=1
+        - ./ctest.bash Release -V
 
 test_myth_debug_job:
     stage: test
     script:
-        - ./cmake.sh Debug
-        - ./make.sh Debug VERBOSE=1
-        - ./ctest.sh Debug -V
+        - ./cmake.bash Debug
+        - ./make.bash Debug VERBOSE=1
+        - ./ctest.bash Debug -V
 
 test_myth_relwithdebinfo_job:
     stage: test
     script:
-        - ./cmake.sh RelWithDebInfo
-        - ./make.sh RelWithDebInfo VERBOSE=1
-        - ./ctest.sh RelWithDebInfo -V
+        - ./cmake.bash RelWithDebInfo
+        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./ctest.bash RelWithDebInfo -V
 
 test_myth_release_job:
     stage: test
     script:
-        - ./cmake.sh Release
-        - ./make.sh Release VERBOSE=1
-        - ./ctest.sh Release -V
+        - ./cmake.bash Release
+        - ./make.bash Release VERBOSE=1
+        - ./ctest.bash Release -V
 
 

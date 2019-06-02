@@ -61,8 +61,8 @@ How to Build
 ```
 git clone --recursive [url] [directory]
 cd [directory]
-./cmake.sh Debug
-./make.sh Debug
+./cmake.bash Debug
+./make.bash Debug
 ```
 
 Executable files will be generated in `build/`.
