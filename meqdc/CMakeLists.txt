@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.0)
 
 project(meqdc)
 
+# Add RPATH in installation
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 if (${MEFDN_ENABLE_MEULT})
     set(MEQDC_MPI_ULT_ITF "MTH" CACHE STRING "Default ULT interface for meqdc-wrap-mpi")
 else()
@@ -25,6 +29,10 @@ target_include_directories(meqdc
 target_link_libraries(meqdc
     PUBLIC medev2
     PRIVATE mefdn-options
+)
+install(TARGETS meqdc
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
 )
 install(DIRECTORY include/ DESTINATION include)
 
