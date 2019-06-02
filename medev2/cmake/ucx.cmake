@@ -147,3 +147,9 @@ target_include_directories(ucx-src INTERFACE
 # https://cmake.org/Bug/view.php?id=15052
 file(MAKE_DIRECTORY ${source_dir}/include)
 
+
+install(DIRECTORY ${install_dir}/bin/       DESTINATION bin)
+install(DIRECTORY ${install_dir}/include/   DESTINATION include)
+install(DIRECTORY ${install_dir}/lib/       DESTINATION lib)
+install(DIRECTORY ${install_dir}/share/     DESTINATION share)
+

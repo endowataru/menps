@@ -26,6 +26,11 @@ target_link_libraries(meomp
     PRIVATE mefdn-options
     PRIVATE mectx
 )
+install(TARGETS meomp
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+install(DIRECTORY include/ DESTINATION include)
 
 file(GLOB example_files example/*.cpp)
 foreach(example_path IN LISTS example_files)

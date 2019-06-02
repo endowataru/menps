@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.0)
 
 project(medsm2)
 
+# Add RPATH in installation
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # Show messages when invoking CMake
 message(STATUS "Generate menps/medsm2/config.h ...")
 
@@ -58,7 +62,12 @@ target_link_libraries(medsm2
     PUBLIC cmpth
     PRIVATE mefdn-options
 )
-
+install(TARGETS medsm2
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+install(DIRECTORY include/ DESTINATION include)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/linker.ld DESTINATION lib/menps)
 
 
 add_library(medsm2-exec-options INTERFACE)
@@ -94,6 +103,13 @@ target_link_libraries(medsm2-ex
     PUBLIC medsm2
     PRIVATE mefdn-options
     PRIVATE medsm2-exec-options
+)
+
+
+install(TARGETS medsm2 medsm2-ex medsm2-test
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
 )
 
 

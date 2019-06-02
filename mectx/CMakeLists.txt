@@ -23,6 +23,7 @@ install(TARGETS mectx
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
+install(DIRECTORY include/ DESTINATION include)
 
 add_executable(mectx-unittest
     unittest/unittest.cpp

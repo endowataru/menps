@@ -33,6 +33,7 @@ target_include_directories(mecom2
 target_link_libraries(mecom2
     INTERFACE meqdc
 )
+install(DIRECTORY include/ DESTINATION include)
 
 
 add_executable(mecom2-test

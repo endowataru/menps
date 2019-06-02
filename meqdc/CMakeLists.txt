@@ -26,6 +26,7 @@ target_link_libraries(meqdc
     PUBLIC medev2
     PRIVATE mefdn-options
 )
+install(DIRECTORY include/ DESTINATION include)
 
 add_library(meqdc-wrap-mpi
     src/wrap_mpi.cpp

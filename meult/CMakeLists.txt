@@ -5,6 +5,10 @@ project(meult CXX ASM)
 # Do not link shared libraries again
 set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
+# Add RPATH in installation
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # Options
 option(MEULT_ENABLE_MTH "Build MassiveThreads" ON)
 option(MEULT_ENABLE_MTH_WORKER_CACHE "Enable caching for worker numbers" ON)
@@ -42,6 +46,7 @@ install(TARGETS meult
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
+install(DIRECTORY include/ DESTINATION include)
 
 # MassiveThreads support
 if (${MEULT_ENABLE_MTH})

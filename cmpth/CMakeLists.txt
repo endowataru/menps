@@ -5,11 +5,8 @@ project(cmpth CXX)
 option(CMPTH_ENABLE_MTH "Build MassiveThreads" ON)
 
 add_library(cmpth INTERFACE)
-
-target_include_directories(cmpth
-    INTERFACE ./include
-)
-
+target_include_directories(cmpth INTERFACE ./include)
+install(DIRECTORY include/ DESTINATION include)
 
 set(CMPTH_GLOBAL_CFLAGS -ftls-model=initial-exec)
 # CMPTH_GLOBAL_CFLAGS will be used in massivethread.cmkae

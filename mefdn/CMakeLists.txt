@@ -275,6 +275,9 @@ install(TARGETS mefdn
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
+install(DIRECTORY include/ DESTINATION include)
+install(DIRECTORY external/fmt/fmt DESTINATION include)
+install(FILES external/cmdline/cmdline.h DESTINATION include/cmdline)
 
 # Google Test
 

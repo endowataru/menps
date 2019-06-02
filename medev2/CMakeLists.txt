@@ -43,6 +43,7 @@ target_link_libraries(medev2
     INTERFACE $<$<BOOL:${MEDEV2_DEVICE_UCX_ENABLED}>:uct>
     INTERFACE $<$<BOOL:${MEDEV2_DEVICE_UCX_ENABLED}>:ucs>
 )
+install(DIRECTORY include/ DESTINATION include)
 
 
 add_executable(medev2_ucp_test

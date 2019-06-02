@@ -55,3 +55,8 @@ set_property(
     dl
     pthread)
 
+
+install(DIRECTORY ${install_dir}/bin/       DESTINATION bin)
+install(DIRECTORY ${install_dir}/include/   DESTINATION include)
+install(DIRECTORY ${install_dir}/lib/       DESTINATION lib)
+
