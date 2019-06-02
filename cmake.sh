@@ -8,25 +8,11 @@ BUILD_TYPE=${1:-Release}
 mkdir -p build/$BUILD_TYPE || true
 
 # Detect the environment.
-
-if [[ $HOSTNAME =~ "oakleaf" ]]; then
-    # Check whether GCC is being used or not.
-    if command -v mpig++px > /dev/null; then
-        # GCC
-        C_COMPILER=mpigccpx
-        CXX_COMPILER=mpig++px
-    else
-        # Fujitsu compiler
-        C_COMPILER=mpifccpx
-        CXX_COMPILER=mpiFCCpx
-    fi
+C_COMPILER=mpicc
+if command -v mpicxx > /dev/null; then
+    CXX_COMPILER=mpicxx
 else
-    C_COMPILER=mpicc
-    if command -v mpicxx > /dev/null; then
-        CXX_COMPILER=mpicxx
-    else
-        CXX_COMPILER=mpic++
-    fi
+    CXX_COMPILER=mpic++
 fi
 
 # Execute cmake.
