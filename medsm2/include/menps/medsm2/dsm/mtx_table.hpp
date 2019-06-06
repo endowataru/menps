@@ -59,9 +59,10 @@ public:
         auto& le = this->les_[mtx_id];
         le.mtx.lock();
         
+        auto& p2p = com.get_p2p_lock();
         const auto tag = P::get_tag_from_lock_id(mtx_id);
         
-        this->lk_tbl_.lock_global(com, mtx_id, tag);
+        this->lk_tbl_.lock_global(com, p2p, mtx_id, tag);
         
         const auto sl = this->get_sig_location(com, mtx_id);
         
@@ -104,9 +105,10 @@ public:
         // Complete writing on the previous owner.
         rma.flush(sl.proc);
         
+        auto& p2p = com.get_p2p_lock();
         const auto tag = P::get_tag_from_lock_id(mtx_id);
         
-        this->lk_tbl_.unlock_global(com, mtx_id, tag);
+        this->lk_tbl_.unlock_global(com, p2p, mtx_id, tag);
         
         auto& le = this->les_[mtx_id];
         le.mtx.unlock();

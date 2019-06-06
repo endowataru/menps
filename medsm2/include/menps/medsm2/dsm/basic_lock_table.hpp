@@ -11,14 +11,13 @@ template <typename P>
 class basic_lock_table
 {
     using com_itf_type = typename P::com_itf_type;
+    using p2p_itf_type = typename com_itf_type::p2p_itf_type;
     using proc_id_type = typename com_itf_type::proc_id_type;
-    using atomic_int_type = typename P::atomic_int_type;
-    
-    using size_type = typename P::size_type;
     
     using lock_pos_type = typename P::lock_pos_type;
-    
     using p2p_tag_type = typename P::p2p_tag_type;
+    using atomic_int_type = typename P::atomic_int_type;
+    using size_type = typename P::size_type;
     
 public:
     void coll_make(
@@ -58,6 +57,7 @@ public:
     
     lock_global_result lock_global(
         com_itf_type&           com
+    ,   p2p_itf_type&           p2p
     ,   const lock_pos_type     lk_pos
     ,   p2p_tag_type            tag
     ) {
@@ -152,8 +152,6 @@ public:
                 link_val = rma.compare_and_swap(proc, glk_rptr, expected, desired);
                 
                 if (link_val == expected) {
-                    auto& p2p = com.get_p2p_lock();
-                    
                     MEFDN_LOG_VERBOSE(
                         "msg:Wait for the previous releaser.\t"
                         "lk_pos:{}\t"
@@ -185,6 +183,7 @@ public:
     
     void unlock_global(
         com_itf_type&           com
+    ,   p2p_itf_type&           p2p
     ,   const lock_pos_type     lk_pos
     ,   p2p_tag_type            tag
     ) {
@@ -222,8 +221,6 @@ public:
             
             link_val = cas_result;
         }
-        
-        auto& p2p = com.get_p2p_lock();
         
         const auto next_proc =
             this->get_probable_owner_from_lock_val(this_proc, link_val);

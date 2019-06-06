@@ -57,8 +57,9 @@ public:
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
         
+        auto& p2p = com.get_p2p();
         const auto tag = P::get_tag_from_blk_id(blk_id);
-        return base::lock_global(com, blk_pos, tag);
+        return base::lock_global(com, p2p, blk_pos, tag);
     }
     
     template <typename EndTransactionResult>
@@ -80,8 +81,9 @@ public:
         rma.flush(glk_ret.owner);
         #endif
         
+        auto& p2p = com.get_p2p();
         const auto tag = P::get_tag_from_blk_id(blk_id);
-        base::unlock_global(com, blk_pos, tag);
+        base::unlock_global(com, p2p, blk_pos, tag);
     }
     
     bool check_owned(
