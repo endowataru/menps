@@ -281,39 +281,39 @@ install(FILES external/cmdline/cmdline.h DESTINATION include/cmdline)
 
 # Google Test
 
-add_library(googletest
-    ./external/googletest/googletest/src/gtest-all.cc
-)
-target_compile_options(googletest
-    PRIVATE
-    -w # Suppress ALL warnings
-)
-target_include_directories(googletest
-    PUBLIC ./external/googletest/googletest
-    PUBLIC ./external/googletest/googletest/include
-    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mefdn/config.h
-)
-target_link_libraries(googletest
-    PRIVATE mefdn-options
-)
+#add_library(googletest
+#    ./external/googletest/googletest/src/gtest-all.cc
+#)
+#target_compile_options(googletest
+#    PRIVATE
+#    -w # Suppress ALL warnings
+#)
+#target_include_directories(googletest
+#    PUBLIC ./external/googletest/googletest
+#    PUBLIC ./external/googletest/googletest/include
+#    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mefdn/config.h
+#)
+#target_link_libraries(googletest
+#    PRIVATE mefdn-options
+#)
 
 # Unit tests
 
-add_executable(mefdn-unittest
-    unittest/unittest.cpp
-    unittest/mpsc_bounded_queue.cpp
-    unittest/spmc_bounded_queue.cpp
-    unittest/spsc_bounded_queue.cpp
-    unittest/mpsc_locked_bounded_queue.cpp
-    unittest/intrusive.cpp
-    unittest/index_list.cpp
-    unittest/tuple.cpp
-    unittest/spinlock.cpp
-)
-
-target_link_libraries(mefdn-unittest
-    mefdn
-    mefdn-options
-    googletest
-)
+#add_executable(mefdn-unittest
+#    unittest/unittest.cpp
+#    unittest/mpsc_bounded_queue.cpp
+#    unittest/spmc_bounded_queue.cpp
+#    unittest/spsc_bounded_queue.cpp
+#    unittest/mpsc_locked_bounded_queue.cpp
+#    unittest/intrusive.cpp
+#    unittest/index_list.cpp
+#    unittest/tuple.cpp
+#    unittest/spinlock.cpp
+#)
+#
+#target_link_libraries(mefdn-unittest
+#    mefdn
+#    mefdn-options
+#    googletest
+#)
 

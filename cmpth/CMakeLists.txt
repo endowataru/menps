@@ -24,17 +24,17 @@ target_include_directories(doctest INTERFACE
 )
 
 
-add_executable(cmpth-mth-test
-    ./example/mth-test.cpp
-)
-target_link_libraries(cmpth-mth-test
-    cmpth
-    cmpth-options
-)
-set_target_properties(cmpth-mth-test PROPERTIES
-    CXX_STANDARD 11
-    CXX_EXTENSIONS OFF
-    CXX_STANDARD_REQUIRED ON)
+#add_executable(cmpth-mth-test
+#    ./example/mth-test.cpp
+#)
+#target_link_libraries(cmpth-mth-test
+#    cmpth
+#    cmpth-options
+#)
+#set_target_properties(cmpth-mth-test PROPERTIES
+#    CXX_STANDARD 11
+#    CXX_EXTENSIONS OFF
+#    CXX_STANDARD_REQUIRED ON)
 
 
 add_executable(cmpth_test_smth

@@ -61,15 +61,15 @@ endif()
 
 # Unit tests
 
-add_executable(meult-unittest
-    unittest/unittest.cpp
-    unittest/qdlock.cpp
-)
-target_link_libraries(meult-unittest
-    meult
-    mefdn-options
-    googletest
-)
+#add_executable(meult-unittest
+#    unittest/unittest.cpp
+#    unittest/qdlock.cpp
+#)
+#target_link_libraries(meult-unittest
+#    meult
+#    mefdn-options
+#    googletest
+#)
 
 file(GLOB example_files example/*.cpp)
 foreach(example_path IN LISTS example_files)
