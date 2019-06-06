@@ -37,17 +37,34 @@ install(DIRECTORY include/ DESTINATION include)
 
 
 add_executable(mecom2-test
-    ./unittest/unittest.cpp
-    #./unittest/rpc.cpp
-    ./unittest/rma.cpp
-    #./src/compile.cpp
-)
-target_include_directories(mecom2-test
-    PUBLIC ./include
+    ./tests/test.cpp
 )
 target_link_libraries(mecom2-test
     PUBLIC mecom2
     PRIVATE mefdn-options
-    PRIVATE googletest
+    PUBLIC doctest
 )
+
+enable_testing()
+
+add_test(
+    NAME mecom2-test
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_sweep.bash $<TARGET_FILE:mecom2-test>
+)
+
+
+#add_executable(mecom2-test
+#    ./unittest/unittest.cpp
+#    #./unittest/rpc.cpp
+#    ./unittest/rma.cpp
+#    #./src/compile.cpp
+#)
+#target_include_directories(mecom2-test
+#    PUBLIC ./include
+#)
+#target_link_libraries(mecom2-test
+#    PUBLIC mecom2
+#    PRIVATE mefdn-options
+#    PRIVATE googletest
+#)
 
