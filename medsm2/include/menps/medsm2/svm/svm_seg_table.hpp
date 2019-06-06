@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <menps/medsm2/seg_table.hpp>
+#include <menps/medsm2/dsm/seg_table.hpp>
 #include <menps/mefdn/arithmetic.hpp>
 #include <menps/mefdn/assert.hpp>
 

@@ -1,21 +1,21 @@
 
-#include <menps/medsm2/sig_table.hpp>
-#include <menps/medsm2/sig_buffer.hpp>
-#include <menps/medsm2/space.hpp>
-#include <menps/medsm2/rel_sig.hpp>
-#include <menps/medsm2/rd_set.hpp>
-#include <menps/medsm2/rd_ts_state.hpp>
-#include <menps/medsm2/wr_set.hpp>
+#include <menps/medsm2/dsm/sig_table.hpp>
+#include <menps/medsm2/dsm/sig_buffer.hpp>
+#include <menps/medsm2/dsm/space.hpp>
+#include <menps/medsm2/dsm/rel_sig.hpp>
+#include <menps/medsm2/dsm/rd_set.hpp>
+#include <menps/medsm2/dsm/rd_ts_state.hpp>
+#include <menps/medsm2/dsm/wr_set.hpp>
 #include <menps/medsm2/svm/svm_space.hpp>
 #include <menps/medsm2/svm/svm_blk_table.hpp>
 #include <menps/medsm2/svm/svm_seg_table.hpp>
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include <menps/mecom2/rma/alltoall_buffer.hpp>
-#include <menps/medsm2/basic_lock_table.hpp>
-#include <menps/medsm2/mtx_table.hpp>
+#include <menps/medsm2/dsm/basic_lock_table.hpp>
+#include <menps/medsm2/dsm/mtx_table.hpp>
 #include <menps/medsm2/id_allocator.hpp>
 #ifdef MEDSM2_ENABLE_REL_THREAD
-#include <menps/medsm2/rel_thread.hpp>
+#include <menps/medsm2/dsm/rel_thread.hpp>
 #endif
 
 #ifdef MEOMP_SEPARATE_WORKER_THREAD

@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include <menps/medsm2/blk_lock_table.hpp>
-#include <menps/medsm2/blk_data_table.hpp>
-#include <menps/medsm2/blk_dir_table.hpp>
+#include <menps/medsm2/dsm/blk_lock_table.hpp>
+#include <menps/medsm2/dsm/blk_data_table.hpp>
+#include <menps/medsm2/dsm/blk_dir_table.hpp>
 #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
-    #include <menps/medsm2/blk_flag_table.hpp>
+    #include <menps/medsm2/dsm/blk_flag_table.hpp>
 #endif
 #include <menps/mefdn/memory/mapped_memory.hpp>
 #include <unistd.h>

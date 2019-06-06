@@ -2,7 +2,7 @@
 #pragma once
 
 #if 1
-#include <menps/medsm2/basic_lock_table.hpp>
+#include <menps/medsm2/dsm/basic_lock_table.hpp>
 #include <menps/medsm2/prof.hpp>
 
 namespace menps {

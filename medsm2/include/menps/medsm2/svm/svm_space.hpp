@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <menps/medsm2/space.hpp>
+#include <menps/medsm2/dsm/space.hpp>
 #ifndef MEOMP_SEPARATE_WORKER_THREAD
 #include <menps/medsm2/svm/sigsegv_catcher.hpp>
 #endif
