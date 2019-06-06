@@ -22,12 +22,12 @@ public:
     void barrier()
     {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
-        const auto comm = self.get_communicator();
+        auto& mf = self.get_mpi_facade();
+        const auto comm = self.get_comm();
         
         MEFDN_LOG_VERBOSE("msg:Call MPI_barrier().");
         
-        mi.barrier({ comm });
+        mf.barrier({ comm });
     }
     
     void untyped_broadcast(
@@ -36,8 +36,8 @@ public:
     ,   const size_type     num_bytes
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
-        const auto comm = self.get_communicator();
+        auto& mf = self.get_mpi_facade();
+        const auto comm = self.get_comm();
         
         MEFDN_LOG_VERBOSE(
             "msg:Call MPI_Bcast().\t"
@@ -49,7 +49,7 @@ public:
         ,   num_bytes
         );
         
-        mi.bcast({ ptr, static_cast<int>(num_bytes), MPI_BYTE, root_proc, comm });
+        mf.bcast({ ptr, static_cast<int>(num_bytes), MPI_BYTE, root_proc, comm });
     }
     
     void untyped_allgather(
@@ -58,8 +58,8 @@ public:
     ,   const size_type     num_bytes
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
-        const auto comm = self.get_communicator();
+        auto& mf = self.get_mpi_facade();
+        const auto comm = self.get_comm();
         const auto num_bytes_int = static_cast<int>(num_bytes);
         
         MEFDN_LOG_VERBOSE(
@@ -72,7 +72,7 @@ public:
         ,   num_bytes
         );
         
-        mi.allgather({ src_ptr, num_bytes_int, MPI_BYTE,
+        mf.allgather({ src_ptr, num_bytes_int, MPI_BYTE,
             dest_ptr, num_bytes_int, MPI_BYTE, comm });
     }
     
@@ -82,8 +82,8 @@ public:
     ,   const size_type     num_bytes
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
-        const auto comm = self.get_communicator();
+        auto& mf = self.get_mpi_facade();
+        const auto comm = self.get_comm();
         
         MEFDN_LOG_VERBOSE(
             "msg:Call MPI_Alltoall().\t"
@@ -95,7 +95,7 @@ public:
         ,   num_bytes
         );
         
-        mi.alltoall({
+        mf.alltoall({
             src_ptr
         ,   static_cast<int>(num_bytes)
         ,   MPI_BYTE
@@ -114,8 +114,8 @@ public:
     ,   const size_type num_elems
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
-        const auto comm = self.get_communicator();
+        auto& mf = self.get_mpi_facade();
+        const auto comm = self.get_comm();
         
         MEFDN_LOG_VERBOSE(
             "msg:Call MPI_Allreduce().\t"
@@ -129,7 +129,7 @@ public:
         
         const auto datatype = P::template get_mpi_datatype<T>();
         
-        mi.allreduce({
+        mf.allreduce({
             src_ptr
         ,   dest_ptr
         ,   static_cast<int>(num_elems)

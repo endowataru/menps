@@ -25,7 +25,7 @@ public:
     { }
     
     mpi_facade_type& get_mpi_facade() {
-        return mf_;
+        return this->mf_;
     }
     MPI_Comm get_comm() const noexcept {
         return this->comm_;
