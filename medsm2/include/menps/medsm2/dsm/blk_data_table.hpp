@@ -44,30 +44,32 @@ public:
     template <typename Conf>
     void coll_make(const Conf& conf)
     {
+        auto& com = conf.com;
+        auto& rma = com.get_rma();
+        auto& coll = com.get_coll();
+        
         const auto priv = static_cast<mefdn::byte*>(conf.priv_buf);
         
         // Attach the private buffer.
-        this->priv_ptr_ = conf.com.get_rma().attach(priv, priv + conf.seg_size);
+        this->priv_ptr_ = rma.attach(priv, priv + conf.seg_size);
         
-        #ifdef MEDSM2_ENABLE_LAZY_MERGE
-        this->priv_buf_.coll_make(conf.com.get_rma(), conf.com.get_coll(), this->priv_ptr_, conf.seg_size);
-        #endif
+        this->priv_buf_.coll_make(rma, coll, this->priv_ptr_, conf.seg_size);
         
         const auto pub = static_cast<mefdn::byte*>(conf.pub_buf);
         
         // Attach the public buffer.
-        this->pub_ptr_ = conf.com.get_rma().attach(pub, pub + conf.seg_size);
+        this->pub_ptr_ = rma.attach(pub, pub + conf.seg_size);
         
-        this->pub_buf_.coll_make(conf.com.get_rma(), conf.com.get_coll(), this->pub_ptr_, conf.seg_size);
+        this->pub_buf_.coll_make(rma, coll, this->pub_ptr_, conf.seg_size);
     }
     
     void finalize(com_itf_type& com)
     {
-        // Detach the public buffer.
-        com.get_rma().detach(this->pub_ptr_);
+        auto& rma = com.get_rma();
         
-        // Detach the public buffer.
-        com.get_rma().detach(this->priv_ptr_);
+        // Detach the public and private buffers.
+        rma.detach(this->pub_ptr_);
+        rma.detach(this->priv_ptr_);
     }
     
     void* get_pub_ptr() const noexcept {
@@ -685,14 +687,12 @@ private:
         return this->pub_buf_.local(blk_size * blk_pos);
     }
     
-    #ifdef MEDSM2_ENABLE_LAZY_MERGE
     typename rma_itf_type::template remote_ptr<mefdn::byte>
     get_other_priv_ptr(const proc_id_type proc, const blk_pos_type blk_pos) {
         auto& self = this->derived();
         const auto blk_size = self.get_blk_size();
         return this->priv_buf_.remote(proc, blk_size * blk_pos);
     }
-    #endif
     typename rma_itf_type::template remote_ptr<mefdn::byte>
     get_other_pub_ptr(const proc_id_type proc, const blk_pos_type blk_pos) {
         auto& self = this->derived();
@@ -703,10 +703,8 @@ private:
     typename rma_itf_type::template local_ptr<mefdn::byte>
         priv_ptr_;
     
-    #ifdef MEDSM2_ENABLE_LAZY_MERGE
     typename P::template alltoall_ptr_set<mefdn::byte>
         priv_buf_;
-    #endif
     
     typename rma_itf_type::template public_ptr<mefdn::byte>
         pub_ptr_;
