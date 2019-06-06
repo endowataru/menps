@@ -1,23 +1,22 @@
 
 #pragma once
 
-#include <menps/medsm2/common.hpp>
 #include <menps/mecom2/rma/rma_itf_id.hpp>
 
-// TODO: Because dsm_rma_info is specialzing the interface,
+// TODO: Because mpi_based_rma is specialzing the interface,
 //       we need to include all headers...
 #include MECOM2_RMA_ITF_HEADER_SINGLE
 #include MECOM2_RMA_ITF_HEADER_MPI
 #include MECOM2_RMA_ITF_HEADER_UCT
 
 namespace menps {
-namespace medsm2 {
+namespace mecom2 {
 
 template <mecom2::rma_itf_id_t Id, typename P>
-struct dsm_rma_info;
+struct mpi_based_rma;
 
 template <typename P>
-struct dsm_rma_info<mecom2::rma_itf_id_t::SINGLE, P>
+struct mpi_based_rma<mecom2::rma_itf_id_t::SINGLE, P>
 {
     using mpi_itf_type = typename P::mpi_itf_type;
     using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
@@ -25,14 +24,14 @@ struct dsm_rma_info<mecom2::rma_itf_id_t::SINGLE, P>
     mecom2::single_rma_ptr  rma;
     
     template <typename Coll>
-    explicit dsm_rma_info(mpi_facade_type& /*mf*/, Coll& /*coll*/)
+    explicit mpi_based_rma(mpi_facade_type& /*mf*/, Coll& /*coll*/)
     {
         rma = mecom2::make_single_rma();
     }
 };
 
 template <typename P>
-struct dsm_rma_info<mecom2::rma_itf_id_t::MPI, P>
+struct mpi_based_rma<mecom2::rma_itf_id_t::MPI, P>
 {
     using mpi_itf_type = typename P::mpi_itf_type;
     using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
@@ -43,7 +42,7 @@ struct dsm_rma_info<mecom2::rma_itf_id_t::MPI, P>
     mecom2::mpi_rma_ptr<mpi_rma_policy_type> rma;
     
     template <typename Coll>
-    explicit dsm_rma_info(mpi_facade_type& mf, Coll& /*coll*/)
+    explicit mpi_based_rma(mpi_facade_type& mf, Coll& /*coll*/)
     {
         mf.comm_dup({ MPI_COMM_WORLD, &comm }); // TODO
         mf.win_create_dynamic({ MPI_INFO_NULL, comm, &win });
@@ -55,7 +54,7 @@ struct dsm_rma_info<mecom2::rma_itf_id_t::MPI, P>
 };
 
 inline int get_procs_per_node() {
-    if (const auto str = std::getenv("MEDSM2_NUM_PROCS_PER_NODE")) {
+    if (const auto str = std::getenv("MECOM2_NUM_PROCS_PER_NODE")) {
         const auto ret = std::atoi(str);
         MEFDN_ASSERT(ret > 0);
         return ret;
@@ -65,7 +64,7 @@ inline int get_procs_per_node() {
 }
 
 template <typename P>
-struct dsm_rma_info<mecom2::rma_itf_id_t::UCT, P>
+struct mpi_based_rma<mecom2::rma_itf_id_t::UCT, P>
 {
     using mpi_itf_type = typename P::mpi_itf_type;
     using mpi_facade_type = typename mpi_itf_type::mpi_facade_type;
@@ -75,7 +74,7 @@ struct dsm_rma_info<mecom2::rma_itf_id_t::UCT, P>
     mecom2::uct_rma<mecom2::uct_rma_policy<uct_itf_type>>*      rma;
     
     template <typename Coll>
-    explicit dsm_rma_info(mpi_facade_type& /*mf*/, Coll& coll)
+    explicit mpi_based_rma(mpi_facade_type& /*mf*/, Coll& coll)
     {
         const auto procs_per_node =
             static_cast<mefdn::size_t>(get_procs_per_node());
@@ -102,45 +101,13 @@ struct dsm_rma_info<mecom2::rma_itf_id_t::UCT, P>
     }
 };
 
-#if 0
-template <typename MpiItf>
-struct dsm_rma_info<mecom2::rma_itf_id_t::ucp, MpiItf>
-{
-    using mpi_facade_type = typename MpiItf::mpi_facade_type;
-    
-    mecom2::rma_ucp_policy::ucp_facade_type     uf;
-    mecom2::rma_ucp_policy::context_type        ctx;
-    mefdn::unique_ptr<mecom2::ucp_worker_set>   wk_set;
-    mecom2::ucp_rma_ptr                         rma;
-    
-    template <typename Coll>
-    explicit dsm_rma_info(mpi_facade_type& /*mf*/, Coll& coll)
-    {
-        using mecom2::rma_ucp_policy;
-        
-        auto conf = rma_ucp_policy::config_type::read(uf, nullptr, nullptr);
-        
-        ucp_params ctx_params = ucp_params();
-        ctx_params.field_mask = UCP_PARAM_FIELD_FEATURES;
-        ctx_params.features   = UCP_FEATURE_RMA | UCP_FEATURE_AMO64;
-        
-        ctx = rma_ucp_policy::context_type::init(uf, &ctx_params, conf.get());
-        
-        ucp_worker_params_t wk_params = ucp_worker_params_t();
-        wk_set = mecom2::make_ucp_worker_set(uf, ctx, wk_params, coll);
-        
-        rma = mecom2::make_ucp_rma(uf, ctx, *wk_set);
-    }
-};
-#endif
-
 template <mecom2::rma_itf_id_t Id, typename P, typename Coll>
-inline mefdn::unique_ptr<dsm_rma_info<Id, P>>
-make_dsm_rma_info(typename P::mpi_itf_type::mpi_facade_type& mf, Coll& coll)
+inline mefdn::unique_ptr<mpi_based_rma<Id, P>>
+make_mpi_based_rma(typename P::mpi_itf_type::mpi_facade_type& mf, Coll& coll)
 {
-    return mefdn::make_unique<dsm_rma_info<Id, P>>(mf, coll);
+    return mefdn::make_unique<mpi_based_rma<Id, P>>(mf, coll);
 }
 
-} // namespace medsm2
+} // namespace mecom2 
 } // namespace menps
 
