@@ -4,11 +4,7 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/assert.hpp>
-#include <menps/mefdn/vector.hpp>
-#include <menps/mefdn/external/fmt.hpp>
-#include <stdexcept>
 
-//#define MEDSM2_USE_ONE_MUTEX
 //#define MEDSM2_FORCE_LATEST_READ
 
 namespace menps {
@@ -49,7 +45,9 @@ public:
     template <typename Conf>
     void coll_make(const Conf& conf)
     {
-        auto& coll = conf.com.get_coll();
+        auto& com = conf.com;
+        auto& rma = com.get_rma();
+        auto& coll = com.get_coll();
         const auto this_proc = coll.this_proc_id();
         
         this->num_blks_ = conf.num_blks; // for debugging
@@ -69,7 +67,7 @@ public:
             #endif
         }
         
-        this->ges_.coll_make(conf.com.get_rma(), coll, conf.num_blks);
+        this->ges_.coll_make(rma, coll, conf.num_blks);
     }
     
     unique_lock_type get_local_lock(const blk_pos_type blk_pos)
@@ -82,12 +80,8 @@ public:
         ,   blk_pos
         );
         
-        #ifdef MEDSM2_USE_ONE_MUTEX
-        return unique_lock_type(this->mtx_);
-        #else
         auto& le = this->les_[blk_pos];
         return unique_lock_type(le.mtx);
-        #endif
     }
     
     struct start_read_result
@@ -763,11 +757,7 @@ private:
 public:
     void check_locked(const blk_pos_type blk_pos, const unique_lock_type& lk)
     {
-        #ifdef MEDSM2_USE_ONE_MUTEX
-        MEFDN_ASSERT(lk.mutex() == &this->mtx_);
-        #else
         MEFDN_ASSERT(lk.mutex() == &this->les_[blk_pos].mtx);
-        #endif
         MEFDN_ASSERT(lk.owns_lock());
     }
     
@@ -811,10 +801,6 @@ private:
     
     typename P::template
         alltoall_buffer<global_entry> ges_;
-    
-    #ifdef MEDSM2_USE_ONE_MUTEX
-    mutex_type mtx_;
-    #endif
 };
 
 } // namespace medsm2
