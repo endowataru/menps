@@ -602,7 +602,7 @@ public:
         typename A0, typename A1, typename A2, typename A3, typename A4,
         typename... RArgs,
         fdn::enable_if_t<
-            (sizeof...(RArgs) >= 2) // Enabled with <= 7 parameters
+            (sizeof...(RArgs) >= 2) // Enabled with >= 7 parameters
         >* = nullptr>
     [[noreturn]]
     static void restore_context(
