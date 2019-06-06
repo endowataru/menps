@@ -161,11 +161,7 @@ public:
         this->acquire_sig(lk_ret.sig_buf);
         
         // Merge the signature for subsequent releases.
-        #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
         this->rel_sig_.merge(this->seg_tbl_, lk_ret.sig_buf);
-        #else
-        this->rel_sig_.merge(lk_ret.sig_buf);
-        #endif
     }
     
     void unlock_mutex(const mtx_id_type mtx_id)
@@ -214,11 +210,7 @@ public:
         
         auto sig = this->rel_sig_.get_sig();
         
-        #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
         this->sig_tbl_.merge_sig_to(this->seg_tbl_, com, sig_id, sig);
-        #else
-        this->sig_tbl_.merge_sig_to(com, sig_id, sig);
-        #endif
         
         // Store the specified value to the atomic variable.
         this->seg_tbl_.atomic_store(com, this->rd_set_, blk_id, offset, value);
@@ -236,11 +228,7 @@ public:
         this->acquire_sig(sig_buf);
         
         // Merge the signature for subsequent releases.
-        #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
         this->rel_sig_.merge(this->seg_tbl_, sig_buf);
-        #else
-        this->rel_sig_.merge(sig_buf);
-        #endif
     }
     
     void fence_release()
@@ -269,11 +257,7 @@ public:
         }
         
         // Union the write notice vector and the release signature.
-        #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
         this->rel_sig_.merge(this->seg_tbl_, mefdn::move(wrs_ret.wn_vec));
-        #else
-        this->rel_sig_.merge(mefdn::move(wrs_ret.wn_vec));
-        #endif
         
         // Notify the other threads waiting for the finish of the release fence.
         this->wr_set_.finish_release();

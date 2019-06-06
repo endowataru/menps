@@ -25,10 +25,6 @@ class sig_buffer
     
     using ult_itf_type = typename P::ult_itf_type;
     
-    /*#ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
-    using seg_table_type = typename P::seg_table_type;
-    #endif*/
-    
     struct header {
         wr_ts_type  min_wr_ts;
         size_type   num_entries;
@@ -73,13 +69,9 @@ public:
     }
     
     // Merge two signature and return a merged signature.
-    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
     template <typename SegTable> // TODO
     static sig_buffer merge(SegTable& seg_tbl,
         const sig_buffer& sig_a, const sig_buffer& sig_b)
-    #else
-    static sig_buffer merge(const sig_buffer& sig_a, const sig_buffer& sig_b)
-    #endif
     {
         wn_vector_type new_wn_vec;
         // Pre-allocate the merged vector.

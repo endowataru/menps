@@ -25,38 +25,22 @@ class rel_sig
     using size_type = typename P::size_type;
     
 public:
-    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
     template <typename SegTable>
     void merge(SegTable& seg_tbl, wn_vector_type wn_vec)
-    #else
-    void merge(wn_vector_type wn_vec)
-    #endif
     {
         // Sort the write notices.
         auto sig = sig_buffer_type::create_from_wns(mefdn::move(wn_vec));
         
-        #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
         this->merge(seg_tbl, mefdn::move(sig));
-        #else
-        this->merge(mefdn::move(sig));
-        #endif
     }
     
-    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
     template <typename SegTable>
     void merge(SegTable& seg_tbl, const sig_buffer_type& sig)
-    #else
-    void merge(const sig_buffer_type& sig)
-    #endif
     {
         const unique_lock_type lk(this->mtx_);
         
         // Merge two sorted lists.
-        #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
         auto merged_sig = sig_buffer_type::merge(seg_tbl, this->sig_, sig);
-        #else
-        auto merged_sig = sig_buffer_type::merge(this->sig_, sig);
-        #endif
         
         merged_sig.truncate(P::constants_type::max_rel_sig_len);
         

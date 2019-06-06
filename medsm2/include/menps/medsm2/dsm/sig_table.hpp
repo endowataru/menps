@@ -70,13 +70,10 @@ public:
         // The temporary buffer is automatically deleted here.
     }
     
-    #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
     template <typename SegTable> // TODO
-    void merge_sig_to(SegTable& seg_tbl,
-    #else
     void merge_sig_to(
-    #endif
-        com_itf_type&           com
+        SegTable&               seg_tbl
+    ,   com_itf_type&           com
     ,   const sig_id_type       sig_id
     ,   const sig_buffer_type&  sig_buf
     ) {
@@ -103,11 +100,7 @@ public:
         
         // Merge two buffers.
         const auto merged_sig =
-            #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
             sig_buffer_type::merge(seg_tbl, tbl_sig, sig_buf);
-            #else
-            sig_buffer_type::merge(tbl_sig, sig_buf);
-            #endif
         
         // Serialize the buffer again.
         const auto ser_buf = merged_sig.serialize(sl.sig_bytes);
