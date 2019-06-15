@@ -3,7 +3,7 @@
 
 #include <menps/mecom2/rma/rma_itf_id.hpp>
 
-// TODO: Because mpi_based_rma is specialzing the interface,
+// TODO: Because mpi_based_rma is specializing the interface,
 //       we need to include all headers...
 #include MECOM2_RMA_ITF_HEADER_SINGLE
 #include MECOM2_RMA_ITF_HEADER_MPI
