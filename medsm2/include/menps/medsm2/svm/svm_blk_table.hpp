@@ -26,7 +26,8 @@ struct svm_blk_table_policy : P
 template <typename P>
 class svm_blk_table
     : private blk_lock_table<svm_blk_table_policy<P>>
-    , private blk_dir_table<svm_blk_table_policy<P>>
+    // TODO: compilation error; simplify the class hierarchy
+    , public blk_dir_table<svm_blk_table_policy<P>>
     , private blk_data_table<svm_blk_table_policy<P>>
 {
     using blk_pos_type = typename P::blk_pos_type;
@@ -46,6 +47,13 @@ public:
     using data_table_type = blk_data_table<base_policy_type>;
     #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
     using flag_table_type = blk_flag_table<base_policy_type>;
+    #endif
+    
+    // TODO: simplify the class hierarchy
+    #ifdef MEDSM2_USE_LAD
+    using lock_table_type::get_lock_entry;
+    #else
+    using dir_table_type::get_lock_entry;
     #endif
     
     template <typename Conf>

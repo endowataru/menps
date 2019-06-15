@@ -13,6 +13,8 @@ namespace medsm2 {
 template <typename P>
 class blk_dir_table
 {
+    MEFDN_DEFINE_DERIVED(P)
+    
     using com_itf_type = typename P::com_itf_type;
     using rma_itf_type = typename com_itf_type::rma_itf_type;
     using proc_id_type = typename com_itf_type::proc_id_type;
@@ -67,7 +69,9 @@ public:
             #endif
         }
         
+        #ifndef MEDSM2_USE_LAD
         this->ges_.coll_make(rma, coll, conf.num_blks);
+        #endif
     }
     
     unique_lock_type get_local_lock(const blk_pos_type blk_pos)
@@ -106,10 +110,11 @@ public:
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
+        auto& self = this->derived();
         this->check_locked(blk_pos, lk);
         
         auto& le = this->les_[blk_pos];
-        auto& ge = * this->ges_.local(blk_pos);
+        auto& ge = self.get_lock_entry(blk_pos);
         
         if (!(le.state == state_type::invalid_clean || le.state == state_type::invalid_dirty)) {
             // This block is not marked as invalid.
@@ -307,10 +312,11 @@ private:
     ,   const unique_lock_type& lk
     ,   const wr_ts_type        new_wr_ts
     ) {
+        auto& self = this->derived();
         this->check_locked(blk_pos, lk);
         
         auto& le = this->les_[blk_pos];
-        auto& ge = * this->ges_.local(blk_pos);
+        auto& ge = self.get_lock_entry(blk_pos);
         
         const auto rd_ts = ge.home_rd_ts;
         
@@ -378,7 +384,9 @@ public:
             // based on this write notice to prepare for the next read.
             
             auto& le = this->les_[blk_pos];
-            auto& ge = * this->ges_.local(blk_pos);
+            
+            auto& self = this->derived();
+            auto& ge = self.get_lock_entry(blk_pos);
             
             // Update the home process.
             le.home_proc = new_home_proc;
@@ -411,7 +419,9 @@ public:
     ) {
         const auto ret = this->invalidate(blk_pos, lk, rd_ts_st.get_min_wr_ts());
         
-        auto& ge = * this->ges_.local(blk_pos);
+        auto& self = this->derived();
+        auto& ge = self.get_lock_entry(blk_pos);
+        
         const auto wr_ts = ge.home_wr_ts;
         const auto rd_ts = ge.home_rd_ts;
         
@@ -456,12 +466,18 @@ public:
     ,   const LockResult&       glk_ret
     ) {
         this->check_locked(blk_pos, lk);
+        auto& self = this->derived();
         
         auto& rma = com.get_rma();
         const auto this_proc = com.this_proc_id();
         
         const auto owner = glk_ret.owner;
         
+        #ifdef MEDSM2_USE_LAD
+        const auto& owner_wr_ts = glk_ret.home_wr_ts;
+        const auto& owner_rd_ts = glk_ret.home_rd_ts;
+        
+        #else
         const auto ge_rptr = this->ges_.remote(owner, blk_pos);
         
         // Load the latest timestamps.
@@ -473,9 +489,10 @@ public:
         
         const auto owner_wr_ts = owner_ge.home_wr_ts;
         const auto owner_rd_ts = owner_ge.home_rd_ts;
+        #endif
         
         auto& le = this->les_[blk_pos];
-        auto& ge MEFDN_MAYBE_UNUSED = * this->ges_.local(blk_pos);
+        auto& ge MEFDN_MAYBE_UNUSED = self.get_lock_entry(blk_pos);
         
         const auto state = le.state;
         //const auto cur_wr_ts = ge.wr_ts;
@@ -577,15 +594,13 @@ public:
         
         const auto cur_proc = com.this_proc_id();
         
-        #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        // Note: new_owner could be the same as old_owner in the past.
         const auto new_owner = cur_proc;
-        #else
-        const auto old_owner = bt_ret.owner;
-        const auto new_owner = mg_ret.is_written ? cur_proc : old_owner;
-        #endif
         
         auto& le = this->les_[blk_pos];
+        #ifndef MEDSM2_USE_LAD
         auto& ge = * this->ges_.local(blk_pos);
+        #endif
         
         // Update the home process.
         // The home process is only updated locally.
@@ -616,37 +631,13 @@ public:
             rd_set.add_readable(blk_id, new_ts.rd_ts);
         }
         
+        #ifndef MEDSM2_USE_LAD
         // Update the timestamps.
         // Although this value may be read by another writer,
         // this process still has the lock for it.
         // Also, the timestamps only increases monotonically.
         ge.home_wr_ts = new_ts.wr_ts;
         ge.home_rd_ts = new_ts.rd_ts;
-        
-        #ifndef MEDSM2_ENABLE_FAST_RELEASE
-        if (new_owner != cur_proc) {
-            auto& rma = com.get_rma();
-            
-            // This process is not the new owner.
-            // (2) old_owner == new_owner != cur_proc
-            
-            MEFDN_ASSERT(bt_ret.wr_ts == new_ts.wr_ts);
-            
-            // If the read timestamp is updated in this transaction,
-            // it needs to be written to the owner.
-            if (bt_ret.rd_ts < new_ts.rd_ts) {
-                const auto ge_rptr =
-                    this->ges_.remote(new_owner /* == old_owner */, blk_pos);
-                
-                // Write the new read timestamp to the owner.
-                rma.buf_write(
-                    new_owner /* == old_owner */
-                ,   rma_itf_type::member(ge_rptr, &global_entry::home_rd_ts)
-                ,   &new_ts.rd_ts
-                ,   1
-                );
-            }
-        }
         #endif
         
         const auto is_still_writable = ! bt_ret.is_write_protected;
@@ -738,7 +729,8 @@ private:
         const rd_ts_state_type& rd_ts_st
     ,   const blk_pos_type      blk_pos
     ) {
-        auto& ge = * this->ges_.local(blk_pos);
+        auto& self = this->derived();
+        auto& ge = self.get_lock_entry(blk_pos);
         
         const auto old_wr_ts = ge.home_wr_ts;
         const auto old_rd_ts = ge.home_rd_ts;
@@ -761,6 +753,7 @@ public:
         MEFDN_ASSERT(lk.owns_lock());
     }
     
+    #ifndef MEDSM2_USE_LAD
 private:
     struct global_entry {
         // The timestamp when this block must be self-invalidated.
@@ -774,6 +767,14 @@ private:
         rd_ts_type  wn_rd_ts;
         wr_ts_type  wn_wr_ts;
     };
+    
+    // for compatibility
+public:
+    global_entry& get_lock_entry(const blk_pos_type blk_pos) {
+        return * this->ges_.local(blk_pos);
+    }
+private:
+    #endif
     
     struct local_entry {
         mutex_type      mtx;
@@ -799,8 +800,10 @@ private:
     
     mefdn::unique_ptr<local_entry []> les_;
     
+    #ifndef MEDSM2_USE_LAD
     typename P::template
         alltoall_buffer<global_entry> ges_;
+    #endif
 };
 
 } // namespace medsm2
