@@ -14,8 +14,6 @@ int main(int argc, char** argv)
     
     auto p = sp.coll_alloc_seg(1<<15, 1<<12);
     
-    //medsm2::mpi_svm_space::rel_id ri{};
-    
     if (coll.this_proc_id() == 0) {
         *(int*)p = 1;
         //sp.store_release(p);
