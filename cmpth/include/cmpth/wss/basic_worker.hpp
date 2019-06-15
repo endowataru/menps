@@ -150,7 +150,7 @@ public:
 private:
     continuation_type local_pop_top_or_root()
     {
-        if (auto cont = wd_.try_local_pop_top()) {
+        if (auto cont = this->wd_.try_local_pop_top()) {
             return cont;
         }
         else {

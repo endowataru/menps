@@ -19,8 +19,6 @@ class basic_smth_scheduler
     using base_ult_itf_type = typename P::base_ult_itf_type;
     using atomic_bool_type = typename base_ult_itf_type::template atomic<bool>;
     
-    using task_pool_type = typename P::task_pool_type;
-    
 public:
     basic_smth_scheduler() {
         auto& self = this->derived();
