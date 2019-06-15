@@ -45,8 +45,8 @@ public:
         
         auto& rqst_comm = self.get_request_comm();
         
-        #if 0
-        if (p.server_proc == rqst_comm.current_process_id()) {
+        #if 1
+        if (p.server_proc == rqst_comm.this_proc_id()) {
             auto& inv = self.get_invoker();
             
             auto ret =

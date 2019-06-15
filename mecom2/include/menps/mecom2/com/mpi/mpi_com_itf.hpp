@@ -4,6 +4,7 @@
 #include <menps/mecom2/com/mpi/mpi_based_rma.hpp>
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
+#include <menps/mecom2/rpc/mpi/mpi_rpc.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -23,6 +24,7 @@ public:
     
     using coll_itf_type = typename P::coll_itf_type;
     using p2p_itf_type = typename P::p2p_itf_type;
+    using rpc_itf_type = typename P::rpc_itf_type;
     using rma_itf_type = typename P::rma_itf_type;
     
     using proc_id_type = typename coll_itf_type::proc_id_type;
@@ -46,11 +48,14 @@ public:
         this->mf_->comm_dup({ MPI_COMM_WORLD, &this->p2p_comm_ });
         // TODO: Specific to medsm2
         this->mf_->comm_dup({ MPI_COMM_WORLD, &this->p2p_lock_comm_ });
+        this->mf_->comm_dup({ MPI_COMM_WORLD, &this->rpc_comm_ });
         
         this->coll_ = P::make_coll(*this->mf_, this->coll_comm_);
         this->p2p_ = P::make_p2p(*this->mf_, this->p2p_comm_);
         // TODO: Specific to medsm2
         this->p2p_lock_ = P::make_p2p(*this->mf_, this->p2p_lock_comm_);
+        
+        this->rpc_ = P::make_rpc(*this->mf_, this->rpc_comm_);
         
         #ifndef MEFDN_ENABLE_MEULT
         ult_itf_type::log_policy::set_state_callback(get_state{ *this });
@@ -67,10 +72,11 @@ public:
         mefdn::logger::set_state_callback(mefdn::logger::state_callback_type{});
     }
     
-    rma_itf_type& get_rma() const noexcept { return *this->rma_info_->rma; }
     coll_itf_type& get_coll() const noexcept { return *this->coll_; }
     p2p_itf_type& get_p2p() const noexcept { return *this->p2p_; }
     p2p_itf_type& get_p2p_lock() const noexcept { return *this->p2p_lock_; }
+    rpc_itf_type& get_rpc() const noexcept { *this->rpc_; }
+    rma_itf_type& get_rma() const noexcept { return *this->rma_info_->rma; }
     
     proc_id_type this_proc_id() { return this->proc_id_; }
     proc_id_type get_num_procs() { return this->num_procs_; }
@@ -125,10 +131,12 @@ private:
     MPI_Comm coll_comm_ = MPI_COMM_NULL;
     MPI_Comm p2p_comm_ = MPI_COMM_NULL;
     MPI_Comm p2p_lock_comm_ = MPI_COMM_NULL;
+    MPI_Comm rpc_comm_ = MPI_COMM_NULL;
     
     mefdn::unique_ptr<coll_itf_type>    coll_;
     mefdn::unique_ptr<p2p_itf_type>     p2p_;
     mefdn::unique_ptr<p2p_itf_type>     p2p_lock_;
+    mefdn::unique_ptr<rpc_itf_type>     rpc_;
     mefdn::unique_ptr<rma_info_type>    rma_info_;
     
     proc_id_type proc_id_ = 0;
@@ -151,6 +159,8 @@ struct mpi_com_itf_policy
     using rma_info_type = mpi_based_rma<P::rma_id, P>;
     using rma_itf_type = get_rma_itf_type_t<P::rma_id, P>;
     
+    using rpc_itf_type = mpi_rpc<mpi_itf_type>;
+    
     using ult_itf_type = typename P::ult_itf_type;
     
     static mefdn::unique_ptr<coll_itf_type> make_coll(mpi_facade_type& mf, const MPI_Comm comm) {
@@ -161,6 +171,9 @@ struct mpi_com_itf_policy
     }
     static mefdn::unique_ptr<rma_info_type> make_rma_info(mpi_facade_type& mf, coll_itf_type& coll) {
         return make_mpi_based_rma<P::rma_id, P>(mf, coll);
+    }
+    static mefdn::unique_ptr<rpc_itf_type> make_rpc(mpi_facade_type& mf, const MPI_Comm comm) {
+        return make_mpi_rpc<mpi_itf_type>(mf, comm);
     }
 };
 
