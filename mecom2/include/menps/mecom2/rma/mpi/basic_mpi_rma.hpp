@@ -60,7 +60,7 @@ public:
     ,   request_type* const             request_result
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         mi.rput({
@@ -84,7 +84,7 @@ public:
     ,   request_type* const             request_result
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         mi.rget({
@@ -109,7 +109,7 @@ public:
     ,   request_type* const         request_result
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         const auto datatype = P::template get_mpi_datatype<T>();
@@ -140,7 +140,7 @@ public:
     ,   const local_ptr<T>&         result_lptr
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         const auto datatype = P::template get_mpi_datatype<T>();
@@ -162,7 +162,7 @@ public:
     ,   const remote_ptr<const T>&  src_rptr
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         const auto datatype = P::template get_mpi_datatype<T>();
@@ -191,7 +191,7 @@ public:
     ,   const T&                    value
     ) {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         const auto datatype = P::template get_mpi_datatype<T>();
@@ -215,7 +215,7 @@ public:
     bool test(request_type* const req)
     {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         
         int flag;
         mi.test({ req, &flag, MPI_STATUS_IGNORE });
@@ -239,7 +239,7 @@ public:
         #else
         
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         
         mi.wait({ req, MPI_STATUS_IGNORE });
         
@@ -249,7 +249,7 @@ public:
     void flush()
     {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         mi.win_flush_all({ win });
@@ -258,7 +258,7 @@ public:
     void flush(const proc_id_type proc)
     {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         mi.win_flush({ proc, win });
@@ -267,7 +267,7 @@ public:
     void flush_local(const proc_id_type proc)
     {
         auto& self = this->derived();
-        auto& mi = self.get_mpi_interface();
+        auto& mi = self.get_mpi_facade();
         const auto win = self.get_win();
         
         mi.win_flush_local({ proc, win });

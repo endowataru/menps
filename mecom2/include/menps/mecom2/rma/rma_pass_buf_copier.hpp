@@ -57,8 +57,6 @@ public:
         auto& self = this->derived();
         
         self.write(dest_proc, dest_rptr, src_ptr, num_elems);
-        
-        // buf is destroyed here.
     }
 };
 

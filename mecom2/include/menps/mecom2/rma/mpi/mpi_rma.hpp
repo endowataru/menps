@@ -30,16 +30,16 @@ public:
     
     template <typename Conf>
     explicit mpi_rma(Conf&& conf)
-        : req_(conf.req)
+        : mf_(conf.req)
         , win_(conf.win)
         , comm_(conf.comm)
         , rank_(0)
     {
-        this->req_.comm_rank({ this->comm_, &this->rank_ });
+        this->mf_.comm_rank({ this->comm_, &this->rank_ });
     }
     
-    mpi_facade_type& get_mpi_interface() {
-        return req_;
+    mpi_facade_type& get_mpi_facade() {
+        return this->mf_;
     }
     
     MPI_Win get_win() {
@@ -53,24 +53,24 @@ public:
     void* untyped_allocate(const mefdn::size_t size) {
         const auto p = new mefdn::byte[size];
         const auto size_aint = static_cast<MPI_Aint>(size);
-        this->req_.win_attach({ win_, p, size_aint });
+        this->mf_.win_attach({ win_, p, size_aint });
         return p;
     }
     
     void untyped_deallocate(void* const p) {
-        this->req_.win_detach({ win_, p });
+        this->mf_.win_detach({ win_, p });
         delete[] static_cast<mefdn::byte*>(p);
     }
     
     template <typename T>
     T* attach(T* const first, T* const last) {
         const auto size = mefdn::distance_in_bytes(first, last);
-        this->req_.win_attach({ win_, first, size });
+        this->mf_.win_attach({ win_, first, size });
         return first;
     }
     
     void detach(void* const first) {
-        this->req_.win_detach({ win_, first });
+        this->mf_.win_detach({ win_, first });
     }
     
     size_type serialized_size_in_bytes(void* /*ptr*/) {
@@ -86,11 +86,11 @@ public:
     
     void progress()
     {
-        this->req_.progress();
+        this->mf_.progress();
     }
     
 private:
-    mpi_facade_type& req_;
+    mpi_facade_type& mf_;
     MPI_Win win_;
     MPI_Comm comm_;
     int rank_;
