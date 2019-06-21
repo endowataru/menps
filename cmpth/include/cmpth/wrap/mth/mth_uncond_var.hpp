@@ -116,6 +116,65 @@ public:
             throw mth_error{};
     }
     
+    // For interfacing in ctmth
+    
+    template <typename Worker>
+    void wait(Worker& /*wk*/) { this->wait(); }
+    
+    template <typename Worker>
+    void notify(Worker& /*wk*/) { this->notify(); }
+    
+    template <typename Worker>
+    void notify_signal(Worker& /*wk*/) { this->notify_signal(); }
+    
+    template <typename Worker>
+    void notify_enter(Worker& /*wk*/) { this->notify_enter(); }
+    
+    template <typename Worker>
+    void swap(Worker& /*wk*/, mth_uncond_var& next_uv) {
+        this->swap(next_uv);
+    }
+    
+    template <typename Func, typename Worker, typename... Args>
+    void swap_with(Worker& wk, mth_uncond_var& next_uv,
+        Args* const ... args)
+    {
+        using func_type = call_with_ptrs<fdn::decay_t<Func>, Worker, Args...>;
+        func_type f{ fdn::make_tuple(fdn::ref(wk), args...) };
+        
+        const auto ret =
+            myth_uncond_swap_with(&this->u_, &func_type::on_wait, &f);
+        
+        if (ret != 0)
+            throw mth_error{};
+    }
+    
+    template <typename Func, typename Worker, typename... Args>
+    void wait_with(Worker& wk, Args* const ... args)
+    {
+        using func_type = call_with_ptrs<fdn::decay_t<Func>, Worker, Args...>;
+        func_type f{ fdn::make_tuple(fdn::ref(wk), args...) };
+        
+        const auto ret =
+            myth_uncond_wait_with(&this->u_, &func_type::on_wait, &f);
+        
+        if (ret != 0)
+            throw mth_error{};
+    }
+    
+private:
+    template <typename Func, typename Worker, typename... Args>
+    struct call_with_ptrs
+    {
+        fdn::tuple<fdn::reference_wrapper<Worker>, Args*...> args;
+        
+        static int on_wait(void* const ptr) {
+            const auto& self = *static_cast<call_with_ptrs*>(ptr);
+            const bool ret = fdn::apply(Func{}, self.args);
+            return ret; // Convert to int
+        }
+    };
+    
 private:
     myth_uncond_t u_;
 };

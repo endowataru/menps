@@ -24,28 +24,15 @@ target_include_directories(doctest INTERFACE
 )
 
 
-#add_executable(cmpth-mth-test
-#    ./example/mth-test.cpp
-#)
-#target_link_libraries(cmpth-mth-test
-#    cmpth
-#    cmpth-options
-#)
-#set_target_properties(cmpth-mth-test PROPERTIES
-#    CXX_STANDARD 11
-#    CXX_EXTENSIONS OFF
-#    CXX_STANDARD_REQUIRED ON)
-
-
-add_executable(cmpth_test_smth
-    ./tests/test_smth.cpp
+add_executable(cmpth_test_sct
+    ./tests/test_sct.cpp
 )
-target_link_libraries(cmpth_test_smth
+target_link_libraries(cmpth_test_sct
     cmpth
     cmpth-options
     doctest
 )
-set_target_properties(cmpth_test_smth PROPERTIES
+set_target_properties(cmpth_test_sct PROPERTIES
     CXX_STANDARD 11
     CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON)
@@ -53,9 +40,9 @@ set_target_properties(cmpth_test_smth PROPERTIES
 enable_testing()
 
 add_test(
-    NAME cmpth_test_smth
+    NAME cmpth_test_sct
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_sweep.sh
-        CMPTH_NUM_WORKERS $<TARGET_FILE:cmpth_test_smth>
+        CMPTH_NUM_WORKERS $<TARGET_FILE:cmpth_test_sct>
 )
 
 
@@ -81,6 +68,26 @@ if (${CMPTH_ENABLE_MTH})
         NAME cmpth_test_mth
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_sweep.sh
             MYTH_NUM_WORKERS $<TARGET_FILE:cmpth_test_mth>
+    )
+    
+    
+    add_executable(cmpth_test_ctmth
+        ./tests/test_ctmth.cpp
+    )
+    target_link_libraries(cmpth_test_ctmth
+        cmpth
+        cmpth-options
+        doctest
+    )
+    set_target_properties(cmpth_test_ctmth PROPERTIES
+        CXX_STANDARD 11
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD_REQUIRED ON)
+    
+    add_test(
+        NAME cmpth_test_ctmth
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_sweep.sh
+            MYTH_NUM_WORKERS $<TARGET_FILE:cmpth_test_ctmth>
     )
 endif()
 

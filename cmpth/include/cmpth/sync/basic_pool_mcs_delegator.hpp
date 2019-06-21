@@ -4,7 +4,6 @@
 #include <cmpth/sync/basic_mcs_delegator.hpp>
 #include <cmpth/sync/basic_mcs_core.hpp>
 #include <cmpth/pool/basic_return_pool.hpp>
-#include <cmpth/smth/default_smth.hpp> // TODO
 #include <cmpth/sync/basic_uncond_thread.hpp>
 
 namespace cmpth {
@@ -58,6 +57,14 @@ struct pool_mcs_delegator_pool_policy {
     static fdn::size_t get_pool_threshold(Pool& pool) {
         return P2::get_pool_threshold(pool);
     }
+    template <typename Node, typename Pool>
+    static Node* create(Pool& /*pool*/) {
+        return new Node;
+    }
+    template <typename Node>
+    static void destroy(Node* const n) {
+        delete n;
+    }
 };
 
 template <typename UltItf, typename P2>
@@ -73,8 +80,8 @@ struct pool_mcs_delegator_policy
     
     using qdlock_thread_type = uncond_qdlock_thread<pool_mcs_delegator_policy>;
     
-    using assert_policy_type = default_smth_common_policy::assert_policy_type; // TODO
-    using log_policy_type = default_smth_common_policy::log_policy_type; // TODO
+    using assert_policy_type = typename UltItf::assert_policy;
+    using log_policy_type = typename UltItf::log_policy;
 };
 
 template <typename UltItf, typename P2>

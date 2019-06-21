@@ -13,7 +13,7 @@ option(MEDSM2_ENABLE_PROF "Enable profiling" FALSE)
 if (${MEFDN_ENABLE_MEULT})
     set(MEDSM2_ULT_ITF "MTH" CACHE STRING "ULT module for DSM")
 else()
-    set(MEDSM2_ULT_ITF "SMTH" CACHE STRING "ULT module for DSM")
+    set(MEDSM2_ULT_ITF "SCT" CACHE STRING "ULT module for DSM")
 endif()
 set(MEDSM2_MPI_ITF "QDC" CACHE STRING "MPI module for DSM")
 set(MEDSM2_UCT_ITF "QDC" CACHE STRING "UCT module for DSM")
@@ -36,6 +36,8 @@ option(MEDSM2_ENABLE_REL_THREAD "Enable releaser thread" OFF)
 set(MEDSM2_REL_THREAD_USEC "10000000" CACHE STRING "Fence period for releaser thread")
 option(MEDSM2_ENABLE_LINEAR_ALLOCATOR "Use linear allocator" ON)
 option(MEDSM2_USE_SIG_BUFFER_MERGE_TABLE "Use blk_flag_table to merge signatures" ON)
+option(MEDSM2_ENABLE_MIGRATION "Enable migration of DSM data" ON)
+option(MEDSM2_USE_DIRECTORY_COHERENCE "Use directory-based coherence" OFF)
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in

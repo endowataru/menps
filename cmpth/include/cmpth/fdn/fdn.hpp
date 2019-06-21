@@ -74,6 +74,8 @@ using std::lock_guard;
 using std::begin;
 using std::end;
 
+using std::ref;
+using std::reference_wrapper;
 
 // <type_traits>
 

@@ -6,7 +6,7 @@
 namespace cmpth {
 
 template <typename P>
-class smth_task_ref
+class sct_task_ref
 {
     using base_ult_itf_type = typename P::base_ult_itf_type;
     using task_desc_type = typename P::task_desc_type;
@@ -17,14 +17,14 @@ class smth_task_ref
     using continuation_type = typename P::continuation_type;
     
 public:
-    smth_task_ref() noexcept = default;
+    sct_task_ref() noexcept = default;
     
-    /*implicit*/ smth_task_ref(task_desc_type* const desc) noexcept
+    /*implicit*/ sct_task_ref(task_desc_type* const desc) noexcept
         : desc_{desc}
     { }
     
-    smth_task_ref(const smth_task_ref&) noexcept = default;
-    smth_task_ref& operator = (const smth_task_ref&) noexcept = default;
+    sct_task_ref(const sct_task_ref&) noexcept = default;
+    sct_task_ref& operator = (const sct_task_ref&) noexcept = default;
     
     explicit operator bool() const noexcept {
         return this->desc_;

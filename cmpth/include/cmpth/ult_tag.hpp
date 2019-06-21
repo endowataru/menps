@@ -7,13 +7,15 @@ namespace cmpth {
 
 enum class ult_tag_t {
     KLT = 1
-,   SMTH
 ,   MTH
+,   SCT
+,   CTMTH
 };
 
 #define CMPTH_ULT_HEADER_KLT    <cmpth/wrap/klt_itf.hpp>
-#define CMPTH_ULT_HEADER_SMTH   <cmpth/smth/default_smth.hpp>
 #define CMPTH_ULT_HEADER_MTH    <cmpth/wrap/mth_itf.hpp>
+#define CMPTH_ULT_HEADER_SCT    <cmpth/sct/def_sct_itf.hpp>
+#define CMPTH_ULT_HEADER_CTMTH  <cmpth/wrap/ctmth_itf.hpp>
 
 template <ult_tag_t Tag>
 struct get_ult_itf_type;

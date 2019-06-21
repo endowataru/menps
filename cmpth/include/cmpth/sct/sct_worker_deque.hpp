@@ -9,7 +9,7 @@ namespace cmpth {
 // TODO: Provide a better (lock-free) implementation
 
 template <typename P>
-class smth_worker_deque
+class sct_worker_deque
 {
     using continuation_type = typename P::continuation_type;
     using spinlock_type = typename P::spinlock_type;

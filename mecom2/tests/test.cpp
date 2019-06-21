@@ -3,7 +3,7 @@
 #include <cmpth/ult_tag.hpp>
 #include <cmpth/ult_ext_itf.hpp>
 
-#define MECOM2_TEST_ULT_ITF     SMTH
+#define MECOM2_TEST_ULT_ITF     SCT
 #define MECOM2_TEST_MPI_ITF     QDC
 #define MECOM2_TEST_RMA_ITF     MPI
 

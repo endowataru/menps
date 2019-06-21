@@ -6,7 +6,7 @@
 namespace cmpth {
 
 template <typename P>
-class smth_continuation
+class sct_continuation
 {
     using task_desc_type = typename P::task_desc_type;
     using unique_task_ptr_type = typename P::unique_task_ptr_type;
@@ -14,9 +14,9 @@ class smth_continuation
     using context_type = typename P::context_type;
     
 public:
-    smth_continuation() noexcept = default;
+    sct_continuation() noexcept = default;
     
-    explicit smth_continuation(unique_task_ptr_type tk)
+    explicit sct_continuation(unique_task_ptr_type tk)
         : tk_{fdn::move(tk)}
     { }
     

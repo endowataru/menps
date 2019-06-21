@@ -237,7 +237,6 @@ private:
     
 private:
     continuation_type   cont_;
-    //worker_num_type   wk_num_; // TODO
 };
 
 } // namespace cmpth

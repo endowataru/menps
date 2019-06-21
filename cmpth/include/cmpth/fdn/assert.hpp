@@ -18,5 +18,14 @@ struct assert_policy {
     }
 };
 
+using def_assert_policy = 
+    assert_policy<
+        #ifdef CMPTH_DEBUG
+        true
+        #else
+        false
+        #endif
+    >;
+
 } // namespace cmpth
 

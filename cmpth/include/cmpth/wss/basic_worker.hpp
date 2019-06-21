@@ -20,9 +20,9 @@ class basic_worker
     using task_ref_type = typename P::task_ref_type;
     using unique_task_ptr_type = typename P::unique_task_ptr_type;
     
+public:
     using worker_num_type = typename P::worker_num_type;
     
-public:
     void local_push_top(continuation_type cont)
     {
         this->wd_.local_push_top( fdn::move(cont) );

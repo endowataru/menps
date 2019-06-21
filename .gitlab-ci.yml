@@ -11,26 +11,70 @@ before_script:
 stages:
     - test
 
-test_smth_debug_job:
+test_sct_debug_job:
     stage: test
     script:
-        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF
+        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=SCT
         - ./make.bash Debug VERBOSE=1
         - ./ctest.bash Debug -V
 
-test_smth_relwithdebinfo_job:
+test_sct_relwithdebinfo_job:
     stage: test
     script:
-        - ./cmake.bash RelWithDebInfo -D MEFDN_ENABLE_MEULT=OFF
+        - ./cmake.bash RelWithDebInfo -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=SCT
         - ./make.bash RelWithDebInfo VERBOSE=1
         - ./ctest.bash RelWithDebInfo -V
 
-test_smth_release_job:
+test_sct_release_job:
     stage: test
     script:
-        - ./cmake.bash Release -D MEFDN_ENABLE_MEULT=OFF
+        - ./cmake.bash Release -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=SCT
         - ./make.bash Release VERBOSE=1
         - ./ctest.bash Release -V
+
+
+test_ctmth_debug_job:
+    stage: test
+    script:
+        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=CTMTH
+        - ./make.bash Debug VERBOSE=1
+        - ./ctest.bash Debug -V
+
+test_ctmth_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=CTMTH
+        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./ctest.bash RelWithDebInfo -V
+
+test_ctmth_release_job:
+    stage: test
+    script:
+        - ./cmake.bash Release -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=CTMTH
+        - ./make.bash Release VERBOSE=1
+        - ./ctest.bash Release -V
+
+
+#test_smth_debug_job:
+#    stage: test
+#    script:
+#        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF
+#        - ./make.bash Debug VERBOSE=1
+#        - ./ctest.bash Debug -V
+#
+#test_smth_relwithdebinfo_job:
+#    stage: test
+#    script:
+#        - ./cmake.bash RelWithDebInfo -D MEFDN_ENABLE_MEULT=OFF
+#        - ./make.bash RelWithDebInfo VERBOSE=1
+#        - ./ctest.bash RelWithDebInfo -V
+#
+#test_smth_release_job:
+#    stage: test
+#    script:
+#        - ./cmake.bash Release -D MEFDN_ENABLE_MEULT=OFF
+#        - ./make.bash Release VERBOSE=1
+#        - ./ctest.bash Release -V
 
 test_myth_debug_job:
     stage: test

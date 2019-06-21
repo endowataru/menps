@@ -14,7 +14,7 @@ class basic_scheduler
     using base_thread_type = typename base_ult_itf_type::thread;
     
     using worker_type = typename P::worker_type;
-    using worker_num_type = typename P::worker_num_type;
+    using worker_num_type = typename worker_type::worker_num_type;
     
     using task_pool_type = typename P::task_pool_type;
     

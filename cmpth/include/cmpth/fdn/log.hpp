@@ -109,6 +109,15 @@ private:
     }
 };
 
+using def_log_policy = 
+    log_policy<
+        #ifdef CMPTH_DEBUG
+        true
+        #else
+        false
+        #endif
+    >;
+
 } // namespace cmpth
 
 #define CMPTH_P_LOG_VERBOSE(P, ...) \

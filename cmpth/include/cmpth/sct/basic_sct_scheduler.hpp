@@ -6,7 +6,7 @@
 namespace cmpth {
 
 template <typename P>
-class basic_smth_scheduler
+class basic_sct_scheduler
     : public basic_scheduler<P>
 {
     CMPTH_DEFINE_DERIVED(P)
@@ -14,18 +14,18 @@ class basic_smth_scheduler
     using continuation_type = typename P::continuation_type;
     
     using worker_type = typename P::worker_type;
-    using worker_num_type = typename P::worker_num_type;
+    using worker_num_type = typename worker_type::worker_num_type;
     
     using base_ult_itf_type = typename P::base_ult_itf_type;
     using atomic_bool_type = typename base_ult_itf_type::template atomic<bool>;
     
 public:
-    basic_smth_scheduler() {
+    basic_sct_scheduler() {
         auto& self = this->derived();
         CMPTH_P_ASSERT(P, self_ == nullptr);
         self_ = &self;
     }
-    ~basic_smth_scheduler() {
+    ~basic_sct_scheduler() {
         auto& self = this->derived();
         CMPTH_P_ASSERT(P, self_ == &self);
         self_ = nullptr;
@@ -66,8 +66,8 @@ private:
 };
 
 template <typename P>
-typename basic_smth_scheduler<P>::derived_type*
-basic_smth_scheduler<P>::self_ = nullptr;
+typename basic_sct_scheduler<P>::derived_type*
+basic_sct_scheduler<P>::self_ = nullptr;
 
 } // namespace cmpth
 

@@ -804,6 +804,16 @@ private:
     typename P::template
         alltoall_buffer<global_entry> ges_;
     #endif
+    
+    #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+    // TODO: Add flags for invalidations
+    /*typename P::template
+        alltoall_buffer<bool> flags_;*/
+    
+    // ...and directory bitmaps
+    /*typename P::template
+        alltoall_buffer<mefdn::byte>    sharers_;*/
+    #endif
 };
 
 } // namespace medsm2

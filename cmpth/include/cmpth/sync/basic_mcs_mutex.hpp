@@ -5,8 +5,6 @@
 
 namespace cmpth {
 
-#define CMPTH_MCS_MUTEX_USE_NEXT_UV
-
 template <typename P>
 class basic_mcs_mutex
 {
@@ -17,21 +15,32 @@ class basic_mcs_mutex
     using uncond_var_type = typename P::uncond_var_type;
     
 public:
-    void lock(worker_type& wk, mcs_node_type* const cur)
+    void lock() {
+        auto& wk = worker_type::get_cur_worker();
+        this->lock(wk);
+    }
+    void unlock() {
+        auto& wk = worker_type::get_cur_worker();
+        this->unlock(wk);
+    }
+    void unlock_and_wait(uncond_var_type& saved_uv) {
+        auto& wk = worker_type::get_cur_worker();
+        this->unlock_and_wait(wk, saved_uv);
+    }
+    
+    void lock(worker_type& wk)
     {
+        auto& pool = P::get_node_pool();
+        //const auto wk_num = wk.get_worker_num();
+        const auto cur = pool.allocate(); // TODO
+        
         const auto prev = this->core_.start_lock(cur);
         
         if (prev != nullptr)
         {
-            #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
-            cur->uv.template wait_with<
-                basic_mcs_mutex::on_lock
-            >(wk, prev, cur);
-            #else
             prev->uv.template wait_with<
                 basic_mcs_mutex::on_lock
             >(wk, prev, cur);
-            #endif
         }
     }
     
@@ -50,12 +59,13 @@ private:
     };
     
 public:
-    mcs_node_type* unlock(worker_type& wk)
+    void unlock(worker_type& wk)
     {
         const auto cur = this->core_.get_head();
         
         if (CMPTH_LIKELY(this->core_.try_unlock(cur))) {
-            return cur;
+            this->deallocate(cur);
+            return;
         }
         
         mcs_node_type* next = nullptr;
@@ -64,16 +74,12 @@ public:
         }
         while (next == nullptr);
         
-        #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
-        next->uv.notify(wk);
-        #else
         cur->uv.notify(wk);
-        #endif
         
-        return cur;
+        this->deallocate(cur);
     }
     
-    mcs_node_type* unlock_and_wait(worker_type& wk, uncond_var_type& saved_uv)
+    void unlock_and_wait(worker_type& wk, uncond_var_type& saved_uv)
     {
         const auto cur = this->core_.get_head();
         
@@ -87,7 +93,10 @@ public:
             >
             (wk, this, cur, &is_unlocked);
             
-            if (CMPTH_LIKELY(is_unlocked)) { return cur; }
+            if (CMPTH_LIKELY(is_unlocked)) {
+                this->deallocate(cur);
+                return;
+            }
         }
         
         mcs_node_type* next = nullptr;
@@ -96,15 +105,10 @@ public:
         }
         while (next == nullptr);
         
-        #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
-        // Save the current context to saved_uv and switch to next->uv.
-        saved_uv.swap(wk, next->uv);
-        #else
-        // Save the current context to saved_uv and switch to cur-uv.
+        // Save the current context to saved_uv and switch to cur->uv.
         saved_uv.swap(wk, cur->uv);
-        #endif
         
-        return cur;
+        this->deallocate(cur);
     }
     
 private:
@@ -125,6 +129,15 @@ private:
             }
         }
     };
+    
+    static void deallocate(mcs_node_type* const cur) {
+        // Important: Renew the worker because it may change.
+        /*auto& wk2 = worker_type::get_cur_worker();
+        const auto wk_num = wk2.get_worker_num();*/
+        
+        auto& pool = P::get_node_pool();
+        pool.deallocate(/*wk_num, */cur); // TODO
+    }
     
     mcs_core_type core_;
 };

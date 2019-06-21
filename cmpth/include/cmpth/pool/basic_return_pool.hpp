@@ -145,13 +145,6 @@ public:
         return &ret->elem;
     }
     
-    #if 0
-    element_type* allocate(size_type cur_wk_num)
-    {
-        return this->allocate(cur_wk_num, [] { return new node; });
-    }
-    #endif
-    
     void deallocate(size_type cur_wk_num, element_type* const e)
     {
         // Destruct the element. No overhead for PODs.

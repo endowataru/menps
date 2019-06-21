@@ -11,7 +11,6 @@ class basic_thread_funcs
     using worker_type = typename P::worker_type;
     
     using context_policy_type = typename P::context_policy_type;
-    using context_type = typename P::context_type;
     using transfer_type = typename P::transfer_type;
     
     using continuation_type = typename P::continuation_type;

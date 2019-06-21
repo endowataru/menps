@@ -194,7 +194,6 @@ private:
     }
     
 public:
-    
     using data_table_type::finalize; // TODO: finalize dir_table_type too
     
     using dir_table_type::check_locked;

@@ -36,7 +36,6 @@ public:
         }
         else {
             // This thread couldn't lock the mutex immediately.
-            
         }
         
         return prev;
@@ -55,16 +54,6 @@ public:
         // Set the next pointer of the previous lock owner.
         prev->next.store(cur, fdn::memory_order_release);
     }
-    
-    #if 0
-    static mcs_node_type* load_next(
-        mcs_node_type* const cur
-    ) noexcept
-    {
-        CMPTH_P_ASSERT(P, cur != nullptr);
-        return cur->next.load(fdn::memory_order_acquire);
-    }
-    #endif
     
     CMPTH_NODISCARD
     bool try_unlock(mcs_node_type* const head) noexcept
@@ -140,32 +129,6 @@ private:
     
     fdn::byte pad2_[CMPTH_CACHE_LINE_SIZE - sizeof(mcs_node_type*)];
 };
-
-#if 0
-template <typename P>
-class basic_mcs_mutex_guard
-{
-    using mutex_type = typename P::mutex_type;
-    using mcs_node_type = typename P::mcs_node_type;
-    
-public:
-    explicit basic_mcs_mutex_guard(mutex_type& mtx)
-        : mtx_{mtx}
-    {
-        this->mtx_.lock(&this->node_);
-    }
-    ~basic_mcs_mutex_guard() {
-        this->mtx_.unlock(&this->node_);
-    }
-    
-    basic_mcs_mutex_guard(const basic_mcs_mutex_guard&) = delete;
-    basic_mcs_mutex_guard& operator = (const basic_mcs_mutex_guard&) = delete;
-    
-private:
-    mutex_type&     mtx_;
-    mcs_node_type   node_;
-};
-#endif
 
 } // namespace cmpth
 

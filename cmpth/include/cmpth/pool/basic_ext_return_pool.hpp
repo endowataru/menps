@@ -35,6 +35,8 @@ class basic_ext_return_pool
 public:
     using typename base::node;
     
+    using base::base; // TODO
+    
     basic_ext_return_pool()
         : base{ult_itf_type::get_num_workers()}
     { }
@@ -47,27 +49,29 @@ public:
         return base::allocate(wk_num, fdn::forward<AllocFunc>(alloc_func));
     }
     element_type* allocate() {
-        return this->allocate(on_create{});
+        return this->allocate(on_create{ *this });
     }
     
 private:
     struct on_create {
+        basic_ext_return_pool& self;
         node* operator() () {
-            return new node;
+            return P2::template create<node>(self);
         }
     };
     
 public:
+    using base::deallocate;
+    
     void deallocate(element_type* e)
     {
         const auto wk_num = ult_itf_type::get_worker_num();
         base::deallocate(wk_num, e);
     }
     
-public:
     static void destroy(node* const n)
     {
-        delete n;
+        P2::destroy(n);
     }
 };
 

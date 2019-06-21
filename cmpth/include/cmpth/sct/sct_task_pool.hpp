@@ -6,19 +6,39 @@
 namespace cmpth {
 
 template <typename P>
-class smth_task_pool
-    : protected P::pool_base_type
+struct sct_task_pool_base_policy
 {
-    using base = typename P::pool_base_type;
+private:
+    using lv4_itf_type = typename P::lv4_itf_type;
     
-    using worker_type = typename P::worker_type;
-    using call_stack_type = typename P::call_stack_type;
+public:
+    using element_type = typename lv4_itf_type::task_desc;
     
-    using task_ref_type = typename P::task_ref_type;
-    using unique_task_ptr_type = typename P::unique_task_ptr_type;
+    template <typename Pool>
+    static fdn::size_t get_pool_threshold(Pool& pool) {
+        return P::get_task_pool_threshold(pool);
+    }
+    
+    template <typename Node>
+    static void destroy(Node* const n)
+    {
+        delete [] reinterpret_cast<fdn::byte*>(n->elem.stk_top);
+    }
+};
+
+template <typename P>
+class sct_task_pool
+    : public P::lv4_itf_type::template pool_t<sct_task_pool_base_policy<P>>
+{
+    using lv4_itf_type = typename P::lv4_itf_type;
+    using base = typename lv4_itf_type::template pool_t<sct_task_pool_base_policy<P>>;
+    
+    using worker_type           = typename lv4_itf_type::worker;
+    using call_stack_type       = typename lv4_itf_type::call_stack;
+    using task_ref_type         = typename lv4_itf_type::task_ref;
+    using unique_task_ptr_type  = typename lv4_itf_type::unique_task_ptr;
     
     using typename base::node;
-    using node_type = node;
     
 public:
     using base::base;
@@ -36,7 +56,7 @@ public:
     
 private:
     struct on_create {
-        smth_task_pool& self;
+        sct_task_pool& self;
         node* operator() () {
             auto size = this->self.def_size_;
             auto alloc_p = new fdn::byte[size];
@@ -45,10 +65,10 @@ private:
             auto* const n =
                 new (
                     fdn::align_call_stack(
-                        alignof(node_type), sizeof(node_type),
+                        alignof(node), sizeof(node),
                         cur_ptr, size
                     )
-                ) node_type{};
+                ) node{};
             
             auto desc = &n->elem;
             desc->stk_top = alloc_p;
@@ -62,12 +82,6 @@ public:
     {
         const auto wk_num = wk.get_worker_num();
         base::deallocate(wk_num, tk.get_task_desc());
-    }
-    
-public:
-    static void destroy(node* const n)
-    {
-        delete [] reinterpret_cast<fdn::byte*>(n->elem.stk_top);
     }
     
 private:

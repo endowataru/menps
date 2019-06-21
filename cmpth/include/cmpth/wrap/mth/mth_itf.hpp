@@ -4,7 +4,7 @@
 #include <cmpth/wrap/mth/mth.hpp>
 #include <cmpth/ult_tag.hpp>
 #include <cmpth/exec/basic_for_loop.hpp>
-#include <cmpth/smth/default_smth.hpp> // TODO
+#include <cmpth/sct/def_sct_spinlock.hpp>
 
 #define CMPTH_ENABLE_MTH_WORKER_CACHE
 
@@ -14,15 +14,8 @@ struct mth_error : std::exception { };
 
 struct mth_base_policy
 {
-    static const bool is_debug =
-        #ifdef CMPTH_DEBUG
-        true;
-        #else
-        false;
-        #endif
-    
-    using assert_policy_type = assert_policy<is_debug>;
-    using log_policy_type = log_policy<is_debug>;
+    using assert_policy_type = def_assert_policy;
+    using log_policy_type = def_log_policy;
 };
 
 class mth_thread;
@@ -48,7 +41,7 @@ struct mth_itf
     
     using thread = mth_thread;
     
-    using spinlock = default_smth_spinlock; // TODO
+    using spinlock = def_sct_spinlock;
     
     using mutex = mth_mutex;
     using condition_variable = mth_cond_var;
