@@ -164,7 +164,8 @@ private:
 public:
     global_entry& get_lock_entry(const blk_pos_type blk_pos) {
         const auto p = base::get_local_lad_at(blk_pos);
-        return *reinterpret_cast<global_entry*>(p);
+        mefdn::byte* const p_raw = p; // implicit conversion
+        return *reinterpret_cast<global_entry*>(p_raw);
     }
     #endif
 };

@@ -23,7 +23,7 @@ class lock_table
     using local_byte_ptr_type =
         typename rma_itf_type::template local_ptr<mefdn::byte>;
     using remote_byte_ptr_type =
-        typename rma_itf_type::template local_ptr<mefdn::byte>;
+        typename rma_itf_type::template remote_ptr<mefdn::byte>;
     
 public:
     void coll_make(
@@ -241,7 +241,7 @@ public:
         }
         
         // Flush the memory for RMA before unlocking.
-        rma.flush();
+        rma.flush(this_proc);
         
         if (link_val == this->make_locked_lock_val(this_proc))
         {

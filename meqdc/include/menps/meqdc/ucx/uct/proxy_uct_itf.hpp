@@ -60,6 +60,16 @@ struct proxy_uct_qdlock_func
     proxy_uct_params        params;
 };
 
+struct proxy_uct_delegator_policy
+{
+    using delegated_func_type = proxy_uct_qdlock_func;
+    
+    template <typename Pool>
+    static mefdn::size_t get_pool_threshold(Pool& /*pool*/) {
+        return MEQDC_MPI_DELEGATOR_POOL_MAX_ENTRIES;
+    }
+};
+
 template <typename P>
 struct proxy_uct_completion
 {
@@ -83,6 +93,18 @@ struct proxy_uct_completion_pool_policy {
     using size_type = mefdn::size_t;
     
     #ifndef MEFDN_ENABLE_MEULT
+    template <typename Pool>
+    static size_type get_pool_threshold(Pool& /*pool*/) {
+        return MEQDC_MPI_REQUEST_POOL_MAX_ENTRIES; // TODO
+    }
+    template <typename Node, typename Pool>
+    static Node* create(Pool& /*pool*/) {
+        return new Node;
+    }
+    template <typename Node>
+    static void destroy(Node* const n) noexcept {
+        delete n;
+    }
     
     #else
     #ifdef MEULT_ENABLE_BALANCED_POOL
@@ -131,7 +153,7 @@ struct proxy_uct_facade_policy
     
     #ifndef MEFDN_ENABLE_MEULT
     using qdlock_delegator_type =
-        typename ult_itf_type::template delegator_t<proxy_uct_qdlock_func>;
+        typename ult_itf_type::template delegator_t<proxy_uct_delegator_policy>;
     
     #else
     using qdlock_delegator_type =
