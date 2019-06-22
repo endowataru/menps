@@ -64,6 +64,9 @@ struct mth_itf
         static myth_thread_t native_handle() noexcept {
             return myth_self();
         }
+        static void yield() {
+            myth_yield();
+        }
     };
     
     #ifdef CMPTH_ENABLE_MTH_WORKER_CACHE
