@@ -25,13 +25,3 @@ install(TARGETS mectx
 )
 install(DIRECTORY include/ DESTINATION include)
 
-#add_executable(mectx-unittest
-#    unittest/unittest.cpp
-#    unittest/context.cpp
-#)
-#target_link_libraries(mectx-unittest
-#    mectx
-#    mefdn-options
-#    googletest
-#)
-

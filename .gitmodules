@@ -4,9 +4,6 @@
 [submodule "mefdn/external/fmt"]
 	path = mefdn/external/fmt
 	url = https://github.com/fmtlib/fmt.git
-[submodule "mefdn/external/googletest"]
-	path = mefdn/external/googletest
-	url = https://github.com/google/googletest.git
 [submodule "medev2/external/ucx"]
 	path = medev2/external/ucx
 	url = https://github.com/openucx/ucx.git
