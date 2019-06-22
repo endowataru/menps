@@ -6,8 +6,7 @@ int main(int argc, char** argv)
 {
     using namespace menps;
     
-    medsm2::dsm_com_creator cc(&argc, &argv);
-    auto& com = cc.get_dsm_com_itf();
+    medsm2::dsm_com_itf_t com(&argc, &argv);
     auto& coll = com.get_coll();
     
     medsm2::mpi_svm_space sp(com);

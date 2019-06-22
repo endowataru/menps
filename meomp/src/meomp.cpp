@@ -31,7 +31,7 @@ using namespace menps;
 using dsm_facade_t = menps::medsm2::dsm_facade;
 dsm_facade_t* g_df;
 
-using coll_t = menps::medsm2::dsm_com_creator::dsm_com_itf_type::coll_itf_type;
+using coll_t = menps::medsm2::dsm_com_itf_t::coll_itf_type;
 using space_t = menps::medsm2::mpi_svm_space;
 
 coll_t* g_coll;
@@ -68,7 +68,7 @@ struct my_tss_worker_policy
     // signal handlers separately for each OpenMP worker thread.
     using base_ult_itf_type = meult::klt_policy;
     #else
-    using base_ult_itf_type = medsm2::dsm_com_creator::ult_itf_type;
+    using base_ult_itf_type = medsm2::dsm_com_itf_t::ult_itf_type;
     #endif
 };
 
@@ -207,7 +207,7 @@ struct my_child_worker_group_policy
     using derived_type = my_child_worker_group;
     using child_worker_type = my_child_worker;
     
-    using comm_ult_itf_type = medsm2::dsm_com_creator::ult_itf_type;
+    using comm_ult_itf_type = medsm2::dsm_com_itf_t::ult_itf_type;
     
     using worker_base_type = my_worker_base;
 };

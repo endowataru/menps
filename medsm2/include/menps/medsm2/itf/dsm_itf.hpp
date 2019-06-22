@@ -9,7 +9,7 @@ namespace medsm2 {
 
 struct dsm_itf_policy {
     using dsm_facade_type = dsm_facade;
-    using ult_itf_type = typename dsm_com_creator::ult_itf_type;
+    using ult_itf_type = typename dsm_com_itf_t::ult_itf_type;
     using thread_num_type = int;
 };
 

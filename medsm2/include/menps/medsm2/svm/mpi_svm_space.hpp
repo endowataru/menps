@@ -4,14 +4,14 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
-#include <menps/medsm2/com/dsm_com_creator.hpp>
+#include <menps/medsm2/com/dsm_com_itf.hpp>
 
 namespace menps {
 namespace medsm2 {
 
 class mpi_svm_space
 {
-    using com_itf_type = dsm_com_creator::dsm_com_itf_type;
+    using com_itf_type = dsm_com_itf_t;
     
     using proc_id_type = int;
     using size_type = mefdn::size_t;

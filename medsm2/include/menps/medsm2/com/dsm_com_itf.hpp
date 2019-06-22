@@ -34,7 +34,7 @@ struct dsm_com_policy_base
     static constexpr mecom2::rma_itf_id_t rma_id = mecom2::rma_itf_id_t::MEDSM2_RMA_ITF;
 };
 
-using dsm_com_creator = mecom2::mpi_com_itf<dsm_com_policy_base>;
+using dsm_com_itf_t = mecom2::mpi_com_itf<dsm_com_policy_base>;
 
 } // namespace medsm2
 } // namespace menps

@@ -28,7 +28,7 @@ namespace medsm2 {
 
 struct dsm_base_policy
 {
-    using com_itf_type = dsm_com_creator::dsm_com_itf_type;
+    using com_itf_type = dsm_com_itf_t;
     using atomic_int_type = mefdn::uint64_t;
     using size_type = mefdn::size_t;
     using ptrdiff_type = mefdn::ptrdiff_t;
@@ -57,7 +57,7 @@ struct dsm_base_policy
     using wn_idx_type = mefdn::size_t;
     using wn_vi_type = mefdn::vector<wn_idx_type>;
     
-    using ult_itf_type = dsm_com_creator::ult_itf_type;
+    using ult_itf_type = typename com_itf_type::ult_itf_type;
     #ifdef MEOMP_SEPARATE_WORKER_THREAD
     using worker_ult_itf_type = meult::klt_policy;
     #else

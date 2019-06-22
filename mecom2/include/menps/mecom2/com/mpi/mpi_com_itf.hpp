@@ -88,12 +88,6 @@ public:
         return buf;
     }
     
-    // for compatibility
-    using dsm_com_itf_type = basic_mpi_com_itf;
-    dsm_com_itf_type& get_dsm_com_itf() {
-        return *this;
-    }
-    
 private:
     struct get_state
     {

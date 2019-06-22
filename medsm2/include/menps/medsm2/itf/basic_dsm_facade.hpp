@@ -5,7 +5,7 @@
 #include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/external/malloc.h>
 #include <menps/medsm2/prof.hpp>
-#include <menps/medsm2/com/dsm_com_creator.hpp> // TODO: required for medev2::prof
+#include <menps/medsm2/com/dsm_com_itf.hpp> // TODO: required for medev2::prof
 
 namespace menps {
 namespace medsm2 {
@@ -13,10 +13,9 @@ namespace medsm2 {
 template <typename P>
 class basic_dsm_facade
 {
-    using com_creator_type = typename P::com_creator_type;
-    using com_itf_type = typename com_creator_type::dsm_com_itf_type; // TODO
+    using com_itf_type = typename P::com_itf_type; // TODO
     
-    using ult_itf_type = typename com_creator_type::ult_itf_type;
+    using ult_itf_type = typename com_itf_type::ult_itf_type;
     using thread_type = typename ult_itf_type::thread;
     using barrier_type = typename ult_itf_type::barrier;
     
@@ -27,9 +26,9 @@ class basic_dsm_facade
     
 public:
     explicit basic_dsm_facade(int* const argc, char*** const argv)
-        : cc_{mefdn::make_unique<com_creator_type>(argc, argv)}
+        : cc_{mefdn::make_unique<com_itf_type>(argc, argv)}
     {
-        auto& com = this->cc_->get_dsm_com_itf();
+        auto& com = *this->cc_;
         auto& coll = com.get_coll();
         const auto proc_id = coll.this_proc_id();
         
@@ -45,7 +44,7 @@ public:
     
     ~basic_dsm_facade()
     {
-        auto& com = this->cc_->get_dsm_com_itf();
+        auto& com = *this->cc_;
         auto& coll = com.get_coll();
         
         // Do a barrier before exiting.
@@ -99,7 +98,7 @@ public:
     
     void* init_heap_seg(const mefdn::size_t seg_size, const mefdn::size_t blk_size)
     {
-        auto& com = this->cc_->get_dsm_com_itf();
+        auto& com = *this->cc_;
         auto& coll = com.get_coll();
         
         this->heap_size_ = seg_size;
@@ -164,7 +163,7 @@ public:
     }
     
     com_itf_type& get_com_itf() const noexcept {
-        return this->cc_->get_dsm_com_itf();
+        return *this->cc_;
     }
     svm_space_type& get_space() const noexcept {
         return *this->sp_;
@@ -172,7 +171,7 @@ public:
     
     void* coallocate(const mefdn::size_t num_bytes)
     {
-        auto& com = this->cc_->get_dsm_com_itf();
+        auto& com = *this->cc_;
         auto& coll = com.get_coll();
         
         void* ret = nullptr;
@@ -185,7 +184,7 @@ public:
     }
     void codeallocate(void* const ptr)
     {
-        auto& com = this->cc_->get_dsm_com_itf();
+        auto& com = *this->cc_;
         auto& coll = com.get_coll();
         
         coll.barrier();
@@ -289,7 +288,7 @@ public:
         return ti.th_num;
     }
     thread_num_type max_num_threads() {
-        auto& com = this->cc_->get_dsm_com_itf();
+        auto& com = *this->cc_;
         auto& coll = com.get_coll();
         const auto num_procs = coll.get_num_procs();
         const auto n_ths_per_proc = P::get_num_threads_per_proc();
@@ -309,7 +308,7 @@ private:
         return *ti_ptr;
     }
     
-    mefdn::unique_ptr<com_creator_type> cc_;
+    mefdn::unique_ptr<com_itf_type>     cc_;
     mefdn::unique_ptr<svm_space_type>   sp_;
     
     mefdn::size_t   heap_size_ = 0;
