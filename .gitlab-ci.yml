@@ -11,6 +11,8 @@ before_script:
 stages:
     - test
 
+# SCT
+
 test_sct_debug_job:
     stage: test
     script:
@@ -32,6 +34,7 @@ test_sct_release_job:
         - ./make.bash Release VERBOSE=1
         - ./ctest.bash Release -V
 
+# CTMTH
 
 test_ctmth_debug_job:
     stage: test
@@ -54,47 +57,62 @@ test_ctmth_release_job:
         - ./make.bash Release VERBOSE=1
         - ./ctest.bash Release -V
 
+# MTH
 
-#test_smth_debug_job:
-#    stage: test
-#    script:
-#        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF
-#        - ./make.bash Debug VERBOSE=1
-#        - ./ctest.bash Debug -V
-#
-#test_smth_relwithdebinfo_job:
-#    stage: test
-#    script:
-#        - ./cmake.bash RelWithDebInfo -D MEFDN_ENABLE_MEULT=OFF
-#        - ./make.bash RelWithDebInfo VERBOSE=1
-#        - ./ctest.bash RelWithDebInfo -V
-#
-#test_smth_release_job:
-#    stage: test
-#    script:
-#        - ./cmake.bash Release -D MEFDN_ENABLE_MEULT=OFF
-#        - ./make.bash Release VERBOSE=1
-#        - ./ctest.bash Release -V
+test_mth_debug_job:
+    stage: test
+    script:
+        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=MTH
+        - ./make.bash Debug VERBOSE=1
+        - ./ctest.bash Debug -V
 
-test_myth_debug_job:
+test_mth_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=MTH
+        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./ctest.bash RelWithDebInfo -V
+
+test_mth_release_job:
+    stage: test
+    script:
+        - ./cmake.bash Release -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_ULT_ITF=MTH
+        - ./make.bash Release VERBOSE=1
+        - ./ctest.bash Release -V
+
+# MEULT + MTH
+
+test_meult_mth_debug_job:
     stage: test
     script:
         - ./cmake.bash Debug
         - ./make.bash Debug VERBOSE=1
         - ./ctest.bash Debug -V
 
-test_myth_relwithdebinfo_job:
+test_meult_mth_relwithdebinfo_job:
     stage: test
     script:
         - ./cmake.bash RelWithDebInfo
         - ./make.bash RelWithDebInfo VERBOSE=1
         - ./ctest.bash RelWithDebInfo -V
 
-test_myth_release_job:
+test_meult_mth_release_job:
     stage: test
     script:
         - ./cmake.bash Release
         - ./make.bash Release VERBOSE=1
         - ./ctest.bash Release -V
+
+# UCT
+
+compile_uct_debug_job:
+    stage: test
+    script:
+        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_RMA_ITF=UCT -D MEDSM2_ULT_ITF=SCT
+        - ./make.bash Debug VERBOSE=1
+        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_RMA_ITF=UCT -D MEDSM2_ULT_ITF=CTMTH
+        - ./make.bash Debug VERBOSE=1
+        - ./cmake.bash Debug -D MEFDN_ENABLE_MEULT=OFF -D MEDSM2_RMA_ITF=UCT -D MEDSM2_ULT_ITF=MTH
+        - ./make.bash Debug VERBOSE=1
 
 
