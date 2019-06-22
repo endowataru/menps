@@ -39,7 +39,7 @@ class direct_mpi_facade
     using mutex_type = typename ult_itf_type::spinlock;
     using unique_lock_type = mefdn::unique_lock<mutex_type>;
     #else
-    #ifdef MEDEV2_USE_QDLOCK
+    #if defined(MEFDN_ENABLE_MEULT) && defined(MEDEV2_USE_QDLOCK)
     using mutex_type = menps::meult::qdlock_mutex<ult_itf_type>;
     using unique_lock_type = mefdn::unique_lock<mutex_type>;
     #else

@@ -5,7 +5,7 @@
 #include <menps/medev2/config.h>
 #include <menps/mefdn/logger.hpp>
 
-#ifdef MEDEV2_USE_QDLOCK
+#if defined(MEFDN_ENABLE_MEULT) && defined(MEDEV2_USE_QDLOCK)
     #include <menps/meult/qd/qdlock_mutex.hpp>
 #endif
 

@@ -15,7 +15,7 @@ else()
 endif()
 
 option(MEDEV2_SERIALIZE_MPI_CALLS "Serialize MPI calls" FALSE)
-option(MEDEV2_USE_QDLOCK "Use qdlock_mutex instead of normal mutex" $<BOOL:${MEFDN_ENABLE_MEULT}>)
+option(MEDEV2_USE_QDLOCK "Use qdlock_mutex instead of normal mutex" TRUE)
 
 option(MEDEV2_AVOID_SWITCH_IN_SIGNAL "Avoid using context switch in signal handler" FALSE)
 
