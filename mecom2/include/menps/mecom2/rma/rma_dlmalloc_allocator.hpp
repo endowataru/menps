@@ -19,11 +19,7 @@ class rma_dlmalloc_allocator
     
     using ult_itf_type = typename P::ult_itf_type;
     //using spinlock_type = typename ult_itf_type::spinlock;
-    #if defined(MEFDN_ENABLE_MEULT) && defined(MEDEV2_USE_QDLOCK)
-    using spinlock_type = menps::meult::qdlock_mutex<ult_itf_type>;
-    #else
     using spinlock_type = typename ult_itf_type::mutex;
-    #endif
     
     using size_type = typename P::size_type;
     

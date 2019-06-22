@@ -57,9 +57,7 @@ public:
         
         this->rpc_ = P::make_rpc(*this->mf_, this->rpc_comm_);
         
-        #ifndef MEFDN_ENABLE_MEULT
         ult_itf_type::log_policy::set_state_callback(get_state{ *this });
-        #endif
         mefdn::logger::set_state_callback(get_state{ *this });
         
         this->rma_info_ = P::make_rma_info(*this->mf_, *this->coll_);

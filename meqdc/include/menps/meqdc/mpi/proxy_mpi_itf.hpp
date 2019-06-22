@@ -5,16 +5,8 @@
 #include <menps/meqdc/mpi/proxy_mpi_facade.hpp>
 #include <menps/meqdc/mpi/proxy_mpi_request_holder.hpp>
 #include <menps/medev2/mpi/mpi_funcs.hpp>
-#ifdef MEFDN_ENABLE_MEULT
-#include <menps/meult/basic_numbered_tls_pool.hpp>
-#include <menps/meult/qd/qdlock_delegator.hpp>
-#endif
 #include <menps/medev2/mpi/mpi_itf_id.hpp>
 #include <menps/medev2/mpi/direct_mpi_facade.hpp>
-#ifdef MEFDN_ENABLE_MEULT
-#include <menps/meult/basic_numbered_pool.hpp>
-#include <menps/meult/basic_balanced_tls_pool.hpp>
-#endif
 
 namespace menps {
 namespace meqdc {
@@ -86,28 +78,10 @@ struct proxy_mpi_request_pool_policy
     using ult_itf_type = typename P::ult_itf_type;
     using size_type = typename P::size_type;
     
-    #ifdef MEFDN_ENABLE_MEULT
-    
-    #ifdef MEULT_ENABLE_BALANCED_POOL
-    using base_pool_type =
-        meult::basic_balanced_tls_pool<proxy_mpi_request_pool_policy>;
-    
-    template <typename Node>
-    static void deallocate(Node* const /*n*/) {
-        // Note: No need to call "delete" here for basic_numbered_pool.
-    }
-    static size_type get_pool_threshold(base_pool_type& /*pool*/) {
-        return MEULT_BALANCED_POOL_MAX_ENTRIES;
-    }
-    #endif
-    
-    #else // MEFDN_ENABLE_MEULT
     template <typename Pool>
     static size_type get_pool_threshold(Pool& /*pool*/) {
         return MEQDC_MPI_REQUEST_POOL_MAX_ENTRIES; // TODO
     }
-    
-    #endif
 };
 
 template <typename P>
@@ -150,40 +124,19 @@ struct proxy_mpi_policy
     using proxy_request_type = proxy_mpi_request<policy_base_type>;
     using proxy_request_state_type = proxy_mpi_request_state;
     
-    #ifdef MEFDN_ENABLE_MEULT
-    
-    #ifdef MEULT_ENABLE_BALANCED_POOL
-    using request_pool_type =
-        meult::basic_numbered_pool<proxy_mpi_request_pool_policy<policy_base_type>>;
-    #else
-    using request_pool_type =
-        meult::basic_numbered_tls_pool<proxy_mpi_request_pool_policy<policy_base_type>>;
-    #endif
-    
-    #else // MEFDN_ENABLE_MEULT
     using request_pool_type =
         typename ult_itf_type::template numbered_pool_t<
             proxy_mpi_request_pool_policy<policy_base_type>
         >;
     
-    #endif
-    
     using request_holder_type = proxy_mpi_request_holder<proxy_mpi_policy>;
     using command_code_type = proxy_mpi_code;
     using proxy_params_type = proxy_mpi_params;
     
-    #ifdef MEFDN_ENABLE_MEULT
-    using qdlock_delegator_type =
-        meult::qdlock_delegator<
-            proxy_mpi_qdlock_func<policy_base_type>
-        ,   ult_itf_type
-        >;
-    #else
     using qdlock_delegator_type =
         typename ult_itf_type::template delegator_t<
             proxy_mpi_delegator_policy<OrigMpiItf>
         >;
-    #endif
     
     static constexpr mefdn::size_t max_num_requests = 1<<18; // TODO
     static constexpr mefdn::size_t max_num_ongoing = 256; // TODO

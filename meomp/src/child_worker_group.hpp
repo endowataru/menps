@@ -4,11 +4,6 @@
 #include <menps/meomp/common.hpp>
 #include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/medsm2/prof.hpp>
-#ifdef MEFDN_ENABLE_MEULT
-#ifdef MEOMP_ENABLE_QDLOCK_BARRIER
-#include <menps/meult/qd/qdlock_barrier.hpp>
-#endif
-#endif
 
 namespace menps {
 namespace meomp {
@@ -26,11 +21,7 @@ class child_worker_group
     
     using comm_ult_itf_type = typename P::comm_ult_itf_type;
     using thread_type = typename comm_ult_itf_type::thread;
-    #if defined(MEFDN_ENABLE_MEULT) && defined(MEOMP_ENABLE_QDLOCK_BARRIER)
-    using barrier_type = meult::qdlock_barrier<comm_ult_itf_type>;
-    #else
     using barrier_type = typename comm_ult_itf_type::barrier;
-    #endif
     
     struct worker_info
     {

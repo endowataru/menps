@@ -3,28 +3,15 @@
 #include <menps/medev2/mpi/direct_mpi_facade.hpp>
 #include <cmpth/ult_tag.hpp>
 #include <cmpth/ult_ext_itf.hpp>
-#ifdef MEFDN_ENABLE_MEULT
-    #include <menps/meult/ult_itf_id.hpp>
-#endif
 
-#ifdef MEFDN_ENABLE_MEULT
-    #include MEFDN_PP_CAT(MEULT_ULT_ITF_HEADER_, MEQDC_MPI_ULT_ITF)
-#else
-    #include MEFDN_PP_CAT(CMPTH_ULT_HEADER_, MEQDC_MPI_ULT_ITF)
-#endif
+#include MEFDN_PP_CAT(CMPTH_ULT_HEADER_, MEQDC_MPI_ULT_ITF)
 
 namespace /*unnamed*/ {
 
 using proxy_mpi_itf_t =
     menps::meqdc::proxy_mpi_itf<
         menps::medev2::mpi::direct_mpi_itf<
-            #ifdef MEFDN_ENABLE_MEULT
-            menps::meult::get_ult_itf_type_t<
-                menps::meult::ult_itf_id_t::MEQDC_MPI_ULT_ITF
-            >
-            #else
             cmpth::get_ult_ext_itf_t<cmpth::ult_tag_t::MEQDC_MPI_ULT_ITF>
-            #endif
         >
     >;
 
