@@ -45,8 +45,8 @@ struct lv6_ctmth_itf
     : lv6_sct_itf<lv6_ctmth_policy>
 {
     // TODO: Reduce multiple base classes
-    using typename basic_for_loop<sct_for_loop_policy<lv6_ctmth_policy>>::for_loop;
-    using typename basic_for_loop<sct_for_loop_policy<lv6_ctmth_policy>>::for_loop_strided;
+    using basic_for_loop<sct_for_loop_policy<lv6_ctmth_policy>>::for_loop;
+    using basic_for_loop<sct_for_loop_policy<lv6_ctmth_policy>>::for_loop_strided;
     using typename basic_for_loop<sct_for_loop_policy<lv6_ctmth_policy>>::execution;
 };
 
