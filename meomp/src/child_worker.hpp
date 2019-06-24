@@ -12,7 +12,9 @@ class child_worker
 {
     MEFDN_DEFINE_DERIVED(P)
     
+    #ifndef MEOMP_USE_CMPTH
     using ult_ref_type = typename P::ult_ref_type;
+    #endif
     using worker_group_type = typename P::worker_group_type;
     
     using cmd_info_type = typename P::cmd_info_type;
@@ -30,9 +32,12 @@ public:
         auto& self = this->derived();
         
         self.start_worker(
+        #ifndef MEOMP_USE_CMPTH
             ult_ref_type::make_root()
         ,   self.make_work_ult()
-        ,   [func, data, &wg, this] {
+        ,   
+        #endif
+            [func, data, &wg, this] {
                 auto& self2 = this->derived();
                 auto& sp = wg.get_dsm_space();
                 

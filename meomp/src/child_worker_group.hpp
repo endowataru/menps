@@ -58,6 +58,10 @@ public:
             wk.set_num_threads(total_num_threads);
             wk.set_thread_num(thread_num);
             
+            #ifdef MEOMP_USE_CMPTH
+            wk.set_call_stack();
+            #endif
+            
             this->wis_[i].th =
                 thread_type([&wk, &self, func, data] {
                     wk.loop(self, func, data);
@@ -69,6 +73,11 @@ public:
     {
         for (int i = 0; i < this->num_child_threads_; ++i) {
             this->wis_[i].th.join();
+            
+            #ifdef MEOMP_USE_CMPTH
+            auto& wk = this->wis_[i].wk;
+            wk.reset_work_stack();
+            #endif
         }
         
         this->wis_.reset();

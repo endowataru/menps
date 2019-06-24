@@ -15,7 +15,9 @@ class dist_worker
     using cmd_info_type = typename P::cmd_info_type;
     using cmd_code_type = typename P::cmd_code_type;
     
+    #ifndef MEOMP_USE_CMPTH
     using ult_ref_type = typename P::ult_ref_type;
+    #endif
     
 public:
     void execute_loop()
@@ -37,9 +39,12 @@ private:
         auto& self = this->derived();
         
         self.start_worker(
+        #ifndef MEOMP_USE_CMPTH
             ult_ref_type::make_root()
         ,   self.make_work_ult()
-        ,   [this] {
+        ,   
+        #endif
+            [this] {
                 auto& self2 = this->derived();
                 auto& sp = self2.get_dsm_space();
                 
@@ -95,7 +100,7 @@ private:
             auto& sp = self.get_dsm_space();
             
             cmd_info_type cmd = cmd_info_type();
-        
+            
             // Load the function pointer and the data from the master process.
             coll.broadcast(0, &cmd, 1);
             
