@@ -10,7 +10,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 message(STATUS "Generate menps/medsm2/config.h ...")
 
 option(MEDSM2_ENABLE_PROF "Enable profiling" FALSE)
-set(MEDSM2_ULT_ITF "SCT" CACHE STRING "ULT module for DSM")
+set(MEDSM2_ULT_ITF "CTMTH" CACHE STRING "ULT module for DSM")
 set(MEDSM2_MPI_ITF "QDC" CACHE STRING "MPI module for DSM")
 set(MEDSM2_UCT_ITF "QDC" CACHE STRING "UCT module for DSM")
 set(MEDSM2_RMA_ITF "MPI" CACHE STRING "RMA module for DSM")
