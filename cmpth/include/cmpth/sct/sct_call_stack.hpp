@@ -54,7 +54,7 @@ public:
     }
     
     task_ref_type get_task_ref() const noexcept {
-        return { tk_.get() };
+        return { this->tk_.get() };
     }
     
     continuation_type make_continuation(context_type ctx) && noexcept
@@ -69,7 +69,7 @@ public:
     }
     
     task_desc_type* release() noexcept {
-        return tk_.release();
+        return this->tk_.release();
     }
     
 private:

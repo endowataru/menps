@@ -11,7 +11,7 @@ struct basic_unique_task_destructor
     void operator() (
         typename P::task_desc_type* const tk
     ) const noexcept {
-        if (tk != nullptr) {
+        if (CMPTH_UNLIKELY(tk != nullptr)) {
             fdn::terminate();
         }
     }
