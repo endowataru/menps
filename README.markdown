@@ -20,8 +20,6 @@ This repository is composed of multiple modules for distributed-memory programmi
     - <b>Q</b>ueue-<b>d</b>elegated <b>c</b>ommunication device wrapper
 - medev2
     - Communication device wrapper library
-- meult
-    - Customizable work-stealing scheduler
 - mectx
     - Context switching library
 - mefdn
@@ -40,12 +38,12 @@ This repository is composed of multiple modules for distributed-memory programmi
 |    meqdc   |
 +------------+
 |    medev2  |
-+---------------+-----+
-|        meult        | -> will be replaced with cmpth
 +---------------------+
 |        mectx        | -> will be replaced with cmpth
 +---------------------+
 |        mefdn        |
++---------------------+
+|        cmpth        |
 +---------------------+
 ```
 
