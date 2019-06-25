@@ -61,12 +61,24 @@ public:
             wk.set_call_stack();
             
             this->wis_[i].th =
-                thread_type([&wk, &self, func, data] {
-                    wk.loop(self, func, data);
-                });
+                thread_type{ on_start_child{ self, wk, func, data } };
         }
     }
     
+private:
+    struct on_start_child
+    {
+        derived_type&       self;
+        child_worker_type&  wk;
+        omp_func_type       func;
+        omp_data_type       data;
+        
+        void operator() () const {
+            wk.loop(self, func, data);
+        }
+    };
+    
+public:
     void end_parallel()
     {
         for (int i = 0; i < this->num_child_threads_; ++i) {
