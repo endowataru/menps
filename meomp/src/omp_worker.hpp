@@ -20,14 +20,6 @@ class omp_worker
 {
     MEFDN_DEFINE_DERIVED(P)
     
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
-    using klt_itf_type = typename P::worker_ult_itf_type; // TODO: use consistent name
-    using klt_thread_type = typename klt_itf_type::thread;
-    using klt_mutex_type = typename klt_itf_type::mutex;
-    using klt_cv_type = typename klt_itf_type::condition_variable;
-    using klt_unique_lock_type = typename klt_itf_type::unique_mutex_lock; // TODO : rename
-    #endif
-    
     #ifdef MEOMP_USE_CMPTH
     using task_ref_type = typename P::task_ref_type;
     using call_stack_type = typename P::call_stack_type;
@@ -117,21 +109,6 @@ public:
         this->work_gu_ = mefdn::move(work_gu);
         #endif
         
-        #ifdef MEOMP_SEPARATE_WORKER_THREAD
-        // Pin the call stack.
-        self.start_delegated_code();
-        
-        // Start the kernel thread.
-        this->root_ku_ =
-            klt_thread_type(
-                delegated_main<mefdn::decay_t<Func>>{
-                    self
-                ,   // Copy the func so that it can survive
-                    // after start_worker() function exits.
-                    mefdn::forward<Func>(func)
-                }
-            );
-        #else
         // Execute this function object immediately.
         delegated_main<mefdn::decay_t<Func>>{
             self
@@ -139,19 +116,9 @@ public:
             // after start_worker() function exits.
             mefdn::forward<Func>(func)
         }();
-        #endif
     }
     void end_worker()
     {
-        #ifdef MEOMP_SEPARATE_WORKER_THREAD
-        this->root_ku_.join();
-        
-        // This unpin is unnecessary
-        // because it's already done in wait_cmd().
-        /*// Unpin the call stack.
-        this->end_delegated_code();*/
-        #endif
-        
         #ifndef MEOMP_USE_CMPTH
         // Reset these members.
         this->root_gu_ = global_ult_ref_type();
@@ -207,61 +174,17 @@ public:
         this->set_cmd_and_exit(info);
     }
     
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
-    bool try_upgrade(void* const ptr)
+    cmd_info_type wait_for_cmd()
     {
-        cmd_info_type info = cmd_info_type();
-        info.code = cmd_code_type::try_upgrade;
-        info.data = ptr;
-        
-        this->set_cmd_and_suspend(info);
-        
-        // TODO: Always returns "true" now.
-        return true;
-    }
-    #endif
-    
-    cmd_info_type wait_for_cmd() {
-        #ifdef MEOMP_SEPARATE_WORKER_THREAD
-        cmd_info_type cmd_info = cmd_info_type();
-        {
-            klt_unique_lock_type lk(this->cmd_mtx_);
-            while (! this->is_cmd_ready_) {
-                this->cmd_cv_.wait(lk);
-            }
-            cmd_info = this->cmd_info_;
-        }
-        
-        // Unpin the call stack.
-        this->end_delegated_code();
-        
-        return cmd_info;
-        
-        #else
         MEFDN_ASSERT(this->is_cmd_ready_);
         
         const auto cmd = this->cmd_info_;
         this->cmd_info_ = cmd_info_type();
         return cmd;
-        #endif
     }
     
-    void reset_cmd() {
-        #ifdef MEOMP_SEPARATE_WORKER_THREAD
-        // Pin the call stack again.
-        this->start_delegated_code();
-        
-        {
-            klt_unique_lock_type lk(this->cmd_mtx_);
-            this->cmd_info_ = cmd_info_type{};
-            MEFDN_ASSERT(this->is_cmd_ready_);
-            this->is_cmd_ready_ = false;
-            
-            // Resume the worker thread.
-            this->cmd_cv_.notify_one();
-        }
-        
-        #else
+    void reset_cmd()
+    {
         this->cmd_info_ = cmd_info_type();
         MEFDN_ASSERT(this->is_cmd_ready_);
         this->is_cmd_ready_ = false;
@@ -272,7 +195,6 @@ public:
         this->resume();
         
         this->end_user_code_on_this_thread();
-        #endif
     }
     
 private:
@@ -280,43 +202,19 @@ private:
     {
         MEFDN_ASSERT(cmd_info.code != cmd_code_type::none);
         
-        #ifdef MEOMP_SEPARATE_WORKER_THREAD
-        {
-            klt_unique_lock_type lk(this->cmd_mtx_);
-            MEFDN_ASSERT(!this->is_cmd_ready_);
-            this->cmd_info_ = cmd_info;
-            this->is_cmd_ready_ = true;
-            this->cmd_cv_.notify_one();
-            
-            while (this->is_cmd_ready_) {
-                this->cmd_cv_.wait(lk);
-            }
-        }
-        #else
         this->cmd_info_ = cmd_info;
         this->is_cmd_ready_ = true;
         
         this->suspend();
         
         MEFDN_ASSERT(!this->is_cmd_ready_);
-        #endif
     }
     void set_cmd_and_exit(const cmd_info_type& cmd_info)
     {
         MEFDN_ASSERT(cmd_info.code != cmd_code_type::none);
         
-        #ifdef MEOMP_SEPARATE_WORKER_THREAD
-        {
-            klt_unique_lock_type lk(this->cmd_mtx_);
-            MEFDN_ASSERT(!this->is_cmd_ready_);
-            this->cmd_info_ = cmd_info;
-            this->is_cmd_ready_ = true;
-            this->cmd_cv_.notify_one();
-        }
-        #else
         this->cmd_info_ = cmd_info;
         this->is_cmd_ready_ = true;
-        #endif
         
         this->exit();
     }
@@ -334,9 +232,7 @@ private:
         this->initialize_on_this_thread();
         
         #ifndef MEOMP_CALL_PIN_ON_WORKER_THREAD
-        #ifndef MEOMP_SEPARATE_WORKER_THREAD
         this->get_work_ult().pin();
-        #endif
         #endif
         #endif
     }
@@ -350,26 +246,13 @@ private:
         this->finalize_tls();
         #else
         #ifndef MEOMP_CALL_PIN_ON_WORKER_THREAD
-        #ifndef MEOMP_SEPARATE_WORKER_THREAD
         this->get_work_ult().unpin();
-        #endif
         #endif
         
         // Finalize the TLS because this function returns to the system code.
         this->finalize_on_this_thread();
         #endif
     }
-    
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
-    void start_delegated_code()
-    {
-        this->get_work_ult().pin();
-    }
-    void end_delegated_code()
-    {
-        this->get_work_ult().unpin();
-    }
-    #endif
     
 private:
     #ifndef MEOMP_USE_CMPTH
@@ -419,17 +302,10 @@ private:
     task_ref_type work_tk_;
     
     #else
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
-    klt_thread_type root_ku_;
-    #endif
     global_ult_ref_type root_gu_;
     global_ult_ref_type work_gu_;
     #endif
     
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
-    klt_mutex_type  cmd_mtx_;
-    klt_cv_type     cmd_cv_;
-    #endif
     cmd_info_type   cmd_info_ = cmd_info_type();
     bool            is_cmd_ready_ = false;
 };

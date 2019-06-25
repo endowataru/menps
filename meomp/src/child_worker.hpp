@@ -98,15 +98,6 @@ private:
                 MEFDN_LOG_VERBOSE("msg:Exiting parallel region on child worker.");
                 return false;
             
-            #ifdef MEOMP_SEPARATE_WORKER_THREAD
-            case cmd_code_type::try_upgrade: {
-                if (!wg.get_dsm_space().try_upgrade(cmd.data)) {
-                    abort(); // TODO
-                }
-                break;
-            }
-            #endif
-            
             case cmd_code_type::none:
             case cmd_code_type::start_parallel:
             case cmd_code_type::end_parallel:

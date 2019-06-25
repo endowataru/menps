@@ -2,9 +2,7 @@
 #pragma once
 
 #include <menps/medsm2/dsm/space.hpp>
-#ifndef MEOMP_SEPARATE_WORKER_THREAD
 #include <menps/medsm2/svm/sigsegv_catcher.hpp>
-#endif
 #include <menps/medsm2/svm/shm_object.hpp>
 #include <menps/mefdn/arithmetic.hpp>
 #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
@@ -60,7 +58,6 @@ public:
                 }
             );
         
-        #ifndef MEOMP_SEPARATE_WORKER_THREAD
         segv_catch_ =
             mefdn::make_unique<sigsegv_catcher>(
                 sigsegv_catcher::config{
@@ -88,7 +85,6 @@ public:
                 ,   false
                 }
             );
-        #endif
     }
     
     ~svm_space()
@@ -396,10 +392,8 @@ private:
     seg_id_type new_seg_id_ = 1;
     mefdn::byte* app_ptr_start_ = nullptr;
     
-    #ifndef MEOMP_SEPARATE_WORKER_THREAD
-    mefdn::unique_ptr<sigsegv_catcher> segv_catch_;
-    #endif
-    mefdn::unique_ptr<shm_object> shm_obj_;
+    mefdn::unique_ptr<sigsegv_catcher>  segv_catch_;
+    mefdn::unique_ptr<shm_object>       shm_obj_;
     
     tss_type is_enabled_;
 };

@@ -21,10 +21,6 @@
 #include <menps/meomp.hpp>
 #include <menps/mefdn/profiling/time.hpp> // get_current_sec
 
-#ifdef MEOMP_SEPARATE_WORKER_THREAD
-#include <menps/medsm2/svm/sigsegv_catcher.hpp>
-#endif
-
 #ifdef MEOMP_USE_CMPTH
 #include <cmpth/wss/basic_single_worker.hpp>
 #include <cmpth/wss/basic_worker_task.hpp>
@@ -81,13 +77,7 @@ class my_omp_ult_ref;
 struct my_tss_worker_policy
 {
     using derived_type = my_worker_base;
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
-    // Kernel threads are used in order to manage
-    // signal handlers separately for each OpenMP worker thread.
-    using base_ult_itf_type = meult::klt_policy;
-    #else
     using base_ult_itf_type = medsm2::dsm_com_itf_t::ult_itf_type;
-    #endif
 };
 
 
@@ -151,9 +141,6 @@ struct my_worker_base_policy
     ,   end_parallel
     ,   exit_parallel
     ,   exit_program
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
-    ,   try_upgrade
-    #endif
     };
     
     using omp_func_type = void (*)(void*);
@@ -1031,7 +1018,7 @@ int main(int argc, char* argv[])
     auto& coll = df.get_com_itf().get_coll();
     g_coll = &coll;
     
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
+    #if 0
     using medsm2::sigsegv_catcher;
     auto segv_catch =
         mefdn::make_unique<sigsegv_catcher>(

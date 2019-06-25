@@ -19,10 +19,6 @@
 #include <menps/medsm2/dsm/rel_thread.hpp>
 #endif
 
-#ifdef MEOMP_SEPARATE_WORKER_THREAD
-#include <menps/meult/klt.hpp>
-#endif
-
 namespace menps {
 namespace medsm2 {
 
@@ -58,11 +54,7 @@ struct dsm_base_policy
     using wn_vi_type = mefdn::vector<wn_idx_type>;
     
     using ult_itf_type = typename com_itf_type::ult_itf_type;
-    #ifdef MEOMP_SEPARATE_WORKER_THREAD
-    using worker_ult_itf_type = meult::klt_policy;
-    #else
     using worker_ult_itf_type = ult_itf_type;
-    #endif
     
     #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
     using mutex_type = mefdn::spinlock;

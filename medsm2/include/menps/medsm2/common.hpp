@@ -6,8 +6,5 @@
 
 #define MEDSM2_ENABLE_P2P_LOCK
 
-//#define MEOMP_SEPARATE_WORKER_THREAD
-    // TODO: Rename
-
 #define MEDSM2_USE_LAD
 

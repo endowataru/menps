@@ -192,15 +192,6 @@ private:
                 // Exit this function.
                 return false;
             
-            #ifdef MEOMP_SEPARATE_WORKER_THREAD
-            case cmd_code_type::try_upgrade: {
-                if (!self.get_dsm_space().try_upgrade(cmd.data)) {
-                    abort(); // TODO
-                }
-                break;
-            }
-            #endif
-            
             case cmd_code_type::none:
             case cmd_code_type::exit_parallel:
             default:
