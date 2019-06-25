@@ -23,11 +23,6 @@ class omp_worker
     using omp_func_type = void (*)(void*);
     using omp_data_type = void*;
     
-public:
-    // for compatibility
-    static derived_type& get_current_worker() noexcept {
-        return derived_type::get_cur_worker();
-    }
     
 private:
     using base = typename P::single_worker_type;

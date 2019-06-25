@@ -260,7 +260,7 @@ int omp_get_thread_num();
 extern "C"
 int omp_get_thread_num()
 {
-    return worker_base_type::get_current_worker().get_thread_num();
+    return worker_base_type::get_cur_worker().get_thread_num();
 }
 
 extern "C"
@@ -273,7 +273,7 @@ int omp_get_num_threads();
 extern "C"
 int omp_get_num_threads()
 {
-    return worker_base_type::get_current_worker().get_num_threads();
+    return worker_base_type::get_cur_worker().get_num_threads();
 }
 
 extern "C"
@@ -321,7 +321,7 @@ void GOMP_barrier();
 extern "C"
 void GOMP_barrier()
 {
-    worker_base_type::get_current_worker().barrier();
+    worker_base_type::get_cur_worker().barrier();
 }
 
 namespace /*unnamed*/ {
@@ -506,7 +506,7 @@ struct kmp_invoker
         MEFDN_ASSERT(self_ptr != nullptr);
         auto& self = *static_cast<kmp_invoker*>(self_ptr);
         
-        const auto thread_num = worker_base_type::get_current_worker().get_thread_num();
+        const auto thread_num = worker_base_type::get_cur_worker().get_thread_num();
         kmp_int32 gtid = thread_num;
         kmp_int32 btid = thread_num;
         
@@ -616,21 +616,21 @@ extern "C"
 kmp_int32 __kmpc_global_thread_num(ident* id);
 extern "C"
 kmp_int32 __kmpc_global_thread_num(ident* /*id*/) {
-    return worker_base_type::get_current_worker().get_thread_num();
+    return worker_base_type::get_cur_worker().get_thread_num();
 }
 
 extern "C"
 kmp_int32 __kmpc_global_num_threads(ident* id);
 extern "C"
 kmp_int32 __kmpc_global_num_threads(ident* /*id*/) {
-    return worker_base_type::get_current_worker().get_num_threads();
+    return worker_base_type::get_cur_worker().get_num_threads();
 }
 
 extern "C"
 void __kmpc_barrier(ident* id, kmp_int32 global_tid);
 extern "C"
 void __kmpc_barrier(ident* /*id*/, kmp_int32 /*global_tid*/) {
-    worker_base_type::get_current_worker().barrier();
+    worker_base_type::get_cur_worker().barrier();
 }
 
 extern "C"
@@ -660,7 +660,7 @@ extern "C"
 kmp_int32 __kmpc_master(ident* loc, kmp_int32 global_tid);
 extern "C"
 kmp_int32 __kmpc_master(ident* /*loc*/, kmp_int32 /*global_tid*/) {
-    return worker_base_type::get_current_worker().get_thread_num() == 0;
+    return worker_base_type::get_cur_worker().get_thread_num() == 0;
 }
 extern "C"
 void __kmpc_end_master(ident* loc, kmp_int32 global_tid);
@@ -687,7 +687,7 @@ void kmpc_for_static_init(
     
     MEFDN_STATIC_ASSERT(mefdn::is_signed<SignedT>::value);
     
-    const auto& wk = worker_base_type::get_current_worker();
+    const auto& wk = worker_base_type::get_cur_worker();
     const auto num_threads = static_cast<T>(wk.get_num_threads());
     MEFDN_ASSERT(gtid == wk.get_thread_num());
     const auto tid = gtid;
