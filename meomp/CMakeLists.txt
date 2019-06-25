@@ -23,7 +23,6 @@ target_compile_options(meomp
 target_link_libraries(meomp
     PUBLIC medsm2
     PRIVATE mefdn-options
-    PRIVATE mectx
 )
 install(TARGETS meomp
     LIBRARY DESTINATION lib

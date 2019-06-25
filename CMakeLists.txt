@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.0)
 
 add_subdirectory(./cmpth)
 add_subdirectory(./mefdn)
-add_subdirectory(./mectx)
 add_subdirectory(./medev2)
 add_subdirectory(./meqdc)
 add_subdirectory(./mecom2)
