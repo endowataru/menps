@@ -5,8 +5,6 @@
 #include "child_worker_group.hpp"
 #include "omp_worker.hpp"
 #include <menps/mefdn/disable_aslr.hpp>
-#include <menps/mefdn/profiling/clock.hpp> // get_cpu_clock
-#include <menps/mefdn/thread/barrier.hpp>
 #include <stdexcept>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/arithmetic.hpp>
@@ -57,8 +55,6 @@ namespace meomp {
 struct my_worker_base_policy;
 
 using my_worker_base = omp_worker<my_worker_base_policy>;
-
-class my_omp_ult_ref;
 
 struct my_tss_worker_policy
 {

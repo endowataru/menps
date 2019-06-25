@@ -3,8 +3,6 @@
 
 #include <menps/meomp/common.hpp>
 
-//#define MEOMP_CALL_PIN_ON_WORKER_THREAD
-
 namespace menps {
 namespace meomp {
 
@@ -14,18 +12,16 @@ class omp_worker
 {
     MEFDN_DEFINE_DERIVED(P)
     
+    using base = typename P::single_worker_type;
+    
     using task_ref_type = typename P::task_ref_type;
     using call_stack_type = typename P::call_stack_type;
     
     using cmd_info_type = typename P::cmd_info_type;
     using cmd_code_type = typename P::cmd_code_type;
     
-    using omp_func_type = void (*)(void*);
-    using omp_data_type = void*;
-    
-    
-private:
-    using base = typename P::single_worker_type;
+    using omp_func_type = typename P::omp_func_type;
+    using omp_data_type = typename P::omp_data_type;
     
 public:
     void set_work_stack(call_stack_type work_stk) {
