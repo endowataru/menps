@@ -12,6 +12,8 @@ class child_worker
 {
     MEFDN_DEFINE_DERIVED(P)
     
+    using worker_base_type = typename P::worker_base_type;
+    
     using worker_group_type = typename P::worker_group_type;
     
     using cmd_info_type = typename P::cmd_info_type;
@@ -28,33 +30,8 @@ public:
     ) {
         auto& self = this->derived();
         
-        self.start_worker(
-            [func, data, &wg, this] {
-                auto& self2 = this->derived();
-                auto& sp = wg.get_dsm_space();
-                
-                sp.enable_on_this_thread();
-                
-                MEFDN_LOG_DEBUG(
-                    "msg:Entering parallel region on child worker.\t"
-                    "func:0x{:x}\t"
-                    "data:0x{:x}"
-                ,   reinterpret_cast<mefdn::uintptr_t>(func)
-                ,   reinterpret_cast<mefdn::uintptr_t>(data)
-                );
-                
-                // Enter the code block inside the parallel region.
-                func(data);
-                
-                sp.disable_on_this_thread();
-                
-                // Exit the parallel region in the child worker.
-                // The context of the child worker is abandoned.
-                self2.exit_parallel();
-                
-                MEFDN_UNREACHABLE();
-            }
-        );
+        on_loop_data d{ wg, func, data };
+        self.template start_worker<on_loop>(&d);
         
         while (true)
         {
@@ -71,6 +48,49 @@ public:
     }
     
 private:
+    struct on_loop_data
+    {
+        worker_group_type&  wg;
+        omp_func_type       func;
+        omp_data_type       data;
+    };
+    
+    struct on_loop
+    {
+        void operator() (
+            worker_base_type&   self_base
+        ,   on_loop_data* const pd
+        ) const
+        {
+            auto& self = static_cast<derived_type&>(self_base);
+            
+            // Copy on_loop_data from the original thread's stack.
+            const auto d = *pd;
+            
+            auto& sp = d.wg.get_dsm_space();
+            sp.enable_on_this_thread();
+            
+            MEFDN_LOG_DEBUG(
+                "msg:Entering parallel region on child worker.\t"
+                "func:0x{:x}\t"
+                "data:0x{:x}"
+            ,   reinterpret_cast<mefdn::uintptr_t>(d.func)
+            ,   reinterpret_cast<mefdn::uintptr_t>(d.data)
+            );
+            
+            // Enter the code block inside the parallel region.
+            d.func(d.data);
+            
+            sp.disable_on_this_thread();
+            
+            // Exit the parallel region in the child worker.
+            // The context of the child worker is abandoned.
+            self.exit_parallel();
+            
+            MEFDN_UNREACHABLE();
+        }
+    };
+    
     bool execute_command(
         worker_group_type&      wg
     ,   const cmd_info_type&    cmd

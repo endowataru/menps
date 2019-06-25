@@ -46,41 +46,18 @@ public:
         this->num_threads_ = num;
     }
     
-private:
-    template <typename Func>
-    struct delegated_main
-    {
-        derived_type&   self;
-        Func            func;
-        
-        void operator() ()
-        {
-            this->self.start_user_code_on_this_thread();
-            
-            this->self.execute(
-                [this] {
-                    this->func();
-                }
-            );
-            
-            this->self.end_user_code_on_this_thread();
-        }
-    };
-    
-public:
-    template <typename Func>
-    void start_worker(Func&& func)
+    template <typename Func, typename... Args>
+    void start_worker(Args* const ... args)
     {
         auto& self = this->derived();
         
-        // Execute this function object immediately.
-        delegated_main<mefdn::decay_t<Func>>{
-            self
-        ,   // Copy the func so that it can survive
-            // after start_worker() function exits.
-            mefdn::forward<Func>(func)
-        }();
+        self.start_user_code_on_this_thread();
+        
+        self.template execute<Func>(args...);
+        
+        self.end_user_code_on_this_thread();
     }
+    
     void end_worker()
     {
         // Do nothing.

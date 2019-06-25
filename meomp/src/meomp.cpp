@@ -122,6 +122,7 @@ class my_dist_worker;
 struct my_child_worker_policy
 {
     using derived_type = my_child_worker;
+    using worker_base_type = my_worker_base;
     
     using worker_group_type = my_child_worker_group;
     
@@ -183,6 +184,7 @@ public:
 struct my_dist_worker_policy
 {
     using derived_type = my_dist_worker;
+    using worker_base_type = my_worker_base;
     
     using cmd_info_type = my_worker_base_policy::cmd_info_type;
     using cmd_code_type = my_worker_base_policy::cmd_code_type;

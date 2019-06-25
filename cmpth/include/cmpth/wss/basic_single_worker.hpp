@@ -18,31 +18,32 @@ class basic_single_worker
     using unique_task_ptr_type = typename P::unique_task_ptr_type;
     
 public:
-    template <typename Func>
-    void execute(Func&& func)
+    template <typename Func, typename... Args>
+    void execute(Args* const ... args)
     {
         auto& self = this->derived();
         using func_type = fdn::decay_t<Func>;
         
-        self.template suspend_to_new<on_execute<func_type>>(
-            fdn::move(this->work_stk_), &func
-        );
+        self.template suspend_to_new<
+            basic_single_worker::on_execute<Func, Args...>
+        >
+        (fdn::move(this->work_stk_), args...);
     }
     
 private:
-    template <typename Func>
+    template <typename Func, typename... Args>
     struct on_execute
     {
         [[noreturn]]
         derived_type& operator() (
             derived_type&       self
         ,   continuation_type   cont
-        ,   Func* const         func
+        ,   Args* const ...     args
         ) const
         {
             self.root_cont_ = fdn::move(cont);
             
-            (*func)();
+            Func{}(self, args...);
             
             CMPTH_UNREACHABLE();
         }

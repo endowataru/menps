@@ -11,6 +11,8 @@ class dist_worker
 {
     MEFDN_DEFINE_DERIVED(P)
     
+    using worker_base_type = typename P::worker_base_type;
+    
     using cmd_info_type = typename P::cmd_info_type;
     using cmd_code_type = typename P::cmd_code_type;
     
@@ -33,25 +35,7 @@ private:
     {
         auto& self = this->derived();
         
-        self.start_worker(
-            [this] {
-                auto& self2 = this->derived();
-                auto& sp = self2.get_dsm_space();
-                
-                sp.enable_on_this_thread();
-                
-                // Enter the user-defined main function.
-                self2.call_entrypoint();
-                
-                sp.disable_on_this_thread();
-                
-                // Exit the program.
-                // This context is also abandoned.
-                self2.exit_program();
-                
-                MEFDN_UNREACHABLE();
-            }
-        );
+        self.template start_worker<on_loop>();
         
         while (true)
         {
@@ -80,6 +64,31 @@ private:
         self.end_worker();
     }
     
+private:
+    struct on_loop
+    {
+        void operator() (worker_base_type& self_base)
+        {
+            auto& self = static_cast<derived_type&>(self_base);
+            
+            auto& sp = self.get_dsm_space();
+            
+            sp.enable_on_this_thread();
+            
+            // Enter the user-defined main function.
+            self.call_entrypoint();
+            
+            sp.disable_on_this_thread();
+            
+            // Exit the program.
+            // This context is also abandoned.
+            self.exit_program();
+            
+            MEFDN_UNREACHABLE();
+        }
+    };
+    
+public:
     void loop_slave()
     {
         auto& self = this->derived();
