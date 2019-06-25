@@ -1,16 +1,9 @@
 
 #include <menps/medsm2/itf/dsm_facade.hpp>
-#ifndef MEOMP_USE_CMPTH
-#include <menps/mectx/generic/single_ult_worker.hpp>
-#include <menps/mectx/generic/thread_specific_worker.hpp>
-#endif
 #include "child_worker.hpp"
 #include "dist_worker.hpp"
 #include "child_worker_group.hpp"
 #include "omp_worker.hpp"
-#ifndef MEOMP_USE_CMPTH
-#include <menps/mectx/context_policy.hpp>
-#endif
 #include <menps/mefdn/disable_aslr.hpp>
 #include <menps/mefdn/profiling/clock.hpp> // get_cpu_clock
 #include <menps/mefdn/thread/barrier.hpp>
@@ -21,7 +14,6 @@
 #include <menps/meomp.hpp>
 #include <menps/mefdn/profiling/time.hpp> // get_current_sec
 
-#ifdef MEOMP_USE_CMPTH
 #include <cmpth/wss/basic_single_worker.hpp>
 #include <cmpth/wss/basic_worker_task.hpp>
 #include <cmpth/wss/basic_worker_tls.hpp>
@@ -31,7 +23,6 @@
 #include <cmpth/sct/sct_running_task.hpp>
 #include <cmpth/ctx/x86_64_context_policy.hpp>
 #include "omp_task_desc.hpp"
-#endif
 
 extern "C"
 int meomp_main(int argc, char** argv);
@@ -67,11 +58,6 @@ struct my_worker_base_policy;
 
 using my_worker_base = omp_worker<my_worker_base_policy>;
 
-#ifndef MEOMP_USE_CMPTH
-using context_t = mectx::context<my_worker_base*>;
-using transfer_t = mectx::transfer<my_worker_base*>;
-#endif
-
 class my_omp_ult_ref;
 
 struct my_tss_worker_policy
@@ -80,8 +66,6 @@ struct my_tss_worker_policy
     using base_ult_itf_type = medsm2::dsm_com_itf_t::ult_itf_type;
 };
 
-
-#ifdef MEOMP_USE_CMPTH
 struct my_task_desc_policy
 {
     using task_desc_type = task_desc<my_task_desc_policy>;
@@ -95,16 +79,12 @@ struct my_task_desc_policy
     using assert_policy_type = cmpth::def_assert_policy;
     using log_policy_type = cmpth::def_log_policy;
 };
-#endif
 
 struct my_worker_base_policy
-    #ifdef MEOMP_USE_CMPTH
     : my_task_desc_policy
-    #endif
 {
     using derived_type = my_worker_base;
     
-    #ifdef MEOMP_USE_CMPTH
     using single_worker_type = cmpth::basic_single_worker<my_worker_base_policy>;
     using worker_task_type = cmpth::basic_worker_task<my_worker_base_policy>;
     using worker_tls_type = cmpth::basic_worker_tls<my_worker_base_policy>;
@@ -117,22 +97,6 @@ struct my_worker_base_policy
     using base_ult_itf_type = my_tss_worker_policy::base_ult_itf_type;
     using task_ref_type = task_ref<my_task_desc_policy>;
     using unique_task_ptr_type = cmpth::basic_unique_task_ptr<my_worker_base_policy>;
-    
-    #else
-    using single_ult_worker_type = mectx::single_ult_worker<my_worker_base_policy>;
-    using ult_switcher_type = mectx::ult_switcher<my_worker_base_policy>;
-    using thread_specific_worker_type = mectx::thread_specific_worker<my_tss_worker_policy>;
-    using context_policy_type = mectx::context_policy;
-    
-    using ult_ref_type = my_omp_ult_ref;
-    
-    using worker_ult_itf_type = my_tss_worker_policy::base_ult_itf_type;
-    #endif
-    
-    #ifndef MEOMP_USE_CMPTH
-    using context_type = context_t;
-    using transfer_type = transfer_t;
-    #endif
     
     enum class cmd_code_type {
         none = 0
@@ -155,68 +119,6 @@ struct my_worker_base_policy
     static space_t& get_dsm_space() noexcept { return *g_sp; }
 };
 
-#ifndef MEOMP_USE_CMPTH
-class my_omp_ult_ref
-{
-public:
-    my_omp_ult_ref() noexcept = default;
-    
-    explicit my_omp_ult_ref(const int id)
-        : id_(id)
-    {
-        MEFDN_ASSERT(id_ >= 0);
-    }
-    
-    static my_omp_ult_ref make_root() {
-        my_omp_ult_ref ret;
-        ret.id_ = -1;
-        return ret;
-    }
-    
-    bool is_valid() const noexcept {
-        return id_ >= -1;
-    }
-    
-    #ifndef MEOMP_USE_CMPTH
-    context_t get_context() { return ctx_; }
-    void set_context(context_t ctx) { ctx_ = ctx; }
-    #endif
-    
-    void* get_stack_ptr() {
-        const auto ptr = static_cast<mefdn::byte*>(g_stack_ptr);
-        return ptr + g_stack_size*(id_+1);
-    }
-    mefdn::size_t get_stack_size() {
-        return g_stack_size;
-    }
-    
-    void pin() {
-        MEFDN_ASSERT(this->is_valid());
-        if (id_ != -1) {
-            g_sp->pin(get_stack_ptr_bottom(), get_stack_size());
-        }
-    }
-    void unpin() {
-        MEFDN_ASSERT(this->is_valid());
-        if (id_ != -1) {
-            g_sp->unpin(get_stack_ptr_bottom(), get_stack_size());
-        }
-    }
-    
-private:
-    void* get_stack_ptr_bottom() {
-        const auto ptr = static_cast<mefdn::byte*>(g_stack_ptr);
-        return ptr + g_stack_size*id_;
-    }
-    
-    int id_ = -2;
-        // -2: invalid
-        // -1: root
-        // >=0: work
-    context_t ctx_ = context_t();
-};
-#endif
-
 class my_child_worker;
 class my_child_worker_group;
 class my_dist_worker;
@@ -224,10 +126,6 @@ class my_dist_worker;
 struct my_child_worker_policy
 {
     using derived_type = my_child_worker;
-    
-    #ifndef MEOMP_USE_CMPTH
-    using ult_ref_type = my_omp_ult_ref;
-    #endif
     
     using worker_group_type = my_child_worker_group;
     
@@ -239,7 +137,6 @@ struct my_child_worker_policy
     }
 };
 
-#ifdef MEOMP_USE_CMPTH
 inline my_worker_base_policy::call_stack_type make_call_stack_at(my_worker_base_policy::task_desc_type* const desc, mefdn::size_t id) {
     desc->ctx = my_worker_base_policy::context_type();
     
@@ -249,13 +146,11 @@ inline my_worker_base_policy::call_stack_type make_call_stack_at(my_worker_base_
     
     return my_worker_base_policy::call_stack_type{ my_worker_base_policy::unique_task_ptr_type{desc} };
 }
-#endif
 
 class my_child_worker
     : public my_worker_base
     , public child_worker<my_child_worker_policy>
 {
-    #ifdef MEOMP_USE_CMPTH
     using task_desc_type = my_worker_base_policy::task_desc_type;
     
 public:
@@ -265,15 +160,6 @@ public:
     
 private:
     task_desc_type desc_;
-    
-    #else
-    using ult_ref_type = typename my_child_worker_policy::ult_ref_type;
-    
-public:
-    ult_ref_type make_work_ult() {
-        return ult_ref_type(1 + this->get_thread_num());
-    }
-    #endif
 };
 
 
@@ -305,10 +191,6 @@ struct my_dist_worker_policy
     using cmd_info_type = my_worker_base_policy::cmd_info_type;
     using cmd_code_type = my_worker_base_policy::cmd_code_type;
     
-    #ifndef MEOMP_USE_CMPTH
-    using ult_ref_type = my_omp_ult_ref;
-    #endif
-    
     static void fatal_error() {
         throw std::logic_error("Fatal error in distributed worker");
     }
@@ -321,24 +203,15 @@ class my_dist_worker
     using omp_func_type = void (*)(void*);
     using omp_data_type = void*;
     
-    #ifndef MEOMP_USE_CMPTH
-    using ult_ref_type = typename my_dist_worker_policy::ult_ref_type;
-    #endif
+    using task_desc_type = my_worker_base_policy::task_desc_type;
     
 public:
-    #ifdef MEOMP_USE_CMPTH
     my_dist_worker() {
         this->set_work_stack(make_call_stack_at(&desc_, 0));
     }
     ~my_dist_worker() {
         this->reset_work_stack();
     }
-    
-private:
-    my_worker_base_policy::task_desc_type desc_;
-    
-public:
-    #endif
     
     coll_t& get_comm_coll() {
         return *g_coll;
@@ -371,14 +244,9 @@ public:
         this->wg_.barrier_on(*this);
     }
     
-    #ifndef MEOMP_USE_CMPTH
-    static ult_ref_type make_work_ult() {
-        return ult_ref_type(0);
-    }
-    #endif
-    
 private:
-    my_child_worker_group wg_;
+    my_child_worker_group   wg_;
+    task_desc_type          desc_;
 };
 
 } // namespace meomp

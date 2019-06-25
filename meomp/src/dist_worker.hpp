@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/meomp/common.hpp>
-#include <menps/mectx/generic/single_ult_worker.hpp>
 
 namespace menps {
 namespace meomp {
@@ -14,10 +13,6 @@ class dist_worker
     
     using cmd_info_type = typename P::cmd_info_type;
     using cmd_code_type = typename P::cmd_code_type;
-    
-    #ifndef MEOMP_USE_CMPTH
-    using ult_ref_type = typename P::ult_ref_type;
-    #endif
     
 public:
     void execute_loop()
@@ -39,11 +34,6 @@ private:
         auto& self = this->derived();
         
         self.start_worker(
-        #ifndef MEOMP_USE_CMPTH
-            ult_ref_type::make_root()
-        ,   self.make_work_ult()
-        ,   
-        #endif
             [this] {
                 auto& self2 = this->derived();
                 auto& sp = self2.get_dsm_space();
