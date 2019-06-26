@@ -13,7 +13,6 @@
 namespace menps {
 namespace medsm2 {
 
-//#define MEDSM2_DISABLE_READ_MERGE
 //#define MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
 //#define MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
 
@@ -93,7 +92,6 @@ public:
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
         
         if (cur_proc != home_proc) {
-            #ifndef MEDSM2_DISABLE_READ_MERGE
             if (is_dirty) {
                 const auto p = prof::start();
                 
@@ -122,7 +120,6 @@ public:
                 prof::finish(prof_kind::merge_read, p);
             }
             else {
-            #endif
                 const auto p = prof::start();
                 
                 // Simply read from the home process.
@@ -138,10 +135,7 @@ public:
                 );
                 
                 prof::finish(prof_kind::wn_read, p);
-                
-            #ifndef MEDSM2_DISABLE_READ_MERGE
             }
-            #endif
         }
         
         const auto p = prof::start();
