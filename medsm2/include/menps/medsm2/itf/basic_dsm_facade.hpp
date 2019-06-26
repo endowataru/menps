@@ -13,7 +13,7 @@ namespace medsm2 {
 template <typename P>
 class basic_dsm_facade
 {
-    using com_itf_type = typename P::com_itf_type; // TODO
+    using com_itf_type = typename P::com_itf_type;
     
     using ult_itf_type = typename com_itf_type::ult_itf_type;
     using thread_type = typename ult_itf_type::thread;
