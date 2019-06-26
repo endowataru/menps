@@ -6,5 +6,3 @@
 
 #define MEDSM2_ENABLE_P2P_LOCK
 
-#define MEDSM2_USE_LAD
-

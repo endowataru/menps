@@ -48,7 +48,6 @@ public:
     void coll_make(const Conf& conf)
     {
         auto& com = conf.com;
-        auto& rma = com.get_rma();
         auto& coll = com.get_coll();
         const auto this_proc = coll.this_proc_id();
         
@@ -68,10 +67,6 @@ public:
             this->les_[blk_pos].fast_rel_threshold = 1;
             #endif
         }
-        
-        #ifndef MEDSM2_USE_LAD
-        this->ges_.coll_make(rma, coll, conf.num_blks);
-        #endif
     }
     
     unique_lock_type get_local_lock(const blk_pos_type blk_pos)
@@ -468,28 +463,12 @@ public:
         this->check_locked(blk_pos, lk);
         auto& self = this->derived();
         
-        auto& rma = com.get_rma();
         const auto this_proc = com.this_proc_id();
         
         const auto owner = glk_ret.owner;
         
-        #ifdef MEDSM2_USE_LAD
         const auto& owner_wr_ts = glk_ret.home_wr_ts;
         const auto& owner_rd_ts = glk_ret.home_rd_ts;
-        
-        #else
-        const auto ge_rptr = this->ges_.remote(owner, blk_pos);
-        
-        // Load the latest timestamps.
-        const auto owner_ge_buf =
-            rma.buf_read(owner, ge_rptr, 1);
-        // TODO: It's better if this read is overlapped with other communications.
-        
-        const auto owner_ge = *owner_ge_buf.get();
-        
-        const auto owner_wr_ts = owner_ge.home_wr_ts;
-        const auto owner_rd_ts = owner_ge.home_rd_ts;
-        #endif
         
         auto& le = this->les_[blk_pos];
         auto& ge MEFDN_MAYBE_UNUSED = self.get_lock_entry(blk_pos);
@@ -598,9 +577,6 @@ public:
         const auto new_owner = cur_proc;
         
         auto& le = this->les_[blk_pos];
-        #ifndef MEDSM2_USE_LAD
-        auto& ge = * this->ges_.local(blk_pos);
-        #endif
         
         // Update the home process.
         // The home process is only updated locally.
@@ -631,7 +607,7 @@ public:
             rd_set.add_readable(blk_id, new_ts.rd_ts);
         }
         
-        #ifndef MEDSM2_USE_LAD
+        #if 0
         // Update the timestamps.
         // Although this value may be read by another writer,
         // this process still has the lock for it.
@@ -753,29 +729,7 @@ public:
         MEFDN_ASSERT(lk.owns_lock());
     }
     
-    #ifndef MEDSM2_USE_LAD
 private:
-    struct global_entry {
-        // The timestamp when this block must be self-invalidated.
-        // If this process is the owner of this block,
-        // this member may be modified by other reader processes.
-        rd_ts_type  home_rd_ts;
-        // The timestamp that can be read by other writers.
-        // Only modified by the local process.
-        wr_ts_type  home_wr_ts;
-        
-        rd_ts_type  wn_rd_ts;
-        wr_ts_type  wn_wr_ts;
-    };
-    
-    // for compatibility
-public:
-    global_entry& get_lock_entry(const blk_pos_type blk_pos) {
-        return * this->ges_.local(blk_pos);
-    }
-private:
-    #endif
-    
     struct local_entry {
         mutex_type      mtx;
         // A home is a process from which the reader must read
@@ -799,11 +753,6 @@ private:
     mefdn::size_t num_blks_ = 0;
     
     mefdn::unique_ptr<local_entry []> les_;
-    
-    #ifndef MEDSM2_USE_LAD
-    typename P::template
-        alltoall_buffer<global_entry> ges_;
-    #endif
 };
 
 } // namespace medsm2

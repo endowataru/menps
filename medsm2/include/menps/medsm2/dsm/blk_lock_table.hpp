@@ -2,7 +2,6 @@
 #pragma once
 
 #if 1
-#include <menps/medsm2/dsm/basic_lock_table.hpp>
 #include <menps/medsm2/dsm/lock_table.hpp>
 #include <menps/medsm2/prof.hpp>
 
@@ -30,19 +29,11 @@ struct blk_lock_table_policy
 
 template <typename P>
 class blk_lock_table
-    #ifdef MEDSM2_USE_LAD
     : private lock_table<blk_lock_table_policy<P>>
-    #else
-    : private basic_lock_table<blk_lock_table_policy<P>>
-    #endif
 {
     MEFDN_DEFINE_DERIVED(P)
     
-    #ifdef MEDSM2_USE_LAD
     using base = lock_table<blk_lock_table_policy<P>>;
-    #else
-    using base = basic_lock_table<blk_lock_table_policy<P>>;
-    #endif
     
     using com_itf_type = typename P::com_itf_type;
     using proc_id_type = typename com_itf_type::proc_id_type;
@@ -58,22 +49,14 @@ public:
     template <typename Conf>
     void coll_make(const Conf& conf)
     {
-        #ifdef MEDSM2_USE_LAD
         base::coll_make(conf.com, conf.num_blks, sizeof(global_entry));
-        #else
-        base::coll_make(conf.com, conf.num_blks);
-        #endif
     }
     
-    #ifdef MEDSM2_USE_LAD
     struct lock_global_result {
         proc_id_type    owner;
         wr_ts_type      home_wr_ts;
         rd_ts_type      home_rd_ts;
     };
-    #else
-    using typename base::lock_global_result;
-    #endif
     
     lock_global_result lock_global(
         com_itf_type&           com
@@ -87,7 +70,6 @@ public:
         auto& p2p = com.get_p2p();
         const auto tag = P::get_tag_from_blk_id(blk_id);
         
-        #ifdef MEDSM2_USE_LAD
         auto& rma = com.get_rma();
         const auto ge_buf =
             rma.template make_unique_uninitialized<mefdn::byte []>(sizeof(global_entry));
@@ -99,10 +81,6 @@ public:
         const auto ge = *reinterpret_cast<const global_entry*>(ge_byte_ptr); // TODO: remove cast
         
         return { lk_ret.owner, ge.home_wr_ts, ge.home_rd_ts };
-        
-        #else
-        return base::lock_global(com, p2p, blk_pos, tag);
-        #endif
     }
     
     template <typename EndTransactionResult>
@@ -126,12 +104,9 @@ public:
         
         auto& p2p = com.get_p2p();
         const auto tag = P::get_tag_from_blk_id(blk_id);
-        #ifdef MEDSM2_USE_LAD
+        
         global_entry ge{ et_ret.new_wr_ts, et_ret.new_rd_ts };
         base::unlock_global(com, p2p, blk_pos, tag, &ge);
-        #else
-        base::unlock_global(com, p2p, blk_pos, tag);
-        #endif
     }
     
     bool check_owned(
@@ -149,7 +124,6 @@ public:
         return ret;
     }
     
-    #ifdef MEDSM2_USE_LAD
 private:
     struct global_entry {
         // The timestamp that can be read by other writers.
@@ -167,7 +141,6 @@ public:
         mefdn::byte* const p_raw = p; // implicit conversion
         return *reinterpret_cast<global_entry*>(p_raw);
     }
-    #endif
 };
 
 } // namespace medsm2

@@ -11,7 +11,6 @@
 #include <menps/medsm2/svm/svm_seg_table.hpp>
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include <menps/mecom2/rma/alltoall_buffer.hpp>
-#include <menps/medsm2/dsm/basic_lock_table.hpp>
 #include <menps/medsm2/dsm/lock_table.hpp>
 #include <menps/medsm2/dsm/mtx_table.hpp>
 #include <menps/medsm2/id_allocator.hpp>
@@ -119,11 +118,7 @@ struct dsm_base_policy
     
     using p2p_tag_type = int;
     
-    #ifdef MEDSM2_USE_LAD
     using lock_table_type = lock_table<dsm_base_policy>;
-    #else
-    using lock_table_type = basic_lock_table<dsm_base_policy>;
-    #endif
     using mtx_table_type = mtx_table<dsm_base_policy>;
     using id_allocator_type = id_allocator<dsm_base_policy>;
     

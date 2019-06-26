@@ -50,11 +50,7 @@ public:
     #endif
     
     // TODO: simplify the class hierarchy
-    #ifdef MEDSM2_USE_LAD
     using lock_table_type::get_lock_entry;
-    #else
-    using dir_table_type::get_lock_entry;
-    #endif
     
     template <typename Conf>
     void coll_make(const Conf& conf)
