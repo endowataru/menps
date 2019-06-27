@@ -105,11 +105,9 @@ public:
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
-        auto& self = this->derived();
         this->check_locked(blk_pos, lk);
         
         auto& le = this->les_[blk_pos];
-        auto& ge = self.get_lock_entry(blk_pos);
         
         if (!(le.state == state_type::invalid_clean || le.state == state_type::invalid_dirty)) {
             // This block is not marked as invalid.
@@ -117,8 +115,7 @@ public:
         }
         else {
             // Load the current read timestamp.
-            // This variable is only updated when the local directory lock is acquired.
-            const auto cur_rd_ts = ge.home_rd_ts;
+            const auto cur_rd_ts = le.cur_rd_ts;
             
             const auto rd_ts_st = rd_set.get_ts_state();
             
@@ -282,10 +279,18 @@ public:
     ) {
         this->check_locked(blk_pos, lk);
         
+        auto& self = this->derived();
+        auto& le = this->les_[blk_pos];
+        auto& ge = self.get_lock_entry(blk_pos);
+        
+        // Update the timestamps because it's possible to consider that
+        // no other processes have updated them.
+        le.cur_wr_ts = ge.home_wr_ts;
+        le.cur_rd_ts = ge.home_rd_ts;
+        
         const auto new_ts =
             this->update_ts(rd_ts_st, blk_pos);
         
-        auto& le = this->les_[blk_pos];
         ++le.fast_rel_count;
         
         return { new_ts.wr_ts, new_ts.rd_ts };
@@ -307,13 +312,11 @@ private:
     ,   const unique_lock_type& lk
     ,   const wr_ts_type        new_wr_ts
     ) {
-        auto& self = this->derived();
         this->check_locked(blk_pos, lk);
         
         auto& le = this->les_[blk_pos];
-        auto& ge = self.get_lock_entry(blk_pos);
         
-        const auto rd_ts = ge.home_rd_ts;
+        const auto rd_ts = le.cur_rd_ts;
         
         // Check whether the timestamp is newer or not.
         // If old_rd_ts < new_wr_ts, the read timestamp has expired
@@ -380,20 +383,10 @@ public:
             
             auto& le = this->les_[blk_pos];
             
-            auto& self = this->derived();
-            auto& ge = self.get_lock_entry(blk_pos);
-            
-            // Update the home process.
+            // Update the home process and timestamps.
             le.home_proc = new_home_proc;
-            // Update the read timestamp.
-            // Note: It is not trivial that these timestamp variables
-            //       can be used for storing the timestamps of "another writer process".
-            //       This is safe because this process is not the home process
-            //       if another writer writes on this block.
-            ge.home_rd_ts = new_rd_ts;
-            
-            // Update the write timestamp.
-            ge.home_wr_ts = new_wr_ts;
+            le.cur_wr_ts = new_wr_ts;
+            le.cur_rd_ts = new_rd_ts;
         }
         
         return ret;
@@ -414,11 +407,11 @@ public:
     ) {
         const auto ret = this->invalidate(blk_pos, lk, rd_ts_st.get_min_wr_ts());
         
-        auto& self = this->derived();
-        auto& ge = self.get_lock_entry(blk_pos);
+        const auto& le = this->les_[blk_pos];
         
-        const auto wr_ts = ge.home_wr_ts;
-        const auto rd_ts = ge.home_rd_ts;
+        // Load the current timestamps.
+        const auto wr_ts = le.cur_wr_ts;
+        const auto rd_ts = le.cur_rd_ts;
         
         return { ret.is_ignored, ret.needs_protect, ret.needs_merge, wr_ts, rd_ts };
     }
@@ -607,6 +600,10 @@ public:
             rd_set.add_readable(blk_id, new_ts.rd_ts);
         }
         
+        // Update the timestamps because this process lastly released.
+        le.cur_wr_ts = new_ts.wr_ts;
+        le.cur_rd_ts = new_ts.rd_ts;
+        
         #if 0
         // Update the timestamps.
         // Although this value may be read by another writer,
@@ -742,6 +739,9 @@ private:
         state_type      state;
         // The number of transactions without writing the data.
         wr_count_type   wr_count;
+        
+        wr_ts_type      cur_wr_ts;
+        rd_ts_type      cur_rd_ts;
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
         wr_count_type   fast_rel_count;
