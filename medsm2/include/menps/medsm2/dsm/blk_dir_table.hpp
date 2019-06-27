@@ -281,7 +281,8 @@ public:
         
         auto& self = this->derived();
         auto& le = this->les_[blk_pos];
-        auto& ge = self.get_lock_entry(blk_pos);
+        
+        const auto ge = self.read_lock_entry(blk_pos);
         
         // Update the timestamps because it's possible to consider that
         // no other processes have updated them.
@@ -464,7 +465,7 @@ public:
         const auto& owner_rd_ts = glk_ret.home_rd_ts;
         
         auto& le = this->les_[blk_pos];
-        auto& ge MEFDN_MAYBE_UNUSED = self.get_lock_entry(blk_pos);
+        const auto ge MEFDN_MAYBE_UNUSED = self.read_lock_entry(blk_pos);
         
         const auto state = le.state;
         //const auto cur_wr_ts = ge.wr_ts;
@@ -703,7 +704,7 @@ private:
     ,   const blk_pos_type      blk_pos
     ) {
         auto& self = this->derived();
-        auto& ge = self.get_lock_entry(blk_pos);
+        const auto ge = self.read_lock_entry(blk_pos);
         
         const auto old_wr_ts = ge.home_wr_ts;
         const auto old_rd_ts = ge.home_rd_ts;
@@ -711,8 +712,7 @@ private:
         const auto new_ts =
             this->make_new_ts(rd_ts_st, true, old_wr_ts, old_rd_ts);
         
-        ge.home_wr_ts = new_ts.wr_ts;
-        ge.home_rd_ts = new_ts.rd_ts;
+        self.write_lock_entry(blk_pos, new_ts.wr_ts, new_ts.rd_ts);
         
         // Return the "old" timestamps
         // which can be used for write notices.

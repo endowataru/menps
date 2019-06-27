@@ -50,7 +50,8 @@ public:
     #endif
     
     // TODO: simplify the class hierarchy
-    using lock_table_type::get_lock_entry;
+    using lock_table_type::read_lock_entry;
+    using lock_table_type::write_lock_entry;
     
     template <typename Conf>
     void coll_make(const Conf& conf)

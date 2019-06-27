@@ -135,6 +135,22 @@ private:
     };
     
 public:
+    global_entry read_lock_entry(const blk_pos_type blk_pos) {
+        // TODO: atomicity
+        const auto ge = this->get_lock_entry(blk_pos);
+        return ge;
+    }
+    void write_lock_entry(
+        const blk_pos_type  blk_pos
+    ,   const wr_ts_type    home_wr_ts
+    ,   const rd_ts_type    home_rd_ts
+    ) {
+        auto& ge = this->get_lock_entry(blk_pos);
+        // TODO: atomicity
+        ge = global_entry{home_wr_ts, home_rd_ts};
+    }
+    
+private:
     global_entry& get_lock_entry(const blk_pos_type blk_pos) {
         const auto p = base::get_local_lad_at(blk_pos);
         mefdn::byte* const p_raw = p; // implicit conversion
