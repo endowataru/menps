@@ -230,6 +230,7 @@ public:
         
         const auto local_glk = this->glks_.local(lk_pos);
         
+        // TODO: use atomic load of MPI
         auto link_val = *local_glk;
         
         // It is a bug if this process has already unlocked.
@@ -297,7 +298,7 @@ public:
         return lock_val == this->make_owned_lock_val(this_proc);
     }
     
-    // TODO: Will be used by blk_dir_table.
+    // Used by blk_lock_table.
     local_byte_ptr_type get_local_lad_at(const lock_pos_type lk_pos) {
         MEFDN_ASSERT(this->lad_size_ > 0);
         return this->lads_.local(lk_pos * this->lad_size_);
