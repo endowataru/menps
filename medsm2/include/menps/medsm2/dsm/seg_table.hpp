@@ -330,14 +330,14 @@ public:
         if (! ret.is_ignored) {
             MEFDN_LOG_DEBUG(
                 "msg:Invalidated block using WN.\t"
-                "blk_pos:{}"
+                "blk_pos:{}\t"
                 "home_proc:{}\t"
+                "wn_wr_ts:{}\t"
                 "wn_rd_ts:{}\t"
-                "wn_wr_ts:{}"
             ,   info.blk_pos
             ,   wn.home_proc
-            ,   wn.rd_ts
             ,   wn.wr_ts
+            ,   wn.rd_ts
             );
         }
         else {
@@ -345,12 +345,12 @@ public:
                 "msg:Ignored WN.\t"
                 "blk_pos:{}\t"
                 "home_proc:{}\t"
+                "wn_wr_ts:{}\t"
                 "wn_rd_ts:{}\t"
-                "wn_wr_ts:{}"
             ,   info.blk_pos
             ,   wn.home_proc
-            ,   wn.rd_ts
             ,   wn.wr_ts
+            ,   wn.rd_ts
             );
         }
         
