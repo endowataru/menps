@@ -435,9 +435,16 @@ public:
     
     void progress()
     {
+        #if 1
+        this->qd_.lock();
+        this->orig_mf_.progress();
+        this->qd_.unlock();
+        
+        #else
         // Do nothing.
         
         MEFDN_LOG_VERBOSE("msg:Called proxy MPI progress (do nothing).");
+        #endif
     }
     
 private:
