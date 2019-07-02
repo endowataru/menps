@@ -71,10 +71,6 @@ public:
         rma.detach(this->priv_ptr_);
     }
     
-    void* get_pub_ptr() const noexcept {
-        return this->get_my_pub_ptr(0);
-    }
-    
     void start_read(
         com_itf_type&           com
     ,   const blk_pos_type      blk_pos
