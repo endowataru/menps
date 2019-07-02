@@ -105,9 +105,16 @@ public:
         const auto priv_app_ptr = this->get_priv_app_ptr_from_seg(seg_id);
         const auto priv_sys_ptr = this->get_priv_sys_ptr_from_seg(seg_id);
         const auto pub_ptr = this->get_pub_ptr_from_seg(seg_id);
+        #ifndef MEDSM2_ENABLE_MIGRATION
+        const auto snapshot_ptr = this->get_snapshot_ptr_from_seg(seg_id);
+        #endif
         
         this->coll_alloc_seg(seg_size, blk_size, seg_id,
-            priv_app_ptr, priv_sys_ptr, pub_ptr, false);
+            priv_app_ptr, priv_sys_ptr, pub_ptr,
+            #ifndef MEDSM2_ENABLE_MIGRATION
+            snapshot_ptr,
+            #endif
+            false);
         
         return priv_app_ptr;
     }
@@ -127,8 +134,18 @@ public:
             static_cast<mefdn::byte*>(this->get_pub_ptr_from_seg(0))
             + reinterpret_cast<ptrdiff_type>(start_ptr);
         
+        #ifndef MEDSM2_ENABLE_MIGRATION
+        const auto snapshot_ptr =
+            static_cast<mefdn::byte*>(this->get_snapshot_ptr_from_seg(0))
+            + reinterpret_cast<ptrdiff_type>(start_ptr);
+        #endif
+        
         this->coll_alloc_seg(seg_size, blk_size, seg_id,
-            start_ptr, priv_sys_ptr, pub_ptr, true);
+            start_ptr, priv_sys_ptr, pub_ptr, 
+            #ifndef MEDSM2_ENABLE_MIGRATION
+            snapshot_ptr,
+            #endif
+            true);
     }
     
 private:
@@ -139,6 +156,9 @@ private:
     ,   void* const         priv_app_ptr
     ,   void* const         priv_sys_ptr
     ,   void* const         pub_app_ptr
+        #ifndef MEDSM2_ENABLE_MIGRATION
+    ,   void* const         snapshot_ptr
+        #endif
     ,   const bool          is_copied
     ) {
         struct conf {
@@ -148,6 +168,9 @@ private:
             void*           priv_app_ptr;
             void*           priv_sys_ptr;
             void*           pub_ptr;
+            #ifndef MEDSM2_ENABLE_MIGRATION
+            void*           snapshot_ptr;
+            #endif
             int             fd;
             bool            is_copied;
         };
@@ -159,6 +182,9 @@ private:
         blk_tbl_ptr->coll_make(
             conf{ this->com_, blk_size, num_blks,
                 priv_app_ptr, priv_sys_ptr, pub_app_ptr,
+                #ifndef MEDSM2_ENABLE_MIGRATION
+                snapshot_ptr,
+                #endif
                 this->shm_obj_->get_fd(), is_copied }
         );
         
@@ -382,6 +408,11 @@ private:
     void* get_pub_ptr_from_seg(const seg_id_type seg_id) {
         return (seg_id + 2*get_max_num_segs()) * this->get_max_seg_size() + app_ptr_start_;
     }
+    #ifndef MEDSM2_ENABLE_MIGRATION
+    void* get_snapshot_ptr_from_seg(const seg_id_type seg_id) {
+        return (seg_id + 3*get_max_num_segs()) * this->get_max_seg_size() + app_ptr_start_;
+    }
+    #endif
     
     size_type get_max_num_syns_per_proc() {
         return P::constants_type::max_num_syns_per_proc;

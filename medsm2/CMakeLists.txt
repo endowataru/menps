@@ -32,6 +32,7 @@ option(MEDSM2_ENABLE_REL_THREAD "Enable releaser thread" OFF)
 set(MEDSM2_REL_THREAD_USEC "10000000" CACHE STRING "Fence period for releaser thread")
 option(MEDSM2_ENABLE_LINEAR_ALLOCATOR "Use linear allocator" ON)
 option(MEDSM2_USE_SIG_BUFFER_MERGE_TABLE "Use blk_flag_table to merge signatures" ON)
+option(MEDSM2_ENABLE_MIGRATION "Enable data migration" ON)
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in

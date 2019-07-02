@@ -68,11 +68,11 @@ public:
     };
     
     lock_global_result lock_global(
-        com_itf_type&           com
-    ,   p2p_itf_type&           p2p
-    ,   const lock_pos_type     lk_pos
-    ,   p2p_tag_type            tag
-    ,   local_byte_ptr_type     lad_buf
+        com_itf_type&               com
+    ,   p2p_itf_type&               p2p
+    ,   const lock_pos_type         lk_pos
+    ,   const p2p_tag_type          tag
+    ,   const local_byte_ptr_type   lad_buf
     ) {
         auto& rma = com.get_rma();
         const auto this_proc = com.this_proc_id();
@@ -221,16 +221,16 @@ public:
         com_itf_type&           com
     ,   p2p_itf_type&           p2p
     ,   const lock_pos_type     lk_pos
-    ,   p2p_tag_type            tag
-    ,   void* const             lad_buf
+    ,   const p2p_tag_type      tag
+    ,   const void* const       lad_buf
     ) {
         auto& rma = com.get_rma();
-        
         const auto this_proc = com.this_proc_id();
         
         const auto local_glk = this->glks_.local(lk_pos);
         
-        // TODO: use atomic load of MPI
+        // Read the local lock value first.
+        // Note: This load can be just a normal load because this process is already locking.
         auto link_val = *local_glk;
         
         // It is a bug if this process has already unlocked.

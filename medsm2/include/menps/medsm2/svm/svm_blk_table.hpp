@@ -49,9 +49,11 @@ public:
     using flag_table_type = blk_flag_table<base_policy_type>;
     #endif
     
+    #ifdef MEDSM2_ENABLE_MIGRATION
     // TODO: simplify the class hierarchy
     using lock_table_type::read_lock_entry;
     using lock_table_type::write_lock_entry;
+    #endif
     
     template <typename Conf>
     void coll_make(const Conf& conf)
@@ -94,6 +96,22 @@ public:
             ,   -1
             ,   0
             );
+
+        #ifndef MEDSM2_ENABLE_MIGRATION
+        const auto snapshot_ptr = conf.snapshot_ptr;
+        this->snapshot_map_ =
+            mefdn::mapped_memory::map(
+                snapshot_ptr
+            ,   num_bytes
+            ,   PROT_READ | PROT_WRITE
+            ,   MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+                #ifdef MEDSM2_ENABLE_MAP_POPULATE
+                | MAP_POPULATE
+                #endif
+            ,   -1
+            ,   0
+            );
+        #endif
         
         if (conf.is_copied) {
             // This is used for initializing global variables.
@@ -114,6 +132,9 @@ public:
             copy_memory(priv_sys_ptr, priv_app_ptr, num_bytes);
             // Initialize the public area with the original contents.
             copy_memory(pub_ptr, priv_app_ptr, num_bytes);
+            #ifndef MEDSM2_ENABLE_MIGRATION
+            copy_memory(snapshot_ptr, priv_app_ptr, num_bytes);
+            #endif
             
             MEFDN_LOG_DEBUG(
                 "msg:Finish copying global variables."
@@ -156,10 +177,17 @@ public:
             size_type       seg_size;
             void*           priv_buf;
             void*           pub_buf;
+            #ifndef MEDSM2_ENABLE_MIGRATION
+            void*           snapshot_buf;
+            #endif
         };
         
         data_table_type::coll_make(
-            data_tbl_conf{ conf.com, num_bytes, priv_sys_ptr, pub_ptr }
+            data_tbl_conf{ conf.com, num_bytes, priv_sys_ptr, pub_ptr
+            #ifndef MEDSM2_ENABLE_MIGRATION
+            , snapshot_ptr
+            #endif
+            }
         );
         
         #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
@@ -288,6 +316,9 @@ private:
     mefdn::mapped_memory   pub_map_;
     mefdn::mapped_memory   priv_sys_map_;
     mefdn::mapped_memory   priv_app_map_;
+    #ifndef MEDSM2_ENABLE_MIGRATION
+    mefdn::mapped_memory   snapshot_map_;
+    #endif
     
     #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
     flag_table_type flag_tbl_;

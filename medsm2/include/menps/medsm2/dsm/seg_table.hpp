@@ -403,6 +403,7 @@ public:
         bool is_written;
         // Indicate that this block can be removed from the write set.
         bool is_still_writable;
+        proc_id_type new_owner;
         rd_ts_type new_rd_ts;
         wr_ts_type new_wr_ts;
     };
@@ -414,6 +415,8 @@ public:
     ) {
         const auto p = prof::start();
         
+        const auto this_proc = com.this_proc_id();
+        
         const auto info = this->get_local_lock(blk_id);
         
         const auto check_ret =
@@ -421,7 +424,7 @@ public:
         
         if (!check_ret.needs_release) {
             // This block is not released now.
-            return { false, false, false, 0, 0 };
+            return { false, false, false, this_proc, 0, 0 };
         }
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
@@ -436,7 +439,8 @@ public:
             
             prof::finish(prof_kind::release_fast, p);
             
-            return { true, true, true, fast_ret.new_rd_ts, fast_ret.new_wr_ts };
+            return { true, true, true,
+                this_proc, fast_ret.new_rd_ts, fast_ret.new_wr_ts };
         }
         #endif
         
@@ -460,6 +464,7 @@ public:
             true
         ,   tx_ret.mg_ret.is_written
         ,   tx_ret.et_ret.is_still_writable
+        ,   tx_ret.et_ret.new_owner
         ,   tx_ret.et_ret.new_rd_ts
         ,   tx_ret.et_ret.new_wr_ts
         };
@@ -516,7 +521,7 @@ private:
         
         const auto p_end_tx = prof::start();
         
-        // Unlock the global lock.
+        // End the transaction.
         const auto et_ret =
             info.dir_tbl.end_transaction(com, rd_ts_st,
                 info.blk_id, info.blk_pos, info.lk, bt_ret, mg_ret);

@@ -60,6 +60,10 @@ public:
         this->pub_ptr_ = rma.attach(pub, pub + conf.seg_size);
         
         this->pub_buf_.coll_make(rma, coll, this->pub_ptr_, conf.seg_size);
+        
+        #ifndef MEDSM2_ENABLE_MIGRATION
+        this->snapshot_ptr_ = static_cast<mefdn::byte*>(conf.snapshot_buf);
+        #endif
     }
     
     void finalize(com_itf_type& com)
@@ -87,7 +91,9 @@ public:
         
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
         
+        #ifdef MEDSM2_ENABLE_MIGRATION
         if (cur_proc != home_proc) {
+        #endif
             if (is_dirty) {
                 const auto p = prof::start();
                 
@@ -108,7 +114,11 @@ public:
                 
                 const auto home_data = home_data_buf.get();
                 
+                #ifdef MEDSM2_ENABLE_MIGRATION
                 const auto my_pub = this->get_my_pub_ptr(blk_pos);
+                #else
+                const auto my_pub = this->get_my_snapshot_ptr(blk_pos);
+                #endif
                 
                 // Apply the changes written in the home into my_priv and my_pub.
                 this->read_merge(blk_pos, home_data, my_priv, my_pub, blk_size);
@@ -132,7 +142,9 @@ public:
                 
                 prof::finish(prof_kind::wn_read, p);
             }
+        #ifdef MEDSM2_ENABLE_MIGRATION
         }
+        #endif
         
         const auto p = prof::start();
         
@@ -153,7 +165,11 @@ public:
         const auto blk_size = self.get_blk_size();
         
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
+        #ifdef MEDSM2_ENABLE_MIGRATION
         const auto my_pub = this->get_my_pub_ptr(blk_pos);
+        #else
+        const auto my_pub = this->get_my_snapshot_ptr(blk_pos);
+        #endif
         
         if (needs_twin) {
             const auto p = prof::start();
@@ -178,6 +194,10 @@ public:
         // This block was written by this process
         // and must be recorded to the write notices.
         bool is_written;
+        // This block is migrated from the previous owner.
+        // If true, only this process has the latest data.
+        // If false, the latest data is also written to the previous owner.
+        bool is_migrated;
     };
     
     template <typename LockResult>
@@ -207,7 +227,11 @@ public:
         }
         
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
+        #ifdef MEDSM2_ENABLE_MIGRATION
         const auto my_pub = this->get_my_pub_ptr(blk_pos);
+        #else
+        const auto my_pub = this->get_my_snapshot_ptr(blk_pos);
+        #endif
         
         bool is_written = false;
         
@@ -265,8 +289,8 @@ public:
                 ,   blk_size
                 );
             
-            #ifdef MEDSM2_ENABLE_LAZY_MERGE
-            // Write back to cur_owner.
+            #if defined(MEDSM2_ENABLE_LAZY_MERGE) && defined(MEDSM2_ENABLE_MIGRATION)
+            // Write back other_data_buf (= remote private) to cur_owner.
             rma.write(
                 cur_owner
             ,   this->get_other_pub_ptr(cur_owner, blk_pos)
@@ -308,6 +332,19 @@ public:
             #endif
         }
         
+        #ifndef MEDSM2_ENABLE_MIGRATION
+        if (is_written) {
+            const auto cur_owner = glk_ret.owner;
+            // Write back my_pub to cur_owner.
+            rma.buf_write(
+                cur_owner
+            ,   this->get_other_pub_ptr(cur_owner, blk_pos)
+            ,   my_pub
+            ,   blk_size
+            );
+        }
+        #endif
+        
         if (glk_ret.needs_protect_after) {
             const auto p = prof::start();
             
@@ -319,8 +356,15 @@ public:
             
             prof::finish(prof_kind::mprotect_tx_after, p);
         }
+
+        const bool is_migrated =
+            #ifdef MEDSM2_ENABLE_MIGRATION
+            true;
+            #else
+            false;
+            #endif
         
-        return { is_written };
+        return { is_written, is_migrated };
         
         // The temporary buffer is discarded in its destructor here.
     }
@@ -689,6 +733,14 @@ private:
         const auto blk_size = self.get_blk_size();
         return this->pub_buf_.remote(proc, blk_size * blk_pos);
     }
+
+    #ifndef MEDSM2_ENABLE_MIGRATION
+    mefdn::byte* get_my_snapshot_ptr(const blk_pos_type blk_pos) {
+        auto& self = this->derived();
+        const auto blk_size = self.get_blk_size();
+        return &this->snapshot_ptr_[blk_size * blk_pos];
+    }
+    #endif
     
     typename rma_itf_type::template local_ptr<mefdn::byte>
         priv_ptr_;
@@ -701,6 +753,10 @@ private:
     
     typename P::template alltoall_ptr_set<mefdn::byte>
         pub_buf_;
+
+    #ifndef MEDSM2_ENABLE_MIGRATION
+    mefdn::byte* snapshot_ptr_ = nullptr;
+    #endif
 };
 
 } // namespace medsm2

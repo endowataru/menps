@@ -460,22 +460,23 @@ public:
         const auto this_proc = com.this_proc_id();
         
         const auto owner = glk_ret.owner;
-        
-        const auto& owner_wr_ts = glk_ret.home_wr_ts;
-        const auto& owner_rd_ts = glk_ret.home_rd_ts;
+        const auto owner_wr_ts = glk_ret.home_wr_ts;
+        const auto owner_rd_ts = glk_ret.home_rd_ts;
         
         auto& le = this->les_[blk_pos];
-        const auto ge MEFDN_MAYBE_UNUSED = self.read_lock_entry(blk_pos);
         
         const auto state = le.state;
-        //const auto cur_wr_ts = ge.wr_ts;
         const auto wr_count = le.wr_count;
         
         const auto is_remotely_updated =
+            #ifdef MEDSM2_ENABLE_MIGRATION
             owner != this_proc;
             // TODO: Comparing the write timestamps doesn't work
             //       because write notices may update those values.
             //cur_wr_ts < owner_wr_ts;
+            #else
+            le.cur_wr_ts < owner_wr_ts;
+            #endif
         
         const auto is_dirty =
             state == state_type::invalid_dirty ||
@@ -525,8 +526,8 @@ public:
             "needs_local_comp:{}\t"
         ,   blk_pos
         ,   owner
-        ,   ge.home_wr_ts
-        ,   ge.home_rd_ts
+        ,   le.cur_wr_ts
+        ,   le.cur_rd_ts
         ,   owner_wr_ts
         ,   owner_rd_ts
         ,   is_remotely_updated
@@ -564,11 +565,11 @@ public:
     ,   const MergeResult&              mg_ret
     ) {
         this->check_locked(blk_pos, lk);
+        const auto this_proc = com.this_proc_id();
         
-        const auto cur_proc = com.this_proc_id();
-        
+        const auto is_migrated = mg_ret.is_migrated;
         // Note: new_owner could be the same as old_owner in the past.
-        const auto new_owner = cur_proc;
+        const auto new_owner = is_migrated ? this_proc : bt_ret.owner;
         
         auto& le = this->les_[blk_pos];
         
@@ -627,7 +628,7 @@ public:
             // (2) If the block was readonly_dirty, the modification on this block
             // is merged in this process and it becomes readonly_clean.
             //
-            // (3) If the block was writable and "becomes clean" (cur_proc != old_owner),
+            // (3) If the block was writable and "becomes clean" (this_proc != old_owner),
             // this block is now downgraded to read-only
             // because the old owner wrote on this block.
             // The state is updated to readonly_clean because of this downgrading.

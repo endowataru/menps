@@ -174,7 +174,7 @@ public:
                 // Add to the write notices
                 // because the current process modified this block.
                 wn_vec.push_back(wn_entry_type{
-                    this_proc, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts
+                    rel_ret.new_owner, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts
                 });
             }
         }
