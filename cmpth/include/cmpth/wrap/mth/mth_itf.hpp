@@ -6,7 +6,7 @@
 #include <cmpth/exec/basic_for_loop.hpp>
 #include <cmpth/sct/def_sct_spinlock.hpp>
 
-#define CMPTH_ENABLE_MTH_WORKER_CACHE
+//#define CMPTH_ENABLE_MTH_WORKER_CACHE
 
 namespace cmpth {
 
@@ -70,6 +70,11 @@ struct mth_itf
     };
     
     #ifdef CMPTH_ENABLE_MTH_WORKER_CACHE
+    // FIXME: This implementation contains a bug which caches
+    //        the thread-local worker number across function calls with context switching.
+    //        It seems that this bug happens when this function is inlined.
+    //        It is not evaluated whether __attribute__((noinline)) can solve this problem or not.
+    __attribute__((noinline))
     static fdn::size_t get_worker_num() noexcept
     {
         static thread_local fdn::size_t wk_num_ = 0;
