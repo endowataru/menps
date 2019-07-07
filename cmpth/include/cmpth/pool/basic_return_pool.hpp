@@ -49,6 +49,8 @@ public:
     explicit basic_return_pool(const size_type n_wks)
         : n_wks_(n_wks)
     {
+        CMPTH_P_ASSERT(P, n_wks_ > 0);
+        
         const auto min_n_pes = 
             fdn::roundup_divide<size_type>(CMPTH_CACHE_LINE_SIZE, sizeof(pro_entry));
         
@@ -147,13 +149,16 @@ public:
     
     void deallocate(size_type cur_wk_num, element_type* const e)
     {
+        CMPTH_P_ASSERT(P, cur_wk_num < this->n_wks_);
+        CMPTH_P_ASSERT(P, e != nullptr);
+        
         // Destruct the element. No overhead for PODs.
         e->~element_type();
         
         const auto n = fdn::get_container_of(e, &node::elem);
         const auto alloc_wk_num = n->wk_num;
+        CMPTH_P_ASSERT(P, alloc_wk_num < this->n_wks_);
         
-        //const auto cur_wk_num = ult_itf_type::get_worker_num();
         auto& we = this->wes_[cur_wk_num];
         
         if (alloc_wk_num == cur_wk_num) {
@@ -203,9 +208,11 @@ public:
     }
     
     static element_type* to_elem(node* const n) noexcept {
+        CMPTH_P_ASSERT(P, n != nullptr);
         return &n->elem;
     }
     static node* to_node(element_type* const e) noexcept {
+        CMPTH_P_ASSERT(P, e != nullptr);
         return fdn::get_container_of(e, &node::elem);
     }
     
