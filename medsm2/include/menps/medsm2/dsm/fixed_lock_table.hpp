@@ -44,7 +44,7 @@ public:
             mefdn::roundup_divide(num_lks, static_cast<size_type>(num_procs));
         this->lad_size_ = lad_size;
         
-        this->glks_.coll_make(rma, coll, this->num_lks_per_proc_ * num_lks);
+        this->glks_.coll_make(rma, coll, this->num_lks_per_proc_);
         if (lad_size != 0) {
             this->lads_.coll_make(rma, coll, this->num_lks_per_proc_ * lad_size);
         }
