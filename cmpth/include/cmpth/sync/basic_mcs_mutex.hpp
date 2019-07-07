@@ -3,6 +3,8 @@
 
 #include <cmpth/fdn.hpp>
 
+//#define CMPTH_MCS_MUTEX_USE_NEXT_UV
+
 namespace cmpth {
 
 template <typename P>
@@ -38,9 +40,15 @@ public:
         
         if (prev != nullptr)
         {
+            #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
+            cur->uv.template wait_with<
+                basic_mcs_mutex::on_lock
+            >(wk, prev, cur);
+            #else
             prev->uv.template wait_with<
                 basic_mcs_mutex::on_lock
             >(wk, prev, cur);
+            #endif
             
             CMPTH_P_ASSERT(P, this->core_.get_head() == cur);
         }
@@ -76,7 +84,11 @@ public:
         }
         while (next == nullptr);
         
+        #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
+        next->uv.notify(wk);
+        #else
         cur->uv.notify(wk);
+        #endif
         
         this->deallocate(cur);
     }
@@ -109,8 +121,13 @@ public:
         }
         while (next == nullptr);
         
+        #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
+        // Save the current context to saved_uv and switch to next->uv.
+        saved_uv.swap(wk, next->uv);
+        #else
         // Save the current context to saved_uv and switch to cur->uv.
         saved_uv.swap(wk, cur->uv);
+        #endif
         
         this->deallocate(cur);
     }
