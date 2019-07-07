@@ -141,11 +141,22 @@ public:
             );
         }
         else {
+            #if 1
+            // TODO: May be unnecessary
+            // Initialize all the contents.
+            fill_zero(priv_sys_ptr, num_bytes);
+            fill_zero(pub_ptr, num_bytes);
+            #ifndef MEDSM2_ENABLE_MIGRATION
+            fill_zero(snapshot_ptr, num_bytes);
+            #endif
+            
+            #else
             // Initialize the private mapping.
             // TODO: May be unnecessary
             memset(priv_sys_ptr, 0, num_bytes);
             // Initialize the public mapping.
             memset(pub_ptr, 0, num_bytes);
+            #endif
         }
         
         this->priv_app_map_ =
@@ -198,6 +209,16 @@ public:
 private:
     static void copy_memory(void* const dest, const void* const src, const size_type num_bytes)
     {
+        MEFDN_LOG_DEBUG(
+            "msg:Start copying memory.\t"
+            "dest:0x{:x}\t"
+            "src:0x{:x}\t"
+            "num_bytes:0x{:x}"
+        ,   reinterpret_cast<mefdn::uintptr_t>(dest)
+        ,   reinterpret_cast<mefdn::uintptr_t>(src)
+        ,   num_bytes
+        );
+        
         #ifdef MEDSM2_ENABLE_MAP_POPULATE
         // Simply call memcpy if MAP_POPULATE is enabled.
         std::memcpy(dest, src, num_bytes);
@@ -216,6 +237,44 @@ private:
             dest_byte[i] = src_byte[i];
         }
         #endif
+        
+        MEFDN_LOG_DEBUG(
+            "msg:Finish copying memory.\t"
+            "dest:0x{:x}\t"
+            "src:0x{:x}\t"
+            "num_bytes:0x{:x}"
+        ,   reinterpret_cast<mefdn::uintptr_t>(dest)
+        ,   reinterpret_cast<mefdn::uintptr_t>(src)
+        ,   num_bytes
+        );
+    }
+    
+    static void fill_zero(void* const dest, const size_type num_bytes)
+    {
+        MEFDN_LOG_DEBUG(
+            "msg:Start filling with zero.\t"
+            "dest:0x{:x}\t"
+            "num_bytes:0x{:x}"
+        ,   reinterpret_cast<mefdn::uintptr_t>(dest)
+        ,   num_bytes
+        );
+        
+        #if 1
+        memset(dest, 0, num_bytes);
+        #else
+        const auto dest_byte = static_cast<mefdn::byte*>(dest);
+        for (size_type i = 0; i < num_bytes; ++i) {
+            dest_byte[i] = static_cast<mefdn::byte>(0);
+        }
+        #endif
+        
+        MEFDN_LOG_DEBUG(
+            "msg:Finish filling with zero.\t"
+            "dest:0x{:x}\t"
+            "num_bytes:0x{:x}"
+        ,   reinterpret_cast<mefdn::uintptr_t>(dest)
+        ,   num_bytes
+        );
     }
     
 public:
