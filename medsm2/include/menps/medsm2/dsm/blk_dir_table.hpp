@@ -475,6 +475,9 @@ public:
             //       because write notices may update those values.
             //cur_wr_ts < owner_wr_ts;
             #else
+            // If invalid, always consider that the remote process has updated this block.
+            (state == state_type::invalid_dirty || state == state_type::invalid_clean) ||
+            // Compare the write timestamps.
             le.cur_wr_ts < owner_wr_ts;
             #endif
         
