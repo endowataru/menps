@@ -170,7 +170,9 @@ private:
         
         static int on_wait(void* const ptr) {
             const auto& self = *static_cast<call_with_ptrs*>(ptr);
-            const bool ret = fdn::apply(Func{}, self.args);
+            // Copy args from the original thread's call stack just in case.
+            const auto args = self.args;
+            const bool ret = fdn::apply(Func{}, args);
             return ret; // Convert to int
         }
     };
