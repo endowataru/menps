@@ -41,6 +41,8 @@ public:
             prev->uv.template wait_with<
                 basic_mcs_mutex::on_lock
             >(wk, prev, cur);
+            
+            CMPTH_P_ASSERT(P, this->core_.get_head() == cur);
         }
     }
     
@@ -97,6 +99,8 @@ public:
                 this->deallocate(cur);
                 return;
             }
+            
+            CMPTH_P_ASSERT(P, this->core_.get_head() == cur);
         }
         
         mcs_node_type* next = nullptr;

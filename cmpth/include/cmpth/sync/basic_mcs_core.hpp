@@ -36,6 +36,7 @@ public:
         }
         else {
             // This thread couldn't lock the mutex immediately.
+            CMPTH_P_ASSERT(P, prev != cur);
         }
         
         return prev;
@@ -91,6 +92,7 @@ public:
     
     bool is_unlockable(mcs_node_type* const head) const noexcept
     {
+        CMPTH_P_ASSERT(P, this->head_ == head);
         return this->tail_.load(fdn::memory_order_relaxed) == head;
     }
     
@@ -115,6 +117,7 @@ public:
         
         const auto next = head->next.load(fdn::memory_order_acquire);
         if (next != nullptr) {
+            CMPTH_P_ASSERT(P, next != head);
             this->head_ = next;
         }
         return next;
