@@ -37,6 +37,8 @@
 
 #define CMPTH_NODISCARD     __attribute__((warn_unused_result))
 
+#define CMPTH_NOINLINE      __attribute__((noinline))
+
 namespace cmpth {
 
 namespace fdn {

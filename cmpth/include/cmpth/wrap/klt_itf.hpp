@@ -25,10 +25,12 @@ struct klt_itf
         using value_type = typename P::value_type;
         
     public:
+        CMPTH_NOINLINE
         value_type* get() const noexcept {
-            return p_;
+            return this->p_;
         }
         
+        CMPTH_NOINLINE
         void set(value_type* const p) const noexcept {
             this->p_ = p;
         }

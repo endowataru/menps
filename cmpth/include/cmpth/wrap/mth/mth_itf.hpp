@@ -74,7 +74,7 @@ struct mth_itf
     //        the thread-local worker number across function calls with context switching.
     //        It seems that this bug happens when this function is inlined.
     //        It is not evaluated whether __attribute__((noinline)) can solve this problem or not.
-    __attribute__((noinline))
+    CMPTH_NOINLINE
     static fdn::size_t get_worker_num() noexcept
     {
         static thread_local fdn::size_t wk_num_ = 0;
