@@ -67,7 +67,10 @@ public:
     
     explicit basic_numbered_pool(const size_type max_num_elems)
         : base_nodes{max_num_elems}
-        , base_pool{ult_itf_type::get_num_workers()}
+        , base_pool{
+            // TODO: Remove cast
+            static_cast<fdn::size_t>(ult_itf_type::get_num_workers())
+        }
     { }
     
     ~basic_numbered_pool() = default;

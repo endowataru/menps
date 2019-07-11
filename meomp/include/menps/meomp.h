@@ -3,7 +3,12 @@
 
 #include <stddef.h>
 
-#define MEOMP_GLOBAL_VAR    __attribute__((section(".dsm_data")))
+#if defined(__APPLE__)
+    // FIXME: There's no good way to implement global variables in macOS.
+    #define MEOMP_GLOBAL_VAR
+#else
+    #define MEOMP_GLOBAL_VAR    __attribute__((section(".dsm_data")))
+#endif
 
 #ifdef __cplusplus
 extern "C" {

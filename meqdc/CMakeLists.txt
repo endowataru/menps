@@ -14,17 +14,15 @@ set(MEQDC_MPI_DELEGATOR_POOL_MAX_ENTRIES 128 CACHE STRING "Pool threshold for MP
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/menps/meqdc/config.h)
 
-add_library(meqdc
-    src/compile.cpp
-)
+add_library(meqdc INTERFACE)
 
-target_include_directories(meqdc
-    PUBLIC ./include
-    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+target_include_directories(meqdc INTERFACE
+    ./include
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
-target_link_libraries(meqdc
-    PUBLIC medev2
-    PRIVATE mefdn-options
+target_link_libraries(meqdc INTERFACE
+    medev2
+    mefdn-options
 )
 install(TARGETS meqdc
     LIBRARY DESTINATION lib

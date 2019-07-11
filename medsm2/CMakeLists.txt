@@ -71,7 +71,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/linker.ld DESTINATION lib/menps)
 add_library(medsm2-exec-options INTERFACE)
 
 target_link_libraries(medsm2-exec-options
-    INTERFACE "-T ${CMAKE_CURRENT_BINARY_DIR}/linker.ld"
+    INTERFACE $<$<NOT:$<BOOL:${APPLE}>>:-T ${CMAKE_CURRENT_BINARY_DIR}/linker.ld>
     INTERFACE $<$<BOOL:${MEFDN_GCC_SUPPORTS_NO_PIE}>:-no-pie>
 )
 

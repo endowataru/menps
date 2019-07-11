@@ -9,7 +9,9 @@
 
 #include MEFDN_PP_CAT(CMPTH_ULT_HEADER_, MEDSM2_ULT_ITF)
 #include MEFDN_PP_CAT(MEDEV2_MPI_ITF_HEADER_, MEDSM2_MPI_ITF)
-#include MEFDN_PP_CAT(MEDEV2_UCT_ITF_HEADER_, MEDSM2_UCT_ITF)
+#ifdef MEDEV2_DEVICE_UCX_ENABLED
+    #include MEFDN_PP_CAT(MEDEV2_UCT_ITF_HEADER_, MEDSM2_UCT_ITF)
+#endif
 
 namespace menps {
 namespace medsm2 {
@@ -25,11 +27,13 @@ struct dsm_com_policy_base
         ,   ult_itf_type
         >;
     
+    #ifdef MEDEV2_DEVICE_UCX_ENABLED
     using uct_itf_type =
         medev2::ucx::uct::get_uct_itf_type_t<
             medev2::ucx::uct::uct_itf_id_t::MEDSM2_UCT_ITF
         ,   dsm_com_policy_base
         >;
+    #endif
     
     static constexpr mecom2::rma_itf_id_t rma_id = mecom2::rma_itf_id_t::MEDSM2_RMA_ITF;
 };

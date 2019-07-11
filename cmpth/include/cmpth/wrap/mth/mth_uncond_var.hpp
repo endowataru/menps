@@ -136,7 +136,7 @@ public:
     }
     
     template <typename Func, typename Worker, typename... Args>
-    void swap_with(Worker& wk, mth_uncond_var& next_uv,
+    void swap_with(Worker& wk, mth_uncond_var& /*next_uv*/,
         Args* const ... args)
     {
         using func_type = call_with_ptrs<fdn::decay_t<Func>, Worker, Args...>;

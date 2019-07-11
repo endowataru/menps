@@ -824,12 +824,14 @@ void meomp_free(void* const ptr) {
 
 }
 
+#ifndef MEFDN_OS_MAC_OS_X
 extern "C" {
 
 extern void* _dsm_data_begin;
 extern void* _dsm_data_end;
 
 } // extern "C"
+#endif
 
 namespace /*unnamed*/ {
 
@@ -907,7 +909,9 @@ int main(int argc, char* argv[])
         );
     #endif
     
+    #ifndef MEFDN_OS_MAC_OS_X
     df.init_global_var_seg(&_dsm_data_begin, &_dsm_data_end, MEDSM2_GLOBAL_VAR_BLOCK_SIZE);
+    #endif
     
     const auto num_procs = coll.get_num_procs();
     

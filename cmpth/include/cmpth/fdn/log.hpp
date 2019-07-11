@@ -33,7 +33,7 @@ struct log_policy
             [] {
                 std::ostringstream os;
                 os << "thread:";
-                os << std::hex << static_cast<fdn::intptr_t>(pthread_self());
+                os << std::hex << fdn::force_integer_cast<fdn::intptr_t>(pthread_self());
                 return os.str();
             };
         return cb;

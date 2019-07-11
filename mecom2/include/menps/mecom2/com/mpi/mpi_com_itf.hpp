@@ -5,6 +5,7 @@
 #include <menps/mecom2/coll/mpi/mpi_coll.hpp>
 #include <menps/mecom2/p2p/mpi/mpi_p2p.hpp>
 #include <menps/mecom2/rpc/mpi/mpi_rpc.hpp>
+#include <menps/mecom2/rma/alltoall_buffer.hpp>
 
 namespace menps {
 namespace mecom2 {

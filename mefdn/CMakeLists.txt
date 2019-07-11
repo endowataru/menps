@@ -59,6 +59,7 @@ if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}"
         # Optimizations
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:OptDebug>:-O3 -DNDEBUG -g>
+        -march=native
         
         # Enable -Weverything
         -Weverything

@@ -102,6 +102,7 @@ using remove_extent_t = typename std::remove_extent<T>::type;
 
 using std::is_trivially_destructible;
 using std::is_integral;
+using std::is_pointer;
 
 template <bool B, typename T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
@@ -432,6 +433,25 @@ struct parallel_unsequenced_policy { };
 // <exception>
 
 using std::exception;
+
+
+template <typename T, typename U>
+inline constexpr typename fdn::enable_if_t<
+    ! (fdn::is_pointer<T>::value || fdn::is_pointer<U>::value)
+,   T
+>
+force_integer_cast(const U& value) noexcept {
+    return static_cast<T>(value);
+}
+
+template <typename T, typename U>
+inline constexpr typename fdn::enable_if_t<
+    (fdn::is_pointer<T>::value || fdn::is_pointer<U>::value)
+,   T
+>
+force_integer_cast(const U& value) noexcept {
+    return reinterpret_cast<T>(value);
+}
 
 } // namespace fdn
 

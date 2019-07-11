@@ -6,6 +6,7 @@
 #include <menps/mefdn/external/malloc.h>
 #include <menps/medsm2/prof.hpp>
 #include <menps/medsm2/com/dsm_com_itf.hpp> // TODO: required for medev2::prof
+#include <menps/mefdn/arithmetic.hpp>
 
 namespace menps {
 namespace medsm2 {

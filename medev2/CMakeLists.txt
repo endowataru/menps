@@ -23,10 +23,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/menps/medev2/config.h)
 
 if(${MEDEV2_DEVICE_UCX_ENABLED})
-    # TODO: Move directory
     include(cmake/ucx.cmake)
-    
-    
 endif()
 
 add_library(medev2 INTERFACE)
@@ -43,19 +40,21 @@ target_link_libraries(medev2
 )
 install(DIRECTORY include/ DESTINATION include)
 
+if(${MEDEV2_DEVICE_UCX_ENABLED})
+    add_executable(medev2_ucp_test
+        ./examples/ucp_test.cpp
+    )
+    target_link_libraries(medev2_ucp_test
+        PUBLIC medev2
+        PRIVATE mefdn-options
+    )
 
-add_executable(medev2_ucp_test
-    ./examples/ucp_test.cpp
-)
-target_link_libraries(medev2_ucp_test
-    PUBLIC medev2
-    PRIVATE mefdn-options
-)
+    add_executable(medev2_uct_test
+        ./examples/uct_test.cpp
+    )
+    target_link_libraries(medev2_uct_test
+        PUBLIC medev2
+        PRIVATE mefdn-options
+    )
+endif()
 
-add_executable(medev2_uct_test
-    ./examples/uct_test.cpp
-)
-target_link_libraries(medev2_uct_test
-    PUBLIC medev2
-    PRIVATE mefdn-options
-)

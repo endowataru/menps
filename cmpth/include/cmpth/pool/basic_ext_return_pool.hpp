@@ -38,7 +38,10 @@ public:
     using base::base; // TODO
     
     basic_ext_return_pool()
-        : base{ult_itf_type::get_num_workers()}
+        : base{
+            // TODO: Remove cast
+            static_cast<fdn::size_t>(ult_itf_type::get_num_workers())
+        }
     { }
     
     using base::allocate;

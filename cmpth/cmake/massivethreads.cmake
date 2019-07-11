@@ -14,6 +14,12 @@ else()
     list(APPEND CMPTH_MASSIVETHREADS_CFLAGS -O3 -DNDEBUG)
 endif()
 
+if(APPLE)
+    # Disable the usage of sched_getcpu() on macOS.
+    # TODO: This should be fixed by MassiveThreads itself.
+    list(APPEND CMPTH_MASSIVETHREADS_CFLAGS -DDAG_RECORDER_RECORD_CPU=0)
+endif()
+
 # Convert from list to string
 string(REPLACE ";" " " CMPTH_MASSIVETHREADS_CFLAGS "${CMPTH_MASSIVETHREADS_CFLAGS}")
 

@@ -7,7 +7,9 @@
 //       we need to include all headers...
 #include MECOM2_RMA_ITF_HEADER_SINGLE
 #include MECOM2_RMA_ITF_HEADER_MPI
-#include MECOM2_RMA_ITF_HEADER_UCT
+#ifdef MEDEV2_DEVICE_UCX_ENABLED
+    #include MECOM2_RMA_ITF_HEADER_UCT
+#endif
 
 namespace menps {
 namespace mecom2 {
@@ -53,6 +55,7 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::MPI, P>
     }
 };
 
+#ifdef MEDEV2_DEVICE_UCX_ENABLED
 inline int get_procs_per_node() {
     if (const auto str = std::getenv("MECOM2_NUM_PROCS_PER_NODE")) {
         const auto ret = std::atoi(str);
@@ -100,6 +103,7 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::UCT, P>
         rma = rma_res->rma.get();
     }
 };
+#endif // MEDEV2_DEVICE_UCX_ENABLED
 
 template <mecom2::rma_itf_id_t Id, typename P, typename Coll>
 inline mefdn::unique_ptr<mpi_based_rma<Id, P>>
