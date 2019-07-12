@@ -106,7 +106,7 @@ public:
     
     template <typename T>
     T compare_and_swap(
-        const proc_id_type  target_proc
+        const proc_id_type  /*target_proc*/
     ,   T* const            target_rptr
     ,   T                   expected
     ,   const T             desired
