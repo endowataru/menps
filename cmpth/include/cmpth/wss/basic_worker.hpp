@@ -91,7 +91,7 @@ public:
     ) {
         this->template exit_to_cont<
             basic_worker::on_cancel_suspend<Func, Args...>
-        >(fdn::move(cont));
+        >(fdn::move(cont), args...);
     }
     
 private:
