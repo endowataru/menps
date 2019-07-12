@@ -61,22 +61,26 @@ if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}"
         $<$<CONFIG:OptDebug>:-O3 -DNDEBUG -g>
         -march=native
         
-        # Enable -Weverything
-        -Weverything
-        
-        # Disable some warnings of -Weverything
-        -Wno-global-constructors
-        -Wno-exit-time-destructors
-        -Wno-padded # TODO: alignment issues
-        -Wno-disabled-macro-expansion # Problem of stdbool.h
-        -Wno-used-but-marked-unused # e.g. mefdn::try_to_lock
-        -Wno-weak-vtables # couldn't find a correct way to suppress this warning
-        -Wno-c++98-compat
-        -Wno-c++98-compat-pedantic
-        -Wno-abstract-vbase-init # Not approved by C++ standard
+        -Wall
+        -Wextra
+        -Wpedantic
+
+        ## Enable -Weverything
+        #-Weverything
+        #
+        ## Disable some warnings of -Weverything
+        #-Wno-global-constructors
+        #-Wno-exit-time-destructors
+        #-Wno-padded # TODO: alignment issues
+        #-Wno-disabled-macro-expansion # Problem of stdbool.h
+        #-Wno-used-but-marked-unused # e.g. mefdn::try_to_lock
+        #-Wno-weak-vtables # couldn't find a correct way to suppress this warning
+        #-Wno-c++98-compat
+        #-Wno-c++98-compat-pedantic
+        #-Wno-abstract-vbase-init # Not approved by C++ standard
         
         # Other options
-        -Wno-c++11-long-long # TODO
+        #-Wno-c++11-long-long # TODO
         -ferror-limit=${error_limit}
         
         # Bug 25546 - Bad diagnostic when using -Wunused-macros and building .S files
