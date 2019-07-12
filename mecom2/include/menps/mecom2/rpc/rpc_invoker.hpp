@@ -60,7 +60,7 @@ public:
         const auto& h = hs_[id];
         MEFDN_ASSERT(h);
         
-        const handler_context_type hc{
+        const handler_context hc{
             server
         ,   src_proc
         ,   mefdn::move(rqst_msg)
