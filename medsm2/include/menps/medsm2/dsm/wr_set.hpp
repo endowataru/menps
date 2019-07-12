@@ -158,7 +158,6 @@ public:
             }
         );
         
-        const auto this_proc = com.this_proc_id();
         wn_vector_type wn_vec;
         // Pre-allocate the write notice vector.
         wn_vec.reserve(num_released);
@@ -182,7 +181,7 @@ public:
         // Remove non-writable blocks from the dirty ID array.
         const auto dirty_last =
             std::remove_if(released_first, released_last,
-                [&released_first, &rel_results, &wn_vec, this_proc] (const blk_id_type& blk_id) {
+                [&released_first, &rel_results] (const blk_id_type& blk_id) {
                     // Determine the index for the ID array.
                     const auto idx =
                         static_cast<size_type>(
