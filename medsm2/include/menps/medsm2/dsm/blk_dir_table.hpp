@@ -455,7 +455,6 @@ public:
     ,   const LockResult&       glk_ret
     ) {
         this->check_locked(blk_pos, lk);
-        auto& self = this->derived();
         
         const auto this_proc = com.this_proc_id();
         
