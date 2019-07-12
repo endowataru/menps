@@ -57,7 +57,7 @@ public:
     
     lock_global_result lock_global(
         com_itf_type&           com
-    ,   p2p_itf_type&           p2p
+    ,   p2p_itf_type&           /*p2p*/
     ,   const lock_pos_type     lk_pos
     ,   const p2p_tag_type      /*tag*/
     ,   local_byte_ptr_type     lad_buf
@@ -113,7 +113,7 @@ public:
     
     void unlock_global(
         com_itf_type&           com
-    ,   p2p_itf_type&           p2p
+    ,   p2p_itf_type&           /*p2p*/
     ,   const lock_pos_type     lk_pos
     ,   const p2p_tag_type      /*tag*/
     ,   const void* const       lad_ptr
