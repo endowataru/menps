@@ -3,6 +3,7 @@
 
 #include <menps/medsm2/dsm/space.hpp>
 #include <menps/medsm2/svm/sigsegv_catcher.hpp>
+#include <menps/medsm2/svm/sigbus_catcher.hpp>
 #include <menps/medsm2/svm/shm_object.hpp>
 #include <menps/mefdn/arithmetic.hpp>
 #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
@@ -58,35 +59,47 @@ public:
                 }
             );
         
-        segv_catch_ =
+        // Note: The derived class is not initialized yet.
+        auto& self = this->derived();
+        
+        this->segv_catch_ =
             mefdn::make_unique<sigsegv_catcher>(
-                sigsegv_catcher::config{
-                    [&] (void* const ptr) {
-                        const auto tss_ptr = this->is_enabled_.get();
-                        if (tss_ptr != nullptr) {
-                            MEFDN_ASSERT(tss_ptr == this);
-                            
-                            #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-                            mecom2::com_signal_state::set_entering_signal();
-                            #endif
-                            
-                            const auto ret = this->try_upgrade(ptr);
-                            
-                            #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-                            mecom2::com_signal_state::set_exiting_signal();
-                            #endif
-                            
-                            return ret;
-                        }
-                        else {
-                            return false;
-                        }
-                    }
-                ,   false
-                }
+                sigsegv_catcher::config{ on_fault{ self }, false}
+            );
+        
+        this->bus_catch_ =
+            mefdn::make_unique<sigbus_catcher>(
+                sigbus_catcher::config{ on_fault{ self }, false}
             );
     }
     
+private:
+    struct on_fault {
+        derived_type& self;
+        bool operator() (void* const ptr) const {
+            const auto tss_ptr = self.is_enabled_.get();
+            if (tss_ptr != nullptr) {
+                MEFDN_ASSERT(tss_ptr == &self);
+                
+                #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+                mecom2::com_signal_state::set_entering_signal();
+                #endif
+                
+                const auto ret = self.try_upgrade(ptr);
+                
+                #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+                mecom2::com_signal_state::set_exiting_signal();
+                #endif
+                
+                return ret;
+            }
+            else {
+                return false;
+            }
+        }
+    };
+    
+public:
     ~svm_space()
     {
         // Destroy wr_set.
@@ -424,6 +437,7 @@ private:
     mefdn::byte* app_ptr_start_ = nullptr;
     
     mefdn::unique_ptr<sigsegv_catcher>  segv_catch_;
+    mefdn::unique_ptr<sigbus_catcher>   bus_catch_;
     mefdn::unique_ptr<shm_object>       shm_obj_;
     
     tss_type is_enabled_;

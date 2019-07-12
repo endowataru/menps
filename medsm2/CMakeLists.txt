@@ -48,6 +48,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/linker.ld.in
 
 add_library(medsm2
     ./src/sigsegv_catcher.cpp
+    ./src/sigbus_catcher.cpp
     ./src/mpi_svm_space.cpp
 )
 target_include_directories(medsm2
