@@ -212,7 +212,10 @@ public:
         return ptr;
     }
     void deallocate(void* const ptr) {
-        #ifndef MEDSM2_ENABLE_LINEAR_ALLOCATOR
+        #ifdef MEDSM2_ENABLE_LINEAR_ALLOCATOR
+        // TODO: Reuse the buffer.
+        (void)ptr;
+        #else
         this->sp_->lock_mutex(this->heap_mtx_id_);
         mspace_free(this->heap_ms_, ptr);
         this->sp_->unlock_mutex(this->heap_mtx_id_);
