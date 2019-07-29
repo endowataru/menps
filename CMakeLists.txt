@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
+project(menps)
+
 add_subdirectory(./cmpth)
 add_subdirectory(./mefdn)
 add_subdirectory(./medev2)
