@@ -476,7 +476,10 @@ void GOMP_critical_end() {
     omp_unset_lock(&g_critical_lock);
 }
 
-
+extern "C"
+bool GOMP_single_start(void) {
+    return worker_base_type::get_cur_worker().get_thread_num() == 0;
+}
 
 // LLVM
 
@@ -665,6 +668,16 @@ void __kmpc_end_master(ident* loc, kmp_int32 global_tid);
 extern "C"
 void __kmpc_end_master(ident* /*loc*/, kmp_int32 /*global_tid*/) {
     // Do nothing.
+}
+
+extern "C"
+kmp_int32 __kmpc_single(ident* loc, kmp_int32 global_tid) {
+    // TODO: use atomics for better performance
+    return __kmpc_master(loc, global_tid);
+}
+extern "C"
+void __kmpc_end_single(ident* loc, kmp_int32 global_tid) {
+    __kmpc_end_master(loc, global_tid);
 }
 
 namespace /*unnamed*/ {
