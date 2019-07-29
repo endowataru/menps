@@ -115,6 +115,10 @@ struct dsm_base_policy
     }
     
     using mtx_id_type = size_type;
+    static constexpr bool is_valid_mutex_id(const mtx_id_type mtx_id) noexcept {
+        return mtx_id != 0;
+    }
+    
     using lock_pos_type = size_type; // TODO: define only for mtx_table
     
     using p2p_tag_type = int;

@@ -435,7 +435,7 @@ public:
             // Load and update the local timestamp values.
             // The updated values may be used in the next release.
             const auto fast_ret =
-                info.dir_tbl.fast_release(rd_ts_st, info.blk_pos, info.lk);
+                info.dir_tbl.fast_release(rd_ts_st, info.blk_id, info.blk_pos, info.lk);
             
             prof::finish(prof_kind::release_fast, p);
             
@@ -498,7 +498,7 @@ private:
        
         // Begin a transaction.
         const auto bt_ret =
-            info.dir_tbl.begin_transaction(com, info.blk_pos, info.lk, glk_ret);
+            info.dir_tbl.begin_transaction(com, info.blk_id, info.blk_pos, info.lk, glk_ret);
         
         prof::finish(prof_kind::begin_tx, p_begin_tx);
         

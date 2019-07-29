@@ -274,6 +274,7 @@ public:
     
     fast_release_result fast_release(
         const rd_ts_state_type& rd_ts_st
+    ,   const blk_id_type       blk_id MEFDN_MAYBE_UNUSED
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
@@ -293,6 +294,24 @@ public:
             this->update_ts(rd_ts_st, blk_pos);
         
         ++le.fast_rel_count;
+        
+        MEFDN_LOG_VERBOSE(
+            "msg:Fast release.\t"
+            "blk_id:0x{:x}\t"
+            "blk_pos:{}\t"
+            "cur_wr_ts:{}\t"
+            "cur_rd_ts:{}\t"
+            "new_wr_ts:{}\t"
+            "new_rd_ts:{}\t"
+            "fast_rel_count:{}"
+        ,   blk_id
+        ,   blk_pos
+        ,   le.cur_wr_ts
+        ,   le.cur_rd_ts
+        ,   new_ts.wr_ts
+        ,   new_ts.rd_ts
+        ,   le.fast_rel_count
+        );
         
         return { new_ts.wr_ts, new_ts.rd_ts };
     }
@@ -450,6 +469,7 @@ public:
     template <typename LockResult>
     begin_transaction_result begin_transaction(
         com_itf_type&           com
+    ,   const blk_id_type       blk_id MEFDN_MAYBE_UNUSED
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ,   const LockResult&       glk_ret
@@ -512,7 +532,8 @@ public:
         #endif
         
         MEFDN_LOG_VERBOSE(
-            "msg:Locked global lock.\t"
+            "msg:Begin transaction for cache block.\t"
+            "blk_id:0x{:x}\t"
             "blk_pos:{}\t"
             "owner:{}\t"
             "cur_wr_ts:{}\t"
@@ -526,6 +547,7 @@ public:
             "is_write_protected:{}\t"
             "needs_local_copy:{}\t"
             "needs_local_comp:{}\t"
+        ,   blk_id
         ,   blk_pos
         ,   owner
         ,   le.cur_wr_ts
