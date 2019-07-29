@@ -361,9 +361,13 @@ public:
 private:
     void acquire_sig(const sig_buffer_type& sig)
     {
+        MEFDN_LOG_VERBOSE("msg:Start acquiring signature.");
+        
         this->acquire_wns(sig);
         
         this->acquire_min_wr_ts(sig.get_min_wr_ts());
+        
+        MEFDN_LOG_VERBOSE("msg:Finish acquiring signature.");
     }
     
     void acquire_wns(const sig_buffer_type& sig)
