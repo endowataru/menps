@@ -869,6 +869,18 @@ inline mefdn::size_t get_stack_size()
     return ret;
 }
 
+inline mefdn::size_t get_heap_size()
+{
+    mefdn::size_t ret = MEOMP_HEAP_SIZE;
+    if (const auto str = std::getenv("MEOMP_HEAP_SIZE")) {
+        ret = static_cast<mefdn::size_t>(std::atoi(str));
+    }
+    if (ret % 0x1000 != 0 || ret <= 0) {
+        throw std::invalid_argument("Invalid MEOMP_HEAP_SIZE");
+    }
+    return ret;
+}
+
 } // unnamed namespace
 
 int main(int argc, char* argv[])
@@ -923,8 +935,8 @@ int main(int argc, char* argv[])
     g_stack_ptr = stack_ptr_start;
     g_stack_size = stack_size;
     
-    g_heap_size = MEOMP_HEAP_SIZE;
-    g_heap_ptr = df.init_heap_seg(MEOMP_HEAP_SIZE, MEOMP_HEAP_BLOCK_SIZE);
+    g_heap_size = get_heap_size();
+    g_heap_ptr = df.init_heap_seg(g_heap_size, MEOMP_HEAP_BLOCK_SIZE);
     
     if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();
