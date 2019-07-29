@@ -80,7 +80,7 @@ public:
         return wk.template suspend_to_cont<
             basic_uncond_var::on_swap_with<Func, Args...>
         >
-        (fdn::move(next_uv.cont_), this, args...);
+        (fdn::move(next_uv.cont_), this, &next_uv, args...);
     }
     
 private:
@@ -88,13 +88,14 @@ private:
     struct on_swap_with {
         worker_type& operator() (
             worker_type&            wk
-        ,   continuation_type       cont
+        ,   continuation_type       prev_cont
         ,   basic_uncond_var* const self
+        ,   basic_uncond_var* const next_uv
         ,   Args* const ...         args
         ) {
             // Put the continuation to the uncond variable.
             // It may be used within Func.
-            self->cont_ = fdn::move(cont);
+            self->cont_ = fdn::move(prev_cont);
             
             // Execute the user-defined function.
             if (Func{}(wk, args...)) {
@@ -106,11 +107,30 @@ private:
                 CMPTH_P_ASSERT(P, self->cont_);
                 
                 // Take the continuation to execute.
-                cont = fdn::move(self->cont_);
+                prev_cont = fdn::move(self->cont_);
                 
-                // Switch back to the original thread.
-                wk.exit_to_cont_imm(fdn::move(cont));
+                // Return to the original thread.
+                wk.template cancel_suspend<
+                    basic_uncond_var::on_swap_with_fail
+                >
+                (fdn::move(prev_cont), next_uv);
             }
+        }
+    };
+    
+    struct on_swap_with_fail {
+        worker_type& operator() (
+            worker_type&            wk
+        ,   continuation_type       next_cont
+        ,   basic_uncond_var* const next_uv
+        ) {
+            // The continuation must not be the root context.
+            CMPTH_P_ASSERT(P, next_cont);
+            
+            // Return the context to the original uncond variable.
+            next_uv->cont_ = fdn::move(next_cont);
+            
+            return wk;
         }
     };
     
