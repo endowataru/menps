@@ -20,12 +20,18 @@ class basic_sct_scheduler
     using atomic_bool_type = typename base_ult_itf_type::template atomic<bool>;
     
 public:
-    basic_sct_scheduler() {
+    basic_sct_scheduler()
+    {
         auto& self = this->derived();
         CMPTH_P_ASSERT(P, self_ == nullptr);
         self_ = &self;
+        
+        worker_type::initialize_tls_global();
     }
-    ~basic_sct_scheduler() {
+    ~basic_sct_scheduler()
+    {
+        worker_type::finalize_tls_global();
+        
         auto& self = this->derived();
         CMPTH_P_ASSERT(P, self_ == &self);
         self_ = nullptr;
@@ -56,6 +62,7 @@ public:
     }
     
     static derived_type& get_instance() noexcept {
+        CMPTH_P_ASSERT(P, self_ != nullptr);
         return *self_;
     }
     

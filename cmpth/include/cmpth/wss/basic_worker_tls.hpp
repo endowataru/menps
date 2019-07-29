@@ -20,22 +20,34 @@ class basic_worker_tls
         typename base_ult_itf_type::template thread_specific<tls_policy>;
     
 public:
+    static void initialize_tls_global() {
+        CMPTH_P_ASSERT(P, tls_ == nullptr);
+        tls_ = new tls_type{};
+    }
+    static void finalize_tls_global() {
+        CMPTH_P_ASSERT(P, tls_ != nullptr);
+        delete tls_;
+        tls_ = nullptr;
+    }
+    
     void initialize_tls()
     {
         auto& self = this->derived();
         
-        CMPTH_P_ASSERT(P, tls_.get() == nullptr);
-        tls_.set(&self);
+        CMPTH_P_ASSERT(P, tls_ != nullptr);
+        CMPTH_P_ASSERT(P, tls_->get() == nullptr);
+        tls_->set(&self);
     }
     
     void finalize_tls()
     {
         this->check_cur_worker();
-        tls_.set(nullptr);
+        tls_->set(nullptr);
     }
     
     static derived_type& get_cur_worker() noexcept {
-        auto* const self = tls_.get();
+        CMPTH_P_ASSERT(P, tls_ != nullptr);
+        auto* const self = tls_->get();
         CMPTH_P_ASSERT(P, self != nullptr);
         return *self;
     }
@@ -45,11 +57,11 @@ public:
     }
     
 private:
-    static tls_type tls_;
+    static tls_type* tls_;
 };
 
 template <typename P>
-typename basic_worker_tls<P>::tls_type basic_worker_tls<P>::tls_{};
+typename basic_worker_tls<P>::tls_type* basic_worker_tls<P>::tls_ = nullptr;
 
 } // namespace cmpth
 

@@ -17,6 +17,13 @@ class dist_worker
     using cmd_code_type = typename P::cmd_code_type;
     
 public:
+    dist_worker() {
+        worker_base_type::initialize_tls_global();
+    }
+    ~dist_worker() {
+        worker_base_type::finalize_tls_global();
+    }
+    
     void execute_loop()
     {
         auto& self = this->derived();
