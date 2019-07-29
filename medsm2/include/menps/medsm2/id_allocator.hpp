@@ -28,6 +28,9 @@ public:
         this->num_ids_ = num_ids;
         
         this->buf_.coll_make(rma, coll, 1);
+        if (com.this_proc_id() == 0) {
+            *this->buf_.local(0) = 1;
+        }
     }
     
     size_type allocate(
