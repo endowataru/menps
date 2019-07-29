@@ -3,8 +3,6 @@
 export UCX_HANDLE_ERRORS=
 export MYTH_BIND_WORKERS=0
 
-MPIRUN_COMMAND="mpirun --allow-run-as-root"
-
 for n_procs in `seq 3`; do
     for n_wks in `seq 3`; do
         for n_ths in `seq 3`; do
@@ -14,8 +12,10 @@ for n_procs in `seq 3`; do
             eval echo Testing MYTH_NUM_WORKERS=$n_wks \
                 CMPTH_NUM_WORKERS=$n_wks \
                 MEDSM2_NUM_THREADS=$MEDSM2_NUM_THREADS \
-                ${MPIRUN_COMMAND} -n $n_procs "${@:1}"
-            eval ${MPIRUN_COMMAND} -n $n_procs "${@:1}"
+                ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} $n_procs \
+                ${MPIEXEC_PREFLAGS} "${@:1}" ${MPIEXEC_POSTFLAGS}
+            eval ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} $n_procs \
+                ${MPIEXEC_PREFLAGS} "${@:1}" ${MPIEXEC_POSTFLAGS}
         done
     done
 done

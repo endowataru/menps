@@ -8,6 +8,37 @@ INCLUDE(CheckCXXCompilerFlag)
 # This package adds CMAKE_THREAD_LIBS_INIT, which is used later.
 find_package(Threads)
 
+find_package(MPI REQUIRED)
+#message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
+#message(STATUS "MPI_GUESS_LIBRARY_NAME=${MPI_GUESS_LIBRARY_NAME}")
+
+if(NOT TARGET MPI::MPI_CXX)
+    add_library(MPI::MPI_CXX IMPORTED INTERFACE)
+    
+    set_property(TARGET MPI::MPI_CXX
+                 PROPERTY INTERFACE_COMPILE_OPTIONS ${MPI_CXX_COMPILE_FLAGS})
+    set_property(TARGET MPI::MPI_CXX
+                 PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
+    set_property(TARGET MPI::MPI_CXX
+                 PROPERTY INTERFACE_LINK_LIBRARIES ${MPI_CXX_LINK_FLAGS} ${MPI_CXX_LIBRARIES})
+endif()
+
+if (NOT DEFINED MPIEXEC_EXECUTABLE)
+    set(MPIEXEC_EXECUTABLE ${MPIEXEC} PARENT_SCOPE)
+endif()
+
+execute_process(
+    COMMAND ${MPIEXEC_EXECUTABLE} --allow-run-as-root ${MPIEXEC_PREFLAGS} echo a ${MPIEXEC_POSTFLAGS}
+    RESULT_VARIABLE MEFDN_MPIEXEC_HAS_ALLOW_RUN_AS_ROOT_RESULT
+    OUTPUT_QUIET ERROR_QUIET
+)
+
+if (MEFDN_MPIEXEC_HAS_ALLOW_RUN_AS_ROOT_RESULT)
+    set(MEFDN_MPIEXEC_PREFLAGS "${MPIEXEC_PREFLAGS}" PARENT_SCOPE)
+else()
+    set(MEFDN_MPIEXEC_PREFLAGS "${MPIEXEC_PREFLAGS} --allow-run-as-root --oversubscribe --bind-to none" PARENT_SCOPE)
+endif()
+
 # Do not link shared libraries again
 set(CMAKE_LINK_DEPENDS_NO_SHARED 1)
 
@@ -273,6 +304,7 @@ target_link_libraries(mefdn
     PUBLIC ${CMAKE_THREAD_LIBS_INIT} # Add "-lpthread".
     PUBLIC cmpth # now mefdn depends on cmpth
     PRIVATE mefdn-options
+    PUBLIC MPI::MPI_CXX
 )
 install(TARGETS mefdn
     LIBRARY DESTINATION lib
