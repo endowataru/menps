@@ -160,13 +160,13 @@ private:
     struct on_wait_with {
         worker_type& operator() (
             worker_type&            wk
-        ,   continuation_type       cont
+        ,   continuation_type       prev_cont
         ,   basic_uncond_var* const self
         ,   Args* const ...         args
         ) {
             // Put the continuation to the uncond variable.
             // It may be used within Func.
-            self->cont_ = fdn::move(cont);
+            self->cont_ = fdn::move(prev_cont);
             
             // Execute the user-defined function.
             if (Func{}(wk, args...)) {
@@ -178,25 +178,28 @@ private:
                 CMPTH_P_ASSERT(P, self->cont_);
                 
                 // Take the continuation to execute.
-                cont = fdn::move(self->cont_);
+                prev_cont = fdn::move(self->cont_);
                 
                 // Return to the original thread.
                 wk.template cancel_suspend<
-                    basic_uncond_var::on_wait_with_ret
+                    basic_uncond_var::on_wait_with_fail
                 >
-                (fdn::move(cont));
+                (fdn::move(prev_cont));
             }
         }
     };
     
-    struct on_wait_with_ret {
+    struct on_wait_with_fail {
         worker_type& operator() (
             worker_type&        wk
-        ,   continuation_type   cont
+        ,   continuation_type   next_cont
         ) {
-            if (cont) {
+            if (next_cont) {
                 // Return the popped task for the wait.
-                wk.local_push_top(fdn::move(cont));
+                wk.local_push_top(fdn::move(next_cont));
+            }
+            else {
+                // The context was on top of the root task.
             }
             
             return wk;
