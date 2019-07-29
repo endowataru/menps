@@ -72,7 +72,13 @@ public:
         ,   result_lptr
         );
         
+        #if 1
+        // TODO: OpenMPI has a issue which misses remote progress in MPI_Win_flush_local().
+        //  https://github.com/open-mpi/ompi/issues/3750
+        self.flush(target_proc);
+        #else
         self.flush_local(target_proc);
+        #endif
     }
     
     template <typename T>
@@ -93,7 +99,13 @@ public:
         ,   result_lptr
         );
         
+        #if 1
+        // TODO: OpenMPI has a issue which misses remote progress in MPI_Win_flush_local().
+        //  https://github.com/open-mpi/ompi/issues/3750
+        self.flush(target_proc);
+        #else
         self.flush_local(target_proc);
+        #endif
     }
 };
 
