@@ -105,7 +105,7 @@ private:
     }
     template <typename T>
     static void print_var(std::ostringstream& os, T* const ptr) {
-        os << "0x" << reinterpret_cast<fdn::intptr_t>(ptr);
+        os << "0x" << std::hex << reinterpret_cast<fdn::intptr_t>(ptr) << std::dec;
     }
 };
 
