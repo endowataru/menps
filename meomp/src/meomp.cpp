@@ -449,16 +449,7 @@ void omp_destroy_lock(omp_lock_t* const lk) {
 
 namespace /*unnamed*/ {
 
-MEOMP_GLOBAL_VAR omp_lock_t g_critical_lock;
-
-#if 0
-MEOMP_GLOBAL_VAR omp_lock_t g_heap_lock;
-#ifdef MEOMP_ENABLE_LINEAR_ALLOCATOR
-MEOMP_GLOBAL_VAR mefdn::size_t g_heap_used;
-#else
-MEOMP_GLOBAL_VAR mspace g_heap_ms;
-#endif
-#endif
+omp_lock_t* g_critical_lock;
 
 } // unnamed namespace
 
@@ -466,14 +457,14 @@ extern "C"
 void GOMP_critical_start();
 extern "C"
 void GOMP_critical_start() {
-    omp_set_lock(&g_critical_lock);
+    omp_set_lock(g_critical_lock);
 }
 
 extern "C"
 void GOMP_critical_end();
 extern "C"
 void GOMP_critical_end() {
-    omp_unset_lock(&g_critical_lock);
+    omp_unset_lock(g_critical_lock);
 }
 
 extern "C"
@@ -952,9 +943,15 @@ int main(int argc, char* argv[])
     g_heap_ptr = df.init_heap_seg(g_heap_size, MEOMP_HEAP_BLOCK_SIZE);
     
     if (coll.this_proc_id() == 0) {
+        g_critical_lock = static_cast<omp_lock_t*>(df.allocate(sizeof(omp_lock_t)));
+    }
+    
+    g_coll->untyped_broadcast(0, &g_critical_lock, sizeof(omp_lock_t*));
+    
+    if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();
         
-        omp_init_lock(&g_critical_lock);
+        omp_init_lock(g_critical_lock);
         
         g_argc = argc;
         g_argv = pack_argv(argc, argv);
@@ -981,7 +978,7 @@ int main(int argc, char* argv[])
         
         meomp_free(g_argv);
         
-        omp_destroy_lock(&g_critical_lock);
+        omp_destroy_lock(g_critical_lock);
         
         sp.disable_on_this_thread();
     }
