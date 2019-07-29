@@ -3,6 +3,9 @@
 set -e
 
 BUILD_TYPE=${1:-Release}
+if [ -z "${BUILD_DIR}" ]; then BUILD_DIR=./build/$BUILD_TYPE; fi
 
-cd build/$BUILD_TYPE && make "${@:2}"
+cd ${BUILD_DIR}
+
+cmake --build . -- "${@:2}"
 
