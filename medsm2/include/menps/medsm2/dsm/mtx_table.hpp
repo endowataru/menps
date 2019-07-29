@@ -52,6 +52,14 @@ public:
     ) {
         auto& rma = com.get_rma();
         
+        MEFDN_LOG_VERBOSE(
+            "msg:Start locking global mutex.\t"
+            "mtx_id:0x{:x}"
+        ,   mtx_id
+        );
+        
+        MEFDN_ASSERT(P::is_valid_mutex_id(mtx_id));
+        
         auto& le = this->les_[mtx_id];
         le.mtx.lock();
         
@@ -68,6 +76,12 @@ public:
         // Deserialize the buffer and return it as a signature.
         auto sig_buf = sig_buffer_type::deserialize_from(buf_ptr, this->sig_bytes_);
         
+        MEFDN_LOG_VERBOSE(
+            "msg:Locked global mutex.\t"
+            "mtx_id:0x{:x}"
+        ,   mtx_id
+        );
+        
         return { mefdn::move(sig_buf) };
     }
     
@@ -76,6 +90,14 @@ public:
     ,   const mtx_id_type       mtx_id
     ,   const sig_buffer_type&  sig_buf
     ) {
+        MEFDN_LOG_VERBOSE(
+            "msg:Start unlocking global mutex.\t"
+            "mtx_id:0x{:x}"
+        ,   mtx_id
+        );
+        
+        MEFDN_ASSERT(P::is_valid_mutex_id(mtx_id));
+        
         const auto ser_buf = sig_buf.serialize(this->sig_bytes_);
         
         auto& p2p = com.get_p2p_lock();
@@ -85,6 +107,12 @@ public:
         
         auto& le = this->les_[mtx_id];
         le.mtx.unlock();
+        
+        MEFDN_LOG_VERBOSE(
+            "msg:Unlocked global mutex.\t"
+            "mtx_id:0x{:x}"
+        ,   mtx_id
+        );
     }
     
 private:
