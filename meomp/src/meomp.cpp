@@ -826,6 +826,10 @@ void meomp_free(void* const ptr) {
     g_df->deallocate(ptr);
 }
 
+void meomp_local_barrier() {
+    g_df->local_barrier();
+}
+
 }
 
 #ifndef MEFDN_OS_MAC_OS_X

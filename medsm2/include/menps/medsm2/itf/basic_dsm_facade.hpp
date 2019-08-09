@@ -291,6 +291,11 @@ public:
         }
     }
     
+    void local_barrier()
+    {
+        this->bar_->arrive_and_wait();
+    }
+    
     thread_num_type get_thread_num() {
         const auto& ti = this->get_thread_info();
         return ti.th_num;

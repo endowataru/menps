@@ -24,6 +24,8 @@ extern void* meomp_malloc(size_t);
 
 extern void meomp_free(void*);
 
+extern void meomp_local_barrier();
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
