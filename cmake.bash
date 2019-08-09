@@ -4,7 +4,7 @@ set -e
 
 BUILD_TYPE=${1:-Release}
 if [ -z "${BUILD_DIR}" ]; then BUILD_DIR=./build/$BUILD_TYPE; fi
-MENPS_DIR=$(pwd)
+if [ -z "${SOURCE_DIR}" ]; then SOURCE_DIR=$(cd $(dirname $0); pwd); fi
 
 # Create directories for out-of-source build.
 mkdir -p $BUILD_DIR || true
@@ -24,7 +24,7 @@ cmake \
     -DCMAKE_C_COMPILER=$C_COMPILER \
     -DCMAKE_CXX_COMPILER=$CXX_COMPILER \
     "${@:2}" \
-    ${MENPS_DIR}
+    ${SOURCE_DIR}
 
 echo "$@" >> cmake.bash.log
 
