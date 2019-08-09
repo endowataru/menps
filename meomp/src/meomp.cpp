@@ -877,7 +877,8 @@ inline mefdn::size_t get_heap_size()
 {
     mefdn::size_t ret = MEOMP_HEAP_SIZE;
     if (const auto str = std::getenv("MEOMP_HEAP_SIZE")) {
-        ret = static_cast<mefdn::size_t>(std::atoi(str));
+        // Note: Use long long for large heap sizes.
+        ret = static_cast<mefdn::size_t>(std::atoll(str));
     }
     if (ret % 0x1000 != 0 || ret <= 0) {
         throw std::invalid_argument("Invalid MEOMP_HEAP_SIZE");
