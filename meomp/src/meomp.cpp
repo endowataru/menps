@@ -22,6 +22,8 @@
 #include <cmpth/ctx/x86_64_context_policy.hpp>
 #include "omp_task_desc.hpp"
 
+#include <omp.h>
+
 extern "C"
 int meomp_main(int argc, char** argv);
 
@@ -254,39 +256,58 @@ using worker_base_type = menps::meomp::my_worker_base;
 using child_worker_type = menps::meomp::my_child_worker;
 
 extern "C"
-int omp_get_thread_num();
-extern "C"
 int omp_get_thread_num()
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
 {
     return worker_base_type::get_cur_worker().get_thread_num();
 }
 
 extern "C"
-int omp_get_thread_num_() {
+int omp_get_thread_num_()
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
+{
     return omp_get_thread_num();
 }
 
 extern "C"
-int omp_get_num_threads();
-extern "C"
 int omp_get_num_threads()
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
 {
     return worker_base_type::get_cur_worker().get_num_threads();
 }
 
 extern "C"
-int omp_get_num_threads_() { return omp_get_num_threads(); }
+int omp_get_num_threads_()
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
+{
+    return omp_get_num_threads();
+}
 
 extern "C"
-int omp_get_max_threads();
-extern "C"
 int omp_get_max_threads()
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
 {
     return g_coll->get_num_procs() * meomp::my_dist_worker::get_threads_per_proc();
 }
 
 extern "C"
-int omp_get_max_threads_() { return omp_get_max_threads(); }
+int omp_get_max_threads_()
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
+{
+    return omp_get_max_threads();
+}
 
 extern "C"
 int meomp_get_num_procs() {
@@ -310,12 +331,19 @@ int meomp_get_local_thread_num() {
 
 extern "C"
 double omp_get_wtime()
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
 {
     return menps::mefdn::get_current_sec();
 }
 
 extern "C"
-double omp_get_wtime_() {
+double omp_get_wtime_()
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
+{
     return omp_get_wtime();
 }
 
@@ -377,17 +405,20 @@ void GOMP_parallel(
 
 #define MEOMP_USE_MEDSM_MUTEX
 
+#if 0
 // Just copy the definition from libgomp omp.h.
 typedef struct {
     unsigned char _x[4]
     __attribute__((__aligned__(4)));
 }
 omp_lock_t;
+#endif
 
 extern "C"
-void omp_set_lock(omp_lock_t* const lk);
-extern "C"
 void omp_set_lock(omp_lock_t* const lk)
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
 {
     #ifdef MEOMP_USE_MEDSM_MUTEX
     const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
@@ -409,9 +440,10 @@ void omp_set_lock(omp_lock_t* const lk)
     #endif
 }
 extern "C"
-void omp_unset_lock(omp_lock_t* const lk);
-extern "C"
 void omp_unset_lock(omp_lock_t* const lk)
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
 {
     #ifdef MEOMP_USE_MEDSM_MUTEX
     const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
@@ -425,9 +457,11 @@ void omp_unset_lock(omp_lock_t* const lk)
     #endif
 }
 extern "C"
-void omp_init_lock(omp_lock_t* const lk);
-extern "C"
-void omp_init_lock(omp_lock_t* const lk) {
+void omp_init_lock(omp_lock_t* const lk)
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
+{
     #ifdef MEOMP_USE_MEDSM_MUTEX
     const auto mtx_id_ptr = reinterpret_cast<space_t::mutex_id_t*>(lk);
     *mtx_id_ptr = g_sp->allocate_mutex();
@@ -440,9 +474,11 @@ void omp_init_lock(omp_lock_t* const lk) {
     #endif
 }
 extern "C"
-void omp_destroy_lock(omp_lock_t* /*lk*/);
-extern "C"
-void omp_destroy_lock(omp_lock_t* const lk) {
+void omp_destroy_lock(omp_lock_t* const lk)
+    #ifdef MEFDN_COMPILER_INTEL
+    noexcept
+    #endif
+{
     #ifdef MEOMP_USE_MEDSM_MUTEX
     const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
     g_sp->deallocate_mutex(mtx_id);
@@ -486,6 +522,22 @@ using kmp_int64 = mefdn::int64_t;
 
 using kmpc_micro = void (*)(kmp_int32* , kmp_int32*, ...);
 using microtask_t = void (*)(int*, int*, ...);
+
+using kmp_critical_name = kmp_int32 [8];
+
+extern "C"
+void __kmpc_begin(ident* loc, kmp_int32 flags);
+extern "C"
+void __kmpc_begin(ident* /*loc*/, kmp_int32 /*flags*/) {
+    // Do nothing.
+}
+
+extern "C"
+void __kmpc_end(ident* loc);
+extern "C"
+void __kmpc_end(ident* /*loc*/) {
+    // Do nothing.
+}
 
 namespace menps {
 namespace meomp {
@@ -782,43 +834,48 @@ void __kmpc_for_static_fini(ident* /*loc*/, kmp_int32 /*global_tid*/) {
     // Do nothing.
 }
 
+
 extern "C"
-void __kmpc_init_lock(omp_lock_t* const lk)
-{
+void __kmpc_init_lock(ident* loc, kmp_int32 gtid, void** user_lock);
+extern "C"
+void __kmpc_init_lock(ident* /*loc*/, kmp_int32 /*gtid*/, void** const user_lock) {
+    const auto lk = reinterpret_cast<omp_lock_t*>(user_lock);
     omp_init_lock(lk);
 }
 extern "C"
-void __kmpc_destroy_lock(omp_lock_t* const lk)
-{
+void __kmpc_destroy_lock(ident* loc, kmp_int32 gtid, void** user_lock);
+extern "C"
+void __kmpc_destroy_lock(ident* /*loc*/, kmp_int32 /*gtid*/, void** const user_lock) {
+    const auto lk = reinterpret_cast<omp_lock_t*>(user_lock);
     omp_destroy_lock(lk);
 }
 
 extern "C"
-void __kmpc_set_lock(omp_lock_t* const lk);
+void __kmpc_set_lock(ident* loc, kmp_int32 gtid, void** user_lock);
 extern "C"
-void __kmpc_set_lock(omp_lock_t* const lk)
-{
+void __kmpc_set_lock(ident* /*loc*/, kmp_int32 /*gtid*/, void** const user_lock) {
+    const auto lk = reinterpret_cast<omp_lock_t*>(user_lock);
     omp_set_lock(lk);
 }
 extern "C"
-void __kmpc_unset_lock(omp_lock_t* const lk);
+void __kmpc_unset_lock(ident* loc, kmp_int32 gtid, void** user_lock);
 extern "C"
-void __kmpc_unset_lock(omp_lock_t* const lk)
-{
+void __kmpc_unset_lock(ident* /*loc*/, kmp_int32 /*gtid*/, void** const user_lock) {
+    const auto lk = reinterpret_cast<omp_lock_t*>(user_lock);
     omp_unset_lock(lk);
 }
 
 extern "C"
-void __kmpc_critical();
+void __kmpc_critical(ident* loc, kmp_int32 global_tid, kmp_critical_name* crit);
 extern "C"
-void __kmpc_critical() {
+void __kmpc_critical(ident* /*loc*/, kmp_int32 /*global_tid*/, kmp_critical_name* /*crit*/) {
     GOMP_critical_start();
 }
 
 extern "C"
-void __kmpc_end_critical();
+void __kmpc_end_critical(ident* loc, kmp_int32 global_tid, kmp_critical_name* crit);
 extern "C"
-void __kmpc_end_critical() {
+void __kmpc_end_critical(ident* /*loc*/, kmp_int32 /*global_tid*/, kmp_critical_name* /*crit*/) {
     GOMP_critical_end();
 }
 
