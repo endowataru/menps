@@ -20,6 +20,8 @@ extern int meomp_get_proc_num();
 
 extern int meomp_get_local_thread_num(void);
 
+extern int meomp_get_num_local_threads(void);
+
 extern void* meomp_malloc(size_t);
 
 extern void meomp_free(void*);
