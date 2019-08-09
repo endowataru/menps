@@ -9,3 +9,8 @@ GRTAGS
 GSYMS
 GTAGS
 
+*.pyc
+*.o
+
+output.yaml
+
