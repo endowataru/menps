@@ -511,10 +511,14 @@ private:
         const auto ret =
             this->req_hld_.progress(this->orig_mf_, complete_request());
         
+        #ifdef MEQDC_MPI_ENABLE_ALWAYS_PROGRESS
+        this->orig_mf_.progress();
+        #else
         #ifdef MEQDC_MPI_ENABLE_STATIC_OFFLOADING
         if (ret.num_ongoing == 0) {
             this->orig_mf_.progress();
         }
+        #endif
         #endif
         
         MEFDN_LOG_VERBOSE("msg:Exiting progress of proxy MPI.");

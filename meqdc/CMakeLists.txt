@@ -10,6 +10,7 @@ set(MEQDC_MPI_ULT_ITF "SCT" CACHE STRING "Default ULT interface for meqdc-wrap-m
 option(MEQDC_MPI_ENABLE_STATIC_OFFLOADING "Enable static offloading in MPI" FALSE)
 set(MEQDC_MPI_REQUEST_POOL_MAX_ENTRIES 128 CACHE STRING "Pool threshold for MPI requests")
 set(MEQDC_MPI_DELEGATOR_POOL_MAX_ENTRIES 128 CACHE STRING "Pool threshold for MPI delegator")
+option(MEQDC_MPI_ENABLE_ALWAYS_PROGRESS "Always issue MPI progress" TRUE)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/menps/meqdc/config.h)
