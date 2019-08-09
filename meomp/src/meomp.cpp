@@ -708,7 +708,7 @@ void kmpc_for_static_init(
     // Follow the calculation of kmp_sch_static_greedy.
     
     const auto big_chunk_inc_count =
-        mefdn::roundup_divide(trip_count, num_threads);
+        mefdn::roundup_divide(trip_count, num_threads) * incr;
     
     const auto new_lower = old_lower + tid * big_chunk_inc_count;
     const auto new_upper = new_lower + big_chunk_inc_count - incr;
