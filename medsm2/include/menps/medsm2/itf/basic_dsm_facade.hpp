@@ -113,7 +113,11 @@ public:
         
         if (coll.this_proc_id() == 0) {
             this->heap_mtx_id_ = this->sp_->allocate_mutex();
-            
+        }
+        
+        coll.broadcast(0, &this->heap_mtx_id_, 1);
+        
+        if (coll.this_proc_id() == 0) {
             this->enable_on_this_thread();
             
             *this->heap_used_ = 0;
