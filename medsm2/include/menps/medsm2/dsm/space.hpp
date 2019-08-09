@@ -157,11 +157,15 @@ public:
         
         const auto lk_ret = this->mtx_tbl_.lock(com, mtx_id);
         
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        this->fence_acquire();
+        #else
         // Apply the WNs and self-invalidation to this process.
         this->acquire_sig(lk_ret.sig_buf);
         
         // Merge the signature for subsequent releases.
         this->rel_sig_.merge(this->seg_tbl_, lk_ret.sig_buf);
+        #endif
     }
     
     void unlock_mutex(const mtx_id_type mtx_id)
@@ -218,6 +222,10 @@ public:
     
     void fence_acquire(const sig_id_type sig_id)
     {
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        this->fence_acquire();
+        
+        #else
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
@@ -229,6 +237,7 @@ public:
         
         // Merge the signature for subsequent releases.
         this->rel_sig_.merge(this->seg_tbl_, sig_buf);
+        #endif
     }
     
     void fence_release()
@@ -248,16 +257,16 @@ public:
         // If the callback returns false,
         // the corresponding block will be removed in the next release.
         auto wrs_ret =
-            this->wr_set_.start_release_for_all_blocks(
-                com, rd_ts_st, this->seg_tbl_
-            );
+            this->wr_set_.start_release_for_all_blocks(com, rd_ts_st, this->seg_tbl_);
         
         if (!wrs_ret.needs_release) {
             return;
         }
         
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         // Union the write notice vector and the release signature.
         this->rel_sig_.merge(this->seg_tbl_, mefdn::move(wrs_ret.wn_vec));
+        #endif
         
         // Notify the other threads waiting for the finish of the release fence.
         this->wr_set_.finish_release();
@@ -286,6 +295,12 @@ public:
             prof::finish(prof_kind::fence, p);
         }
         
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        coll.barrier();
+
+        this->fence_acquire();
+        
+        #else
         const auto sig_size = this->rel_sig_.get_max_size_in_bytes();
         
         // Serialize the release signature to transfer via MPI.
@@ -305,7 +320,7 @@ public:
         }
         
         MEFDN_LOG_DEBUG("msg:Exchanged signatures for barrier.");
-        
+
         {
             const auto p = prof::start();
             
@@ -344,6 +359,7 @@ public:
             
             prof::finish(prof_kind::barrier_acq, p);
         }
+        #endif
         
         #ifdef MEDSM2_FORCE_SELF_INVALIDATE_ALL
         this->rd_set_.self_invalidate_all(
@@ -358,6 +374,23 @@ public:
         MEFDN_LOG_DEBUG("msg:Exiting DSM barrier.");
     }
     
+    #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+private:
+    void fence_acquire() {
+        MEFDN_LOG_VERBOSE("msg:Start acquire fence.");
+        
+        auto& self = this->derived();
+        auto& com = self.get_com_itf();
+        this->rd_set_.self_invalidate(
+            [&] (const rd_ts_state_type& rd_ts_st, const blk_id_type blk_id) {
+                return this->seg_tbl_.self_invalidate(com, rd_ts_st, blk_id);
+            }
+        );
+        
+        MEFDN_LOG_VERBOSE("msg:Finish acquire fence.");
+    }
+    
+    #else // MEDSM2_USE_DIRECTORY_COHERENCE
 private:
     void acquire_sig(const sig_buffer_type& sig)
     {
@@ -401,6 +434,7 @@ private:
             }
         );
     }
+    #endif
     
 public:
     template <typename BlkTablePtr>

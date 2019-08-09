@@ -18,6 +18,8 @@
 #ifdef MEDSM2_ENABLE_REL_THREAD
 #include <menps/medsm2/dsm/rel_thread.hpp>
 #endif
+#include <menps/medsm2/dsm/sharer_map.hpp>
+#include <menps/medsm2/dsm/unordered_rd_set.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -90,14 +92,23 @@ struct dsm_base_policy
         static const size_type max_space_size = MEDSM2_MAX_SPACE_SIZE;
         static const size_type max_seg_size = MEDSM2_MAX_SEG_SIZE;
         static const rd_ts_type lease_ts = MEDSM2_LEASE_TS;
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        static const size_type max_rel_sig_len = 0;
+        #else
         static const size_type max_rel_sig_len = MEDSM2_REL_SIG_LEN;
+        #endif
     };
     
     using sig_buffer_type = sig_buffer<dsm_base_policy>;
     
     using rel_sig_type = rel_sig<dsm_base_policy>;
+    #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+    using rd_set_type = unordered_rd_set<dsm_base_policy>;
+    using rd_ts_state_type = typename rd_set_type::rd_ts_state;
+    #else
     using rd_set_type = rd_set<dsm_base_policy>;
     using rd_ts_state_type = rd_ts_state<dsm_base_policy>;
+    #endif
     using wr_set_type = wr_set<dsm_base_policy>;
     
     using sig_id_type = mefdn::size_t;
@@ -137,6 +148,10 @@ struct dsm_base_policy
     
     #ifdef MEDSM2_ENABLE_REL_THREAD
     using rel_thread_type = rel_thread<dsm_base_policy>;
+    #endif
+
+    #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+    using sharer_map_type = sharer_map<dsm_base_policy>;
     #endif
 };
 

@@ -53,7 +53,9 @@ public:
     
     struct start_release_result {
         bool needs_release;
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         wn_vector_type wn_vec;
+        #endif
     };
     
     template <typename SegTable>
@@ -85,7 +87,11 @@ public:
                     this->rel_cv_.wait(lk);
                 }
                 
-                return { false, {} };
+                return { false
+                    #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
+                    , {}
+                    #endif
+                    };
             }
             
             // This thread was selected for releasing this generation.
@@ -144,7 +150,8 @@ public:
             ult_itf_type::execution::par
         ,   0, num_released, stride
             // TODO: Too many captured variables...
-        ,   [&rel_results, &new_dirty_ids, &com, &rd_ts_st, &seg_table, num_released, stride] (const size_type first) {
+        ,   [&rel_results, &new_dirty_ids, &com, &rd_ts_st, &seg_table, num_released, stride]
+            (const size_type first) {
                 const auto last = mefdn::min(first + stride, num_released);
                 for (size_type i = first; i < last; ++i) {
                     const auto p = prof::start();
@@ -158,6 +165,7 @@ public:
             }
         );
         
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         wn_vector_type wn_vec;
         // Pre-allocate the write notice vector.
         wn_vec.reserve(num_released);
@@ -177,6 +185,7 @@ public:
                 });
             }
         }
+        #endif
         
         // Remove non-writable blocks from the dirty ID array.
         const auto dirty_last =
@@ -205,7 +214,11 @@ public:
         
         this->dirty_ids_ = mefdn::move(new_dirty_ids);
         
-        return { true, wn_vec };
+        return { true
+            #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
+            , wn_vec
+            #endif
+            };
     }
     
     void finish_release()

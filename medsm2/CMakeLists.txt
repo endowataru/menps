@@ -33,6 +33,7 @@ set(MEDSM2_REL_THREAD_USEC "10000000" CACHE STRING "Fence period for releaser th
 option(MEDSM2_ENABLE_LINEAR_ALLOCATOR "Use linear allocator" ON)
 option(MEDSM2_USE_SIG_BUFFER_MERGE_TABLE "Use blk_flag_table to merge signatures" ON)
 option(MEDSM2_ENABLE_MIGRATION "Enable data migration" ON)
+option(MEDSM2_USE_DIRECTORY_COHERENCE "Use directory coherence instead of timestamp-based" OFF)
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in

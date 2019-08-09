@@ -49,7 +49,7 @@ public:
     using flag_table_type = blk_flag_table<base_policy_type>;
     #endif
     
-    #ifdef MEDSM2_ENABLE_MIGRATION
+    #ifdef MEDSM2_ENABLE_FAST_RELEASE
     // TODO: simplify the class hierarchy
     using lock_table_type::read_lock_entry;
     using lock_table_type::write_lock_entry;

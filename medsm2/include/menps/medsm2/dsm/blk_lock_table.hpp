@@ -50,20 +50,39 @@ class blk_lock_table
     using blk_pos_type = typename P::blk_pos_type;
     using unique_lock_type = typename P::unique_lock_type;
     
+    #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+    using sharer_map_type = typename P::sharer_map_type;
+    #else
     using wr_ts_type = typename P::wr_ts_type;
     using rd_ts_type = typename P::rd_ts_type;
+    #endif
+
+    using size_type = typename P::size_type;
     
 public:
     template <typename Conf>
     void coll_make(const Conf& conf)
     {
-        base::coll_make(conf.com, conf.num_blks, sizeof(global_entry));
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        this->ge_size_ = sharer_map_type::get_sharer_map_size(conf.com.get_num_procs());
+        #endif
+        base::coll_make(conf.com, conf.num_blks,
+            #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+            this->ge_size_
+            #else
+            sizeof(global_entry)
+            #endif
+            );
     }
     
     struct lock_global_result {
         proc_id_type    owner;
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        sharer_map_type sharers;
+        #else
         wr_ts_type      home_wr_ts;
         rd_ts_type      home_rd_ts;
+        #endif
     };
     
     lock_global_result lock_global(
@@ -80,15 +99,29 @@ public:
         
         auto& rma = com.get_rma();
         const auto ge_buf =
-            rma.template make_unique_uninitialized<mefdn::byte []>(sizeof(global_entry));
+            rma.template make_unique_uninitialized<mefdn::byte []>(
+                #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+                this->ge_size_
+                #else
+                sizeof(global_entry)
+                #endif
+                );
         const auto ge_buf_ptr = ge_buf.get();
         
         const auto lk_ret = base::lock_global(com, p2p, blk_pos, tag, ge_buf_ptr);
         
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         const mefdn::byte* const ge_byte_ptr = ge_buf_ptr; // implicit conversion
         const auto ge = *reinterpret_cast<const global_entry*>(ge_byte_ptr); // TODO: remove cast
+        #endif
         
-        return { lk_ret.owner, ge.home_wr_ts, ge.home_rd_ts };
+        return { lk_ret.owner,
+            #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+            sharer_map_type::copy_from(ge_buf_ptr, this->ge_size_)
+            #else
+            ge.home_wr_ts, ge.home_rd_ts
+            #endif
+            };
     }
     
     template <typename EndTransactionResult>
@@ -121,8 +154,16 @@ public:
         auto& p2p = com.get_p2p();
         const auto tag = P::get_tag_from_blk_id(blk_id);
         
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         global_entry ge{ et_ret.new_wr_ts, et_ret.new_rd_ts };
-        base::unlock_global(com, p2p, blk_pos, tag, &ge);
+        #endif
+        base::unlock_global(com, p2p, blk_pos, tag,
+            #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+            et_ret.sharers.get_raw()
+            #else
+            &ge
+            #endif
+            );
     }
     
     #ifdef MEDSM2_ENABLE_MIGRATION
@@ -142,6 +183,11 @@ public:
     }
     #endif
     
+    #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+private:
+    size_type ge_size_ = 0;
+
+    #else
 private:
     struct global_entry {
         // The timestamp that can be read by other writers.
@@ -153,7 +199,7 @@ private:
         rd_ts_type  home_rd_ts;
     };
     
-    #ifdef MEDSM2_ENABLE_MIGRATION
+    #ifdef MEDSM2_ENABLE_FAST_RELEASE
 public:
     global_entry read_lock_entry(const blk_pos_type blk_pos) {
         // TODO: atomicity
@@ -176,7 +222,8 @@ private:
         mefdn::byte* const p_raw = p; // implicit conversion
         return *reinterpret_cast<global_entry*>(p_raw);
     }
-    #endif
+    #endif // MEDSM2_ENABLE_FAST_RELEASE
+    #endif // MEDSM2_USE_DIRECTORY_COHERENCE
 };
 
 } // namespace medsm2

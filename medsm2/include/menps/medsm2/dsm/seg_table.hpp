@@ -24,8 +24,10 @@ class seg_table
     using seg_id_type = typename P::seg_id_type;
     using blk_id_type = typename P::blk_id_type;
     using blk_pos_type = typename P::blk_pos_type;
+    #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
     using rd_ts_type = typename P::rd_ts_type;
     using wr_ts_type = typename P::wr_ts_type;
+    #endif
     
     using blk_tbl_type = typename P::blk_tbl_type;
     using blk_lock_tbl_type = typename blk_tbl_type::lock_table_type;
@@ -114,8 +116,10 @@ public:
         // Indicate that this block was invalid and now becomes readable.
         // This flag is used for upgrading the block in a segmentation fault.
         bool is_newly_read;
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         // The read timestamp for this block.
         rd_ts_type rd_ts;
+        #endif
     };
     
     MEFDN_NODISCARD
@@ -151,7 +155,7 @@ public:
         
         const auto rd_ts_st = rd_set.get_ts_state();
         
-        return { read_ret, this->start_write_locked(wr_set, rd_ts_st, info) };
+        return { read_ret, this->start_write_locked( wr_set, rd_ts_st, info) };
     }
     
     using pin_result = start_write_result;
@@ -229,6 +233,17 @@ private:
                 
                 prof::finish(prof_kind::tx_read, p);
                 
+                #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+                MEFDN_LOG_DEBUG(
+                    "msg:Start reading latest block.\t"
+                    "blk_pos:{}\t"
+                    "home_proc:{}\t"
+                    "{}"
+                ,   info.blk_pos
+                ,   start_ret.home_proc
+                ,   this->show_transaction_result(tx_ret)
+                );
+                #else
                 MEFDN_LOG_DEBUG(
                     "msg:Start reading latest block.\t"
                     "blk_pos:{}\t"
@@ -240,8 +255,14 @@ private:
                 ,   start_ret.rd_ts
                 ,   this->show_transaction_result(tx_ret)
                 );
+                #endif
             }
             else {
+                #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+                // Note: Unreachable path.
+                std::abort();
+                
+                #else
                 // Although this block was invalidated,
                 // its read timestamp for this process is still alive.
                 
@@ -261,13 +282,16 @@ private:
                 ,   start_ret.rd_ts
                 ,   start_ret.is_dirty
                 );
+                #endif
             }
         }
         
         return {
             start_ret.needs_read
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         ,   start_ret.rd_ts
             // FIXME: rd_ts must be updated. Return the new value here.
+        #endif
         };
     }
     
@@ -300,6 +324,7 @@ private:
     }
     
 public:
+    #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
     typename blk_dir_tbl_type::acquire_result
     acquire(
         com_itf_type&           com
@@ -356,6 +381,7 @@ public:
         
         return ret;
     }
+    #endif // MEDSM2_USE_DIRECTORY_COHERENCE
     
     typename blk_dir_tbl_type::self_invalidate_result
     self_invalidate(
@@ -366,7 +392,11 @@ public:
         const auto info = this->get_local_lock(blk_id);
         
         const auto ret =
-            info.dir_tbl.self_invalidate(rd_ts_st, info.blk_pos, info.lk);
+            info.dir_tbl.self_invalidate(
+                #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
+                rd_ts_st,
+                #endif
+                info.blk_pos, info.lk);
         
         if (ret.needs_merge) {
             // Do a merge for the pinned block.
@@ -380,6 +410,16 @@ public:
             info.data_tbl.invalidate(info.blk_pos, info.lk);
         }
         
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        MEFDN_LOG_DEBUG(
+            "msg:{}.\t"
+            "blk_pos:{}\t"
+        ,   (ret.needs_protect ? "Self-invalidated block." :
+                (ret.is_ignored ? "Avoid self-invalidation." :
+                    "Self-invalidate invalid block."))
+        ,   info.blk_pos
+        );
+        #else
         MEFDN_LOG_DEBUG(
             "msg:{}.\t"
             "blk_pos:{}\t"
@@ -394,6 +434,7 @@ public:
         ,   ret.rd_ts
         ,   rd_ts_st.get_min_wr_ts()
         );
+        #endif
         
         return ret;
     }
@@ -404,8 +445,10 @@ public:
         // Indicate that this block can be removed from the write set.
         bool is_still_writable;
         proc_id_type new_owner;
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         rd_ts_type new_rd_ts;
         wr_ts_type new_wr_ts;
+        #endif
     };
     
     release_result release(
@@ -424,7 +467,11 @@ public:
         
         if (!check_ret.needs_release) {
             // This block is not released now.
-            return { false, false, false, this_proc, 0, 0 };
+            return { false, false, false, this_proc
+                #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
+                , 0, 0
+                #endif
+                };
         }
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
@@ -465,14 +512,16 @@ public:
         ,   tx_ret.mg_ret.is_written
         ,   tx_ret.et_ret.is_still_writable
         ,   tx_ret.et_ret.new_owner
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         ,   tx_ret.et_ret.new_rd_ts
         ,   tx_ret.et_ret.new_wr_ts
+        #endif
         };
     }
     
 private:
     struct do_transaction_result {
-        typename blk_lock_tbl_type::lock_global_result      glk_ret;
+        //typename blk_lock_tbl_type::lock_global_result      glk_ret;
         typename blk_dir_tbl_type::begin_transaction_result bt_ret;
         typename blk_data_tbl_type::release_merge_result    mg_ret;
         typename blk_dir_tbl_type::end_transaction_result   et_ret;
@@ -523,8 +572,7 @@ private:
         
         // End the transaction.
         const auto et_ret =
-            info.dir_tbl.end_transaction(com, rd_ts_st,
-                info.blk_id, info.blk_pos, info.lk, bt_ret, mg_ret);
+            info.dir_tbl.end_transaction(com, rd_ts_st, info.blk_id, info.blk_pos, info.lk, glk_ret, bt_ret, mg_ret);
         
         prof::finish(prof_kind::end_tx, p_end_tx);
         
@@ -535,7 +583,7 @@ private:
         
         prof::finish(prof_kind::unlock_global, p_unlock_global);
         
-        return { glk_ret, bt_ret, mg_ret, et_ret };
+        return { /*glk_ret,*/ bt_ret, mg_ret, et_ret };
     }
     
     struct do_transaction_default_functor
@@ -576,16 +624,20 @@ private:
     static std::string show_transaction_result(const do_transaction_result& tx_ret)
     {
         return fmt::format(
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
             "old_wr_ts:{}\t"
             "old_rd_ts:{}\t"
             "new_wr_ts:{}\t"
             "new_rd_ts:{}\t"
+        #endif
             "is_written:{}\t"
             "is_still_writable:{}\t"
+        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         ,   tx_ret.bt_ret.wr_ts
         ,   tx_ret.bt_ret.rd_ts
         ,   tx_ret.et_ret.new_wr_ts
         ,   tx_ret.et_ret.new_rd_ts
+        #endif
         ,   tx_ret.mg_ret.is_written
         ,   tx_ret.et_ret.is_still_writable
         );
