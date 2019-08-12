@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mefdn/atomic.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -12,6 +11,7 @@ class rel_thread
 {
     using ult_itf_type = typename P::ult_itf_type;
     using thread_type = typename ult_itf_type::thread;
+    using atomic_bool_type = typename ult_itf_type::template atomic<bool>;
     
     using usec_type = useconds_t; // TODO
     
@@ -37,7 +37,7 @@ private:
         
         void operator() ()
         {
-            while (!self.finished_.load(mefdn::memory_order_relaxed))
+            while (!self.finished_.load(ult_itf_type::memory_order_relaxed))
             {
                 #if 1
                 myth_usleep(self.sleep_usec_);
@@ -53,7 +53,7 @@ private:
         }
     };
     
-    mefdn::atomic<bool> finished_;
+    atomic_bool_type    finished_;
     thread_type         th_;
     usec_type           sleep_usec_;
 };

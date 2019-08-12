@@ -56,8 +56,8 @@ struct proxy_mpi_request
 private:
     using ult_itf_type = typename P::ult_itf_type;
     using uncond_variable_type = typename ult_itf_type::uncond_variable;
-    using atomic_bool_type = mefdn::atomic<bool>; // TODO
-    using atomic_state_type = mefdn::atomic<proxy_mpi_request_state>;
+    using atomic_bool_type = typename ult_itf_type::template atomic<bool>;
+    using atomic_state_type = typename ult_itf_type::template atomic<proxy_mpi_request_state>;
     
 public:
     proxy_mpi_request()

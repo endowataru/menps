@@ -259,10 +259,10 @@ struct uct_completion_policy
     ,   finished
     };
     
-    using atomic_comp_state_type = mefdn::atomic<comp_state_type>;
-    
     using uct_itf_type = UctItf;
     using ult_itf_type = typename UctItf::ult_itf_type;
+    
+    using atomic_comp_state_type = typename ult_itf_type::template atomic<comp_state_type>;
     
     using rkey_info_type = uct_rkey_info<UctItf>;
 };

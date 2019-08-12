@@ -4,6 +4,7 @@
 #include <menps/mefdn/thread/spinlock.hpp>
 #include <menps/mefdn/thread/this_thread.hpp>
 #include <menps/mefdn/thread/lock_guard.hpp>
+#include <menps/mefdn/assert.hpp>
 
 namespace menps {
 namespace mefdn {

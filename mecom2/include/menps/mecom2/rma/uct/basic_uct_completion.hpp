@@ -40,8 +40,8 @@ private:
             return self.state_.compare_exchange_strong(
                 expected
             ,   comp_state_type::waiting
-            ,   mefdn::memory_order_acq_rel
-            ,   mefdn::memory_order_relaxed
+            ,   ult_itf_type::memory_order_acq_rel
+            ,   ult_itf_type::memory_order_relaxed
             );
         }
     };
@@ -52,7 +52,7 @@ public:
         #ifdef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
             while (true)
             {
-                auto st = this->state_.load(mefdn::memory_order_acquire);
+                auto st = this->state_.load(ult_itf_type::memory_order_acquire);
                 
                 if (st == comp_state_type::finished) {
                     break;
@@ -77,7 +77,7 @@ public:
                 }
             }
         #else
-            const auto st = this->state_.load(mefdn::memory_order_acquire);
+            const auto st = this->state_.load(ult_itf_type::memory_order_acquire);
             if (st != comp_state_type::finished) {
                 MEFDN_ASSERT(st == comp_state_type::created);
                 this->uv_.wait_with(on_wait{ *this });
@@ -108,9 +108,9 @@ private:
         );
         
         #ifdef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
-            self.state_.store(comp_state_type::finished, mefdn::memory_order_release);
+            self.state_.store(comp_state_type::finished, ult_itf_type::memory_order_release);
         #else
-            auto st = self.state_.load(mefdn::memory_order_acquire);
+            auto st = self.state_.load(ult_itf_type::memory_order_acquire);
             
             bool waiting = (st == comp_state_type::waiting);
             if (!waiting) {
@@ -120,8 +120,8 @@ private:
                     ! self.state_.compare_exchange_strong(
                         st
                     ,   comp_state_type::finished
-                    ,   mefdn::memory_order_acq_rel
-                    ,   mefdn::memory_order_relaxed
+                    ,   ult_itf_type::memory_order_acq_rel
+                    ,   ult_itf_type::memory_order_relaxed
                     );
             }
             

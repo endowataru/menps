@@ -250,7 +250,7 @@ public:
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
         // Before loading the link values of blk_lock_table,
         // it is necessary to complete all the writes in this process.
-        mefdn::atomic_thread_fence(mefdn::memory_order_seq_cst);
+        ult_itf_type::atomic_thread_fence(ult_itf_type::memory_order_seq_cst);
         #endif
         
         // Iterate all of the writable blocks.

@@ -4,7 +4,6 @@
 #include <menps/meqdc/common.hpp>
 #include <menps/medev2/mpi/mpi_funcs.hpp>
 #include <menps/mefdn/force_integer_cast.hpp>
-#include <menps/mefdn/atomic.hpp>
 #include <menps/mefdn/logger.hpp>
 
 namespace menps {
@@ -96,7 +95,7 @@ private:
                         // with a single process communicator on Intel MPI.
                         proxy_req_ptr->state.store(
                             proxy_request_state_type::finished
-                        ,   mefdn::memory_order_relaxed
+                        ,   ult_itf_type::memory_order_relaxed
                         );
                         do_wait = false;
                     }
@@ -109,7 +108,7 @@ private:
             if (do_wait) {
                 proxy_req_ptr->state.store(
                     proxy_request_state_type::waiting
-                ,   mefdn::memory_order_relaxed
+                ,   ult_itf_type::memory_order_relaxed
                 );
                 return { is_executed, self.is_active(), true, &proxy_req_ptr->uv };
             }
@@ -142,7 +141,7 @@ private:
             if (needs_wait) {
                 proxy_req_ptr->state.store(
                     proxy_request_state_type::waiting
-                ,   mefdn::memory_order_relaxed
+                ,   ult_itf_type::memory_order_relaxed
                 );
                 return { true, &proxy_req_ptr->uv };
             }
@@ -345,7 +344,7 @@ public:
         const auto proxy_req =
             this->to_proxy_request_pointer(*proxy_p.request);
         
-        const auto state = proxy_req->state.load(mefdn::memory_order_acquire);
+        const auto state = proxy_req->state.load(ult_itf_type::memory_order_acquire);
         
         if (state == proxy_request_state_type::finished) {
             *proxy_p.request = MPI_REQUEST_NULL;
@@ -395,8 +394,8 @@ private:
             if (proxy_req->state.compare_exchange_strong(
                 expected
             ,   proxy_request_state_type::waiting
-            ,   mefdn::memory_order_acq_rel
-            ,   mefdn::memory_order_relaxed
+            ,   ult_itf_type::memory_order_acq_rel
+            ,   ult_itf_type::memory_order_relaxed
             )) {
                 return true;
             }
@@ -413,7 +412,7 @@ public:
         const auto proxy_req =
             this->to_proxy_request_pointer(*proxy_p.request);
         
-        auto state = proxy_req->state.load(mefdn::memory_order_acquire);
+        auto state = proxy_req->state.load(ult_itf_type::memory_order_acquire);
         
         if (state == proxy_request_state_type::finished) {
             // Don't need to wait for the request.
@@ -537,7 +536,7 @@ private:
             
             bool waiting = false;
             
-            auto state = proxy_req->state.load(mefdn::memory_order_acquire);
+            auto state = proxy_req->state.load(ult_itf_type::memory_order_acquire);
             
             if (state == proxy_request_state_type::waiting) {
                 waiting = true;
@@ -549,8 +548,8 @@ private:
                     ! proxy_req->state.compare_exchange_strong(
                         state
                     ,   proxy_request_state_type::finished
-                    ,   mefdn::memory_order_acq_rel
-                    ,   mefdn::memory_order_relaxed
+                    ,   ult_itf_type::memory_order_acq_rel
+                    ,   ult_itf_type::memory_order_relaxed
                     );
                 
                 if (waiting) { MEFDN_ASSERT(state == proxy_request_state_type::waiting); }

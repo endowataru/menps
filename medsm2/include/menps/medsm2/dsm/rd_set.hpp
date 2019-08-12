@@ -65,7 +65,7 @@ public:
             const unique_lock_type lk(this->mtx_);
             
             const auto old_min_wr_ts =
-                this->min_wr_ts_.load(mefdn::memory_order_relaxed);
+                this->min_wr_ts_.load(ult_itf_type::memory_order_relaxed);
             
             if (!P::is_greater_rd_ts(min_wr_ts, old_min_wr_ts)) {
                 // Because min_wr_ts <= old_min_wr_ts,
@@ -81,7 +81,7 @@ public:
             }
             
             // Update the minimum write timestamp.
-            this->min_wr_ts_.store(min_wr_ts, mefdn::memory_order_relaxed);
+            this->min_wr_ts_.store(min_wr_ts, ult_itf_type::memory_order_relaxed);
             
             while (! this->pq_.empty()) {
                 auto& e = this->pq_.top();
@@ -170,7 +170,7 @@ public:
         // The minimum timestamp might be loaded concurrently with another writer.
         // To avoid a race condition, this class uses an atomic variable.
         const auto min_wr_ts =
-            this->min_wr_ts_.load(mefdn::memory_order_relaxed);
+            this->min_wr_ts_.load(ult_itf_type::memory_order_relaxed);
         
         return rd_ts_state_type(*this, min_wr_ts);
     }

@@ -31,6 +31,17 @@ struct dsm_base_policy
     using size_type = mefdn::size_t;
     using ptrdiff_type = mefdn::ptrdiff_t;
     
+    using ult_itf_type = typename com_itf_type::ult_itf_type;
+    using worker_ult_itf_type = ult_itf_type;
+    
+    #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
+    using mutex_type = mefdn::spinlock;
+    using unique_lock_type = mefdn::unique_lock<mefdn::spinlock>;
+    #else
+    using mutex_type = typename ult_itf_type::mutex;
+    using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO: rename
+    #endif
+    
     using seg_id_type = mefdn::size_t;
     using blk_id_type = mefdn::size_t;
     using blk_pos_type = mefdn::size_t;
@@ -38,7 +49,7 @@ struct dsm_base_policy
     using rd_ts_type = mefdn::uint64_t;
     using wr_ts_type = mefdn::uint64_t;
     
-    using atomic_wr_ts_type = mefdn::atomic<wr_ts_type>;
+    using atomic_wr_ts_type = ult_itf_type::atomic<wr_ts_type>;
     
     static constexpr bool is_greater_rd_ts(const rd_ts_type a, const rd_ts_type b) noexcept {
         return a > b;
@@ -53,18 +64,7 @@ struct dsm_base_policy
     using wr_set_gen_type = mefdn::ptrdiff_t;
     
     using wn_idx_type = mefdn::size_t;
-    using wn_vi_type = mefdn::vector<wn_idx_type>;
-    
-    using ult_itf_type = typename com_itf_type::ult_itf_type;
-    using worker_ult_itf_type = ult_itf_type;
-    
-    #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-    using mutex_type = mefdn::spinlock;
-    using unique_lock_type = mefdn::unique_lock<mefdn::spinlock>;
-    #else
-    using mutex_type = typename ult_itf_type::mutex;
-    using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO: rename
-    #endif
+    using wn_vi_type = std::vector<wn_idx_type>;
     
     template <typename Elem>
     using alltoall_buffer =

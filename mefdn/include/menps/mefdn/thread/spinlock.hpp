@@ -1,6 +1,21 @@
 
 #pragma once
 
+#if 1
+
+#include <menps/mefdn/lang.hpp>
+#include <cmpth/sct/def_sct_spinlock.hpp>
+
+namespace menps {
+namespace mefdn {
+
+using spinlock = cmpth::def_sct_spinlock;
+
+} // namespace mefdn
+} // namespace menps
+
+#else
+
 #include <menps/mefdn/atomic.hpp>
 #include <menps/mefdn/assert.hpp>
 
@@ -132,4 +147,6 @@ private:
 
 } // namespace mefdn
 } // namespace menps
+
+#endif
  

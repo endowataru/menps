@@ -66,6 +66,8 @@ class single_rma
 {
     using policy_type = single_rma_policy;
     
+    using ult_itf_type = cmpth::klt_itf; // TODO
+    
 public:
     using size_type = typename policy_type::size_type;
     using proc_id_type = typename policy_type::proc_id_type;
@@ -114,7 +116,7 @@ public:
         // TODO: breaking type safety
         auto& target = *reinterpret_cast<volatile std::atomic<T>*>(target_rptr);
         
-        target.compare_exchange_strong(expected, desired, mefdn::memory_order_relaxed);
+        target.compare_exchange_strong(expected, desired, ult_itf_type::memory_order_relaxed);
         
         return expected;
     }
