@@ -4,7 +4,6 @@
 #include <menps/meqdc/common.hpp>
 #include <menps/medev2/ucx/uct/uct_funcs.hpp>
 #include <menps/medev2/ucx/ucx_error.hpp>
-#include <menps/mefdn/memory/get_container_of.hpp>
 
 namespace menps {
 namespace meqdc {
