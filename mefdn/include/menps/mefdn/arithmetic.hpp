@@ -8,12 +8,6 @@ namespace mefdn {
 
 namespace /*unnamed*/ {
 
-template <typename T>
-inline T roundup_divide(T x, T y) noexcept {
-    MEFDN_STATIC_ASSERT_MSG(mefdn::is_integral<T>::value, "T must be integer");
-    return (x + y - 1) / y;
-}
-
 inline bool eager_or(bool x, bool y) noexcept {
     return x || y;
 }
