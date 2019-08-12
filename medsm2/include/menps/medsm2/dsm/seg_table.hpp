@@ -3,7 +3,6 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/vector.hpp>
-#include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/external/fmt.hpp>

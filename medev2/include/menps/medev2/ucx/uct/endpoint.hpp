@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medev2/ucx/uct/uct.hpp>
-#include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/logger.hpp>
 
 namespace menps {

@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/assert.hpp>
 
 namespace menps {

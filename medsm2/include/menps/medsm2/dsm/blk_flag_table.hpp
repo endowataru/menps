@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medsm2 {

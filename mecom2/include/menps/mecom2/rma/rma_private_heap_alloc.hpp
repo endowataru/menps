@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/mecom2/common.hpp>
-#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace mecom2 {

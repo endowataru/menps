@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mefdn/memory/unique_ptr.hpp>
 #include <menps/mefdn/external/malloc.h>
 #include <menps/medsm2/prof.hpp>
 #include <menps/medsm2/com/dsm_com_itf.hpp> // TODO: required for medev2::prof

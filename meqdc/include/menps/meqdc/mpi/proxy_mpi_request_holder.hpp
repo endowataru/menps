@@ -3,7 +3,6 @@
 
 #include <menps/meqdc/common.hpp>
 #include <menps/medev2/mpi/direct_mpi_facade.hpp>
-#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace meqdc {

@@ -6,6 +6,7 @@
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/vector.hpp>
 #include <menps/mefdn/algorithm.hpp>
+#include <menps/mefdn/type_traits.hpp>
 #include <unordered_set>
 
 namespace menps {

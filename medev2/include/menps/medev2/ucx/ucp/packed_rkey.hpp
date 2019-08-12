@@ -3,7 +3,6 @@
 
 #include <menps/medev2/ucx/ucp/ucp.hpp>
 #include <menps/medev2/ucx/ucx_error.hpp>
-#include <menps/mefdn/memory/unique_ptr.hpp>
 
 namespace menps {
 namespace medev2 {
