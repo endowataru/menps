@@ -333,6 +333,19 @@ template <typename T, typename... Args>
 inline unique_ptr<typename make_unique_helper<T>::invalid_type>
 make_unique(Args&&...) = delete;
 
+// Non-standard function to allocate an array without initialization
+template <typename T>
+inline unique_ptr<typename make_unique_helper<T>::array_type>
+make_unique_uninitialized(const fdn::size_t size)
+{
+    using element_type = remove_extent_t<T>;
+    
+    return unique_ptr<T>(
+        // No value-initialization here.
+        new element_type[size]
+    );
+}
+
 
 template <typename T, typename... Args>
 inline oa_unique_ptr<typename make_unique_helper<T>::single_type>
