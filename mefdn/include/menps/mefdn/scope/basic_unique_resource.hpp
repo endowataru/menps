@@ -101,8 +101,9 @@ public:
         return mefdn::get<1>(t_);
     }
     
-    MEFDN_EXPLICIT_OPERATOR_BOOL()
-    
+    explicit operator bool() const noexcept {
+        return !!*this;
+    }
     bool operator ! () const noexcept
     {
         auto& self = this->derived();

@@ -49,8 +49,9 @@ public:
         return func_(storage_, mefdn::forward<As>(args)...);
     }
     
-    MEFDN_EXPLICIT_OPERATOR_BOOL()
-    
+    explicit operator bool() const noexcept {
+        return !!*this;
+    }
     bool operator ! () const noexcept {
         return func_ == nullptr;
     }

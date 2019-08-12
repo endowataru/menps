@@ -11,7 +11,7 @@
 
 // Processor Compatibility
 
-#define MEFDN_CACHE_LINE_SIZE       64
+#define MEFDN_CACHE_LINE_SIZE       CMPTH_CACHE_LINE_SIZE
 #define MEFDN_CALL_STACK_GROW_DIR   -1
 
 // Compiler Compatibility
@@ -50,16 +50,7 @@
 
 // Macros
 
-#define MEFDN_DEFINE_DERIVED(Policy)    \
-    private:\
-        using derived_type = typename Policy::derived_type; \
-        \
-        /*constexpr*/ derived_type& derived() noexcept { \
-            return static_cast<derived_type&>(*this); \
-        } \
-        constexpr const derived_type& derived() const noexcept { \
-            return static_cast<const derived_type&>(*this); \
-        }
+#define MEFDN_DEFINE_DERIVED(P)     CMPTH_DEFINE_DERIVED(P)
 
 // Standard features in C++14 or later
 
@@ -72,20 +63,6 @@
     #define MEFDN_DEPRECATED        __attribute__((deprecated))
 #endif
 
-// Standard features which have been already supported in C++11
-// (should be removed later)
-
-#define MEFDN_RANGE_BASED_FOR(decl, ...) \
-    for (decl : __VA_ARGS__)
-
-#define MEFDN_THREAD_LOCAL          thread_local
-#define MEFDN_OVERRIDE              override
-
-#define MEFDN_EXPLICIT_OPERATOR_BOOL() \
-    explicit operator bool() const { \
-        return ! this->operator!(); \
-    }
-
 // Standard features which suffer from compiler bugs
 
 #if defined(MEFDN_COMPILER_GCC) && MEFDN_COMPILER_GCC_VERSION < 50000
@@ -97,8 +74,7 @@
 
 // Standardized attributes
 
-#define MEFDN_NORETURN      [[noreturn]]
-#define MEFDN_NODISCARD     __attribute__((warn_unused_result))
+#define MEFDN_NODISCARD     CMPTH_NODISCARD
 #define MEFDN_MAYBE_UNUSED  __attribute__((unused))
 
 // Non-standard built-ins
@@ -109,12 +85,12 @@
     #define MEFDN_ALWAYS_INLINE     inline
 #endif
 
-#define MEFDN_NOINLINE      __attribute__((noinline))
+#define MEFDN_NOINLINE      CMPTH_NOINLINE
 
 #define MEFDN_MAY_ALIAS     __attribute__((may_alias))
 
-#define MEFDN_LIKELY(x)     __builtin_expect(!!(x), 1)
-#define MEFDN_UNLIKELY(x)   __builtin_expect(!!(x), 0)
+#define MEFDN_LIKELY(x)     CMPTH_LIKELY(x)
+#define MEFDN_UNLIKELY(x)   CMPTH_UNLIKELY(x)
 
 #ifdef MEFDN_COMPILER_SUPPORTS_BUILTIN_UNREACHABLE
     #define MEFDN_UNREACHABLE()     __builtin_unreachable()

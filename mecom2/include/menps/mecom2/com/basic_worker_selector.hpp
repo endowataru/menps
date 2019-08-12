@@ -72,7 +72,7 @@ private:
     
     #else
     // Note: Valid numbers start from 1.
-    static MEFDN_THREAD_LOCAL worker_num_type cur_num_;
+    static thread_local worker_num_type cur_num_;
     
     mutex_type mtx_;
     worker_num_type alloc_num_ = 0;
@@ -81,7 +81,7 @@ private:
 
 #ifndef MECOM2_USE_ULT_WORKER_NUM
 template <typename P>
-MEFDN_THREAD_LOCAL typename P::worker_num_type
+thread_local typename P::worker_num_type
 basic_worker_selector<P>::cur_num_ = 0;
 #endif
 
