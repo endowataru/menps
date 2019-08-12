@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mefdn/vector.hpp>
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/external/fmt.hpp>
@@ -790,7 +789,7 @@ public:
     #endif
     
 private:
-    mefdn::vector<blk_tbl_ptr> blk_tbls_;
+    std::vector<blk_tbl_ptr> blk_tbls_;
     
     #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
     mutex_type flags_mtx_;

@@ -3,7 +3,6 @@
 
 #include <menps/meqdc/common.hpp>
 #include <menps/medev2/ucx/uct/uct_funcs.hpp>
-#include <menps/mefdn/vector.hpp>
 #include <algorithm>
 
 namespace menps {
@@ -56,7 +55,7 @@ public:
 private:
     proxy_worker_type&  pr_wk_;
     orig_iface_type     orig_iface_;
-    mefdn::vector<proxy_endpoint_type*> pr_eps_;
+    std::vector<proxy_endpoint_type*> pr_eps_;
 };
 
 } // namespace meqdc

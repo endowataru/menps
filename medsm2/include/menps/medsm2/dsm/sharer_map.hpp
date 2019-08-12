@@ -48,7 +48,7 @@ public:
     }
 
 private:
-    mefdn::vector<unsigned char> bm_;
+    std::vector<unsigned char> bm_;
 };
 
 } // namespace medsm2

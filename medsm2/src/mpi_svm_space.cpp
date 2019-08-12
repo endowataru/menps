@@ -86,7 +86,7 @@ struct dsm_base_policy
         wr_ts_type                  wr_ts;
     };
     
-    using wn_vector_type = mefdn::vector<wn_entry_type>;
+    using wn_vector_type = std::vector<wn_entry_type>;
     
     struct constants_type {
         static const size_type max_space_size = MEDSM2_MAX_SPACE_SIZE;

@@ -3,7 +3,6 @@
 
 #include <menps/mecom2/common.hpp>
 #include <menps/mefdn/callback.hpp>
-#include <menps/mefdn/vector.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -72,7 +71,7 @@ public:
     }
     
 private:
-    mefdn::vector<handler_callback_type> hs_;
+    std::vector<handler_callback_type> hs_;
 };
 
 } // namespace mecom2

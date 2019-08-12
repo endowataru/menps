@@ -3,7 +3,6 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/iterator.hpp>
-#include <menps/mefdn/vector.hpp>
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/logger.hpp>
 #include <menps/medsm2/prof.hpp>

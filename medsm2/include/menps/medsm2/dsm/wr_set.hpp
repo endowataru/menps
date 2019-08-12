@@ -4,7 +4,6 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/iterator.hpp>
 #include <menps/mefdn/utility.hpp>
-#include <menps/mefdn/vector.hpp>
 #include <menps/mefdn/algorithm.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <unordered_set>
@@ -99,7 +98,7 @@ public:
             this->is_releasing_ = true;
         }
         
-        mefdn::vector<blk_id_type> new_ids;
+        std::vector<blk_id_type> new_ids;
         {
             const unique_lock_type lk(this->new_ids_mtx_);
             
@@ -114,7 +113,7 @@ public:
         std::sort(begin(new_ids), end(new_ids));
         
         // Preallocate a sufficient space to hold new dirty IDs.
-        mefdn::vector<blk_id_type> new_dirty_ids;
+        std::vector<blk_id_type> new_dirty_ids;
         new_dirty_ids.reserve(this->dirty_ids_.size() + new_ids.size());
         
         // Merge the two sorted arrays for dirty IDs.
@@ -140,7 +139,7 @@ public:
         using release_result_type = typename SegTable::release_result;
         
         // Allocate an array to hold the results of release operations.
-        mefdn::vector<release_result_type> rel_results(num_released);
+        std::vector<release_result_type> rel_results(num_released);
         
         const auto num_workers = ult_itf_type::get_num_workers();
         auto stride = num_released / (16 * num_workers); // TODO: magic number
@@ -239,11 +238,11 @@ public:
     
 private:
     mutex_type new_ids_mtx_;
-    mefdn::vector<blk_id_type> new_ids_;
+    std::vector<blk_id_type> new_ids_;
     
     ult_mutex_type rel_mtx_;
     ult_cv_type rel_cv_;
-    mefdn::vector<blk_id_type> dirty_ids_;
+    std::vector<blk_id_type> dirty_ids_;
     wr_set_gen_type gen_ = 0;
     bool is_releasing_ = false;
 };

@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mefdn/vector.hpp>
 #include <queue>
 
 namespace menps {
@@ -38,7 +37,7 @@ class rd_set
     };
     
     using pq_type =
-        std::priority_queue<entry, mefdn::vector<entry>, greater_ts>;
+        std::priority_queue<entry, std::vector<entry>, greater_ts>;
     
 public:
     rd_set()
@@ -59,7 +58,7 @@ public:
     template <typename Func>
     void self_invalidate(const rd_ts_type min_wr_ts, Func&& func)
     {
-        mefdn::vector<blk_id_type> blk_ids;
+        std::vector<blk_id_type> blk_ids;
         
         {
             const unique_lock_type lk(this->mtx_);
@@ -105,7 +104,7 @@ public:
         ,   blk_ids.size()
         );
         
-        mefdn::vector<entry> new_ents;
+        std::vector<entry> new_ents;
         spinlock_type new_ents_lock;
         
         const rd_ts_state_type rd_ts_st(*this, min_wr_ts);
@@ -148,7 +147,7 @@ public:
     template <typename Func>
     void self_invalidate_all(Func&& func)
     {
-        mefdn::vector<blk_id_type> blk_ids;
+        std::vector<blk_id_type> blk_ids;
         
         {
             const unique_lock_type lk(this->mtx_);

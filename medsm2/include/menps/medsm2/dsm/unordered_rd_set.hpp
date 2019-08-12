@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mefdn/vector.hpp>
 #include <unordered_set>
 
 namespace menps {
