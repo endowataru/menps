@@ -7,6 +7,7 @@
 #include <cmpth/sct/sct_task_ref.hpp>
 #include <cmpth/sync/basic_uncond_var.hpp>
 #include <cmpth/tls/basic_map_tls.hpp>
+#include <cmpth/wrap/atomic_itf_base.hpp>
 
 namespace cmpth {
 
@@ -66,6 +67,7 @@ struct lv1_sct_policy
 
 template <typename P>
 struct lv1_sct_itf
+    : atomic_itf_base // TODO
 {
 private:
     using lv1_policy = lv1_sct_policy<P>;
@@ -88,9 +90,6 @@ public:
     
     using assert_policy     = typename lv1_policy::assert_policy_type;
     using log_policy        = typename lv1_policy::log_policy_type;
-    
-    template <typename T>
-    using atomic = typename base_ult_itf::template atomic<T>; // TODO
 };
 
 } // namespace cmpth

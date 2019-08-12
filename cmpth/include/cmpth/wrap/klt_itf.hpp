@@ -2,10 +2,12 @@
 #pragma once
 
 #include <cmpth/fdn.hpp>
+#include <cmpth/wrap/atomic_itf_base.hpp>
 
 namespace cmpth {
 
 struct klt_itf
+    : atomic_itf_base
 {
     using thread = std::thread;
     
@@ -15,9 +17,6 @@ struct klt_itf
     
     template <typename Mutex>
     using unique_lock = std::unique_lock<Mutex>;
-    
-    template <typename T>
-    using atomic = std::atomic<T>;
     
     template <typename P>
     class thread_specific

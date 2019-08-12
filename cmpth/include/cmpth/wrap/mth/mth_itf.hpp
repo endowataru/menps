@@ -5,6 +5,7 @@
 #include <cmpth/ult_tag.hpp>
 #include <cmpth/exec/basic_for_loop.hpp>
 #include <cmpth/sct/def_sct_spinlock.hpp>
+#include <cmpth/wrap/atomic_itf_base.hpp>
 
 //#define CMPTH_ENABLE_MTH_WORKER_CACHE
 
@@ -35,6 +36,7 @@ struct mth_for_loop_policy
 
 struct mth_itf
     : basic_for_loop<mth_for_loop_policy>
+    , atomic_itf_base
 {
     struct initializer { };
     // TODO: Call myth_init() / myth_fini() ?
