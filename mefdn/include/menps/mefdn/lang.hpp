@@ -1,6 +1,9 @@
 
 #pragma once
 
+// We now depend on cmpth::fdn.
+#include <cmpth/fdn.hpp>
+
 #include <menps/mefdn/config.h>
 #include <cstdlib>
 #include <cstdint>
