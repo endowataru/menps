@@ -15,7 +15,10 @@ namespace /*unnamed*/ {
 struct com_policy
 {
     using ult_itf_type =
-        cmpth::get_ult_ext_itf_t<cmpth::ult_tag_t::MECOM2_TEST_ULT_ITF>;
+        cmpth::get_ult_ext_itf_t<
+            cmpth::ult_tag_t::MECOM2_TEST_ULT_ITF
+        ,   cmpth::sync_tag_t::MCS // TODO
+        >;
     
     using mpi_itf_type =
         menps::medev2::get_mpi_itf_type_t<

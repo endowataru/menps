@@ -19,7 +19,7 @@ namespace medsm2 {
 struct dsm_com_policy_base
 {
     using ult_itf_type =
-        cmpth::get_ult_ext_itf_t<cmpth::ult_tag_t::MEDSM2_ULT_ITF>;
+        cmpth::get_ult_ext_itf_t<cmpth::ult_tag_t::MEDSM2_ULT_ITF, cmpth::sync_tag_t::MEDSM2_DELEGATOR_ITF>;
     
     using mpi_itf_type =
         medev2::get_mpi_itf_type_t<

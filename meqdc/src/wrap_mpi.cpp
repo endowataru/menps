@@ -11,7 +11,10 @@ namespace /*unnamed*/ {
 using proxy_mpi_itf_t =
     menps::meqdc::proxy_mpi_itf<
         menps::medev2::mpi::direct_mpi_itf<
-            cmpth::get_ult_ext_itf_t<cmpth::ult_tag_t::MEQDC_MPI_ULT_ITF>
+            cmpth::get_ult_ext_itf_t<
+                cmpth::ult_tag_t::MEQDC_MPI_ULT_ITF
+            ,   cmpth::sync_tag_t::MCS // TODO
+            >
         >
     >;
 
