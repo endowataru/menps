@@ -293,7 +293,6 @@ add_library(mefdn
 target_include_directories(mefdn
     PUBLIC ./include
     PUBLIC ./external/fmt
-    PUBLIC ./external/cmdline
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mefdn/config.h
 )
 target_compile_definitions(mefdn
@@ -312,5 +311,4 @@ install(TARGETS mefdn
 )
 install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY external/fmt/fmt DESTINATION include)
-install(FILES external/cmdline/cmdline.h DESTINATION include/cmdline)
 
