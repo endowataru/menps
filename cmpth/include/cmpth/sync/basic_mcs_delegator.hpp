@@ -23,6 +23,7 @@ class basic_mcs_delegator
     
 public:
     template <typename DelegateFunc>
+    CMPTH_NODISCARD
     bool lock_or_delegate(/*worker_type& wk, */DelegateFunc&& delegate_func)
     {
         auto& self = this->derived();
@@ -167,8 +168,8 @@ public:
         auto& consumer_uv = this->th_.get_uv();
         
         // Awake the helper thread.
-        // Prefer executing the succeeding critical sections now.
         #ifdef MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
+        // Prefer executing the succeeding critical sections now.
         consumer_uv.notify_enter();
         #else
         consumer_uv.notify_signal();
@@ -312,7 +313,7 @@ public:
     ,   ProgressFunc&&  progress_func
     ) {
         // Note: Copy the functions to a new thread's call stack.
-        th_.start([this, del_exec_func, progress_func] {
+        this->th_.start([this, del_exec_func, progress_func] {
             return this->consume(del_exec_func, progress_func);
         });
     }
