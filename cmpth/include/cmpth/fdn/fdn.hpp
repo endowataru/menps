@@ -10,6 +10,7 @@
 #include <mutex>
 #include <thread>
 #include <functional>
+#include <iterator>
 
 #if !defined(NDEBUG) && !defined(CMPTH_DEBUG)
     #define CMPTH_DEBUG
