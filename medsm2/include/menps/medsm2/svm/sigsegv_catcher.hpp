@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <menps/mefdn/callback.hpp>
+#include <menps/medsm2/common.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -11,8 +11,8 @@ class sigsegv_catcher
 public:
     struct config
     {
-        mefdn::callback<bool (void*)>   on_signal;
-        bool                            alter_stack;
+        std::function<bool (void*)> on_signal;
+        bool                        alter_stack;
     };
     
     explicit sigsegv_catcher(const config&);

@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/mecom2/common.hpp>
-#include <menps/mefdn/callback.hpp>
 
 namespace menps {
 namespace mecom2 {
@@ -30,7 +29,7 @@ public:
     using handler_result_type = server_reply_message_type;
     
     using handler_callback_type =
-        mefdn::callback<handler_result_type (handler_context_type)>;
+        std::function<handler_result_type (handler_context_type)>;
     
     template <typename Conf>
     explicit rpc_invoker(Conf&& conf)
