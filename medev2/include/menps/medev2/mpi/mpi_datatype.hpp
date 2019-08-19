@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medev2/mpi/mpi.hpp>
-#include <menps/mefdn/type_traits/integral_constant.hpp>
 
 namespace menps {
 namespace medev2 {
