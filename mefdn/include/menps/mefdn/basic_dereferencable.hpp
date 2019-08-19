@@ -17,7 +17,7 @@ template <
         &&
         // resource_type is not void*
         ! mefdn::is_void<
-            typename mefdn::remove_pointer<typename Policy::resource_type>::type
+            typename mefdn::remove_pointer_t<typename Policy::resource_type>
         >::value
 >
 class basic_dereferencable
@@ -28,11 +28,11 @@ class basic_dereferencable<Policy, true>
 {
     MEFDN_DEFINE_DERIVED(Policy)
     
-    typedef typename mefdn::add_lvalue_reference<
-        typename mefdn::remove_pointer<
+    typedef typename mefdn::add_lvalue_reference_t<
+        typename mefdn::remove_pointer_t<
             typename Policy::resource_type
-        >::type
-    >::type
+        >
+    >
     lv_ref_resource_type;
     
 public:

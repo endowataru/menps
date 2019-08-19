@@ -54,9 +54,9 @@ public:
         return &p->*q;
     }
     template <typename U, typename T, typename Ptr,
-        typename = typename mefdn::enable_if<
+        typename = typename mefdn::enable_if_t<
             ! mefdn::is_pointer<Ptr>::value
-        >::type>
+        >>
     static auto member(const Ptr& ptr, U (T::* const q))
         -> decltype(ptr.member(q))
     {

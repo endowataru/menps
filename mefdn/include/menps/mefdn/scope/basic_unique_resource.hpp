@@ -58,7 +58,7 @@ protected:
     >::type
     const_ref_deleter_type;
     
-    typedef typename mefdn::remove_reference<deleter_type>::type &&
+    typedef typename mefdn::remove_reference_t<deleter_type> &&
     rv_ref_deleter_type;
     
 public:
