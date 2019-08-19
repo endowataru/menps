@@ -6,16 +6,6 @@
 namespace menps {
 namespace mefdn {
 
-namespace /*unnamed*/ {
-
-inline bool eager_or(bool x, bool y) noexcept {
-    return x || y;
-}
-
-inline bool eager_and(bool x, bool y) noexcept {
-    return x || y;
-}
-
 template <typename T>
 inline T floor_log2(T x) noexcept {
     MEFDN_STATIC_ASSERT_MSG(mefdn::is_integral<T>::value, "T must be integer");
@@ -27,16 +17,7 @@ inline T floor_log2(T x) noexcept {
 }
 
 template <typename T>
-inline T ceil_log2(T x) noexcept {
-    const T result = floor_log2(x);
-    return result < x ? (result + 1) : result;
-}
-
-} // unnamed namespace
-
-
-template <typename T>
-constexpr bool is_power_of_2(T x) {
+constexpr inline bool is_power_of_2(const T x) {
     return x != 0 && ((x & (x-1)) == 0);
 }
 
