@@ -2,8 +2,7 @@
 #pragma once
 
 #include <menps/mefdn/external/fmt.hpp>
-#include <menps/mefdn/thread/recursive_spinlock.hpp>
-#include <menps/mefdn/thread/lock_guard.hpp>
+#include <cmpth/sct/def_sct_spinlock.hpp>
 
 #include <functional>
 #include <iostream>
@@ -20,7 +19,8 @@ namespace mefdn {
 
 class logger {
 private:
-    typedef recursive_spinlock  lock_type;
+    using lock_type = cmpth::def_sct_recursive_spinlock;
+    using guard_type = std::lock_guard<lock_type>;
     
 public:
     typedef mefdn::uint_least16_t log_level_t;
@@ -45,21 +45,21 @@ public:
         
         const auto s = out.str();
         
-        mefdn::lock_guard<lock_type> lc(get_lock());
+        guard_type lc(get_lock());
         std::cout << s << std::endl;
     }
     
 public:
     static void set_state_callback(state_callback_type callback)
     {
-        mefdn::lock_guard<lock_type> lc(get_state_lock());
+        guard_type lc(get_state_lock());
         
         get_state_callback() = callback;
     }
     
 private:
     static std::string get_state() {
-        mefdn::lock_guard<lock_type> lc(get_state_lock());
+        guard_type lc(get_state_lock());
         
         const state_callback_type& callback = get_state_callback();
         if (callback)

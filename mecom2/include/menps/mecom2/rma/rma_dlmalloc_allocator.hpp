@@ -3,7 +3,6 @@
 
 #include <menps/mecom2/common.hpp>
 #include <menps/mefdn/external/malloc.h>
-#include <menps/mefdn/mutex.hpp>
 
 namespace menps {
 namespace mecom2 {

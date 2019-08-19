@@ -6,7 +6,6 @@
 #include <menps/mefdn/assert.hpp>
 #include <menps/mefdn/external/fmt.hpp>
 #include <menps/mefdn/thread/spinlock.hpp>
-#include <menps/mefdn/mutex.hpp>
 
 namespace menps {
 namespace mefdn {
@@ -21,6 +20,7 @@ private:
     using prof_kind_type = typename P::prof_kind_type;
     
     using spinlock_type = mefdn::spinlock;
+    using guard_type = std::lock_guard<spinlock_type>;
     using accumulator_type = mefdn::average_accumulator<mefdn::cpu_clock_t>;
     
     struct entry {
@@ -44,14 +44,14 @@ public:
     {
         const auto now = mefdn::get_cpu_clock();
         auto& e = basic_prof::get(k);
-        mefdn::lock_guard<spinlock_type> lk(e.lock);
+        guard_type lk(e.lock);
         e.acc.add(now-c);
     }
     
     static void add(const prof_kind_type k, mefdn::cpu_clock_t c)
     {
         auto& e = basic_prof::get(k);
-        mefdn::lock_guard<spinlock_type> lk(e.lock);
+        guard_type lk(e.lock);
         e.acc.add(c);
     }
     

@@ -4,6 +4,7 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/type_traits.hpp>
+#include <menps/mefdn/assert.hpp>
 
 namespace menps {
 namespace medsm2 {
