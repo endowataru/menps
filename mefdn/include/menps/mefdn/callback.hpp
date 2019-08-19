@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/assert.hpp>
 #include <array>

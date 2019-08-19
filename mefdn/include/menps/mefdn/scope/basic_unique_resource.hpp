@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/mefdn/type_traits.hpp>
-#include <menps/mefdn/utility.hpp>
 
 namespace menps {
 namespace mefdn {

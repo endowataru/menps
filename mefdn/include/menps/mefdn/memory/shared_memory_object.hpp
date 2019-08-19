@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/logger.hpp>
 
 // for shm_open, shm_unlink

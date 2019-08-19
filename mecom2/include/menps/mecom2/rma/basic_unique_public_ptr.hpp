@@ -3,7 +3,6 @@
 
 #include <menps/mecom2/common.hpp>
 #include <menps/mefdn/type_traits.hpp>
-#include <menps/mefdn/utility.hpp>
 #include <menps/mefdn/assert.hpp>
 #include <menps/mefdn/scope/basic_unique_resource.hpp>
 
