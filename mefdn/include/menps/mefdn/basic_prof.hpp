@@ -57,18 +57,18 @@ public:
     
     static std::string to_string(const char* const head)
     {
-        fmt::MemoryWriter w;
+        fmt::memory_buffer w;
         
         for (mefdn::size_t i = 0;
              i < static_cast<mefdn::size_t>(prof_kind_type::end); ++i)
         {
             const auto kind = static_cast<prof_kind_type>(i);
             
-            w.write("{}{}: {}\n", head, P::get_name(kind),
+            format_to(w, "{}{}: {}\n", head, P::get_name(kind),
                 basic_prof::get(kind).acc);
         }
         
-        return w.str();
+        return fmt::to_string(w);
     }
 };
 

@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <cstddef>
 
+#include <vector>
+
 // Processor Compatibility
 
 #define MEFDN_CACHE_LINE_SIZE       CMPTH_CACHE_LINE_SIZE

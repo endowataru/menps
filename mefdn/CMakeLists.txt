@@ -285,14 +285,14 @@ endif()
 # mefdn : SHARED/STATIC target
 
 add_library(mefdn
-    ./external/fmt/fmt/format.cc
-    ./external/fmt/fmt/ostream.cc
+    ./external/fmt/src/format.cc
+    #./external/fmt/src/posix.cc
     ./src/malloc.cpp
     ./src/disable_aslr.cpp
 )
 target_include_directories(mefdn
     PUBLIC ./include
-    PUBLIC ./external/fmt
+    PUBLIC ./external/fmt/include
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include # only for mefdn/config.h
 )
 target_compile_definitions(mefdn

@@ -73,20 +73,20 @@ int meomp_main(int argc, char** argv)
         for (int i = 0; i < num_threads; ++i) {
             const int tid = omp_get_thread_num();
             if (i == tid) {
-                fmt::MemoryWriter w;
+                fmt::memory_buffer w;
                 if (tid == 0) {
-                    w.write("- buf_size : {}\n", buf_size);
-                    w.write("  size_step : {}\n", size_step);
-                    w.write("  prewrite_step : {}\n", prewrite_step);
-                    w.write("  n_prewrites : {}\n", n_prewrites);
-                    w.write("  num_trials : {}\n", num_trials);
+                    format_to(w, "- buf_size : {}\n", buf_size);
+                    format_to(w, "  size_step : {}\n", size_step);
+                    format_to(w, "  prewrite_step : {}\n", prewrite_step);
+                    format_to(w, "  n_prewrites : {}\n", n_prewrites);
+                    format_to(w, "  num_trials : {}\n", num_trials);
                 }
-                w.write("  - thread_num: {}\n", omp_get_thread_num());
-                w.write("    write_time: {}\n", mem_acc.summary());
-                w.write("    barrier_time: {}\n", bar_acc.summary());
-                w.write("    total_time: {}\n", total_acc.summary());
+                format_to(w, "  - thread_num: {}\n", omp_get_thread_num());
+                format_to(w, "    write_time: {}\n", mem_acc.summary());
+                format_to(w, "    barrier_time: {}\n", bar_acc.summary());
+                format_to(w, "    total_time: {}\n", total_acc.summary());
 
-                const auto str = w.str();
+                const auto str = to_string(w);
                 std::cout << str << std::flush;
                 std::ofstream ofs(file_path, std::ios_base::app);
                 ofs << str;

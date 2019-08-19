@@ -37,13 +37,11 @@ public:
             return;
         }
         
-        fmt::MemoryWriter out;
+        fmt::memory_buffer out;
+        format_to(out, "{}", logger::get_state());
+        format_to(out, fmt_str, args...);
         
-        out << logger::get_state();
-        
-        out.write(fmt_str, args...);
-        
-        const auto s = out.str();
+        const auto s = to_string(out);
         
         guard_type lc(get_lock());
         std::cout << s << std::endl;

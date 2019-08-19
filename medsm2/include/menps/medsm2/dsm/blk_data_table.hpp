@@ -654,46 +654,46 @@ private:
     ) {
         for (size_type i = 0; i < blk_size; ++i) {
             if ((other_pub[i] != my_pub[i]) && (my_priv[i] != my_pub[i])) {
-                fmt::MemoryWriter w;
-                w.write("msg:Detected data race.\t");
-                w.write("blk_pos:{}\t", blk_pos);
-                w.write("index:{}\t", index);
-                w.write("other_pub:0x{:x}\t", reinterpret_cast<mefdn::intptr_t>(&other_pub[i]));
-                w.write("my_priv:0x{:x}\t"  , reinterpret_cast<mefdn::intptr_t>(&my_priv[i]));
-                w.write("my_pub:0x{:x}\t"   , reinterpret_cast<mefdn::intptr_t>(&my_pub[i]));
+                fmt::memory_buffer w;
+                format_to(w, "msg:Detected data race.\t");
+                format_to(w, "blk_pos:{}\t", blk_pos);
+                format_to(w, "index:{}\t", index);
+                format_to(w, "other_pub:0x{:x}\t", reinterpret_cast<mefdn::intptr_t>(&other_pub[i]));
+                format_to(w, "my_priv:0x{:x}\t"  , reinterpret_cast<mefdn::intptr_t>(&my_priv[i]));
+                format_to(w, "my_pub:0x{:x}\t"   , reinterpret_cast<mefdn::intptr_t>(&my_pub[i]));
                 
-                w.write("other_pub_1b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint8_t>(&other_pub[i]));
-                w.write("my_priv_1b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint8_t>(&my_priv[i]));
-                w.write("my_pub_1b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint8_t>(&my_pub[i]));
+                format_to(w, "other_pub_1b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint8_t>(&other_pub[i]));
+                format_to(w, "my_priv_1b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint8_t>(&my_priv[i]));
+                format_to(w, "my_pub_1b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint8_t>(&my_pub[i]));
                 
-                w.write("other_pub_2b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint16_t>(&other_pub[i]));
-                w.write("my_priv_2b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint16_t>(&my_priv[i]));
-                w.write("my_pub_2b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint16_t>(&my_pub[i]));
+                format_to(w, "other_pub_2b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint16_t>(&other_pub[i]));
+                format_to(w, "my_priv_2b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint16_t>(&my_priv[i]));
+                format_to(w, "my_pub_2b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint16_t>(&my_pub[i]));
                 
-                w.write("other_pub_4b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint32_t>(&other_pub[i]));
-                w.write("my_priv_4b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint32_t>(&my_priv[i]));
-                w.write("my_pub_4b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint32_t>(&my_pub[i]));
+                format_to(w, "other_pub_4b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint32_t>(&other_pub[i]));
+                format_to(w, "my_priv_4b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint32_t>(&my_priv[i]));
+                format_to(w, "my_pub_4b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint32_t>(&my_pub[i]));
                 
-                w.write("other_pub_8b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint64_t>(&other_pub[i]));
-                w.write("my_priv_8b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint64_t>(&my_priv[i]));
-                w.write("my_pub_8b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint64_t>(&my_pub[i]));
+                format_to(w, "other_pub_8b:0x{:x}\t", get_aligned_data_race_val<mefdn::uint64_t>(&other_pub[i]));
+                format_to(w, "my_priv_8b:0x{:x}\t"  , get_aligned_data_race_val<mefdn::uint64_t>(&my_priv[i]));
+                format_to(w, "my_pub_8b:0x{:x}\t"   , get_aligned_data_race_val<mefdn::uint64_t>(&my_pub[i]));
                 
-                const auto s = w.str();
+                const auto s = to_string(w);
                 MEFDN_LOG_FATAL("{}", s);
                 throw std::runtime_error(s);
             }
         }
         
         // Lost the exact position...
-        fmt::MemoryWriter w;
-        w.write("msg:Detected data race? (but lost exact position...)\t");
-        w.write("blk_pos:{}\t", blk_pos);
-        w.write("index:{}\t", index);
-        w.write("other_pub:0x{:x}\t", reinterpret_cast<mefdn::intptr_t>(other_pub));
-        w.write("my_priv:0x{:x}\t"  , reinterpret_cast<mefdn::intptr_t>(my_priv));
-        w.write("my_pub:0x{:x}"     , reinterpret_cast<mefdn::intptr_t>(my_pub));
+        fmt::memory_buffer w;
+        format_to(w, "msg:Detected data race? (but lost exact position...)\t");
+        format_to(w, "blk_pos:{}\t", blk_pos);
+        format_to(w, "index:{}\t", index);
+        format_to(w, "other_pub:0x{:x}\t", reinterpret_cast<mefdn::intptr_t>(other_pub));
+        format_to(w, "my_priv:0x{:x}\t"  , reinterpret_cast<mefdn::intptr_t>(my_priv));
+        format_to(w, "my_pub:0x{:x}"     , reinterpret_cast<mefdn::intptr_t>(my_pub));
         
-        const auto s = w.str();
+        const auto s = to_string(w);
         MEFDN_LOG_FATAL("{}", s);
         throw std::logic_error(s);
     }

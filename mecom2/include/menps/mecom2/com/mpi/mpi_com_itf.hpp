@@ -98,9 +98,9 @@ private:
         
         std::string operator() ()
         {
-            fmt::MemoryWriter w;
-            w.write(
-                "proc:{}\tthread:{:x}\tult:{:x}\tlog_id:{}\tclock:{}\t"
+            fmt::memory_buffer w;
+            format_to(w
+            ,   "proc:{}\tthread:{:x}\tult:{:x}\tlog_id:{}\tclock:{}\t"
             ,   self_.coll_->this_proc_id()
             ,   reinterpret_cast<mefdn::uintptr_t>(pthread_self())
                 // TODO: use mefdn::this_thread::get_id()
@@ -110,7 +110,7 @@ private:
             ,   this->number_++
             ,   mefdn::get_cpu_clock() // TODO
             );
-            return w.str();
+            return to_string(w);
         }
         
     private:
