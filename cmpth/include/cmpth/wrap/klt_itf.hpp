@@ -37,6 +37,17 @@ struct klt_itf
     private:
         static thread_local value_type* p_;
     };
+    
+    struct this_thread
+    {
+        static void yield() noexcept {
+            std::this_thread::yield();
+        }
+        
+        static thread::id get_id() noexcept {
+            return std::this_thread::get_id();
+        }
+    };
 };
 
 template <typename P>
