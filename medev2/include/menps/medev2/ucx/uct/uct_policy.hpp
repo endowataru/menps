@@ -4,7 +4,7 @@
 #include <menps/medev2/ucx/uct/direct_facade.hpp>
 #include <menps/medev2/ucx/ucs/async_context.hpp>
 #include <menps/medev2/ucx/uct/worker.hpp>
-#include <menps/medev2/ucx/uct/md_resource_list.hpp>
+#include <menps/medev2/ucx/uct/component_list.hpp>
 #include <menps/medev2/ucx/uct/tl_resource_list.hpp>
 #include <menps/medev2/ucx/uct/memory_domain.hpp>
 #include <menps/medev2/ucx/uct/memory.hpp>
@@ -30,7 +30,8 @@ struct uct_policy
     using async_context_type = ucs::async_context;
     
     using worker_type = worker<P>;
-    using md_resource_list_type = md_resource_list<P>;
+    using component_list_type = component_list<P>;
+    using md_resources_type = std::vector<uct_md_resource_desc_t>;
     using tl_resource_list_type = tl_resource_list<P>;
     using memory_domain_type = memory_domain<P>;
     using memory_type = memory<P>;
@@ -44,29 +45,51 @@ struct uct_policy
     using rkey_buffer_type = address_buffer<void>;
     using remote_key_type = remote_key<P>;
     
-    static memory_domain_type open_md(
+    static md_resources_type query_md_resources(
+        component_list_type&    cl
+    ,   uct_component* const    component
+    ) {
+        const auto num_md_ress = cl.query_md_resource_count(component);
+        md_resources_type md_ress(num_md_ress);
+        cl.query_md_resources(component, md_ress.data());
+        return md_ress;
+    }
+
+    struct open_md_result {
+        uct_component*      component;
+        memory_domain_type  md;
+    };
+
+    static open_md_result open_md(
         uct_facade_type&    uf
     ,   const char* const   tl_name
     ,   const char* const   dev_name
     ) {
-        auto md_ress = md_resource_list_type::query(uf);
+        auto components = component_list_type::query(uf);
         
-        for (auto&& md_res : md_ress) {
-            auto md_conf = md_config_type::read(uf, md_res.md_name);
-            auto md = memory_domain_type::open(uf, md_res.md_name, md_conf.get());
+        for (auto&& component : components) {
+            auto md_ress = query_md_resources(components, component);
             
-            auto tl_ress = tl_resource_list_type::query(uf, md.get());
+            // TODO: uct_md_config_read() doesn't require uct_md_h.
+            auto md_conf = md_config_type::read(
+                uf, component, nullptr, nullptr);
             
-            for (auto&& tl_res : tl_ress) {
-                if ((strcmp(tl_res.tl_name, tl_name) == 0)
-                    && (strcmp(tl_res.dev_name, dev_name) == 0))
-                {
-                    return md;
+            for (auto&& md_res : md_ress) {
+                auto md = memory_domain_type::open(
+                    uf, component, md_res.md_name, md_conf.get());
+                
+                auto tl_ress = tl_resource_list_type::query(uf, md.get());
+                
+                for (auto&& tl_res : tl_ress) {
+                    if ((strcmp(tl_res.tl_name, tl_name) == 0)
+                        && (strcmp(tl_res.dev_name, dev_name) == 0))
+                    {
+                        return { component, mefdn::move(md) };
+                    }
                 }
             }
         }
-        
-        return {};
+        return { nullptr, {} };
     }
     
     static iface_address_type get_iface_address(

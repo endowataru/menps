@@ -75,13 +75,20 @@ public:
     
     ucs_status_t ep_create(const medev2::ucx::uct::ep_create_params& p)
     {
-        auto& pr_iface = *reinterpret_cast<proxy_iface_type*>(p.iface);
+        const auto pr_iface_ptr = p.params->iface;
+        auto& pr_iface = *reinterpret_cast<proxy_iface_type*>(pr_iface_ptr);
         auto& orig_iface = pr_iface.get_orig_iface();
+        
+        // Copy the parameters.
+        // TODO: This method doesn't have forward binary compatibility.
+        uct_ep_params_t orig_ep_params = *p.params;
+        // Replace .iface parameter.
+        orig_ep_params.iface = orig_iface.get();
        
         auto orig_ep =
             proxy_endpoint_type::orig_endpoint_type::create(
-                this->orig_uf_, orig_iface.get());
-       
+                this->orig_uf_, &orig_ep_params);
+        
         auto pr_ep =
             new proxy_endpoint_type(pr_iface, menps::mefdn::move(orig_ep));
        

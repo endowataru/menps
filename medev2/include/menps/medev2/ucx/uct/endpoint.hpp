@@ -48,19 +48,30 @@ public:
     
     // UCT_IFACE_FLAG_CONNECT_TO_EP
     static endpoint create(
-        uct_facade_type&    uf
-    ,   uct_iface* const    iface
+        uct_facade_type&                uf
+    ,   const uct_ep_params_t* const    params
     ) {
         uct_ep* p = nullptr;
         
-        const auto ret = uf.ep_create({ iface, &p });
-        
+        const auto ret = uf.ep_create({ params, &p });
         if (ret != UCS_OK) {
             throw ucx_error("uct_ep_create() failed", ret);
         }
         
         return endpoint(uf, p);
     }
+    // for convenience
+    static endpoint create(
+        uct_facade_type&    uf
+    ,   uct_iface* const    iface
+    ) {
+        uct_ep_params_t params = uct_ep_params_t();
+        params.field_mask = UCT_EP_PARAM_FIELD_IFACE;
+        params.iface = iface;
+        
+        return endpoint::create(uf, &params);
+    }
+
     void get_ep_address(uct_ep_addr_t* const addr)
     {
         auto& uf = * this->get_deleter().uf;
@@ -82,25 +93,6 @@ public:
         if (ret != UCS_OK) {
             throw ucx_error("uct_ep_connect_to_ep() failed", ret);
         }
-    }
-    
-    // UCT_IFACE_FLAG_CONNECT_TO_IFACE
-    static endpoint create_connected(
-        uct_facade_type&                uf
-    ,   const uct_iface_h               iface
-    ,   const uct_device_addr_t* const  dev_addr
-    ,   const uct_iface_addr_t* const   iface_addr
-    ) {
-        uct_ep* p = nullptr;
-        
-        const auto ret =
-            uf.ep_create_connected({ iface, dev_addr, iface_addr, &p });
-        
-        if (ret != UCS_OK) {
-            throw ucx_error("uct_ep_create_connected() failed", ret);
-        }
-        
-        return endpoint(uf, p);
     }
     
     ucs_status_t put_short(

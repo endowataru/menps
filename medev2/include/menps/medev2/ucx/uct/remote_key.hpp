@@ -15,9 +15,10 @@ struct remote_key_deleter
     using uct_facade_type = typename P::uct_facade_type;
     
     uct_facade_type*    uf;
+    uct_component*      component;
     
     void operator () (const uct_rkey_bundle_t& rkey_bundle) const noexcept {
-        uf->rkey_release({ &rkey_bundle });
+        uf->rkey_release({ component, &rkey_bundle });
     }
 };
 
@@ -46,10 +47,11 @@ public:
     remote_key() MEFDN_DEFAULT_NOEXCEPT = default;
     
     explicit remote_key(
-        uct_facade_type&    uf
-    ,   uct_rkey_bundle_t   rkey_bundle
+        uct_facade_type&        uf
+    ,   uct_component* const    component
+    ,   uct_rkey_bundle_t       rkey_bundle
     )
-        : base(mefdn::move(rkey_bundle), deleter_type{ &uf })
+        : base(mefdn::move(rkey_bundle), deleter_type{ &uf, component })
     { }
     
     remote_key(const remote_key&) = delete;
@@ -59,17 +61,18 @@ public:
     remote_key& operator = (remote_key&&) MEFDN_DEFAULT_NOEXCEPT = default;
     
     static remote_key unpack(
-        uct_facade_type&    uf
-    ,   const void* const   rkey_buf
+        uct_facade_type&        uf
+    ,   uct_component* const    component
+    ,   const void* const       rkey_buf
     ) {
         uct_rkey_bundle_t rkey_bundle = uct_rkey_bundle_t();
         
-        const auto ret = uf.rkey_unpack({ rkey_buf, &rkey_bundle });
+        const auto ret = uf.rkey_unpack({ component, rkey_buf, &rkey_bundle });
         if (ret != UCS_OK) {
             throw ucx_error("uct_rkey_unpack() failed", ret);
         }
         
-        return remote_key(uf, rkey_bundle);
+        return remote_key(uf, component, rkey_bundle);
     }
     
 private:

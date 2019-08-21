@@ -135,12 +135,13 @@ public:
     {
         auto& self = this->derived();
         auto& uf = self.get_uct_facade();
+        const auto component = self.get_component();
         
         const auto ptr_buf = static_cast<void* const *>(buf);
         // Load the pointer from the buffer.
         const auto raddr = *ptr_buf;
         
-        auto rkey = remote_key_type::unpack(uf, ptr_buf+1);
+        auto rkey = remote_key_type::unpack(uf, component, ptr_buf+1);
         
         // TODO: Leaking memory.
         const auto minfo_ptr =

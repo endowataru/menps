@@ -46,12 +46,16 @@ public:
     md_config& operator = (md_config&&) noexcept = default;
     
     static md_config read(
-        uct_facade_type&    uf
-    ,   const char* const   md_name
+        uct_facade_type&        uf
+    ,   uct_component* const    component
+    ,   const char* const       env_prefix
+    ,   const char* const       filename
     ) {
         uct_md_config_t* p = nullptr;
         
-        const auto ret = uf.md_config_read({ md_name, nullptr, nullptr, &p });
+        const auto ret =
+            uf.md_config_read({ component, env_prefix, filename, &p });
+        
         if (ret != UCS_OK) {
             throw ucx_error("uct_md_config_read() failed", ret);
         }

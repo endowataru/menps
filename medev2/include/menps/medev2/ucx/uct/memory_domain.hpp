@@ -46,13 +46,14 @@ public:
     memory_domain& operator = (memory_domain&&) noexcept = default;
     
     static memory_domain open(
-        uct_facade_type&        uf
-    ,   const char* const       md_name
-    ,   uct_md_config_t* const  conf
+        uct_facade_type&                uf
+    ,   uct_component* const            component
+    ,   const char* const               md_name
+    ,   const uct_md_config_t* const    conf
     ) {
         uct_md* md = nullptr;
         
-        const auto ret = uf.md_open({ md_name, conf, &md });
+        const auto ret = uf.md_open({ component, md_name, conf, &md });
         if (ret != UCS_OK) {
             throw ucx_error("uct_md_open() failed", ret);
         }

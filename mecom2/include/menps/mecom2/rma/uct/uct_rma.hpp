@@ -66,6 +66,7 @@ public:
     template <typename Conf>
     explicit uct_rma(Conf&& conf)
         : uf_(conf.uf)
+        , component_(conf.component)
         , md_(conf.md)
         , wk_set_(conf.wk_set)
         , md_attr_(conf.md.query())
@@ -89,6 +90,9 @@ public:
     
     uct_facade_type& get_uct_facade() const noexcept {
         return this->uf_;
+    }
+    uct_component* get_component() const noexcept {
+        return this->component_;
     }
     memory_domain_type& get_md() const noexcept {
         return this->md_;
@@ -130,6 +134,7 @@ public:
     
 private:
     uct_facade_type&    uf_;
+    uct_component*      component_;
     memory_domain_type& md_;
     worker_set_type&    wk_set_;
     uct_md_attr_t       md_attr_;
@@ -141,15 +146,17 @@ using uct_rma_ptr = mefdn::unique_ptr<uct_rma<P>>;
 template <typename P>
 inline uct_rma_ptr<P> make_uct_rma(
     typename P::uct_itf_type::uct_facade_type&      uf
+,   uct_component* const                            component
 ,   typename P::uct_itf_type::memory_domain_type&   md
 ,   typename P::worker_set_type&                    wk_set
 ) {
     struct conf {
         typename P::uct_itf_type::uct_facade_type&      uf;
+        uct_component*                                  component;
         typename P::uct_itf_type::memory_domain_type&   md;
         typename P::worker_set_type&                    wk_set;
     };
-    return mefdn::make_unique<uct_rma<P>>(conf{ uf, md, wk_set });
+    return mefdn::make_unique<uct_rma<P>>(conf{ uf, component, md, wk_set });
 }
 
 
@@ -339,7 +346,9 @@ struct uct_rma_resource {
     ,   const char* const   dev_name
     ,   Coll&               coll
     ) {
-        this->md = uct_itf_type::open_md(this->uf, tl_name, dev_name);
+        auto om_ret = uct_itf_type::open_md(this->uf, tl_name, dev_name);
+        this->component = om_ret.component;
+        this->md = mefdn::move(om_ret.md);
         
         auto iface_conf =
             uct_itf_type::iface_config_type::read(
@@ -360,10 +369,11 @@ struct uct_rma_resource {
                 this->uf, this->md, iface_conf.get(), &iface_params, coll);
         
         this->rma = make_uct_rma<uct_rma_policy<UctItf>>(
-            this->uf, this->md, *this->wk_set);
+            this->uf, this->component, this->md, *this->wk_set);
     }
     
     typename uct_itf_type::uct_facade_type      uf;
+    uct_component*                              component;
     typename uct_itf_type::memory_domain_type   md;
     uct_worker_set_ptr<UctItf>                  wk_set;
     uct_rma_ptr<uct_rma_policy<UctItf>>         rma;

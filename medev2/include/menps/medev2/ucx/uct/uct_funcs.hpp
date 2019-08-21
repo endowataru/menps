@@ -102,15 +102,7 @@
         ep_create, \
         ucs_status_t, \
         2, \
-        uct_iface_h, iface, \
-        uct_ep_h *, ep_p) \
-    X(__VA_ARGS__, \
-        ep_create_connected, \
-        ucs_status_t, \
-        4, \
-        uct_iface_h, iface, \
-        const uct_device_addr_t *, dev_addr, \
-        const uct_iface_addr_t *, iface_addr, \
+        const uct_ep_params_t *, params, \
         uct_ep_h *, ep_p)
 
 #define MEDEV2_UCT_EP_FUNCS_EP_DESTROY(X, ...) \
@@ -228,15 +220,22 @@
 
 #define MEDEV2_UCT_OTHER_FUNCS_SYNC_STATUS(X, ...) \
     X(__VA_ARGS__, \
-        query_md_resources, \
+        query_components, \
         ucs_status_t, \
         2, \
-        uct_md_resource_desc_t **, resources_p, \
-        unsigned *, num_resources_p) \
+        uct_component_h **, components_p, \
+        unsigned *, num_components_p) \
+    X(__VA_ARGS__, \
+        component_query, \
+        ucs_status_t, \
+        2, \
+        uct_component_h, component, \
+        uct_component_attr_t *, component_attr) \
     X(__VA_ARGS__, \
         md_open, \
         ucs_status_t, \
-        3, \
+        4, \
+        uct_component_h, component, \
         const char *, md_name, \
         const uct_md_config_t *, config, \
         uct_md_h *, md_p) \
@@ -331,7 +330,7 @@
         md_config_read, \
         ucs_status_t, \
         4, \
-        const char *, name, \
+        uct_component_h, component, \
         const char *, env_prefix, \
         const char *, filename, \
         uct_md_config_t **, config_p) \
@@ -345,28 +344,31 @@
     X(__VA_ARGS__, \
         rkey_unpack, \
         ucs_status_t, \
-        2, \
+        3, \
+        uct_component_h, component, \
         const void *, rkey_buffer, \
         uct_rkey_bundle_t *, rkey_ob) \
     X(__VA_ARGS__, \
         rkey_ptr, \
         ucs_status_t, \
-        3, \
+        4, \
+        uct_component_h, component, \
         uct_rkey_bundle_t *, rkey_ob, \
         uint64_t, remote_addr, \
         void **, addr_p) \
     X(__VA_ARGS__, \
         rkey_release, \
         ucs_status_t, \
-        1, \
+        2, \
+        uct_component_h, component, \
         const uct_rkey_bundle_t *, rkey_ob)
 
 #define MEDEV2_UCT_OTHER_FUNCS_SYNC_VOID(X, ...) \
     X(__VA_ARGS__, \
-        release_md_resource_list, \
+        release_component_list, \
         void, \
         1, \
-        uct_md_resource_desc_t *, resources) \
+        uct_component_h *, components) \
     X(__VA_ARGS__, \
         md_close, \
         void, \

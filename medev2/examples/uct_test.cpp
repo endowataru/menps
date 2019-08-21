@@ -19,11 +19,11 @@ int main()
     auto async_ctx = policy::async_context_type::create(UCS_ASYNC_MODE_THREAD);
     auto wk = policy::worker_type::create(uf, async_ctx.get(), UCS_THREAD_MODE_MULTI);
     
-    auto md = policy::open_md(uf, tl_name, dev_name);
-    const auto md_attr = md.query();
+    auto om_ret = policy::open_md(uf, tl_name, dev_name);
+    const auto md_attr = om_ret.md.query();
     
     auto iface_conf =
-        policy::iface_config_type::read(uf, md.get(), tl_name, nullptr, nullptr);
+        policy::iface_config_type::read(uf, om_ret.md.get(), tl_name, nullptr, nullptr);
     
     uct_iface_params_t iface_params = uct_iface_params_t();
     iface_params.open_mode = UCT_IFACE_OPEN_MODE_DEVICE;
@@ -33,7 +33,7 @@ int main()
     iface_params.rx_headroom = 0;
     
     auto iface =
-        policy::interface_type::open(uf, md.get(), wk.get(),
+        policy::interface_type::open(uf, om_ret.md.get(), wk.get(),
             &iface_params, iface_conf.get());
     
     const auto iface_attr = iface.query();
@@ -42,11 +42,11 @@ int main()
     int x = 1234;
     
     auto mem = policy::memory_type::mem_reg(
-        uf, md.get(), &x, sizeof(x), UCT_MD_MEM_FLAG_FIXED | UCT_MD_MEM_ACCESS_ALL);
+        uf, om_ret.md.get(), &x, sizeof(x), UCT_MD_MEM_FLAG_FIXED | UCT_MD_MEM_ACCESS_ALL);
     
     auto packed_rkey = policy::pack_rkey(mem, md_attr);
     
-    auto rkey = policy::remote_key_type::unpack(uf, packed_rkey.get());
+    auto rkey = policy::remote_key_type::unpack(uf, om_ret.component, packed_rkey.get());
     
     #if 1
     auto ep = policy::endpoint_type::create(uf, iface.get());
