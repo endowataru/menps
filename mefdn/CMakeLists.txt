@@ -229,6 +229,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         -Wno-long-long
         -Wno-shadow # ICC cannot disable this warning in template classes/functions
     )
+    target_compile_definitions(mefdn-options INTERFACE
+        # TODO: workaround to avoid compilation error of fmtlib on ICC
+        FMT_DEPRECATED=
+    )
 endif()
 
 if(MEFDN_PROFILER_USE_GPROF)
