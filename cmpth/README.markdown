@@ -42,3 +42,17 @@ and modify the features for individual motivations,
 I started to build a new library ComposableThreads.
 
 
+## Abbreviations
+
+- cmpth = ComposableThreads
+- itf = interface
+- fdn = fundamental
+- sct = shared-memory ComposableThreads
+- mth = MassiveThreads
+- ult = user-level threads
+- klt = kernel-level threads
+- ctmth = ComposableThreads (on) MassiveThreads
+- exec = execution
+- def = default
+- buf = buffer
+
