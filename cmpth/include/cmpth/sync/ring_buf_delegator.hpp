@@ -53,9 +53,7 @@ struct ring_buf_delegator_policy
 
 template <typename UltItf, typename P2>
 using ring_buf_delegator =
-    basic_ring_buf_delegator<
-        ring_buf_delegator_policy<UltItf, P2>
-    >;
+    basic_ring_buf_delegator<ring_buf_delegator_policy<UltItf, P2>>;
 
 } // namespace cmpth
 

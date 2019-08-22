@@ -13,7 +13,6 @@ class basic_sync_delegator
     CMPTH_DEFINE_DERIVED(P)
     
     using sync_queue_type = typename P::sync_queue_type;
-    using sync_node_type = typename P::sync_node_type;
     using qdlock_thread_type = typename P::qdlock_thread_type;
     
     using ult_itf_type = typename P::ult_itf_type;
@@ -22,6 +21,8 @@ class basic_sync_delegator
     //using worker_type = typename P::worker_type;
     
 public:
+    using sync_node_type = typename P::sync_node_type;
+    
     template <typename DelegateFunc>
     CMPTH_NODISCARD
     bool lock_or_delegate(/*worker_type& wk, */DelegateFunc&& delegate_func)

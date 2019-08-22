@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include <cmpth/sync/basic_pool_mcs_delegator.hpp>
-#include <cmpth/sync/basic_ring_buf_delegator.hpp>
+#include <cmpth/sync/mcs_delegator.hpp>
+#include <cmpth/sync/ring_buf_delegator.hpp>
 // TODO: remove unnecessary dependencies
 
 namespace cmpth {
@@ -20,7 +20,7 @@ using get_delegator_t = typename get_delegator_type<UltItf, DelegatorTag, P2>::t
 
 template <typename UltItf, typename P2>
 struct get_delegator_type<UltItf, sync_tag_t::MCS, P2>
-    : fdn::type_identity<pool_mcs_delegator<UltItf, P2>> {};
+    : fdn::type_identity<mcs_delegator<UltItf, P2>> {};
 
 template <typename UltItf, typename P2>
 struct get_delegator_type<UltItf, sync_tag_t::RB, P2>
