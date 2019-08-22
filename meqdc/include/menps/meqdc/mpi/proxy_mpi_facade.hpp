@@ -18,9 +18,8 @@ class proxy_mpi_facade
     using command_code_type = typename P::command_code_type;
     using proxy_request_type = typename P::proxy_request_type;
     using proxy_request_state_type = typename P::proxy_request_state_type;
-    using qdlock_delegator_type = typename P::qdlock_delegator_type;
-    using qdlock_pool_type = typename qdlock_delegator_type::qdlock_pool_type;
-    using qdlock_node_type = typename qdlock_delegator_type::qdlock_node_type;
+    using delegator_type = typename P::delegator_type;
+    using sync_node_type = typename delegator_type::sync_node_type;
     using proxy_params_type = typename P::proxy_params_type;
     using size_type = typename P::size_type;
     using ult_itf_type = typename P::ult_itf_type;
@@ -36,13 +35,12 @@ public:
         : orig_mf_(argc, argv, MPI_THREAD_SERIALIZED, &orig_level_)
         , req_pool_(P::max_num_requests)
         , req_hld_()
-        , qd_pool_()
-        , qd_(this->qd_pool_)
+        , del_()
     {
         *provided = MPI_THREAD_MULTIPLE;
         
-        this->qd_.start_consumer(
-            [this] (qdlock_node_type& n) {
+        this->del_.start_consumer(
+            [this] (sync_node_type& n) {
                 return this->execute_delegated(n);
             }
         ,   [this] {
@@ -53,7 +51,7 @@ public:
     
     ~proxy_mpi_facade()
     {
-        this->qd_.stop_consumer();
+        this->del_.stop_consumer();
     }
     
 private:
@@ -133,7 +131,7 @@ private:
         proxy_request_type* proxy_req_ptr;
         bool needs_wait;
         
-        delegate_result operator() (qdlock_node_type& cur)
+        delegate_result operator() (sync_node_type& cur)
         {
             cur.func.code = code;
             cur.func.params.*mem = real_p;
@@ -166,7 +164,7 @@ private:
         
         *proxy_p.request = this->to_mpi_request(proxy_req_ptr);
         
-        this->qd_.execute_or_delegate(
+        this->del_.execute_or_delegate(
             execute_imm_nb<Params>{ *this, f, real_p, proxy_req_ptr, needs_wait }
         ,   delegate_nb<Params>{ *this, code, mem, real_p, proxy_req_ptr, needs_wait }
         );
@@ -180,7 +178,7 @@ private:
     ,   const Params& real_p
     ,   const bool needs_wait
     ) {
-        this->qd_.execute_or_delegate(
+        this->del_.execute_or_delegate(
             execute_imm_nb<Params>{ *this, f, real_p, nullptr, needs_wait }
         ,   delegate_nb<Params>{ *this, code, mem, real_p, nullptr, needs_wait }
         );
@@ -201,7 +199,7 @@ private:
         
         *proxy_p.request = this->to_mpi_request(proxy_req_ptr);
         
-        this->qd_.execute_or_delegate(
+        this->del_.execute_or_delegate(
             execute_imm_nb<Params>{ *this, f, real_p, proxy_req_ptr, true }
         ,   delegate_nb<Params>{ *this, code, mem, real_p, proxy_req_ptr, true }
         );
@@ -328,9 +326,9 @@ public:
     
     #define D(dummy, name, Name, tr, num, ...) \
         void name(const medev2::mpi::name##_params& real_p) { \
-            this->qd_.lock(); \
+            this->del_.lock(); \
             this->orig_mf_.name(real_p); \
-            this->qd_.unlock(); \
+            this->del_.unlock(); \
         }
     
     MEDEV2_MPI_PROBE_FUNCS(D, /*dummy*/)
@@ -435,9 +433,9 @@ public:
     void progress()
     {
         #if 1
-        this->qd_.lock();
+        this->del_.lock();
         this->orig_mf_.progress();
-        this->qd_.unlock();
+        this->del_.unlock();
         
         #else
         // Do nothing.
@@ -454,7 +452,7 @@ private:
         uncond_variable_type*   awake_uv;
     };
     
-    del_exec_result execute_delegated(const qdlock_node_type& n)
+    del_exec_result execute_delegated(const sync_node_type& n)
     {
         execute_imm_result ret = execute_imm_result();
         
@@ -593,8 +591,7 @@ private:
     orig_mpi_facade_type    orig_mf_;
     request_pool_type       req_pool_;
     request_holder_type     req_hld_;
-    qdlock_pool_type        qd_pool_;
-    qdlock_delegator_type   qd_;
+    delegator_type          del_;
 };
 
 } // namespace meqdc

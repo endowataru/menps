@@ -85,7 +85,7 @@ struct proxy_mpi_request_pool_policy
 };
 
 template <typename P>
-struct proxy_mpi_qdlock_func
+struct proxy_mpi_func
 {
     proxy_mpi_code          code;
     proxy_mpi_params        params;
@@ -106,7 +106,7 @@ struct proxy_mpi_delegator_policy
 {
     using policy_base_type = proxy_mpi_policy_base<OrigMpiItf>;
     using ult_itf_type = typename OrigMpiItf::ult_itf_type;
-    using delegated_func_type = proxy_mpi_qdlock_func<policy_base_type>;
+    using delegated_func_type = proxy_mpi_func<policy_base_type>;
     
     template <typename Pool>
     static mefdn::size_t get_pool_threshold(Pool& /*pool*/) {
@@ -133,7 +133,7 @@ struct proxy_mpi_policy
     using command_code_type = proxy_mpi_code;
     using proxy_params_type = proxy_mpi_params;
     
-    using qdlock_delegator_type =
+    using delegator_type =
         typename ult_itf_type::template delegator_t<
             proxy_mpi_delegator_policy<OrigMpiItf>
         >;

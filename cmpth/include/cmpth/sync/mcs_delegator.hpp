@@ -8,30 +8,6 @@
 
 namespace cmpth {
 
-template <typename P>
-class basic_mcs_delegator
-    : public basic_sync_delegator<P>
-{
-    using mcs_node_pool_type = typename P::mcs_node_pool_type;
-    
-public:
-    // for compatibility
-    using qdlock_pool_type = mcs_node_pool_type;
-    using qdlock_node_type = typename P::sync_node_type;
-    
-    explicit basic_mcs_delegator(mcs_node_pool_type& pool)
-        : pool_(pool)
-        // Note: GCC 4.8 cannot use {} for initializing a reference
-    { }
-    
-    mcs_node_pool_type& get_pool() const noexcept {
-        return this->pool_;
-    }
-    
-private:
-    mcs_node_pool_type& pool_;
-};
-
 template <typename UltItf, typename P2>
 struct mcs_delegator_node
 {
@@ -66,7 +42,7 @@ struct mcs_delegator_pool_policy {
 template <typename UltItf, typename P2>
 struct mcs_delegator_policy
 {
-    using derived_type = basic_mcs_delegator<mcs_delegator_policy>;
+    using derived_type = basic_sync_delegator<mcs_delegator_policy>;
     using mcs_core_type = basic_mcs_core<mcs_delegator_policy>;
     using sync_queue_type = basic_mcs_queue<mcs_delegator_policy>;
     
@@ -85,7 +61,7 @@ struct mcs_delegator_policy
 
 template <typename UltItf, typename P2>
 using mcs_delegator =
-    basic_mcs_delegator<mcs_delegator_policy<UltItf, P2>>;
+    basic_sync_delegator<mcs_delegator_policy<UltItf, P2>>;
 
 } // namespace cmpth
 

@@ -14,9 +14,8 @@ class proxy_uct_worker
     using orig_uct_itf_type = typename P::orig_uct_itf_type;
     using orig_uct_facade_type = typename orig_uct_itf_type::uct_facade_type;
     
-    using qdlock_delegator_type = typename P::qdlock_delegator_type;
-    using qdlock_pool_type = typename qdlock_delegator_type::qdlock_pool_type;
-    using qdlock_node_type = typename qdlock_delegator_type::qdlock_node_type;
+    using delegator_type = typename P::delegator_type;
+    using sync_node_type = typename delegator_type::sync_node_type;
     
     using command_code_type = typename P::command_code_type;
     using proxy_params_type = typename P::proxy_params_type;
@@ -41,17 +40,16 @@ public:
     )
         : orig_uf_(orig_uf)
         , orig_wk_(mefdn::move(orig_wk))
-        , qd_pool_() // TODO: Unnecessary to allocate "per worker pool"
-        , qd_(this->qd_pool_)
+        , del_()
     {
-        this->qd_.start_consumer(
+        this->del_.start_consumer(
             execute_delegated{ *this }
         ,   do_progress{ *this }
         );
     }
     ~proxy_uct_worker()
     {
-        this->qd_.stop_consumer();
+        this->del_.stop_consumer();
     }
     
     orig_worker_type& get_orig_worker() {
@@ -133,11 +131,11 @@ private:
         // Replace the parameter iface.
         this->replace_iface(&real_p.iface);
         
-        this->qd_.lock();
+        this->del_.lock();
         
         const auto ret = (this->orig_uf_.*f)(real_p);
         
-        this->qd_.unlock();
+        this->del_.unlock();
         
         return ret;
     }
@@ -151,11 +149,11 @@ private:
         // Replace the parameter ep.
         this->replace_ep(&real_p.ep);
         
-        this->qd_.lock();
+        this->del_.lock();
         
         const auto ret = (this->orig_uf_.*f)(real_p);
         
-        this->qd_.unlock();
+        this->del_.unlock();
         
         return ret;
     }
@@ -291,7 +289,7 @@ private:
         Params proxy_params_type::*mem;
         const Params& proxy_p;
         
-        delegate_result operator() (qdlock_node_type& cur)
+        delegate_result operator() (sync_node_type& cur)
         {
             cur.func.code = code;
             cur.func.params.*mem = proxy_p;
@@ -309,7 +307,7 @@ private:
         ucs_status_t ret_st = UCS_OK;
         
         const bool is_locked =
-            this->qd_.execute_or_delegate(
+            this->del_.execute_or_delegate(
                 Exec<Params>{
                     *this, f, proxy_p, &ret_st
                 }
@@ -377,7 +375,7 @@ private:
     {
         proxy_uct_worker& self;
         
-        del_exec_result operator() (const qdlock_node_type& n) const
+        del_exec_result operator() (const sync_node_type& n) const
         {
             execute_imm_result ret = execute_imm_result();
             ucs_status_t st = UCS_OK;
@@ -537,8 +535,7 @@ private:
     
     orig_uct_facade_type&   orig_uf_;
     orig_worker_type        orig_wk_;
-    qdlock_pool_type        qd_pool_;
-    qdlock_delegator_type   qd_;
+    delegator_type          del_;
     size_type               num_ongoing_ = 0;
     
     proxy_completion_pool_type  pc_pool_;

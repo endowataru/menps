@@ -345,7 +345,7 @@ private:
         bool is_active   = this->is_active_;
         
         CMPTH_P_LOG_DEBUG(P,
-            "Start consuming qdlock delegations.\t", 2
+            "Start consuming delegations.\t", 2
         ,   "is_executed", is_executed
         ,   "is_active", is_active
         );
@@ -390,7 +390,7 @@ private:
                 do_progress = !is_executed;
             }
             else {
-                CMPTH_P_LOG_DEBUG(P, "Awake next thread trying to lock qdlock.", 0);
+                CMPTH_P_LOG_DEBUG(P, "Awake next thread trying to lock delegator.", 0);
                 
                 // The next thread is trying to lock the mutex.
                 consumer_uv.swap(*head->uv);
@@ -416,7 +416,7 @@ private:
         }
         
         CMPTH_P_LOG_DEBUG(P,
-            "Finish consuming qdlock delegations.", 3
+            "Finish consuming delegations.", 3
         ,   "is_executed", is_executed
         ,   "is_active", is_active
         ,   "do_progress", do_progress

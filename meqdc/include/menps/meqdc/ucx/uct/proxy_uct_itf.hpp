@@ -44,7 +44,7 @@ enum class proxy_uct_code {
     #undef D
 };
 
-struct proxy_uct_qdlock_func
+struct proxy_uct_func
 {
     proxy_uct_code          code;
     proxy_uct_params        params;
@@ -52,7 +52,7 @@ struct proxy_uct_qdlock_func
 
 struct proxy_uct_delegator_policy
 {
-    using delegated_func_type = proxy_uct_qdlock_func;
+    using delegated_func_type = proxy_uct_func;
     
     template <typename Pool>
     static mefdn::size_t get_pool_threshold(Pool& /*pool*/) {
@@ -115,7 +115,7 @@ struct proxy_uct_facade_policy
     using command_code_type = proxy_uct_code;
     using proxy_params_type = proxy_uct_params;
     
-    using qdlock_delegator_type =
+    using delegator_type =
         typename ult_itf_type::template delegator_t<proxy_uct_delegator_policy>;
 };
 

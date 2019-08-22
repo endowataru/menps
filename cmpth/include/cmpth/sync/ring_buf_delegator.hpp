@@ -7,18 +7,6 @@
 
 namespace cmpth {
 
-template <typename P>
-class basic_ring_buf_delegator
-    : public basic_sync_delegator<P>
-{
-public:
-    // for compatibility
-    struct qdlock_pool_type { };
-    using qdlock_node_type = typename P::sync_node_type;
-
-    explicit basic_ring_buf_delegator(qdlock_pool_type&) { }
-};
-
 template <typename UltItf, typename P2>
 struct ring_buf_delegator_node
 {
@@ -34,7 +22,7 @@ struct ring_buf_delegator_node
 template <typename UltItf, typename P2>
 struct ring_buf_delegator_policy
 {
-    using derived_type = basic_ring_buf_delegator<ring_buf_delegator_policy>;
+    using derived_type = basic_sync_delegator<ring_buf_delegator_policy>;
     using sync_queue_type = basic_ring_buf_queue<ring_buf_delegator_policy>;
     using ring_buf_core_type = basic_ring_buf_core<ring_buf_delegator_policy>;
 
@@ -53,7 +41,7 @@ struct ring_buf_delegator_policy
 
 template <typename UltItf, typename P2>
 using ring_buf_delegator =
-    basic_ring_buf_delegator<ring_buf_delegator_policy<UltItf, P2>>;
+    basic_sync_delegator<ring_buf_delegator_policy<UltItf, P2>>;
 
 } // namespace cmpth
 
