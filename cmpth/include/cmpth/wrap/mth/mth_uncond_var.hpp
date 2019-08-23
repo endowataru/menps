@@ -30,12 +30,6 @@ public:
     mth_uncond_var(const mth_uncond_var&) = delete;
     mth_uncond_var& operator = (const mth_uncond_var&) = delete;
     
-    void wait()
-    {
-        if (myth_uncond_wait(&this->u_) != 0)
-            throw mth_error{};
-    }
-    
     void notify()
     {
         this->notify_signal();
@@ -117,9 +111,6 @@ public:
     }
     
     // For interfacing in ctmth
-    
-    template <typename Worker>
-    void wait(Worker& /*wk*/) { this->wait(); }
     
     template <typename Worker>
     void notify(Worker& /*wk*/) { this->notify(); }

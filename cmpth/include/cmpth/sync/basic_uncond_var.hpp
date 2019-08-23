@@ -135,16 +135,6 @@ private:
     };
     
 public:
-    worker_type& wait(worker_type& wk)
-    {
-        CMPTH_P_ASSERT(P, !this->cont_);
-        
-        return wk.template suspend_to_sched<
-            basic_uncond_var::on_swap // the same function
-        >(this);
-    }
-    
-public:
     template <typename Func, typename... Args>
     worker_type& wait_with(worker_type& wk, Args* const ... args)
     {
@@ -230,11 +220,6 @@ public:
     void swap_with(derived_type& next_uv, Func func) {
         auto& wk = worker_type::get_cur_worker();
         this->template swap_with<on_call_instance<Func>>(wk, next_uv, &func);
-    }
-    
-    void wait() {
-        auto& wk = worker_type::get_cur_worker();
-        this->wait(wk);
     }
     
     template <typename Func>
