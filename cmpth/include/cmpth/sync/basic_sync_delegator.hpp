@@ -309,6 +309,8 @@ public:
         DelExecFunc&&   del_exec_func
     ,   ProgressFunc&&  progress_func
     ) {
+        this->lock();
+        
         // Note: Copy the functions to a new thread's call stack.
         this->th_.start([this, del_exec_func, progress_func] {
             return this->consume(del_exec_func, progress_func);
@@ -458,7 +460,7 @@ private:
     }
     
     sync_queue_type     queue_;
-    bool                is_executed_ = false;
+    bool                is_executed_ = true;
     bool                is_active_ = false;
     qdlock_thread_type  th_;
 };

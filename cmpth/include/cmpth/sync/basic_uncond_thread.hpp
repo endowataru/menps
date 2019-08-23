@@ -66,8 +66,6 @@ private:
         
         void operator() ()
         {
-            self.uv_.wait();
-            
             while (!self.finished_.load(fdn::memory_order_relaxed))
             {
                 func();
