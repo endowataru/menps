@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <cmpth/wrap/mth/mth_itf.hpp>
+#include <cmpth/wrap/mth/mth.hpp>
 
 namespace cmpth {
 

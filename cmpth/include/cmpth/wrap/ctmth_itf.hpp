@@ -6,23 +6,14 @@
 #include <cmpth/sct/lv6_sct_itf.hpp>
 #include <cmpth/sct/lv7_sct_itf.hpp>
 #include <cmpth/ult_tag.hpp>
-#include <cmpth/wrap/basic_wrap_worker.hpp>
 #include <cmpth/pool/basic_ext_return_pool.hpp>
 
 namespace cmpth {
 
 // level 5
 
-struct ctmth_worker_policy {
-    using base_ult_itf_type = mth_itf;
-    using worker_num_type = fdn::size_t;
-    using assert_policy_type = mth_itf::assert_policy;
-    using log_policy_type = mth_itf::log_policy;
-};
-
-struct lv5_mth_itf
-    : mth_itf
-    , basic_wrap_worker_itf<ctmth_worker_policy>
+struct lv5_ctmth_itf
+    : lv5_mth_itf
 {
     using base_ult_itf = klt_itf;
     
@@ -33,7 +24,7 @@ struct lv5_mth_itf
 // level 6: mutex, cv, for_loop
 
 struct lv6_ctmth_policy {
-    using lv5_itf_type = lv5_mth_itf;
+    using lv5_itf_type = lv5_ctmth_itf;
     
     template <typename Pool>
     static fdn::size_t get_mcs_mutex_pool_threshold(Pool& /*pool*/) noexcept {

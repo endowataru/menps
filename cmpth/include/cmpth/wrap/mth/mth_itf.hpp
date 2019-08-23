@@ -1,17 +1,21 @@
 
 #pragma once
 
-#include <cmpth/wrap/mth/mth.hpp>
+#include <cmpth/wrap/mth/mth_thread.hpp>
+#include <cmpth/wrap/mth/mth_mutex.hpp>
+#include <cmpth/wrap/mth/mth_cond_var.hpp>
+#include <cmpth/wrap/mth/mth_uncond_var.hpp>
+#include <cmpth/wrap/mth/mth_thread_specific.hpp>
+#include <cmpth/wrap/mth/mth_barrier.hpp>
 #include <cmpth/ult_tag.hpp>
 #include <cmpth/exec/basic_for_loop.hpp>
 #include <cmpth/sct/def_sct_spinlock.hpp>
 #include <cmpth/wrap/atomic_itf_base.hpp>
+#include <cmpth/wrap/basic_wrap_worker.hpp>
 
 //#define CMPTH_ENABLE_MTH_WORKER_CACHE
 
 namespace cmpth {
-
-struct mth_error : std::exception { };
 
 struct mth_base_policy
 {
@@ -19,57 +23,14 @@ struct mth_base_policy
     using log_policy_type = def_log_policy;
 };
 
-class mth_thread;
-class mth_mutex;
-class mth_cond_var;
-class mth_uncond_var;
-class mth_barrier;
+// level 1
 
-template <typename P>
-class mth_thread_specific;
-
-struct mth_for_loop_policy
-    : mth_base_policy
+struct lv1_mth_itf
+    : atomic_itf_base
 {
-    using thread_type = mth_thread;
-};
-
-struct mth_itf
-    : basic_for_loop<mth_for_loop_policy>
-    , atomic_itf_base
-{
-    struct initializer { };
-    // TODO: Call myth_init() / myth_fini() ?
-    
-    using thread = mth_thread;
-    
     using spinlock = def_sct_spinlock;
-    
-    using mutex = mth_mutex;
-    using condition_variable = mth_cond_var;
-    using uncond_variable = mth_uncond_var;
-    
-    using barrier = mth_barrier;
-    
-    template <typename P>
-    using thread_specific = mth_thread_specific<P>;
-    
-    template <typename Mutex>
-    using unique_lock = std::unique_lock<Mutex>;
-    
-    using unique_mutex_lock = fdn::unique_lock<mutex>;
-    
-    template <typename T>
-    using atomic = std::atomic<T>;
-    
-    struct this_thread {
-        static myth_thread_t native_handle() noexcept {
-            return myth_self();
-        }
-        static void yield() {
-            myth_yield();
-        }
-    };
+    using assert_policy = mth_base_policy::assert_policy_type;
+    using log_policy = mth_base_policy::log_policy_type;
     
     #ifdef CMPTH_ENABLE_MTH_WORKER_CACHE
     // FIXME: This implementation contains a bug which caches
@@ -97,11 +58,77 @@ struct mth_itf
     {
         return myth_get_num_workers();
     }
-    
-    using assert_policy = mth_base_policy::assert_policy_type;
-    using log_policy = mth_base_policy::log_policy_type;
 };
 
+// level 3: workers
+
+struct mth_worker_policy
+    : mth_base_policy
+{
+    using base_ult_itf_type = lv1_mth_itf;
+    using worker_num_type = fdn::size_t;
+};
+
+struct lv3_mth_itf
+    : lv1_mth_itf
+    , basic_wrap_worker_itf<mth_worker_policy>
+{
+    struct this_thread {
+        static myth_thread_t native_handle() noexcept {
+            return myth_self();
+        }
+        static void yield() {
+            myth_yield();
+        }
+    };
+};
+
+// level 5: threads
+
+struct lv5_mth_itf
+    : lv3_mth_itf
+{
+    struct initializer { };
+    // TODO: Call myth_init() / myth_fini() ?
+    
+    using thread = mth_thread<mth_base_policy>;
+    using uncond_variable = mth_uncond_var;
+    
+    template <typename P>
+    using thread_specific = mth_thread_specific<P>;
+};
+
+// level 6: mutex, condition variables
+
+struct mth_for_loop_policy
+    : mth_base_policy
+{
+    using thread_type = lv5_mth_itf::thread;
+};
+
+struct lv6_mth_itf
+    : lv5_mth_itf
+    , basic_for_loop<mth_for_loop_policy>
+{
+    using mutex = mth_mutex;
+    using condition_variable = mth_cond_var;
+    
+    template <typename Mutex>
+    using unique_lock = fdn::unique_lock<Mutex>;
+    
+    using unique_mutex_lock = fdn::unique_lock<mutex>;
+};
+
+
+// level 7: barriers
+
+struct lv7_mth_itf
+    : lv6_mth_itf
+{
+    using barrier = mth_barrier;
+};
+
+using mth_itf = lv7_mth_itf;
 
 template <>
 struct get_ult_itf_type<ult_tag_t::MTH>

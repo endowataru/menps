@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <cmpth/wrap/mth/mth_itf.hpp>
+#include <cmpth/wrap/mth/mth.hpp>
 
 #define CMPTH_AVOID_MYTH_UNCOND_SETUP
 #define CMPTH_ENABLE_MTH_UNCOND_ENTER

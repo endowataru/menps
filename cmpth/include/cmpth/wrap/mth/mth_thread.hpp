@@ -1,15 +1,15 @@
 
 #pragma once
 
-#include <cmpth/wrap/mth/mth_itf.hpp>
+#include <cmpth/wrap/mth/mth.hpp>
 #include <cmpth/wrap/basic_wrap_thread.hpp>
 
 namespace cmpth {
 
+template <typename P>
 struct mth_thread_policy
-    : mth_base_policy
 {
-    using derived_type = mth_thread;
+    using derived_type = basic_wrap_thread<mth_thread_policy>;
     
     using thread_ptr_type = myth_thread_t;
     
@@ -27,16 +27,13 @@ struct mth_thread_policy
     static void thread_detach(const thread_ptr_type t) {
         check_error(myth_detach(t));
     }
+    
+    using assert_policy_type = typename P::assert_policy_type;
+    using log_policy_type = typename P::log_policy_type;
 };
 
-class mth_thread
-    : public basic_wrap_thread<mth_thread_policy>
-{
-    using base = basic_wrap_thread<mth_thread_policy>;
-    
-public:
-    using base::base;
-};
+template <typename P>
+using mth_thread = basic_wrap_thread<mth_thread_policy<P>>;
 
 } // namespace cmpth
 
