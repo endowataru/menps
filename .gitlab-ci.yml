@@ -17,21 +17,21 @@ test_sct_debug_job:
     stage: test
     script:
         - ./cmake.bash Debug -D MEDSM2_ULT_ITF=SCT
-        - ./make.bash Debug VERBOSE=1
+        - ./make.bash Debug VERBOSE=1 -j 8
         - ./ctest.bash Debug -V
 
 test_sct_relwithdebinfo_job:
     stage: test
     script:
         - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=SCT
-        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
 
 test_sct_release_job:
     stage: test
     script:
         - ./cmake.bash Release -D MEDSM2_ULT_ITF=SCT
-        - ./make.bash Release VERBOSE=1
+        - ./make.bash Release VERBOSE=1 -j 8
         - ./ctest.bash Release -V
 
 # CTMTH
@@ -40,21 +40,21 @@ test_ctmth_debug_job:
     stage: test
     script:
         - ./cmake.bash Debug -D MEDSM2_ULT_ITF=CTMTH
-        - ./make.bash Debug VERBOSE=1
+        - ./make.bash Debug VERBOSE=1 -j 8
         - ./ctest.bash Debug -V
 
 test_ctmth_relwithdebinfo_job:
     stage: test
     script:
         - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=CTMTH
-        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
 
 test_ctmth_release_job:
     stage: test
     script:
         - ./cmake.bash Release -D MEDSM2_ULT_ITF=CTMTH
-        - ./make.bash Release VERBOSE=1
+        - ./make.bash Release VERBOSE=1 -j 8
         - ./ctest.bash Release -V
 
 # MTH
@@ -63,21 +63,21 @@ test_mth_debug_job:
     stage: test
     script:
         - ./cmake.bash Debug -D MEDSM2_ULT_ITF=MTH
-        - ./make.bash Debug VERBOSE=1
+        - ./make.bash Debug VERBOSE=1 -j 8
         - ./ctest.bash Debug -V
 
 test_mth_relwithdebinfo_job:
     stage: test
     script:
         - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH
-        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
 
 test_mth_release_job:
     stage: test
     script:
         - ./cmake.bash Release -D MEDSM2_ULT_ITF=MTH
-        - ./make.bash Release VERBOSE=1
+        - ./make.bash Release VERBOSE=1 -j 8
         - ./ctest.bash Release -V
 
 # OpenMPI
@@ -87,7 +87,7 @@ test_openmpi_sct_relwithdebinfo_job:
     image: wendo/openmpi
     script:
         - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=SCT
-        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
 
 test_openmpi_ctmth_relwithdebinfo_job:
@@ -95,7 +95,7 @@ test_openmpi_ctmth_relwithdebinfo_job:
     image: wendo/openmpi
     script:
         - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=CTMTH
-        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
 
 test_openmpi_mth_relwithdebinfo_job:
@@ -103,7 +103,7 @@ test_openmpi_mth_relwithdebinfo_job:
     image: wendo/openmpi
     script:
         - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH
-        - ./make.bash RelWithDebInfo VERBOSE=1
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
 
 # UCT
@@ -112,10 +112,10 @@ compile_uct_debug_job:
     stage: test
     script:
         - ./cmake.bash Debug -D MEDSM2_RMA_ITF=UCT -D MEDSM2_ULT_ITF=SCT
-        - ./make.bash Debug VERBOSE=1
+        - ./make.bash Debug VERBOSE=1 -j 8
         - ./cmake.bash Debug -D MEDSM2_RMA_ITF=UCT -D MEDSM2_ULT_ITF=CTMTH
-        - ./make.bash Debug VERBOSE=1
+        - ./make.bash Debug VERBOSE=1 -j 8
         - ./cmake.bash Debug -D MEDSM2_RMA_ITF=UCT -D MEDSM2_ULT_ITF=MTH
-        - ./make.bash Debug VERBOSE=1
+        - ./make.bash Debug VERBOSE=1 -j 8
 
 
