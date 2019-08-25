@@ -10,17 +10,13 @@ namespace cmpth {
 template <typename P>
 class basic_sync_delegator
 {
-    CMPTH_DEFINE_DERIVED(P)
-    
     using sync_queue_type = typename P::sync_queue_type;
     using start_lock_result_type = typename sync_queue_type::start_lock_result;
     
-    using ult_itf_type = typename P::ult_itf_type;
-    using thread_type = typename ult_itf_type::thread;
-    using suspended_thread_type = typename ult_itf_type::suspended_thread;
-    using worker_type = typename ult_itf_type::worker;
-    
-    //using worker_type = typename P::worker_type;
+    using base_ult_itf_type = typename P::base_ult_itf_type;
+    using thread_type = typename base_ult_itf_type::thread;
+    using suspended_thread_type = typename base_ult_itf_type::suspended_thread;
+    using worker_type = typename base_ult_itf_type::worker;
     
 public:
     using sync_node_type = typename P::sync_node_type;
@@ -29,9 +25,6 @@ public:
     CMPTH_NODISCARD
     bool lock_or_delegate(/*worker_type& wk, */DelegateFunc&& delegate_func)
     {
-        auto& self = this->derived();
-        //auto& pool = self.get_pool();
-        
         auto lock_ret = this->queue_.start_lock();
         if (CMPTH_LIKELY(lock_ret.is_locked)) {
             return true;
@@ -42,7 +35,7 @@ public:
             fdn::forward<DelegateFunc>(delegate_func)(*cur);
         
         if (suspended_thread_type* const wait_sth = del_ret.wait_sth) {
-            wait_sth->template wait_with<on_wait_delegate>(&self, &lock_ret);
+            wait_sth->template wait_with<on_wait_delegate>(this, &lock_ret);
         }
         else {
             this->queue_.set_next(lock_ret);
@@ -55,7 +48,7 @@ private:
         CMPTH_NODISCARD
         bool operator() (
             worker_type&                    /*wk*/
-        ,   derived_type*                   self
+        ,   basic_sync_delegator* const     self
         ,   start_lock_result_type* const   lock_ret
         ) const {
             self->queue_.set_next(*lock_ret);
@@ -85,9 +78,6 @@ private:
 public:
     void unlock()
     {
-        //auto& self = this->derived();
-        //auto& pool = self.get_pool();
-        
         // We completed the execution of the current critical section.
         this->is_executed_ = true;
         
@@ -100,12 +90,9 @@ public:
         
         if (!this->is_active_) {
             if (this->queue_.try_unlock(head)) {
-                //pool.deallocate(head);
-                
                 CMPTH_P_LOG_DEBUG(P,
                     "Finished unlocking delegator immediately.", 0
                 );
-                
                 return;
             }
         }
@@ -150,9 +137,6 @@ public:
     
     void unlock_and_wait(suspended_thread_type& wait_sth)
     {
-        //auto& self = this->derived();
-        //auto& pool = self.get_pool();
-        
         // We completed the execution of the current critical section.
         this->is_executed_ = true;
         
@@ -175,7 +159,6 @@ public:
         // If the next acquirer already wrote its pointer,
         // this thread tries to awake its thread directly.
         if (const auto next_head = this->queue_.try_follow_head(head)) {
-            //pool.deallocate(head);
             // Note: head is no longer accessible.
             
             // The next critical section is not executed yet.
@@ -207,25 +190,19 @@ private:
     {
         CMPTH_NODISCARD
         bool operator() (
-            worker_type&            /*wk*/
-        ,   derived_type* const     self
-        ,   sync_node_type* const   head
-        ,   bool* const             is_unlocked
+            worker_type&                /*wk*/
+        ,   basic_sync_delegator* const self
+        ,   sync_node_type* const       head
+        ,   bool* const                 is_unlocked
         ) {
             // Try to unlock the mutex to suspend.
             if (self->queue_.try_unlock(head)) {
                 // Important: This thread already released the lock here.
-                
-                /*auto& pool = this->self.get_pool();
-                // Release the resource.
-                pool.deallocate(this->head);*/
-                
                 return true;
             }
             else {
                 // Reset this flag.
                 *is_unlocked = false;
-                
                 return false;
             }
         }
@@ -235,14 +212,12 @@ private:
         suspended_thread_type&  wait_sth
     ,   sync_node_type* const   head
     ) {
-        auto& self = this->derived();
-        
         if (!this->queue_.is_unlockable(head)) {
             return false;
         }
         
         bool is_unlocked = true;
-        wait_sth.template wait_with<try_unlock_functor>(&self, head, &is_unlocked);
+        wait_sth.template wait_with<try_unlock_functor>(this, head, &is_unlocked);
         
         return is_unlocked;
     }
@@ -318,9 +293,9 @@ private:
     template <typename DelExecFunc, typename ProgressFunc>
     struct consumer_main
     {
-        derived_type&   self;
-        DelExecFunc     del_exec_func;
-        ProgressFunc    progress_func;
+        basic_sync_delegator&   self;
+        DelExecFunc             del_exec_func;
+        ProgressFunc            progress_func;
         
         void operator() ()
         {
@@ -335,9 +310,6 @@ private:
         DelExecFunc&    del_exec_func
     ,   ProgressFunc&   progress_func
     ) {
-        auto& self = this->derived();
-        //auto& pool = self.get_pool();
-        
         bool is_executed = this->is_executed_;
         bool is_active   = this->is_active_;
         
@@ -422,7 +394,7 @@ private:
                     // Try to unlock the mutex to suspend.
                     bool is_unlocked = true;
                     this->con_sth_.template swap_with<try_unlock_functor>(
-                        awake_sth, &self, head, &is_unlocked
+                        awake_sth, this, head, &is_unlocked
                     );
                     
                     if (is_unlocked) {

@@ -22,13 +22,12 @@ struct ring_buf_delegator_node
 template <typename UltItf, typename P2>
 struct ring_buf_delegator_policy
 {
-    using derived_type = basic_sync_delegator<ring_buf_delegator_policy>;
     using sync_queue_type = basic_ring_buf_queue<ring_buf_delegator_policy>;
     using ring_buf_core_type = basic_ring_buf_core<ring_buf_delegator_policy>;
 
     using sync_node_type = ring_buf_delegator_node<UltItf, P2>;
 
-    using ult_itf_type = UltItf;
+    using base_ult_itf_type = UltItf;
     
     using ring_buf_count_type = fdn::int64_t;
     
