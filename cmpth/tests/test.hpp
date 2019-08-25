@@ -126,3 +126,24 @@ TEST_CASE("Execute many locks on mutex") {
 }
 
 
+struct wait_with_atomic {
+    using flag_type = ult_itf::atomic<bool>;
+    bool operator() (ult_itf::worker& /*wk*/, flag_type* flag) {
+        flag->store(true);
+        return true;
+    }
+};
+
+TEST_CASE("Suspend thread and notify") {
+    ult_itf::suspended_thread sth;
+    wait_with_atomic::flag_type flag;
+    ult_itf::thread th{
+        [&] {
+            sth.wait_with<wait_with_atomic>(&flag);
+        }
+    };
+    while (!flag) { ult_itf::this_thread::yield(); }
+    sth.notify();
+    th.join();
+}
+
