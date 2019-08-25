@@ -16,11 +16,15 @@ class sct_continuation
 public:
     sct_continuation() noexcept = default;
     
-    explicit sct_continuation(unique_task_ptr_type tk)
+    explicit sct_continuation(unique_task_ptr_type tk) noexcept
         : tk_{fdn::move(tk)}
     { }
     
-    // move-only
+    sct_continuation(const sct_continuation&) = delete;
+    sct_continuation& operator = (const sct_continuation&) = delete;
+    
+    sct_continuation(sct_continuation&&) noexcept = default;
+    sct_continuation& operator = (sct_continuation&&) noexcept = default;
     
     context_type get_context() const noexcept {
         return this->tk_->ctx;
@@ -30,7 +34,7 @@ public:
         return this->tk_.release();
     }
     
-    explicit operator bool() {
+    explicit operator bool() const noexcept {
         return !!tk_;
     }
     
