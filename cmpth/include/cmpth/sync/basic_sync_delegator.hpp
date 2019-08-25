@@ -13,10 +13,12 @@ class basic_sync_delegator
     CMPTH_DEFINE_DERIVED(P)
     
     using sync_queue_type = typename P::sync_queue_type;
-    using qdlock_thread_type = typename P::qdlock_thread_type;
+    using start_lock_result_type = typename sync_queue_type::start_lock_result;
     
     using ult_itf_type = typename P::ult_itf_type;
-    using uncond_variable_type = typename ult_itf_type::uncond_variable;
+    using thread_type = typename ult_itf_type::thread;
+    using suspended_thread_type = typename ult_itf_type::suspended_thread;
+    using worker_type = typename ult_itf_type::worker;
     
     //using worker_type = typename P::worker_type;
     
@@ -27,34 +29,20 @@ public:
     CMPTH_NODISCARD
     bool lock_or_delegate(/*worker_type& wk, */DelegateFunc&& delegate_func)
     {
-        //auto& self = this->derived();
+        auto& self = this->derived();
         //auto& pool = self.get_pool();
         
-        const auto lock_ret = this->queue_.start_lock();
-        
-        if (lock_ret.is_locked) { return true; }
+        auto lock_ret = this->queue_.start_lock();
+        if (CMPTH_LIKELY(lock_ret.is_locked)) {
+            return true;
+        }
         
         const auto cur = lock_ret.cur;
-        cur->uv = nullptr;
-        
         const auto del_ret =
             fdn::forward<DelegateFunc>(delegate_func)(*cur);
         
-        if (del_ret.needs_wait) {
-            CMPTH_P_ASSERT(P, del_ret.wait_uv != nullptr);
-            
-            #if 0
-            del_ret.wait_uv->template wait_with<
-                basic_sync_delegator::on_lock
-            >(wk, prev, cur);
-            #else
-            del_ret.wait_uv->wait_with(
-                [this, &lock_ret] {
-                    this->queue_.set_next(lock_ret);
-                    return true;
-                }
-            );
-            #endif
+        if (suspended_thread_type* const wait_sth = del_ret.wait_sth) {
+            wait_sth->template wait_with<on_wait_delegate>(&self, &lock_ret);
         }
         else {
             this->queue_.set_next(lock_ret);
@@ -62,46 +50,35 @@ public:
         
         return false;
     }
-    
-    #if 0
 private:
-    struct on_lock {
+    struct on_wait_delegate {
         CMPTH_NODISCARD
         bool operator() (
-            worker_type&            /*wk*/
-        ,   sync_node_type* const    prev
-        ,   sync_node_type* const    cur
-        ) {
-            sync_queue_type::set_next(prev, cur);
-            
+            worker_type&                    /*wk*/
+        ,   derived_type*                   self
+        ,   start_lock_result_type* const   lock_ret
+        ) const {
+            self->queue_.set_next(*lock_ret);
             return true;
         }
     };
-    #endif
     
 public:
     void lock()
     {
         CMPTH_P_LOG_DEBUG(P,"Start locking delegator.", 0);
         
-        uncond_variable_type uv;
-        this->lock_or_delegate(on_lock_delegate{ &uv });
-        
-        // Note: It's OK to deallocate "uv" because .wait() already finished.
+        this->lock_or_delegate(on_lock_delegate());
     }
     
 private:
     struct delegate_result {
-        bool                    needs_wait;
-        uncond_variable_type*   wait_uv;
+        suspended_thread_type*  wait_sth;
     };
     
     struct on_lock_delegate {
-        uncond_variable_type*   uv;
-        
         delegate_result operator() (sync_node_type& cur) const {
-            cur.uv = this->uv;
-            return { true, this->uv };
+            return { &cur.sth };
         }
     };
     
@@ -142,12 +119,12 @@ public:
             // The next critical section is not executed yet.
             this->is_executed_ = false;
             
-            if (const auto uv = next_head->uv) {
+            if (auto sth = fdn::move(next_head->sth)) {
                 // Enter the next thread immediately.
                 #ifdef MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
-                uv->notify_enter();
+                sth.enter();
                 #else
-                uv->notify_signal();
+                sth.notify();
                 #endif
                 
                 CMPTH_P_LOG_DEBUG(P,
@@ -162,18 +139,16 @@ public:
             "Finished unlocking delegator by awaking helper thread.", 0
         );
         
-        auto& consumer_uv = this->th_.get_uv();
-        
         // Awake the helper thread.
         #ifdef MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
         // Prefer executing the succeeding critical sections now.
-        consumer_uv.notify_enter();
+        this->con_sth_.enter();
         #else
-        consumer_uv.notify_signal();
+        this->con_sth_.notify();
         #endif
     }
     
-    void unlock_and_wait(uncond_variable_type& wait_uv)
+    void unlock_and_wait(suspended_thread_type& wait_sth)
     {
         //auto& self = this->derived();
         //auto& pool = self.get_pool();
@@ -189,7 +164,7 @@ public:
         const auto head = this->queue_.get_head();
         
         if (!this->is_active_) {
-            if (this->try_unlock_and_wait(wait_uv, head)) {
+            if (this->try_unlock_and_wait(wait_sth, head)) {
                 CMPTH_P_LOG_DEBUG(P,
                     "Finished unlocking delegator immediately.", 0
                 );
@@ -206,9 +181,9 @@ public:
             // The next critical section is not executed yet.
             this->is_executed_ = false;
             
-            if (const auto uv = next_head->uv) {
+            if (auto sth = fdn::move(next_head->sth)) {
                 // Enter the next thread immediately.
-                wait_uv.swap(*uv);
+                wait_sth.swap(sth);
                 
                 CMPTH_P_LOG_DEBUG(P,
                     "Finished unlocking delegator by awaking next thread.", 0
@@ -222,24 +197,23 @@ public:
             "Finished unlocking delegator by awaking helper thread.", 0
         );
         
-        auto& consumer_uv = this->th_.get_uv();
-        
         // Awake the helper thread.
         // Prefer executing the succeeding critical sections now.
-        wait_uv.swap(consumer_uv);
+        wait_sth.swap(this->con_sth_);
     }
     
 private:
     struct try_unlock_functor
     {
-        derived_type&   self;
-        sync_node_type*  head;
-        bool*           is_unlocked;
-        
         CMPTH_NODISCARD
-        bool operator() () {
+        bool operator() (
+            worker_type&            /*wk*/
+        ,   derived_type* const     self
+        ,   sync_node_type* const   head
+        ,   bool* const             is_unlocked
+        ) {
             // Try to unlock the mutex to suspend.
-            if (this->self.queue_.try_unlock(this->head)) {
+            if (self->queue_.try_unlock(head)) {
                 // Important: This thread already released the lock here.
                 
                 /*auto& pool = this->self.get_pool();
@@ -250,7 +224,7 @@ private:
             }
             else {
                 // Reset this flag.
-                *this->is_unlocked = false;
+                *is_unlocked = false;
                 
                 return false;
             }
@@ -258,7 +232,7 @@ private:
     };
     
     bool try_unlock_and_wait(
-        uncond_variable_type&   wait_uv
+        suspended_thread_type&  wait_sth
     ,   sync_node_type* const   head
     ) {
         auto& self = this->derived();
@@ -268,7 +242,7 @@ private:
         }
         
         bool is_unlocked = true;
-        wait_uv.wait_with(try_unlock_functor{ self, head, &is_unlocked });
+        wait_sth.template wait_with<try_unlock_functor>(&self, head, &is_unlocked);
         
         return is_unlocked;
     }
@@ -285,15 +259,13 @@ public:
             );
         
         if (is_locked) {
-            const auto ret =
-                fdn::forward<ImmExecFunc>(imm_exec_func)();
+            auto ret = fdn::forward<ImmExecFunc>(imm_exec_func)();
             
             this->is_executed_ = ret.is_executed;
             this->is_active_   = ret.is_active;
             
-            if (ret.needs_wait) {
-                CMPTH_P_ASSERT(P, ret.wait_uv != nullptr);
-                this->unlock_and_wait(*ret.wait_uv);
+            if (suspended_thread_type* const wait_sth = ret.wait_sth) {
+                this->unlock_and_wait(*wait_sth);
             }
             else {
                 this->unlock();
@@ -311,30 +283,53 @@ public:
     ) {
         this->lock();
         
+        using del_exec_func_type = fdn::decay_t<DelExecFunc>;
+        using progress_func_type = fdn::decay_t<ProgressFunc>;
+        
         // Note: Copy the functions to a new thread's call stack.
-        this->th_.start([this, del_exec_func, progress_func] {
-            return this->consume(del_exec_func, progress_func);
-        });
+        this->con_th_ = thread_type{
+            consumer_main<del_exec_func_type, progress_func_type>{
+                *this
+            ,   fdn::forward<DelExecFunc>(del_exec_func)
+            ,   fdn::forward<ProgressFunc>(progress_func)
+            }
+        };
     }
     
     void stop_consumer()
     {
         this->lock();
         
-        this->th_.set_finished();
+        this->finished_ = true;
         
         const bool is_active = this->is_active_;
         
         this->unlock();
         
         if (!is_active) {
-            this->th_.get_uv().notify_signal();
+            // TODO: Is this correct?
+            this->con_sth_.notify();
         }
         
-        this->th_.stop();
+        this->con_th_.join();
     }
     
 private:
+    template <typename DelExecFunc, typename ProgressFunc>
+    struct consumer_main
+    {
+        derived_type&   self;
+        DelExecFunc     del_exec_func;
+        ProgressFunc    progress_func;
+        
+        void operator() ()
+        {
+            while (!self.finished_) {
+                self.consume(del_exec_func, progress_func);
+            }
+        }
+    };
+    
     template <typename DelExecFunc, typename ProgressFunc>
     void consume(
         DelExecFunc&    del_exec_func
@@ -353,7 +348,6 @@ private:
         );
         
         auto head = this->queue_.get_head();
-        auto& consumer_uv = this->th_.get_uv();
         
         if (is_executed) {
             // Check if there are remaining delegated critical sections.
@@ -369,23 +363,18 @@ private:
         // True if the progress function is executed.
         bool do_progress = is_active;
         
-        bool do_switch = false;
-        uncond_variable_type* switch_uv = nullptr;
+        suspended_thread_type awake_sth;
         
         // Check whether the "head" entry is not executed.
         if (!is_executed) {
             // Check whether the current entry means a lock delegation or a lock transfer.
-            if (head->uv == nullptr) {
+            if (!head->sth) {
                 // Execute the delegated function again.
-                const auto ret = del_exec_func(*head);
+                auto ret = del_exec_func(*head);
                 
                 is_executed = ret.is_executed;
                 is_active   = ret.is_active;
-                
-                if (ret.needs_awake) {
-                    do_switch = true;
-                    switch_uv = ret.awake_uv;
-                }
+                awake_sth   = fdn::move(ret.awake_sth);
                 
                 // If the delegation function fails,
                 // the progress is required to complete the function again.
@@ -395,7 +384,7 @@ private:
                 CMPTH_P_LOG_DEBUG(P, "Awake next thread trying to lock delegator.", 0);
                 
                 // The next thread is trying to lock the mutex.
-                consumer_uv.swap(*head->uv);
+                this->con_sth_.swap(head->sth);
                 
                 return;
             }
@@ -403,17 +392,15 @@ private:
         
         if (do_progress) {
             // Call the progress function.
-            const auto ret = progress_func();
+            auto ret = progress_func();
             
             is_active = ret.is_active;
             
-            if (ret.needs_awake) {
-                if (do_switch) {
-                    CMPTH_P_ASSERT(P, switch_uv != nullptr);
-                    switch_uv->notify_signal();
+            if (ret.awake_sth) {
+                if (awake_sth) {
+                    awake_sth.notify();
                 }
-                do_switch = true;
-                switch_uv = ret.awake_uv;
+                awake_sth = fdn::move(ret.awake_sth);
             }
         }
         
@@ -429,40 +416,39 @@ private:
         this->is_active_ = is_active;
         
         if (!is_active && is_executed) {
-            if (do_switch) {
-                CMPTH_P_ASSERT(P, switch_uv != nullptr);
-                
+            if (awake_sth) {
                 if (this->queue_.is_unlockable(head)) {
                     // The progress is disabled.
                     // Try to unlock the mutex to suspend.
                     bool is_unlocked = true;
-                    consumer_uv.swap_with(
-                        *switch_uv
-                    ,   try_unlock_functor{ self, head, &is_unlocked }
+                    this->con_sth_.template swap_with<try_unlock_functor>(
+                        awake_sth, &self, head, &is_unlocked
                     );
                     
                     if (is_unlocked) {
                         // This thread unlocked the mutex and was resumed again.
-                        do_switch = false;
+                        // TODO: This branch is no longer needed.
                     }
                 }
             }
             else {
-                this->try_unlock_and_wait(consumer_uv, head);
+                this->try_unlock_and_wait(this->con_sth_, head);
                 // Note: Ignore this result.
             }
         }
         
-        if (do_switch) {
-            CMPTH_P_ASSERT(P, switch_uv != nullptr);
-            switch_uv->notify_signal();
+        if (awake_sth) {
+            awake_sth.notify();
         }
     }
     
     sync_queue_type     queue_;
     bool                is_executed_ = true;
     bool                is_active_ = false;
-    qdlock_thread_type  th_;
+    
+    thread_type             con_th_;
+    suspended_thread_type   con_sth_;
+    bool                    finished_ = false;
 };
 
 } // namespace cmpth

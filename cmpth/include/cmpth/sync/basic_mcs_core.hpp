@@ -99,7 +99,7 @@ public:
     mcs_node_type* get_head() const noexcept
     {
         CMPTH_P_LOG_DEBUG(P,
-            "Reading qdlock head.", 2
+            "Reading head of MCS core.", 2
         ,   "head", this->head_
         ,   "tail", this->tail_.load(fdn::memory_order_relaxed)
         );

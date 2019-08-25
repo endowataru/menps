@@ -21,7 +21,7 @@ class proxy_uct_worker
     using proxy_params_type = typename P::proxy_params_type;
     
     using ult_itf_type = typename P::ult_itf_type;
-    using uncond_variable_type = typename ult_itf_type::uncond_variable;
+    using suspended_thread_type = typename ult_itf_type::suspended_thread;
     
     using size_type = typename P::size_type;
     
@@ -162,8 +162,7 @@ private:
     {
         bool is_executed;
         bool is_active;
-        bool needs_wait;
-        uncond_variable_type* wait_uv;
+        suspended_thread_type*  wait_sth;
     };
     
     template <typename Params>
@@ -195,8 +194,7 @@ private:
             return {
                 st != UCS_ERR_NO_RESOURCE
             ,   self.is_active()
-            ,   false // TODO
-            ,   nullptr
+            ,   nullptr // TODO ?
             };
         }
     };
@@ -249,7 +247,7 @@ private:
             
             *ret_st = st;
             
-            return { true, self.is_active(), false, nullptr };
+            return { true, self.is_active(), nullptr };
         }
     };
     
@@ -273,13 +271,12 @@ private:
             
             *ret_st = st;
             
-            return { true, self.is_active(), false, nullptr };
+            return { true, self.is_active(), nullptr };
         }
     };
     
     struct delegate_result {
-        bool                    needs_wait;
-        uncond_variable_type*   wait_uv;
+        suspended_thread_type*  wait_sth;
     };
     
     template <typename Params>
@@ -293,7 +290,7 @@ private:
         {
             cur.func.code = code;
             cur.func.params.*mem = proxy_p;
-            return { false, nullptr };
+            return { nullptr };
         }
     };
     
@@ -367,8 +364,7 @@ private:
     struct del_exec_result {
         bool    is_executed;
         bool    is_active;
-        bool    needs_awake;
-        uncond_variable_type*   awake_uv;
+        suspended_thread_type   awake_sth;
     };
     
     struct execute_delegated
@@ -423,14 +419,13 @@ private:
                 throw medev2::ucx::ucx_error("error in offloading", st);
             }
             
-            return { ret.is_executed, ret.is_active, false, nullptr };
+            return { ret.is_executed, ret.is_active, suspended_thread_type() };
         }
     };
     
     struct do_progress_result {
         bool is_active;
-        bool needs_awake;
-        uncond_variable_type* awake_uv;
+        suspended_thread_type   awake_sth;
     };
     
     struct do_progress
@@ -443,7 +438,7 @@ private:
                 // Poll until there are completions
             }
             
-            return { self.is_active(), false, nullptr };
+            return { self.is_active(), suspended_thread_type() };
         }
     };
     

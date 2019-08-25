@@ -11,11 +11,11 @@ template <typename UltItf, typename P2>
 struct ring_buf_delegator_node
 {
     using atomic_bool_type = typename UltItf::template atomic<bool>;
-    using uncond_var_type = typename UltItf::uncond_variable;
+    using suspended_thread_type = typename UltItf::suspended_thread;
     using delegated_func_type = typename P2::delegated_func_type;
     
     atomic_bool_type        ready;
-    uncond_var_type*        uv;
+    suspended_thread_type   sth;
     delegated_func_type     func;
 };
 
@@ -27,7 +27,6 @@ struct ring_buf_delegator_policy
     using ring_buf_core_type = basic_ring_buf_core<ring_buf_delegator_policy>;
 
     using sync_node_type = ring_buf_delegator_node<UltItf, P2>;
-    using qdlock_thread_type = uncond_qdlock_thread<ring_buf_delegator_policy>;
 
     using ult_itf_type = UltItf;
     

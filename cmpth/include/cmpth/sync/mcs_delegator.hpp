@@ -4,20 +4,20 @@
 #include <cmpth/sync/basic_sync_delegator.hpp>
 #include <cmpth/sync/basic_mcs_queue.hpp>
 #include <cmpth/sync/basic_mcs_core.hpp>
-#include <cmpth/sync/basic_uncond_thread.hpp>
+//#include <cmpth/sync/basic_uncond_thread.hpp>
 
 namespace cmpth {
 
 template <typename UltItf, typename P2>
 struct mcs_delegator_node
 {
-    using uncond_var_type = typename UltItf::uncond_variable;
     using atomic_node_ptr_type =
         typename UltItf::template atomic<mcs_delegator_node*>;
+    using suspended_thread_type = typename UltItf::suspended_thread;
     using delegated_func_type = typename P2::delegated_func_type;
     
     atomic_node_ptr_type    next;
-    uncond_var_type*        uv;
+    suspended_thread_type   sth;
     delegated_func_type     func;
 };
 
@@ -52,8 +52,6 @@ struct mcs_delegator_policy
     using ult_itf_type = UltItf;
     using mcs_node_pool_type =
         basic_ext_return_pool<UltItf, mcs_delegator_pool_policy<UltItf, P2>>;
-    
-    using qdlock_thread_type = uncond_qdlock_thread<mcs_delegator_policy>;
     
     using assert_policy_type = typename UltItf::assert_policy;
     using log_policy_type = typename UltItf::log_policy;

@@ -55,7 +55,7 @@ struct proxy_mpi_request
 {
 private:
     using ult_itf_type = typename P::ult_itf_type;
-    using uncond_variable_type = typename ult_itf_type::uncond_variable;
+    using suspended_thread_type  = typename ult_itf_type::suspended_thread;
     using atomic_bool_type = typename ult_itf_type::template atomic<bool>;
     using atomic_state_type = typename ult_itf_type::template atomic<proxy_mpi_request_state>;
     
@@ -65,7 +65,7 @@ public:
     { }
     
     atomic_state_type       state;
-    uncond_variable_type    uv;
+    suspended_thread_type   sth;
     atomic_bool_type        finished;
     MPI_Request             orig_req;
     MPI_Status              status;

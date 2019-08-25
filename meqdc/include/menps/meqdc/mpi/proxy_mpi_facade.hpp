@@ -22,8 +22,10 @@ class proxy_mpi_facade
     using sync_node_type = typename delegator_type::sync_node_type;
     using proxy_params_type = typename P::proxy_params_type;
     using size_type = typename P::size_type;
+    
     using ult_itf_type = typename P::ult_itf_type;
-    using uncond_variable_type = typename ult_itf_type::uncond_variable;
+    using suspended_thread_type = typename ult_itf_type::suspended_thread;
+    using worker_type = typename ult_itf_type::worker;
     
 public:
     explicit proxy_mpi_facade(
@@ -59,8 +61,7 @@ private:
     {
         bool    is_executed;
         bool    is_active;
-        bool    needs_wait;
-        uncond_variable_type* wait_uv;
+        suspended_thread_type*  wait_sth;
     };
     
     template <typename Params>
@@ -108,17 +109,16 @@ private:
                     proxy_request_state_type::waiting
                 ,   ult_itf_type::memory_order_relaxed
                 );
-                return { is_executed, self.is_active(), true, &proxy_req_ptr->uv };
+                return { is_executed, self.is_active(), &proxy_req_ptr->sth };
             }
             else {
-                return { is_executed, self.is_active(), false, nullptr };
+                return { is_executed, self.is_active(), nullptr };
             }
         }
     };
     
     struct delegate_result {
-        bool                    needs_wait;
-        uncond_variable_type*   wait_uv;
+        suspended_thread_type*  wait_sth;
     };
     
     template <typename Params>
@@ -141,10 +141,10 @@ private:
                     proxy_request_state_type::waiting
                 ,   ult_itf_type::memory_order_relaxed
                 );
-                return { true, &proxy_req_ptr->uv };
+                return { &proxy_req_ptr->sth };
             }
             else {
-                return { false, nullptr };
+                return { nullptr };
             }
         }
     };
@@ -382,10 +382,11 @@ public:
     
 private:
     struct wait_func {
-        proxy_request_type* proxy_req;
-        bool* is_blocked;
-        
-        bool operator () () const noexcept
+        bool operator () (
+            worker_type&                /*wk*/
+        ,   proxy_request_type* const   proxy_req
+        ,   bool* const                 is_blocked
+        ) const noexcept
         {
             auto expected = proxy_request_state_type::created;
             
@@ -420,7 +421,7 @@ public:
             
             // Block until the completion.
             bool is_blocked = true;
-            proxy_req->uv.wait_with(wait_func{ proxy_req, &is_blocked });
+            proxy_req->sth.template wait_with<wait_func>(proxy_req, &is_blocked);
         }
         
         if (proxy_p.status != MPI_STATUS_IGNORE) {
@@ -448,8 +449,7 @@ private:
     struct del_exec_result {
         bool    is_executed;
         bool    is_active;
-        bool    needs_awake;
-        uncond_variable_type*   awake_uv;
+        suspended_thread_type   awake_sth;
     };
     
     del_exec_result execute_delegated(const sync_node_type& n)
@@ -492,21 +492,19 @@ private:
             }
         }
         
-        return { ret.is_executed, ret.is_active, false, nullptr };
+        return { ret.is_executed, ret.is_active, suspended_thread_type() };
     }
     
     struct do_progress_result {
         bool is_active;
-        bool needs_awake;
-        uncond_variable_type* awake_uv;
+        suspended_thread_type   awake_sth;
     };
     
     do_progress_result do_progress()
     {
         MEFDN_LOG_VERBOSE("msg:Entering progress of proxy MPI.");
         
-        const auto ret =
-            this->req_hld_.progress(this->orig_mf_, complete_request());
+        auto ret = this->req_hld_.progress(this->orig_mf_, complete_request());
         
         #ifdef MEQDC_MPI_ENABLE_ALWAYS_PROGRESS
         this->orig_mf_.progress();
@@ -520,7 +518,7 @@ private:
         
         MEFDN_LOG_VERBOSE("msg:Exiting progress of proxy MPI.");
         
-        return { this->is_active(), (ret.awake_uv != nullptr), ret.awake_uv};
+        return { this->is_active(), mefdn::move(ret.awake_sth) };
     }
     
     struct complete_request
@@ -555,7 +553,7 @@ private:
             }
             
             // If there's a thread waiting for this request,
-            // the uncond variable of "proxy_req" is awaken by the callee.
+            // the suspended thread of "proxy_req" is awaken by the callee.
             return waiting;
         }
     };

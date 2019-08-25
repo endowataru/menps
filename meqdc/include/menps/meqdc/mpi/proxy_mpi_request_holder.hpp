@@ -14,7 +14,7 @@ class proxy_mpi_request_holder
     using proxy_request_type = typename P::proxy_request_type;
     using size_type = typename P::size_type;
     using ult_itf_type = typename P::ult_itf_type;
-    using uncond_variable_type = typename ult_itf_type::uncond_variable;
+    using suspended_thread_type = typename ult_itf_type::suspended_thread;
     
 public:
     proxy_mpi_request_holder()
@@ -50,7 +50,7 @@ public:
     struct progress_result {
         size_type               num_ongoing;
         size_type               num_completed;
-        uncond_variable_type*   awake_uv;
+        suspended_thread_type   awake_sth;
     };
     
     template <typename CompFunc>
@@ -62,7 +62,7 @@ public:
             MEFDN_LOG_VERBOSE(
                 "msg:No request for progress in proxy MPI"
             );
-            return { 0, 0, nullptr };
+            return { 0, 0, suspended_thread_type() };
         }
         
         const auto incount = static_cast<int>(num_reqs);
@@ -85,10 +85,10 @@ public:
                 "num_reqs:{}"
             ,   num_reqs
             );
-            return { num_reqs, 0, nullptr };
+            return { num_reqs, 0, suspended_thread_type() };
         }
         
-        uncond_variable_type* awake_uv = nullptr;
+        suspended_thread_type awake_sth;
         
         for (size_type i = 0; i < num_completed; ++i) {
             const auto index = static_cast<size_type>(this->indices_[i]);
@@ -99,10 +99,10 @@ public:
             const bool waiting = comp_func(proxy_req, this->statuses_[index]);
             
             if (waiting) {
-                if (awake_uv != nullptr) {
-                    awake_uv->notify_signal();
+                if (awake_sth) {
+                    awake_sth.notify();
                 }
-                awake_uv = &proxy_req->uv;
+                awake_sth = mefdn::move(proxy_req->sth);
             }
         }
         
@@ -130,7 +130,7 @@ public:
         ,   num_completed
         );
         
-        return { num_reqs, num_completed, awake_uv };
+        return { num_reqs, num_completed, mefdn::move(awake_sth) };
     }
     
     size_type get_num_ongoing() const noexcept

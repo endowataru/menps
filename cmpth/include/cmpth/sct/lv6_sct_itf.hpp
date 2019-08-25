@@ -20,6 +20,7 @@ public:
     using mcs_unique_lock_type = fdn::unique_lock<mcs_mutex_type>;
     
     using uncond_var_type       = typename lv5_itf_type::uncond_variable;
+    using suspended_thread_type = typename lv5_itf_type::suspended_thread;
     using worker_type           = typename lv5_itf_type::worker;
     
     using assert_policy_type    = typename lv5_itf_type::assert_policy;
