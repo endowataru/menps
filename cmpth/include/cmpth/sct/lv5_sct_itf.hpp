@@ -6,10 +6,11 @@
 #include <cmpth/sct/basic_sct_scheduler.hpp>
 #include <cmpth/sct/sct_task_pool.hpp>
 #include <cmpth/sync/basic_uncond_var.hpp>
+#include <cmpth/wss/basic_suspended_thread.hpp>
 
 namespace cmpth {
 
-// level 5: thread, scheduler, uncond
+// level 5: thread, scheduler, uncond, suspended_thread
 
 template <typename P>
 struct lv5_sct_policy
@@ -127,6 +128,23 @@ public:
 };
 
 template <typename P>
+struct sct_suspended_thread_policy
+{
+private:
+    using lv4_itf_type = typename P::lv4_itf_type;
+    
+public:
+    using derived_type = basic_suspended_thread<sct_suspended_thread_policy>;
+    
+    using worker_type       = typename lv4_itf_type::worker;
+    using continuation_type = typename lv4_itf_type::continuation;
+    using task_desc_type    = typename lv4_itf_type::task_desc;
+    
+    using assert_policy_type    = typename lv4_itf_type::assert_policy;
+    using log_policy_type       = typename lv4_itf_type::log_policy;
+};
+
+template <typename P>
 struct sct_thread_specific_policy
 {
 private:
@@ -152,6 +170,7 @@ struct lv5_sct_itf
     using scheduler = basic_sct_scheduler<sct_scheduler_policy<P>>;
     using initializer = sct_initializer<P>;
     using uncond_variable = basic_uncond_var<sct_uncond_policy<P>>;
+    using suspended_thread = basic_suspended_thread<sct_suspended_thread_policy<P>>;
     
     template <typename VarP>
     using thread_specific =

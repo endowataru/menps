@@ -5,6 +5,7 @@
 #include <cmpth/wrap/mth/mth_mutex.hpp>
 #include <cmpth/wrap/mth/mth_cond_var.hpp>
 #include <cmpth/wrap/mth/mth_uncond_var.hpp>
+#include <cmpth/wrap/mth/mth_suspended_thread.hpp>
 #include <cmpth/wrap/mth/mth_thread_specific.hpp>
 #include <cmpth/wrap/mth/mth_barrier.hpp>
 #include <cmpth/ult_tag.hpp>
@@ -83,7 +84,13 @@ struct lv3_mth_itf
     };
 };
 
-// level 5: threads
+// level 5: threads, suspended threads
+
+struct mth_suspended_thread_policy
+    : mth_base_policy
+{
+    using worker_type = lv3_mth_itf::worker;
+};
 
 struct lv5_mth_itf
     : lv3_mth_itf
@@ -93,6 +100,7 @@ struct lv5_mth_itf
     
     using thread = mth_thread<mth_base_policy>;
     using uncond_variable = mth_uncond_var;
+    using suspended_thread = mth_suspended_thread<mth_suspended_thread_policy>;
     
     template <typename P>
     using thread_specific = mth_thread_specific<P>;
