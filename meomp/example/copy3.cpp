@@ -77,7 +77,7 @@ int meomp_main(int argc, char** argv)
             format_to(out, "  bandwidth: {} # [bytes/sec]\n", (1.0*size*num_trials)/t);
             format_to(out, "  num_threads: {}\n", num_threads);
             format_to(out, "  num_trials: {}\n", num_trials);
-            //format_to(out, "  sum: {}\n", sum);
+            format_to(out, "  sum: {}\n", sum);
             
             const char * file_path = getenv("BENCH_OUTPUT_PATH");
             if (file_path == nullptr) { file_path = "output.yaml"; }
