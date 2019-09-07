@@ -33,13 +33,14 @@ struct lv1_mth_itf
     using assert_policy = mth_base_policy::assert_policy_type;
     using log_policy = mth_base_policy::log_policy_type;
     
+    using worker_num_type = fdn::size_t;
     #ifdef CMPTH_ENABLE_MTH_WORKER_CACHE
     // FIXME: This implementation contains a bug which caches
     //        the thread-local worker number across function calls with context switching.
     //        It seems that this bug happens when this function is inlined.
     //        It is not evaluated whether __attribute__((noinline)) can solve this problem or not.
     CMPTH_NOINLINE
-    static fdn::size_t get_worker_num() noexcept
+    static worker_num_type get_worker_num() noexcept
     {
         static thread_local fdn::size_t wk_num_ = 0;
         auto wk_num = wk_num_;
@@ -50,12 +51,12 @@ struct lv1_mth_itf
         return wk_num-1;
     }
     #else
-    static fdn::size_t get_worker_num() noexcept
+    static worker_num_type get_worker_num() noexcept
     {
         return myth_get_worker_num();
     }
     #endif
-    static fdn::size_t get_num_workers() noexcept
+    static worker_num_type get_num_workers() noexcept
     {
         return myth_get_num_workers();
     }
