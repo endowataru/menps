@@ -77,7 +77,7 @@
 // Standardized attributes
 
 #define MEFDN_NODISCARD     CMPTH_NODISCARD
-#define MEFDN_MAYBE_UNUSED  __attribute__((unused))
+#define MEFDN_MAYBE_UNUSED  CMPTH_MAYBE_UNUSED
 
 // Non-standard built-ins
 

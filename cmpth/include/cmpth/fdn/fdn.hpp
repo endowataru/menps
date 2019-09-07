@@ -38,6 +38,7 @@
 #define CMPTH_UNLIKELY(x)   __builtin_expect(!!(x), 0)
 
 #define CMPTH_NODISCARD     __attribute__((warn_unused_result))
+#define CMPTH_MAYBE_UNUSED  __attribute__((unused))
 
 #define CMPTH_NOINLINE      __attribute__((noinline))
 
