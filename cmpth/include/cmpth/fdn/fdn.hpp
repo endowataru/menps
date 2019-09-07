@@ -150,7 +150,7 @@ using make_index_sequence = make_integer_sequence<fdn::size_t, N>;
 // <functional>
 
 template <typename Func, typename... Args>
-constexpr auto invoke(Func&& func, Args&&... args)
+inline constexpr auto invoke(Func&& func, Args&&... args)
     -> decltype(fdn::forward<Func>(func)(fdn::forward<Args>(args)...))
 {
     return fdn::forward<Func>(func)(fdn::forward<Args>(args)...);
