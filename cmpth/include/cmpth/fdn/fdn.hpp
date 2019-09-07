@@ -11,6 +11,7 @@
 #include <thread>
 #include <functional>
 #include <iterator>
+#include <array>
 
 #if !defined(NDEBUG) && !defined(CMPTH_DEBUG)
     #define CMPTH_DEBUG
@@ -79,6 +80,8 @@ using std::end;
 
 using std::ref;
 using std::reference_wrapper;
+
+using std::array;
 
 // <type_traits>
 
