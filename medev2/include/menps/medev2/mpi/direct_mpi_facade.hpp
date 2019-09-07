@@ -11,6 +11,8 @@
 #endif
 #include <menps/medev2/mpi/mpi_itf_id.hpp>
 #include <menps/mefdn/type_traits.hpp>
+#include <cmpth/prof/prof_tag.hpp>
+#include MEFDN_PP_CAT(CMPTH_PROF_HEADER_, MEDEV2_PROF_ASPECT)
 
 namespace menps {
 namespace medev2 {
@@ -60,6 +62,17 @@ public:
     
     ~direct_mpi_facade()
     {
+        int num_ranks = 0;
+        int this_rank = 0;
+        PMPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+        PMPI_Comm_rank(MPI_COMM_WORLD, &this_rank);
+        for (int i = 0; i < num_ranks; ++i) {
+            if (i == this_rank) {
+                P::prof_aspect_type::print_all("medev2_mpi", this_rank);
+            }
+            PMPI_Barrier(MPI_COMM_WORLD);
+        }
+        
         PMPI_Finalize();
     }
     
@@ -70,8 +83,8 @@ public:
                 MEDEV2_EXPAND_PARAMS_TO_LOG_FMT(num, __VA_ARGS__) \
             ,   MEDEV2_EXPAND_PARAMS_TO_LOG_P_DOT_ARGS(num, __VA_ARGS__) \
             ); \
-            const auto prof_val = prof::start(); \
             { \
+                CMPTH_P_PROF_SCOPE(P, name); \
                 MPI_CRITICAL \
                 mpi_error::check( \
                     PMPI_##Name( \
@@ -79,7 +92,6 @@ public:
                     ) \
                 ); \
             } \
-            prof::finish(prof_kind::name, prof_val); \
             MEFDN_LOG_DEBUG( \
                 "msg:Exiting MPI_" #Name ".\t" \
                 MEDEV2_EXPAND_PARAMS_TO_LOG_FMT(num, __VA_ARGS__) \
@@ -120,6 +132,9 @@ template <typename UltItf>
 struct direct_mpi_facade_policy
 {
     using ult_itf_type = UltItf;
+    using prof_aspect_type =
+        typename ult_itf_type::template prof_aspect_t<
+            cmpth::prof_tag::MEDEV2_PROF_ASPECT, mpi_prof_aspect_policy>;
 };
 
 template <typename UltItf>

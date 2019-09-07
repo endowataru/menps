@@ -5,7 +5,7 @@ project(medev2)
 # Show messages when invoking CMake
 message(STATUS "Generate menps/medev2/config.h ...")
 
-option(MEDEV2_ENABLE_PROF "Enable profiling" FALSE)
+set(MEDEV2_PROF_ASPECT "DUMMY" CACHE STRING "Prof aspect for medev2")
 
 if(APPLE)
     # UCX is not supported on macOS.
