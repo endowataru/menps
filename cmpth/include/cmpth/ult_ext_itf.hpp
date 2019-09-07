@@ -5,6 +5,7 @@
 #include <cmpth/pool/basic_numbered_pool.hpp>
 #include <cmpth/ult_tag.hpp>
 #include <cmpth/sync_tag.hpp>
+#include <cmpth/prof/prof_tag.hpp>
 
 namespace cmpth {
 
@@ -20,6 +21,9 @@ struct ult_ext_itf
     
     template <typename P2>
     using delegator_t = get_delegator_t<UltItf, DelegatorTag, P2>;
+    
+    template <prof_tag ProfTag, typename P2>
+    using prof_aspect_t = get_prof_aspect_t<ProfTag, UltItf, P2>;
 };
 
 template <ult_tag_t Tag, sync_tag_t DelegatorTag>
