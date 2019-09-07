@@ -171,6 +171,8 @@ struct my_child_worker_group_policy
     using comm_ult_itf_type = medsm2::dsm_com_itf_t::ult_itf_type;
     
     using worker_base_type = my_worker_base;
+    
+    using prof_aspect_type = medsm2::dsm_com_policy_base::prof_aspect_type;
 };
 
 
@@ -1037,8 +1039,6 @@ int main(int argc, char* argv[])
     g_coll->barrier();
     
     sp.stop_release_thread();
-    
-    df.print_prof();
     
     if (coll.this_proc_id() == 0) {
         sp.enable_on_this_thread();

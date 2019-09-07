@@ -152,13 +152,11 @@ public:
             (const size_type first) {
                 const auto last = mefdn::min(first + stride, num_released);
                 for (size_type i = first; i < last; ++i) {
-                    const auto p = prof::start();
+                    CMPTH_P_PROF_SCOPE(P, release);
                     
                     // Call the callback release function.
                     // The returned values are stored in parallel.
                     rel_results[i] = seg_table.release(com, rd_ts_st, new_dirty_ids[i]);
-                    
-                    prof::finish(prof_kind::release, p);
                 }
             }
         );

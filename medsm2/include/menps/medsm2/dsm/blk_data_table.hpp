@@ -95,7 +95,7 @@ public:
         if (cur_proc != home_proc) {
         #endif
             if (is_dirty) {
-                const auto p = prof::start();
+                CMPTH_P_PROF_SCOPE(P, merge_read);
                 
                 // Merge the diff in the read.
                 
@@ -122,11 +122,9 @@ public:
                 
                 // Apply the changes written in the home into my_priv and my_pub.
                 this->read_merge(blk_pos, home_data, my_priv, my_pub, blk_size);
-                
-                prof::finish(prof_kind::merge_read, p);
             }
             else {
-                const auto p = prof::start();
+                CMPTH_P_PROF_SCOPE(P, wn_read);
                 
                 // Simply read from the home process.
                 rma.read(
@@ -139,19 +137,17 @@ public:
                 ,   my_priv
                 ,   blk_size
                 );
-                
-                prof::finish(prof_kind::wn_read, p);
             }
         #ifdef MEDSM2_ENABLE_MIGRATION
         }
         #endif
         
-        const auto p = prof::start();
-        
-        // Call mprotect(PROT_READ).
-        self.set_readonly(blk_pos, blk_size);
-        
-        prof::finish(prof_kind::mprotect_start_read, p);
+        {
+            CMPTH_P_PROF_SCOPE(P, mprotect_start_read);
+            
+            // Call mprotect(PROT_READ).
+            self.set_readonly(blk_pos, blk_size);
+        }
     }
     
     void start_write(
@@ -172,22 +168,20 @@ public:
         #endif
         
         if (needs_twin) {
-            const auto p = prof::start();
+            CMPTH_P_PROF_SCOPE(P, start_write_twin);
             
             // Copy the private data to the public data.
             // This is a preparation for releasing this block later.
             std::memcpy(my_pub, my_priv, blk_size);
             //std::copy(my_priv, my_priv + blk_size, my_pub);
-            
-            prof::finish(prof_kind::start_write_twin, p);
         }
         
-        const auto p = prof::start();
-        
-        // Call mprotect(PROT_READ | PROT_WRITE).
-        self.set_writable(blk_pos, blk_size);
-        
-        prof::finish(prof_kind::mprotect_start_write, p);
+        {
+            CMPTH_P_PROF_SCOPE(P, mprotect_start_write);
+            
+            // Call mprotect(PROT_READ | PROT_WRITE).
+            self.set_writable(blk_pos, blk_size);
+        }
     }
     
     struct release_merge_result {
@@ -207,6 +201,8 @@ public:
     ,   const unique_lock_type& lk
     ,   const LockResult&       glk_ret
     ) {
+        CMPTH_P_PROF_SCOPE(P, tx_merge);
+        
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
         
@@ -218,12 +214,10 @@ public:
             // this method write-protects this block
             // in order to apply the changes to the private data.
             
-            const auto p = prof::start();
+            CMPTH_P_PROF_SCOPE(P, mprotect_tx_before);
             
             // Call mprotect(PROT_READ).
             self.set_readonly(blk_pos, blk_size);
-            
-            prof::finish(prof_kind::mprotect_tx_before, p);
         }
         
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
@@ -242,12 +236,10 @@ public:
             // It's OK to read the intermediate states
             // because those writes will be managed by the next release operation.
             if (glk_ret.needs_local_comp){
-                const auto p = prof::start();
+                CMPTH_P_PROF_SCOPE(P, tx_merge_memcmp);
                 
                 is_written = std::memcmp(my_priv, my_pub, blk_size) != 0;
                 //std::equal(my_priv, my_priv + blk_size, my_pub)
-                
-                prof::finish(prof_kind::tx_merge_memcmp, p);
             }
             else {
                 is_written = true;
@@ -259,13 +251,11 @@ public:
             if (is_written) {
             #endif
                 if (glk_ret.needs_local_copy) {
-                    const auto p = prof::start();
+                    CMPTH_P_PROF_SCOPE(P, tx_merge_local_memcpy);
                     
                     // Copy the private data to the public data.
                     std::memcpy(my_pub, my_priv, blk_size);
                     //std::copy(my_priv, my_priv + blk_size, my_pub);
-                    
-                    prof::finish(prof_kind::tx_merge_local_memcpy, p);
                 }
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             }
@@ -314,7 +304,7 @@ public:
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_REMOTE
             }
             else {
-                const auto p = prof::start();
+                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_memcpy);
                 
                 // Although this process doesn't release this block at this time,
                 // the buffer read from the current owner can be utilized.
@@ -326,8 +316,6 @@ public:
                 //std::copy(other_data, other_data + blk_size, my_priv);
                 std::memcpy(my_pub , other_data, blk_size);
                 //std::copy(other_data, other_data + blk_size, my_pub);
-                
-                prof::finish(prof_kind::tx_merge_remote_memcpy, p);
             }
             #endif
         }
@@ -346,15 +334,13 @@ public:
         #endif
         
         if (glk_ret.needs_protect_after) {
-            const auto p = prof::start();
+            CMPTH_P_PROF_SCOPE(P, mprotect_tx_after);
             
             // If this block was inaccessible (invalid-clean or invalid-dirty) from the application,
             // make the block readable now.
             
             // Call mprotect(PROT_READ).
             self.set_readonly(blk_pos, blk_size);
-            
-            prof::finish(prof_kind::mprotect_tx_after, p);
         }
 
         const bool is_migrated =
@@ -375,12 +361,12 @@ public:
         self.check_locked(blk_pos, lk);
         const auto blk_size = self.get_blk_size();
         
-        const auto p = prof::start();
-        
-        // Call mprotect(PROT_NONE).
-        self.set_inaccessible(blk_pos, blk_size);
-        
-        prof::finish(prof_kind::mprotect_invalidate, p);
+        {
+            CMPTH_P_PROF_SCOPE(P, mprotect_invalidate);
+            
+            // Call mprotect(PROT_NONE).
+            self.set_inaccessible(blk_pos, blk_size);
+        }
     }
     
     // This function is used to implement atomic operations.
@@ -452,15 +438,13 @@ private:
     ,         mefdn::byte* const    my_pub
     ,   const size_type             blk_size
     ) {
-        const auto p = prof::start();
+        CMPTH_P_PROF_SCOPE(P, read_merge);
         
         #ifdef MEDSM2_USE_SIMD_DIFF
         read_merge_simd(blk_pos, other_pub, my_priv, my_pub, blk_size);
         #else
         read_merge_byte(blk_pos, other_pub, my_priv, my_pub, blk_size);
         #endif
-        
-        prof::finish(prof_kind::read_merge, p);
     }
     
     static void write_merge(
@@ -473,19 +457,15 @@ private:
     ) {
         #ifdef MEDSM2_USE_SIMD_DIFF
         if (use_simd) {
-            const auto p = prof::start();
+            CMPTH_P_PROF_SCOPE(P, write_merge_simd);
             
             write_merge_simd(blk_pos, other_pub, my_priv, my_pub, blk_size);
-            
-            prof::finish(prof_kind::write_merge_simd, p);
         }
         else {
         #endif
-            const auto p = prof::start();
+            CMPTH_P_PROF_SCOPE(P, write_merge_byte);
             
             write_merge_byte(blk_pos, other_pub, my_priv, my_pub, blk_size);
-            
-            prof::finish(prof_kind::write_merge_byte, p);
         #ifdef MEDSM2_USE_SIMD_DIFF
         }
         #endif

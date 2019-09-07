@@ -153,6 +153,8 @@ struct dsm_base_policy
     #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
     using sharer_map_type = sharer_map<dsm_base_policy>;
     #endif
+    
+    using prof_aspect_type = dsm_com_policy_base::prof_aspect_type;
 };
 
 const dsm_base_policy::wr_count_type dsm_base_policy::max_fast_rel_threshold;

@@ -312,30 +312,20 @@ public:
     
     bool try_upgrade(void* const ptr) // XXX
     {
-        const auto p = prof::start();
-        
         const auto blk_id = this->get_blk_id_from_app_ptr(ptr);
         
         const auto rd_ret = base::start_read(blk_id);
-        
         if (rd_ret.is_newly_read) {
             // This block was exactly read at this time.
-            
-            prof::finish(prof_kind::read_upgrade, p);
-            
             return true;
         }
         
         const auto wr_ret = base::start_write(blk_id);
-        
         if (wr_ret.write.is_writable) {
             // This block was or is now writable.
             // This behavior allows the situation
             // where the block has already been writable.
             // because other threads may have changed the state to writable.
-            
-            prof::finish(prof_kind::write_upgrade, p);
-            
             return true;
         }
         

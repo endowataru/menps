@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/meomp/common.hpp>
-#include <menps/medsm2/prof.hpp>
 
 namespace menps {
 namespace meomp {
@@ -95,15 +94,12 @@ public:
     // This function is called when the worker decided to do a barrier.
     void barrier_on(worker_base_type& wk)
     {
+        CMPTH_P_PROF_SCOPE(P, omp_barrier);
+        
         auto& self = this->derived();
         
-        using medsm2::prof;
-        using medsm2::prof_kind;
-        
-        const auto p = prof::start();
-        
         // Check whether this function is called inside a parallel region.
-        if (bar_) {
+        if (this->bar_) {
             // Do a barrier in this process to complete preceding memory writes.
             this->bar_->arrive_and_wait();
             
@@ -117,8 +113,6 @@ public:
             // Do a barrier in this process again to ensure the freshness of subsequent memory loads.
             this->bar_->arrive_and_wait();
         }
-        
-        prof::finish(prof_kind::omp_barrier, p);
     }
     
 private:

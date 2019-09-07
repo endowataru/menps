@@ -9,12 +9,12 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Show messages when invoking CMake
 message(STATUS "Generate menps/medsm2/config.h ...")
 
-option(MEDSM2_ENABLE_PROF "Enable profiling" FALSE)
 set(MEDSM2_ULT_ITF "CTMTH" CACHE STRING "ULT module for DSM")
 set(MEDSM2_MPI_ITF "QDC" CACHE STRING "MPI module for DSM")
 set(MEDSM2_UCT_ITF "QDC" CACHE STRING "UCT module for DSM")
 set(MEDSM2_RMA_ITF "MPI" CACHE STRING "RMA module for DSM")
 set(MEDSM2_DELEGATOR_ITF "MCS" CACHE STRING "Delegator for DSM")
+set(MEDSM2_PROF_ASPECT "DUMMY" CACHE STRING "Prof aspect for DSM")
 set(MEDSM2_GLOBAL_VAR_BLOCK_SIZE "0x8000" CACHE STRING "Block size of global variables")
 set(MEDSM2_MAX_SPACE_SIZE "0x100000000000" CACHE STRING "DSM space size")
 set(MEDSM2_MAX_SEG_SIZE "MEDSM2_MAX_SPACE_SIZE / 64" CACHE STRING "Maximum DSM segment size")

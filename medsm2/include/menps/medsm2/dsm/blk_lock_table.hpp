@@ -3,7 +3,6 @@
 
 #include <menps/medsm2/dsm/lock_table.hpp>
 #include <menps/medsm2/dsm/fixed_lock_table.hpp>
-#include <menps/medsm2/prof.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -91,6 +90,8 @@ public:
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
+        CMPTH_P_PROF_SCOPE(P, lock_global);
+        
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
         
@@ -133,6 +134,8 @@ public:
     ,   const lock_global_result&   glk_ret MEFDN_MAYBE_UNUSED
     ,   const EndTransactionResult& et_ret
     ) {
+        CMPTH_P_PROF_SCOPE(P, unlock_global);
+        
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
         
@@ -177,7 +180,7 @@ public:
         
         const bool ret = base::check_owned(com, blk_pos);
         if (!ret) {
-            prof::add(prof_kind::tx_migrate, 1);
+            CMPTH_P_PROF_ADD(P, tx_migrate);
         }
         return ret;
     }

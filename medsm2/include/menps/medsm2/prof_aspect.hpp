@@ -2,15 +2,12 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <menps/mefdn/basic_prof.hpp>
-
-namespace menps {
-namespace medsm2 {
+#include <cmpth/prof.hpp>
 
 #define MEDSM2_PROF_KINDS(x) \
     x(omp_barrier) \
     x(barrier) \
-    x(fence) \
+    x(fence_release) \
     x(release) \
     x(release_fast) \
     x(release_tx) \
@@ -41,40 +38,17 @@ namespace medsm2 {
     x(mprotect_tx_before) \
     x(mprotect_tx_after)
 
-#define DEFINE_PROF_KIND(name) name,
+namespace menps {
+namespace medsm2 {
 
-enum class prof_kind {
-    MEDSM2_PROF_KINDS(DEFINE_PROF_KIND)
-    end
-};
-
-#undef DEFINE_PROF_KIND
-
-struct prof_policy
+struct prof_aspect_policy
 {
-    static const bool is_enabled =
-        #ifdef MEDSM2_ENABLE_PROF
-            true;
-        #else
-            false;
-        #endif
+    CMPTH_DEFINE_PROF_ASPECT_POLICY(MEDSM2_PROF_KINDS)
     
-    using prof_kind_type = prof_kind;
-    
-    static const char* get_name(const prof_kind_type k)
-    {
-        #define DEFINE_NAME(name)   #name ,
-        
-        static const char* names[] =
-            { MEDSM2_PROF_KINDS(DEFINE_NAME) "end" };
-        
-        #undef DEFINE_NAME
-        
-        return names[static_cast<mefdn::size_t>(k)];
+    static constexpr fdn::size_t get_default_mlog_size() noexcept {
+        return 1ull << 20;
     }
 };
-
-using prof = mefdn::basic_prof<prof_policy>;
 
 } // namespace medsm2
 } // namespace menps

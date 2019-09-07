@@ -4,7 +4,6 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <menps/mefdn/external/fmt.hpp>
-#include <menps/medsm2/prof.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -219,16 +218,14 @@ private:
             if (start_ret.needs_latest_read) {
                 // This block was invalidated based on timestamps.
                 
-                const auto p = prof::start();
-                
                 const auto rd_ts_st = rd_set.get_ts_state();
+                
+                CMPTH_P_PROF_SCOPE(P, tx_read);
                 
                 // Read & merge the latest values inside the global critical section.
                 const auto tx_ret MEFDN_MAYBE_UNUSED /*TODO*/ =
                     this->do_transaction(com, rd_ts_st, info);
                 // TODO: It is strange that tx_ret is totally ignored in this method.
-                
-                prof::finish(prof_kind::tx_read, p);
                 
                 #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
                 MEFDN_LOG_DEBUG(
@@ -453,8 +450,6 @@ public:
     ,   const rd_ts_state_type& rd_ts_st
     ,   const blk_id_type       blk_id
     ) {
-        const auto p = prof::start();
-        
         const auto this_proc = com.this_proc_id();
         
         const auto info = this->get_local_lock(blk_id);
@@ -476,23 +471,23 @@ public:
         if (check_ret.is_fast_released
             && info.lock_tbl.check_owned(com, info.blk_pos, info.lk))
         {
+            CMPTH_P_PROF_SCOPE(P, release_fast);
+            
             // Load and update the local timestamp values.
             // The updated values may be used in the next release.
             const auto fast_ret =
                 info.dir_tbl.fast_release(rd_ts_st, info.blk_id, info.blk_pos, info.lk);
-            
-            prof::finish(prof_kind::release_fast, p);
             
             return { true, true, true,
                 this_proc, fast_ret.new_rd_ts, fast_ret.new_wr_ts };
         }
         #endif
         
+        CMPTH_P_PROF_SCOPE(P, release_tx);
+        
         // Merge the written values inside the global critical section.
         auto tx_ret =
             this->do_transaction(com, rd_ts_st, info);
-        
-        prof::finish(prof_kind::release_tx, p);
         
         MEFDN_LOG_DEBUG(
             "msg:Released block.\t"
@@ -518,7 +513,6 @@ public:
     
 private:
     struct do_transaction_result {
-        //typename blk_lock_tbl_type::lock_global_result      glk_ret;
         typename blk_dir_tbl_type::begin_transaction_result bt_ret;
         typename blk_data_tbl_type::release_merge_result    mg_ret;
         typename blk_dir_tbl_type::end_transaction_result   et_ret;
@@ -531,24 +525,14 @@ private:
     ,   const lock_info&        info
     ,   Func&&                  func
     ) {
-        const auto p_lock_global = prof::start();
-        
         // Lock the latest owner globally.
         // This is achieved by following the graph of probable owners.
         const auto glk_ret =
             info.lock_tbl.lock_global(com, info.blk_id, info.blk_pos, info.lk);
         
-        prof::finish(prof_kind::lock_global, p_lock_global);
-        
-        const auto p_begin_tx = prof::start();
-       
         // Begin a transaction.
         const auto bt_ret =
             info.dir_tbl.begin_transaction(com, info.blk_id, info.blk_pos, info.lk, glk_ret);
-        
-        prof::finish(prof_kind::begin_tx, p_begin_tx);
-        
-        const auto p_mg = prof::start();
         
         // Merge the writes from both the current process and the latest owner.
         /*const*/ auto mg_ret =
@@ -563,24 +547,14 @@ private:
             mg_ret.is_written = true;
         }
         
-        prof::finish(prof_kind::tx_merge, p_mg);
-        
-        const auto p_end_tx = prof::start();
-        
         // End the transaction.
         const auto et_ret =
             info.dir_tbl.end_transaction(com, rd_ts_st, info.blk_id, info.blk_pos, info.lk, glk_ret, bt_ret, mg_ret);
         
-        prof::finish(prof_kind::end_tx, p_end_tx);
-        
-        const auto p_unlock_global = prof::start();
-        
         // Unlock the global lock.
         info.lock_tbl.unlock_global(com, info.blk_id, info.blk_pos, info.lk, glk_ret, et_ret);
         
-        prof::finish(prof_kind::unlock_global, p_unlock_global);
-        
-        return { /*glk_ret,*/ bt_ret, mg_ret, et_ret };
+        return { bt_ret, mg_ret, et_ret };
     }
     
     struct do_transaction_default_functor

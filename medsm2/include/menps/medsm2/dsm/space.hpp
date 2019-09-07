@@ -3,7 +3,6 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/logger.hpp>
-#include <menps/medsm2/prof.hpp>
 
 //#define MEDSM2_FORCE_SELF_INVALIDATE_ALL
 
@@ -66,6 +65,16 @@ public:
         auto& com = self.get_com_itf();
         
         seg_tbl_.finalize(com);
+        
+        auto& coll = com.get_coll();
+        const auto this_proc = com.this_proc_id();
+        const auto num_procs = com.get_num_procs();
+        for (proc_id_type proc = 0; proc < num_procs; ++proc) {
+            if (proc == this_proc) {
+                P::prof_aspect_type::print_all("medsm2", this_proc);
+            }
+            coll.barrier();
+        }
     }
     
     void finalize()
@@ -91,6 +100,8 @@ public:
     MEFDN_NODISCARD
     start_read_result start_read(const blk_id_type blk_id)
     {
+        CMPTH_P_PROF_SCOPE(P, read_upgrade);
+        
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
@@ -105,6 +116,8 @@ public:
     MEFDN_NODISCARD
     start_write_result start_write(const blk_id_type blk_id)
     {
+        CMPTH_P_PROF_SCOPE(P, write_upgrade);
+        
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
@@ -239,6 +252,8 @@ public:
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
+        CMPTH_P_PROF_SCOPE(P, fence_release);
+        
         const auto rd_ts_st = this->rd_set_.get_ts_state();
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
@@ -268,26 +283,19 @@ public:
     
     void barrier()
     {
+        CMPTH_P_PROF_SCOPE(P, barrier);
+        
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         auto& coll = com.get_coll();
         
         const auto this_proc = com.this_proc_id();
-        
-        const auto p_all = prof::start();
+        const auto num_procs = com.get_num_procs();
         
         MEFDN_LOG_DEBUG("msg:Entering DSM barrier.");
         
-        const auto num_procs = com.get_num_procs();
-        
-        {
-            const auto p = prof::start();
-            
-            // Release all of the preceding writes in this thread.
-            this->fence_release();
-            
-            prof::finish(prof_kind::fence, p);
-        }
+        // Release all of the preceding writes in this thread.
+        this->fence_release();
         
         #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
         coll.barrier();
@@ -305,18 +313,16 @@ public:
             mefdn::make_unique_uninitialized<mefdn::byte []>(sig_size * num_procs);
         
         {
-            const auto p = prof::start();
+            CMPTH_P_PROF_SCOPE(P, barrier_allgather);
             
             // Collect the signatures from all of the processes.
             coll.allgather(this_buf.get(), all_buf.get(), sig_size);
-            
-            prof::finish(prof_kind::barrier_allgather, p);
         }
         
         MEFDN_LOG_DEBUG("msg:Exchanged signatures for barrier.");
 
         {
-            const auto p = prof::start();
+            CMPTH_P_PROF_SCOPE(P, barrier_acq);
             
             const auto sigs =
                 mefdn::make_unique<sig_buffer_type []>(num_procs);
@@ -350,8 +356,6 @@ public:
             
             // Invalidate based on the minimum write timestamp.
             this->acquire_min_wr_ts(min_wr_ts);
-            
-            prof::finish(prof_kind::barrier_acq, p);
         }
         #endif
         
@@ -363,14 +367,13 @@ public:
         );
         #endif
         
-        prof::finish(prof_kind::barrier, p_all);
-        
         MEFDN_LOG_DEBUG("msg:Exiting DSM barrier.");
     }
     
     #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
 private:
-    void fence_acquire() {
+    void fence_acquire()
+    {
         MEFDN_LOG_VERBOSE("msg:Start acquire fence.");
         
         auto& self = this->derived();

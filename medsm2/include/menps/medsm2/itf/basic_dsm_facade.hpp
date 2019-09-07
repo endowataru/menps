@@ -3,9 +3,8 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/external/malloc.h>
-#include <menps/medsm2/prof.hpp>
-#include <menps/medsm2/com/dsm_com_itf.hpp> // TODO: required for medev2::prof
 #include <menps/mefdn/arithmetic.hpp>
+#include <menps/mefdn/assert.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -136,34 +135,6 @@ public:
     }
     void disable_on_this_thread() {
         this->sp_->disable_on_this_thread();
-    }
-    
-    void print_prof()
-    {
-        #if (defined(MEDSM2_ENABLE_PROF) || defined(MEDEV2_ENABLE_PROF) || defined(MEULT_ENABLE_PROF))
-        auto& coll = this->get_com_itf().get_coll();
-        using coll_t = typename com_itf_type::coll_itf_type;
-        using proc_id_t = typename coll_t::proc_id_type;
-        const auto num_procs = coll.get_num_procs();
-        std::cout << std::flush;
-        coll.barrier();
-        for (proc_id_t proc = 0; proc < num_procs; ++proc) {
-            if (coll.this_proc_id() == proc) {
-                std::cout << fmt::format("- proc: {}\n", proc);
-                #ifdef MEDSM2_ENABLE_PROF
-                std::cout << medsm2::prof::to_string("    - ");
-                #endif
-                #ifdef MEDEV2_ENABLE_PROF
-                std::cout << medev2::mpi::prof::to_string("    - ");
-                #endif
-                #ifdef MEULT_ENABLE_PROF
-                std::cout << meult::prof::to_string("    - ");
-                #endif
-                std::cout << std::flush;
-            }
-            coll.barrier();
-        }
-        #endif
     }
     
     com_itf_type& get_com_itf() const noexcept {
