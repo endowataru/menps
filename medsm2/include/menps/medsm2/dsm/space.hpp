@@ -39,9 +39,6 @@ class space
     using size_type = typename P::size_type;
     
     using ult_itf_type = typename P::ult_itf_type;
-    using mutex_type = typename ult_itf_type::mutex;
-    using mutex_unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
-    using spinlock_type = typename ult_itf_type::spinlock;
     
     using mtx_table_type = typename P::mtx_table_type;
     using id_allocator_type = typename P::id_allocator_type;

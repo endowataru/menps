@@ -2,8 +2,6 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <map>
-#include <unordered_set>
 #include <algorithm>
 
 namespace menps {

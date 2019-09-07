@@ -4,7 +4,9 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/assert.hpp>
 #include <algorithm>
-#include <unordered_set>
+#ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
+    #include <unordered_set>
+#endif
 
 namespace menps {
 namespace medsm2 {
