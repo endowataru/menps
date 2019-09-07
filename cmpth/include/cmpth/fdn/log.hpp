@@ -5,6 +5,39 @@
 #include <iostream> // TODO
 #include <sstream>
 
+#define CMPTH_P_LOG_VERBOSE(P, ...) \
+    do { \
+        if (P::log_policy_type::is_enabled) { \
+            P::log_policy_type::print_verbose_log(__VA_ARGS__); \
+        } \
+    } while (false)
+
+#define CMPTH_P_LOG_DEBUG(P, ...) \
+    do { \
+        if (P::log_policy_type::is_enabled) { \
+            P::log_policy_type::print_debug_log(__VA_ARGS__); \
+        } \
+    } while (false)
+
+#define CMPTH_P_LOG_INFO(P, ...) \
+    do { \
+        if (P::log_policy_type::is_enabled) { \
+            P::log_policy_type::print_info_log(__VA_ARGS__); \
+        } \
+    } while (false)
+
+#define CMPTH_P_LOG_WARN(P, ...) \
+    do { \
+        if (P::log_policy_type::is_enabled) { \
+            P::log_policy_type::print_warn_log(__VA_ARGS__); \
+        } \
+    } while (false)
+
+#define CMPTH_P_LOG_FATAL(P, ...) \
+    do { \
+        P::log_policy_type::print_fatal_log(__VA_ARGS__); \
+    } while (false)
+
 namespace cmpth {
 
 template <bool IsEnabled>
@@ -119,38 +152,4 @@ using def_log_policy =
     >;
 
 } // namespace cmpth
-
-#define CMPTH_P_LOG_VERBOSE(P, ...) \
-    do { \
-        if (P::log_policy_type::is_enabled) { \
-            P::log_policy_type::print_verbose_log(__VA_ARGS__); \
-        } \
-    } while (false)
-
-#define CMPTH_P_LOG_DEBUG(P, ...) \
-    do { \
-        if (P::log_policy_type::is_enabled) { \
-            P::log_policy_type::print_debug_log(__VA_ARGS__); \
-        } \
-    } while (false)
-
-#define CMPTH_P_LOG_INFO(P, ...) \
-    do { \
-        if (P::log_policy_type::is_enabled) { \
-            P::log_policy_type::print_info_log(__VA_ARGS__); \
-        } \
-    } while (false)
-
-#define CMPTH_P_LOG_WARN(P, ...) \
-    do { \
-        if (P::log_policy_type::is_enabled) { \
-            P::log_policy_type::print_warn_log(__VA_ARGS__); \
-        } \
-    } while (false)
-
-#define CMPTH_P_LOG_FATAL(P, ...) \
-    do { \
-        P::log_policy_type::print_fatal_log(__VA_ARGS__); \
-    } while (false)
-
 
