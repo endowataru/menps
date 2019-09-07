@@ -18,7 +18,7 @@ struct lv5_ctmth_itf
     using base_ult_itf = klt_itf;
     
     template <typename P2>
-    using pool_t = basic_ext_return_pool<mth_itf, P2>;
+    using pool_t = basic_ext_return_pool<lv5_mth_itf, P2>;
 };
 
 // level 6: mutex, cv, for_loop
