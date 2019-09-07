@@ -117,6 +117,7 @@
 #define MEFDN_EXTERN_C_END      }
 
 namespace menps {
+
 namespace mefdn {
 
 using namespace cmpth::fdn;
@@ -162,6 +163,9 @@ using std::nullptr_t;
 enum class byte : unsigned char {}; // added in C++17
 
 } // namespace mefdn
+
+namespace fdn = mefdn;
+
 } // namespace menps
 
 
