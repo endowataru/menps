@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 #define CMPTH_P_ASSERT(P, x)    \
-    (void)(!(P::assert_policy_type::is_enabled) || (x) || \
+    static_cast<void>(!(P::assert_policy_type::is_enabled) || (x) || \
     (P::assert_policy_type::fail(#x, __FILE__, __LINE__),0)) \
 
 namespace cmpth {
