@@ -19,7 +19,7 @@
 #include <cmpth/sct/sct_call_stack.hpp>
 #include <cmpth/sct/sct_continuation.hpp>
 #include <cmpth/sct/sct_running_task.hpp>
-#include <cmpth/ctx/x86_64_context_policy.hpp>
+#include <cmpth/arch/x86_64_context_policy.hpp>
 #include "omp_task_desc.hpp"
 
 #include <omp.h>

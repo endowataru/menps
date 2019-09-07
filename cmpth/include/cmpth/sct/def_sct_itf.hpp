@@ -8,7 +8,7 @@
 #include <cmpth/sct/lv7_sct_itf.hpp>
 
 #include <cmpth/sct/def_sct_spinlock.hpp>
-#include <cmpth/ctx/x86_64_context_policy.hpp>
+#include <cmpth/arch/x86_64_context_policy.hpp>
 #include <cmpth/pool/basic_ext_return_pool.hpp>
 #include <cmpth/sync/basic_spinlock.hpp>
 #include <cmpth/sct/sct_worker_deque.hpp>
