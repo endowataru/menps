@@ -11,3 +11,6 @@
 	path = cmpth/external/massivethreads
 	url = https://github.com/endowataru/massivethreads.git
 	branch = fix/uncond_funcs
+[submodule "cmpth/external/massivelogger"]
+	path = cmpth/external/massivelogger
+	url = https://github.com/massivethreads/massivelogger.git

@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.1)
 project(cmpth CXX)
 
 option(CMPTH_ENABLE_MTH "Build MassiveThreads" ON)
+option(CMPTH_ENABLE_MLOG "Use MassiveLogger" OFF)
 
 add_library(cmpth INTERFACE)
 target_include_directories(cmpth INTERFACE ./include)
@@ -89,6 +90,12 @@ if (${CMPTH_ENABLE_MTH})
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_sweep.sh
             MYTH_NUM_WORKERS $<TARGET_FILE:cmpth_test_ctmth>
     )
+endif()
+
+if (${CMPTH_ENABLE_MLOG})
+    add_library(massivelogger INTERFACE)
+    target_include_directories(massivelogger INTERFACE ./external/massivelogger/include)
+    target_link_libraries(cmpth INTERFACE massivelogger)
 endif()
 
 
