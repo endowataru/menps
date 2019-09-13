@@ -1,5 +1,7 @@
 
 #include <menps/medev2/ucx/uct/uct_policy.hpp>
+#include <cmpth/sct/def_sct_itf.hpp>
+#include <cmpth/ult_ext_itf.hpp>
 #include <iostream>
 
 int main()
@@ -11,8 +13,8 @@ int main()
     const char dev_name[] = "mlx5_0:1";
     
     using policy =
-        menps::medev2::ucx::uct::uct_policy<
-            menps::medev2::ucx::uct::direct_facade_policy>;
+        menps::medev2::ucx::uct::direct_uct_itf<
+            cmpth::ult_ext_itf<cmpth::def_sct_itf, cmpth::sync_tag_t::MCS>>;
     
     policy::uct_facade_type uf;
     

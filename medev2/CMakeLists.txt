@@ -5,7 +5,8 @@ project(medev2)
 # Show messages when invoking CMake
 message(STATUS "Generate menps/medev2/config.h ...")
 
-set(MEDEV2_PROF_ASPECT "DUMMY" CACHE STRING "Prof aspect for medev2")
+set(MEDEV2_MPI_PROF_ASPECT "DUMMY" CACHE STRING "Prof aspect for medev2::mpi")
+set(MEDEV2_UCT_PROF_ASPECT "DUMMY" CACHE STRING "Prof aspect for medev2::uct")
 
 if(APPLE)
     # UCX is not supported on macOS.

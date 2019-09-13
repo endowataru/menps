@@ -69,6 +69,8 @@ public:
     }
     
     ~basic_mpi_com_itf() {
+        this->rma_info_->print_prof(*this->coll_);
+
         mefdn::logger::set_state_callback(mefdn::logger::state_callback_type{});
     }
     

@@ -25,6 +25,7 @@ template <typename P>
 struct uct_policy
 {
     using uct_facade_type = typename P::uct_facade_type;
+    using prof_aspect_type = typename P::prof_aspect_type;
     
     // TODO: Precisely, this is in UCS.
     using async_context_type = ucs::async_context;
@@ -126,14 +127,20 @@ struct uct_policy
     }
 };
 
+template <typename UltItf>
 struct direct_uct_itf_policy
 {
-    using uct_facade_type = direct_facade;
+private:
+    using facade_policy_type = direct_uct_facade_policy<UltItf>;
+
+public:
+    using uct_facade_type = direct_uct_facade<facade_policy_type>;
+    using prof_aspect_type = typename facade_policy_type::prof_aspect_type;
 };
 
 template <typename UltItf>
 struct direct_uct_itf
-    : uct_policy<direct_uct_itf_policy>
+    : uct_policy<direct_uct_itf_policy<UltItf>>
 {
     using ult_itf_type = UltItf;
 };

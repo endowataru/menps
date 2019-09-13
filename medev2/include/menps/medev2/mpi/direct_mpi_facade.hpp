@@ -12,7 +12,7 @@
 #include <menps/medev2/mpi/mpi_itf_id.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <cmpth/prof/prof_tag.hpp>
-#include MEFDN_PP_CAT(CMPTH_PROF_HEADER_, MEDEV2_PROF_ASPECT)
+#include MEFDN_PP_CAT(CMPTH_PROF_HEADER_, MEDEV2_MPI_PROF_ASPECT)
 
 namespace menps {
 namespace medev2 {
@@ -134,7 +134,7 @@ struct direct_mpi_facade_policy
     using ult_itf_type = UltItf;
     using prof_aspect_type =
         typename ult_itf_type::template prof_aspect_t<
-            cmpth::prof_tag::MEDEV2_PROF_ASPECT, mpi_prof_aspect_policy>;
+            cmpth::prof_tag::MEDEV2_MPI_PROF_ASPECT, mpi_prof_aspect_policy>;
 };
 
 template <typename UltItf>

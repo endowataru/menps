@@ -124,6 +124,8 @@ struct proxy_uct_itf_policy
 {
     using uct_facade_type =
         proxy_uct_facade<proxy_uct_facade_policy<OrigUctItf, UltItf>>;
+
+    using prof_aspect_type = typename OrigUctItf::prof_aspect_type;
 };
 
 template <typename OrigUctItf, typename UltItf>

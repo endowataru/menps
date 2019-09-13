@@ -30,6 +30,9 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::SINGLE, P>
     {
         rma = mecom2::make_single_rma();
     }
+
+    template <typename Coll>
+    void print_prof(Coll& /*coll*/) { }
 };
 
 template <typename P>
@@ -53,6 +56,9 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::MPI, P>
         
         rma = mecom2::make_mpi_rma<mpi_rma_policy_type>(mf, win, MPI_COMM_WORLD);
     }
+
+    template <typename Coll>
+    void print_prof(Coll& /*coll*/) { }
 };
 
 #ifdef MEDEV2_DEVICE_UCX_ENABLED
@@ -101,6 +107,18 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::UCT, P>
         
         rma_res = mecom2::make_uct_rma_resource<uct_itf_type>(tl_name, dev_name, coll);
         rma = rma_res->rma.get();
+    }
+
+    template <typename Coll>
+    void print_prof(Coll& coll) {
+        const auto this_proc = coll.this_proc_id();
+        const auto num_ranks = coll.get_num_procs();
+        for (typename Coll::proc_id_type i = 0; i < num_ranks; ++i) {
+            if (i == this_proc) {
+                uct_itf_type::prof_aspect_type::print_all("medev2_uct", this_proc);
+            }
+            coll.barrier();
+        }
     }
 };
 #endif // MEDEV2_DEVICE_UCX_ENABLED
