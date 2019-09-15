@@ -5,8 +5,6 @@
 
 namespace cmpth {
 
-//#define MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
-
 template <typename P>
 class basic_sync_delegator
 {
@@ -107,12 +105,14 @@ public:
             this->is_executed_ = false;
             
             if (auto sth = fdn::move(next_head->sth)) {
-                // Enter the next thread immediately.
-                #ifdef MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
-                sth.enter();
-                #else
-                sth.notify();
-                #endif
+                if (P::prefer_execute_critical) {
+                    // Enter the succeeding next thread immediately.
+                    sth.enter();
+                }
+                else {
+                    // Make the next thread executable.
+                    sth.notify();
+                }
                 
                 CMPTH_P_LOG_DEBUG(P,
                     "Finished unlocking delegator by awaking next thread.", 0
@@ -127,12 +127,14 @@ public:
         );
         
         // Awake the helper thread.
-        #ifdef MEULT_QD_USE_UNCOND_ENTER_FOR_TRANSFER
-        // Prefer executing the succeeding critical sections now.
-        this->con_sth_.enter();
-        #else
-        this->con_sth_.notify();
-        #endif
+        if (P::prefer_execute_critical) {
+            // Enter the helper thread immediately.
+            this->con_sth_.enter();
+        }
+        else {
+            // Make the helper thread executable.
+            this->con_sth_.notify();
+        }
     }
     
     void unlock_and_wait(suspended_thread_type& wait_sth)

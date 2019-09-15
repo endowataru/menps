@@ -53,6 +53,8 @@ struct mcs_delegator_policy
     
     using assert_policy_type = typename UltItf::assert_policy;
     using log_policy_type = typename UltItf::log_policy;
+    
+    static const bool prefer_execute_critical = true;
 };
 
 template <typename UltItf, typename P2>
