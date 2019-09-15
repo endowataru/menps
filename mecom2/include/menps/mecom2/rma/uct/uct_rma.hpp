@@ -48,6 +48,8 @@ public:
     using public_ptr = typename policy_type::template public_ptr<T>;
     template <typename T>
     using unique_public_ptr = typename policy_type::template unique_public_ptr<T>;
+    template <typename T>
+    using unique_local_ptr = typename policy_type::template unique_local_ptr<T>;
     
     template <typename U, typename T>
     static U* member(T* const p, U (T::* const q)) noexcept {

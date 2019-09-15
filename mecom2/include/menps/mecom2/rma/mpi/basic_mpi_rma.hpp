@@ -42,6 +42,8 @@ public:
     using public_ptr = typename P::template public_ptr<T>;
     template <typename T>
     using unique_public_ptr = typename P::template unique_public_ptr<T>;
+    template <typename T>
+    using unique_local_ptr = typename P::template unique_local_ptr<T>;
     
     // MPI_Rput()
     using rma_req_block_itf<P>::untyped_write;
