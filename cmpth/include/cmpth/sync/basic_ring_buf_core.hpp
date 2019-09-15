@@ -8,11 +8,11 @@ namespace cmpth {
 template <typename P>
 class basic_ring_buf_core
 {
-    using ult_itf_type = typename P::ult_itf_type;
+    using base_ult_itf_type = typename P::base_ult_itf_type;
 
     using ring_buf_count_type = typename P::ring_buf_count_type;
     using atomic_count_type =
-        typename ult_itf_type::template atomic<ring_buf_count_type>;
+        typename base_ult_itf_type::template atomic<ring_buf_count_type>;
     
 public:
     struct lock_result {

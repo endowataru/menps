@@ -13,7 +13,7 @@ class basic_ring_buf_queue
     using ring_buf_core_type = typename P::ring_buf_core_type;
     using ring_buf_count_type = typename P::ring_buf_count_type;
     
-    using ult_itf_type = typename P::ult_itf_type;
+    using base_ult_itf_type = typename P::base_ult_itf_type;
     
 public:
     basic_ring_buf_queue()
@@ -37,7 +37,7 @@ public:
                 return { ret.is_locked, prev, cur };
             }
             // Retry.
-            ult_itf_type::this_thread::yield();
+            base_ult_itf_type::this_thread::yield();
         }
     }
     
