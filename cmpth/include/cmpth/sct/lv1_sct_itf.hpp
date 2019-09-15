@@ -5,7 +5,6 @@
 #include <cmpth/sct/sct_call_stack.hpp>
 #include <cmpth/sct/sct_continuation.hpp>
 #include <cmpth/sct/sct_task_ref.hpp>
-#include <cmpth/sync/basic_uncond_var.hpp>
 #include <cmpth/tls/basic_map_tls.hpp>
 #include <cmpth/wrap/atomic_itf_base.hpp>
 

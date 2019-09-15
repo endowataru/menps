@@ -4,7 +4,6 @@
 #include <cmpth/wrap/mth/mth_thread.hpp>
 #include <cmpth/wrap/mth/mth_mutex.hpp>
 #include <cmpth/wrap/mth/mth_cond_var.hpp>
-#include <cmpth/wrap/mth/mth_uncond_var.hpp>
 #include <cmpth/wrap/mth/mth_suspended_thread.hpp>
 #include <cmpth/wrap/mth/mth_thread_specific.hpp>
 #include <cmpth/wrap/mth/mth_barrier.hpp>
@@ -100,7 +99,6 @@ struct lv5_mth_itf
     // TODO: Call myth_init() / myth_fini() ?
     
     using thread = mth_thread<mth_base_policy>;
-    using uncond_variable = mth_uncond_var;
     using suspended_thread = mth_suspended_thread<mth_suspended_thread_policy>;
     
     template <typename P>
