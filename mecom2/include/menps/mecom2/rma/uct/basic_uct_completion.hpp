@@ -19,7 +19,8 @@ class basic_uct_completion
     
     using ult_itf_type = typename P::ult_itf_type;
     using spinlock_type = typename ult_itf_type::spinlock;
-    using uncond_variable_type = typename ult_itf_type::uncond_variable;
+    using worker_type = typename ult_itf_type::worker;
+    using suspended_thread_type = typename ult_itf_type::suspended_thread;
     
     using rkey_info_type = typename P::rkey_info_type;
     
@@ -31,13 +32,14 @@ public:
     
 private:
     struct on_wait {
-        basic_uct_completion& self;
-        
-        bool operator() () const noexcept
+        bool operator() (
+            worker_type&                wk
+        ,   basic_uct_completion* const self
+        ) const noexcept
         {
             auto expected = comp_state_type::created;
             
-            return self.state_.compare_exchange_strong(
+            return self->state_.compare_exchange_strong(
                 expected
             ,   comp_state_type::waiting
             ,   ult_itf_type::memory_order_acq_rel
@@ -80,7 +82,7 @@ public:
             const auto st = this->state_.load(ult_itf_type::memory_order_acquire);
             if (st != comp_state_type::finished) {
                 MEFDN_ASSERT(st == comp_state_type::created);
-                this->uv_.wait_with(on_wait{ *this });
+                this->sth_.template wait_with<on_wait>(this);
             }
         #endif
     }
@@ -127,13 +129,13 @@ private:
             
             if (waiting) {
                 // Prefer returning to the progress thread immediately.
-                self.uv_.notify_signal();
+                self.sth_.notify();
             }
         #endif
     }
     
     atomic_comp_state_type  state_;
-    uncond_variable_type    uv_;
+    suspended_thread_type   sth_;
 };
 
 } // namespace mecom2
