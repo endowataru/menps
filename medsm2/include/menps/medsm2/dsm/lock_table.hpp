@@ -3,6 +3,7 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/assert.hpp>
+#include <menps/medsm2/prof_aspect.hpp>
 
 namespace menps {
 namespace medsm2 {
@@ -92,6 +93,8 @@ public:
         // because other processes may also replace it concurrently.
         if (link_val == this->make_owned_lock_val(this_proc))
         {
+            CMPTH_P_PROF_SCOPE(P, lock_global_cas_1);
+            
             const auto local_glk_rptr =
                 this->glks_.remote(this_proc, lk_pos);
             
@@ -150,7 +153,11 @@ public:
             auto expected = this->make_owned_lock_val(proc);
             const auto desired = this->make_linked_lock_val(this_proc);
             
-            link_val = rma.compare_and_swap(proc, glk_rptr, expected, desired);
+            {
+                CMPTH_P_PROF_SCOPE(P, lock_global_cas_2);
+                
+                link_val = rma.compare_and_swap(proc, glk_rptr, expected, desired);
+            }
             
             if (link_val == expected) {
                 // Acquired the lock.
@@ -178,8 +185,12 @@ public:
             expected = this->make_locked_lock_val(proc);
             
             if (link_val == expected) {
-                // Try to follow the last releaser and become the next.
-                link_val = rma.compare_and_swap(proc, glk_rptr, expected, desired);
+                {
+                    CMPTH_P_PROF_SCOPE(P, lock_global_cas_3);
+                    
+                    // Try to follow the last releaser and become the next.
+                    link_val = rma.compare_and_swap(proc, glk_rptr, expected, desired);
+                }
                 
                 if (link_val == expected) {
                     MEFDN_LOG_VERBOSE(
@@ -193,13 +204,17 @@ public:
                     // Waiting from the same process is a bug.
                     MEFDN_ASSERT(proc != this_proc);
                     
-                    if (this->lad_size_ > 0) {
-                        // Wait for the previous releaser and get the result.
-                        p2p.untyped_recv(proc, tag, lad_buf, this->lad_size_);
-                    }
-                    else {
-                        // Wait for the previous releaser.
-                        p2p.untyped_recv(proc, tag, nullptr, 0);
+                    {
+                        CMPTH_P_PROF_SCOPE(P, lock_global_recv);
+                        
+                        if (this->lad_size_ > 0) {
+                            // Wait for the previous releaser and get the result.
+                            p2p.untyped_recv(proc, tag, lad_buf, this->lad_size_);
+                        }
+                        else {
+                            // Wait for the previous releaser.
+                            p2p.untyped_recv(proc, tag, nullptr, 0);
+                        }
                     }
                     
                     MEFDN_LOG_VERBOSE(

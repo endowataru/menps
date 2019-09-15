@@ -294,13 +294,20 @@ public:
         
         MEFDN_LOG_DEBUG("msg:Entering DSM barrier.");
         
-        // Release all of the preceding writes in this thread.
-        this->fence_release();
+        {
+            CMPTH_P_PROF_SCOPE(P, barrier_release);
+            
+            // Release all of the preceding writes in this thread.
+            this->fence_release();
+        }
         
         #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
         coll.barrier();
-
-        this->fence_acquire();
+        
+        {
+            CMPTH_P_PROF_SCOPE(P, barrier_acquire);
+            this->fence_acquire();
+        }
         
         #else
         const auto sig_size = this->rel_sig_.get_max_size_in_bytes();
@@ -322,7 +329,7 @@ public:
         MEFDN_LOG_DEBUG("msg:Exchanged signatures for barrier.");
 
         {
-            CMPTH_P_PROF_SCOPE(P, barrier_acq);
+            CMPTH_P_PROF_SCOPE(P, barrier_acquire);
             
             const auto sigs =
                 mefdn::make_unique<sig_buffer_type []>(num_procs);

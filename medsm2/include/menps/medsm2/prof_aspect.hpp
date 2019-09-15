@@ -7,15 +7,18 @@
 #define MEDSM2_PROF_KINDS(x) \
     x(omp_barrier) \
     x(barrier) \
+    x(barrier_release) \
+    x(barrier_allgather) \
+    x(barrier_acquire) \
     x(fence_release) \
     x(release) \
     x(release_fast) \
     x(release_tx) \
-    x(lock_global) \
-    x(begin_tx) \
+    x(tx_lock_global) \
+    x(tx_begin) \
     x(tx_merge) \
-    x(end_tx) \
-    x(unlock_global) \
+    x(tx_end) \
+    x(tx_unlock_global) \
     x(tx_migrate) \
     x(tx_merge_memcmp) \
     x(tx_merge_local_memcpy) \
@@ -23,8 +26,6 @@
     x(write_merge_simd) \
     x(write_merge_byte) \
     x(read_merge) \
-    x(barrier_allgather) \
-    x(barrier_acq) \
     x(push_wn) \
     x(start_write_twin) \
     x(tx_read) \
@@ -36,7 +37,14 @@
     x(mprotect_start_read) \
     x(mprotect_start_write) \
     x(mprotect_tx_before) \
-    x(mprotect_tx_after)
+    x(mprotect_tx_after) \
+    x(lock_global_cas_1) \
+    x(lock_global_cas_2) \
+    x(lock_global_cas_3) \
+    x(lock_global_recv) \
+    x(tx_merge_remote_get) \
+    x(tx_merge_remote_put_1) \
+    x(tx_merge_remote_put_2)
 
 namespace menps {
 namespace medsm2 {

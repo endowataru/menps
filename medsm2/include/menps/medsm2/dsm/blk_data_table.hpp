@@ -267,26 +267,35 @@ public:
         else {
             const auto cur_owner = glk_ret.owner;
             
-            // Read the data from cur_owner.
-            const auto other_data_buf =
-                rma.buf_read(
-                    cur_owner
-                #ifdef MEDSM2_ENABLE_LAZY_MERGE
-                ,   this->get_other_priv_ptr(cur_owner, blk_pos)
-                #else
-                ,   this->get_other_pub_ptr(cur_owner, blk_pos)
-                #endif
-                ,   blk_size
-                );
+            typename rma_itf_type::template unique_local_ptr<mefdn::byte []> other_data_buf;
+            {
+                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_get);
+                
+                // Read the data from cur_owner.
+                other_data_buf =
+                    rma.buf_read(
+                        cur_owner
+                    #ifdef MEDSM2_ENABLE_LAZY_MERGE
+                    ,   this->get_other_priv_ptr(cur_owner, blk_pos)
+                    #else
+                    ,   this->get_other_pub_ptr(cur_owner, blk_pos)
+                    #endif
+                    ,   blk_size
+                    );
+            }
             
             #if defined(MEDSM2_ENABLE_LAZY_MERGE) && defined(MEDSM2_ENABLE_MIGRATION)
-            // Write back other_data_buf (= remote private) to cur_owner.
-            rma.write(
-                cur_owner
-            ,   this->get_other_pub_ptr(cur_owner, blk_pos)
-            ,   other_data_buf.get()
-            ,   blk_size
-            );
+            {
+                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_1);
+                
+                // Write back other_data_buf (= remote private) to cur_owner.
+                rma.write(
+                    cur_owner
+                ,   this->get_other_pub_ptr(cur_owner, blk_pos)
+                ,   other_data_buf.get()
+                ,   blk_size
+                );
+            }
             #endif
             
             const auto other_data = other_data_buf.get();
@@ -322,6 +331,8 @@ public:
         
         #ifndef MEDSM2_ENABLE_MIGRATION
         if (is_written) {
+            CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_2);
+            
             const auto cur_owner = glk_ret.owner;
             // Write back my_pub to cur_owner.
             rma.buf_write(

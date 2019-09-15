@@ -24,6 +24,8 @@ struct blk_lock_table_policy
     
     template <typename Elem>
     using alltoall_buffer = typename P::template alltoall_buffer<Elem>;
+
+    using prof_aspect_type = typename P::prof_aspect_type;
 };
 
 template <typename P>
@@ -90,7 +92,7 @@ public:
     ,   const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
     ) {
-        CMPTH_P_PROF_SCOPE(P, lock_global);
+        CMPTH_P_PROF_SCOPE(P, tx_lock_global);
         
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);
@@ -134,7 +136,7 @@ public:
     ,   const lock_global_result&   glk_ret MEFDN_MAYBE_UNUSED
     ,   const EndTransactionResult& et_ret
     ) {
-        CMPTH_P_PROF_SCOPE(P, unlock_global);
+        CMPTH_P_PROF_SCOPE(P, tx_unlock_global);
         
         auto& self = this->derived();
         self.check_locked(blk_pos, lk);

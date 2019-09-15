@@ -588,7 +588,7 @@ public:
     ,   const LockResult&       glk_ret
     ) {
         this->check_locked(blk_pos, lk);
-        CMPTH_P_PROF_SCOPE(P, begin_tx);
+        CMPTH_P_PROF_SCOPE(P, tx_begin);
         
         const auto this_proc = com.this_proc_id();
         
@@ -739,7 +739,7 @@ public:
     ,   const MergeResult&              mg_ret
     ) {
         this->check_locked(blk_pos, lk);
-        CMPTH_P_PROF_SCOPE(P, end_tx);
+        CMPTH_P_PROF_SCOPE(P, tx_end);
         
         const auto this_proc = com.this_proc_id();
         
