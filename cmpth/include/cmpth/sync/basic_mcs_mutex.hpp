@@ -14,7 +14,7 @@ class basic_mcs_mutex
     using mcs_node_type = typename P::mcs_node_type;
     
     using worker_type = typename P::worker_type;
-    using uncond_var_type = typename P::uncond_var_type;
+    using suspended_thread_type = typename P::suspended_thread_type;
     
 public:
     void lock() {
@@ -25,9 +25,9 @@ public:
         auto& wk = worker_type::get_cur_worker();
         this->unlock(wk);
     }
-    void unlock_and_wait(uncond_var_type& saved_uv) {
+    void unlock_and_wait(suspended_thread_type& saved_sth) {
         auto& wk = worker_type::get_cur_worker();
-        this->unlock_and_wait(wk, saved_uv);
+        this->unlock_and_wait(wk, saved_sth);
     }
     
     void lock(worker_type& wk)
@@ -41,11 +41,11 @@ public:
         if (prev != nullptr)
         {
             #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
-            cur->uv.template wait_with<
+            cur->sth.template wait_with<
                 basic_mcs_mutex::on_lock
             >(wk, prev, cur);
             #else
-            prev->uv.template wait_with<
+            prev->sth.template wait_with<
                 basic_mcs_mutex::on_lock
             >(wk, prev, cur);
             #endif
@@ -85,15 +85,15 @@ public:
         while (next == nullptr);
         
         #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
-        next->uv.notify(wk);
+        next->sth.notify(wk);
         #else
-        cur->uv.notify(wk);
+        cur->sth.notify(wk);
         #endif
         
         this->deallocate(cur);
     }
     
-    void unlock_and_wait(worker_type& wk, uncond_var_type& saved_uv)
+    void unlock_and_wait(worker_type& wk, suspended_thread_type& saved_sth)
     {
         const auto cur = this->core_.get_head();
         
@@ -102,7 +102,7 @@ public:
         )) {
             bool is_unlocked = true;
             
-            saved_uv.template wait_with<
+            saved_sth.template wait_with<
                 basic_mcs_mutex::on_unlock_and_wait
             >
             (wk, this, cur, &is_unlocked);
@@ -122,11 +122,11 @@ public:
         while (next == nullptr);
         
         #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
-        // Save the current context to saved_uv and switch to next->uv.
-        saved_uv.swap(wk, next->uv);
+        // Save the current context to saved_sth and switch to next->sth.
+        saved_sth.swap(wk, next->sth);
         #else
-        // Save the current context to saved_uv and switch to cur->uv.
-        saved_uv.swap(wk, cur->uv);
+        // Save the current context to saved_sth and switch to cur->sth.
+        saved_sth.swap(wk, cur->sth);
         #endif
         
         this->deallocate(cur);

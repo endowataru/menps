@@ -14,11 +14,11 @@ private:
     using base_ult_itf_type = typename lv5_itf_type::base_ult_itf;
     
 public:
-    using uncond_var_type = typename lv5_itf_type::uncond_variable;
+    using suspended_thread_type = typename lv5_itf_type::suspended_thread;
     using atomic_node_ptr_type =
         typename base_ult_itf_type::template atomic<sct_mcs_mutex_node*>;
     
-    uncond_var_type         uv;
+    suspended_thread_type   sth;
     atomic_node_ptr_type    next;
 };
 
@@ -32,7 +32,6 @@ public:
     using mcs_core_type = basic_mcs_core<sct_mcs_mutex_core_policy>;
     using mcs_node_type = sct_mcs_mutex_node<P>;
     
-    using uncond_var_type = typename mcs_node_type::uncond_var_type;
     using atomic_node_ptr_type = typename mcs_node_type::atomic_node_ptr_type;
     
     using assert_policy_type = typename lv5_itf_type::assert_policy;
@@ -67,6 +66,7 @@ private:
     
 public:
     using worker_type = typename lv5_itf_type::worker;
+    using suspended_thread_type = typename lv5_itf_type::suspended_thread;
     
     using mcs_node_pool_type =
         typename lv5_itf_type::template pool_t<sct_mcs_mutex_pool_policy<P>>;

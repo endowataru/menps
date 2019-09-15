@@ -12,11 +12,11 @@ class basic_mcs_cv
     using mcs_unique_lock_type = typename P::mcs_unique_lock_type;
     
     using worker_type = typename P::worker_type;
-    using uncond_var_type = typename P::uncond_var_type;
+    using suspended_thread_type = typename P::suspended_thread_type;
     
     struct wait_entry {
-        uncond_var_type uv;
-        wait_entry*     next;
+        suspended_thread_type   sth;
+        wait_entry*             next;
     };
     
 public:
@@ -31,7 +31,7 @@ public:
         
         const auto mtx = lk.release();
         
-        mtx->unlock_and_wait(e.uv);
+        mtx->unlock_and_wait(e.sth);
         
         // Lock again here.
         lk = mcs_unique_lock_type{*mtx};
@@ -49,7 +49,7 @@ public:
     {
         auto& wk = worker_type::get_cur_worker();
         if (const auto we = this->waiting_) {
-            we->uv.notify(wk);
+            we->sth.notify(wk);
             this->waiting_ = we->next;
         }
     }
@@ -59,7 +59,7 @@ public:
         auto& wk = worker_type::get_cur_worker();
         auto we = this->waiting_;
         while (we != nullptr) {
-            we->uv.notify(wk);
+            we->sth.notify(wk);
             we = we->next;
         }
         this->waiting_ = nullptr;
