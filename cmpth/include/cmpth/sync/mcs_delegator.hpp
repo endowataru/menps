@@ -41,6 +41,8 @@ struct mcs_delegator_pool_policy {
 template <typename UltItf, typename P2>
 struct mcs_delegator_policy
 {
+    using consumer_type = typename P2::consumer_type;
+    
     using mcs_core_type = basic_mcs_core<mcs_delegator_policy>;
     using sync_queue_type = basic_mcs_queue<mcs_delegator_policy>;
     
@@ -50,6 +52,7 @@ struct mcs_delegator_policy
     using base_ult_itf_type = UltItf;
     using mcs_node_pool_type =
         basic_ext_return_pool<UltItf, mcs_delegator_pool_policy<UltItf, P2>>;
+
     
     using assert_policy_type = typename UltItf::assert_policy;
     using log_policy_type = typename UltItf::log_policy;

@@ -9,6 +9,41 @@ namespace menps {
 namespace meqdc {
 
 template <typename P>
+class proxy_uct_worker;
+
+template <typename P>
+class proxy_uct_consumer
+{
+    using ult_itf_type = typename P::ult_itf_type;
+    using suspended_thread_type = typename ult_itf_type::suspended_thread;
+
+    using delegator_type = typename P::delegator_type;
+    using sync_node_type = typename delegator_type::sync_node_type;
+
+    using worker_type = proxy_uct_worker<P>;
+    
+public:
+    // TODO: breaking encapsulation
+    explicit proxy_uct_consumer(worker_type& w) : w_(w) { }
+
+    using del_exec_result = fdn::tuple<bool, suspended_thread_type>;
+    del_exec_result execute(const sync_node_type& n) {
+        return typename worker_type::execute_delegated{this->w_}(n);
+    }
+    using do_progress_result = suspended_thread_type;
+    do_progress_result progress() {
+        return typename worker_type::do_progress{this->w_}();
+    }
+
+    bool is_active() const noexcept {
+        return this->w_.is_active();
+    }
+
+private:
+    worker_type& w_;
+};
+
+template <typename P>
 class proxy_uct_worker
 {
     using orig_uct_itf_type = typename P::orig_uct_itf_type;
@@ -30,6 +65,9 @@ class proxy_uct_worker
     
     using proxy_endpoint_type = typename P::proxy_endpoint_type;
     using proxy_iface_type = typename P::proxy_iface_type;
+
+    using consumer_type = proxy_uct_consumer<P>;
+    friend consumer_type;
     
 public:
     using orig_worker_type = typename orig_uct_itf_type::worker_type;
@@ -42,10 +80,7 @@ public:
         , orig_wk_(mefdn::move(orig_wk))
         , del_()
     {
-        this->del_.start_consumer(
-            execute_delegated{ *this }
-        ,   do_progress{ *this }
-        );
+        this->del_.start_consumer(*this);
     }
     ~proxy_uct_worker()
     {
@@ -158,12 +193,7 @@ private:
         return ret;
     }
     
-    struct execute_imm_result
-    {
-        bool is_executed;
-        bool is_active;
-        suspended_thread_type*  wait_sth;
-    };
+    using execute_imm_result = fdn::tuple<bool, suspended_thread_type*>;
     
     template <typename Params>
     struct execute_imm_ep
@@ -193,7 +223,6 @@ private:
             
             return {
                 st != UCS_ERR_NO_RESOURCE
-            ,   self.is_active()
             ,   nullptr // TODO ?
             };
         }
@@ -219,7 +248,8 @@ private:
             const auto ret =
                 execute_imm_ep<Params>{ self, f, real_p, ret_st }();
             
-            if (!ret.is_executed) {
+            using fdn::get;
+            if (!get<0>(ret)) {
                 self.destroy_proxy_completion(pc);
             }
             
@@ -247,7 +277,7 @@ private:
             
             *ret_st = st;
             
-            return { true, self.is_active(), nullptr };
+            return { true, nullptr };
         }
     };
     
@@ -271,13 +301,11 @@ private:
             
             *ret_st = st;
             
-            return { true, self.is_active(), nullptr };
+            return { true, nullptr };
         }
     };
     
-    struct delegate_result {
-        suspended_thread_type*  wait_sth;
-    };
+    using delegate_result = suspended_thread_type*;
     
     template <typename Params>
     struct delegate
@@ -290,7 +318,7 @@ private:
         {
             cur.func.code = code;
             cur.func.params.*mem = proxy_p;
-            return { nullptr };
+            return nullptr;
         }
     };
     
@@ -361,11 +389,7 @@ public:
     #undef D
     
 private:
-    struct del_exec_result {
-        bool    is_executed;
-        bool    is_active;
-        suspended_thread_type   awake_sth;
-    };
+    using del_exec_result = typename consumer_type::del_exec_result;
     
     struct execute_delegated
     {
@@ -419,14 +443,12 @@ private:
                 throw medev2::ucx::ucx_error("error in offloading", st);
             }
             
-            return { ret.is_executed, ret.is_active, suspended_thread_type() };
+            using fdn::get;
+            return { get<0>(ret), suspended_thread_type() };
         }
     };
     
-    struct do_progress_result {
-        bool is_active;
-        suspended_thread_type   awake_sth;
-    };
+    using do_progress_result = typename consumer_type::do_progress_result;
     
     struct do_progress
     {
@@ -438,7 +460,7 @@ private:
                 // Poll until there are completions
             }
             
-            return { self.is_active(), suspended_thread_type() };
+            return suspended_thread_type();
         }
     };
     

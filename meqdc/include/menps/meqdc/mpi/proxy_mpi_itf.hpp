@@ -102,11 +102,15 @@ struct proxy_mpi_policy_base
 };
 
 template <typename OrigMpiItf>
+struct proxy_mpi_policy;
+
+template <typename OrigMpiItf>
 struct proxy_mpi_delegator_policy
 {
     using policy_base_type = proxy_mpi_policy_base<OrigMpiItf>;
     using ult_itf_type = typename OrigMpiItf::ult_itf_type;
     using delegated_func_type = proxy_mpi_func<policy_base_type>;
+    using consumer_type = proxy_mpi_consumer<proxy_mpi_policy<OrigMpiItf>>;
     
     template <typename Pool>
     static mefdn::size_t get_pool_threshold(Pool& /*pool*/) {

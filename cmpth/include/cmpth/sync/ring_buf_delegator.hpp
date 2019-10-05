@@ -22,6 +22,8 @@ struct ring_buf_delegator_node
 template <typename UltItf, typename P2>
 struct ring_buf_delegator_policy
 {
+    using consumer_type = typename P2::consumer_type;
+
     using sync_queue_type = basic_ring_buf_queue<ring_buf_delegator_policy>;
     using ring_buf_core_type = basic_ring_buf_core<ring_buf_delegator_policy>;
 

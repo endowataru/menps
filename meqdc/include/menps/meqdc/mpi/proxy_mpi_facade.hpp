@@ -10,6 +10,41 @@ namespace menps {
 namespace meqdc {
 
 template <typename P>
+class proxy_mpi_facade;
+
+template <typename P>
+class proxy_mpi_consumer
+{
+    using ult_itf_type = typename P::ult_itf_type;
+    using suspended_thread_type = typename ult_itf_type::suspended_thread;
+
+    using delegator_type = typename P::delegator_type;
+    using sync_node_type = typename delegator_type::sync_node_type;
+
+    using facade_type = proxy_mpi_facade<P>;
+    
+public:
+    // TODO: breaking encapsulation
+    explicit proxy_mpi_consumer(facade_type& f) : f_(f) { }
+
+    using del_exec_result = fdn::tuple<bool, suspended_thread_type>;
+    del_exec_result execute(const sync_node_type& n) {
+        return this->f_.execute_delegated(n);
+    }
+    using do_progress_result = suspended_thread_type;
+    do_progress_result progress() {
+        return this->f_.do_progress();
+    }
+
+    bool is_active() const noexcept {
+        return this->f_.is_active();
+    }
+
+private:
+    facade_type& f_;
+};
+
+template <typename P>
 class proxy_mpi_facade
 {
     using orig_mpi_facade_type = typename P::orig_mpi_facade_type;
@@ -26,6 +61,9 @@ class proxy_mpi_facade
     using ult_itf_type = typename P::ult_itf_type;
     using suspended_thread_type = typename ult_itf_type::suspended_thread;
     using worker_type = typename ult_itf_type::worker;
+
+    using consumer_type = proxy_mpi_consumer<P>;
+    friend consumer_type;
     
 public:
     explicit proxy_mpi_facade(
@@ -41,14 +79,7 @@ public:
     {
         *provided = MPI_THREAD_MULTIPLE;
         
-        this->del_.start_consumer(
-            [this] (sync_node_type& n) {
-                return this->execute_delegated(n);
-            }
-        ,   [this] {
-                return this->do_progress();
-            }
-        );
+        this->del_.start_consumer(*this);
     }
     
     ~proxy_mpi_facade()
@@ -57,12 +88,7 @@ public:
     }
     
 private:
-    struct execute_imm_result
-    {
-        bool    is_executed;
-        bool    is_active;
-        suspended_thread_type*  wait_sth;
-    };
+    using execute_imm_result = fdn::tuple<bool, suspended_thread_type*>;
     
     template <typename Params>
     struct execute_imm_nb
@@ -109,17 +135,15 @@ private:
                     proxy_request_state_type::waiting
                 ,   ult_itf_type::memory_order_relaxed
                 );
-                return { is_executed, self.is_active(), &proxy_req_ptr->sth };
+                return { is_executed, &proxy_req_ptr->sth };
             }
             else {
-                return { is_executed, self.is_active(), nullptr };
+                return { is_executed, nullptr };
             }
         }
     };
     
-    struct delegate_result {
-        suspended_thread_type*  wait_sth;
-    };
+    using delegate_result = suspended_thread_type*;
     
     template <typename Params>
     struct delegate_nb
@@ -141,10 +165,10 @@ private:
                     proxy_request_state_type::waiting
                 ,   ult_itf_type::memory_order_relaxed
                 );
-                return { &proxy_req_ptr->sth };
+                return &proxy_req_ptr->sth;
             }
             else {
-                return { nullptr };
+                return nullptr;
             }
         }
     };
@@ -446,11 +470,7 @@ public:
     }
     
 private:
-    struct del_exec_result {
-        bool    is_executed;
-        bool    is_active;
-        suspended_thread_type   awake_sth;
-    };
+    using del_exec_result = typename consumer_type::del_exec_result;
     
     del_exec_result execute_delegated(const sync_node_type& n)
     {
@@ -491,14 +511,14 @@ private:
                 std::abort();
             }
         }
+
+        using fdn::get;
+        MEFDN_ASSERT(get<1>(ret) == nullptr);
         
-        return { ret.is_executed, ret.is_active, suspended_thread_type() };
+        return { get<0>(ret), suspended_thread_type() };
     }
     
-    struct do_progress_result {
-        bool is_active;
-        suspended_thread_type   awake_sth;
-    };
+    using do_progress_result = typename consumer_type::do_progress_result;
     
     do_progress_result do_progress()
     {
@@ -518,7 +538,7 @@ private:
         
         MEFDN_LOG_VERBOSE("msg:Exiting progress of proxy MPI.");
         
-        return { this->is_active(), mefdn::move(ret.awake_sth) };
+        return mefdn::move(ret.awake_sth);
     }
     
     struct complete_request
