@@ -17,8 +17,6 @@ class wr_set
     
     using wr_set_gen_type   = typename P::wr_set_gen_type;
     
-    using com_itf_type = typename P::com_itf_type;
-    
     using rd_ts_state_type = typename P::rd_ts_state_type;
     
     using wn_entry_type = typename P::wn_entry_type;
@@ -50,11 +48,11 @@ public:
         wn_vector_type  wn_vec;
     };
     
-    template <typename SegTable>
+    template <typename ReleaseFunc, typename MakeWnVecFunc>
     start_release_result start_release_for_all_blocks(
-        com_itf_type&           com
-    ,   const rd_ts_state_type& rd_ts_st
-    ,   SegTable&               seg_table
+        const rd_ts_state_type& rd_ts_st
+    ,   ReleaseFunc             rel_func
+    ,   MakeWnVecFunc&&         make_wn_vec_func
     ) {
         MEFDN_STATIC_ASSERT(mefdn::is_signed<wr_set_gen_type>::value);
         
@@ -124,7 +122,8 @@ public:
                 released_last - released_first
             );
         
-        using release_result_type = typename SegTable::release_result;
+        using release_result_type =
+            fdn::decay_t<decltype(rel_func(rd_ts_st, fdn::declval<blk_id_type>()))>;
         
         // Allocate an array to hold the results of release operations.
         std::vector<release_result_type> rel_results(num_released);
@@ -138,7 +137,7 @@ public:
             ult_itf_type::execution::par
         ,   0, num_released, stride
             // TODO: Too many captured variables...
-        ,   [&rel_results, &new_dirty_ids, &com, &rd_ts_st, &seg_table, num_released, stride]
+        ,   [&rel_results, &new_dirty_ids, &rd_ts_st, num_released, stride, &rel_func]
             (const size_type first) {
                 const auto last = mefdn::min(first + stride, num_released);
                 for (size_type i = first; i < last; ++i) {
@@ -146,32 +145,13 @@ public:
                     
                     // Call the callback release function.
                     // The returned values are stored in parallel.
-                    rel_results[i] = seg_table.release(com, rd_ts_st, new_dirty_ids[i]);
+                    rel_results[i] = rel_func(rd_ts_st, new_dirty_ids[i]);
                 }
             }
         );
         
-        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
-        wn_vector_type wn_vec;
-        // Pre-allocate the write notice vector.
-        wn_vec.reserve(num_released);
-        
-        // Check all of the release results sequentially.
-        for (size_type i = 0; i < num_released; ++i) {
-            const auto blk_id = new_dirty_ids[i];
-            
-            const auto& rel_ret = rel_results[i];
-            
-            if (rel_ret.release_completed && rel_ret.is_written)
-            {
-                // Add to the write notices
-                // because the current process modified this block.
-                wn_vec.push_back(wn_entry_type{
-                    rel_ret.new_owner, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts
-                });
-            }
-        }
-        #endif
+        auto wn_vec = fdn::forward<MakeWnVecFunc>(make_wn_vec_func)(
+            released_first, released_last, begin(rel_results));
         
         // Remove non-writable blocks from the dirty ID array.
         const auto dirty_last =

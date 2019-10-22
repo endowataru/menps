@@ -266,7 +266,13 @@ public:
         // If the callback returns false,
         // the corresponding block will be removed in the next release.
         auto wrs_ret =
-            this->wr_set_.start_release_for_all_blocks(com, rd_ts_st, this->seg_tbl_);
+            this->wr_set_.start_release_for_all_blocks(
+                rd_ts_st
+            ,   [&com, this] (const rd_ts_state_type& rd_ts_st, const blk_id_type blk_id) {
+                    return this->seg_tbl_.release(com, rd_ts_st, blk_id);
+                }
+            ,   convert_to_wn_vec{self}
+            );
         
         if (!wrs_ret.needs_release) {
             return;
@@ -281,6 +287,40 @@ public:
         this->wr_set_.finish_release();
     }
     
+private:
+    struct convert_to_wn_vec {
+        derived_type&   self;
+        template <typename BlkIdIter, typename RelRetIter>
+        wn_vector_type operator() (BlkIdIter blk_id_first, BlkIdIter blk_id_last, RelRetIter rel_ret_first) {
+            wn_vector_type wn_vec;
+            
+            #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
+            const auto num_released =
+                static_cast<size_type>(blk_id_last - blk_id_first);
+            // Pre-allocate the write notice vector.
+            wn_vec.reserve(num_released);
+            
+            // Check all of the release results sequentially.
+            for (size_type i = 0; i < num_released; ++i) {
+                const auto blk_id = *(blk_id_first+i);
+                const auto& rel_ret = *(rel_ret_first+i);
+                
+                if (rel_ret.release_completed && rel_ret.is_written)
+                {
+                    // Add to the write notices
+                    // because the current process modified this block.
+                    wn_vec.push_back(wn_entry_type{
+                        rel_ret.new_owner, blk_id, rel_ret.new_rd_ts, rel_ret.new_wr_ts
+                    });
+                }
+            }
+            #endif
+            
+            return wn_vec;
+        }
+    };
+    
+public:
     void barrier()
     {
         CMPTH_P_PROF_SCOPE(P, barrier);
