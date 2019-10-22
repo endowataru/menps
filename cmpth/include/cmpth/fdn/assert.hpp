@@ -6,7 +6,10 @@
 
 #define CMPTH_P_ASSERT(P, x)    \
     static_cast<void>(!(P::assert_policy_type::is_enabled) || (x) || \
-    (P::assert_policy_type::fail(#x, __FILE__, __LINE__),0)) \
+    (P::assert_policy_type::fail(#x, __FILE__, __LINE__),0))
+
+#define CMPTH_P_ASSERT_ALWAYS(P, x)    \
+    static_cast<void>((x) || (P::assert_policy_type::fail(#x, __FILE__, __LINE__),0))
 
 namespace cmpth {
 
