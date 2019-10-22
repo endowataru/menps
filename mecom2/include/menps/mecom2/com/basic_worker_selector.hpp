@@ -17,7 +17,7 @@ class basic_worker_selector
     
     using ult_itf_type = typename P::ult_itf_type;
     using mutex_type = typename ult_itf_type::mutex;
-    using mutex_unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO
+    using lock_guard_type = typename ult_itf_type::template lock_guard<mutex_type>;
     
 public:
     template <typename Conf>
@@ -48,7 +48,7 @@ public:
         auto cur_num = cur_num_;
         
         if (MEFDN_UNLIKELY(cur_num == 0)) {
-            mutex_unique_lock_type lk(this->mtx_);
+            lock_guard_type lk{this->mtx_};
             if (this->alloc_num_ >= this->max_num_) {
                 // TODO: Better exception class.
                 throw std::bad_alloc();

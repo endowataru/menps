@@ -34,7 +34,7 @@ class direct_mpi_facade
 {
     using ult_itf_type = typename P::ult_itf_type;
     using mutex_type = typename ult_itf_type::mutex;
-    using unique_lock_type = typename ult_itf_type::unique_mutex_lock;
+    using unique_lock_type = typename ult_itf_type::template unique_lock<mutex_type>;
     
 public:
     explicit direct_mpi_facade(

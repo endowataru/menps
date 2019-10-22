@@ -34,7 +34,8 @@ struct dsm_base_policy
     using ult_itf_type = typename com_itf_type::ult_itf_type;
     
     using mutex_type = typename ult_itf_type::mutex;
-    using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO: rename
+    using unique_lock_type =
+        typename ult_itf_type::template unique_lock<mutex_type>;
     
     using seg_id_type = mefdn::size_t;
     using blk_id_type = mefdn::size_t;

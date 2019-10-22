@@ -122,8 +122,8 @@ struct lv6_mth_itf
     
     template <typename Mutex>
     using unique_lock = fdn::unique_lock<Mutex>;
-    
-    using unique_mutex_lock = fdn::unique_lock<mutex>;
+    template <typename Mutex>
+    using lock_guard = fdn::lock_guard<Mutex>;
 };
 
 

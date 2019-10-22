@@ -47,8 +47,10 @@ struct lv6_sct_itf
     using mutex = sct_mcs_mutex<P>;
     using condition_variable = basic_mcs_cv<sct_cv_policy<P>>;
     
-    // TODO
-    using unique_mutex_lock = fdn::unique_lock<mutex>;
+    template <typename Mutex>
+    using unique_lock = fdn::unique_lock<Mutex>;
+    template <typename Mutex>
+    using lock_guard = fdn::lock_guard<Mutex>;
 };
 
 } // namespace cmpth

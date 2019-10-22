@@ -17,7 +17,7 @@ public:
     using ptrdiff_type = fdn::ptrdiff_t;
     using mutex_type = typename lv6_itf_type::mutex;
     using cv_type = typename lv6_itf_type::condition_variable;
-    using unique_lock_type = typename lv6_itf_type::unique_mutex_lock;
+    using unique_lock_type = typename lv6_itf_type::template unique_lock<mutex_type>;
 };
 
 template <typename P>

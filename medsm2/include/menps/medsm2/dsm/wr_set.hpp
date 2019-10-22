@@ -24,17 +24,13 @@ class wr_set
     using wn_entry_type = typename P::wn_entry_type;
     using wn_vector_type = typename P::wn_vector_type;
     
-    using ult_itf_type      = typename P::ult_itf_type;
-    
-    using mutex_type = typename P::mutex_type;
-    using unique_lock_type = typename P::unique_lock_type;
-    
-    // This class requires a condition variable to synchronize the threads
+    using ult_itf_type = typename P::ult_itf_type;
+    using mutex_type = typename ult_itf_type::mutex;
+    using unique_lock_type = typename ult_itf_type::template unique_lock<mutex_type>;
+    using cv_type = typename ult_itf_type::condition_variable;
+    // Note: This class requires a condition variable to synchronize the threads
     // which request a release fence.
     // Spinlocks cannot be applied to this class.
-    using ult_mutex_type        = typename ult_itf_type::mutex;
-    using ult_cv_type           = typename ult_itf_type::condition_variable;
-    using ult_unique_lock_type  = typename ult_itf_type::unique_mutex_lock;
     
 public:
     wr_set() = default;
@@ -45,7 +41,7 @@ public:
     
     void add_writable(const blk_id_type blk_id)
     {
-        const unique_lock_type lk(this->new_ids_mtx_);
+        const unique_lock_type lk{this->new_ids_mtx_};
         this->new_ids_.push_back(blk_id);
     }
     
@@ -65,7 +61,7 @@ public:
         MEFDN_STATIC_ASSERT(mefdn::is_signed<wr_set_gen_type>::value);
         
         {
-            ult_unique_lock_type lk(this->rel_mtx_);
+            unique_lock_type lk{this->rel_mtx_};
             
             // Decide the release position.
             const auto gen = this->gen_ + (this->is_releasing_ ? 1 : 0);
@@ -98,7 +94,7 @@ public:
         
         std::vector<blk_id_type> new_ids;
         {
-            const unique_lock_type lk(this->new_ids_mtx_);
+            const unique_lock_type lk{this->new_ids_mtx_};
             
             // Remove all of the entries queued as new writable block IDs.
             new_ids = mefdn::move(this->new_ids_);
@@ -222,7 +218,7 @@ public:
         MEFDN_ASSERT(this->is_releasing_);
         
         {
-            const ult_unique_lock_type lk(this->rel_mtx_);
+            const unique_lock_type lk{this->rel_mtx_};
             
             this->is_releasing_ = false;
             ++this->gen_;
@@ -236,8 +232,8 @@ private:
     mutex_type new_ids_mtx_;
     std::vector<blk_id_type> new_ids_;
     
-    ult_mutex_type rel_mtx_;
-    ult_cv_type rel_cv_;
+    mutex_type rel_mtx_;
+    cv_type rel_cv_;
     std::vector<blk_id_type> dirty_ids_;
     wr_set_gen_type gen_ = 0;
     bool is_releasing_ = false;
