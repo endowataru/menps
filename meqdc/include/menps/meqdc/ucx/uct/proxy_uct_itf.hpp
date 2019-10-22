@@ -12,7 +12,7 @@ namespace meqdc {
 
 union proxy_uct_params {
     #define D(dummy, name, tr, num, ...) \
-        medev2::ucx::uct::name##_params name; \
+        medev2::ucx::uct::name##_params name;
     
     // async (ep, post, implicit)
     MEDEV2_UCT_EP_FUNCS_ASYNC_STATUS_IMPLICIT(D, /*dummy*/)
