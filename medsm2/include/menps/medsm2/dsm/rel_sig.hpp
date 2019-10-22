@@ -16,6 +16,7 @@ class rel_sig
     using wn_vector_type = typename P::wn_vector_type;
     
     using sig_buffer_type = typename P::sig_buffer_type;
+    using serialized_buffer_type = typename sig_buffer_type::serialized_buffer_type;
     
     using ult_itf_type = typename P::ult_itf_type;
     using mutex_type = typename ult_itf_type::mutex;
@@ -46,7 +47,7 @@ public:
         this->sig_ = mefdn::move(merged_sig);
     }
     
-    typename sig_buffer_type::serialized_buffer_type serialize(size_type size) {
+    serialized_buffer_type serialize(size_type size) {
         // TODO: lock
         const mutex_guard_type lk{this->mtx_};
         
