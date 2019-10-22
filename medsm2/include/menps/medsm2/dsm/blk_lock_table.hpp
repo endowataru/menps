@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <menps/medsm2/dsm/lock_table.hpp>
+#include <menps/medsm2/dsm/queue_lock_table.hpp>
 #include <menps/medsm2/dsm/fixed_lock_table.hpp>
 
 namespace menps {
@@ -31,7 +31,7 @@ struct blk_lock_table_policy
 template <typename P>
 class blk_lock_table
     #ifdef MEDSM2_ENABLE_MIGRATION
-    : private lock_table<blk_lock_table_policy<P>>
+    : private queue_lock_table<blk_lock_table_policy<P>>
     #else
     : private fixed_lock_table<blk_lock_table_policy<P>>
     #endif
@@ -39,7 +39,7 @@ class blk_lock_table
     MEFDN_DEFINE_DERIVED(P)
     
     #ifdef MEDSM2_ENABLE_MIGRATION
-    using base = lock_table<blk_lock_table_policy<P>>;
+    using base = queue_lock_table<blk_lock_table_policy<P>>;
     #else
     using base = fixed_lock_table<blk_lock_table_policy<P>>;
     #endif

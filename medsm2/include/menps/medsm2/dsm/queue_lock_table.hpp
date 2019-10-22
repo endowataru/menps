@@ -9,7 +9,7 @@ namespace menps {
 namespace medsm2 {
 
 template <typename P>
-class lock_table
+class queue_lock_table
 {
     using com_itf_type = typename P::com_itf_type;
     using rma_itf_type = typename com_itf_type::rma_itf_type;
@@ -318,6 +318,8 @@ public:
         MEFDN_ASSERT(this->lad_size_ > 0);
         return this->lads_.local(lk_pos * this->lad_size_);
     }
+    
+    size_type get_lad_size() const noexcept { return this->lad_size_; }
     
 private:
     static atomic_int_type make_owned_lock_val(const proc_id_type /*owner*/) {

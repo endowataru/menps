@@ -144,6 +144,8 @@ public:
         rma.buf_write(ll.proc, ll.lk_rptr, &zero, 1);
     }
     
+    size_type get_lad_size() const noexcept { return this->lad_size_; }
+    
 private:
     struct lock_location {
         proc_id_type            proc;
