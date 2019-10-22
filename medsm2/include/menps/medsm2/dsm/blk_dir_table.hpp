@@ -798,11 +798,11 @@ public:
                     sharers.unset(proc_id);
                 }
             }
-            const bool written_flag = true;
             ult_itf_type::for_loop(
                 ult_itf_type::execution::par
             ,   0, inv_sharers.size()
             ,   [&] (const mefdn::size_t i) {
+                    const bool written_flag = true;
                     const auto proc_id = inv_sharers[i];
                     rma.buf_write(
                         proc_id
