@@ -53,6 +53,10 @@ public:
         this->mf_->comm_dup({ MPI_COMM_WORLD, &this->rpc_comm_ });
         
         this->coll_ = P::make_coll(*this->mf_, this->coll_comm_);
+        
+        this->proc_id_ = this->coll_->this_proc_id();
+        this->num_procs_ = this->coll_->get_num_procs();
+
         this->p2p_ = P::make_p2p(*this->mf_, this->p2p_comm_);
         // TODO: Specific to medsm2
         this->p2p_lock_ = P::make_p2p(*this->mf_, this->p2p_lock_comm_);
@@ -63,9 +67,6 @@ public:
         mefdn::logger::set_state_callback(get_state{ *this });
         
         this->rma_info_ = P::make_rma_info(*this->mf_, *this->coll_);
-        
-        this->proc_id_ = this->coll_->this_proc_id();
-        this->num_procs_ = this->coll_->get_num_procs();
     }
     
     ~basic_mpi_com_itf() {
@@ -100,7 +101,7 @@ private:
     struct get_state
     {
         explicit get_state(basic_mpi_com_itf& self)
-            : self_(self)
+            : proc_id_(self.this_proc_id())
         { }
         
         std::string operator() ()
@@ -108,7 +109,7 @@ private:
             fmt::memory_buffer w;
             format_to(w
             ,   "proc:{}\tthread:{:x}\tult:{:x}\tlog_id:{}\tclock:{}\t"
-            ,   self_.coll_->this_proc_id()
+            ,   this->proc_id_
             ,   reinterpret_cast<mefdn::uintptr_t>(pthread_self())
                 // TODO: use mefdn::this_thread::get_id()
             ,   reinterpret_cast<mefdn::uintptr_t>(
@@ -121,7 +122,7 @@ private:
         }
         
     private:
-        basic_mpi_com_itf& self_;
+        proc_id_type proc_id_ = 0;
         mefdn::size_t number_ = 0;
     };
     
