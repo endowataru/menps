@@ -291,7 +291,6 @@ public:
     }
     
     #ifdef MEDSM2_ENABLE_FAST_RELEASE
-    
     struct fast_release_result
     {
         wr_ts_type  new_wr_ts;
@@ -341,7 +340,6 @@ public:
         
         return { new_ts.wr_ts, new_ts.rd_ts };
     }
-    
     #endif
     
 private:
@@ -411,25 +409,11 @@ public:
         this->check_locked(blk_pos, lk);
         
         const bool is_invalidated = *inv_flags_.local(blk_pos);
-        /*auto& flag = *inv_flags_.local(blk_pos);
-        const auto is_invalidated = flag;
-        if (is_invalidated) { flag = false; }*/
-        
         return this->set_invalid_state(blk_pos, lk, is_invalidated);
     }
     
     #else // MEDSM2_USE_DIRECTORY_COHERENCE
 private:
-    #if 0
-    struct invalidate_result {
-        bool    is_ignored;
-        // It is necessary to call mprotect(PROT_NONE) on this block.
-        bool    needs_protect;
-        // This block must be merged from the writer because it is writable.
-        bool    needs_merge;
-    };
-    #endif
-    
     invalidate_result invalidate(
         const blk_pos_type      blk_pos
     ,   const unique_lock_type& lk
@@ -445,48 +429,7 @@ private:
         // If old_rd_ts < new_wr_ts, the read timestamp has expired
         // and this block was invalidated.
         const auto is_invalidated = P::is_greater_rd_ts(new_wr_ts, rd_ts);
-        
         return this->set_invalid_state(blk_pos, lk, is_invalidated);
-        #if 0
-        if (P::is_greater_rd_ts(new_wr_ts, rd_ts)) {
-            if (le.state == state_type::invalid_clean || le.state == state_type::invalid_dirty) {
-                // Although the write is not ignored,
-                // invalidated blocks require neither protection nor merging.
-                return { false, false, false };
-            }
-            else if (le.state == state_type::readonly_clean) {
-                // Set the state to "invalid & clean".
-                le.state = state_type::invalid_clean;
-                
-                // mprotect(PROT_NONE) must be called immediately.
-                return { false, true, false };
-            }
-            else if (le.state == state_type::readonly_dirty) {
-                // Set the state to "invalid & dirty".
-                le.state = state_type::invalid_dirty;
-                
-                // mprotect(PROT_NONE) must be called immediately.
-                return { false, true, false };
-            }
-            else if (le.state == state_type::writable) {
-                // Set the state to "invalid & dirty".
-                // The next read will be a merge in this state.
-                le.state = state_type::invalid_dirty;
-                
-                // mprotect(PROT_NONE) must be called immediately.
-                return { false, true, false };
-            }
-            else {
-                // Pinned blocks cannot be merged with mprotect(PROT_NONE).
-                return { false, false, true };
-            }
-        }
-        else {
-            // The write notice is ignored because it's old.
-            // There is no need to release/protect this block.
-            return { true, false, false };
-        }
-        #endif
     }
     
 public:
@@ -786,15 +729,6 @@ public:
         // Update the timestamps because this process lastly released.
         le.cur_wr_ts = new_ts.wr_ts;
         le.cur_rd_ts = new_ts.rd_ts;
-        #endif
-        
-        #if 0
-        // Update the timestamps.
-        // Although this value may be read by another writer,
-        // this process still has the lock for it.
-        // Also, the timestamps only increases monotonically.
-        ge.home_wr_ts = new_ts.wr_ts;
-        ge.home_rd_ts = new_ts.rd_ts;
         #endif
         
         const auto is_still_writable = ! bt_ret.is_write_protected;
