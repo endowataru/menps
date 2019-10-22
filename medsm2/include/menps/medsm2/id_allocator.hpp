@@ -87,8 +87,7 @@ public:
 private:
     size_type num_ids_ = 0;
     
-    typename P::template
-        alltoall_buffer<atomic_int_type>    buf_;
+    typename com_itf_type::template alltoall_buffer_t<atomic_int_type> buf_;
 };
 
 } // namespace medsm2

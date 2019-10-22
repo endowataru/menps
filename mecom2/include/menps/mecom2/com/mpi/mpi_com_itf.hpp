@@ -82,12 +82,16 @@ public:
     
     proc_id_type this_proc_id() { return this->proc_id_; }
     proc_id_type get_num_procs() { return this->num_procs_; }
+
+    template <typename Elem>
+    using alltoall_buffer_t = alltoall_buffer<rma_itf_type, Elem>;
+    template <typename Elem>
+    using alltoall_ptr_set_t = alltoall_ptr_set<rma_itf_type, Elem>;
     
     template <typename Elem>
-    alltoall_buffer<rma_itf_type, Elem>
-    make_alltoall_buffer(const size_type num_elems_per_proc)
+    alltoall_buffer_t<Elem> make_alltoall_buffer(const size_type num_elems_per_proc)
     {
-        alltoall_buffer<rma_itf_type, Elem> buf;
+        alltoall_buffer_t<Elem> buf;
         buf.coll_make(this->get_rma(), this->get_coll(), num_elems_per_proc);
         return buf;
     }
