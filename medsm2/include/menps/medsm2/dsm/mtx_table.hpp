@@ -114,6 +114,8 @@ public:
         ,   mtx_id
         );
     }
+
+    size_type get_sig_size() const noexcept { return this->sig_bytes_; }
     
 private:
     size_type   num_locks_ = 0;
