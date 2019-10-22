@@ -27,6 +27,8 @@ using remove_pointer_t = typename std::remove_pointer<T>::type;
 template <typename T>
 using add_lvalue_reference_t = typename std::add_lvalue_reference<T>::type;
 
+using std::declval;
+
 } // namespace mefdn
 } // namespace menps
 
