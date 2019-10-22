@@ -14,16 +14,15 @@ class rd_set
     
     using blk_id_type = typename P::blk_id_type;
     using rd_ts_type = typename P::rd_ts_type;
-    using wr_ts_type = typename P::wr_ts_type;
     using atomic_wr_ts_type = typename P::atomic_wr_ts_type;
-    
-    using mutex_type = typename P::mutex_type;
-    using unique_lock_type  = typename P::unique_lock_type;
     
     using size_type = typename P::size_type;
     
     using ult_itf_type = typename P::ult_itf_type;
     using spinlock_type = typename ult_itf_type::spinlock;
+    using spinlock_guard_type = typename ult_itf_type::template lock_guard<spinlock_type>;
+    using mutex_type = typename ult_itf_type::mutex;
+    using mutex_guard_type = typename ult_itf_type::template lock_guard<mutex_type>;
     
     struct entry {
         blk_id_type blk_id;
@@ -46,7 +45,7 @@ public:
     
     void add_readable(const blk_id_type blk_id, const rd_ts_type rd_ts)
     {
-        const unique_lock_type lk(this->mtx_);
+        const mutex_guard_type lk{this->mtx_};
         
         // Check that (min_wr_ts <= rd_ts).
         MEFDN_ASSERT(!P::is_greater_rd_ts(this->min_wr_ts_.load(), rd_ts));
@@ -61,7 +60,7 @@ public:
         std::vector<blk_id_type> blk_ids;
         
         {
-            const unique_lock_type lk(this->mtx_);
+            const mutex_guard_type lk{this->mtx_};
             
             const auto old_min_wr_ts =
                 this->min_wr_ts_.load(ult_itf_type::memory_order_relaxed);
@@ -120,14 +119,14 @@ public:
                 const auto blk_id = blk_ids[i];
                 const auto ret = func(rd_ts_st, blk_id);
                 if (!P::is_greater_rd_ts(min_wr_ts, ret.rd_ts)) {
-                    mefdn::lock_guard<spinlock_type> lk(new_ents_lock);
+                    spinlock_guard_type lk{new_ents_lock};
                     new_ents.push_back(entry{ blk_id, ret.rd_ts });
                 }
             }
         );
         
         if (!new_ents.empty()) {
-            const unique_lock_type lk(this->mtx_);
+            const mutex_guard_type lk{this->mtx_};
             for (const auto& e : new_ents) {
                 this->pq_.push(e);
             }
@@ -150,7 +149,7 @@ public:
         std::vector<blk_id_type> blk_ids;
         
         {
-            const unique_lock_type lk(this->mtx_);
+            const mutex_guard_type lk{this->mtx_};
             while (!this->pq_.empty()) {
                 const auto& e = this->pq_.top();
                 blk_ids.push_back(e.blk_id);

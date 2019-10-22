@@ -49,7 +49,8 @@ class blk_lock_table
     
     using blk_id_type = typename P::blk_id_type;
     using blk_pos_type = typename P::blk_pos_type;
-    using unique_lock_type = typename P::unique_lock_type;
+    
+    using blk_unique_lock_type = typename P::blk_unique_lock_type;
     
     #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
     using sharer_map_type = typename P::sharer_map_type;
@@ -87,15 +88,15 @@ public:
     };
     
     lock_global_result lock_global(
-        com_itf_type&           com
-    ,   const blk_id_type       blk_id
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
+        com_itf_type&               com
+    ,   const blk_id_type           blk_id
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
     ) {
         CMPTH_P_PROF_SCOPE(P, tx_lock_global);
         
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         
         auto& p2p = com.get_p2p();
         const auto tag = P::get_tag_from_blk_id(blk_id);
@@ -129,17 +130,17 @@ public:
     
     template <typename EndTransactionResult>
     void unlock_global(
-        com_itf_type&               com
-    ,   const blk_id_type           blk_id
-    ,   const blk_pos_type          blk_pos
-    ,   const unique_lock_type&     lk
-    ,   const lock_global_result&   glk_ret MEFDN_MAYBE_UNUSED
-    ,   const EndTransactionResult& et_ret
+        com_itf_type&                   com
+    ,   const blk_id_type               blk_id
+    ,   const blk_pos_type              blk_pos
+    ,   const blk_unique_lock_type&     blk_lk
+    ,   const lock_global_result&       glk_ret MEFDN_MAYBE_UNUSED
+    ,   const EndTransactionResult&     et_ret
     ) {
         CMPTH_P_PROF_SCOPE(P, tx_unlock_global);
         
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         
         const auto new_owner MEFDN_MAYBE_UNUSED =
             #ifdef MEDSM2_ENABLE_MIGRATION
@@ -173,12 +174,12 @@ public:
     
     #ifdef MEDSM2_ENABLE_MIGRATION
     bool check_owned(
-        com_itf_type&           com
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
+        com_itf_type&               com
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
     ) {
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         
         const bool ret = base::check_owned(com, blk_pos);
         if (!ret) {

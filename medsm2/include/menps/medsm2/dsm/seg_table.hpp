@@ -30,8 +30,9 @@ class seg_table
     using blk_data_tbl_type = typename blk_tbl_type::data_table_type;
     using blk_dir_tbl_type = typename blk_tbl_type::dir_table_type;
     
-    using mutex_type = typename P::mutex_type;
-    using unique_lock_type = typename P::unique_lock_type;
+    using ult_itf_type = typename P::ult_itf_type;
+    using mutex_type = typename ult_itf_type::mutex;
+    using unique_lock_type = typename ult_itf_type::template unique_lock<mutex_type>;
     
     using wn_entry_type = typename P::wn_entry_type;
     
@@ -727,7 +728,7 @@ public:
     
     #ifdef MEDSM2_USE_SIG_BUFFER_MERGE_TABLE
     unique_lock_type get_flags_lock() {
-        return unique_lock_type(this->flags_mtx_);
+        return unique_lock_type{this->flags_mtx_};
     }
     
     bool try_set_flag(const blk_id_type blk_id) {

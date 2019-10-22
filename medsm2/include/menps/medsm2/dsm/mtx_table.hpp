@@ -25,7 +25,8 @@ class mtx_table
     using byte_rptr_type =
         typename rma_itf_type::template remote_ptr<mefdn::byte>;
     
-    using mutex_type = typename P::mutex_type;
+    using ult_itf_type = typename P::ult_itf_type;
+    using mutex_type = typename ult_itf_type::mutex;
     
 public:
     template <typename Conf>

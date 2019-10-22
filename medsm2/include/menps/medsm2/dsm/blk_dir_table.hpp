@@ -17,8 +17,8 @@ class blk_dir_table
     using proc_id_type = typename com_itf_type::proc_id_type;
     using atomic_int_type = typename P::atomic_int_type;
     
-    using mutex_type = typename P::mutex_type;
-    using unique_lock_type = typename P::unique_lock_type;
+    using blk_mutex_type = typename P::blk_mutex_type;
+    using blk_unique_lock_type = typename P::blk_unique_lock_type;
     
     using blk_id_type = typename P::blk_id_type;
     using blk_pos_type = typename P::blk_pos_type;
@@ -79,7 +79,7 @@ public:
         #endif
     }
     
-    unique_lock_type get_local_lock(const blk_pos_type blk_pos)
+    blk_unique_lock_type get_local_lock(const blk_pos_type blk_pos)
     {
         MEFDN_ASSERT(blk_pos < num_blks_);
         
@@ -90,7 +90,7 @@ public:
         );
         
         auto& le = this->les_[blk_pos];
-        return unique_lock_type(le.mtx);
+        return blk_unique_lock_type(le.mtx);
     }
     
     struct start_read_result
@@ -112,12 +112,12 @@ public:
     
     MEFDN_NODISCARD
     start_read_result start_read(
-        rd_set_type&            rd_set
-    ,   const blk_id_type       blk_id
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
+        rd_set_type&                rd_set
+    ,   const blk_id_type           blk_id
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
     ) {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         
         auto& le = this->les_[blk_pos];
         
@@ -191,13 +191,13 @@ public:
     
     MEFDN_NODISCARD
     start_write_result start_write(
-        wr_set_type&            wr_set
-    ,   const rd_ts_state_type& rd_ts_st
-    ,   const blk_id_type       blk_id
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
+        wr_set_type&                wr_set
+    ,   const rd_ts_state_type&     rd_ts_st
+    ,   const blk_id_type           blk_id
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
     ) {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         
         auto& le = this->les_[blk_pos];
         if (le.state == state_type::readonly_clean || le.state == state_type::readonly_dirty) {
@@ -230,9 +230,9 @@ public:
         }
     }
     
-    void set_pinned(const blk_pos_type blk_pos, const unique_lock_type& lk)
+    void set_pinned(const blk_pos_type blk_pos, const blk_unique_lock_type& blk_lk)
     {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         
         auto& le = this->les_[blk_pos];
         // Upgrading is necessary before store-releasing.
@@ -242,9 +242,9 @@ public:
         le.state = state_type::pinned;
     }
     
-    void set_unpinned(const blk_pos_type blk_pos, const unique_lock_type& lk)
+    void set_unpinned(const blk_pos_type blk_pos, const blk_unique_lock_type& blk_lk)
     {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         
         auto& le = this->les_[blk_pos];
         // Unpinned blocks must be pinned before.
@@ -265,10 +265,10 @@ public:
     };
     
     check_release_result check_release(
-        const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
+        const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
     ) {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         
         const auto& le = this->les_[blk_pos];
         const auto state = le.state;
@@ -298,12 +298,12 @@ public:
     };
     
     fast_release_result fast_release(
-        const rd_ts_state_type& rd_ts_st
-    ,   const blk_id_type       blk_id MEFDN_MAYBE_UNUSED
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
+        const rd_ts_state_type&     rd_ts_st
+    ,   const blk_id_type           blk_id MEFDN_MAYBE_UNUSED
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
     ) {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         
         auto& self = this->derived();
         auto& le = this->les_[blk_pos];
@@ -352,10 +352,11 @@ private:
     };
     
     invalidate_result set_invalid_state(
-        const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const bool              is_invalidated
+        const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   const bool                  is_invalidated
     ) {
+        this->check_locked(blk_pos, blk_lk);
         auto& le = this->les_[blk_pos];
         
         if (is_invalidated) {
@@ -403,23 +404,23 @@ public:
     using self_invalidate_result = invalidate_result;
     
     self_invalidate_result self_invalidate(
-        const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
+        const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
     ) {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         
         const bool is_invalidated = *inv_flags_.local(blk_pos);
-        return this->set_invalid_state(blk_pos, lk, is_invalidated);
+        return this->set_invalid_state(blk_pos, blk_lk, is_invalidated);
     }
     
     #else // MEDSM2_USE_DIRECTORY_COHERENCE
 private:
     invalidate_result invalidate(
-        const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const wr_ts_type        new_wr_ts
+        const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   const wr_ts_type            new_wr_ts
     ) {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         
         auto& le = this->les_[blk_pos];
         
@@ -429,7 +430,7 @@ private:
         // If old_rd_ts < new_wr_ts, the read timestamp has expired
         // and this block was invalidated.
         const auto is_invalidated = P::is_greater_rd_ts(new_wr_ts, rd_ts);
-        return this->set_invalid_state(blk_pos, lk, is_invalidated);
+        return this->set_invalid_state(blk_pos, blk_lk, is_invalidated);
     }
     
 public:
@@ -439,13 +440,13 @@ public:
     // may have changed regardless of the returned values.
     MEFDN_NODISCARD
     acquire_result acquire(
-        const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const proc_id_type      new_home_proc
-    ,   const rd_ts_type        new_rd_ts
-    ,   const wr_ts_type        new_wr_ts
+        const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   const proc_id_type          new_home_proc
+    ,   const rd_ts_type            new_rd_ts
+    ,   const wr_ts_type            new_wr_ts
     ) {
-        const auto ret = this->invalidate(blk_pos, lk, new_wr_ts);
+        const auto ret = this->invalidate(blk_pos, blk_lk, new_wr_ts);
         
         if (! ret.is_ignored) {
             // Even if the block is already invalid,
@@ -472,11 +473,11 @@ public:
     };
     
     self_invalidate_result self_invalidate(
-        const rd_ts_state_type& rd_ts_st
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
+        const rd_ts_state_type&     rd_ts_st
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
     ) {
-        const auto ret = this->invalidate(blk_pos, lk, rd_ts_st.get_min_wr_ts());
+        const auto ret = this->invalidate(blk_pos, blk_lk, rd_ts_st.get_min_wr_ts());
         
         const auto& le = this->les_[blk_pos];
         
@@ -522,13 +523,13 @@ public:
     
     template <typename LockResult>
     begin_transaction_result begin_transaction(
-        com_itf_type&           com
-    ,   const blk_id_type       blk_id MEFDN_MAYBE_UNUSED
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const LockResult&       glk_ret
+        com_itf_type&               com
+    ,   const blk_id_type           blk_id MEFDN_MAYBE_UNUSED
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   const LockResult&           glk_ret
     ) {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         CMPTH_P_PROF_SCOPE(P, tx_begin);
         
         const auto this_proc = com.this_proc_id();
@@ -670,16 +671,16 @@ public:
     
     template <typename LockResult, typename MergeResult>
     end_transaction_result end_transaction(
-        com_itf_type&                   com
-    ,   const rd_ts_state_type&         rd_ts_st
-    ,   const blk_id_type               blk_id
-    ,   const blk_pos_type              blk_pos
-    ,   const unique_lock_type&         lk
-    ,   LockResult&                     glk_ret MEFDN_MAYBE_UNUSED
-    ,   const begin_transaction_result& bt_ret
-    ,   const MergeResult&              mg_ret
+        com_itf_type&                       com
+    ,   const rd_ts_state_type&             rd_ts_st
+    ,   const blk_id_type                   blk_id
+    ,   const blk_pos_type                  blk_pos
+    ,   const blk_unique_lock_type&         blk_lk
+    ,   LockResult&                         glk_ret MEFDN_MAYBE_UNUSED
+    ,   const begin_transaction_result&     bt_ret
+    ,   const MergeResult&                  mg_ret
     ) {
-        this->check_locked(blk_pos, lk);
+        this->check_locked(blk_pos, blk_lk);
         CMPTH_P_PROF_SCOPE(P, tx_end);
         
         const auto this_proc = com.this_proc_id();
@@ -883,15 +884,15 @@ private:
     #endif // MEDSM2_USE_DIRECTORY_COHERENCE
     
 public:
-    void check_locked(const blk_pos_type blk_pos, const unique_lock_type& lk)
+    void check_locked(const blk_pos_type blk_pos, const blk_unique_lock_type& blk_lk)
     {
-        MEFDN_ASSERT(lk.mutex() == &this->les_[blk_pos].mtx);
-        MEFDN_ASSERT(lk.owns_lock());
+        MEFDN_ASSERT(blk_lk.mutex() == &this->les_[blk_pos].mtx);
+        MEFDN_ASSERT(blk_lk.owns_lock());
     }
     
 private:
     struct local_entry {
-        mutex_type      mtx;
+        blk_mutex_type      mtx;
         // A home is a process from which the reader must read
         // the block data to maintain coherence.
         // This field is only updated via write notices

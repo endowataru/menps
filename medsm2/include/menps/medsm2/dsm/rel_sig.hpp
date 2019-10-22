@@ -17,8 +17,9 @@ class rel_sig
     
     using sig_buffer_type = typename P::sig_buffer_type;
     
-    using mutex_type = typename P::mutex_type;
-    using unique_lock_type = typename P::unique_lock_type;
+    using ult_itf_type = typename P::ult_itf_type;
+    using mutex_type = typename ult_itf_type::mutex;
+    using mutex_guard_type = typename ult_itf_type::template lock_guard<mutex_type>;
     
     using size_type = typename P::size_type;
     
@@ -35,7 +36,7 @@ public:
     template <typename SegTable>
     void merge(SegTable& seg_tbl, const sig_buffer_type& sig)
     {
-        const unique_lock_type lk(this->mtx_);
+        const mutex_guard_type lk{this->mtx_};
         
         // Merge two sorted lists.
         auto merged_sig = sig_buffer_type::merge(seg_tbl, this->sig_, sig);
@@ -47,7 +48,7 @@ public:
     
     typename sig_buffer_type::serialized_buffer_type serialize(size_type size) {
         // TODO: lock
-        const unique_lock_type lk(this->mtx_);
+        const mutex_guard_type lk{this->mtx_};
         
         auto ret = sig_.serialize(size);
         
@@ -64,7 +65,7 @@ public:
     
     sig_buffer_type get_sig() const
     {
-        const unique_lock_type lk(this->mtx_);
+        const mutex_guard_type lk{this->mtx_};
         
         // Copy the signature and return it.
         // TODO: Reduce this copy.

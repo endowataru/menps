@@ -35,7 +35,7 @@ class blk_data_table
     using proc_id_type = typename com_itf_type::proc_id_type;
     using blk_pos_type = typename P::blk_pos_type;
     
-    using unique_lock_type = typename P::unique_lock_type;
+    using blk_unique_lock_type = typename P::blk_unique_lock_type;
     
     using size_type = typename P::size_type;
     
@@ -76,14 +76,14 @@ public:
     }
     
     void start_read(
-        com_itf_type&           com
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const proc_id_type      home_proc
-    ,   const bool              is_dirty
+        com_itf_type&               com
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   const proc_id_type          home_proc
+    ,   const bool                  is_dirty
     ) {
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         
         const auto blk_size = self.get_blk_size();
         const auto cur_proc = com.this_proc_id();
@@ -151,12 +151,12 @@ public:
     }
     
     void start_write(
-        const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const bool              needs_twin
+        const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   const bool                  needs_twin
     ) {
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         
         const auto blk_size = self.get_blk_size();
         
@@ -196,15 +196,15 @@ public:
     
     template <typename LockResult>
     release_merge_result release_merge(
-        com_itf_type&           com
-    ,   const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const LockResult&       glk_ret
+        com_itf_type&               com
+    ,   const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   const LockResult&           glk_ret
     ) {
         CMPTH_P_PROF_SCOPE(P, tx_merge);
         
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         
         const auto blk_size = self.get_blk_size();
         auto& rma = com.get_rma();
@@ -366,10 +366,10 @@ public:
         // The temporary buffer is discarded in its destructor here.
     }
     
-    void invalidate(const blk_pos_type blk_pos, const unique_lock_type& lk)
+    void invalidate(const blk_pos_type blk_pos, const blk_unique_lock_type& blk_lk)
     {
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         const auto blk_size = self.get_blk_size();
         
         {
@@ -383,12 +383,12 @@ public:
     // This function is used to implement atomic operations.
     template <typename Func>
     void perform_transaction(
-        const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   Func&&                  func
+        const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   Func&&                      func
     ) {
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
         const auto my_pub = this->get_my_pub_ptr(blk_pos);
@@ -399,13 +399,13 @@ public:
     
     template <typename T, typename Func>
     bool do_amo_at(
-        const blk_pos_type      blk_pos
-    ,   const unique_lock_type& lk
-    ,   const size_type         offset
-    ,   Func&&                  func
+        const blk_pos_type          blk_pos
+    ,   const blk_unique_lock_type& blk_lk
+    ,   const size_type             offset
+    ,   Func&&                      func
     ) {
         auto& self = this->derived();
-        self.check_locked(blk_pos, lk);
+        self.check_locked(blk_pos, blk_lk);
         
         const auto my_priv = this->get_my_priv_ptr(blk_pos);
         const auto my_pub = this->get_my_pub_ptr(blk_pos);
