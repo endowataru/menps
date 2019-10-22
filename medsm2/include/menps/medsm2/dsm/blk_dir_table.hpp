@@ -4,8 +4,6 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/assert.hpp>
 
-//#define MEDSM2_FORCE_LATEST_READ
-
 namespace menps {
 namespace medsm2 {
 
@@ -147,7 +145,7 @@ public:
             // If not, the home process written in this process is still valid.
             // (= before self-invalidation.)
             const auto needs_latest_read =
-                #if defined(MEDSM2_USE_DIRECTORY_COHERENCE) || defined(MEDSM2_FORCE_LATEST_READ)
+                #if defined(MEDSM2_USE_DIRECTORY_COHERENCE)
                 true
                 #else
                 ! rd_ts_st.is_valid_rd_ts(cur_rd_ts)
