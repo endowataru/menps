@@ -95,6 +95,10 @@ struct dsm_base_policy
     };
     
     using sig_buffer_type = sig_buffer<dsm_base_policy>;
+
+    static wr_ts_type get_wr_ts(const wn_entry_type& wn) noexcept {
+        return wn.wr_ts;
+    }
     
     using rel_sig_type = rel_sig<dsm_base_policy>;
     #ifdef MEDSM2_USE_DIRECTORY_COHERENCE

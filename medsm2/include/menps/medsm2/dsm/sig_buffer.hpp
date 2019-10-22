@@ -31,7 +31,7 @@ class sig_buffer
     
     struct greater_wn {
         bool operator() (const wn_entry_type& a, const wn_entry_type& b) const noexcept {
-            return P::is_greater_wr_ts(a.wr_ts, b.wr_ts);
+            return P::is_greater_wr_ts(P::get_wr_ts(a), P::get_wr_ts(b));
         }
     };
     
@@ -59,7 +59,7 @@ public:
     void truncate(const size_type max_size)
     {
         if (this->wn_vec_.size() > max_size) {
-            const auto last_wr_ts = this->wn_vec_[max_size].wr_ts;
+            const auto last_wr_ts = P::get_wr_ts(this->wn_vec_[max_size]);
             // TODO: Use the policy's comparator.
             this->min_wr_ts_ = std::max(this->min_wr_ts_, last_wr_ts);
             
