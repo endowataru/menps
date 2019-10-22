@@ -34,13 +34,8 @@ struct dsm_base_policy
     using ult_itf_type = typename com_itf_type::ult_itf_type;
     using worker_ult_itf_type = ult_itf_type;
     
-    #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-    using mutex_type = mefdn::spinlock;
-    using unique_lock_type = mefdn::unique_lock<mefdn::spinlock>;
-    #else
     using mutex_type = typename ult_itf_type::mutex;
     using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO: rename
-    #endif
     
     using seg_id_type = mefdn::size_t;
     using blk_id_type = mefdn::size_t;

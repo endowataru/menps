@@ -5,10 +5,6 @@
 #include <menps/medev2/mpi/prof.hpp>
 #include <menps/mefdn/logger.hpp>
 #include <exception>
-#ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-#include <menps/mefdn/thread/spinlock.hpp>
-#include <menps/mefdn/mutex.hpp>
-#endif
 #include <menps/medev2/mpi/mpi_itf_id.hpp>
 #include <menps/mefdn/type_traits.hpp>
 #include <cmpth/prof/prof_tag.hpp>
@@ -37,13 +33,8 @@ template <typename P>
 class direct_mpi_facade
 {
     using ult_itf_type = typename P::ult_itf_type;
-    #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-    using mutex_type = typename ult_itf_type::spinlock;
-    using unique_lock_type = mefdn::unique_lock<mutex_type>;
-    #else
     using mutex_type = typename ult_itf_type::mutex;
     using unique_lock_type = typename ult_itf_type::unique_mutex_lock;
-    #endif
     
 public:
     explicit direct_mpi_facade(

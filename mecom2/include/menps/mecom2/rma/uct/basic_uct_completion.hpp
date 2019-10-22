@@ -2,9 +2,6 @@
 #pragma once
 
 #include <menps/mecom2/common.hpp>
-#ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-    #include <menps/mecom2/com/com_signal_state.hpp>
-#endif
 #include <menps/medev2/ucx/uct/uct.hpp>
 
 namespace menps {
@@ -60,13 +57,7 @@ public:
                     break;
                 }
                 
-                #ifdef MEDEV2_AVOID_SWITCH_IN_SIGNAL
-                if (! com_signal_state::is_in_signal()) {
-                    ult_itf_type::this_thread::yield();
-                }
-                #else
                 ult_itf_type::this_thread::yield();
-                #endif
                 
                 {
                     #ifdef MECOM2_UCT_RMA_ENABLE_WORKER_LOCK

@@ -17,8 +17,6 @@ endif()
 
 option(MEDEV2_SERIALIZE_MPI_CALLS "Serialize MPI calls" FALSE)
 
-option(MEDEV2_AVOID_SWITCH_IN_SIGNAL "Avoid using context switch in signal handler" FALSE)
-
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/menps/medev2/config.h)
