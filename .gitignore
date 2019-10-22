@@ -14,3 +14,6 @@ GTAGS
 
 output.yaml
 
+compile_commands.json
+.clangd
+
