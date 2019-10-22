@@ -4,6 +4,7 @@
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/algorithm.hpp>
 #include <menps/mefdn/type_traits.hpp>
+#include <menps/mefdn/assert.hpp>
 #include <unordered_set>
 
 namespace menps {
