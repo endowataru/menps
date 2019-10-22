@@ -159,16 +159,11 @@ struct dsm_base_policy
 const dsm_base_policy::wr_count_type dsm_base_policy::max_fast_rel_threshold;
 
 
-struct my_blk_table_policy : dsm_base_policy
-{
-};
-
-struct my_seg_table_policy : my_blk_table_policy
+struct my_seg_table_policy : dsm_base_policy
 {
     using derived_type = svm_seg_table<my_seg_table_policy>;
-    using blk_tbl_type = svm_blk_table<my_blk_table_policy>;
+    using blk_tbl_type = svm_blk_table<dsm_base_policy>;
 };
-
 using my_seg_table = svm_seg_table<my_seg_table_policy>;
 
 
