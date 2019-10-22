@@ -30,15 +30,13 @@ class svm_space
     using blk_id_type = typename P::blk_id_type;
     using sig_id_type = typename P::sig_id_type;
     
-    using worker_ult_itf_type = typename P::worker_ult_itf_type;
+    using ult_itf_type = typename P::ult_itf_type;
     
     struct tss_policy {
         using value_type = derived_type;
     };
-    
     using tss_type =
-        typename worker_ult_itf_type::
-            template thread_specific<tss_policy>;
+        typename ult_itf_type::template thread_specific<tss_policy>;
     
 public:
     template <typename Conf>

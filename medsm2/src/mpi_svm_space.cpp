@@ -32,7 +32,6 @@ struct dsm_base_policy
     using ptrdiff_type = mefdn::ptrdiff_t;
     
     using ult_itf_type = typename com_itf_type::ult_itf_type;
-    using worker_ult_itf_type = ult_itf_type;
     
     using mutex_type = typename ult_itf_type::mutex;
     using unique_lock_type = typename ult_itf_type::unique_mutex_lock; // TODO: rename
