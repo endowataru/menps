@@ -2,6 +2,7 @@
 #pragma once
 
 #include <menps/mefdn/logger.hpp>
+#include <menps/mefdn/assert.hpp>
 
 // for shm_open, shm_unlink
 #include <sys/mman.h>
