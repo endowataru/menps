@@ -46,10 +46,8 @@ public:
     }
     
     struct start_release_result {
-        bool needs_release;
-        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
-        wn_vector_type wn_vec;
-        #endif
+        bool            needs_release;
+        wn_vector_type  wn_vec;
     };
     
     template <typename SegTable>
@@ -81,11 +79,7 @@ public:
                     this->rel_cv_.wait(lk);
                 }
                 
-                return { false
-                    #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
-                    , {}
-                    #endif
-                    };
+                return { false, {} };
             }
             
             // This thread was selected for releasing this generation.
@@ -206,11 +200,7 @@ public:
         
         this->dirty_ids_ = mefdn::move(new_dirty_ids);
         
-        return { true
-            #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
-            , wn_vec
-            #endif
-            };
+        return { true, fdn::move(wn_vec) };
     }
     
     void finish_release()
