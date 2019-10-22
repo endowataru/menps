@@ -3,6 +3,7 @@
 
 #include <menps/medsm2/common.hpp>
 #include <menps/mefdn/logger.hpp>
+#include <menps/medsm2/svm/svm_space_base.hpp>
 
 //#define MEDSM2_FORCE_SELF_INVALIDATE_ALL
 
@@ -11,6 +12,7 @@ namespace medsm2 {
 
 template <typename P>
 class space
+    : public svm_space_base
 {
     MEFDN_DEFINE_DERIVED(P)
     
@@ -82,13 +84,13 @@ public:
         this->wr_set_.finalize();
     }
     
-    void start_release_thread()
+    virtual void start_release_thread() override
     {
         #ifdef MEDSM2_ENABLE_REL_THREAD
         this->rel_th_.start([this] { this->fence_release(); }, MEDSM2_REL_THREAD_USEC);
         #endif
     }
-    void stop_release_thread()
+    virtual void stop_release_thread() override
     {
         #ifdef MEDSM2_ENABLE_REL_THREAD
         this->rel_th_.stop();
@@ -128,7 +130,7 @@ public:
     
     using pin_result = typename seg_table_type::pin_result;
     
-    pin_result pin(const blk_id_type blk_id)
+    pin_result pin_block(const blk_id_type blk_id)
     {
         auto& self = this->derived();
         auto& com = self.get_com_itf();
@@ -136,20 +138,21 @@ public:
         return this->seg_tbl_.pin(com, this->rd_set_, this->wr_set_, blk_id);
     }
     
-    void unpin(const blk_id_type blk_id)
+    void unpin_block(const blk_id_type blk_id)
     {
         this->seg_tbl_.unpin(blk_id);
         
         this->wr_set_.add_writable(blk_id);
     }
     
-    mtx_id_type allocate_mutex() {
+    virtual mtx_id_type allocate_mutex() override
+    {
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
         return this->mtx_id_alloc_.allocate(com);
     }
-    void deallocate_mutex(const mtx_id_type mtx_id)
+    virtual void deallocate_mutex(const mtx_id_type mtx_id) override
     {
         auto& self = this->derived();
         auto& com = self.get_com_itf();
@@ -157,7 +160,7 @@ public:
         this->mtx_id_alloc_.deallocate(com, mtx_id);
     }
     
-    void lock_mutex(const mtx_id_type mtx_id)
+    virtual void lock_mutex(const mtx_id_type mtx_id) override
     {
         auto& self = this->derived();
         auto& com = self.get_com_itf();
@@ -175,7 +178,7 @@ public:
         #endif
     }
     
-    void unlock_mutex(const mtx_id_type mtx_id)
+    virtual void unlock_mutex(const mtx_id_type mtx_id) override
     {
         auto& self = this->derived();
         auto& com = self.get_com_itf();
@@ -188,7 +191,7 @@ public:
     }
     
     template <typename T>
-    bool compare_exchange_strong_acquire(
+    bool compare_exchange_strong_acquire_general(
         const sig_id_type   sig_id
     ,   const blk_id_type   blk_id
     ,   const size_type     offset
@@ -208,7 +211,7 @@ public:
     }
     
     template <typename T>
-    void store_release(
+    void store_release_general(
         const sig_id_type   sig_id
     ,   const blk_id_type   blk_id
     ,   const size_type     offset
@@ -321,7 +324,7 @@ private:
     };
     
 public:
-    void barrier()
+    virtual void barrier() override
     {
         CMPTH_P_PROF_SCOPE(P, barrier);
         

@@ -94,10 +94,10 @@ public:
         base::finalize();
     }
     
-    void* coll_alloc_seg(
+    virtual void* coll_alloc_seg(
         const size_type seg_size
     ,   const size_type blk_size
-    ) {
+    ) override {
         // Generate the next segment ID.
         // TODO: Check the max number of segments.
         const auto seg_id = this->new_seg_id_++;
@@ -119,11 +119,11 @@ public:
         return priv_app_ptr;
     }
     
-    void coll_alloc_global_var_seg(
+    virtual void coll_alloc_global_var_seg(
         const size_type seg_size
     ,   const size_type blk_size
     ,   void* const     start_ptr
-    ) {
+    ) override {
         const seg_id_type seg_id = 0;
         
         const auto priv_sys_ptr =
@@ -198,7 +198,7 @@ public:
     }
     
     template <typename T>
-    bool compare_exchange_strong_acquire(
+    bool compare_exchange_strong_acquire_general(
         T&      target // TODO: define atomic type
     ,   T&      expected
     ,   const T desired
@@ -211,12 +211,20 @@ public:
                 - reinterpret_cast<mefdn::byte*>(blk_id) // TODO
             );
         
-        return base::compare_exchange_strong_acquire(
+        return base::compare_exchange_strong_acquire_general(
             sig_id, blk_id, offset, expected, desired);
+    }
+
+    virtual bool compare_exchange_strong_acquire(
+        mefdn::uint32_t&        target
+    ,   mefdn::uint32_t&        expected
+    ,   const mefdn::uint32_t   desired
+    ) override {
+        return this->compare_exchange_strong_acquire_general(target, expected, desired);
     }
     
     template <typename T>
-    void store_release(
+    void store_release_general(
         T&      target // TODO: define atomic type
     ,   const T value
     ) {
@@ -228,8 +236,15 @@ public:
                 - reinterpret_cast<mefdn::byte*>(blk_id) // TODO
             );
         
-        base::store_release(
+        base::store_release_general(
             sig_id, blk_id, offset, value);
+    }
+    
+    virtual void store_release(
+        mefdn::uint32_t* const  ptr
+    ,   const mefdn::uint32_t   val
+    ) override {
+        this->store_release_general(*ptr, val);
     }
     
 private:
@@ -274,30 +289,30 @@ public:
     }
     #endif
     
-    void pin(void* const ptr, const size_type size)
+    virtual void pin(void* const ptr, const size_type size) override
     {
         this->for_all_blocks(ptr, size,
             [&] (const blk_id_type blk_id) {
-                base::pin(blk_id);
+                base::pin_block(blk_id);
             });
     }
     
-    void unpin(void* const ptr, const size_type size)
+    virtual void unpin(void* const ptr, const size_type size) override
     {
         this->for_all_blocks(ptr, size,
             [&] (const blk_id_type blk_id) {
-                base::unpin(blk_id);
+                base::unpin_block(blk_id);
             });
     }
     
-    void enable_on_this_thread() {
+    virtual void enable_on_this_thread() override {
         this->is_enabled_.set(&derived());
     }
-    void disable_on_this_thread() {
+    virtual void disable_on_this_thread() override {
         this->is_enabled_.set(nullptr);
     }
     
-    bool try_upgrade(void* const ptr) // XXX
+    virtual bool try_upgrade(void* const ptr) override
     {
         const auto blk_id = this->get_blk_id_from_app_ptr(ptr);
         

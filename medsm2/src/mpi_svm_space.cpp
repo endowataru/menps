@@ -124,7 +124,7 @@ struct dsm_base_policy
         return static_cast<int>(blk_id >> 12);
     }
     
-    using mtx_id_type = size_type;
+    using mtx_id_type = svm_space_base::mutex_id_t;
     static constexpr bool is_valid_mutex_id(const mtx_id_type mtx_id) noexcept {
         return mtx_id != 0;
     }
@@ -182,130 +182,24 @@ struct my_space_policy : dsm_base_policy
 
 using my_space = svm_space<my_space_policy>;
 
-
-class mpi_svm_space::impl
-{
-    struct my_space_conf {
-        com_itf_type&   com;
-        mefdn::size_t   max_num_sigs;
-        mefdn::size_t   sig_size_in_bytes;
-        mefdn::size_t   max_num_locks;
-    };
-    
-public:
-    explicit impl(com_itf_type& com)
-        : com_(com)
-        , sp_(
-            my_space_conf{
-                com_
-            ,   1024 // TODO: magic number
-            ,   dsm_base_policy::rel_sig_type::get_max_size_in_bytes()
-                // TODO: Simplify the dependencies
-            ,   1024 // TODO: magic number
-            }
-        )
-    {
-        //this->sp_.coll_init(my_space_conf{ com_, 1<<15, 1<<10 }); // TODO: magic numbers
-    }
-    
-    my_space& space() { return sp_; }
-    
-private:
-    com_itf_type& com_;
-    my_space sp_;
+struct my_space_conf {
+    dsm_com_itf_t&  com;
+    mefdn::size_t   max_num_sigs;
+    mefdn::size_t   sig_size_in_bytes;
+    mefdn::size_t   max_num_locks;
 };
 
-mpi_svm_space::mpi_svm_space(com_itf_type& com)
-    : impl_(new impl(com))
-{ }
-
-mpi_svm_space::~mpi_svm_space() = default;
-
-void* mpi_svm_space::coll_alloc_seg(const size_type seg_size, const size_type blk_size) {
-    return this->impl_->space().coll_alloc_seg(seg_size, blk_size);
-}
-
-void mpi_svm_space::coll_alloc_global_var_seg(const size_type seg_size, const size_type blk_size, void* const start_ptr)
+fdn::unique_ptr<svm_space_base> make_mpi_svm_space(dsm_com_itf_t& com)
 {
-    return this->impl_->space().coll_alloc_global_var_seg(seg_size, blk_size, start_ptr);
-}
-
-
-mpi_svm_space::mutex_id_t mpi_svm_space::allocate_mutex()
-{
-    return static_cast<mpi_svm_space::mutex_id_t>(
-        this->impl_->space().allocate_mutex()
+    return fdn::make_unique<my_space>(
+        my_space_conf{
+            com
+        ,   1024 // TODO: magic number
+        ,   dsm_base_policy::rel_sig_type::get_max_size_in_bytes()
+            // TODO: Simplify the dependencies
+        ,   1024 // TODO: magic number
+        }
     );
-}
-void mpi_svm_space::deallocate_mutex(const mutex_id_t mtx_id) {
-    this->impl_->space().deallocate_mutex(mtx_id);
-}
-
-void mpi_svm_space::lock_mutex(const mutex_id_t mtx_id) {
-    this->impl_->space().lock_mutex(mtx_id);
-}
-void mpi_svm_space::unlock_mutex(const mutex_id_t mtx_id) {
-    this->impl_->space().unlock_mutex(mtx_id);
-}
-
-
-bool mpi_svm_space::compare_exchange_strong_acquire(
-    mefdn::uint32_t&        target
-,   mefdn::uint32_t&        expected
-,   const mefdn::uint32_t   desired
-) {
-    return this->impl_->space().compare_exchange_strong_acquire(target, expected, desired);
-}
-
-void mpi_svm_space::store_release(
-    mefdn::uint32_t* const  ptr
-,   const mefdn::uint32_t   val
-) {
-    this->impl_->space().store_release(*ptr, val);
-}
-
-#if 0
-mefdn::uint64_t mpi_svm_space::load_acquire(mefdn::uint64_t* const ptr)
-{
-    return this->impl_->space().load_acquire(ptr);
-}
-
-#endif
-void mpi_svm_space::barrier() {
-    this->impl_->space().barrier();
-}
-
-void mpi_svm_space::pin(void* const ptr, const size_type size)
-{
-    this->impl_->space().pin(ptr, size);
-}
-
-void mpi_svm_space::unpin(void* const ptr, const size_type size)
-{
-    this->impl_->space().unpin(ptr, size);
-}
-
-void mpi_svm_space::enable_on_this_thread()
-{
-    this->impl_->space().enable_on_this_thread();
-}
-void mpi_svm_space::disable_on_this_thread()
-{
-    this->impl_->space().disable_on_this_thread();
-}
-
-void mpi_svm_space::start_release_thread()
-{
-    this->impl_->space().start_release_thread();
-}
-void mpi_svm_space::stop_release_thread()
-{
-    this->impl_->space().stop_release_thread();
-}
-
-bool mpi_svm_space::try_upgrade(void* const ptr)
-{
-    return this->impl_->space().try_upgrade(ptr);
 }
 
 } // namespace medsm2

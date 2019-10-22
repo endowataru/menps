@@ -1,5 +1,7 @@
 
+#include <menps/meomp/common.hpp>
 #include <menps/medsm2/itf/dsm_facade.hpp>
+#include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include "child_worker.hpp"
 #include "dist_worker.hpp"
 #include "child_worker_group.hpp"
@@ -35,7 +37,7 @@ using dsm_facade_t = menps::medsm2::dsm_facade;
 dsm_facade_t* g_df;
 
 using coll_t = menps::medsm2::dsm_com_itf_t::coll_itf_type;
-using space_t = menps::medsm2::mpi_svm_space;
+using space_t = menps::medsm2::svm_space_base;
 
 coll_t* g_coll;
 space_t* g_sp;
@@ -964,6 +966,8 @@ int main(int argc, char* argv[])
     
     dsm_facade_t df{&argc, &argv};
     g_df = &df;
+
+    df.set_svm_space(medsm2::make_mpi_svm_space(df.get_com_itf()));
     
     auto& sp = df.get_space();
     g_sp = &sp;

@@ -1,5 +1,6 @@
 
 #include <menps/medsm2/itf/dsm_itf.hpp>
+#include <menps/medsm2/svm/mpi_svm_space.hpp>
 #include <menps/mefdn/disable_aslr.hpp>
 
 using menps::medsm2::dsm_itf;
@@ -19,6 +20,7 @@ int main(int argc, char* argv[])
     context.applyCommandLine(argc, argv);
     
     dsm_itf::dsm_facade_type df{&argc, &argv};
+    df.set_svm_space(menps::medsm2::make_mpi_svm_space(df.get_com_itf()));
     
     dsm_itf::set_dsm_facade(df);
     

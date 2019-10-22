@@ -3,14 +3,14 @@
 
 #include <menps/medsm2/itf/basic_dsm_facade.hpp>
 #include <menps/medsm2/com/dsm_com_itf.hpp>
-#include <menps/medsm2/svm/mpi_svm_space.hpp>
+#include <menps/medsm2/svm/svm_space_base.hpp>
 
 namespace menps {
 namespace medsm2 {
 
 struct dsm_facade_policy {
     using com_itf_type = dsm_com_itf_t;
-    using svm_space_type = mpi_svm_space;
+    using svm_space_type = svm_space_base;
     using thread_num_type = int;
     
     static thread_num_type get_num_threads_per_proc() {

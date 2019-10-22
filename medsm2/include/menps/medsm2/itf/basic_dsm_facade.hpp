@@ -31,8 +31,6 @@ public:
         auto& coll = com.get_coll();
         const auto proc_id = coll.this_proc_id();
         
-        this->sp_ = mefdn::make_unique<svm_space_type>(com);
-        
         const auto n_ths_per_proc = P::get_num_threads_per_proc();
         this->bar_ = mefdn::make_unique<barrier_type>(n_ths_per_proc);
         
@@ -66,6 +64,10 @@ public:
         
         // Do a barrier before destroying the resources.
         coll.barrier();
+    }
+
+    void set_svm_space(fdn::unique_ptr<svm_space_type> sp) {
+        this->sp_ = fdn::move(sp);
     }
     
     void init_global_var_seg(void* const data_begin, void* const data_end, const mefdn::size_t blk_size)
