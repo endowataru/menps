@@ -141,21 +141,12 @@ public:
             );
         }
         else {
-            #if 1
             // TODO: May be unnecessary
             // Initialize all the contents.
             fill_zero(priv_sys_ptr, num_bytes);
             fill_zero(pub_ptr, num_bytes);
             #ifndef MEDSM2_ENABLE_MIGRATION
             fill_zero(snapshot_ptr, num_bytes);
-            #endif
-            
-            #else
-            // Initialize the private mapping.
-            // TODO: May be unnecessary
-            memset(priv_sys_ptr, 0, num_bytes);
-            // Initialize the public mapping.
-            memset(pub_ptr, 0, num_bytes);
             #endif
         }
         
