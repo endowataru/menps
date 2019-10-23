@@ -2,6 +2,9 @@
 #include <menps/meomp/common.hpp>
 #include <menps/medsm2/itf/dsm_facade.hpp>
 #include <menps/medsm2/svm/mpi_svm_space.hpp>
+#ifdef MEOMP_ENABLE_MEDSM3
+    #include <menps/medsm3/md3/make_md3_space.hpp>
+#endif
 #include "child_worker.hpp"
 #include "dist_worker.hpp"
 #include "child_worker_group.hpp"
@@ -967,7 +970,11 @@ int main(int argc, char* argv[])
     dsm_facade_t df{&argc, &argv};
     g_df = &df;
 
+    #ifdef MEOMP_ENABLE_MEDSM3
+    df.set_svm_space(medsm3::make_md3_space(df.get_com_itf()));
+    #else
     df.set_svm_space(medsm2::make_mpi_svm_space(df.get_com_itf()));
+    #endif
     
     auto& sp = df.get_space();
     g_sp = &sp;

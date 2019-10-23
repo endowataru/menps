@@ -5,6 +5,7 @@ project(meomp)
 set(MEOMP_DEF_STKSIZE 32768 CACHE STRING "Default stack size")
 set(MEOMP_HEAP_SIZE 1048576 CACHE STRING "Default heap size")
 set(MEOMP_HEAP_BLOCK_SIZE 32768 CACHE STRING "Default heap block size")
+option(MEOMP_ENABLE_MEDSM3 "Enable medsm3 for meomp" OFF)
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
@@ -22,6 +23,7 @@ target_compile_options(meomp
 )
 target_link_libraries(meomp
     PUBLIC medsm2
+    PUBLIC medsm3
     PRIVATE mefdn-options
 )
 install(TARGETS meomp

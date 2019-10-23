@@ -8,6 +8,7 @@ add_subdirectory(./medev2)
 add_subdirectory(./meqdc)
 add_subdirectory(./mecom2)
 add_subdirectory(./medsm2)
+add_subdirectory(./medsm3)
 add_subdirectory(./meomp)
 
 enable_testing()
