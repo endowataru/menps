@@ -11,11 +11,15 @@ mkdir -p $BUILD_DIR || true
 cd $BUILD_DIR
 
 # Detect the environment.
-C_COMPILER=mpicc
-if command -v mpicxx > /dev/null; then
-    CXX_COMPILER=mpicxx
-else
-    CXX_COMPILER=mpic++
+if [ -z "${C_COMPILER}" ]; then
+    C_COMPILER=mpicc
+fi
+if [ -z "${CXX_COMPILER}" ]; then
+    if command -v mpicxx > /dev/null; then
+        CXX_COMPILER=mpicxx
+    else
+        CXX_COMPILER=mpic++
+    fi
 fi
 
 # Execute cmake.
