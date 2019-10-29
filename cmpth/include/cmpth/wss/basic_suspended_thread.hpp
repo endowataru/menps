@@ -23,32 +23,6 @@ public:
     basic_suspended_thread(basic_suspended_thread&&) noexcept = default;
     basic_suspended_thread& operator = (basic_suspended_thread&&) noexcept = default;
     
-    worker_type& wait() {
-        auto& wk = worker_type::get_cur_worker();
-        return this->wait(wk);
-    }
-    worker_type& wait(worker_type& wk)
-    {
-        CMPTH_P_ASSERT(P, !this->cont_);
-        
-        return wk.template suspend_to_sched<
-            basic_suspended_thread::on_wait
-        >(this);
-    }
-    
-private:
-    struct on_wait {
-        worker_type& operator() (
-            worker_type&                    wk
-        ,   continuation_type               cont
-        ,   basic_suspended_thread* const   self
-        ) {
-            self->cont_ = fdn::move(cont);
-            return wk;
-        }
-    };
-    
-public:
     template <typename Func, typename... Args>
     worker_type& wait_with(Args* const ... args)
     {
