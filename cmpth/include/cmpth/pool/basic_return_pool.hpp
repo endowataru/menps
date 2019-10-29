@@ -105,6 +105,7 @@ public:
     template <typename AllocFunc>
     element_type* allocate(size_type cur_wk_num, AllocFunc&& alloc_func)
     {
+        CMPTH_P_ASSERT(P, cur_wk_num < this->n_wks_);
         //const auto cur_wk_num = ult_itf_type::get_worker_num();
         auto& cur_we = this->wes_[cur_wk_num];
         

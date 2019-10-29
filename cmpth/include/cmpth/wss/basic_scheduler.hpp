@@ -148,6 +148,7 @@ public:
     }
     
     worker_type& get_worker_of_num(const worker_num_type wk_num) {
+        CMPTH_P_ASSERT(P, wk_num >= 0);
         CMPTH_P_ASSERT(P, wk_num < this->num_wks_);
         return this->wks_[wk_num];
     }

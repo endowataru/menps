@@ -59,12 +59,14 @@ public:
     
     continuation_type make_continuation(context_type ctx) && noexcept
     {
-        this->tk_->ctx = ctx;
+        CMPTH_P_ASSERT(P, this->tk_);
         
+        this->tk_->ctx = ctx;
         return continuation_type{ fdn::move(this->tk_) };
     }
     
     bool is_detached() noexcept {
+        CMPTH_P_ASSERT(P, this->tk_);
         return this->tk_->detached;
     }
     

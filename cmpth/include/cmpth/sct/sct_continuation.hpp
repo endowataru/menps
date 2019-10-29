@@ -27,6 +27,7 @@ public:
     sct_continuation& operator = (sct_continuation&&) noexcept = default;
     
     context_type get_context() const noexcept {
+        CMPTH_P_ASSERT(P, *this);
         return this->tk_->ctx;
     }
     
