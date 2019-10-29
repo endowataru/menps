@@ -54,6 +54,9 @@ private:
             
             // Execute the user-defined function.
             if (Func{}(wk, args...)) {
+                // It is not allowed to do a context switch inside Func.
+                wk.check_cur_worker();
+                
                 // Switch to the popped thread.
                 return wk;
             }
@@ -187,6 +190,9 @@ private:
             
             // Execute the user-defined function.
             if (Func{}(wk, args...)) {
+                // It is not allowed to do a context switch inside Func.
+                wk.check_cur_worker();
+                
                 // Switch to "next_sth".
                 return wk;
             }

@@ -25,18 +25,22 @@ public:
     
     void local_push_top(continuation_type cont)
     {
+        this->check_cur_worker();
         this->wd_.local_push_top( fdn::move(cont) );
     }
     void local_push_bottom(continuation_type cont)
     {
+        this->check_cur_worker();
         this->wd_.local_push_bottom( fdn::move(cont) );
     }
     continuation_type try_local_pop_top()
     {
+        this->check_cur_worker();
         return this->wd_.try_local_pop_top();
     }
     continuation_type try_remote_pop_bottom()
     {
+        // This method is called from a thief worker.
         return this->wd_.try_remote_pop_bottom();
     }
     
@@ -63,7 +67,10 @@ private:
         ,   const task_ref_type tk
         ,   Args* const ...     args
         ) {
+            wk.check_cur_worker();
+            
             // Revive the exited thread.
+            // TODO: Avoid using tk.get_task_desc() here.
             continuation_type cont{
                 unique_task_ptr_type{ tk.get_task_desc() }
             };
@@ -75,9 +82,10 @@ private:
             
             // Execute the user-defined function.
             // Note: cont may be null when it's the scheduler task.
-            auto& self_2 = Func{}(wk, fdn::move(cont), args...);
-            
-            return self_2;
+            auto& wk_2 = Func{}(wk, fdn::move(cont), args...);
+
+            wk_2.check_cur_worker();
+            return wk_2;
         }
     };
     
@@ -100,7 +108,7 @@ private:
             derived_type&       wk
         ,   continuation_type   cont
         ) {
-            CMPTH_P_ASSERT(P, !wk.root_cont_);
+            wk.check_cur_worker();
             
             // Set the root context.
             wk.root_cont_ = fdn::move(cont);
@@ -144,6 +152,7 @@ public:
                 basic_worker::on_yield
             >();
         
+        wk_2.check_cur_worker();
         return wk_2;
     }
     

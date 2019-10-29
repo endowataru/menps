@@ -39,6 +39,7 @@ class basic_worker_task
             
             auto& self_2 = Func{}(self, fdn::move(prev_cont), args...);
             
+            self_2.check_cur_worker();
             return { &self_2 };
         }
     };
@@ -67,7 +68,9 @@ public:
         
         /*>---context---<*/
         
-        return *tr.p0;
+        auto& self_2 = *tr.p0;
+        self_2.check_cur_worker();
+        return self_2;
     }
     
 private:
@@ -89,6 +92,7 @@ private:
             
             auto& self_2 = Func{}(self, fdn::move(prev_cont), args...);
             
+            self_2.check_cur_worker();
             return { &self_2 };
         }
     };
@@ -116,7 +120,9 @@ public:
         
         /*>---context---<*/
         
-        return *tr.p0;
+        auto& self_2 = *tr.p0;
+        self_2.check_cur_worker();
+        return self_2;
     }
     
 private:
@@ -135,6 +141,7 @@ private:
             // Call the user-defined function.
             auto& self_2 = Func{}(self, prev_tk, args...);
             
+            self_2.check_cur_worker();
             return { &self_2 };
         }
     };
@@ -183,6 +190,7 @@ private:
         ,   task_ref_type   /*prev_tk*/
             // Note: This task is discarded. The user is responsible to manage it.
         ) const {
+            self.check_cur_worker();
             return self;
         }
     };
