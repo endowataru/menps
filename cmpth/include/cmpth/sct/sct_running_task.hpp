@@ -77,6 +77,17 @@ public:
         return { tk_.get() };
     }
     
+    void mark_as_root() noexcept {
+        CMPTH_P_ASSERT(P, this->tk_);
+        CMPTH_P_ASSERT(P, !this->tk_->is_root);
+        this->tk_->is_root = true;
+    }
+    void unmark_as_root() noexcept {
+        CMPTH_P_ASSERT(P, this->tk_);
+        CMPTH_P_ASSERT(P, this->tk_->is_root);
+        this->tk_->is_root = false;
+    }
+    
 private:
     task_desc_type          root_desc_;
     unique_task_ptr_type    tk_;

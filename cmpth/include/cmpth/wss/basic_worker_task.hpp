@@ -201,6 +201,14 @@ public:
     task_ref_type get_cur_task_ref() const noexcept {
         return this->cur_tk_.get_task_ref();
     }
+
+protected:
+    void mark_cur_task_as_root() {
+        this->cur_tk_.mark_as_root();
+    }
+    void unmark_cur_task_as_root() {
+        this->cur_tk_.unmark_as_root();
+    }
     
 private:
     running_task_type cur_tk_;

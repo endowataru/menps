@@ -39,6 +39,11 @@ public:
         return !!tk_;
     }
     
+    bool is_root() const noexcept {
+        CMPTH_P_ASSERT(P, *this);
+        return this->tk_->is_root;
+    }
+    
 private:
     unique_task_ptr_type tk_;
 };

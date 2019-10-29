@@ -76,8 +76,12 @@ private:
             };
             
             if (!wk.root_cont_) {
+                CMPTH_P_ASSERT(P, cont.is_root());
                 // The revived task is the scheduler task.
-                wk.root_cont_ = fdn::move(cont);
+                wk.set_root_cont(fdn::move(cont));
+            }
+            else {
+                CMPTH_P_ASSERT(P, !cont.is_root());
             }
             
             // Execute the user-defined function.
@@ -110,8 +114,8 @@ private:
         ) {
             wk.check_cur_worker();
             
-            // Set the root context.
-            wk.root_cont_ = fdn::move(cont);
+            // Set the root continuation.
+            wk.set_root_cont(fdn::move(cont));
             
             return wk;
         }
@@ -123,10 +127,17 @@ public:
     {
         CMPTH_P_ASSERT(P, !this->root_cont_);
         
-        this->template suspend_to_cont<
-            basic_worker::on_execute
-        >
-        (fdn::move(cont));
+        this->mark_cur_task_as_root();
+    
+        auto& wk CMPTH_MAYBE_UNUSED =
+            this->template suspend_to_cont<
+                basic_worker::on_execute
+            >(fdn::move(cont));
+        
+        wk.check_cur_worker();
+        CMPTH_P_ASSERT(P, &wk == this);
+
+        this->unmark_cur_task_as_root();
         
         CMPTH_P_ASSERT(P, !this->root_cont_);
     }
@@ -164,6 +175,7 @@ private:
         }
         else {
             CMPTH_P_ASSERT(P, this->root_cont_);
+            CMPTH_P_ASSERT(P, this->root_cont_.is_root());
             return fdn::move(this->root_cont_);
         }
     }
@@ -178,6 +190,14 @@ public:
     }
     
 private:
+    void set_root_cont(continuation_type root_cont)
+    {
+        CMPTH_P_ASSERT(P, root_cont);
+        CMPTH_P_ASSERT(P, root_cont.is_root());
+        CMPTH_P_ASSERT(P, !this->root_cont_);
+        this->root_cont_ = fdn::move(root_cont);
+    }
+    
     worker_num_type     wk_num_ = P::invalid_worker_num;
     worker_deque_type   wd_;
     continuation_type   root_cont_;

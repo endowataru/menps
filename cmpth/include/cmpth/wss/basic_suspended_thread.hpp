@@ -81,6 +81,8 @@ private:
         ,   continuation_type   next_cont
         ) {
             if (next_cont) {
+                CMPTH_P_ASSERT(P, !next_cont.is_root());
+                
                 // Return the popped task for the wait.
                 wk.local_push_top(fdn::move(next_cont));
             }
@@ -99,6 +101,7 @@ public:
     void notify(worker_type& wk)
     {
         CMPTH_P_ASSERT(P, this->cont_);
+        CMPTH_P_ASSERT(P, !this->cont_.is_root());
         
         wk.local_push_top(fdn::move(this->cont_));
     }
@@ -110,6 +113,7 @@ public:
     worker_type& enter(worker_type& wk)
     {
         CMPTH_P_ASSERT(P, this->cont_);
+        CMPTH_P_ASSERT(P, !this->cont_.is_root());
         
         return wk.template suspend_to_cont<
             basic_suspended_thread::on_enter
@@ -136,6 +140,7 @@ public:
     {
         CMPTH_P_ASSERT(P, !this->cont_);
         CMPTH_P_ASSERT(P, next_sth.cont_);
+        CMPTH_P_ASSERT(P, !next_sth.cont_.is_root());
         
         return wk.template suspend_to_cont<
             basic_suspended_thread::on_swap
@@ -168,6 +173,7 @@ public:
     {
         CMPTH_P_ASSERT(P, !this->cont_);
         CMPTH_P_ASSERT(P, next_sth.cont_);
+        CMPTH_P_ASSERT(P, !next_sth.cont_.is_root());
         
         return wk.template suspend_to_cont<
             basic_suspended_thread::on_swap_with<Func, Args...>
@@ -220,6 +226,7 @@ private:
         ) {
             // The continuation must not be the root context.
             CMPTH_P_ASSERT(P, next_cont);
+            CMPTH_P_ASSERT(P, !next_cont.is_root());
             
             // Return the context to the original suspended thread.
             next_sth->cont_ = fdn::move(next_cont);

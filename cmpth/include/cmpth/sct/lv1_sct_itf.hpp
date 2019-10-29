@@ -28,6 +28,7 @@ public:
     task_mutex_type     mtx;
     atomic_bool_type    finished;
     bool                detached;
+    bool                is_root;
     continuation_type   joiner;
     void*               stk_top;
     void*               stk_bottom;
