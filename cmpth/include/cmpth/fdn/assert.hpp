@@ -3,6 +3,7 @@
 
 #include <cmpth/fdn/fdn.hpp>
 #include <cstdlib>
+#include <iostream> // TODO
 
 #define CMPTH_P_ASSERT(P, x)    \
     static_cast<void>(!(P::assert_policy_type::is_enabled) || (x) || \
@@ -16,7 +17,9 @@ namespace cmpth {
 template <bool IsEnabled>
 struct assert_policy {
     static const bool is_enabled = IsEnabled;
-    static void fail(const char*, const char*, int) {
+    static void fail(const char* const cond, const char* const file, const int line) {
+        std::cerr << "Assertion failed: " << cond << " of " << file
+                  << " at line " << line << "." << std::endl;
         std::abort();
     }
 };
