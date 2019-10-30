@@ -252,7 +252,7 @@ private:
                 // The continuation must not be consumed.
                 CMPTH_P_ASSERT(P, self->cont_);
                 // Take the continuation to execute.
-                next_sth->cont_ = fdn::move(self->cont_);
+                prev_cont = fdn::move(self->cont_);
             }
             
             // It is not allowed to do a context switch inside Func.
