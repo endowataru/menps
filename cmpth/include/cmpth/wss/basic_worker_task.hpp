@@ -13,6 +13,7 @@ class basic_worker_task
     using context_policy_type = typename P::context_policy_type;
     using context_type = typename P::context_type;
     using transfer_type = typename P::transfer_type;
+    using cond_transfer_type = typename P::cond_transfer_type;
     
     using task_desc_type = typename P::task_desc_type;
     using call_stack_type = typename P::call_stack_type;
@@ -117,6 +118,68 @@ public:
                 basic_worker_task::on_suspend_to_cont<Func, Args...>
             >
             (ctx, &self, next_desc, args...);
+        
+        /*>---context---<*/
+        
+        auto& self_2 = *tr.p0;
+        self_2.check_cur_worker();
+        return self_2;
+    }
+    
+private:
+    template <typename Func, typename... Args>
+    struct on_cond_suspend_to_cont {
+        cond_transfer_type operator() (
+            const context_type          ctx
+        ,   derived_type* const         self_ptr
+        ,   continuation_type* const    next_cont
+        ,   Args* const ...             args
+        ) const {
+            auto& self = *self_ptr;
+            self.check_cur_worker();
+            
+            // Release the ownership of the next thread.
+            const auto next_desc = next_cont->release();
+            
+            // Set the context to the parent thread.
+            auto prev_cont =
+                self.cur_tk_.suspend_to(
+                    ctx /*>---context---<*/, next_desc);
+            
+            // Execute the user-defined function.
+            auto& wk_2 = Func{}(self, prev_cont, args...);
+            
+            // When the continuation is consumed by Func,
+            // Func requests this function to switch to next_cont.
+            // Otherwise, it should return back to the original context.
+            const bool flag = !prev_cont;
+            if (!flag) {
+                // Revive the original continuation.
+                *next_cont = wk_2.cur_tk_.revive_suspended(fdn::move(prev_cont));
+            }
+            
+            wk_2.check_cur_worker();
+            return { &wk_2, flag };
+        }
+    };
+    
+public:
+    template <typename Func, typename... Args>
+    derived_type& cond_suspend_to_cont(
+        continuation_type&  next_cont
+    ,   Args* const ...     args
+    ) {
+        auto& self = this->derived();
+        self.check_cur_worker();
+        
+        // Get the context of the following thread.
+        const auto ctx = next_cont.get_context();
+        
+        const auto tr =
+            context_policy_type::template cond_swap_context<
+                basic_worker_task::on_cond_suspend_to_cont<Func, Args...>
+            >
+            (ctx, &self, &next_cont, args...);
         
         /*>---context---<*/
         

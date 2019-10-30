@@ -106,6 +106,23 @@ public:
         >(fdn::move(cont), args...);
     }
     
+    template <typename Func, typename... Args>
+    derived_type& cond_suspend_to_sched(Args* const ... args)
+    {
+        auto next_cont = this->local_pop_top_or_root();
+        auto& wk_2 = this->template cond_suspend_to_cont<Func>(next_cont, args...);
+        
+        if (next_cont) {
+            if (wk_2.root_cont_) {
+                wk_2.local_push_top(fdn::move(next_cont));
+            }
+            else {
+                wk_2.set_root_cont(fdn::move(next_cont));
+            }
+        }
+        return wk_2;
+    }
+    
 private:
     struct on_execute {
         derived_type& operator() (

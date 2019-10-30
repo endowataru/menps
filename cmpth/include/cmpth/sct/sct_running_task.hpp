@@ -39,16 +39,27 @@ public:
         const context_type      cur_ctx
     ,   task_desc_type* const   next_tk
     ) {
+        CMPTH_P_ASSERT(P, this->tk_);
         CMPTH_P_ASSERT(P, next_tk != nullptr);
         unique_task_ptr_type tk{next_tk};
-        
-        CMPTH_P_ASSERT(P, this->tk_);
         
         using fdn::swap;
         swap(this->tk_, tk);
         
         // Set the current context to the descriptor.
         tk->ctx = cur_ctx;
+        
+        return continuation_type{fdn::move(tk)};
+    }
+
+    continuation_type revive_suspended(continuation_type prev_cont)
+    {
+        CMPTH_P_ASSERT(P, this->tk_);
+        CMPTH_P_ASSERT(P, prev_cont);
+        unique_task_ptr_type tk{prev_cont.release()};
+        
+        using fdn::swap;
+        swap(this->tk_, tk);
         
         return continuation_type{fdn::move(tk)};
     }

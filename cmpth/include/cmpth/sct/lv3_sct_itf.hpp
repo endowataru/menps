@@ -43,6 +43,7 @@ public:
     using context_policy_type   = typename lv2_itf_type::context_policy;
     using context_type          = typename lv2_itf_type::context;
     using transfer_type         = typename lv2_itf_type::transfer;
+    using cond_transfer_type    = typename lv2_itf_type::cond_transfer;
     
     using base_ult_itf_type     = typename lv2_itf_type::base_ult_itf;
     

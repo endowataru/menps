@@ -59,6 +59,8 @@ struct lv1_sct_policy
         typename context_policy_type::template context<worker_type*>;
     using transfer_type =
         typename context_policy_type::template transfer<worker_type*>;
+    using cond_transfer_type =
+        typename context_policy_type::template cond_transfer<worker_type*>;
     
     using tls_map_type = basic_map_tls_map<lv1_sct_policy>;
     using tls_key_type = typename P::tls_key_type;
@@ -84,6 +86,7 @@ public:
     using context_policy    = typename lv1_policy::context_policy_type;
     using context           = typename lv1_policy::context_type;
     using transfer          = typename lv1_policy::transfer_type;
+    using cond_transfer     = typename lv1_policy::cond_transfer_type;
     
     using base_ult_itf      = typename lv1_policy::base_ult_itf_type;
     using tls_key           = typename lv1_policy::tls_key_type;

@@ -22,6 +22,16 @@ struct x86_64_transfer<T*>
 };
 
 template <typename T>
+struct x86_64_cond_transfer;
+
+template <typename T>
+struct x86_64_cond_transfer<T*>
+{
+    T*              p0;
+    fdn::int64_t    flag;
+};
+
+template <typename T>
 struct x86_64_context;
 
 template <typename T>
@@ -41,6 +51,9 @@ public:
     
     template <typename T>
     using transfer = x86_64_transfer<T>;
+    
+    template <typename T>
+    using cond_transfer = x86_64_cond_transfer<T>;
     
     template <typename T>
     using context = x86_64_context<T>;
@@ -310,6 +323,92 @@ protected:
         return result;
     }
     
+    using cond_swap_context_func_t =
+        cond_transfer<void*> (*)(context<void*>, void*, void*, void*, void*, void*);
+    
+    static transfer<void*> cond_swap_context_void(
+        context<void*>  ctx
+    ,   cond_swap_context_func_t func
+    ,   void*           arg1 = nullptr
+    ,   void*           arg2 = nullptr
+    ,   void*           arg3 = nullptr
+    ,   void* const     arg4 = nullptr
+    ,   void* const     arg5 = nullptr
+    ) {
+        transfer<void*> result;
+        
+        register void* arg4_r8 asm ("r8") = arg4;
+        register void* arg5_r9 asm ("r9") = arg5;
+        
+        asm volatile (
+            // RDI = ctx; RSI = arg1; RDX = arg2; RCX = arg3;
+            
+            SAVE_CONTEXT("r15")
+            
+            // Copy the saved context to prepare for the recovery of "2:".
+            "movq   %%rdi, %%r14\n\t"
+            // Load RBP from the context.
+            "movq   (%%rsp), %%rbp\n\t"
+            // Call the user-defined function here.
+            //  (RAX, RDX) = func(RDI, RSI, RDX, RCX, R8, R9);
+            "call   " FUNC_OPERAND "\n\t" // = push %rip; jmp FUNC_OPERAND
+            
+            // Jump to "2:" if (RDX == 0).
+            "testq  %%rdx, %%rdx\n\t"
+            "je     2f\n\t"
+            
+            // Adjust RSP (the same value of RBP is loaded before).
+            "popq   %%rbp\n\t"
+            // Jump to the saved RIP.
+            "ret\n"
+            
+        "2:\n\t"
+            // Recover to the original context.
+            
+            // Restore the RSP.
+            "mov    %%r14, %%rsp\n\t"
+            // Restore the original RBP.
+            "popq   %%rbp\n\t"
+            // Skip the saved RIP.
+            "add    $8, %%rsp\n"
+            
+        "1:\n\t"
+            // Continuation starts here.
+            
+            // RSP is pointing to the saved RSP.
+            // RBP is already restored.
+            
+            // Restore RSP from the stack.
+            // It also skips the red zone.
+            "popq   %%rsp"
+            
+            // result = RAX;
+            
+        :   OUTPUT_CONSTRAINTS(
+            // RBX | Input: User-defined function. / Output: Overwritten (but discarded).
+                func ,
+            // RDI | Input: Restored RSP. / Output: Overwritten (but discarded).
+                ctx.p ,
+            // RAX | Output: User-defined value from Func or the previous context.
+                result.p0 ,
+            // RSI | Input: 1st user-defined argument. / Output: Overwritten (but discarded).
+                arg1 ,
+            // RDX | Input: 2nd user-defined argument. / Output: Overwritten (but discarded).
+                arg2 ,
+            // RCX | Input: 3rd user-defined argument. / Output: Overwritten (but discarded).
+                arg3 ,
+            // R8  | Input: 4th user-defined argument. / Output: Overwritten (but discarded).
+                arg4_r8 ,
+            // R9  | Input: 5th user-defined argument. / Output: Overwritten (but discarded).
+                arg5_r9
+            )
+        :   // No input constraints
+        :   CLOBBERS
+        );
+        
+        return result;
+    }
+    
     using restore_context_func_t =
         transfer<void*> (*)(void*, void*, void*, void*, void*, void*);
     
@@ -531,7 +630,7 @@ public:
     ,   RArgs* const ...    rest_args
     ) {
         const auto func =
-            reinterpret_cast<save_context_func_t>(
+            reinterpret_cast<swap_context_func_t>(
                 &x86_64_context_policy::on_save_many<
                     Func, T, A1, A2, A3, A4, RArgs...
                 >
@@ -541,6 +640,85 @@ public:
         
         const auto tr =
             x86_64_context_policy_base::swap_context_void(
+                { ctx.p }, func, arg1, arg2, arg3, arg4, &rargs
+            );
+        
+        return { static_cast<T*>(tr.p0) };
+    }
+    
+private:
+    template <typename Func, typename T, typename... Args>
+    static cond_transfer<T*> on_cond_swap(const context<T*> ctx, Args* const ... args) {
+        return Func{}(ctx, args...);
+    }
+    
+    template <typename Func, typename T,
+        typename A1, typename A2, typename A3, typename A4,
+        typename... RArgs>
+    static cond_transfer<T*> on_cond_swap_many(
+        const context<T*>   ctx
+    ,   A1* const           arg1
+    ,   A2* const           arg2
+    ,   A3* const           arg3
+    ,   A4* const           arg4
+    ,   const fdn::tuple<RArgs* ...>* const rest_args
+    ) {
+        return fdn::apply(
+            Func{}
+        ,   fdn::tuple_cat(
+                fdn::forward_as_tuple(ctx, arg1, arg2, arg3, arg4)
+            ,   *rest_args
+            )
+        );
+    }
+    
+public:
+    template <typename Func, typename T, typename... Args,
+        fdn::enable_if_t<
+            (sizeof...(Args) <= 5) // Enabled with <= 5 parameters
+        >* = nullptr>
+    static transfer<T*> cond_swap_context(
+        const context<T*>   ctx
+    ,   Args* const ...     args
+    ) {
+        const auto func =
+            reinterpret_cast<cond_swap_context_func_t>(
+                &x86_64_context_policy::on_cond_swap<Func, T, Args...>
+            );
+        
+        const auto tr =
+            x86_64_context_policy_base::cond_swap_context_void(
+                { ctx.p }, func, args...
+            );
+        
+        return { static_cast<T*>(tr.p0) };
+    }
+    
+    template <typename Func, typename T,
+        typename A1, typename A2, typename A3, typename A4,
+        typename... RArgs,
+        fdn::enable_if_t<
+            (sizeof...(RArgs) >= 2) // Enabled >= 6 parameters
+        >* = nullptr>
+    static transfer<T*> cond_swap_context(
+        const context<T*>   ctx
+    ,   A1* const           arg1
+    ,   A2* const           arg2
+    ,   A3* const           arg3
+    ,   A4* const           arg4
+    ,   RArgs* const ...    rest_args
+    ) {
+        const auto func =
+            reinterpret_cast<cond_swap_context_func_t>(
+                &x86_64_context_policy::on_cond_swap_many<
+                    Func, T, A1, A2, A3, A4, RArgs...
+                >
+            );
+        
+        fdn::tuple<RArgs* ...> rargs{ rest_args... };
+        
+        const auto tr =
+            x86_64_context_policy_base::cond_swap_context_void(
                 { ctx.p }, func, arg1, arg2, arg3, arg4, &rargs
             );
         
