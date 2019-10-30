@@ -135,10 +135,10 @@ private:
                     proxy_request_state_type::waiting
                 ,   ult_itf_type::memory_order_relaxed
                 );
-                return { is_executed, &proxy_req_ptr->sth };
+                return execute_imm_result{ is_executed, &proxy_req_ptr->sth };
             }
             else {
-                return { is_executed, nullptr };
+                return execute_imm_result{ is_executed, nullptr };
             }
         }
     };
@@ -515,7 +515,7 @@ private:
         using fdn::get;
         MEFDN_ASSERT(get<1>(ret) == nullptr);
         
-        return { get<0>(ret), suspended_thread_type() };
+        return del_exec_result{ get<0>(ret), suspended_thread_type() };
     }
     
     using do_progress_result = typename consumer_type::do_progress_result;

@@ -221,7 +221,7 @@ private:
                 pr_ep.increment_ongoing();
             }
             
-            return {
+            return execute_imm_result{
                 st != UCS_ERR_NO_RESOURCE
             ,   nullptr // TODO ?
             };
@@ -277,7 +277,7 @@ private:
             
             *ret_st = st;
             
-            return { true, nullptr };
+            return execute_imm_result{ true, nullptr };
         }
     };
     
@@ -301,7 +301,7 @@ private:
             
             *ret_st = st;
             
-            return { true, nullptr };
+            return execute_imm_result{ true, nullptr };
         }
     };
     
@@ -444,7 +444,7 @@ private:
             }
             
             using fdn::get;
-            return { get<0>(ret), suspended_thread_type() };
+            return del_exec_result{ get<0>(ret), suspended_thread_type() };
         }
     };
     
