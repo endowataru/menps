@@ -72,7 +72,6 @@ private:
             
             // It is not allowed to do a context switch inside Func.
             wk.check_cur_worker();
-            // Switch to the popped thread.
             return wk;
         }
     };
@@ -258,7 +257,6 @@ private:
             
             // It is not allowed to do a context switch inside Func.
             wk.check_cur_worker();
-            // Switch to the popped thread.
             return wk;
         }
     };

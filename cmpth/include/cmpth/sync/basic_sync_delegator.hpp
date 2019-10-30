@@ -104,6 +104,10 @@ public:
             this->is_executed_ = false;
             
             if (auto sth = fdn::move(next_head->sth)) {
+                CMPTH_P_LOG_DEBUG(P,
+                    "Finish unlocking delegator by awaking next thread.", 0
+                );
+                
                 if (P::prefer_execute_critical) {
                     // Enter the succeeding next thread immediately.
                     sth.enter();
@@ -113,16 +117,12 @@ public:
                     sth.notify();
                 }
                 
-                CMPTH_P_LOG_DEBUG(P,
-                    "Finished unlocking delegator by awaking next thread.", 0
-                );
-                
                 return;
             }
         }
         
         CMPTH_P_LOG_DEBUG(P,
-            "Finished unlocking delegator by awaking helper thread.", 0
+            "Finish unlocking delegator by awaking helper thread.", 0
         );
         
         // Awake the helper thread.
@@ -167,19 +167,19 @@ public:
             this->is_executed_ = false;
             
             if (auto sth = fdn::move(next_head->sth)) {
+                CMPTH_P_LOG_DEBUG(P,
+                    "Finish unlocking delegator by swapping with next thread.", 0
+                );
+                
                 // Enter the next thread immediately.
                 wait_sth.swap(sth);
-                
-                CMPTH_P_LOG_DEBUG(P,
-                    "Finished unlocking delegator by awaking next thread.", 0
-                );
                 
                 return;
             }
         }
         
         CMPTH_P_LOG_DEBUG(P,
-            "Finished unlocking delegator by awaking helper thread.", 0
+            "Finished unlocking delegator by swapping with helper thread.", 0
         );
         
         // Awake the helper thread.
@@ -203,6 +203,10 @@ private:
                 return true;
             }
             else {
+                CMPTH_P_LOG_DEBUG(P
+                ,   "Failed to unlock MCS delegator in try_unlock_functor.", 1
+                ,   "head", head
+                );
                 // Reset this flag.
                 *is_unlocked = false;
                 return false;
@@ -376,6 +380,10 @@ private:
         if (!is_active && is_executed) {
             if (awake_sth) {
                 if (this->queue_.is_unlockable(head)) {
+                    CMPTH_P_LOG_DEBUG(P,
+                        "Try to unlock delegator thread on top of another continuation.", 1
+                    ,   "head", head
+                    );
                     // The progress is disabled.
                     // Try to unlock the mutex to suspend.
                     bool is_unlocked = true;
@@ -390,6 +398,10 @@ private:
                 }
             }
             else {
+                CMPTH_P_LOG_DEBUG(P,
+                    "Try to unlock delegator thread on top of scheduler context.", 1
+                ,   "head", head
+                );
                 this->try_unlock_and_wait(this->con_sth_, head);
                 // Note: Ignore this result.
             }
