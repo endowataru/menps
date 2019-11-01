@@ -99,3 +99,23 @@ if (${CMPTH_ENABLE_MLOG})
 endif()
 
 
+if (${CMPTH_ENABLE_MTH}) # TODO
+    file(GLOB example_files example/*.cpp)
+    foreach(example_path IN LISTS example_files)
+        get_filename_component(example_name ${example_path} NAME_WE)
+        add_executable(cmpth-${example_name}
+            ${example_path}
+        )
+        target_link_libraries(cmpth-${example_name}
+            cmpth
+            cmpth-options
+            doctest
+        )
+        set_target_properties(cmpth-${example_name} PROPERTIES
+            CXX_STANDARD 11
+            CXX_EXTENSIONS OFF
+            CXX_STANDARD_REQUIRED ON)
+    endforeach()
+endif()
+
+
