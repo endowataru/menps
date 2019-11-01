@@ -13,11 +13,27 @@
 #include <iterator>
 #include <array>
 
+// Macros
+
 #if !defined(NDEBUG) && !defined(CMPTH_DEBUG)
     #define CMPTH_DEBUG
 #endif
 
-// Macros
+#if __cplusplus < 201103L
+    #error "ComposableThreads requires C++11 or above."
+#endif
+
+#if __cplusplus >= 201402L
+    #define CMPTH_USE_CXX14 1
+#else
+    #define CMPTH_USE_CXX14 0
+#endif
+
+#if __cplusplus >= 201703L
+    #define CMPTH_USE_CXX17 1
+#else
+    #define CMPTH_USE_CXX17 0
+#endif
 
 #define CMPTH_DEFINE_DERIVED(P) \
     private: \
@@ -155,12 +171,20 @@ using make_index_sequence = make_integer_sequence<fdn::size_t, N>;
 
 // <functional>
 
+// invoke()
+// See also: https://stackoverflow.com/questions/32918679/in-c-11-how-to-invoke-an-arbitrary-callable-object
+
+#if CMPTH_USE_CXX17
+using std::invoke;
+
+#else
 template <typename Func, typename... Args>
-inline constexpr auto invoke(Func&& func, Args&&... args)
-    -> decltype(fdn::forward<Func>(func)(fdn::forward<Args>(args)...))
+inline constexpr auto invoke(Func func, Args&&... args)
+    -> decltype(fdn::ref(func)(fdn::forward<Args>(args)...))
 {
-    return fdn::forward<Func>(func)(fdn::forward<Args>(args)...);
+    return fdn::ref(func)(fdn::forward<Args>(args)...);
 }
+#endif
 
 // <tuple>
 
@@ -171,6 +195,10 @@ using std::tuple_size;
 using std::tuple_cat;
 using std::get;
 
+#if CMPTH_USE_CXX14
+using std::apply;
+
+#else
 namespace detail {
 
 template <typename Func, typename Tuple, fdn::size_t... Is>
@@ -210,6 +238,7 @@ inline constexpr auto apply(Func&& func, Tuple&& t)
         >{}
     );
 }
+#endif
 
 
 // Added functions
