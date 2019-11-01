@@ -218,6 +218,8 @@ private:
     worker_num_type     wk_num_ = P::invalid_worker_num;
     worker_deque_type   wd_;
     continuation_type   root_cont_;
+
+    fdn::byte pad_[CMPTH_CACHE_LINE_SIZE * 2]; // TODO
 };
 
 } // namespace cmpth

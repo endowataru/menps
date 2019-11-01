@@ -221,6 +221,8 @@ private:
     size_type                           n_wks_ = 0;
     fdn::oa_unique_ptr<wk_entry []>     wes_;
     fdn::oa_unique_ptr<pro_entry []>    pes_;
+    
+    fdn::byte pad_[CMPTH_CACHE_LINE_SIZE * 2]; // TODO
 };
 
 } // namespace cmpth
