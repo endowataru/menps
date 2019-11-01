@@ -228,6 +228,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         # Disable some warnings
         -Wno-long-long
         -Wno-shadow # ICC cannot disable this warning in template classes/functions
+        -wd2196 # Disable warning #2196: routine is both "inline" and "noinline"
     )
     target_compile_definitions(mefdn-options INTERFACE
         # TODO: workaround to avoid compilation error of fmtlib on ICC
