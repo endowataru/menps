@@ -136,6 +136,7 @@ private:
     
 public:
     using worker_type = typename lv4_itf_type::worker;
+    using tls_map_type = typename lv4_itf_type::tls_map;
     using tls_key_type = typename lv4_itf_type::tls_key;
     
     static tls_key_pool_type& get_tls_key_pool() noexcept {

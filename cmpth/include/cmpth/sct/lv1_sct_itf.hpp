@@ -33,7 +33,7 @@ public:
     void*               stk_top;
     void*               stk_bottom;
     context_type        ctx;
-    tls_map_type        tls;
+    tls_map_type*       tls;
 };
 
 template <typename P>
@@ -89,6 +89,7 @@ public:
     using cond_transfer     = typename lv1_policy::cond_transfer_type;
     
     using base_ult_itf      = typename lv1_policy::base_ult_itf_type;
+    using tls_map           = typename lv1_policy::tls_map_type;
     using tls_key           = typename lv1_policy::tls_key_type;
     
     using assert_policy     = typename lv1_policy::assert_policy_type;

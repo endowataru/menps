@@ -63,6 +63,7 @@ template <typename P, typename VarP>
 class basic_map_tls_thread_specific
 {
     using worker_type = typename P::worker_type;
+    using tls_map_type = typename P::tls_map_type;
     using tls_key_type = typename P::tls_key_type;
     
     using value_type = typename VarP::value_type;
@@ -81,26 +82,31 @@ public:
     basic_map_tls_thread_specific(const basic_map_tls_thread_specific&) = delete;
     basic_map_tls_thread_specific& operator = (const basic_map_tls_thread_specific&) = delete;
     
-    value_type* get() const
-    {
-        auto& wk = worker_type::get_cur_worker();
-        const auto tk = wk.get_cur_task_ref();
-        const auto desc = tk.get_task_desc();
-        
-        const auto ret = desc->tls.get(this->key_);
+    value_type* get() const {
+        auto& tls = this->get_tls_map();
+        const auto ret = tls.get(this->key_);
         return static_cast<value_type*>(ret);
     }
     
-    void set(value_type* const p) const
-    {
+    void set(value_type* const p) const {
+        auto& tls = this->get_tls_map();
+        tls.set(this->key_, p);
+    }
+    
+private:
+    tls_map_type& get_tls_map() const {
         auto& wk = worker_type::get_cur_worker();
         const auto tk = wk.get_cur_task_ref();
         const auto desc = tk.get_task_desc();
         
-        desc->tls.set(this->key_, p);
+        auto tls = desc->tls;
+        if (tls == nullptr) {
+            tls = new tls_map_type;
+            desc->tls = tls;
+        }
+        return *tls;
     }
     
-private:
     tls_key_type key_;
 };
 

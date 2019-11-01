@@ -22,6 +22,9 @@ public:
     template <typename Node>
     static void destroy(Node* const n)
     {
+        // Delete the TLS map.
+        delete n->elem.tls;
+
         delete [] reinterpret_cast<fdn::byte*>(n->elem.stk_top);
     }
 };
