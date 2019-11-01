@@ -106,6 +106,15 @@ test_openmpi_mth_relwithdebinfo_job:
         - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
 
+# medsm3
+
+test_medsm3_ctmth_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=CTMTH -D MEOMP_ENABLE_MEDSM3=ON
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
 # UCT
 
 compile_uct_debug_job:
