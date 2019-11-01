@@ -112,6 +112,8 @@ using std::is_pointer;
 template <bool B, typename T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
 
+template <typename T>
+using make_signed_t = typename std::make_signed<T>::type;
 
 
 template <typename T, T... Is>

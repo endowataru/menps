@@ -12,6 +12,7 @@
 #include <cmpth/pool/basic_ext_return_pool.hpp>
 #include <cmpth/sync/basic_spinlock.hpp>
 #include <cmpth/sct/sct_worker_deque.hpp>
+#include <cmpth/wd/chaselev_worker_deque.hpp>
 #include <unordered_map>
 
 #include <cmpth/ult_tag.hpp>
@@ -40,6 +41,26 @@ using def_lv1_sct_itf = lv1_sct_itf<def_lv1_sct_policy>;
 
 // level 2: worker deque
 
+#if 1
+struct def_sct_worker_deque_policy
+    : def_sct_common_policy
+{
+    using continuation_type = def_lv1_sct_itf::continuation;
+    using unique_task_ptr_type = def_lv1_sct_itf::unique_task_ptr;
+    using task_desc_type = def_lv1_sct_itf::task_desc;
+    static fdn::size_t get_default_deque_size() noexcept {
+        return constants::default_worker_deque_size;
+    }
+};
+
+struct def_lv2_sct_itf
+    : def_lv1_sct_itf
+{
+    using worker_deque = chaselev_worker_deque<def_sct_worker_deque_policy>;
+};
+
+#else
+
 struct def_sct_worker_deque_policy
     : def_sct_common_policy
 {
@@ -52,6 +73,7 @@ struct def_lv2_sct_itf
 {
     using worker_deque = sct_worker_deque<def_sct_worker_deque_policy>;
 };
+#endif
 
 // level 3: worker
 
