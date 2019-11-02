@@ -25,9 +25,9 @@ class basic_mpi_rma
     
     using ult_itf_type = typename P::ult_itf_type;
     
-    using request_type = typename P::request_type;
-    
 public:
+    using request_type = typename P::request_type;
+
     using proc_id_type = typename P::proc_id_type;
     using size_type = typename P::size_type;
     

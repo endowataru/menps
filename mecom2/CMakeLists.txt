@@ -54,3 +54,18 @@ add_test(
 set_tests_properties(mecom2-test PROPERTIES
     ENVIRONMENT "MPIEXEC_EXECUTABLE=${MPIEXEC_EXECUTABLE};MPIEXEC_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG};MPIEXEC_PREFLAGS=${MEFDN_MPIEXEC_PREFLAGS};MPIEXEC_POSTFLAGS=${MPIEXEC_POSTFLAGS}")
 
+
+file(GLOB example_files example/*.cpp)
+foreach(example_path IN LISTS example_files)
+    get_filename_component(example_name ${example_path} NAME_WE)
+    add_executable(mecom2-${example_name}
+        ${example_path}
+    )
+    target_link_libraries(mecom2-${example_name}
+        PUBLIC mecom2
+        PRIVATE mefdn-options
+    )
+endforeach()
+
+
+
