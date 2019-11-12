@@ -141,7 +141,7 @@ private:
         
         auto fast_rel_ret = this->rd_ctrl().try_fast_release(rd_ts_st, blk_llk);
         if (!fast_rel_ret.needs_release) {
-            return { false, false, false, {} };
+            return { false, false, false, wn_entry_type() }; // Note: Use () for GCC 4.8
         }
         else if (fast_rel_ret.is_released) {
             CMPTH_P_LOG_INFO(P,

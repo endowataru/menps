@@ -29,7 +29,7 @@ public:
     ,   home_ctrl_type&         home_ctrl
     ) noexcept
         : base{blk_llk, owner}
-        , ts_intvl_{ts_intvl}
+        , ts_intvl_(ts_intvl) // Note: {} cannot be used in GCC 4.8?
         , home_ctrl_{&home_ctrl}
     { }
 

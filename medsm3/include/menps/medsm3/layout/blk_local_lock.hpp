@@ -28,7 +28,7 @@ public:
     ,   const lock_tag_type     lk_tag
     )
         : com_(com)
-        , blk_id_{blk_id}
+        , blk_id_(blk_id) // Note: {} cannot be used in GCC 4.8?
         , blk_ulk_{fdn::move(blk_ulk)}
         , blk_size_{blk_size}
         , lk_tag_{lk_tag}

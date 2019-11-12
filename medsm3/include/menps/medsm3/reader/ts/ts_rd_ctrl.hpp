@@ -109,11 +109,11 @@ public:
     {
         const auto chk_rel_ret = this->state_data_ctrl().check_release(blk_llk);
         if (!chk_rel_ret.needs_release) {
-            return { false, false, {} };
+            return { false, false, wn_entry_type() }; // Note: Use () for GCC 4.8
         }
 
         if (!(chk_rel_ret.is_fast_released && this->home_ctrl().check_owned(blk_llk))) {
-            return { true, false, {} };
+            return { true, false, wn_entry_type() }; // Note: Use () for GCC 4.8
         }
 
         auto& com = blk_llk.get_com_itf();
@@ -245,7 +245,7 @@ private:
             return { true, up_ret.new_wn.ts_intvl.rd_ts };
         }
         else {
-            return { false, {} };
+            return { false, rd_ts_type() }; // Note: Use () for GCC 4.8
         }
     }
 
