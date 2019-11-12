@@ -967,6 +967,19 @@ inline mefdn::size_t get_heap_size()
     return ret;
 }
 
+inline mefdn::size_t get_heap_block_size()
+{
+    mefdn::size_t ret = MEOMP_HEAP_BLOCK_SIZE;
+    if (const auto str = std::getenv("MEOMP_HEAP_BLOCK_SIZE")) {
+        // Note: Use long long for large heap sizes.
+        ret = static_cast<mefdn::size_t>(std::atoll(str));
+    }
+    if (ret % 0x1000 != 0 || ret <= 0) {
+        throw std::invalid_argument("Invalid MEOMP_HEAP_BLOCK_SIZE");
+    }
+    return ret;
+}
+
 } // unnamed namespace
 
 int main(int argc, char* argv[])
@@ -1028,7 +1041,8 @@ int main(int argc, char* argv[])
     g_stack_size = stack_size;
     
     g_heap_size = get_heap_size();
-    g_heap_ptr = df.init_heap_seg(g_heap_size, MEOMP_HEAP_BLOCK_SIZE);
+    const auto heap_block_size = get_heap_block_size();
+    g_heap_ptr = df.init_heap_seg(g_heap_size, heap_block_size);
     
     if (coll.this_proc_id() == 0) {
         g_critical_lock = static_cast<omp_lock_t*>(df.allocate(sizeof(omp_lock_t)));
