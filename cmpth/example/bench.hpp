@@ -48,7 +48,7 @@ inline void exec_bench_impl(const char* const ult_itf_name, const int argc, char
  
     const char * file_path = getenv("BENCH_OUTPUT_PATH");
     if (file_path == NULL) { file_path = "output.yaml"; }
-    std::ofstream ofs{file_path, std::ios::out | std::ios::app};   
+    std::ofstream ofs{file_path, std::ios::out | std::ios::app};
     ofs << str;
 }
 
