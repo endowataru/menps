@@ -265,56 +265,32 @@ using worker_base_type = menps::meomp::my_worker_base;
 using child_worker_type = menps::meomp::my_child_worker;
 
 extern "C"
-int omp_get_thread_num()
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
-{
+int omp_get_thread_num() noexcept {
     return worker_base_type::get_cur_worker().get_thread_num();
 }
 
 extern "C"
-int omp_get_thread_num_()
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
-{
+int omp_get_thread_num_() noexcept {
     return omp_get_thread_num();
 }
 
 extern "C"
-int omp_get_num_threads()
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
-{
+int omp_get_num_threads() noexcept {
     return worker_base_type::get_cur_worker().get_num_threads();
 }
 
 extern "C"
-int omp_get_num_threads_()
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
-{
+int omp_get_num_threads_() noexcept {
     return omp_get_num_threads();
 }
 
 extern "C"
-int omp_get_max_threads()
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
-{
+int omp_get_max_threads() noexcept {
     return g_coll->get_num_procs() * meomp::my_dist_worker::get_threads_per_proc();
 }
 
 extern "C"
-int omp_get_max_threads_()
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
-{
+int omp_get_max_threads_() noexcept {
     return omp_get_max_threads();
 }
 
@@ -339,20 +315,12 @@ int meomp_get_local_thread_num() {
 }
 
 extern "C"
-double omp_get_wtime()
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
-{
+double omp_get_wtime() noexcept {
     return menps::mefdn::get_current_sec();
 }
 
 extern "C"
-double omp_get_wtime_()
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
-{
+double omp_get_wtime_() noexcept {
     return omp_get_wtime();
 }
 
@@ -424,10 +392,7 @@ omp_lock_t;
 #endif
 
 extern "C"
-void omp_set_lock(omp_lock_t* const lk)
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
+void omp_set_lock(omp_lock_t* const lk) noexcept
 {
     #ifdef MEOMP_USE_MEDSM_MUTEX
     const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
@@ -449,10 +414,7 @@ void omp_set_lock(omp_lock_t* const lk)
     #endif
 }
 extern "C"
-void omp_unset_lock(omp_lock_t* const lk)
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
+void omp_unset_lock(omp_lock_t* const lk) noexcept
 {
     #ifdef MEOMP_USE_MEDSM_MUTEX
     const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
@@ -466,10 +428,7 @@ void omp_unset_lock(omp_lock_t* const lk)
     #endif
 }
 extern "C"
-void omp_init_lock(omp_lock_t* const lk)
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
+void omp_init_lock(omp_lock_t* const lk) noexcept
 {
     #ifdef MEOMP_USE_MEDSM_MUTEX
     const auto mtx_id_ptr = reinterpret_cast<space_t::mutex_id_t*>(lk);
@@ -483,10 +442,7 @@ void omp_init_lock(omp_lock_t* const lk)
     #endif
 }
 extern "C"
-void omp_destroy_lock(omp_lock_t* const lk)
-    #ifdef MEFDN_COMPILER_INTEL
-    noexcept
-    #endif
+void omp_destroy_lock(omp_lock_t* const lk) noexcept
 {
     #ifdef MEOMP_USE_MEDSM_MUTEX
     const auto mtx_id = *reinterpret_cast<space_t::mutex_id_t*>(lk);
@@ -528,6 +484,7 @@ struct ident;
 
 using kmp_int32 = mefdn::int32_t;
 using kmp_int64 = mefdn::int64_t;
+using kmp_uint64 = mefdn::uint64_t;
 
 using kmpc_micro = void (*)(kmp_int32* , kmp_int32*, ...);
 using microtask_t = void (*)(int*, int*, ...);
@@ -819,7 +776,18 @@ void __kmpc_for_static_init_4(
     kmpc_for_static_init(loc, gtid, schedtype, plastiter, plower, pupper, pstride, incr, chunk);
 }
 
-
+extern "C"
+void __kmpc_for_static_init_8(
+    ident* const        loc
+,   const kmp_int32     gtid
+,   const kmp_int32     schedtype
+,   kmp_int32* const    plastiter
+,   kmp_int64* const    plower
+,   kmp_int64* const    pupper
+,   kmp_int64* const    pstride
+,   const kmp_int64     incr
+,   const kmp_int64     chunk
+);
 extern "C"
 void __kmpc_for_static_init_8(
     ident* const        loc
@@ -834,6 +802,34 @@ void __kmpc_for_static_init_8(
 ) {
     kmpc_for_static_init(loc, gtid, schedtype, plastiter, plower, pupper, pstride, incr, chunk);
 }
+
+extern "C"
+void __kmpc_for_static_init_8u(
+    ident* const        loc
+,   const kmp_int32     gtid
+,   const kmp_int32     schedtype
+,   kmp_int32* const    plastiter
+,   kmp_uint64* const   plower
+,   kmp_uint64* const   pupper
+,   kmp_int64* const    pstride
+,   const kmp_int64     incr
+,   const kmp_int64     chunk
+);
+extern "C"
+void __kmpc_for_static_init_8u(
+    ident* const        loc
+,   const kmp_int32     gtid
+,   const kmp_int32     schedtype
+,   kmp_int32* const    plastiter
+,   kmp_uint64* const   plower
+,   kmp_uint64* const   pupper
+,   kmp_int64* const    pstride
+,   const kmp_int64     incr
+,   const kmp_int64     chunk
+) {
+    kmpc_for_static_init(loc, gtid, schedtype, plastiter, plower, pupper, pstride, incr, chunk);
+}
+
 
 
 extern "C"
@@ -878,6 +874,16 @@ extern "C"
 void __kmpc_critical(ident* loc, kmp_int32 global_tid, kmp_critical_name* crit);
 extern "C"
 void __kmpc_critical(ident* /*loc*/, kmp_int32 /*global_tid*/, kmp_critical_name* /*crit*/) {
+    GOMP_critical_start();
+}
+
+extern "C"
+void __kmpc_critical_with_hint(ident* loc, kmp_int32 global_tid,
+    kmp_critical_name* crit, uint32_t hint);
+extern "C"
+void __kmpc_critical_with_hint(ident* /*loc*/, kmp_int32 /*global_tid*/,
+    kmp_critical_name* /*crit*/, uint32_t /*hint*/)
+{
     GOMP_critical_start();
 }
 
