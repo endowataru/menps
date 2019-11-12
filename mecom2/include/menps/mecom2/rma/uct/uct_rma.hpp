@@ -360,6 +360,9 @@ struct uct_rma_resource {
         //iface_conf.modify("IB_TX_QUEUE_LEN", "4096");
         
         uct_iface_params_t iface_params = uct_iface_params_t();
+        iface_params.field_mask = UCT_IFACE_PARAM_FIELD_OPEN_MODE |
+            UCT_IFACE_PARAM_FIELD_DEVICE | UCT_IFACE_PARAM_FIELD_STATS_ROOT |
+            UCT_IFACE_PARAM_FIELD_RX_HEADROOM;
         iface_params.open_mode = UCT_IFACE_OPEN_MODE_DEVICE;
         iface_params.mode.device.tl_name = tl_name;
         iface_params.mode.device.dev_name = dev_name;
