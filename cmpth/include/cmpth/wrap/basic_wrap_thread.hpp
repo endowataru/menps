@@ -46,16 +46,15 @@ private:
                 delete self;
             }
             catch (std::exception& e) {
-                CMPTH_P_LOG_FATAL(P,
-                    "An exception thrown in thread::thread()", 1,
-                    "what", e.what()
+                CMPTH_P_LOG_FATAL(P
+                ,   "An exception thrown in thread::thread()"
+                ,   "what", e.what()
                 );
                 fdn::terminate();
             }
             catch (...) {
                 CMPTH_P_LOG_FATAL(P,
-                    "Unknown exception thrown in thread::thread()", 0
-                );
+                    "Unknown exception thrown in thread::thread()");
                 fdn::terminate();
             }
             return nullptr;

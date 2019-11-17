@@ -71,7 +71,7 @@ private:
                 return fdn::apply(Func(), self.args);
             }
             catch (...) {
-                CMPTH_P_LOG_FATAL(P, "An exception is thrown in myth_uncond_wait_with()!", 0);
+                CMPTH_P_LOG_FATAL(P, "An exception is thrown in myth_uncond_wait_with()!");
                 std::abort();
             }
         }
@@ -142,7 +142,7 @@ private:
                 return fdn::apply(Func(), self.args);
             }
             catch (...) {
-                CMPTH_P_LOG_FATAL(P, "An exception is thrown in myth_uncond_swap_with()!", 0);
+                CMPTH_P_LOG_FATAL(P, "An exception is thrown in myth_uncond_swap_with()!");
                 std::abort();
             }
         }

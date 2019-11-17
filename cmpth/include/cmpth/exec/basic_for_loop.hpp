@@ -96,14 +96,13 @@ private:
         }
         catch (std::exception& e) {
             CMPTH_P_LOG_FATAL(P,
-                "msg:An exception thrown in mth::for_loop(par)!\t"
-            ,   1
+                "An exception thrown in mth::for_loop(par)!\t"
             ,   "what", e.what()
             );
             throw;
         }
         catch (...) {
-            CMPTH_P_LOG_FATAL(P, "msg:An unknown exception thrown in mth::for_loop(par)!", 0);
+            CMPTH_P_LOG_FATAL(P, "An unknown exception thrown in mth::for_loop(par)!");
             throw;
         }
     }

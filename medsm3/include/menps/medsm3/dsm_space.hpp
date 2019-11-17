@@ -98,11 +98,13 @@ protected:
 public:
     virtual void barrier() override
     {
-        CMPTH_P_LOG_INFO(P, "msg:Entering DSM barrier.", 0);
+        CMPTH_P_LOG_INFO(P, "Entering DSM barrier.");
+
         auto sig = this->wr_ctrl().fence_release();
         auto sig_set = this->sync_tbl().exchange_sig(sig);
         this->rd_ctrl().fence_acquire_all(sig_set);
-        CMPTH_P_LOG_INFO(P, "msg:Exiting DSM barrier.", 0);
+
+        CMPTH_P_LOG_INFO(P, "Exiting DSM barrier.");
     }
 
     virtual mtx_id_type allocate_mutex() override {

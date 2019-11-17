@@ -153,7 +153,7 @@ private:
             // Func requests this function to switch to next_cont.
             // Otherwise, it should return back to the original context.
             const bool flag = !prev_cont;
-            CMPTH_P_LOG_VERBOSE(P, "Return from cond_suspend.", 1, "flag", flag);
+            CMPTH_P_LOG_VERBOSE(P, "Return from cond_suspend.", "flag", flag);
             if (!flag) {
                 // Revive the original continuation.
                 *next_cont = wk_2.cur_tk_.revive_suspended(fdn::move(prev_cont));

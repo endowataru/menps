@@ -65,7 +65,6 @@ struct log_aspect_base
         const log_filter_flag_t flag
     ,   const log_level_t       level
     ,   const char* const       msg
-    ,   int                     /*num_params*/
     ,   Rest&&...               rest
     ) {
         if ((flag & get_filter_flag()) == 0) { return; }
@@ -123,13 +122,10 @@ struct log_aspect
     static void print_log(
         const log_level_t       level
     ,   const char* const       msg
-    ,   int                     num_params
     ,   Rest&&...               rest
     ) {
         log_aspect_base<IsEnabled>::print_log(
-            Flag, level, msg, num_params,
-            fdn::forward<Rest>(rest)...
-        );
+            Flag, level, msg, fdn::forward<Rest>(rest)...);
     }
 };
 

@@ -26,7 +26,7 @@ public:
     ,   blk_unique_lock_type    blk_ulk
     ,   const fdn::size_t       blk_size
     ,   const lock_tag_type     lk_tag
-    )
+    ) noexcept
         : com_(com)
         , blk_id_(blk_id) // Note: {} cannot be used in GCC 4.8?
         , blk_ulk_{fdn::move(blk_ulk)}
@@ -37,7 +37,26 @@ public:
         CMPTH_P_ASSERT(P, this->blk_ulk_.owns_lock());
         CMPTH_P_ASSERT(P, this->blk_size_ > 0);
 
-        CMPTH_P_LOG_DEBUG(P, "msg:Locked block.", 0);
+        CMPTH_P_LOG_DEBUG(P
+        ,   "Locked block."
+        ,   "blk_id", blk_id.to_str()
+        ,   "blk_size", blk_size
+        ,   "lock_tag", lk_tag
+        );
+    }
+
+    blk_local_lock(blk_local_lock&&) noexcept = default;
+    //blk_local_lock& operator = (blk_local_lock&&) noexcept = default;
+
+    ~blk_local_lock() {
+        if (this->blk_ulk_.owns_lock()) {
+            CMPTH_P_LOG_DEBUG(P
+            ,   "Unlock block."
+            ,   "blk_id", this->blk_id().to_str()
+            ,   "blk_size", this->blk_size()
+            ,   "lock_tag", this->lock_tag()
+            );
+        }
     }
 
     com_itf_type& get_com_itf() { return this->com_; }

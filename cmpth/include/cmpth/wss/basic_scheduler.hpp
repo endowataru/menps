@@ -43,7 +43,10 @@ private:
                 }
             }
             
-            CMPTH_P_LOG_DEBUG(P, "Execute task.", 1, "wk_num", wk_num);
+            CMPTH_P_LOG_DEBUG(P
+            ,   "Execute task."
+            ,   "wk_num", wk_num
+            );
             
             wk.execute(fdn::move(cont));
         }

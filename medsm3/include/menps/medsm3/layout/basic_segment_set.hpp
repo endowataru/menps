@@ -37,8 +37,7 @@ public:
         // Generate the next segment ID.
         const auto seg_id = this->new_seg_id_++;
         CMPTH_P_LOG_VERBOSE(P
-        ,   "msg:Make new segment."
-        ,   3
+        ,   "Make new segment."
         ,   "seg_id", seg_id
         ,   "seg_size", seg_size
         ,   "blk_size", blk_size
@@ -62,8 +61,7 @@ public:
 
         const seg_id_type seg_id = 1;
         CMPTH_P_LOG_VERBOSE(P,
-            "msg:Make global variable segment."
-        ,   3
+            "Make global variable segment."
         ,   "seg_size", seg_size
         ,   "blk_size", blk_size
         ,   "start_ptr", start_ptr

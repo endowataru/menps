@@ -30,7 +30,7 @@ public:
         
         if (tail - head >= ((cap - 1) << 1)) {
             CMPTH_P_LOG_DEBUG(P,
-                "Failed to lock full ring buffer core.", 2
+                "Failed to lock full ring buffer core."
             ,   "head", head
             ,   "tail", tail
             );
@@ -51,7 +51,7 @@ public:
             const auto cur_tail_idx = (new_tail >> 1) % cap;
             
             CMPTH_P_LOG_DEBUG(P,
-                "Successfully locked or enqueued to ring buffer core.", 5
+                "Successfully locked or enqueued to ring buffer core."
             ,   "head", head
             ,   "tail", tail
             ,   "prev_tail_idx", prev_tail_idx
@@ -62,7 +62,7 @@ public:
         }
         else {
             CMPTH_P_LOG_DEBUG(P,
-                "Failed to exchange ring buffer counter core.", 3
+                "Failed to exchange ring buffer counter core."
             ,   "head", head
             ,   "tail", tail
             ,   "new_tail", new_tail
@@ -88,7 +88,7 @@ public:
 
         if (success) {
             CMPTH_P_LOG_DEBUG(P,
-                "Successfully unlocked ring buffer core.", 4
+                "Successfully unlocked ring buffer core."
             ,   "head", head
             ,   "tail", tail
             ,   "new_tail", new_tail
@@ -96,7 +96,7 @@ public:
         }
         else {
             CMPTH_P_LOG_DEBUG(P,
-                "Failed to unlock ring buffer core.", 4
+                "Failed to unlock ring buffer core."
             ,   "head", head
             ,   "tail", tail
             ,   "new_tail", new_tail
@@ -127,7 +127,7 @@ public:
         const auto next_head = head + 2;
         
         CMPTH_P_LOG_DEBUG(P,
-            "Following head of ring buffer core.", 2
+            "Following head of ring buffer core."
         ,   "head", head
         ,   "next_head", next_head
         );
@@ -145,7 +145,7 @@ public:
         const auto ret = (head | 1) == tail;
         
         CMPTH_P_LOG_DEBUG(P,
-            "Checking whether ring buffer is unlockable.", 3
+            "Checking whether ring buffer is unlockable."
         ,   "head", head
         ,   "tail", tail
         ,   "is_unlockable", ret

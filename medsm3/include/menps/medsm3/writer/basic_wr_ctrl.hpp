@@ -53,7 +53,7 @@ public:
 
     sig_buffer_type fence_release()
     {
-        CMPTH_P_LOG_INFO(P, "msg:Start release fence.", 0);
+        CMPTH_P_LOG_INFO(P, "Start release fence.");
 
         auto& self = this->derived();
 
@@ -89,7 +89,7 @@ public:
             this->wr_set_.finish_release();
         }
 
-        CMPTH_P_LOG_INFO(P, "msg:Finish release fence.", 0);
+        CMPTH_P_LOG_INFO(P, "Finish release fence.");
         
         return this->rel_sig_.get_sig();
     }
@@ -144,9 +144,8 @@ private:
             return { false, false, false, wn_entry_type() }; // Note: Use () for GCC 4.8
         }
         else if (fast_rel_ret.is_released) {
-            CMPTH_P_LOG_INFO(P,
-                "Fast release."
-            ,   4
+            CMPTH_P_LOG_INFO(P
+            ,   "Fast release."
             ,   "blk_id", blk_id.to_str()
             ,   "home_proc", fast_rel_ret.new_wn.home_proc
             ,   "wr_ts", fast_rel_ret.new_wn.ts_intvl.wr_ts
@@ -157,15 +156,13 @@ private:
         else {
             CMPTH_P_LOG_INFO(P,
                 "Start slow release."
-            ,   1
             ,   "blk_id", blk_id.to_str()
             );
 
             auto up_ret = this->rd_ctrl().update_global(rd_ts_st, blk_llk);
 
-            CMPTH_P_LOG_INFO(P,
-                "Finish slow release."
-            ,   6
+            CMPTH_P_LOG_INFO(P
+            ,   "Finish slow release."
             ,   "blk_id", blk_id.to_str()
             ,   "home_proc", up_ret.new_wn.home_proc
             ,   "wr_ts", up_ret.new_wn.ts_intvl.wr_ts

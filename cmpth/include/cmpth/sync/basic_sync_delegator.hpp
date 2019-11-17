@@ -59,7 +59,7 @@ private:
 public:
     void lock()
     {
-        CMPTH_P_LOG_DEBUG(P,"Start locking delegator.", 0);
+        CMPTH_P_LOG_DEBUG(P, "Start locking delegator.");
         
         this->lock_or_delegate(on_lock_delegate());
     }
@@ -79,7 +79,7 @@ public:
 
         const bool is_active = this->con_->is_active();
         CMPTH_P_LOG_DEBUG(P,
-            "Start unlocking delegator.", 1
+            "Start unlocking delegator."
         ,   "is_active", is_active
         );
         
@@ -87,9 +87,7 @@ public:
         
         if (!is_active) {
             if (this->queue_.try_unlock(head)) {
-                CMPTH_P_LOG_DEBUG(P,
-                    "Finished unlocking delegator immediately.", 0
-                );
+                CMPTH_P_LOG_DEBUG(P, "Finished unlocking delegator immediately.");
                 return;
             }
         }
@@ -105,7 +103,7 @@ public:
             
             if (auto sth = fdn::move(next_head->sth)) {
                 CMPTH_P_LOG_DEBUG(P,
-                    "Finish unlocking delegator by awaking next thread.", 0
+                    "Finish unlocking delegator by awaking next thread."
                 );
                 
                 if (P::prefer_execute_critical) {
@@ -122,7 +120,7 @@ public:
         }
         
         CMPTH_P_LOG_DEBUG(P,
-            "Finish unlocking delegator by awaking helper thread.", 0
+            "Finish unlocking delegator by awaking helper thread."
         );
         
         // Awake the helper thread.
@@ -142,8 +140,8 @@ public:
         this->is_executed_ = true;
         
         const bool is_active = this->con_->is_active();
-        CMPTH_P_LOG_DEBUG(P,
-            "Start unlocking delegator.", 1
+        CMPTH_P_LOG_DEBUG(P
+        ,   "Start unlocking delegator."
         ,   "is_active", is_active
         );
         
@@ -152,8 +150,7 @@ public:
         if (!is_active) {
             if (this->try_unlock_and_wait(wait_sth, head)) {
                 CMPTH_P_LOG_DEBUG(P,
-                    "Finished unlocking delegator immediately.", 0
-                );
+                    "Finished unlocking delegator immediately.");
                 return;
             }
         }
@@ -168,8 +165,7 @@ public:
             
             if (auto sth = fdn::move(next_head->sth)) {
                 CMPTH_P_LOG_DEBUG(P,
-                    "Finish unlocking delegator by swapping with next thread.", 0
-                );
+                    "Finish unlocking delegator by swapping with next thread.");
                 
                 // Enter the next thread immediately.
                 wait_sth.swap(sth);
@@ -179,8 +175,7 @@ public:
         }
         
         CMPTH_P_LOG_DEBUG(P,
-            "Finished unlocking delegator by swapping with helper thread.", 0
-        );
+            "Finished unlocking delegator by swapping with helper thread.");
         
         // Awake the helper thread.
         // Prefer executing the succeeding critical sections now.
@@ -204,7 +199,7 @@ private:
             }
             else {
                 CMPTH_P_LOG_DEBUG(P
-                ,   "Failed to unlock MCS delegator in try_unlock_functor.", 1
+                ,   "Failed to unlock MCS delegator in try_unlock_functor."
                 ,   "head", head
                 );
                 // Reset this flag.
@@ -306,7 +301,7 @@ private:
         bool is_executed = this->is_executed_;
         
         CMPTH_P_LOG_DEBUG(P,
-            "Start consuming delegations.", 2
+            "Start consuming delegations."
         ,   "is_executed", is_executed
         );
         
@@ -344,7 +339,7 @@ private:
                 do_progress = !is_executed;
             }
             else {
-                CMPTH_P_LOG_DEBUG(P, "Awake next thread trying to lock delegator.", 0);
+                CMPTH_P_LOG_DEBUG(P, "Awake next thread trying to lock delegator.");
                 
                 // The next thread is trying to lock the mutex.
                 this->con_sth_.swap(head->sth);
@@ -368,7 +363,7 @@ private:
         const bool is_active = this->con_->is_active();
 
         CMPTH_P_LOG_DEBUG(P,
-            "Finish consuming delegations.", 3
+            "Finish consuming delegations."
         ,   "is_executed", is_executed
         ,   "is_active", is_active
         ,   "do_progress", do_progress
@@ -381,7 +376,7 @@ private:
             if (awake_sth) {
                 if (this->queue_.is_unlockable(head)) {
                     CMPTH_P_LOG_DEBUG(P,
-                        "Try to unlock delegator thread on top of another continuation.", 1
+                        "Try to unlock delegator thread on top of another continuation."
                     ,   "head", head
                     );
                     // The progress is disabled.
@@ -399,7 +394,7 @@ private:
             }
             else {
                 CMPTH_P_LOG_DEBUG(P,
-                    "Try to unlock delegator thread on top of scheduler context.", 1
+                    "Try to unlock delegator thread on top of scheduler context."
                 ,   "head", head
                 );
                 this->try_unlock_and_wait(this->con_sth_, head);

@@ -56,7 +56,6 @@ public:
         if (this->inv_ctrl().try_get_wn(rd_ts_st, blk_llk, &wn)) {
             CMPTH_P_LOG_INFO(P
             ,   "Start fast read."
-            ,   4
             ,   "blk_id", blk_llk.blk_id().to_str()
             ,   "home_proc", wn.home_proc
             ,   "wr_ts", wn.ts_intvl.wr_ts
@@ -69,7 +68,6 @@ public:
 
             CMPTH_P_LOG_INFO(P
             ,   "Finish fast read."
-            ,   4
             ,   "blk_id", blk_llk.blk_id().to_str()
             ,   "home_proc", wn.home_proc
             ,   "wr_ts", wn.ts_intvl.wr_ts
@@ -79,7 +77,6 @@ public:
         else {
             CMPTH_P_LOG_INFO(P
             ,   "Start slow read."
-            ,   1
             ,   "blk_id", blk_llk.blk_id().to_str()
             );
 
@@ -87,7 +84,6 @@ public:
 
             CMPTH_P_LOG_INFO(P
             ,   "Finish slow read."
-            ,   6
             ,   "blk_id", blk_llk.blk_id().to_str()
             ,   "home_proc", up_ret.new_wn.home_proc
             ,   "wr_ts", up_ret.new_wn.ts_intvl.wr_ts
@@ -150,7 +146,6 @@ public:
     {
         CMPTH_P_LOG_INFO(P
         ,   "Start updating block."
-        ,   1
         ,   "blk_id", blk_llk.blk_id().to_str()
         );
 
@@ -176,7 +171,6 @@ public:
 
         CMPTH_P_LOG_INFO(P
         ,   "Finish updating block."
-        ,   1
         ,   "blk_id", blk_llk.blk_id().to_str()
         );
         
@@ -193,7 +187,7 @@ public:
 
     void fence_acquire(const sig_buffer_type& sig)
     {
-        CMPTH_P_LOG_INFO(P, "Start fence acquire.", 0);
+        CMPTH_P_LOG_INFO(P, "Start fence acquire.");
 
         this->rd_set_.self_invalidate(
             sig.get_min_wr_ts()
@@ -220,7 +214,7 @@ public:
             }
         );
 
-        CMPTH_P_LOG_INFO(P, "Finish fence acquire.", 0);
+        CMPTH_P_LOG_INFO(P, "Finish fence acquire.");
     }
 
 private:
@@ -233,7 +227,6 @@ private:
     {
         CMPTH_P_LOG_INFO(P
         ,   "Invalidate block."
-        ,   1
         ,   "blk_id", blk_llk.blk_id().to_str()
         );
 
