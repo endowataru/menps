@@ -29,7 +29,7 @@ struct mth_thread_policy
     }
     
     using assert_policy_type = typename P::assert_policy_type;
-    using log_policy_type = typename P::log_policy_type;
+    using log_aspect_type = typename P::log_aspect_type;
 };
 
 template <typename P>

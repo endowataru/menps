@@ -29,7 +29,7 @@ struct lv5_sct_policy
     using transfer_type         = typename lv4_itf_type::transfer;
     
     using assert_policy_type    = typename lv4_itf_type::assert_policy;
-    using log_policy_type       = typename lv4_itf_type::log_policy;
+    using log_aspect_type       = typename lv4_itf_type::log_aspect;
 };
 
 template <typename P>
@@ -122,7 +122,7 @@ public:
     using task_desc_type    = typename lv4_itf_type::task_desc;
     
     using assert_policy_type    = typename lv4_itf_type::assert_policy;
-    using log_policy_type       = typename lv4_itf_type::log_policy;
+    using log_aspect_type       = typename lv4_itf_type::log_aspect;
 };
 
 template <typename P>

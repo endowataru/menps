@@ -20,7 +20,7 @@ namespace cmpth {
 struct mth_base_policy
 {
     using assert_policy_type = def_assert_policy;
-    using log_policy_type = def_log_policy;
+    using log_aspect_type = def_log_aspect;
 };
 
 // level 1
@@ -30,7 +30,7 @@ struct lv1_mth_itf
 {
     using spinlock = def_sct_spinlock;
     using assert_policy = mth_base_policy::assert_policy_type;
-    using log_policy = mth_base_policy::log_policy_type;
+    using log_aspect = mth_base_policy::log_aspect_type;
     
     using worker_num_type = fdn::size_t;
     #ifdef CMPTH_ENABLE_MTH_WORKER_CACHE

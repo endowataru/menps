@@ -20,6 +20,9 @@ struct def_lv1_md3_itf_policy
     using mtx_id_type = medsm2::svm_space_base::mutex_id_t;
     using prof_aspect_type = medsm2::dsm_com_policy_base::prof_aspect_type;
 
+    using log_aspect_type =
+        typename com_itf_type::ult_itf_type::log_aspect::template rebind<32>;
+
     struct constants_type {
         static const fdn::uint64_t lease_ts = 10;
         #ifdef MEDSM2_USE_DIRECTORY_COHERENCE

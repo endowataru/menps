@@ -35,6 +35,8 @@ struct def_lv1_sct_policy
     using tls_map_impl_type = std::unordered_map<tls_key_type, void*>;
     
     using worker_type = sct_worker<def_lv3_sct_policy>; // TODO: circular dependency
+
+    using log_aspect_type = def_log_aspect;
 };
 
 using def_lv1_sct_itf = lv1_sct_itf<def_lv1_sct_policy>;

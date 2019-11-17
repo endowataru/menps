@@ -23,7 +23,7 @@ public:
     using worker_type           = typename lv5_itf_type::worker;
     
     using assert_policy_type    = typename lv5_itf_type::assert_policy;
-    using log_policy_type       = typename lv5_itf_type::log_policy;
+    using log_aspect_type       = typename lv5_itf_type::log_aspect;
 };
 
 template <typename P>
@@ -36,7 +36,7 @@ public:
     using thread_type = typename lv5_itf_type::thread;
     
     using assert_policy_type    = typename lv5_itf_type::assert_policy;
-    using log_policy_type       = typename lv5_itf_type::log_policy;
+    using log_aspect_type       = typename lv5_itf_type::log_aspect;
 };
 
 template <typename P>

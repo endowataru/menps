@@ -35,7 +35,7 @@ public:
     using atomic_node_ptr_type = typename mcs_node_type::atomic_node_ptr_type;
     
     using assert_policy_type = typename lv5_itf_type::assert_policy;
-    using log_policy_type = typename lv5_itf_type::log_policy;
+    using log_aspect_type = typename lv5_itf_type::log_aspect;
 };
 
 template <typename P>

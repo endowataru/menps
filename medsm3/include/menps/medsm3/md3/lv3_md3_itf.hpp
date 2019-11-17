@@ -26,7 +26,7 @@ public:
 
     using ult_itf_type = typename lv2_itf_type::ult_itf_type;
     using assert_policy_type = typename ult_itf_type::assert_policy;
-    using log_policy_type = typename ult_itf_type::log_policy;
+    using log_aspect_type = typename ult_itf_type::log_aspect;
 
     using blk_id_type = typename lv2_itf_type::blk_id_type;
 

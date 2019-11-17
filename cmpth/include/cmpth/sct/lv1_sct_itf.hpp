@@ -44,7 +44,7 @@ struct lv1_sct_policy
     using task_mutex_type = typename P::task_mutex_type;
     
     using assert_policy_type = typename P::assert_policy_type;
-    using log_policy_type = typename P::log_policy_type;
+    using log_aspect_type = typename P::log_aspect_type;
     
     using task_desc_type = sct_task_desc<lv1_sct_policy>;
     using task_ref_type = sct_task_ref<lv1_sct_policy>;
@@ -93,7 +93,7 @@ public:
     using tls_key           = typename lv1_policy::tls_key_type;
     
     using assert_policy     = typename lv1_policy::assert_policy_type;
-    using log_policy        = typename lv1_policy::log_policy_type;
+    using log_aspect        = typename lv1_policy::log_aspect_type;
 };
 
 } // namespace cmpth

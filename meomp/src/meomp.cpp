@@ -82,7 +82,7 @@ struct my_task_desc_policy
         typename context_policy_type::template cond_transfer<my_worker_base*>;
     
     using assert_policy_type = cmpth::def_assert_policy;
-    using log_policy_type = cmpth::def_log_policy;
+    using log_aspect_type = cmpth::def_log_aspect;
 };
 
 struct my_worker_base_policy

@@ -48,7 +48,7 @@ public:
     using base_ult_itf_type     = typename lv2_itf_type::base_ult_itf;
     
     using assert_policy_type    = typename lv2_itf_type::assert_policy;
-    using log_policy_type       = typename lv2_itf_type::log_policy;
+    using log_aspect_type       = typename lv2_itf_type::log_aspect;
 };
 
 template <typename P>

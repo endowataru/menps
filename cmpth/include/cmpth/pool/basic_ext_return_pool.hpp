@@ -21,7 +21,7 @@ struct basic_ext_return_pool_policy
     }
     
     using assert_policy_type = typename UltItf::assert_policy;
-    using log_policy_type = typename UltItf::log_policy;
+    using log_aspect_type = typename UltItf::log_aspect;
 };
 
 template <typename UltItf, typename P2>
