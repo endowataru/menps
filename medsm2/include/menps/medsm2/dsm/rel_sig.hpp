@@ -12,7 +12,6 @@ class rel_sig
 {
     using blk_id_type = typename P::blk_id_type;
     
-    using wr_ts_type = typename P::wr_ts_type;
     using wn_vector_type = typename P::wn_vector_type;
     
     using sig_buffer_type = typename P::sig_buffer_type;
