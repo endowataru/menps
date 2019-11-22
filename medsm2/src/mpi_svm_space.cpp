@@ -20,6 +20,7 @@
 #endif
 #include <menps/medsm2/dsm/sharer_map.hpp>
 #include <menps/medsm2/dsm/unordered_rd_set.hpp>
+#include <unordered_set>
 
 namespace menps {
 namespace medsm2 {
@@ -102,6 +103,7 @@ struct dsm_base_policy
     
     using rel_sig_type = rel_sig<dsm_base_policy>;
     #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+    using blk_id_set_type = std::unordered_set<blk_id_type>;
     using rd_set_type = unordered_rd_set<dsm_base_policy>;
     using rd_ts_state_type = typename rd_set_type::rd_ts_state;
     #else

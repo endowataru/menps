@@ -2,7 +2,6 @@
 #pragma once
 
 #include <menps/medsm2/common.hpp>
-#include <unordered_set>
 
 namespace menps {
 namespace medsm2 {
@@ -17,6 +16,8 @@ class unordered_rd_set
     using mutex_guard_type =
         typename ult_itf_type::template lock_guard<mutex_type>;
     
+    using blk_id_set_type = typename P::blk_id_set_type;
+
 public:
     void add_readable(const blk_id_type blk_id) {
         const mutex_guard_type lk{this->mtx_};
@@ -44,7 +45,7 @@ public:
         unordered_rd_set& self;
         unordered_rd_set& get_rd_set() const noexcept {
             return self;
-        }   
+        }
     };
     
     rd_ts_state get_ts_state() {
@@ -52,8 +53,9 @@ public:
     }
     
 private:
-    mutable mutex_type              mtx_;
-    std::unordered_set<blk_id_type> blk_ids_;
+    mutable mutex_type  mtx_;
+    blk_id_set_type     blk_ids_;
+    //std::unordered_set<blk_id_type> blk_ids_;
 };
 
 } // namespace medsm2
