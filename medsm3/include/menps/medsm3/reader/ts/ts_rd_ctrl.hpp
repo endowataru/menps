@@ -28,8 +28,11 @@ class ts_rd_ctrl
     using rd_ts_type = typename P::rd_ts_type;
 
     using blk_id_type = typename P::blk_id_type;
-
     using rd_ts_state_type = typename P::rd_ts_state_type;
+
+    using ult_itf_type = typename P::ult_itf_type;
+    using com_itf_type = typename P::com_itf_type;
+    using proc_id_type = typename com_itf_type::proc_id_type;
 
 public:
     explicit ts_rd_ctrl(
@@ -215,47 +218,101 @@ public:
 
     void fence_acquire_all(const sig_buf_set_type& sig_set)
     {
+        CMPTH_P_LOG_INFO(P, "Start fence acquire (of barrier).");
+
+        wr_ts_type min_wr_ts = 0;
         for (auto& sig : sig_set) {
-            this->fence_acquire(sig);
+            // Get the maximum of "minimum write timestamps".
+            min_wr_ts = std::max(min_wr_ts, sig.get_min_wr_ts());
+                // TODO: use custom comparator to avoid overflow?
         }
+
+        auto& com = this->ll_ctrl_ptr_->get_com_itf();
+        const auto this_proc = com.this_proc_id();
+        const auto num_procs = com.get_num_procs();
+
+        // Invalidate all of the written blocks in the write notices.
+        ///*parallel*/ for (proc_id_type proc_id = 0; proc_id < num_procs; ++proc_id) {
+        ult_itf_type::for_loop(
+            ult_itf_type::execution::par
+        ,   0
+        ,   num_procs
+        ,   [this, &sig_set, this_proc] (const proc_id_type proc_id) {
+                if (proc_id != this_proc) {
+                    this->acquire_wn_array(sig_set[proc_id]);
+                }
+            }
+        );
+        
+        // Invalidate based on the minimum write timestamp.
+        this->acquire_min_wr_ts(min_wr_ts);
+
+        CMPTH_P_LOG_INFO(P, "Finish fence acquire (of barrier).");
     }
 
     void fence_acquire(const sig_buffer_type& sig)
     {
-        CMPTH_P_LOG_INFO(P, "Start fence acquire.");
+        CMPTH_P_LOG_INFO(P, "Start fence acquire (with single signature).");
 
-        this->rd_set_.self_invalidate(
-            sig.get_min_wr_ts()
-        ,   [this] (const rd_ts_state_type& rd_ts_st, const blk_id_type blk_id) -> invalidate_result {
-                auto blk_llk = this->local_lock_ctrl().get_local_lock(blk_id);
-                const auto inv_ctrl_ret = this->inv_ctrl().try_invalidate_with_ts(blk_llk, rd_ts_st);
-                if (inv_ctrl_ret.needs_invalidate) {
-                    auto up_ret = this->invalidate(blk_llk);
-                    const auto rd_ts = up_ret.is_updated ? up_ret.rd_ts : inv_ctrl_ret.rd_ts;
-                    return { up_ret.is_updated, rd_ts };
-                }
-                else {
-                    return { false, inv_ctrl_ret.rd_ts };
-                }
-            }
-        );
+        // Invalidate based on the write notice array.
+        this->acquire_wn_array(sig);
 
-        sig.for_all_wns(
-            [this] (const wn_entry_type& wn) {
-                auto blk_llk = this->local_lock_ctrl().get_local_lock(wn.blk_id);
-                if (this->inv_ctrl().try_invalidate_with_wn(blk_llk, wn)) {
-                    this->invalidate(blk_llk);
-                }
-            }
-        );
+        // Invalidate based on the minimum write timestamp.
+        this->acquire_min_wr_ts(sig.get_min_wr_ts());
 
-        CMPTH_P_LOG_INFO(P, "Finish fence acquire.");
+        CMPTH_P_LOG_INFO(P, "Finish fence acquire (with single signature).");
     }
 
 private:
+    void acquire_wn_array(const sig_buffer_type& sig)
+    {
+        // Invalidate the blocks based on write notices.
+        sig.for_all_wns(on_wn_invalidate{ *this });
+    }
+
+    struct on_wn_invalidate {
+        ts_rd_ctrl& self;
+        void operator() (const wn_entry_type& wn) const {
+            // Try to invalidate this block based on the write notice.
+            // If invalidated, the home process ID and the timestamp are recorded.
+            auto blk_llk = this->self.local_lock_ctrl().get_local_lock(wn.blk_id);
+            if (this->self.inv_ctrl().try_invalidate_with_wn(blk_llk, wn)) {
+                this->self.invalidate(blk_llk);
+            }
+        }
+    };
+
+    void acquire_min_wr_ts(const wr_ts_type min_wr_ts)
+    {
+        // Self-invalidate all of the old blocks.
+        // This also increases the acquire timestamp (= minimum write timestamp).
+        this->rd_set_.self_invalidate(min_wr_ts, on_self_invalidate{ *this });
+    }
+
     struct invalidate_result {
         bool        is_updated;
         rd_ts_type  rd_ts;
+    };
+
+    struct on_self_invalidate {
+        ts_rd_ctrl& self;
+        invalidate_result operator() (
+            const rd_ts_state_type& rd_ts_st
+        ,   const blk_id_type blk_id
+        ) const {
+            auto blk_llk = this->self.local_lock_ctrl().get_local_lock(blk_id);
+            const auto inv_ctrl_ret =
+                this->self.inv_ctrl().try_invalidate_with_ts(blk_llk, rd_ts_st);
+
+            if (inv_ctrl_ret.needs_invalidate) {
+                auto inv_ret = this->self.invalidate(blk_llk);
+                const auto rd_ts = inv_ret.is_updated ? inv_ret.rd_ts : inv_ctrl_ret.rd_ts;
+                return { inv_ret.is_updated, rd_ts };
+            }
+            else {
+                return { false, inv_ctrl_ret.rd_ts };
+            }
+        }
     };
     
     invalidate_result invalidate(blk_local_lock_type& blk_llk)
