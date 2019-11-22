@@ -25,11 +25,17 @@ struct def_lv1_md3_itf_policy
 
     struct constants_type {
         static const fdn::uint64_t lease_ts = 10;
-        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
-        static const fdn::size_t max_rel_sig_len = 0;
-        #else
-        static const fdn::size_t max_rel_sig_len = MEDSM2_REL_SIG_LEN;
-        #endif
+
+        static const bool use_directory_coherence =
+            #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+            true
+            #else
+            false
+            #endif
+            ;
+        static const fdn::size_t max_rel_sig_len =
+            use_directory_coherence ? 0 : MEDSM2_REL_SIG_LEN;
+
         static const bool is_migration_enabled =
             #ifdef MEDSM2_ENABLE_MIGRATION
             true
