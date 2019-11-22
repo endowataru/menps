@@ -286,7 +286,7 @@ public:
     }
 
 private:
-    wr_count_ctrl_type wr_count_ctrl() noexcept {
+    wr_count_ctrl_type& wr_count_ctrl() noexcept {
         CMPTH_P_ASSERT(P, this->wr_count_ctrl_ptr_);
         return *this->wr_count_ctrl_ptr_;
     }
