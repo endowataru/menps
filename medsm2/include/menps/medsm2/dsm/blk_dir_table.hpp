@@ -597,6 +597,7 @@ public:
             "blk_id:0x{:x}\t"
             "blk_pos:{}\t"
             "owner:{}\t"
+            "last_writer_proc:{}\t"
             "is_remotely_updated:{}\t"
             "is_dirty:{}\t"
             "needs_protect_before:{}\t"
@@ -607,6 +608,7 @@ public:
         ,   blk_id
         ,   blk_pos
         ,   owner
+        ,   glk_ret.last_writer_proc
         ,   is_remotely_updated
         ,   is_dirty
         ,   needs_protect_before
@@ -621,6 +623,7 @@ public:
             "blk_id:0x{:x}\t"
             "blk_pos:{}\t"
             "owner:{}\t"
+            "last_writer_proc:{}\t"
             "cur_wr_ts:{}\t"
             "cur_rd_ts:{}\t"
             "owner_wr_ts:{}\t"
@@ -635,6 +638,7 @@ public:
         ,   blk_id
         ,   blk_pos
         ,   owner
+        ,   glk_ret.last_writer_proc
         ,   le.cur_wr_ts
         ,   le.cur_rd_ts
         ,   owner_wr_ts
@@ -648,7 +652,7 @@ public:
         ,   needs_local_comp
         );
         #endif
-        
+
         return { owner,
             #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
             owner_wr_ts, owner_rd_ts,
@@ -660,6 +664,7 @@ public:
     
     struct end_transaction_result {
         proc_id_type    new_owner;
+        proc_id_type    last_writer_proc;
         #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
         sharer_map_type sharers;
         #else
@@ -691,6 +696,9 @@ public:
         // Note: new_owner could be the same as old_owner in the past.
         const auto new_owner = is_migrated ? this_proc : bt_ret.owner;
         
+        const auto new_last_writer_proc =
+            mg_ret.is_written ? this_proc : glk_ret.last_writer_proc;
+
         auto& le = this->les_[blk_pos];
         
         // Update the home process.
@@ -832,7 +840,7 @@ public:
         *this->inv_flags_.local(blk_pos) = false;
         #endif
         
-        return { new_owner,
+        return { new_owner, new_last_writer_proc,
             #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
             mefdn::move(sharers),
             #else

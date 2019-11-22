@@ -61,6 +61,14 @@ class blk_lock_table
 
     using size_type = typename P::size_type;
     
+    size_type get_lad_size() {
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        return sizeof(proc_id_type) + this->ge_size_;
+        #else
+        return sizeof(global_entry_with_header);
+        #endif
+    }
+
 public:
     template <typename Conf>
     void coll_make(const Conf& conf)
@@ -68,17 +76,12 @@ public:
         #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
         this->ge_size_ = sharer_map_type::get_sharer_map_size(conf.com.get_num_procs());
         #endif
-        base::coll_make(conf.com, conf.num_blks,
-            #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
-            this->ge_size_
-            #else
-            sizeof(global_entry)
-            #endif
-            );
+        base::coll_make(conf.com, conf.num_blks, this->get_lad_size());
     }
     
     struct lock_global_result {
         proc_id_type    owner;
+        proc_id_type    last_writer_proc;
         #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
         sharer_map_type sharers;
         #else
@@ -103,27 +106,25 @@ public:
         
         auto& rma = com.get_rma();
         const auto ge_buf =
-            rma.template make_unique_uninitialized<mefdn::byte []>(
-                #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
-                this->ge_size_
-                #else
-                sizeof(global_entry)
-                #endif
-                );
+            rma.template make_unique_uninitialized<mefdn::byte []>(this->get_lad_size());
         const auto ge_buf_ptr = ge_buf.get();
         
         const auto lk_ret = base::lock_global(com, p2p, blk_pos, tag, ge_buf_ptr);
         
-        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
         const mefdn::byte* const ge_byte_ptr = ge_buf_ptr; // implicit conversion
-        const auto ge = *reinterpret_cast<const global_entry*>(ge_byte_ptr); // TODO: remove cast
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        const auto last_writer_proc = *reinterpret_cast<const proc_id_type*>(ge_byte_ptr);
+        const auto ge_lad_rest_ptr = &ge_byte_ptr[sizeof(proc_id_type)];
+        #else
+        const auto geh = *reinterpret_cast<const global_entry_with_header*>(ge_byte_ptr);
+        const auto last_writer_proc = geh.last_writer_proc;
         #endif
         
-        return { lk_ret.owner,
+        return { lk_ret.owner, last_writer_proc,
             #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
-            sharer_map_type::copy_from(ge_buf_ptr, this->ge_size_)
+            sharer_map_type::copy_from(ge_lad_rest_ptr, this->ge_size_)
             #else
-            ge.home_wr_ts, ge.home_rd_ts
+            geh.ge.home_wr_ts, geh.ge.home_rd_ts
             #endif
             };
     }
@@ -160,14 +161,19 @@ public:
         auto& p2p = com.get_p2p();
         const auto tag = P::get_tag_from_blk_id(blk_id);
         
-        #ifndef MEDSM2_USE_DIRECTORY_COHERENCE
-        global_entry ge{ et_ret.new_wr_ts, et_ret.new_rd_ts };
+        const auto last_writer_proc = et_ret.last_writer_proc;
+        #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
+        std::vector<fdn::byte> lad_buf(this->get_lad_size());
+        std::memcpy(&lad_buf[0], &last_writer_proc, sizeof(proc_id_type));
+        std::memcpy(&lad_buf[sizeof(proc_id_type)], et_ret.sharers.get_raw(), this->ge_size_);
+        #else
+        global_entry_with_header lad{ last_writer_proc, { et_ret.new_wr_ts, et_ret.new_rd_ts } };
         #endif
         base::unlock_global(com, p2p, blk_pos, tag,
             #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
-            et_ret.sharers.get_raw()
+            lad_buf.data()
             #else
-            &ge
+            &lad
             #endif
             );
     }
@@ -205,6 +211,11 @@ private:
         rd_ts_type  home_rd_ts;
     };
     
+    struct global_entry_with_header {
+        proc_id_type    last_writer_proc;
+        global_entry    ge;
+    };
+    
     #ifdef MEDSM2_ENABLE_FAST_RELEASE
 public:
     global_entry read_lock_entry(const blk_pos_type blk_pos) {
@@ -226,7 +237,7 @@ private:
     global_entry& get_lock_entry(const blk_pos_type blk_pos) {
         const auto p = base::get_local_lad_at(blk_pos);
         mefdn::byte* const p_raw = p; // implicit conversion
-        return *reinterpret_cast<global_entry*>(p_raw);
+        return reinterpret_cast<global_entry_with_header*>(p_raw)->ge;
     }
     #endif // MEDSM2_ENABLE_FAST_RELEASE
     #endif // MEDSM2_USE_DIRECTORY_COHERENCE
