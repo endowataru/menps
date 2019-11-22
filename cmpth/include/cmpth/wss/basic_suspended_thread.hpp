@@ -227,7 +227,7 @@ public:
         
         return wk.template cond_suspend_to_cont<
             basic_suspended_thread::on_swap_with<Func, Args...>
-        >(next_sth.cont_, this, &next_sth, args...);
+        >(next_sth.cont_, this, args...);
     }
     
 private:
@@ -237,7 +237,6 @@ private:
             worker_type&                    wk
         ,   continuation_type&              prev_cont
         ,   basic_suspended_thread* const   self
-        ,   basic_suspended_thread* const   next_sth
         ,   Args* const ...                 args
         ) {
             // Put the continuation to the previous suspended thread.

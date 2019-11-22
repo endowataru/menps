@@ -22,12 +22,10 @@ public:
     void execute(Args* const ... args)
     {
         auto& self = this->derived();
-        using func_type = fdn::decay_t<Func>;
-        
+
         self.template suspend_to_new<
             basic_single_worker::on_execute<Func, Args...>
-        >
-        (fdn::move(this->work_stk_), args...);
+        >(fdn::move(this->work_stk_), args...);
     }
     
 private:
