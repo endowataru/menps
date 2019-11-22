@@ -9,20 +9,21 @@ template <typename P>
 class mth_suspended_thread
 {
     using worker_type = typename P::worker_type;
+    using constants_type = typename P::constants_type;
     
 public:
     mth_suspended_thread() noexcept
         : u_()
     {
-        #ifndef CMPTH_AVOID_MYTH_UNCOND_SETUP
-        myth_uncond_init(&this->u_);
-        #endif
+        if (constants_type::call_myth_uncond_setup) {
+            myth_uncond_init(&this->u_);
+        }
     }
     
     ~mth_suspended_thread() {
-        #ifndef CMPTH_AVOID_MYTH_UNCOND_SETUP
-        myth_uncond_destroy(&this->u_); // ignore error
-        #endif
+        if (constants_type::call_myth_uncond_setup) {
+            myth_uncond_destroy(&this->u_); // ignore error
+        }
     }
     
     mth_suspended_thread(const mth_suspended_thread&) noexcept = delete;

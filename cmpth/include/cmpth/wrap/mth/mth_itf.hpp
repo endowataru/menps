@@ -21,6 +21,7 @@ struct mth_base_policy
 {
     using assert_policy_type = def_assert_policy;
     using log_aspect_type = def_log_aspect;
+    using constants_type = constants;
 };
 
 // level 1
