@@ -341,7 +341,7 @@ private:
             );
         }
         else {
-            MEFDN_LOG_WARN(
+            MEFDN_LOG_FATAL(
                 "msg:mprotect() failed.\t"
                 "ptr:{:x}\t"
                 "num_bytes:{}\n"
