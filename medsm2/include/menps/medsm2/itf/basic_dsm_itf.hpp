@@ -64,7 +64,10 @@ public:
     static T* conew() {
         auto& df = get_dsm_facade();
         const auto p = df.coallocate(sizeof(T));
-        return new (p) T();
+        if (df.get_thread_num() == 0) {
+            new (p) T();
+        }
+        return static_cast<T*>(p);
     }
     template <typename T>
     static void codelete(T* p) {
