@@ -91,13 +91,15 @@ public:
             rma.progress();
         }
         
-        // Read the LAD.
-        rma.read(
-            ll.proc
-        ,   ll.lad_rptr
-        ,   lad_buf
-        ,   ll.lad_size
-        );
+        if (ll.lad_size > 0) {
+            // Read the LAD.
+            rma.read(
+                ll.proc
+            ,   ll.lad_rptr
+            ,   lad_buf
+            ,   ll.lad_size
+            );
+        }
         
         // Acquired the lock.
         MEFDN_LOG_VERBOSE(
@@ -123,16 +125,18 @@ public:
         
         const auto ll = this->get_lock_location(com, lk_pos);
         
-        const auto lad_bptr = static_cast<const mefdn::byte*>(lad_ptr);
-        
-        // Read the LAD.
-        // TODO: Remove buffering.
-        rma.buf_write(
-            ll.proc
-        ,   ll.lad_rptr
-        ,   lad_bptr
-        ,   ll.lad_size
-        );
+        if (ll.lad_size > 0) {
+            const auto lad_bptr = static_cast<const mefdn::byte*>(lad_ptr);
+            
+            // Read the LAD.
+            // TODO: Remove buffering.
+            rma.buf_write(
+                ll.proc
+            ,   ll.lad_rptr
+            ,   lad_bptr
+            ,   ll.lad_size
+            );
+        }
         
         // Flush the writes before unlocking.
         rma.flush(ll.proc);
@@ -163,10 +167,15 @@ private:
         const auto proc_id = lk_pos % num_procs;
         const auto lad_size = this->lad_size_;
         
+        remote_byte_ptr_type lad_rptr = remote_byte_ptr_type();
+        if (this->lad_size_ > 0) {
+            lad_rptr = this->lads_.remote(proc_id, lk_idx * lad_size);
+        }
+
         return {
             proc_id
         ,   this->glks_.remote(proc_id, lk_idx)
-        ,   this->lads_.remote(proc_id, lk_idx * lad_size)
+        ,   lad_rptr
         ,   lad_size
         };
     }
