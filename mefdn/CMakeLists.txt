@@ -57,8 +57,6 @@ set(MEFDN_MCMODEL "small" CACHE STRING "Memory model specified as -mcmodel=")
 
 set(MEFDN_CXX_STANDARD "0x" CACHE STRING "C++ standard version")
 
-set(error_limit 3)
-
 # mefdn-options : INTERFACE target to set options individually
 
 add_library(mefdn-options INTERFACE)
@@ -112,7 +110,6 @@ if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}"
         
         # Other options
         #-Wno-c++11-long-long # TODO
-        -ferror-limit=${error_limit}
         
         # Bug 25546 - Bad diagnostic when using -Wunused-macros and building .S files
         # https://llvm.org/bugs/show_bug.cgi?id=25546
@@ -212,7 +209,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         
         # Prevent too many errors
         #-Wfatal-errors
-        $<$<BOOL:${MEFDN_GCC_SUPPORTS_FMAX_ERRORS}>:-fmax-errors=${error_limit}>
     )
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     target_compile_options(mefdn-options INTERFACE
