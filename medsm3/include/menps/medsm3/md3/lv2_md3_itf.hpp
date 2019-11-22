@@ -7,12 +7,13 @@
 #include <menps/medsm3/svm/svm_data_ctrl.hpp>
 #include <menps/medsm3/svm/svm_state_ctrl.hpp>
 #include <menps/medsm3/svm/svm_wr_count_ctrl.hpp>
+#include <menps/medsm3/svm/svm_local_lock_ctrl.hpp>
 
 namespace menps {
 namespace medsm3 {
 
 template <typename P>
-struct lv2_md2_policy_base
+struct lv2_md3_policy_base
 {
 private:
     using lv1_itf_type = typename P::lv1_itf_type;
@@ -24,7 +25,7 @@ public:
 
     using ult_itf_type = typename lv1_itf_type::ult_itf_type;
     using assert_policy_type = typename ult_itf_type::assert_policy;
-    using log_aspect_type = typename ult_itf_type::log_aspect;
+    using log_aspect_type = typename lv1_itf_type::log_aspect_type;
 
     using prof_aspect_type = typename lv1_itf_type::prof_aspect_type;
 
@@ -33,7 +34,7 @@ public:
 
 template <typename P>
 struct md3_wr_count_ctrl_policy
-    : lv2_md2_policy_base<P>
+    : lv2_md3_policy_base<P>
 {
 private:
     using lv1_itf_type = typename P::lv1_itf_type;
@@ -47,7 +48,7 @@ public:
 
 template <typename P>
 struct md3_state_ctrl_policy
-    : lv2_md2_policy_base<P>
+    : lv2_md3_policy_base<P>
 {
 private:
     using lv1_itf_type = typename P::lv1_itf_type;
@@ -63,7 +64,7 @@ public:
 
 template <typename P>
 struct md3_merge_policy_policy
-    : lv2_md2_policy_base<P>
+    : lv2_md3_policy_base<P>
 {
 private:
     using lv1_itf_type = typename P::lv1_itf_type;
@@ -75,7 +76,7 @@ public:
 
 template <typename P>
 struct md3_data_ctrl_policy
-    : lv2_md2_policy_base<P>
+    : lv2_md3_policy_base<P>
 {
 private:
     using lv1_itf_type = typename P::lv1_itf_type;
@@ -90,7 +91,7 @@ public:
 
 template <typename P>
 struct md3_state_data_ctrl_policy
-    : lv2_md2_policy_base<P>
+    : lv2_md3_policy_base<P>
 {
 private:
     using lv1_itf_type = typename P::lv1_itf_type;
@@ -103,6 +104,20 @@ public:
     using state_ctrl_ptr_type = fdn::unique_ptr<state_ctrl_type>;
 };
 
+template <typename P>
+struct md3_local_lock_ctrl_policy
+    : lv2_md3_policy_base<P>
+{
+private:
+    using lv1_itf_type = typename P::lv1_itf_type;
+
+public:
+    using blk_local_lock_type = typename lv1_itf_type::blk_local_lock_type;
+    using segment_set_ptr_type = typename lv1_itf_type::segment_set_ptr_type;
+    using ult_itf_type = typename lv1_itf_type::ult_itf_type;
+    using blk_mutex_type = typename lv1_itf_type::blk_mutex_type;
+    using blk_id_type = typename lv1_itf_type::blk_id_type;
+};
 
 template <typename P>
 struct lv2_md3_itf
@@ -116,6 +131,8 @@ struct lv2_md3_itf
     using state_ctrl_ptr_type = typename md3_state_data_ctrl_policy<P>::state_ctrl_ptr_type;
     using state_data_ctrl_type = typename md3_state_data_ctrl_policy<P>::derived_type;
     using state_data_ctrl_ptr_type = fdn::unique_ptr<state_data_ctrl_type>;
+    using local_lock_ctrl_type = svm_local_lock_ctrl<md3_local_lock_ctrl_policy<P>>;
+    using local_lock_ctrl_ptr_type = fdn::unique_ptr<local_lock_ctrl_type>;
 };
 
 } // namespace medsm3

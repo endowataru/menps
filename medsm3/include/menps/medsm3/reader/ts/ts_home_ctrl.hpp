@@ -17,7 +17,7 @@ class ts_home_ctrl
     using com_itf_type = typename P::com_itf_type;
     using proc_id_type = typename com_itf_type::proc_id_type;
 
-    using ts_interval_type = typename P::ts_interval_type;
+    using global_entry_type = typename P::global_entry_type;
 
 public:
     blk_global_lock_type get_global_lock(blk_local_lock_type& blk_llk)
@@ -25,13 +25,13 @@ public:
         auto& self = this->derived();
         auto lk_ret = this->lock_global(blk_llk);
         return blk_global_lock_type{
-            blk_llk, lk_ret.owner_proc, lk_ret.owner_intvl, self
+            blk_llk, lk_ret.owner_proc, self, lk_ret.ge
         };
     }
 
     struct lock_global_result {
         proc_id_type        owner_proc;
-        ts_interval_type    owner_intvl;
+        global_entry_type   ge;
     };
 
     lock_global_result lock_global(blk_local_lock_type& blk_llk)
@@ -43,32 +43,33 @@ public:
         const auto owner_proc = glk_ret.owner_proc;
         // TODO: Fix RMA interface (of UCT) to simplify the below procedure.
         // First, implicitly cast to byte*.
-        const fdn::byte* const owner_intvl_bptr = glk_ret.owner_lad.get();
-        // Then, cast byte* to ts_interval_type*.
-        const auto owner_intvl =
-            *reinterpret_cast<const ts_interval_type*>(owner_intvl_bptr);
+        const fdn::byte* const lad_ptr = glk_ret.owner_lad.get();
+        // Then, cast byte* to global_entry_type*.
+        const auto ge = *reinterpret_cast<const global_entry_type*>(lad_ptr);
         
-        return { owner_proc, owner_intvl };
+        return { owner_proc, ge };
     }
 
-    void unlock_global(blk_local_lock_type& blk_llk, const ts_interval_type& owner_intvl)
+    void unlock_global(blk_local_lock_type& blk_llk, const global_entry_type& ge)
     {
         auto& self = this->derived();
         
-        self.unlock_global_raw(blk_llk, &owner_intvl);
+        self.unlock_global_raw(blk_llk, &ge);
     }
     
-    ts_interval_type read_lock_entry(blk_local_lock_type& blk_llk)
+    global_entry_type read_lock_entry(blk_local_lock_type& blk_llk)
     {
         auto& self = this->derived();
-        ts_interval_type intvl = ts_interval_type();
-        self.read_lock_entry_raw(blk_llk, &intvl);
-        return intvl;
+        global_entry_type ge = global_entry_type();
+        self.read_lock_entry_raw(blk_llk, &ge);
+        CMPTH_P_ASSERT(P, ge.last_writer_proc == blk_llk.get_com_itf().this_proc_id());
+        return ge;
     }
-    void write_lock_entry(blk_local_lock_type& blk_llk, const ts_interval_type& intvl)
+    void write_lock_entry(blk_local_lock_type& blk_llk, const global_entry_type& ge)
     {
         auto& self = this->derived();
-        self.write_lock_entry_raw(blk_llk, &intvl);
+        CMPTH_P_ASSERT(P, ge.last_writer_proc == blk_llk.get_com_itf().this_proc_id());
+        self.write_lock_entry_raw(blk_llk, &ge);
     }
 };
 

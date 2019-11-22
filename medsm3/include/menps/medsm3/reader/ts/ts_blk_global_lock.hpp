@@ -19,38 +19,40 @@ class ts_blk_global_lock
     using com_itf_type = typename P::com_itf_type;
     using proc_id_type = typename com_itf_type::proc_id_type;
 
+    using global_entry_type = typename P::global_entry_type;
+
 public:
     ts_blk_global_lock() MEFDN_DEFAULT_NOEXCEPT = default;
 
     explicit ts_blk_global_lock(
-        blk_local_lock_type&    blk_llk
-    ,   const proc_id_type      owner
-    ,   const ts_interval_type  ts_intvl
-    ,   home_ctrl_type&         home_ctrl
+        blk_local_lock_type&        blk_llk
+    ,   const proc_id_type          owner
+    ,   home_ctrl_type&             home_ctrl
+    ,   const global_entry_type&    home_ge
     ) noexcept
-        : base{blk_llk, owner}
-        , ts_intvl_(ts_intvl) // Note: {} cannot be used in GCC 4.8?
+        : base{blk_llk, owner, home_ge.last_writer_proc}
         , home_ctrl_{&home_ctrl}
+        , home_intvl_(home_ge.owner_intvl) // Note: {} cannot be used in GCC 4.8?
     { }
 
     ts_interval_type get_home_interval() const noexcept {
         CMPTH_P_ASSERT(P, this->owns_lock());
-        return this->ts_intvl_;
+        return this->home_intvl_;
     }
     
-    void unlock(const ts_interval_type new_intvl)
+    void unlock(const global_entry_type& ge)
     {
         CMPTH_P_ASSERT(P, this->home_ctrl_ != nullptr);
         auto& blk_llk = this->local_lock();
-        this->home_ctrl_->unlock_global(blk_llk, new_intvl);
+        this->home_ctrl_->unlock_global(blk_llk, ge);
         this->release();
     }
     
 private:
-    ts_interval_type    ts_intvl_ = ts_interval_type();
     home_ctrl_type*     home_ctrl_ = nullptr;
+    ts_interval_type    home_intvl_ = ts_interval_type();
 };
-
 
 } // namespace medsm3
 } // namespace menps
+

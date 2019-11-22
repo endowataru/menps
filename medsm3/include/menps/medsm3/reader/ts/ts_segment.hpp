@@ -19,13 +19,12 @@ class ts_segment
 
     using blk_local_lock_type = typename P::blk_local_lock_type;
     using blk_id_type = typename P::blk_id_type;
-    using blk_subindex_type = typename P::blk_subindex_type;
 
     using wr_count_type = typename P::wr_count_type;
     
 public:
     explicit ts_segment(com_itf_type& com, const fdn::size_t num_blks)
-        : base{com, num_blks, sizeof(ts_interval_type)}
+        : base{com, num_blks, sizeof(global_entry_type)}
         , lk_entries_{fdn::make_unique<local_entry_type []>(num_blks)}
     {
         const auto this_proc = com.this_proc_id();
@@ -40,12 +39,20 @@ public:
         }
     }
 
+    struct global_entry_type
+    {
+        proc_id_type        last_writer_proc;
+        ts_interval_type    owner_intvl;
+    };
+
     struct local_entry_type
         : base::blk_local_metadata_base
     {
         // The number of transactions without writing the data.
         wr_count_type   wr_count;
 
+        // TODO: These members should only appear when fast release is enabled.
+        bool            is_written_last;
         wr_count_type   fast_rel_count;
         wr_count_type   fast_rel_threshold;
 

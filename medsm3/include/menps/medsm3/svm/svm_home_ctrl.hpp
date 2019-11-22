@@ -47,7 +47,8 @@ private:
     struct lock_global_raw_result
     {
         proc_id_type                owner_proc;
-        unique_public_ptr<byte []>   owner_lad;
+        unique_public_ptr<byte []>  owner_lad;
+        fdn::size_t                 lad_size;
     };
 
     lock_global_raw_result lock_global_raw(blk_local_lock_type& blk_llk)
@@ -67,7 +68,7 @@ private:
         
         const auto ret = glk_tbl.lock_global(com, p2p, blk_sidx, tag, owner_lad.get());
 
-        return { ret.owner, fdn::move(owner_lad) };
+        return { ret.owner, fdn::move(owner_lad), lad_size };
     }
     void unlock_global_raw(blk_local_lock_type& blk_llk, const void* const lad)
     {

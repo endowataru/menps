@@ -101,7 +101,9 @@ public:
         wn_entry_type   new_wn;
     };
 
-    fast_release_result try_fast_release(const rd_ts_state_type& rd_ts_st, blk_local_lock_type& blk_llk)
+    template <typename R = fast_release_result>
+    fdn::enable_if_t<P::constants_type::is_fast_release_enabled, R>
+    try_fast_release(const rd_ts_state_type& rd_ts_st, blk_local_lock_type& blk_llk)
     {
         const auto chk_rel_ret = this->state_data_ctrl().check_release(blk_llk);
         if (!chk_rel_ret.needs_release) {
@@ -115,22 +117,44 @@ public:
         auto& com = blk_llk.get_com_itf();
         const auto this_proc = com.this_proc_id();
 
-        auto old_intvl = this->home_ctrl().read_lock_entry(blk_llk);
+        auto old_ge = this->home_ctrl().read_lock_entry(blk_llk);
+        CMPTH_P_ASSERT(P, old_ge.last_writer_proc == this_proc);
 
-        auto new_intvl = this->inv_ctrl().fast_release(rd_ts_st, blk_llk, old_intvl);
+        auto new_intvl = this->inv_ctrl().fast_release(rd_ts_st, blk_llk, old_ge.owner_intvl);
 
-        this->home_ctrl().write_lock_entry(blk_llk, new_intvl);
-        
-        return { true, true, { this_proc, blk_llk.blk_id(), old_intvl } };
+        this->home_ctrl().write_lock_entry(blk_llk, { this_proc, new_intvl });
+
+        return { true, true, { this_proc, blk_llk.blk_id(), old_ge.owner_intvl } };
     }
 
-    void on_start_write(const rd_ts_state_type& rd_ts_st, blk_local_lock_type& blk_llk)
+    template <typename R = fast_release_result>
+    fdn::enable_if_t<!P::constants_type::is_fast_release_enabled, R>
+    try_fast_release(const rd_ts_state_type& /*rd_ts_st*/, blk_local_lock_type& /*blk_llk*/) {
+        // This is only enabled when fast release is enabled.
+        return { true, false, wn_entry_type() }; // Note: Use () for GCC 4.8
+    }
+
+    template <typename R = void>
+    fdn::enable_if_t<P::constants_type::is_fast_release_enabled, R>
+    on_start_write(const rd_ts_state_type& rd_ts_st, blk_local_lock_type& blk_llk)
     {
-        auto old_intvl = this->home_ctrl().read_lock_entry(blk_llk);
+        auto& com = blk_llk.get_com_itf();
+        const auto this_proc = com.this_proc_id();
 
-        auto new_intvl = this->inv_ctrl().on_start_write(rd_ts_st, blk_llk, old_intvl);
+        if (this->state_data_ctrl().is_written_last(blk_llk)) {
+            auto old_ge = this->home_ctrl().read_lock_entry(blk_llk);
+            CMPTH_P_ASSERT(P, old_ge.last_writer_proc == this_proc);
 
-        this->home_ctrl().write_lock_entry(blk_llk, new_intvl);
+            auto new_intvl = this->inv_ctrl().on_start_write(rd_ts_st, blk_llk, old_ge.owner_intvl);
+
+            this->home_ctrl().write_lock_entry(blk_llk, { this_proc, new_intvl });
+        }
+    }
+
+    template <typename R = void>
+    fdn::enable_if_t<!P::constants_type::is_fast_release_enabled, R>
+    on_start_write(const rd_ts_state_type& /*rd_ts_st*/, blk_local_lock_type& /*blk_llk*/) {
+        // This is only enabled when fast release is enabled.
     }
 
     struct update_result {
@@ -154,10 +178,10 @@ public:
         auto blk_glk = this->home_ctrl().get_global_lock(blk_llk);
         //{ owner_proc, owner_intvl } = home_ctrl().lock_global(blk_cs);
 
-        const bool is_remotely_updated =
-            this->inv_ctrl().is_remotely_updated(blk_glk);
+        const bool is_remotely_updated_ts =
+            this->inv_ctrl().is_remotely_updated_ts(blk_glk);
 
-        auto sd_ret = this->state_data_ctrl().update_global(blk_glk, is_remotely_updated);
+        auto sd_ret = this->state_data_ctrl().update_global(blk_glk, is_remotely_updated_ts);
         
         // update timestamps
         auto inv_intvl = this->inv_ctrl().update_timestamp(rd_ts_st, blk_glk, sd_ret, is_upgraded);
@@ -167,7 +191,7 @@ public:
         }
         
         //home_ctrl().unlock_global(blk_cs, intvl);
-        blk_glk.unlock(inv_intvl);
+        blk_glk.unlock({ sd_ret.new_last_writer_proc, inv_intvl });
 
         CMPTH_P_LOG_INFO(P
         ,   "Finish updating block."

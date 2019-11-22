@@ -35,7 +35,7 @@ public:
         }
     }
 
-    bool is_remotely_updated(blk_global_lock_type& blk_glk)
+    bool is_remotely_updated_ts(blk_global_lock_type& blk_glk)
     {
         auto& self = this->derived();
         auto& blk_llk = blk_glk.local_lock();

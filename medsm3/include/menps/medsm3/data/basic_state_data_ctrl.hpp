@@ -33,6 +33,9 @@ public:
     bool is_invalid(blk_local_lock_type& blk_llk) {
         return this->st_ctrl().is_invalid(blk_llk);
     }
+    bool is_written_last(blk_local_lock_type& blk_llk) {
+        return this->st_ctrl().is_written_last(blk_llk);
+    }
 
     void fast_read(blk_local_lock_type& blk_llk, const proc_id_type proc_id)
     {
@@ -60,30 +63,67 @@ public:
     {
         // Indicate that this block can be removed from the write set.
         bool            is_write_protected;
-        // 
+        // Indicate that this block is modified by this process.
         bool            is_written;
-        // 
+        // The owner (?) process, which will be written in write notices.
+        // This process is used for being read by other reader processes.
         proc_id_type    new_owner;
+        // The process which wrote the block at last.
+        // This is different from the owner because the owner does not change
+        // when the fixed-home mode is selected.
+        proc_id_type    new_last_writer_proc;
     };
 
-    update_result update_global(blk_global_lock_base_type& blk_glk, const bool is_remotely_updated)
+    update_result update_global(blk_global_lock_base_type& blk_glk, const bool is_remotely_updated_ts)
     {
         auto& blk_llk = blk_glk.local_lock();
         auto& com = blk_llk.get_com_itf();
         const auto this_proc = com.this_proc_id();
 
-        auto begin_ret = this->st_ctrl().update_global_begin(blk_glk, is_remotely_updated);
+        auto begin_ret = this->st_ctrl().update_global_begin(blk_glk, is_remotely_updated_ts);
+
+        CMPTH_P_LOG_DEBUG(P,
+            "Updating block state and data."
+        ,   "blk_id", blk_llk.blk_id().to_str()
+        ,   "is_remotely_updated", begin_ret.is_remotely_updated
+        ,   "is_dirty", begin_ret.is_dirty
+        ,   "needs_protect_before", begin_ret.needs_protect_before
+        ,   "needs_protect_after", begin_ret.needs_protect_after
+        ,   "is_write_protected", begin_ret.is_write_protected
+        ,   "needs_local_copy", begin_ret.needs_local_copy
+        ,   "needs_local_comp", begin_ret.needs_local_comp
+        ,   "old_owner", blk_glk.prev_owner()
+        ,   "old_last_writer_proc", blk_glk.last_writer_proc()
+        );
 
         auto merge_ret = this->dt_ctrl().update_merge(blk_glk, begin_ret);
 
         this->st_ctrl().update_global_end(blk_glk, begin_ret, merge_ret);
 
-        const auto is_migrated = merge_ret.is_migrated;
         // Note: new_owner could be the same as old_owner in the past.
-        const auto new_owner = is_migrated ? this_proc : blk_glk.prev_owner();
+        const auto new_owner = merge_ret.is_migrated ? this_proc : blk_glk.prev_owner();
 
-        return { begin_ret.is_write_protected, merge_ret.is_written, new_owner };
-        // ???
+        const auto new_last_writer_proc = merge_ret.is_written ? this_proc : blk_glk.last_writer_proc();
+
+        CMPTH_P_LOG_DEBUG(P,
+            "Updated block state and data."
+        ,   "blk_id", blk_llk.blk_id().to_str()
+        ,   "is_remotely_updated", begin_ret.is_remotely_updated
+        ,   "is_dirty", begin_ret.is_dirty
+        ,   "needs_protect_before", begin_ret.needs_protect_before
+        ,   "needs_protect_after", begin_ret.needs_protect_after
+        ,   "is_write_protected", begin_ret.is_write_protected
+        ,   "needs_local_copy", begin_ret.needs_local_copy
+        ,   "needs_local_comp", begin_ret.needs_local_comp
+        ,   "is_written", merge_ret.is_written
+        ,   "is_migrated", merge_ret.is_migrated
+        ,   "old_owner", blk_glk.prev_owner()
+        ,   "new_owner", new_owner
+        ,   "old_last_writer_proc", blk_glk.last_writer_proc()
+        ,   "new_last_writer_proc", new_last_writer_proc
+        );
+
+        return { begin_ret.is_write_protected, merge_ret.is_written, new_owner, new_last_writer_proc };
     }
 
     typename state_ctrl_type::invalidate_result invalidate(blk_local_lock_type& blk_llk)

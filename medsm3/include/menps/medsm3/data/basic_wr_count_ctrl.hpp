@@ -41,18 +41,35 @@ public:
             : true;
     }
 
-    bool is_fast_released(blk_local_lock_type& blk_llk)
+    bool try_fast_release(blk_local_lock_type& blk_llk)
     {
         auto& self = this->derived();
 
-        if (self.is_fast_release_enabled()) {
-            const auto fast_rel_count = self.get_fast_rel_count(blk_llk);
-            const auto fast_rel_threshold = self.get_fast_rel_threshold(blk_llk);
-            return fast_rel_count < fast_rel_threshold;
-        }
-        else {
+        if (!self.is_fast_release_enabled()) {
             return false;
         }
+
+        const auto is_written_last = self.get_written_last(blk_llk);
+        const auto fast_rel_count = self.get_fast_rel_count(blk_llk);
+        const auto fast_rel_threshold = self.get_fast_rel_threshold(blk_llk);
+        
+        const auto is_fast_released =
+            is_written_last && fast_rel_count < fast_rel_threshold;
+
+        CMPTH_P_LOG_VERBOSE(P
+        ,   "Check possibility of fast release."
+        ,   "blk_id", blk_llk.blk_id().to_str()
+        ,   "is_written_last", is_written_last
+        ,   "fast_rel_count", fast_rel_count
+        ,   "fast_rel_threshold", fast_rel_threshold
+        ,   "is_fast_released", is_fast_released
+        );
+
+        if (is_fast_released) {
+            self.set_fast_rel_count(blk_llk, fast_rel_count+1);
+        }
+        
+        return is_fast_released;
     }
 
     bool needs_protect_before(blk_global_lock_base_type& blk_glk) {
@@ -75,6 +92,9 @@ public:
         auto wr_count = self.get_wr_count(blk_llk);
 
         if (self.is_fast_release_enabled()) {
+            const auto is_written_last = ! bt_ret.is_remotely_updated && mg_ret.is_written;
+            self.set_written_last(blk_llk, is_written_last);
+
             auto fast_rel_threshold = self.get_fast_rel_threshold(blk_llk);
             if (bt_ret.is_write_protected) {
                 // Reset the counts.
@@ -99,6 +119,14 @@ public:
             self.set_fast_rel_count(blk_llk, 0);
             // TODO: May overflow.
             self.set_fast_rel_threshold(blk_llk, fast_rel_threshold);
+
+            CMPTH_P_LOG_VERBOSE(P
+            ,   "Update write counter."
+            ,   "blk_id", blk_llk.blk_id().to_str()
+            ,   "is_written_last", is_written_last
+            ,   "wr_count", wr_count
+            ,   "fast_rel_threshold", fast_rel_threshold
+            );
         }
         else {
             // Update the write count.
@@ -107,6 +135,12 @@ public:
                     (bt_ret.needs_local_comp && mg_ret.is_written))
                 ? 0 : (wr_count + 1);
             // TODO: May overflow.
+            
+            CMPTH_P_LOG_VERBOSE(P
+            ,   "Update write counter."
+            ,   "blk_id", blk_llk.blk_id().to_str()
+            ,   "wr_count", wr_count
+            );
         }
 
         self.set_wr_count(blk_llk, wr_count);

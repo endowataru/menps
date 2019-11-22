@@ -7,7 +7,7 @@ namespace menps {
 namespace medsm3 {
 
 template <typename P>
-class svm_inv_ctrl
+class svm_ts_inv_ctrl
     : public P::inv_ctrl_base_type
     // ts_inv_ctrl or dir_inv_ctrl
 {
@@ -23,7 +23,7 @@ class svm_inv_ctrl
     using segment_set_ptr_type = typename P::segment_set_ptr_type;
 
 public:
-    explicit svm_inv_ctrl(segment_set_ptr_type seg_set_ptr)
+    explicit svm_ts_inv_ctrl(segment_set_ptr_type seg_set_ptr)
         : seg_set_ptr_{fdn::move(seg_set_ptr)}
     { }
 

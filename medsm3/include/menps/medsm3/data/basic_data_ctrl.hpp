@@ -147,9 +147,6 @@ public:
             }
         }
         
-        const auto owner_proc = blk_glk.prev_owner();
-        const auto owner_source_rptr = self.get_remote_source_rptr(owner_proc, blk_llk);
-        
         if (! begin_ret.is_remotely_updated) {
             if (is_written) {
                 if (begin_ret.needs_local_copy) {
@@ -165,45 +162,49 @@ public:
             }
         }
         else {
-            typename rma_itf_type::template unique_local_ptr<byte []> owner_source_buf;
+            const auto home_proc =
+                migration_enabled ? blk_glk.last_writer_proc() : blk_glk.prev_owner();
+            
+            typename rma_itf_type::template unique_local_ptr<byte []> home_source_buf;
             {
                 CMPTH_P_PROF_SCOPE(P, tx_merge_remote_get);
 
-                // Read the data from owner_proc.
-                owner_source_buf = rma.buf_read(owner_proc, owner_source_rptr, blk_size);
+                const auto home_source_rptr = self.get_remote_source_rptr(home_proc, blk_llk);
+                // Read the data from home_proc.
+                home_source_buf = rma.buf_read(home_proc, home_source_rptr, blk_size);
             }
-            const auto owner_source = owner_source_buf.get();
+            const auto home_source = home_source_buf.get();
             
             if (self.is_lazy_merge_enabled() && migration_enabled)
             {
                 CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_1);
 
-                const auto owner_snapshot_rptr = self.get_remote_snapshot_rptr(owner_proc, blk_llk);
-                // Write back owner_source_buf (= remote private) to owner_proc.
-                rma.write(owner_proc, owner_snapshot_rptr, owner_source_buf.get(), blk_size);
+                const auto home_snapshot_rptr = self.get_remote_snapshot_rptr(home_proc, blk_llk);
+                // Write back home_source (= remote private) to home_proc.
+                rma.write(home_proc, home_snapshot_rptr, home_source, blk_size);
             }
             
             if (is_written) {
                 // Use SIMD if the private data is write-protected.
                 const bool use_simd = begin_ret.is_write_protected;
                 
-                // Three copies (local_snapshot, local_working, owner_source) are different with each other.
+                // Three copies (local_snapshot, local_working, home_source) are different with each other.
                 // It is necessary to merge them to complete the release.
-                merge_policy_type::write_merge(blk_llk, owner_source, local_working, local_snapshot, blk_size, use_simd);
+                merge_policy_type::write_merge(blk_llk, home_source, local_working, local_snapshot, blk_size, use_simd);
             }
             else {
                 CMPTH_P_PROF_SCOPE(P, tx_merge_remote_memcpy);
                 
                 // Although this process doesn't release this block at this time,
-                // the buffer read from the current owner can be utilized.
+                // the buffer read from the current home can be utilized.
                 // This is important when an acquire on this block is on-going
                 // because that thread requires this releaser thread
                 // to make the latest modifications visible on this process.
                 // Note: The timestamp should also be updated in the directory later.
-                std::memcpy(local_working, owner_source, blk_size);
-                //std::copy(owner_source, owner_source + blk_size, local_working);
-                std::memcpy(local_snapshot, owner_source, blk_size);
-                //std::copy(owner_source, owner_source + blk_size, local_snapshot);
+                std::memcpy(local_working, home_source, blk_size);
+                //std::copy(home_source, home_source + blk_size, local_working);
+                std::memcpy(local_snapshot, home_source, blk_size);
+                //std::copy(home_source, home_source + blk_size, local_snapshot);
             }
         }
         
@@ -211,6 +212,8 @@ public:
         {
             CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_2);
 
+            const auto owner_proc = blk_glk.prev_owner();
+            const auto owner_source_rptr = self.get_remote_source_rptr(owner_proc, blk_llk);
             // Write back local_snapshot to owner_proc.
             rma.buf_write(owner_proc, owner_source_rptr, local_snapshot, blk_size);
         }

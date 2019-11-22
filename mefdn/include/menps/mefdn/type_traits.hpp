@@ -15,6 +15,9 @@ using std::is_void;
 using std::is_signed;
 using std::is_trivial;
 
+template <bool B, typename T, typename F>
+using conditional_t = typename conditional<B, T, F>::type;
+
 template <typename T>
 using remove_cv_t = typename std::remove_cv<T>::type;
 

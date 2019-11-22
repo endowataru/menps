@@ -48,6 +48,13 @@ public:
         this->seg_set().set_local_entry_of(blk_llk, &local_entry_type::wr_count, wr_count);
     }
 
+    bool get_written_last(blk_local_lock_type& blk_llk) noexcept {
+        return this->seg_set().get_local_entry_of(blk_llk, &local_entry_type::is_written_last);
+    }
+    void set_written_last(blk_local_lock_type& blk_llk, const bool is_written_last) noexcept {
+        this->seg_set().set_local_entry_of(blk_llk, &local_entry_type::is_written_last, is_written_last);
+    }
+
     wr_count_type get_fast_rel_count(blk_local_lock_type& blk_llk) noexcept {
         return this->seg_set().get_local_entry_of(blk_llk, &local_entry_type::fast_rel_count);
     }

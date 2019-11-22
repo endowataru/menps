@@ -6,9 +6,8 @@
 namespace menps {
 namespace medsm3 {
 
-// TODO: move to svm/
 template <typename P>
-class local_lock_ctrl
+class svm_local_lock_ctrl
 {
     using blk_local_lock_type = typename P::blk_local_lock_type;
     using blk_id_type = typename P::blk_id_type;
@@ -20,11 +19,14 @@ class local_lock_ctrl
     using blk_mutex_type = typename P::blk_mutex_type;
     using blk_unique_lock_type = typename ult_itf_type::template unique_lock<blk_mutex_type>;
 
+    using com_itf_type = typename P::com_itf_type;
+
 public:
-    explicit local_lock_ctrl(segment_set_ptr_type seg_set_ptr)
+    explicit svm_local_lock_ctrl(segment_set_ptr_type seg_set_ptr)
         : seg_set_ptr_{fdn::move(seg_set_ptr)}
     { }
 
+    MEFDN_ALWAYS_INLINE
     blk_local_lock_type get_local_lock(const blk_id_type blk_id) {
         CMPTH_P_ASSERT(P, this->seg_set_ptr_);
         auto& seg_set = *this->seg_set_ptr_;
@@ -37,6 +39,12 @@ public:
         ,   seg.get_blk_size()
         ,   seg.get_tag_from_subindex(blk_id.sidx)
         };
+    }
+
+    // TODO: This is required only for ts_rd_ctrl::fence_acquire_all().
+    com_itf_type& get_com_itf() {
+        CMPTH_P_ASSERT(P, this->seg_set_ptr_);
+        return this->seg_set_ptr_->get_com_itf();
     }
 
 private:

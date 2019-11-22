@@ -23,11 +23,19 @@ public:
         : wr_count_ctrl_ptr_{fdn::move(wr_count_ctrl_ptr)}
     { }
 
+    // Used by update_global() and try_start_read().
     bool is_invalid(blk_local_lock_type& blk_llk)
     {
         auto& self = this->derived();
         const auto state = self.get_local_state(blk_llk);
         return state == blk_state_type::invalid_clean || state == blk_state_type::invalid_dirty;
+    }
+
+    // TODO: This method accesses the internal method of wr_count_ctrl.
+    // Used by on_start_write().
+    bool is_written_last(blk_local_lock_type& blk_llk)
+    {
+        return this->wr_count_ctrl().get_written_last(blk_llk);
     }
 
     struct fast_read_result {
@@ -116,7 +124,10 @@ public:
             ! (state == blk_state_type::invalid_clean ||
                state == blk_state_type::readonly_clean);
         
-        return { needs_release, this->wr_count_ctrl().is_fast_released(blk_llk) };
+        const auto is_fast_released =
+            this->wr_count_ctrl().try_fast_release(blk_llk);
+        
+        return { needs_release, is_fast_released };
     }
 
     struct update_global_begin_result
@@ -154,6 +165,9 @@ public:
         const auto this_proc = com.this_proc_id();
         const auto owner = blk_glk.prev_owner();
 
+        #if 1
+        const auto is_remotely_updated = blk_glk.last_writer_proc() != this_proc;
+        #else
         const auto is_remotely_updated =
                 self.is_migration_enabled()
             ?   owner != this_proc
@@ -166,7 +180,8 @@ public:
                     // Compare the write timestamps.
                 ||  is_remotely_updated_ts
                 );
-        
+        #endif
+
         const auto is_dirty =
             state == blk_state_type::invalid_dirty ||
             state == blk_state_type::readonly_dirty ||

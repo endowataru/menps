@@ -6,9 +6,13 @@
 #include <menps/medsm3/layout/blk_local_lock.hpp>
 #include <menps/medsm3/layout/blk_global_lock_base.hpp>
 #include <menps/medsm3/reader/ts/ts_segment.hpp>
+#include <menps/medsm3/reader/dir/dir_segment.hpp>
 #include <menps/medsm2/dsm/queue_lock_table.hpp>
+#include <menps/medsm2/dsm/fixed_lock_table.hpp>
 #include <menps/mefdn/memory/mapped_memory.hpp>
 #include <menps/medsm2/svm/shm_object.hpp>
+#include <menps/medsm2/id_allocator.hpp>
+#include <menps/medsm2/dsm/sharer_map.hpp>
 
 namespace menps {
 namespace medsm3 {
@@ -92,15 +96,36 @@ struct md3_global_lock_table_policy
 };
 
 template <typename P>
+struct md3_sharer_map_policy
+{
+    using com_itf_type = typename lv1_md3_policy_base<P>::com_itf_type;
+    using size_type = fdn::size_t;
+};
+
+template <typename P>
 struct md3_segment_policy
     : lv1_md3_policy_base<P>
 {
-    using segment_base_type = ts_segment<md3_segment_policy>;
+    using segment_base_type =
+        fdn::conditional_t<
+            P::constants_type::use_directory_coherence
+        ,   dir_segment<md3_segment_policy>
+        ,   ts_segment<md3_segment_policy>
+        >;
 
-    using global_lock_table_type = medsm2::queue_lock_table<md3_global_lock_table_policy<P>>;
+    using global_lock_table_type =
+        fdn::conditional_t<
+            P::constants_type::is_migration_enabled
+        ,   medsm2::queue_lock_table<md3_global_lock_table_policy<P>>
+        ,   medsm2::fixed_lock_table<md3_global_lock_table_policy<P>>
+        >;
+
     using blk_state_type = md3_blk_state_t;
     using wr_count_type = fdn::size_t;
     using mapped_memory_type = fdn::mapped_memory;
+
+    // Only used by dir_segment.
+    using sharer_map_type = medsm2::sharer_map<md3_sharer_map_policy<P>>;
 };
 
 template <typename P>
@@ -112,6 +137,15 @@ struct mv3_segment_set_policy
     using shm_object_type = medsm2::shm_object;
 };
 
+
+template <typename P>
+struct md3_id_allocator_policy
+{
+public:
+    using com_itf_type = typename P::com_itf_type;
+    using size_type = fdn::size_t;
+    using atomic_int_type = fdn::uint64_t; // TODO
+};
 
 template <typename P>
 struct lv1_md3_itf
@@ -137,7 +171,10 @@ struct lv1_md3_itf
     using blk_state_type = typename md3_segment_policy<P>::blk_state_type;
     using wr_count_type = typename md3_segment_policy<P>::wr_count_type;
     using blk_mutex_type = typename lv1_md3_policy_base<P>::blk_mutex_type;
+
+    using sharer_map_type = typename md3_segment_policy<P>::sharer_map_type;
      
+    using log_aspect_type = typename lv1_md3_policy_base<P>::log_aspect_type;
     using prof_aspect_type = typename P::prof_aspect_type;
 
     using constants_type = typename lv1_md3_policy_base<P>::constants_type;
@@ -145,6 +182,8 @@ struct lv1_md3_itf
     // Used by mtx_table.
     // TODO: Separate into two implementations.
     using global_lock_table_type = typename md3_segment_policy<P>::global_lock_table_type;
+
+    using id_allocator_type = medsm2::id_allocator<md3_id_allocator_policy<P>>;
 };
 
 } // namespace medsm3

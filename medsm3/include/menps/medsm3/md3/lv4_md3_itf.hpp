@@ -5,7 +5,6 @@
 #include <menps/medsm3/svm/svm_flag_set_ref.hpp>
 #include <menps/medsm3/writer/basic_pin_ctrl.hpp>
 #include <menps/medsm2/dsm/wr_set.hpp>
-#include <menps/medsm2/dsm/rel_sig.hpp>
 
 namespace menps {
 namespace medsm3 {
@@ -22,7 +21,7 @@ public:
     using com_itf_type = typename lv3_itf_type::com_itf_type;
     using ult_itf_type = typename lv3_itf_type::ult_itf_type;
     using assert_policy_type = typename ult_itf_type::assert_policy;
-    using log_aspect_type = typename ult_itf_type::log_aspect;
+    using log_aspect_type = typename lv3_itf_type::log_aspect_type;
 
     using prof_aspect_type = typename lv3_itf_type::prof_aspect_type;
 
@@ -47,22 +46,6 @@ public:
     
     using rd_ts_state_type = typename lv3_itf_type::rd_ts_state_type;
     using ts_type = typename lv3_itf_type::ts_type;
-};
-
-template <typename P>
-struct md3_rel_sig_policy
-    : lv4_md3_policy_base<P>
-{
-private:
-    using lv3_itf_type = typename P::lv3_itf_type;
-    
-public:
-    using size_type = fdn::size_t;
-
-    using sig_buffer_type = typename lv3_itf_type::sig_buffer_type;
-
-    using wr_ts_type = typename lv3_itf_type::wr_ts_type;
-    using wn_vector_type = typename lv3_itf_type::wn_vector_type;
 };
 
 template <typename P>
@@ -92,7 +75,7 @@ public:
 
     using wr_set_type = medsm2::wr_set<md3_wr_set_policy<P>>;
     using sig_buffer_type = typename lv3_itf_type::sig_buffer_type;
-    using rel_sig_type = medsm2::rel_sig<md3_rel_sig_policy<P>>;
+    using rel_sig_type = typename lv3_itf_type::rel_sig_type;
 
     using wn_entry_type = typename lv3_itf_type::wn_entry_type;
     using wn_vector_type = typename lv3_itf_type::wn_vector_type;
@@ -123,7 +106,6 @@ struct lv4_md3_itf
 {
     using wr_ctrl_type = typename md3_wr_ctrl_policy<P>::derived_type;
     using pin_ctrl_type = typename md3_pin_ctrl_policy<P>::derived_type;
-    using rel_sig_type = typename md3_wr_ctrl_policy<P>::rel_sig_type;
 };
 
 } // namespace medsm3
