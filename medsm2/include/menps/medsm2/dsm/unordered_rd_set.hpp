@@ -32,7 +32,7 @@ public:
         std::vector<blk_id_type> removed;
         for (const auto blk_id : this->blk_ids_) {
             const auto ret = func(rd_ts_st, blk_id);
-            if (!ret.is_ignored) {
+            if (!ret.still_readable) {
                 removed.push_back(blk_id);
             }
         }

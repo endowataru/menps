@@ -349,6 +349,8 @@ private:
         bool    needs_protect;
         // This block must be merged from the writer because it is writable.
         bool    needs_merge;
+
+        bool    still_readable;
     };
     
     invalidate_result set_invalid_state(
@@ -363,21 +365,21 @@ private:
             if (le.state == state_type::invalid_clean || le.state == state_type::invalid_dirty) {
                 // Although the write is not ignored,
                 // invalidated blocks require neither protection nor merging.
-                return { false, false, false };
+                return { false, false, false, false };
             }
             else if (le.state == state_type::readonly_clean) {
                 // Set the state to "invalid & clean".
                 le.state = state_type::invalid_clean;
                 
                 // mprotect(PROT_NONE) must be called immediately.
-                return { false, true, false };
+                return { false, true, false, false };
             }
             else if (le.state == state_type::readonly_dirty) {
                 // Set the state to "invalid & dirty".
                 le.state = state_type::invalid_dirty;
                 
                 // mprotect(PROT_NONE) must be called immediately.
-                return { false, true, false };
+                return { false, true, false, false };
             }
             else if (le.state == state_type::writable) {
                 // Set the state to "invalid & dirty".
@@ -385,17 +387,17 @@ private:
                 le.state = state_type::invalid_dirty;
                 
                 // mprotect(PROT_NONE) must be called immediately.
-                return { false, true, false };
+                return { false, true, false, false };
             }
             else {
                 // Pinned blocks cannot be merged with mprotect(PROT_NONE).
-                return { false, false, true };
+                return { false, false, true, true };
             }
         }
         else {
             // The write notice is ignored because it's old.
             // There is no need to release/protect this block.
-            return { true, false, false };
+            return { true, false, false, true };
         }
     }
     
