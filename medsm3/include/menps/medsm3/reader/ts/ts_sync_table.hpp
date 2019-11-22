@@ -32,8 +32,8 @@ public:
             fdn::size_t sig_size_in_bytes;
         };
         this->mtx_tbl_.coll_init(
-            mtx_table_conf{ com, num_locks, rel_sig_type::get_max_size_in_bytes()
-        });
+            mtx_table_conf{ com, num_locks, rel_sig_type::get_max_size_in_bytes() }
+        );
         this->mtx_id_alloc_.coll_make(com, num_locks);
     }
 
