@@ -106,14 +106,87 @@ test_openmpi_mth_relwithdebinfo_job:
         - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
 
-# medsm3
+# medsm2 with dir,fixed
 
-test_medsm3_ctmth_relwithdebinfo_job:
+test_nofastrel_mth_relwithdebinfo_job:
     stage: test
     script:
-        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=CTMTH -D MEOMP_ENABLE_MEDSM3=ON
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEDSM2_ENABLE_FAST_RELEASE=OFF
         - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
         - ./ctest.bash RelWithDebInfo -V
+
+test_nolazymerge_mth_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEDSM2_ENABLE_FAST_RELEASE=OFF -D MEDSM2_ENABLE_LAZY_MERGE=OFF
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+test_dir_mth_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEDSM2_ENABLE_FAST_RELEASE=OFF -D MEDSM2_ENABLE_LAZY_MERGE=OFF -D MEDSM2_USE_DIRECTORY_COHERENCE=ON
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+test_fixed_mth_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEDSM2_ENABLE_FAST_RELEASE=OFF -D MEDSM2_ENABLE_LAZY_MERGE=OFF -D MEDSM2_ENABLE_MIGRATION=OFF
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+test_dir_fixed_mth_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEDSM2_ENABLE_FAST_RELEASE=OFF -D MEDSM2_ENABLE_LAZY_MERGE=OFF -D MEDSM2_USE_DIRECTORY_COHERENCE=ON -D MEDSM2_ENABLE_MIGRATION=OFF
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+# medsm3
+
+test_medsm3_mth_relwithdebinfo_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEOMP_ENABLE_MEDSM3=ON
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+test_medsm3_nofastrel_mth_relwithdebinfo_dir_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEOMP_ENABLE_MEDSM3=ON -D MEDSM2_ENABLE_FAST_RELEASE=OFF
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+test_medsm3_nolazymerge_mth_relwithdebinfo_dir_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEOMP_ENABLE_MEDSM3=ON -D MEDSM2_ENABLE_FAST_RELEASE=OFF -D MEDSM2_ENABLE_LAZY_MERGE=OFF
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+test_medsm3_dir_mth_relwithdebinfo_dir_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEOMP_ENABLE_MEDSM3=ON -D MEDSM2_ENABLE_FAST_RELEASE=OFF -D MEDSM2_ENABLE_LAZY_MERGE=OFF -D MEDSM2_USE_DIRECTORY_COHERENCE=ON
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+test_medsm3_fixed_mth_relwithdebinfo_dir_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEOMP_ENABLE_MEDSM3=ON -D MEDSM2_ENABLE_FAST_RELEASE=OFF -D MEDSM2_ENABLE_LAZY_MERGE=OFF -D MEDSM2_ENABLE_MIGRATION=OFF
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
+test_medsm3_dir_fixed_mth_relwithdebinfo_dir_job:
+    stage: test
+    script:
+        - ./cmake.bash RelWithDebInfo -D MEDSM2_ULT_ITF=MTH -D MEOMP_ENABLE_MEDSM3=ON -D MEDSM2_ENABLE_FAST_RELEASE=OFF -D MEDSM2_ENABLE_LAZY_MERGE=OFF -D MEDSM2_USE_DIRECTORY_COHERENCE=ON -D MEDSM2_ENABLE_MIGRATION=OFF
+        - ./make.bash RelWithDebInfo VERBOSE=1 -j 8
+        - ./ctest.bash RelWithDebInfo -V
+
 
 # UCT
 
