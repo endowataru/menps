@@ -40,10 +40,22 @@ public:
 
         const auto sd_ret = sd_ctrl.start_write(blk_llk);
         if (sd_ret.needs_protect) {
-            this->wr_set_.add_writable(blk_llk.blk_id());
+            const auto blk_id = blk_llk.blk_id();
+            CMPTH_P_LOG_DEBUG(P
+            ,   "Start writing block."
+            ,   "blk_id", blk_id.to_str()
+            );
+
+            this->wr_set_.add_writable(blk_id);
 
             auto rd_ts_st = this->rd_ctrl().get_rd_ts_st();
             this->rd_ctrl().on_start_write(rd_ts_st, blk_llk);
+        }
+        else {
+            CMPTH_P_LOG_DEBUG(P
+            ,   "Ignored writing block (already writable)."
+            ,   "blk_id", blk_llk.blk_id().to_str()
+            );
         }
 
         // When the block was or is now writable, consider this method call succeeded.
@@ -147,9 +159,7 @@ private:
             CMPTH_P_LOG_INFO(P
             ,   "Fast release."
             ,   "blk_id", blk_id.to_str()
-            ,   "home_proc", fast_rel_ret.new_wn.home_proc
-            ,   "wr_ts", fast_rel_ret.new_wn.ts_intvl.wr_ts
-            ,   "rd_ts", fast_rel_ret.new_wn.ts_intvl.rd_ts
+            ,   "wn", this->rd_ctrl().show_wn(fast_rel_ret.new_wn)
             );
             return { true, true, true, fast_rel_ret.new_wn };
         }
@@ -164,9 +174,7 @@ private:
             CMPTH_P_LOG_INFO(P
             ,   "Finish slow release."
             ,   "blk_id", blk_id.to_str()
-            ,   "home_proc", up_ret.new_wn.home_proc
-            ,   "wr_ts", up_ret.new_wn.ts_intvl.wr_ts
-            ,   "rd_ts", up_ret.new_wn.ts_intvl.rd_ts
+            ,   "wn", this->rd_ctrl().show_wn(up_ret.new_wn)
             ,   "is_write_protected", up_ret.is_write_protected
             ,   "is_written", up_ret.is_written
             );

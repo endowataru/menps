@@ -90,29 +90,21 @@ private:
         const auto ret = mprotect(p, num_bytes, prot);
         
         if (ret == 0) {
-            MEFDN_LOG_INFO(
-                "msg:Called mprotect().\t"
-                "ptr:{:x}\t"
-                "num_bytes:{}\t"
-                "prot:{}\t"
-            ,   reinterpret_cast<mefdn::uintptr_t>(p)
-            ,   num_bytes
-            ,   prot
+            CMPTH_P_LOG_INFO(P
+            ,   "Called mprotect()."
+            ,   "ptr", p
+            ,   "num_bytes", num_bytes
+            ,   "prot", prot
             );
         }
         else {
-            MEFDN_LOG_WARN(
-                "msg:mprotect() failed.\t"
-                "ptr:{:x}\t"
-                "num_bytes:{}\n"
-                "prot:{}\t"
-                "ret:{}\t"
-                "errno:{}"
-            ,   reinterpret_cast<mefdn::uintptr_t>(p)
-            ,   num_bytes
-            ,   prot
-            ,   ret
-            ,   errno
+            CMPTH_P_LOG_FATAL(P
+            ,   "mprotect() failed."
+            ,   "ptr", p
+            ,   "num_bytes", num_bytes
+            ,   "prot", prot
+            ,   "ret", ret
+            ,   "errno", errno
             );
             
             throw std::exception{};

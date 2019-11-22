@@ -71,11 +71,15 @@ protected:
     {
         auto blk_llk = this->local_lock_ctrl().get_local_lock(blk_id);
         this->pin_ctrl_->start_pin(blk_llk);
+
+        CMPTH_P_LOG_DEBUG(P, "Pinned block.", "blk_id", blk_id.to_str());
     }
     void end_pin_block(const blk_id_type blk_id)
     {
         auto blk_llk = this->local_lock_ctrl().get_local_lock(blk_id);
         this->pin_ctrl_->end_pin(blk_llk);
+
+        CMPTH_P_LOG_DEBUG(P, "Unpinned block.", "blk_id", blk_id.to_str());
     }
 
     #if 0

@@ -97,16 +97,12 @@ public:
         if (conf.is_copied) {
             // This is used for initializing global variables.
             
-            MEFDN_LOG_DEBUG(
-                "msg:Start copying global variables.\t"
-                "working_sys_ptr:{:x}\t"
-                "working_app_ptr:{:x}\t"
-                "primary_ptr:{:x}\t"
-                "num_bytes:{:x}"
-            ,   reinterpret_cast<fdn::uintptr_t>(working_sys_ptr)
-            ,   reinterpret_cast<fdn::uintptr_t>(working_app_ptr)
-            ,   reinterpret_cast<fdn::uintptr_t>(primary_ptr)
-            ,   num_bytes
+            CMPTH_P_LOG_INFO(P
+            ,   "Start copying global variables."
+            ,   "working_sys_ptr", working_sys_ptr
+            ,   "working_app_ptr", working_app_ptr
+            ,   "primary_ptr", primary_ptr
+            ,   "num_bytes", num_bytes
             );
             
             // Initialize the private area with the original contents.
@@ -117,9 +113,7 @@ public:
                 copy_memory(secondary_ptr, working_app_ptr, num_bytes);
             }
             
-            MEFDN_LOG_DEBUG(
-                "msg:Finish copying global variables."
-            );
+            CMPTH_P_LOG_INFO(P, "Finish copying global variables.");
         }
         else {
             // TODO: May be unnecessary
@@ -230,14 +224,11 @@ public:
 private:
     static void copy_memory(void* const dest, const void* const src, const fdn::size_t num_bytes)
     {
-        MEFDN_LOG_DEBUG(
-            "msg:Start copying memory.\t"
-            "dest:0x{:x}\t"
-            "src:0x{:x}\t"
-            "num_bytes:0x{:x}"
-        ,   reinterpret_cast<mefdn::uintptr_t>(dest)
-        ,   reinterpret_cast<mefdn::uintptr_t>(src)
-        ,   num_bytes
+        CMPTH_P_LOG_DEBUG(P
+        ,   "Start copying memory."
+        ,   "dest", dest
+        ,   "src", src
+        ,   "num_bytes", num_bytes
         );
         
         #ifdef MEDSM2_ENABLE_MAP_POPULATE
@@ -259,25 +250,20 @@ private:
         }
         #endif
         
-        MEFDN_LOG_DEBUG(
-            "msg:Finish copying memory.\t"
-            "dest:0x{:x}\t"
-            "src:0x{:x}\t"
-            "num_bytes:0x{:x}"
-        ,   reinterpret_cast<mefdn::uintptr_t>(dest)
-        ,   reinterpret_cast<mefdn::uintptr_t>(src)
-        ,   num_bytes
+        CMPTH_P_LOG_DEBUG(P
+        ,   "Finish copying memory."
+        ,   "dest", dest
+        ,   "src", src
+        ,   "num_bytes", num_bytes
         );
     }
 
     static void fill_zero(void* const dest, const fdn::size_t num_bytes)
     {
-        MEFDN_LOG_DEBUG(
-            "msg:Start filling with zero.\t"
-            "dest:0x{:x}\t"
-            "num_bytes:0x{:x}"
-        ,   reinterpret_cast<fdn::uintptr_t>(dest)
-        ,   num_bytes
+        CMPTH_P_LOG_DEBUG(P
+        ,   "Start filling with zero."
+        ,   "dest", dest
+        ,   "num_bytes", num_bytes
         );
         
         #if 1
@@ -289,12 +275,10 @@ private:
         }
         #endif
         
-        MEFDN_LOG_DEBUG(
-            "msg:Finish filling with zero.\t"
-            "dest:0x{:x}\t"
-            "num_bytes:0x{:x}"
-        ,   reinterpret_cast<fdn::uintptr_t>(dest)
-        ,   num_bytes
+        CMPTH_P_LOG_DEBUG(P
+        ,   "Finish filling with zero."
+        ,   "dest", dest
+        ,   "num_bytes", num_bytes
         );
     }
 

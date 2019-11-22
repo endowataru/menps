@@ -172,10 +172,21 @@ public:
         CMPTH_P_LOG_INFO(P
         ,   "Finish updating block."
         ,   "blk_id", blk_llk.blk_id().to_str()
+        ,   "is_upgraded", is_upgraded
         );
         
         return { sd_ret.is_write_protected, sd_ret.is_written,
             { sd_ret.new_owner, blk_llk.blk_id(), inv_intvl } };
+    }
+
+    static std::string show_wn(const wn_entry_type& wn)
+    {
+        return fmt::format(
+            "home_proc={},wr_ts={},rd_ts={}"
+        ,   wn.home_proc
+        ,   wn.ts_intvl.wr_ts
+        ,   wn.ts_intvl.rd_ts
+        );
     }
 
     void fence_acquire_all(const sig_buf_set_type& sig_set)

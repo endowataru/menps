@@ -239,7 +239,7 @@ private:
                 format_to(w, "my_pub_8b:0x{:x}\t"   , get_aligned_data_race_val<fdn::uint64_t>(&my_pub[i]));
                 
                 const auto s = to_string(w);
-                MEFDN_LOG_FATAL("{}", s);
+                CMPTH_P_LOG_FATAL(P, "Detected data race.", "detail", s);
                 throw std::runtime_error(s);
             }
         }
@@ -255,7 +255,7 @@ private:
         format_to(w, "my_pub:0x{:x}"     , reinterpret_cast<mefdn::intptr_t>(my_pub));
         
         const auto s = to_string(w);
-        MEFDN_LOG_FATAL("{}", s);
+        CMPTH_P_LOG_FATAL(P, "Detected data race.", "detail", s);
         throw std::logic_error(s);
     }
     
