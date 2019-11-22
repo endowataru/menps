@@ -804,6 +804,15 @@ public:
             ,   [&] (const mefdn::size_t i) {
                     const bool written_flag = true;
                     const auto proc_id = inv_sharers[i];
+                    MEFDN_LOG_DEBUG(
+                        "msg:Send invalidation.\t"
+                        "blk_id:0x{:x}\t"
+                        "blk_pos:{}\t"
+                        "proc_id:{}"
+                    ,   blk_id
+                    ,   blk_pos
+                    ,   proc_id
+                    );
                     rma.buf_write(
                         proc_id
                     ,   this->inv_flags_.remote(proc_id, blk_pos)

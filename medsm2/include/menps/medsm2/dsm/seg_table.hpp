@@ -350,10 +350,12 @@ public:
         if (! ret.is_ignored) {
             MEFDN_LOG_DEBUG(
                 "msg:Invalidated block using WN.\t"
+                "blk_id:0x{:x}\t"
                 "blk_pos:{}\t"
                 "home_proc:{}\t"
                 "wn_wr_ts:{}\t"
                 "wn_rd_ts:{}\t"
+            ,   wn.blk_id
             ,   info.blk_pos
             ,   wn.home_proc
             ,   wn.wr_ts
@@ -363,10 +365,12 @@ public:
         else {
             MEFDN_LOG_DEBUG(
                 "msg:Ignored WN.\t"
+                "blk_id:0x{:x}\t"
                 "blk_pos:{}\t"
                 "home_proc:{}\t"
                 "wn_wr_ts:{}\t"
                 "wn_rd_ts:{}\t"
+            ,   wn.blk_id
             ,   info.blk_pos
             ,   wn.home_proc
             ,   wn.wr_ts
@@ -408,15 +412,18 @@ public:
         #ifdef MEDSM2_USE_DIRECTORY_COHERENCE
         MEFDN_LOG_DEBUG(
             "msg:{}.\t"
+            "blk_id:0x{:x}\t"
             "blk_pos:{}\t"
         ,   (ret.needs_protect ? "Self-invalidated block." :
                 (ret.is_ignored ? "Avoid self-invalidation." :
                     "Self-invalidate invalid block."))
+        ,   blk_id
         ,   info.blk_pos
         );
         #else
         MEFDN_LOG_DEBUG(
             "msg:{}.\t"
+            "blk_id:0x{:x}\t"
             "blk_pos:{}\t"
             "wr_ts:{}\t"
             "rd_ts:{}\t"
@@ -424,6 +431,7 @@ public:
         ,   (ret.needs_protect ? "Self-invalidated block." :
                 (ret.is_ignored ? "Avoid self-invalidation." :
                     "Self-invalidate invalid block."))
+        ,   blk_id
         ,   info.blk_pos
         ,   ret.wr_ts
         ,   ret.rd_ts
