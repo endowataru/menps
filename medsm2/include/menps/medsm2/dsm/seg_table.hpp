@@ -545,7 +545,7 @@ private:
         
         // Merge the writes from both the current process and the latest owner.
         /*const*/ auto mg_ret =
-            info.data_tbl.release_merge(com, info.blk_pos, info.lk, bt_ret);
+            info.data_tbl.release_merge(com, info.blk_pos, info.lk, glk_ret, bt_ret);
         
         // Invoke a special operation on this block.
         const auto is_changed =

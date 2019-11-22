@@ -194,12 +194,13 @@ public:
         bool is_migrated;
     };
     
-    template <typename LockResult>
+    template <typename LockResult, typename BeginTransactionResult>
     release_merge_result release_merge(
-        com_itf_type&               com
-    ,   const blk_pos_type          blk_pos
-    ,   const blk_unique_lock_type& blk_lk
-    ,   const LockResult&           glk_ret
+        com_itf_type&                   com
+    ,   const blk_pos_type              blk_pos
+    ,   const blk_unique_lock_type&     blk_lk
+    ,   const LockResult&               glk_ret
+    ,   const BeginTransactionResult&   bt_ret
     ) {
         CMPTH_P_PROF_SCOPE(P, tx_merge);
         
@@ -209,7 +210,7 @@ public:
         const auto blk_size = self.get_blk_size();
         auto& rma = com.get_rma();
         
-        if (glk_ret.needs_protect_before) {
+        if (bt_ret.needs_protect_before) {
             // Only when the block was writable and should be protected,
             // this method write-protects this block
             // in order to apply the changes to the private data.
@@ -229,13 +230,13 @@ public:
         
         bool is_written = false;
         
-        if (glk_ret.is_dirty) {
+        if (bt_ret.is_dirty) {
             // Compare the private data with the public data.
             // Note that the private data is STILL WRITABLE
             // and can be modified concurrently by other threads in this process.
             // It's OK to read the intermediate states
             // because those writes will be managed by the next release operation.
-            if (glk_ret.needs_local_comp){
+            if (bt_ret.needs_local_comp){
                 CMPTH_P_PROF_SCOPE(P, tx_merge_memcmp);
                 
                 is_written = std::memcmp(my_priv, my_pub, blk_size) != 0;
@@ -246,11 +247,11 @@ public:
             }
         }
         
-        if (! glk_ret.is_remotely_updated) {
+        if (! bt_ret.is_remotely_updated) {
             #ifndef MEDSM2_FORCE_ALWAYS_MERGE_LOCAL
             if (is_written) {
             #endif
-                if (glk_ret.needs_local_copy) {
+                if (bt_ret.needs_local_copy) {
                     CMPTH_P_PROF_SCOPE(P, tx_merge_local_memcpy);
                     
                     // Copy the private data to the public data.
@@ -265,7 +266,11 @@ public:
             #endif
         }
         else {
-            const auto cur_owner = glk_ret.owner;
+            #ifdef MEDSM2_ENABLE_MIGRATION
+            const auto cur_owner = glk_ret.last_writer_proc;
+            #else
+            const auto cur_owner = bt_ret.owner;
+            #endif
             
             typename rma_itf_type::template unique_local_ptr<mefdn::byte []> other_data_buf;
             {
@@ -304,7 +309,7 @@ public:
             if (is_written) {
             #endif
                 // Use SIMD if the private data is write-protected.
-                const bool use_simd = glk_ret.is_write_protected;
+                const bool use_simd = bt_ret.is_write_protected;
                 
                 // Three copies (my_pub, my_priv, other_data) are different with each other.
                 // It is necessary to merge them to complete the release.
@@ -333,7 +338,7 @@ public:
         if (is_written) {
             CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_2);
             
-            const auto cur_owner = glk_ret.owner;
+            const auto cur_owner = bt_ret.owner;
             // Write back my_pub to cur_owner.
             rma.buf_write(
                 cur_owner
@@ -344,7 +349,7 @@ public:
         }
         #endif
         
-        if (glk_ret.needs_protect_after) {
+        if (bt_ret.needs_protect_after) {
             CMPTH_P_PROF_SCOPE(P, mprotect_tx_after);
             
             // If this block was inaccessible (invalid-clean or invalid-dirty) from the application,

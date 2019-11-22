@@ -212,8 +212,10 @@ public:
             wr_set.add_writable(blk_id);
             
             #ifdef MEDSM2_ENABLE_FAST_RELEASE
-            // Update the timestamps locally.
-            this->update_ts(rd_ts_st, blk_pos);
+            if (le.is_written_last) {
+                // Update the timestamps locally.
+                this->update_ts(rd_ts_st, blk_pos);
+            }
             #endif
             
             return { true, needs_twin, true };
@@ -282,6 +284,7 @@ public:
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
         const auto is_fast_released =
+            le.is_written_last &&
             le.fast_rel_count < le.fast_rel_threshold;
         
         return { needs_release, is_fast_released };
@@ -547,6 +550,10 @@ public:
         const auto state = le.state;
         const auto wr_count = le.wr_count;
         
+        #if 1
+        const auto is_remotely_updated =
+            glk_ret.last_writer_proc != this_proc;
+        #else
         const auto is_remotely_updated =
             #ifdef MEDSM2_ENABLE_MIGRATION
             owner != this_proc;
@@ -559,6 +566,7 @@ public:
             // Compare the write timestamps.
             le.cur_wr_ts < owner_wr_ts;
             #endif
+        #endif
         
         const auto is_dirty =
             state == state_type::invalid_dirty ||
@@ -763,6 +771,8 @@ public:
         }
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        le.is_written_last = ! bt_ret.is_remotely_updated && mg_ret.is_written;
+
         if (bt_ret.is_write_protected) {
             // Reset the counts.
             le.wr_count = 0;
@@ -929,8 +939,8 @@ private:
         #endif
         
         #ifdef MEDSM2_ENABLE_FAST_RELEASE
+        bool            is_written_last;
         wr_count_type   fast_rel_count;
-        
         wr_count_type   fast_rel_threshold;
         #endif
     };
