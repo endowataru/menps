@@ -47,6 +47,7 @@ space_t* g_sp;
 
 int g_argc;
 char** g_argv;
+int g_exit_code = 0;
 
 void* g_stack_ptr;
 mefdn::size_t g_stack_size;
@@ -227,7 +228,7 @@ public:
     }
     
     void call_entrypoint() {
-        meomp_main(g_argc, g_argv);
+        g_exit_code = meomp_main(g_argc, g_argv);
     }
     
     space_t& get_dsm_space() {
@@ -1084,8 +1085,8 @@ int main(int argc, char* argv[])
     }
     
     // Do a barrier before destroying the resources.
-    g_coll->barrier();
+    g_coll->broadcast(0, &g_exit_code, 1);
     
-    return 0;
+    return g_exit_code;
 }
 
