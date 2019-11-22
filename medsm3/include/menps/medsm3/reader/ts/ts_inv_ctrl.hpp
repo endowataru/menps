@@ -69,11 +69,11 @@ public:
         return this->make_new_ts(rd_ts_st, true, intvl.wr_ts, intvl.rd_ts);
     }
 
-    template <typename UpdateResult>
+    template <typename StateDataResult>
     ts_interval_type update_timestamp(
         const rd_ts_state_type& rd_ts_st
     ,   blk_global_lock_type&   blk_glk
-    ,   const UpdateResult&     up_ret
+    ,   const StateDataResult&  sd_ret
     ,   const bool              is_upgraded
     ) {
         auto& self = this->derived();
@@ -91,12 +91,12 @@ public:
 
         // Generate new timestamp values.
         const auto new_intvl =
-            this->make_new_ts(copied_ts_st, up_ret.is_written,
+            this->make_new_ts(copied_ts_st, sd_ret.is_written,
                 old_intvl.wr_ts, old_intvl.rd_ts);
         // update timestamp based on blk_gcs.ts
         
         // Update the timestamps because this process lastly released.
-        self.set_local_wn(blk_llk, up_ret.new_owner, new_intvl);
+        self.set_local_wn(blk_llk, sd_ret.new_owner, new_intvl);
 
         return new_intvl;
     }
