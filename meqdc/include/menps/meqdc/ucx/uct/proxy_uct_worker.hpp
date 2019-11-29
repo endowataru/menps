@@ -460,9 +460,16 @@ private:
         
         do_progress_result operator() () const
         {
+            bool is_polled = false;
             while (self.orig_wk_.progress() != 0) {
                 // Poll until there are completions
+                is_polled = true;
             }
+            #ifdef MEQDC_UCT_ENABLE_YIELD
+            if (!is_polled) {
+                ult_itf_type::this_thread::yield();
+            }
+            #endif
             
             return suspended_thread_type();
         }
