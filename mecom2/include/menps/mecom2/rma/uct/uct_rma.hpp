@@ -379,6 +379,8 @@ struct uct_rma_resource {
         
         // TODO
         //iface_conf.modify("IB_TX_QUEUE_LEN", "4096");
+        //iface_conf.modify("TIMEOUT", "100us");
+        //iface_conf.modify("RETRY_COUNT", "0");
         
         uct_iface_params_t iface_params = uct_iface_params_t();
         iface_params.field_mask = UCT_IFACE_PARAM_FIELD_OPEN_MODE |
