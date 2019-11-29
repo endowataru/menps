@@ -82,6 +82,9 @@ struct lv3_mth_itf
         static void yield() {
             myth_yield();
         }
+        static void yield_local_only() {
+            myth_yield_ex(myth_yield_option_local_only);
+        }
     };
 };
 
