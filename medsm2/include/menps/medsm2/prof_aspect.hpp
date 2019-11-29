@@ -43,8 +43,9 @@
     x(lock_global_cas_3) \
     x(lock_global_recv) \
     x(tx_merge_remote_get) \
-    x(tx_merge_remote_put_1) \
-    x(tx_merge_remote_put_2)
+    x(tx_merge_remote_put_back_nb) \
+    x(tx_merge_remote_put_back_wait) \
+    x(tx_merge_remote_put_home)
 
 namespace menps {
 namespace medsm2 {

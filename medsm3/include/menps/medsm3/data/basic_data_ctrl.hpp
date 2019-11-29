@@ -21,6 +21,7 @@ class basic_data_ctrl
     using com_itf_type = typename P::com_itf_type;
     using proc_id_type = typename com_itf_type::proc_id_type;
     using rma_itf_type = typename com_itf_type::rma_itf_type;
+    using unique_request_type = typename rma_itf_type::unique_request_type;
 
 public:
     void fast_read(blk_local_lock_type& blk_llk, const proc_id_type wr_proc, const bool is_dirty)
@@ -175,13 +176,16 @@ public:
             }
             const auto home_source = home_source_buf.get();
             
+            unique_request_type req;
+            
             if (self.is_lazy_merge_enabled() && migration_enabled)
             {
-                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_1);
+                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_back_nb);
 
                 const auto home_snapshot_rptr = self.get_remote_snapshot_rptr(home_proc, blk_llk);
                 // Write back home_source (= remote private) to home_proc.
-                rma.write(home_proc, home_snapshot_rptr, home_source, blk_size);
+                req = rma.write_nb(home_proc, home_snapshot_rptr, home_source, blk_size);
+                //rma.write(home_proc, home_snapshot_rptr, home_source, blk_size);
             }
             
             if (is_written) {
@@ -206,11 +210,16 @@ public:
                 std::memcpy(local_snapshot, home_source, blk_size);
                 //std::copy(home_source, home_source + blk_size, local_snapshot);
             }
+
+            if (self.is_lazy_merge_enabled() && migration_enabled) {
+                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_back_wait);
+                rma.wait(fdn::move(req));
+            }
         }
         
         if (!migration_enabled && is_written)
         {
-            CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_2);
+            CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_home);
 
             const auto owner_proc = blk_glk.prev_owner();
             const auto owner_source_rptr = self.get_remote_source_rptr(owner_proc, blk_llk);

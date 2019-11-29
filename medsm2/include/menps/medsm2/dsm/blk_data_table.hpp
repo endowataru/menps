@@ -34,6 +34,7 @@ class blk_data_table
     using rma_itf_type = typename com_itf_type::rma_itf_type;
     using proc_id_type = typename com_itf_type::proc_id_type;
     using blk_pos_type = typename P::blk_pos_type;
+    using unique_request_type = typename rma_itf_type::unique_request_type;
     
     using blk_unique_lock_type = typename P::blk_unique_lock_type;
     
@@ -289,17 +290,27 @@ public:
                     );
             }
             
+            unique_request_type req;
             #if defined(MEDSM2_ENABLE_LAZY_MERGE) && defined(MEDSM2_ENABLE_MIGRATION)
             {
-                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_1);
+                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_back_nb);
                 
                 // Write back other_data_buf (= remote private) to cur_owner.
+                #ifdef MEDSM2_ENABLE_NONBLOCKING
+                req = rma.write_nb(
+                    cur_owner
+                ,   this->get_other_pub_ptr(cur_owner, blk_pos)
+                ,   other_data_buf.get()
+                ,   blk_size
+                );
+                #else
                 rma.write(
                     cur_owner
                 ,   this->get_other_pub_ptr(cur_owner, blk_pos)
                 ,   other_data_buf.get()
                 ,   blk_size
                 );
+                #endif
             }
             #endif
             
@@ -332,11 +343,20 @@ public:
                 //std::copy(other_data, other_data + blk_size, my_pub);
             }
             #endif
+
+            #if defined(MEDSM2_ENABLE_LAZY_MERGE) && defined(MEDSM2_ENABLE_MIGRATION)
+            #ifdef MEDSM2_ENABLE_NONBLOCKING
+            {
+                CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_back_wait);
+                rma.wait(fdn::move(req));
+            }
+            #endif
+            #endif
         }
         
         #ifndef MEDSM2_ENABLE_MIGRATION
         if (is_written) {
-            CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_2);
+            CMPTH_P_PROF_SCOPE(P, tx_merge_remote_put_home);
             
             const auto cur_owner = bt_ret.owner;
             // Write back my_pub to cur_owner.
