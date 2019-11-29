@@ -89,8 +89,11 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::UCT, P>
             static_cast<mefdn::size_t>(get_procs_per_node());
         
         // TODO
+        #if 1
         const char tl_name[] = "rc_mlx5";
-        //const char tl_name[] = "rc";
+        #else
+        const char tl_name[] = "rc_verbs";
+        #endif
         #if 1
         const auto hca_num = coll.this_proc_id() % procs_per_node;
         const auto dev_name_str = fmt::format("mlx5_{}:1", hca_num);
