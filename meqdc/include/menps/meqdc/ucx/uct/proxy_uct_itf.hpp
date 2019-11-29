@@ -124,6 +124,8 @@ struct proxy_uct_facade_policy
         typename ult_itf_type::template delegator_t<
             proxy_uct_delegator_policy<OrigUctItf, UltItf>
         >;
+
+    static const fdn::size_t max_num_ongoing = MEQDC_UCT_MAX_NUM_ONGOING;
 };
 
 template <typename OrigUctItf, typename UltItf>

@@ -11,6 +11,8 @@ option(MEQDC_MPI_ENABLE_STATIC_OFFLOADING "Enable static offloading in MPI" FALS
 set(MEQDC_MPI_REQUEST_POOL_MAX_ENTRIES 128 CACHE STRING "Pool threshold for MPI requests")
 set(MEQDC_MPI_DELEGATOR_POOL_MAX_ENTRIES 128 CACHE STRING "Pool threshold for MPI delegator")
 option(MEQDC_MPI_ENABLE_ALWAYS_PROGRESS "Always issue MPI progress" TRUE)
+set(MEQDC_MPI_MAX_NUM_ONGOING 256 CACHE STRING "max_num_ongoing for MPI")
+set(MEQDC_UCT_MAX_NUM_ONGOING 1 CACHE STRING "max_num_ongoing for UCT")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/menps/meqdc/config.h)

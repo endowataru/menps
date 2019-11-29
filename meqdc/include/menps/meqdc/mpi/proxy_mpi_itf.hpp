@@ -143,7 +143,7 @@ struct proxy_mpi_policy
         >;
     
     static constexpr mefdn::size_t max_num_requests = 1<<18; // TODO
-    static constexpr mefdn::size_t max_num_ongoing = 256; // TODO
+    static constexpr mefdn::size_t max_num_ongoing = MEQDC_MPI_MAX_NUM_ONGOING; // TODO
     static constexpr mefdn::size_t mpi_request_offset = 1; // TODO
 };
 

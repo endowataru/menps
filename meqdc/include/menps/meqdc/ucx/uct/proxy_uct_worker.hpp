@@ -102,14 +102,18 @@ public:
         this->num_ongoing_ -= num;
     }
     
-    size_type get_num_ongoing() {
+    size_type get_num_ongoing() const noexcept {
         return this->num_ongoing_;
     }
-    bool is_active() {
+    bool is_active() const noexcept {
         return this->get_num_ongoing() > 0;
     }
     
 private:
+    bool is_available() const noexcept {
+        return this->get_num_ongoing() < P::max_num_ongoing;
+    }
+
     static proxy_iface_type& get_proxy_iface(uct_iface* const iface)
     {
         const auto pr_iface = reinterpret_cast<proxy_iface_type*>(iface);
@@ -205,8 +209,11 @@ private:
         
         execute_imm_result operator() ()
         {
-            auto real_p = proxy_p;
+            if (!self.is_available()) {
+                return execute_imm_result{ false, nullptr };
+            }
             
+            auto real_p = proxy_p;
             // Replace the parameter "ep".
             auto& pr_ep = self.replace_ep(&real_p.ep);
             
@@ -239,7 +246,6 @@ private:
         execute_imm_result operator() ()
         {
             auto real_p = proxy_p;
-            
             auto& pr_ep = self.get_proxy_ep(proxy_p.ep);
             
             const auto pc =
@@ -268,7 +274,6 @@ private:
         execute_imm_result operator() ()
         {
             auto real_p = proxy_p;
-            
             auto& pr_iface = self.replace_iface(&real_p.iface);
             
             self.replace_comp(&real_p.comp, &on_complete_iface_flush, &pr_iface);
@@ -292,7 +297,6 @@ private:
         execute_imm_result operator() ()
         {
             auto real_p = proxy_p;
-            
             auto& pr_ep = self.replace_ep(&real_p.ep);
             
             self.replace_comp(&real_p.comp, &on_complete_ep_flush, &pr_ep);
