@@ -151,6 +151,7 @@ struct mpi_rma_policy
     using element_type_of = mefdn::remove_pointer_t<Ptr>;
     
     using request_type = MPI_Request;
+    using unique_request_type = request_type; // TODO;
     
     template <typename T>
     static MPI_Datatype get_mpi_datatype() {

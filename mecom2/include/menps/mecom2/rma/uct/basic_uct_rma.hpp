@@ -27,23 +27,37 @@ class basic_uct_rma
     template <typename T>
     using local_ptr_t = typename P::template local_ptr<T>;
     
-    using rkey_info_type = typename P::rkey_info_type;
-    
-    using completion_type = typename P::completion_type;
-    
-    struct write_arg {
-        const void* src_ptr;
-        size_type   num_bytes;
-    };
-    
-    static mefdn::size_t on_write_pack(void* const dest, void* const arg_void)
-    {
-        auto& arg = *static_cast<const write_arg*>(arg_void);
-        std::memcpy(dest, arg.src_ptr, arg.num_bytes);
-        return arg.num_bytes;
+    using request_object_type = typename P::request_object_type;
+
+public:
+    using unique_request_type = typename P::unique_request_type;
+
+private:
+    unique_request_type allocate_unique_request() {
+        return fdn::make_unique<request_object_type>();
     }
     
 public:
+    void wait(unique_request_type req)
+    {
+        auto& self = this->derived();
+        MEFDN_ASSERT(req);
+        req->wait(self);
+    }
+
+    unique_request_type untyped_write_nb(
+        const proc_id_type              dest_proc
+    ,   const remote_ptr_t<void>&       dest_rptr
+    ,   const local_ptr_t<const void>&  src_lptr
+    ,   const size_type                 num_bytes
+    ) {
+        auto& self = this->derived();
+        
+        auto req = self.allocate_unique_request();
+        self.start_untyped_write_nb(*req, dest_proc, dest_rptr, src_lptr, num_bytes);
+        return req;
+    }
+
     void untyped_write(
         const proc_id_type              dest_proc
     ,   const remote_ptr_t<void>&       dest_rptr
@@ -51,52 +65,95 @@ public:
     ,   const size_type                 num_bytes
     ) {
         auto& self = this->derived();
-        auto info = self.lock_rma(dest_proc, dest_rptr);
         
-        #if 1
-        completion_type comp;
+        request_object_type req;
+        const auto is_completed =
+            self.start_untyped_write_nb(req, dest_proc, dest_rptr, src_lptr, num_bytes);
         
-        uct_iov iov = uct_iov();
+        if (!is_completed) {
+            req.wait(self);
+        }
+    }
+
+private:
+    bool start_untyped_write_nb(
+        request_object_type&            req_obj
+    ,   const proc_id_type              dest_proc
+    ,   const remote_ptr_t<void>&       dest_rptr
+    ,   const local_ptr_t<const void>&  src_lptr
+    ,   const size_type                 num_bytes
+    ) {
+        auto& self = this->derived();
+        req_obj.start(self, dest_proc, dest_rptr);
+        
+        #ifndef MECOM2_RMA_ENABLE_LOOPBACK
+        if (self.is_local_proc(dest_proc)) {
+            MEFDN_LOG_VERBOSE(
+                "msg:Local RMA write (memcpy).\t"
+                "dest_rptr:{}\t"
+                "src_lptr:{}\t"
+                "num_bytes:{}"
+            ,   mefdn::show_param(dest_rptr.get_ptr())
+            ,   mefdn::show_param(src_lptr.get())
+            ,   num_bytes
+            );
+            
+            // Local write.
+            std::memcpy(dest_rptr.get_ptr(), src_lptr.get(), num_bytes);
+            
+            req_obj.finish(self);
+            return true;
+        }
+        #endif
+        
+        // TODO: meqdc cannot deep-copy iov
+        //uct_iov iov = uct_iov();
+        auto& iov = req_obj.get_iov();
         iov.buffer = const_cast<void*>(src_lptr.get());
         iov.length = num_bytes;
         iov.memh = src_lptr.get_minfo()->mem.get();
         iov.stride = 0;
         iov.count = 1;
         
+        auto& ep = req_obj.get_ep();
+        const auto rkey = req_obj.get_rkey_bundle().rkey;
+        const auto comp = req_obj.get_completion_ptr();
         ucs_status_t st = UCS_OK;
         {
-            #ifdef MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
-            mefdn::lock_guard<spinlock_type> lk(info.lock);
-            #endif
+            const auto lk = req_obj.lock_worker_lock();
             
-            st = info.ep.put_zcopy(
+            st = ep.put_zcopy(
                 &iov
             ,   1
             ,   dest_rptr.get_addr()
-            ,   info.rkey.get().rkey
-            ,   comp.get_ptr()
+            ,   rkey
+            ,   comp
             );
         }
         
-        this->wait(info, st, &comp);
-        
-        #else
-        write_arg arg{ src_lptr, num_bytes };
-        
-        // Note: Return value (= length) is ignored.
-        info.ep.put_bcopy(
-            &on_write_pack
-        ,   &arg
-        ,   dest_rptr.get_addr()
-        ,   info.rkey.get().rkey
-        );
-        
-        this->flush(info, UCS_INPROGRESS);
-        #endif
-        
-        self.unlock_rma(info);
+        if (st == UCS_OK) {
+            req_obj.finish(self);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    
+
+public:
+    unique_request_type untyped_read_nb(
+        const proc_id_type              src_proc
+    ,   const remote_ptr_t<const void>& src_rptr
+    ,   const local_ptr_t<void>&        dest_lptr
+    ,   const size_type                 num_bytes
+    ) {
+        auto& self = this->derived();
+        
+        auto req = self.allocate_unique_request();
+        self.start_untyped_read_nb(*req, src_proc, src_rptr, dest_lptr, num_bytes);
+        return req;
+    }
+
     void untyped_read(
         const proc_id_type              src_proc
     ,   const remote_ptr_t<const void>& src_rptr
@@ -104,56 +161,112 @@ public:
     ,   const size_type                 num_bytes
     ) {
         auto& self = this->derived();
-        auto info = self.lock_rma(src_proc, src_rptr);
         
-        completion_type comp;
+        request_object_type req;
+        const auto is_completed =
+            self.start_untyped_read_nb(req, src_proc, src_rptr, dest_lptr, num_bytes);
         
+        if (!is_completed) {
+            req.wait(self);
+        }
+    }
+
+private:
+    bool start_untyped_read_nb(
+        request_object_type&            req_obj
+    ,   const proc_id_type              src_proc
+    ,   const remote_ptr_t<const void>& src_rptr
+    ,   const local_ptr_t<void>&        dest_lptr
+    ,   const size_type                 num_bytes
+    ) {
+        auto& self = this->derived();
+        req_obj.start(self, src_proc, src_rptr);
+
+        #ifndef MECOM2_RMA_ENABLE_LOOPBACK
+        if (self.is_local_proc(src_proc)) {
+            MEFDN_LOG_VERBOSE(
+                "msg:Local RMA read (memcpy).\t"
+                "src_rptr:{}\t"
+                "dest_lptr:{}\t"
+                "num_bytes:{}"
+            ,   mefdn::show_param(src_rptr.get_ptr())
+            ,   mefdn::show_param(dest_lptr.get())
+            ,   num_bytes
+            );
+            
+            // Local read.
+            std::memcpy(dest_lptr.get(), src_rptr.get_ptr(), num_bytes);
+            
+            req_obj.finish(self);
+            return true;
+        }
+        #endif
+
+        auto& ep = req_obj.get_ep();
+        const auto rkey = req_obj.get_rkey_bundle().rkey;
+        const auto comp = req_obj.get_completion_ptr();
         ucs_status_t st = UCS_OK;
         
         // TODO: Read threshold from UCT config
-        if (num_bytes > MECOM2_RMA_UCT_GET_ZCOPY_SIZE)
-        {
-            uct_iov iov = uct_iov();
+        if (num_bytes > MECOM2_RMA_UCT_GET_ZCOPY_SIZE) {
+            // TODO: meqdc cannot deep-copy iov
+            //uct_iov iov = uct_iov();
+            auto& iov = req_obj.get_iov();
             iov.buffer = dest_lptr.get();
             iov.length = num_bytes;
             iov.memh = dest_lptr.get_minfo()->mem.get();
             iov.stride = 0;
             iov.count = 1;
             
-            
-            {
-                #ifdef MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
-                mefdn::lock_guard<spinlock_type> lk(info.lock);
-                #endif
+            const auto lk = req_obj.lock_worker_lock();
                 
-                st = info.ep.get_zcopy(
-                    &iov
-                ,   1
-                ,   src_rptr.get_addr()
-                ,   info.rkey.get().rkey
-                ,   comp.get_ptr()
-                );
-            }
+            st = ep.get_zcopy(
+                &iov
+            ,   1
+            ,   src_rptr.get_addr()
+            ,   rkey
+            ,   comp
+            );
         }
-        else
-        {
-            st = info.ep.get_bcopy(
+        else {
+            const auto lk = req_obj.lock_worker_lock();
+            
+            st = ep.get_bcopy(
                 reinterpret_cast<uct_unpack_callback_t>(&std::memcpy)
             ,   dest_lptr
             ,   num_bytes
             ,   src_rptr.get_addr()
-            ,   info.rkey.get().rkey
-            ,   comp.get_ptr()
+            ,   rkey
+            ,   comp
             );
         }
         
-        this->wait(info, st, &comp);
-        //this->flush(info, UCS_INPROGRESS);
-        
-        self.unlock_rma(info);
+        if (st == UCS_OK) {
+            req_obj.finish(self);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    
-    // TODO: Currently, Atomic operation don't require local buffer registration.
+
+public:
+    template <typename T>
+    unique_request_type compare_and_swap_nb(
+        const proc_id_type          target_proc
+    ,   const remote_ptr_t<T>&      target_rptr
+    ,   const T* const              expected_lptr
+    ,   const T* const              desired_lptr
+    ,   T* const                    result_lptr
+    ) {
+        auto& self = this->derived();
+        
+        auto req = self.allocate_unique_request();
+        self.start_compare_and_swap_nb(*req, target_proc, target_rptr,
+            expected_lptr, desired_lptr, result_lptr);
+        return req;
+    }
+
     template <typename T>
     void compare_and_swap_b(
         const proc_id_type          target_proc
@@ -163,58 +276,55 @@ public:
     ,   T* const                    result_lptr
     ) {
         auto& self = this->derived();
-        auto info = self.lock_rma(target_proc, target_rptr);
         
-        completion_type comp;
+        request_object_type req;
+        const auto is_completed =
+            self.start_compare_and_swap_nb(req, target_proc, target_rptr,
+                expected_lptr, desired_lptr, result_lptr);
         
+        if (!is_completed) {
+            req.wait(self);
+        }
+    }
+
+private:
+    // Note: Atomic operation don't require local buffer registration.
+    template <typename T>
+    bool start_compare_and_swap_nb(
+        request_object_type&        req_obj
+    ,   const proc_id_type          target_proc
+    ,   const remote_ptr_t<T>&      target_rptr
+    ,   const T* const              expected_lptr
+    ,   const T* const              desired_lptr
+    ,   T* const                    result_lptr
+    ) {
+        auto& self = this->derived();
+        req_obj.start(self, target_proc, target_rptr);
+        
+        auto& ep = req_obj.get_ep();
+        const auto rkey = req_obj.get_rkey_bundle().rkey;
+        const auto comp = req_obj.get_completion_ptr();
         ucs_status_t st = UCS_OK;
         {
-            #ifdef MECOM2_UCT_RMA_ENABLE_WORKER_LOCK
-            mefdn::lock_guard<spinlock_type> lk(info.lock);
-            #endif
+            const auto lk = req_obj.lock_worker_lock();
         
-            st = info.ep.atomic_cswap64(
+            st = ep.atomic_cswap64(
                 *expected_lptr          // compare
             ,   *desired_lptr           // swap
             ,   target_rptr.get_addr()  // remote_addr
-            ,   info.rkey.get().rkey    // rkey
+            ,   rkey                    // rkey
             ,   result_lptr             // result
-            ,   comp.get_ptr()          // comp
+            ,   comp                    // comp
             );
         }
         
-        this->wait(info, st, &comp);
-        
-        self.unlock_rma(info);
-    }
-    
-private:
-    void wait(
-        const rkey_info_type&   info MEFDN_MAYBE_UNUSED
-    ,   const ucs_status_t      st
-    ,   completion_type* const  comp
-    ) {
         if (st == UCS_OK) {
-            return;
+            req_obj.finish(self);
+            return true;
         }
-        
-        comp->wait(info);
-    }
-    
-    void flush(
-        const rkey_info_type&   info
-    ,   const ucs_status_t      st
-    ) {
-        if (st == UCS_OK) {
-            return;
+        else {
+            return false;
         }
-        
-        completion_type comp;
-        
-        const auto ret =
-            info.ep.flush(UCT_FLUSH_FLAG_LOCAL, &comp);
-        
-        this->wait(info, ret, &comp);
     }
 };
 

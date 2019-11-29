@@ -48,7 +48,6 @@ public:
         return this->minfo_;
     }
     
-protected:
     element_type* get_ptr() const noexcept {
         return this->ptr_;
     }

@@ -2,7 +2,7 @@
 #pragma once
 
 #include <menps/mecom2/rma/rma_itf_id.hpp>
-#include <menps/mecom2/rma/uct/basic_uct_completion.hpp>
+#include <menps/mecom2/rma/uct/basic_uct_request_object.hpp>
 #include <menps/mecom2/rma/uct/basic_uct_rma.hpp>
 #include <menps/mecom2/rma/uct/basic_uct_rma_alloc.hpp>
 #include <menps/mecom2/rma/basic_public_rma_ptr.hpp>
@@ -34,7 +34,7 @@ class uct_rma
     
     using worker_set_type = typename P::worker_set_type;
     
-    using uct_rkey_info_type = typename policy_type::uct_rkey_info_type;
+    using rkey_info_type = typename policy_type::rkey_info_type;
     
 public:
     using proc_id_type = typename policy_type::proc_id_type;
@@ -72,6 +72,8 @@ public:
         , md_(conf.md)
         , wk_set_(conf.wk_set)
         , md_attr_(conf.md.query())
+        , this_proc_(conf.coll.this_proc_id())
+        , num_procs_(conf.coll.get_num_procs())
     {
         #ifdef MECOM2_RMA_USE_DLMALLOC_ALLOCATOR
         this->init_public_allocator(2ull << 30); // TODO: magic number
@@ -103,28 +105,32 @@ public:
         return this->md_attr_;
     }
     
-    uct_rkey_info_type lock_rma(
+    rkey_info_type lock_rma(
         const proc_id_type              proc
     ,   const remote_ptr<const void>&   rptr
     ) {
+        #if 0
+        const auto wk_num = std::rand() % num_procs_; // TODO
+        #else
         const auto wk_num = this->wk_set_.current_worker_num();
+        #endif
         auto* minfo = rptr.get_minfo();
         
         while (!this->wk_set_.try_start_rma(wk_num, proc)) {
             policy_type::ult_itf_type::this_thread::yield();
+            //policy_type::ult_itf_type::this_thread::yield_local_only();
         }
         
         return {
             wk_num
         ,   proc
-        ,   this->wk_set_.get_worker(wk_num)
-        ,   this->wk_set_.get_iface(wk_num)
-        ,   this->wk_set_.get_ep(wk_num, proc)
-        ,   minfo->rkey
-        ,   this->wk_set_.get_worker_lock(wk_num)
+        ,   &this->wk_set_.get_iface(wk_num)
+        ,   &this->wk_set_.get_ep(wk_num, proc)
+        ,   &minfo->rkey
+        ,   &this->wk_set_.get_worker_lock(wk_num)
         };
     }
-    void unlock_rma(uct_rkey_info_type& info)
+    void unlock_rma(rkey_info_type& info)
     {
         this->wk_set_.finish_rma(info.wk_num, info.proc);
     }
@@ -133,6 +139,10 @@ public:
     {
         // FIXME: There's no way to accomplish remote completion in UCT
     }
+
+    bool is_local_proc(const proc_id_type proc) {
+        return proc == this->this_proc_;
+    }
     
 private:
     uct_facade_type&    uf_;
@@ -140,25 +150,29 @@ private:
     memory_domain_type& md_;
     worker_set_type&    wk_set_;
     uct_md_attr_t       md_attr_;
+    proc_id_type        this_proc_ = 0;
+    proc_id_type        num_procs_ = 0;
 };
 
 template <typename P>
 using uct_rma_ptr = mefdn::unique_ptr<uct_rma<P>>;
 
-template <typename P>
+template <typename P, typename Coll>
 inline uct_rma_ptr<P> make_uct_rma(
     typename P::uct_itf_type::uct_facade_type&      uf
 ,   uct_component* const                            component
 ,   typename P::uct_itf_type::memory_domain_type&   md
 ,   typename P::worker_set_type&                    wk_set
+,   Coll&                                           coll
 ) {
     struct conf {
         typename P::uct_itf_type::uct_facade_type&      uf;
         uct_component*                                  component;
         typename P::uct_itf_type::memory_domain_type&   md;
         typename P::worker_set_type&                    wk_set;
+        Coll&                                           coll;
     };
-    return mefdn::make_unique<uct_rma<P>>(conf{ uf, component, md, wk_set });
+    return mefdn::make_unique<uct_rma<P>>(conf{ uf, component, md, wk_set, coll });
 }
 
 
@@ -250,16 +264,15 @@ struct uct_rkey_info
 {
     worker_num_t                                wk_num;
     mefdn::size_t                               proc; // TODO: Use proc_id_type
-    typename UctItf::worker_type&               wk;
-    typename UctItf::interface_type&            iface;
-    typename UctItf::endpoint_type&             ep;
-    typename UctItf::remote_key_type&           rkey;
-    typename UctItf::ult_itf_type::spinlock&    lock;
+    typename UctItf::interface_type*            iface;
+    typename UctItf::endpoint_type*             ep;
+    typename UctItf::remote_key_type*           rkey;
+    typename UctItf::ult_itf_type::spinlock*    lock;
 };
 
 
 template <typename UctItf>
-struct uct_completion_policy
+struct uct_request_object_policy
 {
     enum class comp_state_type
     {
@@ -273,8 +286,17 @@ struct uct_completion_policy
     
     using atomic_comp_state_type = typename ult_itf_type::template atomic<comp_state_type>;
     
+    using uct_rma_type = uct_rma<uct_rma_policy<UctItf>>;
     using rkey_info_type = uct_rkey_info<UctItf>;
+    using worker_unique_lock_type =
+        typename ult_itf_type::template unique_lock<typename ult_itf_type::spinlock>;
+        // TODO: Too complicated.
+    
+    using proc_id_type = mefdn::size_t; // TODO
+    template <typename T>
+    using remote_ptr = uct_remote_ptr<UctItf, T>;
 };
+
 
 
 template <typename T>
@@ -322,9 +344,8 @@ struct uct_rma_policy
     
     using worker_set_type = uct_worker_set<uct_worker_set_policy<UctItf>>;
     
-    using uct_rkey_info_type = uct_rkey_info<UctItf>;
-    
-    using completion_type = basic_uct_completion<uct_completion_policy<UctItf>>;
+    using request_object_type = basic_uct_request_object<uct_request_object_policy<UctItf>>;
+    using unique_request_type = fdn::unique_ptr<request_object_type>;
     
     template <typename U, typename Ptr>
     static auto static_cast_to(const Ptr& ptr)
@@ -374,7 +395,7 @@ struct uct_rma_resource {
                 this->uf, this->md, iface_conf.get(), &iface_params, coll);
         
         this->rma = make_uct_rma<uct_rma_policy<UctItf>>(
-            this->uf, this->component, this->md, *this->wk_set);
+            this->uf, this->component, this->md, *this->wk_set, coll);
     }
     
     typename uct_itf_type::uct_facade_type      uf;

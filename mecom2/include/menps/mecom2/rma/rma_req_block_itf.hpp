@@ -50,17 +50,8 @@ public:
         }
         #endif
         
-        request_type req;
-        
-        self.untyped_write_nb(
-            dest_proc
-        ,   dest_rptr
-        ,   src_lptr
-        ,   num_bytes
-        ,   &req
-        );
-        
-        self.wait(&req);
+        auto req = self.untyped_write_nb(dest_proc, dest_rptr, src_lptr, num_bytes);
+        self.wait(fdn::move(req));
     }
     
     void untyped_read(
@@ -90,19 +81,11 @@ public:
         }
         #endif
         
-        request_type req;
-        
-        self.untyped_read_nb(
-            src_proc
-        ,   src_rptr
-        ,   dest_lptr
-        ,   num_bytes
-        ,   &req
-        );
-        
-        self.wait(&req);
+        auto req = self.untyped_read_nb(src_proc, src_rptr, dest_lptr, num_bytes);
+        self.wait(fdn::move(req));
     }
     
+    #if 0
     template <typename T>
     void exchange_b(
         const proc_id_type          target_proc
@@ -148,6 +131,7 @@ public:
         
         self.wait(&req);
     }
+    #endif
 };
 
 } // namespace mecom2

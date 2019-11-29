@@ -14,8 +14,42 @@ class rma_typed_itf
     
     using proc_id_type = typename P::proc_id_type;
     using size_type = typename P::size_type;
+
+    using unique_request_type = typename P::unique_request_type;
     
 public:
+    template <typename RemotePtr, typename LocalPtr>
+    unique_request_type write_nb(
+        const proc_id_type  dest_proc
+    ,   RemotePtr&&         dest_rptr
+    ,   LocalPtr&&          src_lptr
+    ,   const size_type     num_elems
+    ) {
+        using remote_ptr_type = mefdn::decay_t<RemotePtr>;
+        using local_ptr_type  = mefdn::decay_t<LocalPtr>;
+        using remote_elem_type = typename P::template element_type_of<remote_ptr_type>;
+        using local_elem_type  = typename P::template element_type_of<local_ptr_type>;
+        
+        // Note: Important for type safety.
+        MEFDN_STATIC_ASSERT_MSG(
+            (mefdn::is_same<
+                remote_elem_type
+            ,   mefdn::remove_const_t<local_elem_type>
+            >::value)
+        ,   "Breaking type safety"
+        );
+        
+        auto& self = this->derived();
+        const auto num_bytes = num_elems * sizeof(remote_elem_type);
+        
+        return self.untyped_write_nb(
+            dest_proc
+        ,   mefdn::forward<RemotePtr>(dest_rptr)
+        ,   mefdn::forward<LocalPtr>(src_lptr)
+        ,   num_bytes
+        );
+    }
+
     template <typename RemotePtr, typename LocalPtr>
     void write(
         const proc_id_type  dest_proc
@@ -44,6 +78,38 @@ public:
             dest_proc
         ,   mefdn::forward<RemotePtr>(dest_rptr)
         ,   mefdn::forward<LocalPtr>(src_lptr)
+        ,   num_bytes
+        );
+    }
+    
+    template <typename RemotePtr, typename LocalPtr>
+    unique_request_type read_nb(
+        const proc_id_type  src_proc
+    ,   RemotePtr&&         src_rptr
+    ,   LocalPtr&&          dest_lptr
+    ,   const size_type     num_elems
+    ) {
+        using remote_ptr_type = mefdn::decay_t<RemotePtr>;
+        using local_ptr_type  = mefdn::decay_t<LocalPtr>;
+        using remote_elem_type = typename P::template element_type_of<remote_ptr_type>;
+        using local_elem_type  = typename P::template element_type_of<local_ptr_type>;
+        
+        // Note: Important for type safety.
+        MEFDN_STATIC_ASSERT_MSG(
+            (mefdn::is_same<
+                mefdn::remove_const_t<remote_elem_type>
+            ,   local_elem_type
+            >::value)
+        ,   "Breaking type safety"
+        );
+        
+        auto& self = this->derived();
+        const auto num_bytes = num_elems * sizeof(remote_elem_type);
+        
+        return self.untyped_read_nb(
+            src_proc
+        ,   mefdn::forward<RemotePtr>(src_rptr)
+        ,   mefdn::forward<LocalPtr>(dest_lptr)
         ,   num_bytes
         );
     }

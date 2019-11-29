@@ -80,7 +80,7 @@ inline void write_discontiguous(
         i = j;
     }
     for (auto& req: reqs) {
-        g_rma->wait(&req);
+        g_rma->wait(std::move(req));
     }
 }
 

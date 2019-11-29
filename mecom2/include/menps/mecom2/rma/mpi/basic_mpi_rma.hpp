@@ -27,6 +27,7 @@ class basic_mpi_rma
     
 public:
     using request_type = typename P::request_type;
+    using unique_request_type = typename P::unique_request_type;
 
     using proc_id_type = typename P::proc_id_type;
     using size_type = typename P::size_type;
@@ -46,10 +47,23 @@ public:
     using rma_req_block_itf<P>::untyped_write;
     // MPI_Rget()
     using rma_req_block_itf<P>::untyped_read;
+    #if 0
     // MPI_Rget_accumulate()
     using rma_req_block_itf<P>::exchange_b;
+    #endif
     // MPI_Compare_and_swap()
     using rma_flush_block_itf<P>::compare_and_swap_b;
+
+    unique_request_type untyped_write_nb(
+        const proc_id_type              dest_proc
+    ,   const remote_ptr<void>&         dest_rptr
+    ,   const local_ptr<const void>&    src_lptr
+    ,   const size_type                 num_bytes
+    ) {
+        request_type req = request_type();
+        this->untyped_write_nb(dest_proc, dest_rptr, src_lptr, num_bytes, &req);
+        return req;
+    }
     
     void untyped_write_nb(
         const proc_id_type              dest_proc
@@ -73,6 +87,17 @@ public:
         ,   win                         // win
         ,   request_result              // request
         });
+    }
+
+    unique_request_type untyped_read_nb(
+        const proc_id_type              src_proc
+    ,   const remote_ptr<const void>&   src_rptr
+    ,   const local_ptr<void>&          dest_lptr
+    ,   const size_type                 num_bytes
+    ) {
+        request_type req = request_type();
+        this->untyped_read_nb(src_proc, src_rptr, dest_lptr, num_bytes, &req);
+        return req;
     }
     
     void untyped_read_nb(
@@ -99,6 +124,7 @@ public:
         });
     }
     
+    #if 0
     template <typename T>
     void exchange_nb(
         const proc_id_type          target_proc
@@ -129,6 +155,7 @@ public:
         ,   request_result              // request
         });
     }
+    #endif
     
     template <typename T>
     void compare_and_swap_nb(
@@ -211,18 +238,18 @@ public:
     }
     
     MEFDN_NODISCARD
-    bool test(request_type* const req)
+    bool test(request_type req)
     {
         auto& self = this->derived();
         auto& mi = self.get_mpi_facade();
         
         int flag;
-        mi.test({ req, &flag, MPI_STATUS_IGNORE });
+        mi.test({ &req, &flag, MPI_STATUS_IGNORE });
         
         return flag != 0;
     }
     
-    void wait(request_type* const req)
+    void wait(request_type req)
     {
         #ifdef MECOM2_AVOID_MPI_WAIT
         while (!this->test(req))
@@ -234,7 +261,7 @@ public:
         auto& self = this->derived();
         auto& mi = self.get_mpi_facade();
         
-        mi.wait({ req, MPI_STATUS_IGNORE });
+        mi.wait({ &req, MPI_STATUS_IGNORE });
         
         #endif
     }
