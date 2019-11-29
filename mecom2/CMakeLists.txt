@@ -10,6 +10,8 @@ option(MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
     "Enable explicit progress for UCT workers" OFF)
 option(MECOM2_UCT_RMA_ENABLE_CONCURRENT_LIMIT
     "Enable concurrent limit for UCT workers" OFF)
+set(MECOM2_UCT_RMA_CONCURRENT_LIMIT_COUNT "256" CACHE STRING
+    "Concurrent limit of UCT workers")
 option(MECOM2_UCT_ENABLE_PARALLEL_INIT_WORKER_SET
     "Enable parallel initialization of UCT workers (may cause bugs)" OFF)
 

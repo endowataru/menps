@@ -86,7 +86,7 @@ public:
                         ei.ep_addr = uct_itf_type::get_ep_address(ei.ep, wi.iface_attr);
                         
                         ei.num_ongoing = 0;
-                        ei.max_num_ongoing = 256; // TODO;
+                        ei.max_num_ongoing = MECOM2_UCT_RMA_CONCURRENT_LIMIT_COUNT; // TODO;
                         
                         cur_ep_addr_size = std::max(cur_ep_addr_size, ei.ep_addr.size_in_bytes());
                     }
