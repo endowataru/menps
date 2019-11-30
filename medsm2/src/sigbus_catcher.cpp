@@ -50,22 +50,32 @@ public:
         restore_old();
     }
     
-    static void handle_signal(const int /*signum*/, siginfo_t* const si, void* const /*uc*/)
+    static void handle_signal(const int /*signum*/, siginfo_t* const si, void* const uc_void)
     {
         void* const ptr = si->si_addr;
+        const auto uc = static_cast<ucontext_t*>(uc_void);
+        const auto fault_kind = get_fault_kind(uc);
         
         MEFDN_LOG_VERBOSE(
             "msg:Entering SIGBUS handler.\t"
-            "ptr:{:x}"
+            "ptr:{:x}\t"
+            "sp:{:x}\t"
+            "fault_kind:{}"
         ,   reinterpret_cast<mefdn::uintptr_t>(ptr)
+        ,   reinterpret_cast<mefdn::uintptr_t>(MEFDN_GET_STACK_POINTER())
+        ,   static_cast<int>(fault_kind)
         );
         
-        const bool ret = self_->conf_.on_signal(ptr);
+        const bool ret = self_->conf_.on_signal(ptr, fault_kind);
         
         MEFDN_LOG_VERBOSE(
             "msg:Exiting SIGBUS handler.\t"
-            "ptr:{:x}"
+            "ptr:{:x}\t"
+            "sp:{:x}\t"
+            "fault_kind:{}"
         ,   reinterpret_cast<mefdn::uintptr_t>(ptr)
+        ,   reinterpret_cast<mefdn::uintptr_t>(MEFDN_GET_STACK_POINTER())
+        ,   static_cast<int>(fault_kind)
         );
         
         if (!ret) {

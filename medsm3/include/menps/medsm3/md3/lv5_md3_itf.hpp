@@ -21,6 +21,7 @@ public:
     using prof_aspect_type = typename lv4_itf_type::prof_aspect_type;
 
     using blk_id_type = typename lv4_itf_type::blk_id_type;
+    using constants_type = typename lv4_itf_type::constants_type;
 };
 
 template <typename P>

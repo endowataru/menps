@@ -16,4 +16,17 @@
     #error "MEDSM2_ENABLE_LAZY_MERGE cannot be enabled when MEDSM2_USE_DIRECTORY_COHERENCE is ON"
 #endif
 
+namespace menps {
+namespace medsm2 {
+
+enum class fault_kind_t
+{
+    unknown = 0
+,   read
+,   write
+,   exec
+};
+
+} // namespace medsm2
+} // namespace menps
 

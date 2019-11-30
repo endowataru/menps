@@ -11,8 +11,9 @@ class sigbus_catcher
 public:
     struct config
     {
-        std::function<bool (void*)> on_signal;
-        bool                        alter_stack;
+        using on_signal_type = std::function<bool (void*, fault_kind_t)>;
+        on_signal_type  on_signal;
+        bool            alter_stack;
     };
     
     explicit sigbus_catcher(const config&);

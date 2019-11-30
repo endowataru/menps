@@ -59,11 +59,23 @@ public:
 private:
     struct on_fault {
         basic_svm_space& self;
-        bool operator() (void* const ptr) const {
+        bool operator() (void* const ptr, medsm2::fault_kind_t fault_kind) const {
             const auto tss_ptr = self.is_enabled_.get();
             if (MEFDN_LIKELY(tss_ptr != nullptr)) {
                 MEFDN_ASSERT(tss_ptr == &self);
-                return self.try_upgrade(ptr);
+                if (!P::constants_type::enable_fault_classification) {
+                    // Ignore fault kind.
+                    fault_kind = medsm2::fault_kind_t::unknown;
+                }
+                if (fault_kind == medsm2::fault_kind_t::read) {
+                    return self.try_upgrade_with_flag(ptr, false);
+                }
+                else if (fault_kind == medsm2::fault_kind_t::write) {
+                    return self.try_upgrade_with_flag(ptr, true);
+                }
+                else {
+                    return self.try_upgrade(ptr);
+                }
             }
             else {
                 return false;
@@ -139,6 +151,16 @@ public:
     com_itf_type& get_com_itf() { return this->seg_set().get_com_itf(); }
 
 private:
+    bool try_upgrade_with_flag(void* const ptr, const bool is_write)
+    {
+        blk_id_type blk_id = blk_id_type();
+        if (CMPTH_UNLIKELY(!this->seg_set().try_get_blk_id_from_app_ptr(ptr, &blk_id))) {
+            return false;
+        }
+        base::try_upgrade_block_with_flag(blk_id, is_write);
+        return true;
+    }
+
     segment_set_type& seg_set() noexcept {
         CMPTH_P_ASSERT(P, this->seg_set_ptr_);
         return *this->seg_set_ptr_;

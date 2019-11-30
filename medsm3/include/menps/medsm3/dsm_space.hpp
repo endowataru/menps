@@ -66,6 +66,16 @@ protected:
         }
         return false;
     }
+    MEFDN_NODISCARD
+    bool try_upgrade_block_with_flag(const blk_id_type blk_id, const bool is_write)
+    {
+        auto blk_llk = this->local_lock_ctrl().get_local_lock(blk_id);
+        const auto is_read_done = this->rd_ctrl().try_start_read(blk_llk);
+        if (!is_write) {
+            return is_read_done;
+        }
+        return this->wr_ctrl().try_start_write(blk_llk);
+    }
 
     void start_pin_block(const blk_id_type blk_id)
     {

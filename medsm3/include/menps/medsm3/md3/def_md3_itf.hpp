@@ -86,6 +86,14 @@ struct def_lv1_md3_itf_policy
             #endif
             ;
         static const fdn::size_t merge_simd_unroll_len = 8; // TODO
+
+        static const bool enable_fault_classification =
+            #ifdef MEDSM2_ENABLE_FAULT_CLASSIFICATION
+            true
+            #else
+            false
+            #endif
+            ;
     };
 };
 

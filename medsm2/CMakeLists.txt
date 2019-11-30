@@ -36,6 +36,7 @@ option(MEDSM2_USE_SIG_BUFFER_MERGE_TABLE "Use blk_flag_table to merge signatures
 option(MEDSM2_ENABLE_MIGRATION "Enable data migration" ON)
 option(MEDSM2_USE_DIRECTORY_COHERENCE "Use directory coherence instead of timestamp-based" OFF)
 option(MEDSM2_ENABLE_NONBLOCKING "Enable non-blocking communications in medsm2" ON)
+option(MEDSM2_ENABLE_FAULT_CLASSIFICATION "Enable classification of read/write faults" ON)
 
 # Generate config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in

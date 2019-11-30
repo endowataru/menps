@@ -71,14 +71,26 @@ public:
 private:
     struct on_fault {
         derived_type& self;
-        bool operator() (void* const ptr) const {
+        bool operator() (void* const ptr, fault_kind_t fault_kind) const {
             const auto tss_ptr = self.is_enabled_.get();
             if (tss_ptr != nullptr) {
                 MEFDN_ASSERT(tss_ptr == &self);
+                #ifndef MEDSM2_ENABLE_FAULT_CLASSIFICATION
+                // Ignore fault kind.
+                fault_kind = fault_kind_t::unknown;
+                #endif
                 
-                const auto ret = self.try_upgrade(ptr);
-                
-                return ret;
+                if (fault_kind == fault_kind_t::read) {
+                    self.try_read_upgrade(ptr);
+                    return true;
+                }
+                else if (fault_kind == fault_kind_t::write) {
+                    self.try_write_upgrade(ptr);
+                    return true;
+                }
+                else {
+                    return self.try_upgrade(ptr);
+                }
             }
             else {
                 return false;
@@ -336,6 +348,31 @@ public:
     }
     
 private:
+    bool try_read_upgrade(void* const ptr)
+    {
+        const auto blk_id = this->get_blk_id_from_app_ptr(ptr);
+        const auto rd_ret = base::start_read(blk_id);
+        if (rd_ret.is_newly_read) {
+            // This block was exactly read at this time.
+            return true;
+        }
+        return false;
+    }
+    
+    bool try_write_upgrade(void* const ptr)
+    {
+        const auto blk_id = this->get_blk_id_from_app_ptr(ptr);
+        const auto wr_ret = base::start_write(blk_id);
+        if (wr_ret.write.is_writable) {
+            // This block was or is now writable.
+            // This behavior allows the situation
+            // where the block has already been writable.
+            // because other threads may have changed the state to writable.
+            return true;
+        }
+        return false;
+    }
+    
     static std::string get_reg_name(const proc_id_type proc) {
         return fmt::format("medsm_cache_{}", proc);
     }
