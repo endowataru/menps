@@ -16,5 +16,4 @@
     #error "MEDSM2_ENABLE_LAZY_MERGE cannot be enabled when MEDSM2_USE_DIRECTORY_COHERENCE is ON"
 #endif
 
-#define MEDSM2_ENABLE_NONBLOCKING
 
