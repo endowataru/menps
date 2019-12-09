@@ -2,17 +2,19 @@
 #include "bench.hpp"
 #include <unordered_map>
 
-template <typename UltItf>
+template <typename P>
 class bench_mtx
 {
 private:
-    using thread = typename UltItf::thread;
-    using mutex = typename UltItf::mutex;
+    using ult_itf_type = typename P::ult_itf_type;
+
+    using thread = typename ult_itf_type::thread;
+    using mutex = typename ult_itf_type::mutex;
 
 public:
     explicit bench_mtx(const int argc, char** const argv) {
         this->nthreads_ = (argc > 1 ? atol(argv[1]) : 50);
-        this->n_per_th_ = (argc > 1 ? atol(argv[2]) : 200000);
+        this->n_per_th_ = (argc > 2 ? atol(argv[2]) : 200000);
     }
 
     struct result_type {

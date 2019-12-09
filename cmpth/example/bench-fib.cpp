@@ -3,12 +3,14 @@
 #include <unordered_map>
 #include <vector>
 
-template <typename UltItf>
+template <typename P>
 class bench_fib
 {
 private:
-    using thread = typename UltItf::thread;
-    using mutex = typename UltItf::mutex;
+    using ult_itf_type = typename P::ult_itf_type;
+
+    using thread = typename ult_itf_type::thread;
+    using mutex = typename ult_itf_type::mutex;
     
     using fib_int_t = std::uint64_t;
 

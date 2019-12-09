@@ -99,7 +99,10 @@ struct mth_suspended_thread_policy
 struct lv5_mth_itf
     : lv3_mth_itf
 {
-    struct initializer { };
+    struct initializer {
+        initializer() { }
+        initializer(int /*argc*/, char** /*argv*/) { }
+    };
     // TODO: Call myth_init() / myth_fini() ?
     
     using thread = mth_thread<mth_base_policy>;

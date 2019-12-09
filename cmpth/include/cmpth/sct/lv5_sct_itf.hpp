@@ -99,6 +99,9 @@ public:
         
         this->init_ = fdn::make_unique<initializer>(this->sched_);
     }
+    sct_initializer(int /*argc*/, char** /*argv*/)
+        : sct_initializer{}
+    { }
     
     sct_initializer(const sct_initializer&) = delete;
     sct_initializer& operator = (const sct_initializer&) = delete;

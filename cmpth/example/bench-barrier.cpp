@@ -2,17 +2,19 @@
 #include "bench.hpp"
 #include <unordered_map>
 
-template <typename UltItf>
+template <typename P>
 class bench_barrier
 {
 private:
-    using thread = typename UltItf::thread;
-    using barrier = typename UltItf::barrier;
+    using ult_itf_type = typename P::ult_itf_type;
+
+    using thread = typename ult_itf_type::thread;
+    using barrier = typename ult_itf_type::barrier;
 
 public:
     explicit bench_barrier(const int argc, char** const argv)
         : nthreads_{(argc > 1 ? atol(argv[1]) : 50)}
-        , n_per_th_{(argc > 1 ? atol(argv[2]) : 300000)}
+        , n_per_th_{(argc > 2 ? atol(argv[2]) : 300000)}
         , bar_{this->nthreads_}
     { }
 
@@ -60,6 +62,7 @@ private:
             const auto nthreads = self.nthreads_;
             const auto n_per_th = self.n_per_th_;
             for (long i = 0; i < n_per_th; ++i) {
+                CMPTH_P_PROF_SCOPE(P, bench_event);
                 if (i % nthreads == a) {
                     ++*count;
                 }
@@ -82,6 +85,7 @@ private:
     long    nthreads_ = 0;
     long    n_per_th_ = 0;
     barrier bar_;
+    unsigned char pad_[CMPTH_CACHE_LINE_SIZE];
 };
 
 int main(const int argc, char** const argv) {

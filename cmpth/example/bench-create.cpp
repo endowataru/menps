@@ -2,12 +2,14 @@
 #include "bench.hpp"
 #include <unordered_map>
 
-template <typename UltItf>
+template <typename P>
 class bench_create
 {
 private:
-    using thread = typename UltItf::thread;
-    using mutex = typename UltItf::mutex;
+    using ult_itf_type = typename P::ult_itf_type;
+
+    using thread = typename ult_itf_type::thread;
+    using mutex = typename ult_itf_type::mutex;
 
 public:
     explicit bench_create(const int argc, char** const argv) {
