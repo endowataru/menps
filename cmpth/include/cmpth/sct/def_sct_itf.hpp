@@ -11,7 +11,7 @@
 #include <cmpth/arch/x86_64_context_policy.hpp>
 #include <cmpth/pool/basic_ext_return_pool.hpp>
 #include <cmpth/sync/basic_spinlock.hpp>
-#include <cmpth/sct/sct_worker_deque.hpp>
+#include <cmpth/wd/spinlock_worker_deque.hpp>
 #include <cmpth/wd/chaselev_worker_deque.hpp>
 #include <unordered_map>
 
@@ -43,6 +43,7 @@ using def_lv1_sct_itf = lv1_sct_itf<def_lv1_sct_policy>;
 
 // level 2: worker deque
 
+// TODO: Don't use #if
 #if 1
 struct def_sct_worker_deque_policy
     : def_sct_common_policy
@@ -73,7 +74,7 @@ struct def_sct_worker_deque_policy
 struct def_lv2_sct_itf
     : def_lv1_sct_itf
 {
-    using worker_deque = sct_worker_deque<def_sct_worker_deque_policy>;
+    using worker_deque = spinlock_worker_deque<def_sct_worker_deque_policy>;
 };
 #endif
 
