@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cmpth/wrap/abt/abt.hpp>
+#include <vector>
 
 namespace cmpth {
 
@@ -21,12 +22,12 @@ public:
 
         abt_error::check_error(ABT_init(argc, argv));
 
-        const auto enable_abt_private_pool = constants_type::enable_abt_private_pool;
-        if (enable_abt_private_pool) {
+        const auto enable_abt_multiple_pools = constants_type::enable_abt_multiple_pools;
+        if (enable_abt_multiple_pools) {
             this->pools_ = fdn::make_unique<pool_type []>(num_wks);
             for (int i = 0; i < num_wks; ++i) {
                 this->pools_[i] =
-                    pool_type::create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_PRIV, ABT_TRUE);
+                    pool_type::create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE);
             }
         }
         else {
@@ -36,7 +37,14 @@ public:
         }
 
         auto self_xstream = xstream_type::self();
-        {
+        if (enable_abt_multiple_pools){
+            std::vector<ABT_pool> my_pools(num_wks, ABT_POOL_NULL);
+            for (int i = 0; i < num_wks; ++i) {
+                my_pools[i] = this->pools_[i].get();
+            }
+            self_xstream.set_main_sched_basic(ABT_SCHED_RANDWS, num_wks, my_pools.data());
+        }
+        else {
             auto pool = this->pools_[0].get();
             self_xstream.set_main_sched_basic(ABT_SCHED_RANDWS, 1, &pool);
         }
@@ -44,11 +52,20 @@ public:
         this->xstreams_[0] = fdn::move(self_xstream);
 
         for (int i = 1; i < num_wks; ++i) {
-            const auto pool_idx = enable_abt_private_pool ? i : 0;
-            auto pool = this->pools_[pool_idx].get();
-            auto xstream =
-                xstream_type::create_basic(
+            xstream_type xstream;
+            if (enable_abt_multiple_pools) {
+                std::vector<ABT_pool> my_pools(num_wks, ABT_POOL_NULL);
+                for (int k = 0; k < num_wks; ++k) {
+                    my_pools[k] = this->pools_[(i + k) % num_wks].get();
+                }
+                xstream = xstream_type::create_basic(
+                    ABT_SCHED_RANDWS, num_wks, my_pools.data(), ABT_SCHED_CONFIG_NULL);
+            }
+            else {
+                auto pool = this->pools_[0].get();
+                xstream = xstream_type::create_basic(
                     ABT_SCHED_RANDWS, 1, &pool, ABT_SCHED_CONFIG_NULL);
+            }
             xstream.start();
 
             this->xstreams_[i] = fdn::move(xstream);
@@ -63,12 +80,14 @@ public:
             this->xstreams_[i].join();
         }
         this->xstreams_[0].release();
+        this->xstreams_.release();
+        this->pools_.release();
 
         ABT_finalize();
     }
 
     ABT_pool get_pool(const fdn::size_t rank) const noexcept {
-        const auto pool_idx = constants_type::enable_abt_private_pool ? rank : 0;
+        const auto pool_idx = constants_type::enable_abt_multiple_pools ? rank : 0;
         return this->pools_[pool_idx].get();
     }
 
