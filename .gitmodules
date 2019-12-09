@@ -14,3 +14,6 @@
 [submodule "cmpth/external/massivelogger"]
 	path = cmpth/external/massivelogger
 	url = https://github.com/massivethreads/massivelogger.git
+[submodule "cmpth/external/argobots"]
+	path = cmpth/external/argobots
+	url = https://github.com/pmodels/argobots.git
