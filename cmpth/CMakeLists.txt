@@ -18,6 +18,13 @@ target_compile_options(cmpth-options INTERFACE
     -Wall -Wextra -pedantic ${CMPTH_GLOBAL_CFLAGS}
 )
 
+function(cmpth_require_cxx11 target)
+    set_target_properties(${target} PROPERTIES
+        CXX_STANDARD 11
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD_REQUIRED ON)
+endfunction()
+
 
 add_library(doctest INTERFACE)
 target_include_directories(doctest INTERFACE
@@ -33,10 +40,7 @@ target_link_libraries(cmpth_test_sct
     cmpth-options
     doctest
 )
-set_target_properties(cmpth_test_sct PROPERTIES
-    CXX_STANDARD 11
-    CXX_EXTENSIONS OFF
-    CXX_STANDARD_REQUIRED ON)
+cmpth_require_cxx11(cmpth_test_sct)
 
 enable_testing()
 
@@ -60,10 +64,7 @@ if (${CMPTH_ENABLE_MTH})
         cmpth-options
         doctest
     )
-    set_target_properties(cmpth_test_mth PROPERTIES
-        CXX_STANDARD 11
-        CXX_EXTENSIONS OFF
-        CXX_STANDARD_REQUIRED ON)
+    cmpth_require_cxx11(cmpth_test_mth)
     
     add_test(
         NAME cmpth_test_mth
@@ -80,10 +81,7 @@ if (${CMPTH_ENABLE_MTH})
         cmpth-options
         doctest
     )
-    set_target_properties(cmpth_test_ctmth PROPERTIES
-        CXX_STANDARD 11
-        CXX_EXTENSIONS OFF
-        CXX_STANDARD_REQUIRED ON)
+    cmpth_require_cxx11(cmpth_test_ctmth)
     
     add_test(
         NAME cmpth_test_ctmth
@@ -111,10 +109,7 @@ if (${CMPTH_ENABLE_MTH}) # TODO
             cmpth-options
             doctest
         )
-        set_target_properties(cmpth-${example_name} PROPERTIES
-            CXX_STANDARD 11
-            CXX_EXTENSIONS OFF
-            CXX_STANDARD_REQUIRED ON)
+        cmpth_require_cxx11(cmpth-${example_name})
     endforeach()
 endif()
 
