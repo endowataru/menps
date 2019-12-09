@@ -18,6 +18,8 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
         #--enable-fault-injection   # Disabled; seemed meaningless
         --enable-debug-data
         #--enable-mt                # Disabled
+        
+        --without-java
     )
 elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
     set(MEDEV2_UCX_CONFIGURE_FLAGS
@@ -29,6 +31,8 @@ elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
         --disable-debug
         --disable-assertions
         --disable-params-check
+        
+        --without-java
     )
 else()
     set(MEDEV2_UCX_CONFIGURE_FLAGS
@@ -40,6 +44,8 @@ else()
         --disable-debug
         --disable-assertions
         --disable-params-check
+        
+        --without-java
     )
 endif()
 
