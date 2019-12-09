@@ -138,6 +138,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:OptDebug>:-O3 -DNDEBUG -g>
         -march=native
+        -mavx
         
         # Disable SSP.
         -fno-stack-protector
