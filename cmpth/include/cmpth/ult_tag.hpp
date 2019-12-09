@@ -10,12 +10,14 @@ enum class ult_tag_t {
 ,   MTH
 ,   SCT
 ,   CTMTH
+,   ABT
 };
 
 #define CMPTH_ULT_HEADER_KLT    <cmpth/wrap/klt_itf.hpp>
 #define CMPTH_ULT_HEADER_MTH    <cmpth/wrap/mth_itf.hpp>
 #define CMPTH_ULT_HEADER_SCT    <cmpth/sct/def_sct_itf.hpp>
 #define CMPTH_ULT_HEADER_CTMTH  <cmpth/wrap/ctmth_itf.hpp>
+#define CMPTH_ULT_HEADER_ABT    <cmpth/wrap/abt_itf.hpp>
 
 template <ult_tag_t Tag>
 struct get_ult_itf_type;

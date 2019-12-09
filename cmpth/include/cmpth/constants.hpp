@@ -13,6 +13,7 @@ struct constants
     static constexpr const fdn::size_t default_ring_buf_length = 100;
     static constexpr const fdn::size_t default_worker_deque_size = 4096;
     static constexpr bool call_myth_uncond_setup = false;
+    static constexpr bool enable_abt_private_pool = false;
 };
 
 } // namespace cmpth

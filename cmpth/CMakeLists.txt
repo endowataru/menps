@@ -4,13 +4,14 @@ project(cmpth CXX)
 
 option(CMPTH_ENABLE_MTH "Build MassiveThreads" ON)
 option(CMPTH_ENABLE_MLOG "Use MassiveLogger" OFF)
+option(CMPTH_ENABLE_ABT "Build Argobots" OFF)
 
 add_library(cmpth INTERFACE)
 target_include_directories(cmpth INTERFACE ./include)
 install(DIRECTORY include/ DESTINATION include)
 
 set(CMPTH_GLOBAL_CFLAGS -ftls-model=initial-exec)
-# CMPTH_GLOBAL_CFLAGS will be used in massivethread.cmkae
+# CMPTH_GLOBAL_CFLAGS will be used in massivethreads.cmake and argobots.cmake
 
 add_library(cmpth-options INTERFACE)
 
@@ -96,6 +97,28 @@ if (${CMPTH_ENABLE_MLOG})
     target_link_libraries(cmpth INTERFACE massivelogger)
 endif()
 
+if (${CMPTH_ENABLE_ABT})
+    include(./cmake/argobots.cmake)
+    
+    add_executable(cmpth-abt-test
+        ./example/abt/abt-test.cpp
+    )
+    target_link_libraries(cmpth-abt-test
+        cmpth
+        cmpth-options
+        argobots
+    )
+    cmpth_require_cxx11(cmpth-abt-test)
+endif()
+
+add_library(cmpth-all INTERFACE)
+target_link_libraries(cmpth-all INTERFACE
+    cmpth
+    $<$<BOOL:${CMPTH_ENABLE_ABT}>:argobots>
+)
+target_compile_definitions(cmpth-all INTERFACE
+    $<$<BOOL:${CMPTH_ENABLE_ABT}>:CMPTH_ENABLE_ABT=1>
+)
 
 if (${CMPTH_ENABLE_MTH}) # TODO
     file(GLOB example_files example/*.cpp)
@@ -105,7 +128,7 @@ if (${CMPTH_ENABLE_MTH}) # TODO
             ${example_path}
         )
         target_link_libraries(cmpth-${example_name}
-            cmpth
+            cmpth-all
             cmpth-options
             doctest
         )

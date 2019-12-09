@@ -11,6 +11,7 @@ class basic_wrap_thread
     CMPTH_DEFINE_DERIVED(P)
     
     using thread_ptr_type = typename P::thread_ptr_type;
+    using thread_return_type = typename P::thread_return_type;
     
 public:
     basic_wrap_thread() noexcept = default;
@@ -38,7 +39,7 @@ private:
         F                   func;
         fdn::tuple<Args...> args;
         
-        static void* start(void* p)
+        static thread_return_type start(void* p)
         {
             auto* const self = static_cast<starter*>(p);
             try {
@@ -57,7 +58,7 @@ private:
                     "Unknown exception thrown in thread::thread()");
                 fdn::terminate();
             }
-            return nullptr;
+            return P::make_thread_return_empty();
         }
     };
     
@@ -114,7 +115,7 @@ public:
     static derived_type ptr_fork(void (*func)(void*), void* ptr)
     {
         // Correct the return type; it's always ignored.
-        const auto f = reinterpret_cast<void* (*)(void*)>(func);
+        const auto f = reinterpret_cast<thread_return_type (*)(void*)>(func);
         
         return derived_type{ P::thread_create(f, ptr) };
     }

@@ -12,6 +12,7 @@ struct mth_thread_policy
     using derived_type = basic_wrap_thread<mth_thread_policy>;
     
     using thread_ptr_type = myth_thread_t;
+    using thread_return_type = void*;
     
     static void check_error(const int err) {
         if (err != 0) { throw mth_error{}; }
@@ -27,6 +28,7 @@ struct mth_thread_policy
     static void thread_detach(const thread_ptr_type t) {
         check_error(myth_detach(t));
     }
+    static thread_return_type make_thread_return_empty() { return nullptr; }
     
     using assert_policy_type = typename P::assert_policy_type;
     using log_aspect_type = typename P::log_aspect_type;
