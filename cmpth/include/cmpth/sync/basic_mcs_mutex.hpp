@@ -85,9 +85,11 @@ public:
         while (next == nullptr);
         
         #ifdef CMPTH_MCS_MUTEX_USE_NEXT_UV
-        next->sth.notify(wk);
+        //next->sth.notify(wk);
+        next->sth.enter(wk);
         #else
-        cur->sth.notify(wk);
+        //cur->sth.notify(wk);
+        cur->sth.enter(wk);
         #endif
         
         this->deallocate(cur);
