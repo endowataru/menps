@@ -1,6 +1,8 @@
 
 #include "bench.hpp"
 #include <unordered_map>
+#include <numeric>
+#include <vector>
 
 template <typename P>
 class bench_mtx
@@ -15,22 +17,28 @@ public:
     explicit bench_mtx(const int argc, char** const argv) {
         this->nthreads_ = (argc > 1 ? atol(argv[1]) : 50);
         this->n_per_th_ = (argc > 2 ? atol(argv[2]) : 200000);
+        this->num_mtxs_ = (argc > 3 ? atol(argv[3]) : 1);
+        this->entries_ = cmpth::fdn::make_unique<entry []>(this->num_mtxs_);
     }
 
     struct result_type {
         long r;
-        long count;
+        std::vector<long> counts;
     };
     result_type operator() () {
         long r = 0;
-        long count = 0;
-        rec_params p{ *this, 0, this->nthreads_, &r, &count };
+        rec_params p{ *this, 0, this->nthreads_, &r };
         rec(&p);
-        return { r, count };
+        std::vector<long> counts;
+        for (long i = 0; i < this->num_mtxs_; ++i) {
+            counts.push_back(this->entries_[i].count);
+        }
+        return { r, std::move(counts) };
     }
     bool is_correct(const result_type& ret) const {
-        return ret.r == (this->nthreads_ - 1) * this->nthreads_ / 2
-            && ret.count == this->nthreads_ * this->n_per_th_;
+        const auto sum = std::accumulate(ret.counts.begin(), ret.counts.end(), 0);
+        return (ret.r == (this->nthreads_ - 1) * this->nthreads_ / 2)
+            && (sum == this->nthreads_ * this->n_per_th_);
     }
     static const char* name() { return "bench_mtx"; }
 
@@ -39,6 +47,7 @@ public:
         config_type c;
         c["nthreads"] = std::to_string(this->nthreads_);
         c["n_per_th"] = std::to_string(this->n_per_th_);
+        c["num_mtxs"] = std::to_string(this->num_mtxs_);
         return c;
     }
 
@@ -48,7 +57,6 @@ private:
         long a;
         long b;
         long* r;
-        long* count;
     };
     static void rec(void* const p_void) {
         const auto& p = *static_cast<rec_params*>(p_void);
@@ -56,21 +64,23 @@ private:
         const auto a = p.a;
         const auto b = p.b;
         const auto r = p.r;
-        const auto count = p.count;
         if (b - a == 1) {
             const auto n_per_th = self.n_per_th_;
+            const auto idx = a % self.num_mtxs_;
+            auto& mtx = self.entries_[idx].mtx;
+            auto& count = self.entries_[idx].count;
             for (long i = 0; i < n_per_th; ++i) {
-                self.mtx_.lock();
-                ++*count;
-                self.mtx_.unlock();
+                mtx.lock();
+                ++count;
+                mtx.unlock();
             }
             *r = a;
         }
         else {
             long c = (a + b) / 2;
             long r1 = 0, r2 = 0;
-            rec_params p1{ self, a, c, &r1, count };
-            rec_params p2{ self, c, b, &r2, count };
+            rec_params p1{ self, a, c, &r1 };
+            rec_params p2{ self, c, b, &r2 };
             auto t = thread::ptr_fork(&rec, &p1);
             rec(&p2);
             t.join();
@@ -80,7 +90,13 @@ private:
 
     long    nthreads_ = 0;
     long    n_per_th_ = 0;
-    mutex   mtx_;
+    long    num_mtxs_ = 0;
+    struct entry {
+        mutex   mtx;
+        long    count = 0;
+        char    pad[CMPTH_CACHE_LINE_SIZE - sizeof(long)];
+    };
+    std::unique_ptr<entry []> entries_;
 };
 
 int main(const int argc, char** const argv) {
