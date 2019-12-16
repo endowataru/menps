@@ -6,25 +6,24 @@
 namespace cmpth {
 
 template <typename P>
-class sct_running_task
+class basic_sct_running_task
 {
     using task_desc_type = typename P::task_desc_type;
     using unique_task_ptr_type = typename P::unique_task_ptr_type;
     using task_ref_type = typename P::task_ref_type;
     
-    using call_stack_type = typename P::call_stack_type;
     using continuation_type = typename P::continuation_type;
     
     using context_type = typename P::context_type;
     
 public:
-    sct_running_task() noexcept
+    basic_sct_running_task() noexcept
         : root_desc_()
         // Note: GCC 4.8 does NOT zero-fill empty {}
         , tk_{&this->root_desc_}
     { }
     
-    ~sct_running_task() {
+    ~basic_sct_running_task() {
         // Check that the root task is deleted.
         CMPTH_P_ASSERT(P, this->tk_.get() == &this->root_desc_);
         // No need to track the ownership of the root task's descriptor.
@@ -32,8 +31,8 @@ public:
     }
     
     // uncopyable
-    sct_running_task(const sct_running_task&) = delete;
-    sct_running_task& operator = (const sct_running_task&) = delete;
+    basic_sct_running_task(const basic_sct_running_task&) = delete;
+    basic_sct_running_task& operator = (const basic_sct_running_task&) = delete;
     
     continuation_type suspend_to(
         const context_type      cur_ctx
@@ -74,11 +73,8 @@ public:
         using fdn::swap;
         swap(this->tk_, tk);
         
-        // TODO: Removed for cancel_suspend()
-        #if 0
         // The context is reset for debugging.
         tk->ctx = context_type{};
-        #endif
         
         return { tk.release() };
     }

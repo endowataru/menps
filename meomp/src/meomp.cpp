@@ -21,9 +21,9 @@
 #include <cmpth/wss/basic_worker_task.hpp>
 #include <cmpth/wss/basic_worker_tls.hpp>
 #include <cmpth/wss/basic_unique_task_ptr.hpp>
-#include <cmpth/sct/sct_call_stack.hpp>
-#include <cmpth/sct/sct_continuation.hpp>
-#include <cmpth/sct/sct_running_task.hpp>
+#include <cmpth/sct/basic_sct_call_stack.hpp>
+#include <cmpth/sct/basic_sct_continuation.hpp>
+#include <cmpth/sct/basic_sct_running_task.hpp>
 #include <cmpth/arch/x86_64_context_policy.hpp>
 #include "omp_task_desc.hpp"
 
@@ -96,9 +96,9 @@ struct my_worker_base_policy
     using worker_tls_type = cmpth::basic_worker_tls<my_worker_base_policy>;
     
     using task_desc_type = task_desc<my_task_desc_policy>;
-    using call_stack_type = cmpth::sct_call_stack<my_worker_base_policy>;
-    using continuation_type = cmpth::sct_continuation<my_worker_base_policy>;
-    using running_task_type = cmpth::sct_running_task<my_worker_base_policy>;
+    using call_stack_type = cmpth::basic_sct_call_stack<my_worker_base_policy>;
+    using continuation_type = cmpth::basic_sct_continuation<my_worker_base_policy>;
+    using running_task_type = cmpth::basic_sct_running_task<my_worker_base_policy>;
     
     using base_ult_itf_type = my_tss_worker_policy::base_ult_itf_type;
     using task_ref_type = task_ref<my_task_desc_policy>;

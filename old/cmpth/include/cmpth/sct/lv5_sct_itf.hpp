@@ -99,7 +99,7 @@ public:
         
         this->init_ = fdn::make_unique<initializer>(this->sched_);
     }
-    sct_initializer(int /*argc*/, char** /*argv*/)
+    explicit sct_initializer(int /*argc*/, char** /*argv*/)
         : sct_initializer{}
     { }
     

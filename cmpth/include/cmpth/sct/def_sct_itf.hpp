@@ -1,149 +1,141 @@
 
 #pragma once
 
-#include <cmpth/sct/lv1_sct_itf.hpp>
-#include <cmpth/sct/lv3_sct_itf.hpp>
-#include <cmpth/sct/lv5_sct_itf.hpp>
-#include <cmpth/sct/lv6_sct_itf.hpp>
-#include <cmpth/sct/lv7_sct_itf.hpp>
+#include <cmpth/sct/sct_itf.hpp>
 
-#include <cmpth/sct/def_sct_spinlock.hpp>
-#include <cmpth/arch/x86_64_context_policy.hpp>
-#include <cmpth/pool/basic_ext_return_pool.hpp>
+#include <cmpth/wss/basic_worker_tls.hpp>
+#include <cmpth/wss/basic_unique_task_ptr.hpp>
+#include <cmpth/sct/basic_sct_continuation.hpp>
+#include <cmpth/sct/basic_sct_task_ref.hpp>
+#include <cmpth/sct/basic_sct_call_stack.hpp>
+#include <cmpth/sct/basic_sct_running_task.hpp>
+#include <cmpth/wss/basic_worker_task.hpp>
+#include <cmpth/wss/basic_worker.hpp>
+#include <cmpth/wss/basic_thread_funcs.hpp>
+#include <cmpth/sct/basic_sct_scheduler.hpp>
+#include <cmpth/sct/basic_sct_initializer.hpp>
+#include <cmpth/wss/basic_thread.hpp>
+#include <cmpth/wss/basic_suspended_thread.hpp>
+
+#include <cmpth/wrap/klt_itf.hpp>
 #include <cmpth/sync/basic_spinlock.hpp>
-#include <cmpth/wd/spinlock_worker_deque.hpp>
+//#include <cmpth/prof/dummy_prof_recorder.hpp>
+#include <cmpth/sct/basic_sct_return_memory_pool.hpp>
+#include <cmpth/sct/basic_sct_task_pool.hpp>
+#include <cmpth/arch/context_policy.hpp>
+#include <cmpth/tls/basic_map_tls.hpp>
+#include <cmpth/sct/basic_sct_task_desc.hpp>
 #include <cmpth/wd/chaselev_worker_deque.hpp>
+#include <cmpth/sct/basic_sct_mcs_mutex.hpp>
+#include <cmpth/sync/basic_mcs_cv.hpp>
+#include <cmpth/sync/basic_cv_barrier.hpp>
+#include <cmpth/exec/basic_for_loop.hpp>
 #include <unordered_map>
 
 #include <cmpth/ult_tag.hpp>
 
 namespace cmpth {
 
-// level 1: task_desc
-
-struct def_lv3_sct_policy;
-
-struct def_lv1_sct_policy
-    : def_sct_common_policy
+struct def_sct_policy
 {
-    using context_policy_type = x86_64_context_policy<def_sct_common_policy>;
-    
-    using task_mutex_type = def_sct_spinlock;   // used only for sct_task_desc
-    using spinlock_type = def_sct_spinlock;     // used for other purposes
-    
+    // Define classes provided as a top-level policy.
+    using base_ult_itf_type = klt_itf;
+    using constants_type = constants;
+    // Aspects
+    using assert_policy_type = def_assert_policy;
+    using log_aspect_type = def_log_aspect;
+    /*template <typename P>
+    using prof_aspect_t = dummy_prof_recorder<P>;*/
+    template <typename P>
+    using spinlock_t = basic_spinlock<P>;
+    // Contexts
+    template <typename P>
+    using context_policy_t = context_policy<P>;
+    // Pointers to tasks
+    template <typename P>
+    using unique_task_ptr_t = basic_unique_task_ptr<P>;
+    template <typename P>
+    using task_ref_t = basic_sct_task_ref<P>;
+    // Pointers to task with execution states
+    template <typename P>
+    using continuation_t = basic_sct_continuation<P>;
+    template <typename P>
+    using call_stack_t = basic_sct_call_stack<P>;
+    template <typename P>
+    using running_task_t = basic_sct_running_task<P>;
+    // Task descriptors
+    template <typename P>
+    using task_desc_t = basic_sct_task_desc<P>;
+    template <typename P>
+    using task_mutex_t = typename P::spinlock_type;
+    // Workers
+    template <typename P>
+    using worker_deque_t = chaselev_worker_deque<P>;
+    using worker_num_type = fdn::size_t;
+    static const worker_num_type invalid_worker_num = -1;
+    template <typename P>
+    using worker_tls_t = basic_worker_tls<P>;
+    template <typename P>
+    using worker_task_t = basic_worker_task<P>;
+    template <typename P>
+    using worker_t = basic_worker<P>;
+    // Memory pools
+    template <typename P>
+    using memory_pool_t = basic_sct_return_memory_pool<P>;
+    template <typename P>
+    using task_pool_t = basic_sct_task_pool<P>;
+    // Thread functions
+    template <typename P>
+    using thread_funcs_t = basic_thread_funcs<P>;
+    // Schedulers
+    template <typename P>
+    using scheduler_t = basic_sct_scheduler<P>;
+    template <typename P>
+    using initializer_t = basic_sct_initializer<P>;
+    // Threads
+    template <typename P>
+    using thread_t = basic_thread<P>;
+    template <typename P>
+    using suspended_thread_t = basic_suspended_thread<P>;
+    // Synchronizations
+    template <typename P>
+    using mutex_t = basic_sct_mcs_mutex<P>;
+    template <typename P>
+    using cv_t = basic_mcs_cv<P>;
+    template <typename P>
+    using barrier_t = basic_cv_barrier<P>;
+    // Atomics
+    using atomic_itf_type = atomic_itf_base;
+    // For-loops
+    template <typename P>
+    using for_loop_t = basic_for_loop<P>;
+    // Thread-local storage (TLS)
     using tls_key_type = fdn::size_t;
     using tls_map_impl_type = std::unordered_map<tls_key_type, void*>;
-    
-    using worker_type = sct_worker<def_lv3_sct_policy>; // TODO: circular dependency
+    template <typename P>
+    using tls_map_t = basic_map_tls_map<P>;
+    template <typename P>
+    using tls_key_pool_t = basic_map_tls_key_pool<P>;
+    template <typename P, typename VarP>
+    using thread_specific_t = basic_map_tls_thread_specific<P, VarP>;
 
-    using log_aspect_type = def_log_aspect;
-};
-
-using def_lv1_sct_itf = lv1_sct_itf<def_lv1_sct_policy>;
-
-// level 2: worker deque
-
-// TODO: Don't use #if
-#if 1
-struct def_sct_worker_deque_policy
-    : def_sct_common_policy
-{
-    using continuation_type = def_lv1_sct_itf::continuation;
-    using unique_task_ptr_type = def_lv1_sct_itf::unique_task_ptr;
-    using task_desc_type = def_lv1_sct_itf::task_desc;
-    static fdn::size_t get_default_deque_size() noexcept {
-        return constants::default_worker_deque_size;
-    }
-};
-
-struct def_lv2_sct_itf
-    : def_lv1_sct_itf
-{
-    using worker_deque = chaselev_worker_deque<def_sct_worker_deque_policy>;
-};
-
-#else
-
-struct def_sct_worker_deque_policy
-    : def_sct_common_policy
-{
-    using continuation_type = def_lv1_sct_itf::continuation;
-    using spinlock_type = def_sct_spinlock;
-};
-
-struct def_lv2_sct_itf
-    : def_lv1_sct_itf
-{
-    using worker_deque = spinlock_worker_deque<def_sct_worker_deque_policy>;
-};
-#endif
-
-// level 3: worker
-
-struct def_lv3_sct_policy {
-    using lv2_itf_type = def_lv2_sct_itf;
-    
-    using worker_num_type = fdn::int32_t;
-    static const worker_num_type invalid_worker_num = -1;
-    
-    inline static worker_num_type get_num_workers() noexcept;
-};
-
-using def_lv3_sct_itf = lv3_sct_itf<def_lv3_sct_policy>;
-
-// level 4: pool
-
-struct def_lv4_sct_itf
-    : def_lv3_sct_itf
-{
-    template <typename P2>
-    using pool_t = basic_ext_return_pool<def_lv3_sct_itf, P2>;
-};
-
-// level 5: thread, scheduler
-
-struct def_lv5_sct_policy {
-    using lv4_itf_type = def_lv4_sct_itf;
-    
-    static fdn::size_t get_default_stack_size() noexcept {
-        return constants::default_stack_size;
-    }
     template <typename Pool>
     static fdn::size_t get_task_pool_threshold(Pool& /*pool*/) noexcept {
         return constants::default_task_pool_threshold;
     }
-};
-
-using def_lv5_sct_itf = lv5_sct_itf<def_lv5_sct_policy>;
-
-def_lv3_sct_policy::worker_num_type def_lv3_sct_policy::get_num_workers() noexcept {
-    const auto& sched = def_lv5_sct_itf::scheduler::get_instance();
-    return sched.get_num_workers();
-}
-
-// level 6: mutex, cv
-
-struct def_lv6_sct_policy {
-    using lv5_itf_type = def_lv5_sct_itf;
-    
     template <typename Pool>
     static fdn::size_t get_mcs_mutex_pool_threshold(Pool& /*pool*/) noexcept {
         return constants::default_mcs_pool_threshold;
     }
+    static fdn::size_t get_default_stack_size() noexcept {
+        return constants::default_stack_size;
+    }
+    static fdn::size_t get_default_worker_deque_size() noexcept {
+        return constants::default_worker_deque_size;
+    }
 };
 
-using def_lv6_sct_itf = lv6_sct_itf<def_lv6_sct_policy>;
-
-// level 7: barrier
-
-struct def_lv7_sct_policy {
-    using lv6_itf_type = def_lv6_sct_itf;
-};
-
-using def_lv7_sct_itf = lv7_sct_itf<def_lv7_sct_policy>;
-
-
-using def_sct_itf = def_lv7_sct_itf;
+using def_sct_itf = sct_itf<def_sct_policy>;
 
 template <>
 struct get_ult_itf_type<ult_tag_t::SCT>

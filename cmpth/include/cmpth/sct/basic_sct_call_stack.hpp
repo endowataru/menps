@@ -6,7 +6,7 @@
 namespace cmpth {
 
 template <typename P>
-class sct_call_stack
+class basic_sct_call_stack
 {
     using continuation_type = typename P::continuation_type;
     using unique_task_ptr_type = typename P::unique_task_ptr_type;
@@ -16,9 +16,9 @@ class sct_call_stack
     using context_type = typename P::context_type;
     
 public:
-    sct_call_stack() noexcept = default;
+    basic_sct_call_stack() noexcept = default;
     
-    explicit sct_call_stack(unique_task_ptr_type tk)
+    explicit basic_sct_call_stack(unique_task_ptr_type tk)
         : tk_{fdn::move(tk)}
         , ptr_{this->tk_->stk_bottom}
     {
