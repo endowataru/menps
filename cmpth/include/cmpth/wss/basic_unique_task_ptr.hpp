@@ -6,11 +6,8 @@
 namespace cmpth {
 
 template <typename P>
-struct basic_unique_task_destructor
-{
-    void operator() (
-        typename P::task_desc_type* const tk
-    ) const noexcept {
+struct basic_unique_task_destructor {
+    void operator() (typename P::task_desc_type* const tk) const noexcept {
         if (CMPTH_UNLIKELY(tk != nullptr)) {
             fdn::terminate();
         }
