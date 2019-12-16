@@ -20,7 +20,7 @@ struct basic_ext_return_pool_policy
         return P2::get_pool_threshold(pool);
     }
     
-    using assert_policy_type = typename UltItf::assert_policy;
+    using assert_aspect_type = typename UltItf::assert_aspect;
     using log_aspect_type = typename UltItf::log_aspect;
 };
 

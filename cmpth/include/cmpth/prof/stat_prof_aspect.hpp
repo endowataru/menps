@@ -29,7 +29,7 @@ public:
         typename accumulator_policy_type::clock_policy_type;
     
     using accumulator_type = stat_accumulator<accumulator_policy_type>;
-    using assert_policy_type = typename UltItf::assert_policy;
+    using assert_aspect_type = typename UltItf::assert_aspect;
     
     using kind_type = typename P2::kind_type;
     static const fdn::size_t num_kinds = P2::num_kinds;

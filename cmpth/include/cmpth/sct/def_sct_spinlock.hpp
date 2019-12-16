@@ -9,7 +9,7 @@ namespace cmpth {
 
 struct def_sct_common_policy
 {
-    using assert_policy_type = def_assert_policy;
+    using assert_aspect_type = def_assert_aspect;
     using log_aspect_type = def_log_aspect;
     
     using base_ult_itf_type = klt_itf;

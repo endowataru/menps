@@ -60,7 +60,7 @@ struct lv1_md3_policy_base
     using blk_local_lock_type = blk_local_lock<lv1_md3_policy_base<P>>;
     using blk_global_lock_base_type = blk_global_lock_base<lv1_md3_policy_base<P>>;
     
-    using assert_policy_type = typename ult_itf_type::assert_policy;
+    using assert_aspect_type = typename ult_itf_type::assert_aspect;
     using log_aspect_type = typename P::log_aspect_type;
 
     struct ts_interval_type {

@@ -42,7 +42,7 @@ struct def_sct_policy
     using base_ult_itf_type = klt_itf;
     using constants_type = constants;
     // Aspects
-    using assert_policy_type = def_assert_policy;
+    using assert_aspect_type = def_assert_aspect;
     using log_aspect_type = def_log_aspect;
     /*template <typename P>
     using prof_aspect_t = dummy_prof_recorder<P>;*/

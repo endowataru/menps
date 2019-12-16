@@ -7,7 +7,7 @@ namespace cmpth {
 
 template <typename P>
 struct sct_spinlock_policy {
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     using base_ult_itf_type = typename P::base_ult_itf_type;
     using atomic_bool_type = typename base_ult_itf_type::template atomic<bool>;
 };
@@ -23,7 +23,7 @@ struct sct_worker;
 
 template <typename P>
 struct sct_context_policy_policy {
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
 };
 template <typename P>
 using sct_context_policy =
@@ -59,7 +59,7 @@ struct sct_continuation_policy {
     using task_desc_type = sct_task_desc<P>;
     using unique_task_ptr_type = sct_unique_task_ptr<P>;
     using context_type = sct_context<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
 };
 template <typename P>
 using sct_continuation =
@@ -80,7 +80,7 @@ struct sct_task_ref_policy {
     using task_desc_type = sct_task_desc<P>;
     using task_mutex_type = sct_task_mutex<P>;
     using continuation_type = sct_continuation<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
 };
 template <typename P>
 using sct_task_ref = typename P::template task_ref_t<sct_task_ref_policy<P>>;
@@ -93,7 +93,7 @@ struct sct_call_stack_policy {
     using task_desc_type = sct_task_desc<P>;
     using task_ref_type = sct_task_ref<P>;
     using context_type = sct_context<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
 };
 template <typename P>
 using sct_call_stack = typename P::template call_stack_t<sct_call_stack_policy<P>>;
@@ -127,7 +127,7 @@ struct sct_worker_deque_policy {
     using task_desc_type = sct_task_desc<P>;
     using unique_task_ptr_type = sct_unique_task_ptr<P>;
     using base_ult_itf_type = typename P::base_ult_itf_type;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     static fdn::size_t get_default_deque_size() noexcept {
         return P::get_default_worker_deque_size();
     }
@@ -144,7 +144,7 @@ struct sct_running_task_policy {
     using task_ref_type = sct_task_ref<P>;
     using continuation_type = sct_continuation<P>;
     using context_type = sct_context<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
 };
 template <typename P>
 using sct_running_task =
@@ -175,7 +175,7 @@ template <typename P>
 struct sct_worker_tls_policy {
     using base_ult_itf_type = typename P::base_ult_itf_type;
     using derived_type = sct_worker<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
 };
 template <typename P>
 using sct_worker_tls = typename P::template worker_tls_t<sct_worker_tls_policy<P>>;
@@ -192,7 +192,7 @@ struct sct_worker_policy {
     using continuation_type = sct_continuation<P>;
     using task_ref_type = sct_task_ref<P>;
     using unique_task_ptr_type = sct_unique_task_ptr<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     static const worker_num_type invalid_worker_num = P::invalid_worker_num;
 };
 template <typename P>
@@ -203,7 +203,7 @@ template <typename P, typename P2>
 struct sct_memory_pool_policy : P2 {
     using spinlock_type = sct_spinlock<P>;
     using worker_type = sct_worker<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     using log_aspect_type = typename P::log_aspect_type;
 };
 template <typename P, typename P2>
@@ -277,7 +277,7 @@ struct sct_scheduler_policy {
     using continuation_type = sct_continuation<P>;
     using task_pool_type = sct_task_pool<P>;
     using thread_funcs_type = sct_thread_funcs<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     using tls_key_pool_type = sct_tls_key_pool<P>;
     using task_ref_type = sct_task_ref<P>;
     using log_aspect_type = typename P::log_aspect_type;
@@ -324,7 +324,7 @@ struct sct_suspended_thread_policy {
     using worker_type = sct_worker<P>;
     using continuation_type = sct_continuation<P>;
     using task_desc_type = sct_task_desc<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
 };
 
 
@@ -334,7 +334,7 @@ struct sct_mutex_policy {
     using worker_num_type = typename P::worker_num_type;
     using suspended_thread_type = sct_suspended_thread<P>;
     using base_ult_itf_type = typename P::base_ult_itf_type;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     using log_aspect_type = typename P::log_aspect_type;
     template <typename P2>
     using memory_pool_t = sct_memory_pool<P, P2>;
@@ -364,7 +364,7 @@ public:
         typename base_ult_itf_type::template unique_lock<mcs_mutex_type>; // TODO
     using worker_type = sct_worker<P>;
     using suspended_thread_type = sct_suspended_thread<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
 };
 template <typename P>
 using sct_cv = typename P::template cv_t<sct_cv_policy<P>>;
@@ -388,7 +388,7 @@ using sct_barrier = typename P::template barrier_t<sct_barrier_policy<P>>;
 template <typename P>
 struct sct_for_loop_policy {
     using thread_type = sct_thread<P>;
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     using log_aspect_type = typename P::log_aspect_type;
 };
 template <typename P>
@@ -451,7 +451,7 @@ struct sct_itf
 
     using initializer = sct_initializer<P>;
 
-    using assert_policy = typename P::assert_policy_type;
+    using assert_aspect = typename P::assert_aspect_type;
     using log_aspect = typename P::log_aspect_type;
 
     using worker_num_type = typename P::worker_num_type;

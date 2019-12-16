@@ -16,7 +16,7 @@ struct ctmth_mutex_policy {
     using worker_num_type = mth_itf::worker_num_type;
     using suspended_thread_type = mth_itf::suspended_thread;
     using base_ult_itf_type = klt_itf;
-    using assert_policy_type = mth_itf::assert_policy;
+    using assert_aspect_type = mth_itf::assert_aspect;
     using log_aspect_type = mth_itf::log_aspect;
     template <typename P2>
     using memory_pool_t = basic_ext_return_pool<mth_itf, P2>;
@@ -36,7 +36,7 @@ struct ctmth_cv_policy {
     using mcs_unique_lock_type = fdn::unique_lock<ctmth_mutex>;
     using worker_type = mth_itf::worker;
     using suspended_thread_type = mth_itf::suspended_thread;
-    using assert_policy_type = mth_itf::assert_policy;
+    using assert_aspect_type = mth_itf::assert_aspect;
 };
 using ctmth_cv = basic_mcs_cv<ctmth_cv_policy>;
 
@@ -50,7 +50,7 @@ using ctmth_barrier = basic_cv_barrier<ctmth_barrier_policy>;
 
 struct ctmth_for_loop_policy {
     using thread_type = mth_itf::thread;
-    using assert_policy_type = mth_itf::assert_policy;
+    using assert_aspect_type = mth_itf::assert_aspect;
     using log_aspect_type = mth_itf::log_aspect;
 };
 

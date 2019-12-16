@@ -20,7 +20,7 @@ struct basic_sct_return_memory_pool_policy
         return P::get_pool_threshold(pool);
     }
     
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     using log_aspect_type = typename P::log_aspect_type;
 };
 

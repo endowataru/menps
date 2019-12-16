@@ -53,7 +53,7 @@ struct mcs_delegator_policy
     using mcs_node_pool_type =
         basic_ext_return_pool<UltItf, mcs_delegator_pool_policy<UltItf, P2>>;
     
-    using assert_policy_type = typename UltItf::assert_policy;
+    using assert_aspect_type = typename UltItf::assert_aspect;
     using log_aspect_type = typename UltItf::log_aspect;
     
     static const bool prefer_execute_critical = true;

@@ -28,7 +28,7 @@ struct basic_sct_mcs_mutex_core_policy {
     
     using atomic_node_ptr_type = typename mcs_node_type::atomic_node_ptr_type;
     
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     using log_aspect_type = typename P::log_aspect_type;
 };
 

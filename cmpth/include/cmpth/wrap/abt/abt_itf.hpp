@@ -14,7 +14,7 @@ namespace cmpth {
 
 struct abt_base_policy
 {
-    using assert_policy_type = def_assert_policy;
+    using assert_aspect_type = def_assert_aspect;
     using log_aspect_type = def_log_aspect;
     using constants_type = constants;
 };
@@ -30,7 +30,7 @@ struct abt_global_policy : abt_base_policy
 struct lv1_abt_itf
     : atomic_itf_base
 {
-    using assert_policy = abt_base_policy::assert_policy_type;
+    using assert_aspect = abt_base_policy::assert_aspect_type;
     using log_aspect = abt_base_policy::log_aspect_type;
 
     using global = abt_global<abt_global_policy>;

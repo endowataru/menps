@@ -19,7 +19,7 @@ namespace cmpth {
 
 struct mth_base_policy
 {
-    using assert_policy_type = def_assert_policy;
+    using assert_aspect_type = def_assert_aspect;
     using log_aspect_type = def_log_aspect;
     using constants_type = constants;
 };
@@ -30,7 +30,7 @@ struct lv1_mth_itf
     : atomic_itf_base
 {
     using spinlock = def_sct_spinlock;
-    using assert_policy = mth_base_policy::assert_policy_type;
+    using assert_aspect = mth_base_policy::assert_aspect_type;
     using log_aspect = mth_base_policy::log_aspect_type;
     
     using worker_num_type = fdn::size_t;

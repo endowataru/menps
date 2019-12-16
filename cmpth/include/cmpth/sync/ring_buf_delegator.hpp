@@ -35,7 +35,7 @@ struct ring_buf_delegator_policy
     
     static const ring_buf_count_type ring_buf_length = constants::default_ring_buf_length;
     
-    using assert_policy_type = typename UltItf::assert_policy;
+    using assert_aspect_type = typename UltItf::assert_aspect;
     using log_aspect_type = typename UltItf::log_aspect;
     
     static const bool prefer_execute_critical = true;

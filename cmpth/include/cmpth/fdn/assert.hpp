@@ -6,16 +6,16 @@
 #include <iostream> // TODO
 
 #define CMPTH_P_ASSERT(P, x)    \
-    static_cast<void>(!(P::assert_policy_type::is_enabled) || (x) || \
-    (P::assert_policy_type::fail(#x, __FILE__, __LINE__),0))
+    static_cast<void>(!(P::assert_aspect_type::is_enabled) || (x) || \
+    (P::assert_aspect_type::fail(#x, __FILE__, __LINE__),0))
 
 #define CMPTH_P_ASSERT_ALWAYS(P, x)    \
-    static_cast<void>((x) || (P::assert_policy_type::fail(#x, __FILE__, __LINE__),0))
+    static_cast<void>((x) || (P::assert_aspect_type::fail(#x, __FILE__, __LINE__),0))
 
 namespace cmpth {
 
 template <bool IsEnabled>
-struct assert_policy {
+struct assert_aspect {
     static const bool is_enabled = IsEnabled;
     static void fail(const char* const cond, const char* const file, const int line) {
         std::cerr << "Assertion failed: " << cond << " of " << file
@@ -24,8 +24,8 @@ struct assert_policy {
     }
 };
 
-using def_assert_policy = 
-    assert_policy<
+using def_assert_aspect =
+    assert_aspect<
         #ifdef CMPTH_DEBUG
         true
         #else

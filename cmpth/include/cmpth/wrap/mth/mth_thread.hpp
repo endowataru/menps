@@ -30,7 +30,7 @@ struct mth_thread_policy
     }
     static thread_return_type make_thread_return_empty() { return nullptr; }
     
-    using assert_policy_type = typename P::assert_policy_type;
+    using assert_aspect_type = typename P::assert_aspect_type;
     using log_aspect_type = typename P::log_aspect_type;
 };
 
