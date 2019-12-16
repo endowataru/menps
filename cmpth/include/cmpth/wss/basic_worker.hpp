@@ -50,60 +50,12 @@ public:
         return this->template suspend_to_cont<Func>(
             this->local_pop_top_or_root(), args...);
     }
-    
     template <typename Func, typename... Args>
     [[noreturn]]
     void exit_to_sched(Args* const ... args)
     {
         this->template exit_to_cont<Func>(
             this->local_pop_top_or_root(), args...);
-    }
-    
-private:
-    template <typename Func, typename... Args>
-    struct on_cancel_suspend {
-        derived_type& operator() (
-            derived_type&       wk
-        ,   const task_ref_type tk
-        ,   Args* const ...     args
-        ) {
-            wk.check_cur_worker();
-            
-            // Revive the exited thread.
-            // TODO: Avoid using tk.get_task_desc() here.
-            continuation_type cont{
-                unique_task_ptr_type{ tk.get_task_desc() }
-            };
-            
-            if (!wk.root_cont_) {
-                CMPTH_P_ASSERT(P, cont.is_root());
-                // The revived task is the scheduler task.
-                wk.set_root_cont(fdn::move(cont));
-            }
-            else {
-                CMPTH_P_ASSERT(P, !cont.is_root());
-            }
-            
-            // Execute the user-defined function.
-            // Note: cont may be null when it's the scheduler task.
-            auto& wk_2 = Func{}(wk, fdn::move(cont), args...);
-
-            wk_2.check_cur_worker();
-            return wk_2;
-        }
-    };
-    
-public:
-    // Cancel the execution of an on-top function.
-    template <typename Func, typename... Args>
-    [[noreturn]]
-    void cancel_suspend(
-        continuation_type   cont
-    ,   Args* const ...     args
-    ) {
-        this->template exit_to_cont<
-            basic_worker::on_cancel_suspend<Func, Args...>
-        >(fdn::move(cont), args...);
     }
     
     template <typename Func, typename... Args>
