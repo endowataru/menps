@@ -96,7 +96,7 @@ private:
         }
         catch (std::exception& e) {
             CMPTH_P_LOG_FATAL(P,
-                "An exception thrown in mth::for_loop(par)!\t"
+                "An exception thrown in mth::for_loop(par)!"
             ,   "what", e.what()
             );
             throw;
