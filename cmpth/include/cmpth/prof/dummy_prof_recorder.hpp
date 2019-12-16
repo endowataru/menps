@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cmpth/prof/basic_prof_aspect.hpp>
+#include <cmpth/prof/prof_tag.hpp>
 
 namespace cmpth {
 
