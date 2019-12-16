@@ -20,7 +20,6 @@ class basic_worker_task
     using continuation_type = typename P::continuation_type;
     using running_task_type = typename P::running_task_type;
     using task_ref_type = typename P::task_ref_type;
-    using unique_task_ptr_type = typename P::unique_task_ptr_type;
     
     template <typename Func, typename... Args>
     struct on_suspend_to_new {
@@ -241,27 +240,7 @@ public:
         
         CMPTH_UNREACHABLE();
     }
-    
-    [[noreturn]]
-    void exit_to_cont_imm(continuation_type next_cont) {
-        this->exit_to_cont<on_exit_to_cont_imm>(fdn::move(next_cont));
-    }
-    
-private:
-    struct on_exit_to_cont_imm {
-        derived_type& operator() (
-            derived_type&   self
-        ,   task_ref_type   /*prev_tk*/
-            // Note: This task is discarded. The user is responsible to manage it.
-        ) const {
-            self.check_cur_worker();
-            return self;
-        }
-    };
-    
-    // TODO: exit_to_new() ?
-    
-public:
+
     task_ref_type get_cur_task_ref() const noexcept {
         return this->cur_tk_.get_task_ref();
     }
