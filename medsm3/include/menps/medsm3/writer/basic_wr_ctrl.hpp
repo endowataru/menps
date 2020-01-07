@@ -65,7 +65,7 @@ public:
         return sd_ret.is_writable;
     }
 
-    sig_buffer_type fence_release()
+    sig_buffer_type fence_release(const bool clear_sig)
     {
         CMPTH_P_PROF_SCOPE(P, fence_release);
         CMPTH_P_LOG_INFO(P, "Start release fence.");
@@ -105,7 +105,7 @@ public:
 
         CMPTH_P_LOG_INFO(P, "Finish release fence.");
         
-        return this->rel_sig_.get_sig();
+        return this->rel_sig_.get_sig(clear_sig);
     }
 
 private:

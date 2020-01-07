@@ -46,8 +46,7 @@ public:
         this->sig_ = mefdn::move(merged_sig);
     }
     
-    serialized_buffer_type serialize(size_type size) {
-        // TODO: lock
+    serialized_buffer_type serialize_and_clear(const size_type size) {
         const mutex_guard_type lk{this->mtx_};
         
         auto ret = sig_.serialize(size);
@@ -63,13 +62,21 @@ public:
         return sig_buffer_type::get_size_in_bytes(P::constants_type::max_rel_sig_len);
     }
     
-    sig_buffer_type get_sig() const
+    sig_buffer_type get_sig(const bool clear_sig)
     {
         const mutex_guard_type lk{this->mtx_};
         
-        // Copy the signature and return it.
-        // TODO: Reduce this copy.
-        return this->sig_;
+        if (clear_sig) {
+            // Move the signature first.
+            auto sig = fdn::move(this->sig_);
+            // Make sure that the signature is cleared; nothing actually happens.
+            this->sig_ = sig_buffer_type();
+            return sig;
+        }
+        else {
+            // Copy the signature and return it.
+            return this->sig_;
+        }
     }
     
 private:

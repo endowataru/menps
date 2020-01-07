@@ -121,7 +121,7 @@ public:
         sig_buffer_type sig;
         {
             CMPTH_P_PROF_SCOPE(P, barrier_release);
-            sig = this->wr_ctrl().fence_release();
+            sig = this->wr_ctrl().fence_release(true);
         }
         sig_buf_set_type sig_set;
         {
@@ -151,7 +151,7 @@ public:
 
     virtual void unlock_mutex(mtx_id_type mtx_id) override
     {
-        auto sig = this->wr_ctrl().fence_release();
+        auto sig = this->wr_ctrl().fence_release(false);
         this->sync_tbl().unlock_mutex(mtx_id, sig);
     }
  

@@ -185,7 +185,7 @@ public:
         
         this->fence_release();
         
-        auto sig = this->rel_sig_.get_sig();
+        auto sig = this->rel_sig_.get_sig(false);
         
         this->mtx_tbl_.unlock(com, mtx_id, sig);
     }
@@ -222,7 +222,7 @@ public:
         
         this->fence_release();
         
-        auto sig = this->rel_sig_.get_sig();
+        auto sig = this->rel_sig_.get_sig(false);
         
         this->sig_tbl_.merge_sig_to(this->seg_tbl_, com, sig_id, sig);
         
@@ -355,8 +355,9 @@ public:
         #else
         const auto sig_size = this->rel_sig_.get_max_size_in_bytes();
         
-        // Serialize the release signature to transfer via MPI.
-        const auto this_buf = this->rel_sig_.serialize(sig_size);
+        // Serialize the release signature to transfer via MPI
+        // and clear it to reduce write notices.
+        const auto this_buf = this->rel_sig_.serialize_and_clear(sig_size);
         
         // Allocate an uninitialized buffer.
         const auto all_buf =

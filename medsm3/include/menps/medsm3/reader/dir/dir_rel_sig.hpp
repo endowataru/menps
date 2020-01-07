@@ -18,7 +18,7 @@ public:
         // Do nothing.
     }
     
-    sig_buffer_type get_sig() const {
+    sig_buffer_type get_sig(const bool /*clear_sig*/) const {
         return sig_buffer_type();
     }
 };
