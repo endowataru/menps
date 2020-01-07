@@ -83,7 +83,7 @@ public:
     void print_all(const char* const module_name, const fdn::size_t proc_id)
     {
         std::stringstream filename_st;
-        filename_st << "trace." << module_name << "." << proc_id;
+        filename_st << get_prof_output_prefix() << "." << module_name << "." << proc_id;
         const auto filename = filename_st.str();
         
         const auto file = fopen(filename.c_str(), "w");
@@ -92,6 +92,11 @@ public:
     }
 
 private:
+    static std::string get_prof_output_prefix() noexcept {
+        const char* const trace_prefix_str = std::getenv("CMPTH_TRACE_PREFIX");
+        return trace_prefix_str != nullptr ? trace_prefix_str : "trace";
+    }
+    
     bool is_enabled_ = true;
     mlog_data_t md_;
 };
