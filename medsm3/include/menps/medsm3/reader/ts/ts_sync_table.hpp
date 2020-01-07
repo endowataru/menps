@@ -53,12 +53,8 @@ public:
         const auto all_buf =
             fdn::make_unique_uninitialized<fdn::byte []>(sig_size * num_procs);
         
-        {
-            CMPTH_P_PROF_SCOPE(P, barrier_allgather);
-            
-            // Collect the signatures from all of the processes.
-            coll.allgather(this_buf.get(), all_buf.get(), sig_size);
-        }
+        // Collect the signatures from all of the processes.
+        coll.allgather(this_buf.get(), all_buf.get(), sig_size);
 
         sig_buf_set_type sigs(num_procs);
         for (proc_id_type proc_id = 0; proc_id < num_procs; ++proc_id) {

@@ -8,6 +8,7 @@
 extern "C"
 int meomp_main(int argc, char** argv)
 {
+    meomp_prof_begin();
     for (int i = 0; i < 10; ++i) {
         #pragma omp parallel
         {
@@ -17,5 +18,6 @@ int meomp_main(int argc, char** argv)
             #pragma omp barrier
         }
     }
+    meomp_prof_end();
 }
 

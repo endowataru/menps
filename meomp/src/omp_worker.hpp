@@ -110,6 +110,19 @@ public:
         
         this->set_cmd_and_exit(info);
     }
+
+    void prof_begin() {
+        cmd_info_type info = cmd_info_type();
+        info.code = cmd_code_type::prof_begin;
+        
+        this->set_cmd_and_suspend(info);
+    }
+    void prof_end() {
+        cmd_info_type info = cmd_info_type();
+        info.code = cmd_code_type::prof_end;
+        
+        this->set_cmd_and_suspend(info);
+    }
     
     cmd_info_type wait_for_cmd()
     {

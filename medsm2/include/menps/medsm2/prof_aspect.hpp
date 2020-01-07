@@ -6,6 +6,10 @@
 
 #define MEDSM2_PROF_KINDS(x) \
     x(omp_barrier) \
+    x(meomp_main_comp) \
+    x(meomp_parallel) \
+    x(meomp_parallel_master) \
+    x(meomp_parallel_child) \
     x(barrier) \
     x(barrier_release) \
     x(barrier_allgather) \
@@ -26,7 +30,6 @@
     x(write_merge_simd) \
     x(write_merge_byte) \
     x(read_merge) \
-    x(push_wn) \
     x(start_write_twin) \
     x(tx_read) \
     x(merge_read) \

@@ -50,6 +50,9 @@ public:
     virtual void stop_release_thread() = 0;
     
     virtual bool try_upgrade(void* ptr) = 0;
+
+    virtual void enable_prof() noexcept = 0;
+    virtual void disable_prof() noexcept = 0;
 };
 
 } // namespace medsm2

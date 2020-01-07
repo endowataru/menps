@@ -36,9 +36,11 @@ public:
     MEFDN_NODISCARD
     bool try_start_write(blk_local_lock_type& blk_llk)
     {
-        auto& sd_ctrl = this->rd_ctrl().state_data_ctrl();
+        CMPTH_P_PROF_SCOPE(P, write_upgrade);
 
+        auto& sd_ctrl = this->rd_ctrl().state_data_ctrl();
         const auto sd_ret = sd_ctrl.start_write(blk_llk);
+
         if (sd_ret.needs_protect) {
             const auto blk_id = blk_llk.blk_id();
             CMPTH_P_LOG_DEBUG(P
@@ -65,10 +67,10 @@ public:
 
     sig_buffer_type fence_release()
     {
+        CMPTH_P_PROF_SCOPE(P, fence_release);
         CMPTH_P_LOG_INFO(P, "Start release fence.");
 
         auto& self = this->derived();
-
         auto rd_ts_st = this->rd_ctrl().get_rd_ts_st();
 
         if (self.is_fast_release_enabled()) {
@@ -147,8 +149,9 @@ private:
 
     release_result release(const rd_ts_state_type& rd_ts_st, const blk_id_type blk_id)
     {
-        auto& ll_ctrl = this->rd_ctrl().local_lock_ctrl();
+        CMPTH_P_PROF_SCOPE(P, release);
 
+        auto& ll_ctrl = this->rd_ctrl().local_lock_ctrl();
         auto blk_llk = ll_ctrl.get_local_lock(blk_id);
         
         auto fast_rel_ret = this->rd_ctrl().try_fast_release(rd_ts_st, blk_llk);
@@ -164,6 +167,8 @@ private:
             return { true, true, true, fast_rel_ret.new_wn };
         }
         else {
+            CMPTH_P_PROF_SCOPE(P, release_tx);
+
             CMPTH_P_LOG_INFO(P,
                 "Start slow release."
             ,   "blk_id", blk_id.to_str()

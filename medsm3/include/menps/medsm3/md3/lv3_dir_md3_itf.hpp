@@ -110,6 +110,8 @@ public:
     using segment_set_ptr_type = typename lv2_itf_type::segment_set_ptr_type;
 
     using global_entry_type = typename lv2_itf_type::segment_type::global_entry_type;
+
+    using prof_aspect_type = typename lv2_itf_type::prof_aspect_type;
 };
 
 template <typename P>
@@ -164,6 +166,8 @@ public:
     struct sig_buf_set_type { /* empty */ };
     struct wn_entry_type { /* empty */ };
     using wn_vector_type = std::vector<wn_entry_type>;
+
+    using prof_aspect_type = typename lv2_itf_type::prof_aspect_type;
 };
 
 template <typename P>

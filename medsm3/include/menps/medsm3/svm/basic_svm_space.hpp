@@ -22,6 +22,7 @@ class basic_svm_space
     using blk_id_type = typename P::blk_id_type;
 
     using com_itf_type = typename P::com_itf_type;
+    using proc_id_type = typename com_itf_type::proc_id_type;
     using ult_itf_type = typename P::ult_itf_type;
     
     struct tss_policy {
@@ -35,6 +36,8 @@ class basic_svm_space
 
     using pin_ctrl_ptr_type = typename P::pin_ctrl_ptr_type;
     using sync_table_ptr_type = typename P::sync_table_ptr_type;
+
+    using prof_aspect_type = typename P::prof_aspect_type;
 
 public:
     explicit basic_svm_space(
@@ -84,6 +87,19 @@ private:
     };
 
 public:
+    virtual ~basic_svm_space() /*noexcept*/ {
+        auto& com = this->seg_set().get_com_itf();
+        auto& coll = com.get_coll();
+        const auto this_proc = com.this_proc_id();
+        const auto num_procs = com.get_num_procs();
+        for (proc_id_type proc = 0; proc < num_procs; ++proc) {
+            if (proc == this_proc) {
+                prof_aspect_type::print_all("medsm3", this_proc);
+            }
+            coll.barrier();
+        }
+    }
+
     virtual void* coll_alloc_seg(fdn::size_t seg_size, fdn::size_t blk_size) override
     {
         return this->seg_set().coll_make_segment(seg_size, blk_size);
@@ -149,6 +165,13 @@ public:
     }
 
     com_itf_type& get_com_itf() { return this->seg_set().get_com_itf(); }
+
+    virtual void enable_prof() noexcept override {
+        prof_aspect_type::set_enabled(true);
+    }
+    virtual void disable_prof() noexcept override {
+        prof_aspect_type::set_enabled(false);
+    }
 
 private:
     bool try_upgrade_with_flag(void* const ptr, const bool is_write)

@@ -53,6 +53,8 @@ private:
 
     lock_global_raw_result lock_global_raw(blk_local_lock_type& blk_llk)
     {
+        CMPTH_P_PROF_SCOPE(P, tx_lock_global);
+
         auto& seg = this->seg_set().segment_of(blk_llk);
         auto& glk_tbl = seg.get_global_lock_table();
         const auto blk_sidx = blk_llk.subindex();
@@ -68,10 +70,12 @@ private:
         
         const auto ret = glk_tbl.lock_global(com, p2p, blk_sidx, tag, owner_lad.get());
 
-        return { ret.owner, fdn::move(owner_lad), lad_size };
+        return { ret.owner, fdn::move(owner_lad) };
     }
     void unlock_global_raw(blk_local_lock_type& blk_llk, const void* const lad)
     {
+        CMPTH_P_PROF_SCOPE(P, tx_unlock_global);
+
         auto& seg = this->seg_set().segment_of(blk_llk);
         auto& glk_tbl = seg.get_global_lock_table();
         const auto blk_sidx = blk_llk.subindex();

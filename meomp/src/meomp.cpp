@@ -111,6 +111,8 @@ struct my_worker_base_policy
     ,   end_parallel
     ,   exit_parallel
     ,   exit_program
+    ,   prof_begin
+    ,   prof_end
     };
     
     using omp_func_type = void (*)(void*);
@@ -138,6 +140,8 @@ struct my_child_worker_policy
     
     using cmd_info_type = my_worker_base_policy::cmd_info_type;
     using cmd_code_type = my_worker_base_policy::cmd_code_type;
+
+    using prof_aspect_type = medsm2::dsm_com_policy_base::prof_aspect_type;
     
     static void fatal_error() {
         throw std::logic_error("Fatal error in child worker");
@@ -200,6 +204,8 @@ struct my_dist_worker_policy
     
     using cmd_info_type = my_worker_base_policy::cmd_info_type;
     using cmd_code_type = my_worker_base_policy::cmd_code_type;
+
+    using prof_aspect_type = medsm2::dsm_com_policy_base::prof_aspect_type;
     
     static void fatal_error() {
         throw std::logic_error("Fatal error in distributed worker");
@@ -906,6 +912,13 @@ void meomp_free(void* const ptr) {
 
 void meomp_local_barrier() {
     g_df->local_barrier();
+}
+
+void meomp_prof_begin() {
+    worker_base_type::get_cur_worker().prof_begin();
+}
+void meomp_prof_end() {
+    worker_base_type::get_cur_worker().prof_end();
 }
 
 }

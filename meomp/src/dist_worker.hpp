@@ -15,6 +15,11 @@ class dist_worker
     
     using cmd_info_type = typename P::cmd_info_type;
     using cmd_code_type = typename P::cmd_code_type;
+
+    using prof_aspect_type = typename P::prof_aspect_type;
+    using prof_kind_type = typename prof_aspect_type::kind_type;
+    template <prof_kind_type Kind>
+    using prof_record_t = typename prof_aspect_type::template record_t<Kind>;
     
 public:
     dist_worker() {
@@ -56,9 +61,6 @@ private:
             if (!is_parallel_) {
                 // Broadcast the command from this process.
                 coll.broadcast(0, &cmd, 1);
-                
-                // Synchronize the whole DSM space.
-                sp.barrier();
             }
             
             if (!this->execute_command(cmd, true)) {
@@ -110,9 +112,6 @@ public:
             // Load the function pointer and the data from the master process.
             coll.broadcast(0, &cmd, 1);
             
-            // Synchronize the whole DSM space.
-            sp.barrier();
-            
             if (!this->execute_command(cmd, false)) {
                 break;
             }
@@ -127,6 +126,13 @@ private:
         
         switch (cmd.code) {
             case cmd_code_type::start_parallel: {
+                this->prof_rec_parallel_ =
+                    prof_aspect_type::template begin_event<prof_kind_type::meomp_parallel>();
+
+                auto& sp = self.get_dsm_space();
+                // Synchronize the whole DSM space.
+                sp.barrier();
+
                 const auto proc_id  = coll.this_proc_id();
                 const auto num_procs = coll.get_num_procs();
                 
@@ -145,6 +151,9 @@ private:
                 if (is_master) {
                     self.set_thread_num(0);
                     self.set_num_threads(total_num_threads);
+
+                    this->prof_rec_parallel_master_ =
+                        prof_aspect_type::template begin_event<prof_kind_type::meomp_parallel_master>();
                 }
                 else {
                     // There is no master thread on slave nodes.
@@ -155,12 +164,14 @@ private:
                     
                     self.end_parallel_on_children();
                     
-                    auto& sp = self.get_dsm_space();
                     // Insert a DSM barrier here because of a observed bug.
                     // TODO: Refactoring.
                     sp.barrier();
                     
                     this->is_parallel_ = false;
+
+                    prof_aspect_type::template end_event<
+                        prof_kind_type::meomp_parallel>(this->prof_rec_parallel_);
                 }
                 
                 break;
@@ -168,6 +179,9 @@ private:
             
             case cmd_code_type::end_parallel: {
                 if (is_master) {
+                    prof_aspect_type::template end_event<
+                        prof_kind_type::meomp_parallel_master>(this->prof_rec_parallel_master_);
+
                     self.end_parallel_on_children();
                     
                     auto& sp = self.get_dsm_space();
@@ -179,6 +193,9 @@ private:
                     self.set_num_threads(1);
                     
                     this->is_parallel_ = false;
+
+                    prof_aspect_type::template end_event<
+                        prof_kind_type::meomp_parallel>(this->prof_rec_parallel_);
                 }
                 else {
                     // Fatal error.
@@ -191,6 +208,17 @@ private:
             
             case cmd_code_type::barrier: {
                 self.barrier_on_master();
+                break;
+            }
+
+            case cmd_code_type::prof_begin: {
+                this->prof_rec_main_comp_ =
+                    prof_aspect_type::template begin_event<prof_kind_type::meomp_main_comp>();
+                break;
+            }
+            case cmd_code_type::prof_end: {
+                prof_aspect_type::template end_event<
+                    prof_kind_type::meomp_main_comp>(this->prof_rec_main_comp_);
                 break;
             }
             
@@ -227,6 +255,9 @@ public:
     
 private:
     bool is_parallel_ = false;
+    prof_record_t<prof_kind_type::meomp_main_comp> prof_rec_main_comp_;
+    prof_record_t<prof_kind_type::meomp_parallel> prof_rec_parallel_;
+    prof_record_t<prof_kind_type::meomp_parallel_master> prof_rec_parallel_master_;
 };
 
 } // namespace meomp

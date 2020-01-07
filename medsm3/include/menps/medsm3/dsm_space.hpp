@@ -28,6 +28,9 @@ class dsm_space
     using sync_table_type = typename P::sync_table_type;
     using sync_table_ptr_type = typename P::sync_table_ptr_type;
 
+    using sig_buffer_type = typename P::sig_buffer_type;
+    using sig_buf_set_type = typename P::sig_buf_set_type;
+
 public:
     explicit dsm_space(pin_ctrl_ptr_type pin_ctrl, sync_table_ptr_type sync_tbl)
         : pin_ctrl_{fdn::move(pin_ctrl)}
@@ -112,11 +115,23 @@ protected:
 public:
     virtual void barrier() override
     {
+        CMPTH_P_PROF_SCOPE(P, barrier);
         CMPTH_P_LOG_INFO(P, "Entering DSM barrier.");
 
-        auto sig = this->wr_ctrl().fence_release();
-        auto sig_set = this->sync_tbl().exchange_sig(sig);
-        this->rd_ctrl().fence_acquire_all(sig_set);
+        sig_buffer_type sig;
+        {
+            CMPTH_P_PROF_SCOPE(P, barrier_release);
+            sig = this->wr_ctrl().fence_release();
+        }
+        sig_buf_set_type sig_set;
+        {
+            CMPTH_P_PROF_SCOPE(P, barrier_allgather);
+            sig_set = this->sync_tbl().exchange_sig(sig);
+        }
+        {
+            CMPTH_P_PROF_SCOPE(P, barrier_acquire);
+            this->rd_ctrl().fence_acquire_all(sig_set);
+        }
 
         CMPTH_P_LOG_INFO(P, "Exiting DSM barrier.");
     }

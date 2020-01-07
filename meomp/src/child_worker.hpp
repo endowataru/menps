@@ -21,6 +21,11 @@ class child_worker
     
     using omp_func_type = void (*)(void*);
     using omp_data_type = void*;
+
+    using prof_aspect_type = typename P::prof_aspect_type;
+    using prof_kind_type = typename prof_aspect_type::kind_type;
+    template <prof_kind_type Kind>
+    using prof_record_t = typename prof_aspect_type::template record_t<Kind>;
     
 public:
     void loop(
@@ -28,6 +33,8 @@ public:
     ,   const omp_func_type func
     ,   const omp_data_type data
     ) {
+        CMPTH_P_PROF_SCOPE(P, meomp_parallel_child);
+        
         auto& self = this->derived();
         
         on_loop_data d{ wg, func, data };
@@ -109,6 +116,17 @@ private:
                 // Exit this function.
                 MEFDN_LOG_VERBOSE("msg:Exiting parallel region on child worker.");
                 return false;
+
+            case cmd_code_type::prof_begin: {
+                this->prof_rec_main_comp_ =
+                    prof_aspect_type::template begin_event<prof_kind_type::meomp_main_comp>();
+                break;
+            }
+            case cmd_code_type::prof_end: {
+                prof_aspect_type::template end_event<
+                    prof_kind_type::meomp_main_comp>(this->prof_rec_main_comp_);
+                break;
+            }
             
             case cmd_code_type::none:
             case cmd_code_type::start_parallel:
@@ -122,6 +140,8 @@ private:
         
         return true;
     }
+
+    prof_record_t<prof_kind_type::meomp_main_comp> prof_rec_main_comp_;
 };
 
 } // namespace meomp

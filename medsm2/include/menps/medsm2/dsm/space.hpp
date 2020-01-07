@@ -499,6 +499,13 @@ public:
         // Just forward to the segment table.
         return this->seg_tbl_.get_blk_pos(seg_id, blk_id);
     }
+
+    virtual void enable_prof() noexcept override {
+        P::prof_aspect_type::set_enabled(true);
+    }
+    virtual void disable_prof() noexcept override {
+        P::prof_aspect_type::set_enabled(false);
+    }
     
 private:
     seg_table_type  seg_tbl_;

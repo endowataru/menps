@@ -48,6 +48,9 @@ public:
     using sync_table_ptr_type = typename lv4_itf_type::sync_table_ptr_type;
 
     using mtx_id_type = typename lv4_itf_type::mtx_id_type;
+
+    using sig_buffer_type = typename lv4_itf_type::sig_buffer_type;
+    using sig_buf_set_type = typename lv4_itf_type::sig_buf_set_type;
 };
 
 template <typename P>

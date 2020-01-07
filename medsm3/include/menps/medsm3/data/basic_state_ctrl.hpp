@@ -157,6 +157,8 @@ public:
 
     update_global_begin_result update_global_begin(blk_global_lock_base_type& blk_glk, const bool is_remotely_updated_ts)
     {
+        CMPTH_P_PROF_SCOPE(P, tx_begin);
+
         auto& self = this->derived();
         auto& blk_llk = blk_glk.local_lock();
         const auto state = self.get_local_state(blk_llk);
@@ -210,6 +212,8 @@ public:
     template <typename MergeResult>
     void update_global_end(blk_global_lock_base_type& blk_glk, const update_global_begin_result& bt_ret, const MergeResult& mg_ret)
     {
+        CMPTH_P_PROF_SCOPE(P, tx_end);
+
         auto& self = this->derived();
         auto& blk_llk = blk_glk.local_lock();
         

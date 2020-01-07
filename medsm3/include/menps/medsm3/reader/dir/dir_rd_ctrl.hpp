@@ -48,6 +48,9 @@ public:
         if (!this->state_data_ctrl().is_invalid(blk_llk)) {
             return false;
         }
+        
+        CMPTH_P_PROF_SCOPE(P, read_upgrade);
+        CMPTH_P_PROF_SCOPE(P, tx_read);
 
         CMPTH_P_LOG_INFO(P
         ,   "Start slow read."

@@ -54,6 +54,8 @@ public:
             return false;
         }
 
+        CMPTH_P_PROF_SCOPE(P, read_upgrade);
+
         auto rd_ts_st = this->get_rd_ts_st();
         wn_entry_type wn = wn_entry_type();
         if (this->inv_ctrl().try_get_wn(rd_ts_st, blk_llk, &wn)) {
@@ -78,6 +80,8 @@ public:
             );
         }
         else {
+            CMPTH_P_PROF_SCOPE(P, tx_read);
+
             CMPTH_P_LOG_INFO(P
             ,   "Start slow read."
             ,   "blk_id", blk_llk.blk_id().to_str()
@@ -116,6 +120,8 @@ public:
         if (!(chk_rel_ret.is_fast_released && this->home_ctrl().check_owned(blk_llk))) {
             return { true, false, wn_entry_type() }; // Note: Use () for GCC 4.8
         }
+
+        CMPTH_P_PROF_SCOPE(P, release_fast);
 
         auto& com = blk_llk.get_com_itf();
         const auto this_proc = com.this_proc_id();

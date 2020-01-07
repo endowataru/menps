@@ -130,6 +130,7 @@ public:
     {
         auto st_ret = this->st_ctrl().invalidate(blk_llk);
         if (st_ret.needs_protect) {
+            CMPTH_P_PROF_SCOPE(P, mprotect_invalidate);
             this->dt_ctrl().protect_invalid(blk_llk);
         }
         return st_ret;
