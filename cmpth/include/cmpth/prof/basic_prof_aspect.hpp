@@ -16,22 +16,21 @@ private:
     
 public:
     using kind_type = typename recorder_type::kind_type;
+
+    template <kind_type Kind>
+    using record_t = typename recorder_type::template record_t<Kind>;
     
     template <kind_type Kind>
     class scoped_event
     {
-        using record_type = typename recorder_type::template record_t<Kind>;
+        using record_type = record_t<Kind>;
         
     public:
         scoped_event() {
-            const auto wk_num = base_ult_itf_type::get_worker_num();
-            auto& rec = basic_prof_aspect::get_recorder();
-            this->r_ = rec.template begin<Kind>(wk_num);
+            this->r_ = basic_prof_aspect::template begin_event<Kind>();
         }
         ~scoped_event() {
-            const auto wk_num = base_ult_itf_type::get_worker_num();
-            auto& rec = basic_prof_aspect::get_recorder();
-            rec.template end<Kind>(wk_num, this->r_);
+            basic_prof_aspect::template end_event<Kind>(this->r_);
         }
         
         scoped_event(const scoped_event&) = delete;
@@ -40,10 +39,26 @@ public:
     private:
         record_type r_;
     };
-    
+
+    static void set_enabled(const bool is_enabled) {
+        auto& rec = basic_prof_aspect::get_recorder();
+        rec.set_enabled(is_enabled);
+    }
+
     template <kind_type Kind>
-    static void add_event()
-    {
+    static record_t<Kind> begin_event() {
+        const auto wk_num = base_ult_itf_type::get_worker_num();
+        auto& rec = basic_prof_aspect::get_recorder();
+        return rec.template begin<Kind>(wk_num);
+    }
+    template <kind_type Kind>
+    static void end_event(record_t<Kind> r) {
+        const auto wk_num = base_ult_itf_type::get_worker_num();
+        auto& rec = basic_prof_aspect::get_recorder();
+        rec.template end<Kind>(wk_num, r);
+    }
+    template <kind_type Kind>
+    static void add_event() {
         const auto wk_num = base_ult_itf_type::get_worker_num();
         auto& rec = basic_prof_aspect::get_recorder();
         rec.template add<Kind>(wk_num);
@@ -56,6 +71,7 @@ public:
 
 private:
     static recorder_type& get_recorder() noexcept {
+        // TODO: Reduce singleton
         static recorder_type r;
         return r;
     }

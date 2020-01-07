@@ -20,6 +20,8 @@ public:
     
     template <kind_type Kind>
     using record_t = record_type;
+
+    void set_enabled(const bool /*is_enabled*/) { }
     
     template <kind_type Kind>
     record_type begin(worker_num_type /*wk_num*/) { return {}; }

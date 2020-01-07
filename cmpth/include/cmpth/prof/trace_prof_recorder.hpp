@@ -26,16 +26,22 @@ public:
     template <kind_type Kind>
     using record_t = record_type;
     
-    trace_prof_recorder()
-    {
+    trace_prof_recorder() {
         const auto num_wks = base_ult_itf_type::get_num_workers();
         const auto num_ranks = static_cast<int>(num_wks);
         mlog_init(&this->md_, num_ranks, P::get_default_mlog_size());
     }
     
+    void set_enabled(const bool is_enabled) {
+        this->is_enabled_ = is_enabled;
+    }
+    
     template <kind_type Kind>
     record_type begin(const worker_num_type wk_num)
     {
+        if (!this->is_enabled_) {
+            return { nullptr };
+        }
         const clock_type t0 = clock_policy_type::get_clock();
         const auto p = MLOG_BEGIN(&this->md_, wk_num, t0);
         return { p };
@@ -43,6 +49,9 @@ public:
     template <kind_type Kind>
     void end(const worker_num_type wk_num, const record_type r)
     {
+        if (!this->is_enabled_) {
+            return;
+        }
         const clock_type t1 = clock_policy_type::get_clock();
         MLOG_END(&this->md_, wk_num, r.begin_ptr, &decode_interval, t1, Kind);
     }
@@ -81,8 +90,9 @@ public:
         mlog_flush_all(&this->md_, file);
         fclose(file);
     }
-    
+
 private:
+    bool is_enabled_ = true;
     mlog_data_t md_;
 };
 

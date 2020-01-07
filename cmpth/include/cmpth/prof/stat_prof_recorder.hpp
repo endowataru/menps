@@ -34,13 +34,25 @@ public:
 
     template <kind_type Kind>
     using record_t = record_type;
+
+    void set_enabled(const bool is_enabled) {
+        this->is_enabled_ = is_enabled;
+    }
     
     template <kind_type Kind>
     record_type begin(worker_num_type /*wk_num*/) {
-        return { clock_policy_type::get_clock() };
+        if (this->is_enabled_) {
+            return { clock_policy_type::get_clock() };
+        }
+        else {
+            return record_type();
+        }
     }
     template <kind_type Kind>
     void end(const worker_num_type wk_num, record_type r) {
+        if (!this->is_enabled_) {
+            return;
+        }
         const auto t1 = clock_policy_type::get_clock();
         auto& acc = this->get_accumulator(Kind, wk_num);
         acc.add(t1 - r.t0);
@@ -79,6 +91,7 @@ private:
         return this->accs_[wk_num][static_cast<fdn::size_t>(kind)];
     }
     
+    bool is_enabled_ = true;
     fdn::unique_ptr<accumulator_array_type []> accs_;
 };
 
