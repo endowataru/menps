@@ -61,6 +61,8 @@ public:
 protected:
     using make_context_func_t = void (*)(transfer<void*>, void*);
     
+    // Separate this function to flush caller-saved registers (TODO).
+    CMPTH_NOINLINE
     static context<void*> make_context_void(
         void* const                 sp
     ,   const fdn::size_t           /*size*/
@@ -185,6 +187,8 @@ protected:
     using save_context_func_t =
         transfer<void*> (*)(context<void*>, void*, void*, void*, void*, void*);
     
+    // Separate this function to flush caller-saved registers (TODO).
+    CMPTH_NOINLINE
     static transfer<void*> save_context_void(
         void* const         sp
     ,   const fdn::size_t   /*size*/
@@ -260,6 +264,8 @@ protected:
     
     using swap_context_func_t = save_context_func_t;
     
+    // Separate this function to flush caller-saved registers (TODO).
+    CMPTH_NOINLINE
     static transfer<void*> swap_context_void(
         context<void*>  ctx
     ,   swap_context_func_t func
@@ -326,6 +332,8 @@ protected:
     using cond_swap_context_func_t =
         cond_transfer<void*> (*)(context<void*>, void*, void*, void*, void*, void*);
     
+    // Separate this function to flush caller-saved registers (TODO).
+    CMPTH_NOINLINE
     static transfer<void*> cond_swap_context_void(
         context<void*>  ctx
     ,   cond_swap_context_func_t func
@@ -412,6 +420,8 @@ protected:
     using restore_context_func_t =
         transfer<void*> (*)(void*, void*, void*, void*, void*, void*);
     
+    // Separate this function to flush caller-saved registers (TODO).
+    CMPTH_NOINLINE
     [[noreturn]]
     static void restore_context_void(
         const context<void*>    ctx
