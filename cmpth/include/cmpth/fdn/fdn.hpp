@@ -35,6 +35,9 @@
     #define CMPTH_USE_CXX17 0
 #endif
 
+#define CMPTH_PP_CAT(a, b)          CMPTH_PP_CAT_HELPER(a, b)
+#define CMPTH_PP_CAT_HELPER(a, b)   a ## b
+
 #define CMPTH_DEFINE_DERIVED(P) \
     private: \
         using derived_type = typename P::derived_type; \
