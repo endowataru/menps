@@ -36,8 +36,12 @@ public:
 
     lock_global_result lock_global(blk_local_lock_type& blk_llk)
     {
-        auto& self = this->derived();
+        CMPTH_P_LOG_DEBUG(P
+        ,   "Locking global block lock."
+        ,   "blk_id", blk_llk.blk_id().to_str()
+        );
 
+        auto& self = this->derived();
         auto glk_ret = self.lock_global_raw(blk_llk);
 
         const auto owner_proc = glk_ret.owner_proc;
@@ -52,8 +56,15 @@ public:
 
     void unlock_global(blk_local_lock_type& blk_llk, const global_entry_type& ge)
     {
+        CMPTH_P_LOG_DEBUG(P
+        ,   "Unlocking global block lock."
+        ,   "blk_id", blk_llk.blk_id().to_str()
+        ,   "last_writer_proc", ge.last_writer_proc
+        ,   "owner_wr_ts", ge.owner_intvl.wr_ts
+        ,   "owner_rd_ts", ge.owner_intvl.rd_ts
+        );
+
         auto& self = this->derived();
-        
         self.unlock_global_raw(blk_llk, &ge);
     }
     
