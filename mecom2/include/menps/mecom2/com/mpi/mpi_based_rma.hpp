@@ -72,6 +72,20 @@ inline int get_procs_per_node() {
         return 1;
 }
 
+inline const char* get_uct_tl_name() {
+    if (const auto str = std::getenv("MECOM2_UCT_TL_NAME")) {
+        return str;
+    }
+    return MECOM2_UCT_DEFAULT_TL_NAME;
+}
+
+inline const char* get_uct_dev_name() {
+    if (const auto str = std::getenv("MECOM2_UCT_DEV_NAME")) {
+        return str;
+    }
+    return MECOM2_UCT_DEFAULT_DEV_NAME;
+}
+
 template <typename P>
 struct mpi_based_rma<mecom2::rma_itf_id_t::UCT, P>
 {
@@ -88,6 +102,11 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::UCT, P>
         const auto procs_per_node =
             static_cast<mefdn::size_t>(get_procs_per_node());
         
+        #if 1
+        const char* const tl_name = get_uct_tl_name();
+        const char* const dev_name = get_uct_dev_name();
+
+        #else
         // TODO
         #if 1
         const char tl_name[] = "rc_mlx5";
@@ -101,10 +120,13 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::UCT, P>
         #else
         const char dev_name[] = "mlx5_0:1";
         #endif
+        #endif
         
         MEFDN_LOG_DEBUG(
-            "msg:Set up UCT."
+            "msg:Set up UCT.\t"
+            "tl_name:{}\t"
             "dev_name:{}"
+        ,   tl_name
         ,   dev_name
         );
         

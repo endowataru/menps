@@ -15,6 +15,9 @@ set(MECOM2_UCT_RMA_CONCURRENT_LIMIT_COUNT "256" CACHE STRING
 option(MECOM2_UCT_ENABLE_PARALLEL_INIT_WORKER_SET
     "Enable parallel initialization of UCT workers (may cause bugs)" OFF)
 
+set(MECOM2_UCT_DEFAULT_TL_NAME "rc_mlx5" CACHE STRING "Default transport layer name for UCT")
+set(MECOM2_UCT_DEFAULT_DEV_NAME "mlx5_0:1" CACHE STRING "Default device name for UCT")
+
 option(MECOM2_USE_WORKER_LOCAL_ALLOCATOR "Use worker-local RMA allocator" TRUE)
 
 option(MECOM2_AVOID_MPI_WAIT "Avoid using MPI_Wait()" FALSE)
