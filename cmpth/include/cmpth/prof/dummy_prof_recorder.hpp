@@ -24,13 +24,13 @@ public:
     void set_enabled(const bool /*is_enabled*/) { }
     
     template <kind_type Kind>
-    record_type begin(worker_num_type /*wk_num*/) { return {}; }
+    record_type begin() { return {}; }
     
     template <kind_type Kind>
-    void end(worker_num_type /*wk_num*/, record_type /*r*/) { }
+    void end(record_type /*r*/) { }
     
     template <kind_type Kind>
-    void add(worker_num_type /*wk_num*/) { }
+    void add() { }
 
     void print_all(const char* /*module_name*/, fdn::size_t /*proc_id*/) { }
 };

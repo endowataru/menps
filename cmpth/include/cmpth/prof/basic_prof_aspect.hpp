@@ -47,21 +47,18 @@ public:
 
     template <kind_type Kind>
     static record_t<Kind> begin_event() {
-        const auto wk_num = base_ult_itf_type::get_worker_num();
         auto& rec = basic_prof_aspect::get_recorder();
-        return rec.template begin<Kind>(wk_num);
+        return rec.template begin<Kind>();
     }
     template <kind_type Kind>
     static void end_event(record_t<Kind> r) {
-        const auto wk_num = base_ult_itf_type::get_worker_num();
         auto& rec = basic_prof_aspect::get_recorder();
-        rec.template end<Kind>(wk_num, r);
+        rec.template end<Kind>(r);
     }
     template <kind_type Kind>
     static void add_event() {
-        const auto wk_num = base_ult_itf_type::get_worker_num();
         auto& rec = basic_prof_aspect::get_recorder();
-        rec.template add<Kind>(wk_num);
+        rec.template add<Kind>();
     }
     
     static void print_all(const char* const module_name, const fdn::size_t proc_id) {

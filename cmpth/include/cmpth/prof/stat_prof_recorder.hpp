@@ -40,7 +40,7 @@ public:
     }
     
     template <kind_type Kind>
-    record_type begin(worker_num_type /*wk_num*/) {
+    record_type begin() {
         if (this->is_enabled_) {
             return { clock_policy_type::get_clock() };
         }
@@ -49,16 +49,18 @@ public:
         }
     }
     template <kind_type Kind>
-    void end(const worker_num_type wk_num, record_type r) {
+    void end(record_type r) {
         if (!this->is_enabled_) {
             return;
         }
         const auto t1 = clock_policy_type::get_clock();
+        const auto wk_num = base_ult_itf_type::get_worker_num();
         auto& acc = this->get_accumulator(Kind, wk_num);
         acc.add(t1 - r.t0);
     }
     template <kind_type Kind>
-    void add(const worker_num_type wk_num) {
+    void add() {
+        const auto wk_num = base_ult_itf_type::get_worker_num();
         auto& acc = this->get_accumulator(Kind, wk_num);
         acc.add(0);
     }

@@ -37,22 +37,24 @@ public:
     }
     
     template <kind_type Kind>
-    record_type begin(const worker_num_type wk_num)
+    record_type begin()
     {
         if (!this->is_enabled_) {
             return { nullptr };
         }
         const clock_type t0 = clock_policy_type::get_clock();
+        const auto wk_num = base_ult_itf_type::get_worker_num();
         const auto p = MLOG_BEGIN(&this->md_, wk_num, t0);
         return { p };
     }
     template <kind_type Kind>
-    void end(const worker_num_type wk_num, const record_type r)
+    void end(const record_type r)
     {
         if (!this->is_enabled_) {
             return;
         }
         const clock_type t1 = clock_policy_type::get_clock();
+        const auto wk_num = base_ult_itf_type::get_worker_num();
         MLOG_END(&this->md_, wk_num, r.begin_ptr, &decode_interval, t1, Kind);
     }
     
@@ -75,9 +77,9 @@ private:
 
 public:
     template <kind_type Kind>
-    void add(const worker_num_type wk_num) {
-        const auto r = this->begin<Kind>(wk_num);
-        this->end<Kind>(wk_num, r);
+    void add() {
+        const auto r = this->begin<Kind>();
+        this->end<Kind>(r);
     }
     
     void print_all(const char* const module_name, const fdn::size_t proc_id)
