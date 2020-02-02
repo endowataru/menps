@@ -3,12 +3,20 @@
 #include <cmpth/ult_tag.hpp>
 #include <cmpth/ult_ext_itf.hpp>
 
-#define MECOM2_TEST_ULT_ITF     SCT
+#define MECOM2_TEST_ULT_ITF     CTMTH
 #define MECOM2_TEST_MPI_ITF     DIRECT
-#define MECOM2_TEST_RMA_ITF     MPI
+#ifdef BENCH_USE_UCT
+    #define MECOM2_TEST_RMA_ITF     UCT
+    #define MECOM2_TEST_UCT_ITF     QDC
+#else
+    #define MECOM2_TEST_RMA_ITF     MPI
+#endif
 
 #include MEFDN_PP_CAT(CMPTH_ULT_HEADER_, MECOM2_TEST_ULT_ITF)
 #include MEFDN_PP_CAT(MEDEV2_MPI_ITF_HEADER_, MECOM2_TEST_MPI_ITF)
+#ifdef BENCH_USE_UCT
+    #include MEFDN_PP_CAT(MEDEV2_UCT_ITF_HEADER_, MECOM2_TEST_UCT_ITF)
+#endif
 
 namespace /*unnamed*/ {
 
@@ -26,6 +34,14 @@ struct com_policy
         ,   ult_itf_type
         >;
     
+    #ifdef BENCH_USE_UCT
+    using uct_itf_type =
+        menps::medev2::ucx::uct::get_uct_itf_type_t<
+            menps::medev2::ucx::uct::uct_itf_id_t::MECOM2_TEST_UCT_ITF
+        ,   com_policy
+        >;
+    #endif
+
     static constexpr menps::mecom2::rma_itf_id_t rma_id =
         menps::mecom2::rma_itf_id_t::MECOM2_TEST_RMA_ITF;
 };
