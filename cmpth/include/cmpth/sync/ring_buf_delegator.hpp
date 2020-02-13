@@ -12,7 +12,8 @@ struct ring_buf_delegator_node
 {
     using atomic_bool_type = typename UltItf::template atomic<bool>;
     using suspended_thread_type = typename UltItf::suspended_thread;
-    using delegated_func_type = typename P2::delegated_func_type;
+    using consumer_type = typename P2::consumer_type;
+    using delegated_func_type = typename consumer_type::delegated_func_type;
     
     atomic_bool_type        ready;
     suspended_thread_type   sth;

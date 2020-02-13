@@ -15,21 +15,19 @@ class proxy_mpi_facade;
 template <typename P>
 class proxy_mpi_consumer
 {
+    using facade_type = typename P::facade_type;
     using ult_itf_type = typename P::ult_itf_type;
     using suspended_thread_type = typename ult_itf_type::suspended_thread;
-
-    using delegator_type = typename P::delegator_type;
-    using sync_node_type = typename delegator_type::sync_node_type;
-
-    using facade_type = proxy_mpi_facade<P>;
     
 public:
+    using delegated_func_type = typename P::delegated_func_type;
+
     // TODO: breaking encapsulation
     explicit proxy_mpi_consumer(facade_type& f) : f_(f) { }
 
     using del_exec_result = fdn::tuple<bool, suspended_thread_type>;
-    del_exec_result execute(const sync_node_type& n) {
-        return this->f_.execute_delegated(n);
+    del_exec_result execute(const delegated_func_type& func) {
+        return this->f_.execute_delegated(func);
     }
     using do_progress_result = suspended_thread_type;
     do_progress_result progress() {
@@ -54,7 +52,8 @@ class proxy_mpi_facade
     using proxy_request_type = typename P::proxy_request_type;
     using proxy_request_state_type = typename P::proxy_request_state_type;
     using delegator_type = typename P::delegator_type;
-    using sync_node_type = typename delegator_type::sync_node_type;
+    using consumer_type = typename delegator_type::consumer_type;
+    using delegated_func_type = typename consumer_type::delegated_func_type;
     using proxy_params_type = typename P::proxy_params_type;
     using size_type = typename P::size_type;
     
@@ -62,7 +61,6 @@ class proxy_mpi_facade
     using suspended_thread_type = typename ult_itf_type::suspended_thread;
     using worker_type = typename ult_itf_type::worker;
 
-    using consumer_type = proxy_mpi_consumer<P>;
     friend consumer_type;
     
 public:
@@ -75,11 +73,12 @@ public:
         : orig_mf_(argc, argv, MPI_THREAD_SERIALIZED, &orig_level_)
         , req_pool_(P::max_num_requests)
         , req_hld_()
+        , con_(*this)
         , del_()
     {
         *provided = MPI_THREAD_MULTIPLE;
         
-        this->del_.start_consumer(*this);
+        this->del_.start_consumer(this->con_);
     }
     
     ~proxy_mpi_facade()
@@ -155,11 +154,11 @@ private:
         proxy_request_type* proxy_req_ptr;
         bool needs_wait;
         
-        delegate_result operator() (sync_node_type& cur)
+        delegate_result operator() (delegated_func_type& func)
         {
-            cur.func.code = code;
-            cur.func.params.*mem = real_p;
-            cur.func.proxy_req = proxy_req_ptr;
+            func.code = code;
+            func.params.*mem = real_p;
+            func.proxy_req = proxy_req_ptr;
             if (needs_wait) {
                 proxy_req_ptr->state.store(
                     proxy_request_state_type::waiting
@@ -472,11 +471,9 @@ public:
 private:
     using del_exec_result = typename consumer_type::del_exec_result;
     
-    del_exec_result execute_delegated(const sync_node_type& n)
+    del_exec_result execute_delegated(const delegated_func_type& func)
     {
         execute_imm_result ret = execute_imm_result();
-        
-        auto& func = n.func;
         
         switch (func.code) {
             #define D(dummy, name, Name, tr, num, ...) \
@@ -609,6 +606,7 @@ private:
     orig_mpi_facade_type    orig_mf_;
     request_pool_type       req_pool_;
     request_holder_type     req_hld_;
+    consumer_type           con_;
     delegator_type          del_;
 };
 

@@ -13,7 +13,8 @@ struct mcs_delegator_node
     using atomic_node_ptr_type =
         typename UltItf::template atomic<mcs_delegator_node*>;
     using suspended_thread_type = typename UltItf::suspended_thread;
-    using delegated_func_type = typename P2::delegated_func_type;
+    using consumer_type = typename P2::consumer_type;
+    using delegated_func_type = typename consumer_type::delegated_func_type;
     
     atomic_node_ptr_type    next;
     suspended_thread_type   sth;

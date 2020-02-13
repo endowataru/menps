@@ -17,22 +17,21 @@ class proxy_uct_consumer
     using ult_itf_type = typename P::ult_itf_type;
     using suspended_thread_type = typename ult_itf_type::suspended_thread;
 
-    using delegator_type = typename P::delegator_type;
-    using sync_node_type = typename delegator_type::sync_node_type;
-
-    using worker_type = proxy_uct_worker<P>;
+    using proxy_worker_type = typename P::proxy_worker_type;
     
 public:
+    using delegated_func_type = typename P::delegated_func_type;
+
     // TODO: breaking encapsulation
-    explicit proxy_uct_consumer(worker_type& w) : w_(w) { }
+    explicit proxy_uct_consumer(proxy_worker_type& w) : w_(w) { }
 
     using del_exec_result = fdn::tuple<bool, suspended_thread_type>;
-    del_exec_result execute(const sync_node_type& n) {
-        return typename worker_type::execute_delegated{this->w_}(n);
+    del_exec_result execute(const delegated_func_type& func) {
+        return typename proxy_worker_type::execute_delegated{this->w_}(func);
     }
     using do_progress_result = suspended_thread_type;
     do_progress_result progress() {
-        return typename worker_type::do_progress{this->w_}();
+        return typename proxy_worker_type::do_progress{this->w_}();
     }
 
     bool is_active() const noexcept {
@@ -40,7 +39,7 @@ public:
     }
 
 private:
-    worker_type& w_;
+    proxy_worker_type& w_;
 };
 
 template <typename P>
@@ -50,7 +49,8 @@ class proxy_uct_worker
     using orig_uct_facade_type = typename orig_uct_itf_type::uct_facade_type;
     
     using delegator_type = typename P::delegator_type;
-    using sync_node_type = typename delegator_type::sync_node_type;
+    using consumer_type = typename delegator_type::consumer_type;
+    using delegated_func_type = typename consumer_type::delegated_func_type;
     
     using command_code_type = typename P::command_code_type;
     using proxy_params_type = typename P::proxy_params_type;
@@ -66,7 +66,6 @@ class proxy_uct_worker
     using proxy_endpoint_type = typename P::proxy_endpoint_type;
     using proxy_iface_type = typename P::proxy_iface_type;
 
-    using consumer_type = proxy_uct_consumer<P>;
     friend consumer_type;
     
 public:
@@ -78,9 +77,10 @@ public:
     )
         : orig_uf_(orig_uf)
         , orig_wk_(mefdn::move(orig_wk))
+        , con_(*this)
         , del_()
     {
-        this->del_.start_consumer(*this);
+        this->del_.start_consumer(this->con_);
     }
     ~proxy_uct_worker()
     {
@@ -318,10 +318,10 @@ private:
         Params proxy_params_type::*mem;
         const Params& proxy_p;
         
-        delegate_result operator() (sync_node_type& cur)
+        delegate_result operator() (delegated_func_type& func)
         {
-            cur.func.code = code;
-            cur.func.params.*mem = proxy_p;
+            func.code = code;
+            func.params.*mem = proxy_p;
             return nullptr;
         }
     };
@@ -399,12 +399,10 @@ private:
     {
         proxy_uct_worker& self;
         
-        del_exec_result operator() (const sync_node_type& n) const
+        del_exec_result operator() (const delegated_func_type& func) const
         {
             execute_imm_result ret = execute_imm_result();
             ucs_status_t st = UCS_OK;
-            
-            auto& func = n.func;
             
             switch (func.code) {
                 #define D(Exec, name, Name, tr, num, ...) \
@@ -563,6 +561,7 @@ private:
     
     orig_uct_facade_type&   orig_uf_;
     orig_worker_type        orig_wk_;
+    consumer_type           con_;
     delegator_type          del_;
     size_type               num_ongoing_ = 0;
     

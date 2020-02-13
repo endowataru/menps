@@ -16,10 +16,11 @@ class basic_sync_delegator
     using suspended_thread_type = typename base_ult_itf_type::suspended_thread;
     using worker_type = typename base_ult_itf_type::worker;
 
-    using consumer_type = typename P::consumer_type;
-    
-public:
     using sync_node_type = typename P::sync_node_type;
+
+public:
+    using consumer_type = typename P::consumer_type;
+    using delegated_func_type = typename consumer_type::delegated_func_type;
     
     template <typename DelegateFunc>
     CMPTH_NODISCARD
@@ -32,7 +33,7 @@ public:
         
         const auto cur = lock_ret.cur;
         suspended_thread_type* const wait_sth =
-            fdn::forward<DelegateFunc>(delegate_func)(*cur);
+            fdn::forward<DelegateFunc>(delegate_func)(cur->func);
         
         if (wait_sth) {
             wait_sth->template wait_with<on_wait_delegate>(this, &lock_ret);
@@ -66,8 +67,10 @@ public:
     
 private:
     struct on_lock_delegate {
-        suspended_thread_type* operator() (sync_node_type& cur) const {
-            return &cur.sth;
+        suspended_thread_type* operator() (delegated_func_type& func) const {
+            // TODO: This works, but ugly
+            auto* const node = fdn::get_container_of(&func, &sync_node_type::func);
+            return &node->sth;
         }
     };
     
@@ -256,13 +259,11 @@ public:
     }
     
 public:
-    template <typename... Args>
-    void start_consumer(Args&&... args)
+    void start_consumer(consumer_type& con)
     {
         this->lock();
 
-        this->con_ = fdn::make_unique<consumer_type>(fdn::forward<Args>(args)...);
-        
+        this->con_ = &con;
         this->con_th_ = thread_type{ consumer_main{ *this } };
     }
     
@@ -282,8 +283,6 @@ public:
         }
         
         this->con_th_.join();
-
-        this->con_.reset();
     }
     
 private:
@@ -324,7 +323,7 @@ private:
         }
         
         // True if the progress function is executed.
-        bool do_progress = this->con_->is_active();
+        bool do_progress = con.is_active();
         
         suspended_thread_type awake_sth;
         
@@ -333,11 +332,17 @@ private:
             // Check whether the current entry means a lock delegation or a lock transfer.
             if (!head->sth) {
                 // Execute the delegated function again.
-                auto ret = con.execute(*head);
+                auto ret = con.execute(head->func);
                 
                 using fdn::get;
                 is_executed = get<0>(ret);
                 awake_sth   = fdn::move(get<1>(ret));
+
+                // TODO: for performance
+                if (is_executed) {
+                    this->is_executed_ = true;
+                    return;
+                }
                 
                 // If the delegation function fails,
                 // the progress is required to complete the function again.
@@ -365,7 +370,7 @@ private:
             }
         }
         
-        const bool is_active = this->con_->is_active();
+        const bool is_active = con.is_active();
 
         CMPTH_P_LOG_VERBOSE(P,
             "Finish consuming delegations."
@@ -416,10 +421,10 @@ private:
     bool                is_executed_ = true;
     bool                is_active_ = false;
     
-    fdn::unique_ptr<consumer_type>  con_;
-    thread_type                     con_th_;
-    suspended_thread_type           con_sth_;
-    bool                            finished_ = false;
+    consumer_type*          con_ = nullptr;
+    thread_type             con_th_;
+    suspended_thread_type   con_sth_;
+    bool                    finished_ = false;
 };
 
 } // namespace cmpth

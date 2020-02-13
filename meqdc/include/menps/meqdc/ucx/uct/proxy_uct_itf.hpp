@@ -54,10 +54,16 @@ template <typename OrigUctItf, typename UltItf>
 struct proxy_uct_facade_policy;
 
 template <typename OrigUctItf, typename UltItf>
+struct proxy_uct_consumer_policy {
+    using delegated_func_type = proxy_uct_func;
+    using ult_itf_type = UltItf;
+    using proxy_worker_type = proxy_uct_worker<proxy_uct_facade_policy<OrigUctItf, UltItf>>;
+};
+
+template <typename OrigUctItf, typename UltItf>
 struct proxy_uct_delegator_policy
 {
-    using delegated_func_type = proxy_uct_func;
-    using consumer_type = proxy_uct_consumer<proxy_uct_facade_policy<OrigUctItf, UltItf>>;
+    using consumer_type = proxy_uct_consumer<proxy_uct_consumer_policy<OrigUctItf, UltItf>>;
     
     template <typename Pool>
     static mefdn::size_t get_pool_threshold(Pool& /*pool*/) {
