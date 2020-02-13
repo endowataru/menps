@@ -4,7 +4,7 @@
 #include <cmpth/prof/basic_prof_aspect.hpp>
 #include <cmpth/prof/trace_prof_recorder.hpp>
 #include <cmpth/prof/prof_tag.hpp>
-#include <cmpth/arch/x86_64_cpu_clock_policy.hpp>
+#include <cmpth/arch/cpu_clock_policy.hpp>
 
 namespace cmpth {
 
@@ -13,7 +13,7 @@ struct trace_prof_recorder_policy
 {
     using base_ult_itf_type = UltItf;
     using kind_type = typename P2::kind_type;
-    using clock_policy_type = x86_64_cpu_clock_policy;
+    using clock_policy_type = cpu_clock_policy;
     
     static constexpr fdn::size_t get_default_mlog_size() noexcept {
         return P2::get_default_mlog_size();

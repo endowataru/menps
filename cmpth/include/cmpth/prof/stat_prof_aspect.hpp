@@ -5,14 +5,14 @@
 #include <cmpth/prof/stat_prof_recorder.hpp>
 #include <cmpth/prof/stat_accumulator.hpp>
 #include <cmpth/prof/prof_tag.hpp>
-#include <cmpth/arch/x86_64_cpu_clock_policy.hpp>
+#include <cmpth/arch/cpu_clock_policy.hpp>
 
 namespace cmpth {
 
 template <typename UltItf, typename P2>
 struct stat_prof_accumulator_policy
 {
-    using clock_policy_type = x86_64_cpu_clock_policy;
+    using clock_policy_type = cpu_clock_policy;
     using sample_type = clock_policy_type::clock_type;
     using real_type = double;
 };
