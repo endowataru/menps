@@ -421,8 +421,8 @@ protected:
         transfer<void*> (*)(void*, void*, void*, void*, void*, void*);
     
     // Separate this function to flush caller-saved registers (TODO).
-    CMPTH_NOINLINE
     [[noreturn]]
+    CMPTH_NOINLINE
     static void restore_context_void(
         const context<void*>    ctx
     ,   restore_context_func_t  func
