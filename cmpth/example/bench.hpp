@@ -110,7 +110,7 @@ inline int exec_bench(const int argc, char** const argv)
         exec_bench_impl<Bench, cmpth::ult_tag_t::CTMTH>(ult_itf_name, argc, argv);
         return 0;
     }
-    #ifdef CMPTH_ENABLE_ABT
+    #if defined(CMPTH_ENABLE_ABT) && !defined(BENCH_AVOID_ABT)
     if (std::strcmp(ult_itf_name, "ABT") == 0) {
         exec_bench_impl<Bench, cmpth::ult_tag_t::ABT>(ult_itf_name, argc, argv);
         return 0;
