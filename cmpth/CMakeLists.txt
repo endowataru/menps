@@ -26,6 +26,17 @@ function(cmpth_require_cxx11 target)
         CXX_STANDARD_REQUIRED ON)
 endfunction()
 
+if(NOT APPLE)
+    add_library(cmpth-cfibre
+        ./src/cfibre.cpp
+    )
+    target_link_libraries(cmpth-cfibre
+        cmpth
+        cmpth-options
+    )
+    cmpth_require_cxx11(cmpth-cfibre)
+endif()
+
 
 add_library(doctest INTERFACE)
 target_include_directories(doctest INTERFACE
