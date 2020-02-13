@@ -73,14 +73,14 @@ public:
             );
         
         if (ret) {
-            CMPTH_P_LOG_DEBUG(P,
+            CMPTH_P_LOG_VERBOSE(P,
                 "Successfully unlocked MCS core."
             ,   "old_head", head
             );
             return true;
         }
         else {
-            CMPTH_P_LOG_DEBUG(P,
+            CMPTH_P_LOG_VERBOSE(P,
                 "Failed to unlock MCS core."
             ,   "head", head
             ,   "tail", this->tail_.load(fdn::memory_order_relaxed)
@@ -98,7 +98,7 @@ public:
     
     mcs_node_type* get_head() const noexcept
     {
-        CMPTH_P_LOG_DEBUG(P,
+        CMPTH_P_LOG_VERBOSE(P,
             "Reading head of MCS core."
         ,   "head", this->head_
         ,   "tail", this->tail_.load(fdn::memory_order_relaxed)
