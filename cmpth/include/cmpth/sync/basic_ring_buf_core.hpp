@@ -15,6 +15,11 @@ class basic_ring_buf_core
         typename base_ult_itf_type::template atomic<ring_buf_count_type>;
     
 public:
+    basic_ring_buf_core()
+        : head_{0}
+        , tail_{0}
+    { }
+
     struct lock_result {
         bool    is_locked;
         bool    is_delegated;
