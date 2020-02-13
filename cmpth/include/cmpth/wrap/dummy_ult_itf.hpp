@@ -63,7 +63,7 @@ public:
 class dummy_barrier
 {
 public:
-    explicit dummy_barrier(fdn::size_t) { }
+    explicit dummy_barrier(fdn::ptrdiff_t) { }
     void arrive_and_wait() { }
 };
 
@@ -78,7 +78,7 @@ struct dummy_ult_itf
     static worker_num_type get_num_workers() noexcept { return 1; }
     struct initializer {
         initializer() { }
-        explicit initializer(int argc, char** argv) { }
+        explicit initializer(int /*argc*/, char** /*argv*/) { }
     };
 };
 
