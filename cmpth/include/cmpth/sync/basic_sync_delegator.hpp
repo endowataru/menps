@@ -76,7 +76,8 @@ public:
     {
         // We completed the execution of the current critical section.
         this->is_executed_ = true;
-
+        
+        CMPTH_P_ASSERT(P, this->con_ != nullptr);
         const bool is_active = this->con_->is_active();
         
         CMPTH_P_LOG_VERBOSE(P,
@@ -140,6 +141,7 @@ public:
         // We completed the execution of the current critical section.
         this->is_executed_ = true;
         
+        CMPTH_P_ASSERT(P, this->con_ != nullptr);
         const bool is_active = this->con_->is_active();
         
         CMPTH_P_LOG_VERBOSE(P
@@ -299,6 +301,7 @@ private:
     
     void consume()
     {
+        CMPTH_P_ASSERT(P, this->con_ != nullptr);
         auto& con = *this->con_;
         bool is_executed = this->is_executed_;
         
