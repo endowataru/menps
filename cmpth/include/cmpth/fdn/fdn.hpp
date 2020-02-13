@@ -198,7 +198,7 @@ using std::tuple_size;
 using std::tuple_cat;
 using std::get;
 
-#if CMPTH_USE_CXX14
+#if CMPTH_USE_CXX17
 using std::apply;
 
 #else
