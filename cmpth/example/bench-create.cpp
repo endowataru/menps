@@ -36,6 +36,9 @@ public:
         c["nthreads"] = std::to_string(this->nthreads_);
         return c;
     }
+    long num_total_ops() const {
+        return 1; // TODO
+    }
 
 private:
     struct rec_params {

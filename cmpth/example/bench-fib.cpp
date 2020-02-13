@@ -42,6 +42,9 @@ public:
         c["n"] = std::to_string(this->n_);
         return c;
     }
+    long num_total_ops() const {
+        return 1; // TODO
+    }
 
 private:
     struct rec_params {

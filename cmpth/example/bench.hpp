@@ -62,7 +62,11 @@ inline void exec_bench_impl(const char* const ult_itf_name, const int argc, char
     const auto correct = b.is_correct(ret);
     ss << "  correct: " << correct << std::endl;
     if (correct) {
-        ss << "  time: " << (t1-t0) << " # [sec]" << std::endl;
+        const auto t_intvl = t1-t0;
+        const auto num_ops = b.num_total_ops();
+        ss << "  time: " << t_intvl << " # [sec]" << std::endl;
+        ss << "  num_ops: " << num_ops << " # [ops]" << std::endl;
+        ss << "  ops_per_sec: " << (num_ops/t_intvl) << " # [ops/sec]" << std::endl;
         ss << "  num_workers: " << ult_itf_type::get_num_workers() << std::endl;
         ss << "  ult_itf: " << ult_itf_name << std::endl;
         const auto conf = b.get_config();

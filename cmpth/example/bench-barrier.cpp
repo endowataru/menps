@@ -42,6 +42,9 @@ public:
         c["n_per_th"] = std::to_string(this->n_per_th_);
         return c;
     }
+    long num_total_ops() const {
+        return this->n_per_th_;
+    }
 
 private:
     struct rec_params {

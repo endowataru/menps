@@ -50,6 +50,9 @@ public:
         c["num_mtxs"] = std::to_string(this->num_mtxs_);
         return c;
     }
+    long num_total_ops() const {
+        return this->nthreads_ * this->n_per_th_;
+    }
 
 private:
     struct rec_params {
