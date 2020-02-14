@@ -18,8 +18,10 @@ class basic_uct_request_object
     using endpoint_type = typename uct_itf_type::endpoint_type;
 
     using ult_itf_type = typename P::ult_itf_type;
+    #ifndef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
     using worker_type = typename ult_itf_type::worker;
     using suspended_thread_type = typename ult_itf_type::suspended_thread;
+    #endif
     
     using uct_rma_type = typename P::uct_rma_type;
     using rkey_info_type = typename P::rkey_info_type;
@@ -81,6 +83,7 @@ public:
         rma.unlock_rma(this->rkey_info_);
     }
 
+    #ifndef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
 private:
     struct on_wait {
         bool operator() (
@@ -98,6 +101,7 @@ private:
             );
         }
     };
+    #endif
     
 public:
     uct_completion_t* get_completion_ptr() noexcept {
@@ -166,7 +170,9 @@ private:
     
     atomic_comp_state_type  state_;
     rkey_info_type          rkey_info_;
+    #ifndef MECOM2_UCT_RMA_ENABLE_EXPLICIT_PROGRESS
     suspended_thread_type   sth_;
+    #endif
     uct_iov                 iov_;
 };
 

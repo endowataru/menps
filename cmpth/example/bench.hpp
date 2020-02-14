@@ -8,6 +8,7 @@
     #include <cmpth/wrap/abt_itf.hpp>
 #endif
 #include <cmpth/wrap/dummy_ult_itf.hpp>
+#include <cmpth/wrap/kth_itf.hpp>
 #include <cmpth/ult_ext_itf.hpp>
 #include <cmpth/prof.hpp>
 #include <cmpth/prof/prof_tag.hpp>
@@ -119,6 +120,12 @@ inline int exec_bench(const int argc, char** const argv)
     #if !defined(BENCH_AVOID_DUMMY)
     if (std::strcmp(ult_itf_name, "DUMMY") == 0) {
         exec_bench_impl<Bench, cmpth::ult_tag_t::DUMMY>(ult_itf_name, argc, argv);
+        return 0;
+    }
+    #endif
+    #if !defined(BENCH_AVOID_KTH)
+    if (std::strcmp(ult_itf_name, "KTH") == 0) {
+        exec_bench_impl<Bench, cmpth::ult_tag_t::KTH>(ult_itf_name, argc, argv);
         return 0;
     }
     #endif

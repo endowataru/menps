@@ -2,6 +2,7 @@
 // TODO: suspended_thread is not supported in ABT
 #define BENCH_AVOID_ABT
 #define BENCH_AVOID_DUMMY
+#define BENCH_AVOID_KTH
 #include "bench.hpp"
 
 namespace fdn = cmpth::fdn;
