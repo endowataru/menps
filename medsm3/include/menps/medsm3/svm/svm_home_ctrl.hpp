@@ -70,7 +70,7 @@ private:
         
         const auto ret = glk_tbl.lock_global(com, p2p, blk_sidx, tag, owner_lad.get());
 
-        return { ret.owner, fdn::move(owner_lad) };
+        return { ret.owner, fdn::move(owner_lad), lad_size };
     }
     void unlock_global_raw(blk_local_lock_type& blk_llk, const void* const lad)
     {
