@@ -74,7 +74,8 @@ public:
         swap(this->tk_, tk);
         
         // The context is reset for debugging.
-        tk->ctx = context_type{};
+        // Note: GCC 4.8 needs to use () to value-initialize.
+        tk->ctx = context_type();
         
         return { tk.release() };
     }
