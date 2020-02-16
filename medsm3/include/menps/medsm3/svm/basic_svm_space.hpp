@@ -178,9 +178,13 @@ private:
     {
         blk_id_type blk_id = blk_id_type();
         if (CMPTH_UNLIKELY(!this->seg_set().try_get_blk_id_from_app_ptr(ptr, &blk_id))) {
+            // ptr points to the outside of the DSM space.
             return false;
         }
-        base::try_upgrade_block_with_flag(blk_id, is_write);
+        // This return value is discarded intentionally.
+        const bool upgraded MEFDN_MAYBE_UNUSED =
+            base::try_upgrade_block_with_flag(blk_id, is_write);
+        // The returned boolean means that ptr points to the DSM space.
         return true;
     }
 

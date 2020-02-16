@@ -62,7 +62,8 @@ public:
     {
         CMPTH_P_LOG_VERBOSE(P, "Start locking delegator.");
         
-        this->lock_or_delegate(on_lock_delegate());
+        const auto ret CMPTH_MAYBE_UNUSED =
+            this->lock_or_delegate(on_lock_delegate());
     }
     
 private:

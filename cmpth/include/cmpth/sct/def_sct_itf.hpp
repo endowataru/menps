@@ -72,7 +72,7 @@ struct def_sct_policy
     template <typename P>
     using worker_deque_t = chaselev_worker_deque<P>;
     using worker_num_type = fdn::size_t;
-    static const worker_num_type invalid_worker_num = -1;
+    static const worker_num_type invalid_worker_num = static_cast<worker_num_type>(-1);
     template <typename P>
     using worker_tls_t = basic_worker_tls<P>;
     template <typename P>

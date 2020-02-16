@@ -93,7 +93,8 @@ public:
         for (size_type i = 0; i < num_completed; ++i) {
             const auto index = static_cast<size_type>(this->indices_[i]);
             MEFDN_LOG_VERBOSE("msg:Found completion.\tindex:{}", index);
-            MEFDN_ASSERT(0 <= index && index < num_reqs);
+            //MEFDN_ASSERT(0 <= index); // TODO
+            MEFDN_ASSERT(index < num_reqs);
             
             auto& proxy_req = this->proxy_reqs_[index];
             const bool waiting = comp_func(proxy_req, this->statuses_[index]);

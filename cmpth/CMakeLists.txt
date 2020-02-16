@@ -17,6 +17,7 @@ add_library(cmpth-options INTERFACE)
 
 target_compile_options(cmpth-options INTERFACE
     -Wall -Wextra -pedantic ${CMPTH_GLOBAL_CFLAGS}
+    $<$<CXX_COMPILER_ID:Intel>:-wd2196> # Disable warning #2196: routine is both "inline" and "noinline"
 )
 
 function(cmpth_require_cxx11 target)

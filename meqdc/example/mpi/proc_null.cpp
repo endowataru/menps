@@ -20,6 +20,7 @@ void* thread_main(void*)
         MPI_Wait(&req, MPI_STATUS_IGNORE);
         #endif
     }
+    return nullptr;
 }
 
 int main(int argc, char* argv[])
