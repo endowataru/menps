@@ -78,7 +78,9 @@ public:
     }
 
     mtx_id_type allocate_mutex() {
-        return this->mtx_id_alloc_.allocate(this->com_);
+        return static_cast<mtx_id_type>(
+            this->mtx_id_alloc_.allocate(this->com_)
+        );
     }
     void deallocate_mutex(const mtx_id_type mtx_id) {
         this->mtx_id_alloc_.deallocate(this->com_, mtx_id);

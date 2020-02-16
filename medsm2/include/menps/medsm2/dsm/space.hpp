@@ -150,7 +150,9 @@ public:
         auto& self = this->derived();
         auto& com = self.get_com_itf();
         
-        return this->mtx_id_alloc_.allocate(com);
+        return static_cast<mtx_id_type>(
+            this->mtx_id_alloc_.allocate(com)
+        );
     }
     virtual void deallocate_mutex(const mtx_id_type mtx_id) override
     {

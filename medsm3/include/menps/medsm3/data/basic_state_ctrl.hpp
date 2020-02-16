@@ -155,7 +155,7 @@ public:
         bool            needs_local_comp;
     };
 
-    update_global_begin_result update_global_begin(blk_global_lock_base_type& blk_glk, const bool is_remotely_updated_ts)
+    update_global_begin_result update_global_begin(blk_global_lock_base_type& blk_glk, const bool /*is_remotely_updated_ts*/)
     {
         CMPTH_P_PROF_SCOPE(P, tx_begin);
 
@@ -165,7 +165,7 @@ public:
 
         auto& com = blk_llk.get_com_itf();
         const auto this_proc = com.this_proc_id();
-        const auto owner = blk_glk.prev_owner();
+        //const auto owner = blk_glk.prev_owner();
 
         #if 1
         const auto is_remotely_updated = blk_glk.last_writer_proc() != this_proc;

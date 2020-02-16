@@ -52,8 +52,6 @@ private:
         while (true)
         {
             auto& coll = self.get_comm_coll();
-            auto& sp = self.get_dsm_space();
-            
             auto cmd = self.wait_for_cmd();
             
             // If the master thread is in the parallel region,
@@ -105,8 +103,6 @@ public:
         while (true)
         {
             auto& coll = self.get_comm_coll();
-            auto& sp = self.get_dsm_space();
-            
             cmd_info_type cmd = cmd_info_type();
             
             // Load the function pointer and the data from the master process.

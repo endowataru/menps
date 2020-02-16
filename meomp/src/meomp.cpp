@@ -277,6 +277,8 @@ int omp_get_thread_num() noexcept {
 }
 
 extern "C"
+int omp_get_thread_num_() noexcept;
+extern "C"
 int omp_get_thread_num_() noexcept {
     return omp_get_thread_num();
 }
@@ -287,6 +289,8 @@ int omp_get_num_threads() noexcept {
 }
 
 extern "C"
+int omp_get_num_threads_() noexcept;
+extern "C"
 int omp_get_num_threads_() noexcept {
     return omp_get_num_threads();
 }
@@ -296,6 +300,8 @@ int omp_get_max_threads() noexcept {
     return g_coll->get_num_procs() * meomp::my_dist_worker::get_threads_per_proc();
 }
 
+extern "C"
+int omp_get_max_threads_() noexcept;
 extern "C"
 int omp_get_max_threads_() noexcept {
     return omp_get_max_threads();
@@ -326,6 +332,8 @@ double omp_get_wtime() noexcept {
     return menps::mefdn::get_current_sec();
 }
 
+extern "C"
+double omp_get_wtime_() noexcept;
 extern "C"
 double omp_get_wtime_() noexcept {
     return omp_get_wtime();
@@ -480,6 +488,8 @@ void GOMP_critical_end() {
     omp_unset_lock(g_critical_lock);
 }
 
+extern "C"
+bool GOMP_single_start(void);
 extern "C"
 bool GOMP_single_start(void) {
     return worker_base_type::get_cur_worker().get_thread_num() == 0;
@@ -692,10 +702,14 @@ void __kmpc_end_master(ident* /*loc*/, kmp_int32 /*global_tid*/) {
 }
 
 extern "C"
+kmp_int32 __kmpc_single(ident* loc, kmp_int32 global_tid);
+extern "C"
 kmp_int32 __kmpc_single(ident* loc, kmp_int32 global_tid) {
     // TODO: use atomics for better performance
     return __kmpc_master(loc, global_tid);
 }
+extern "C"
+void __kmpc_end_single(ident* loc, kmp_int32 global_tid);
 extern "C"
 void __kmpc_end_single(ident* loc, kmp_int32 global_tid) {
     __kmpc_end_master(loc, global_tid);
@@ -951,7 +965,7 @@ inline char** pack_argv(int argc, char* argv[])
         str_buf += std::strlen(argv[i])+1;
     }
     
-    MEFDN_ASSERT(str_buf - static_cast<char*>(ptr) == size);
+    MEFDN_ASSERT(str_buf - static_cast<char*>(ptr) == static_cast<mefdn::ptrdiff_t>(size));
     
     return global_argv;
 }

@@ -458,7 +458,7 @@ private:
         
         do_progress_result operator() () const
         {
-            bool is_polled = false;
+            bool is_polled MEFDN_MAYBE_UNUSED = false;
             while (self.orig_wk_.progress() != 0) {
                 // Poll until there are completions
                 is_polled = true;

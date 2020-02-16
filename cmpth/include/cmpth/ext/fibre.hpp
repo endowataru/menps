@@ -24,7 +24,7 @@ public:
 class Fibre
 {
 public:
-    Fibre(void (*start_routine)(void *), void* arg, bool bg = false) {
+    Fibre(void (*start_routine)(void *), void* arg) {
         this->t_ = fibre_itf::thread::ptr_fork(start_routine, arg);
     }
     ~Fibre() {

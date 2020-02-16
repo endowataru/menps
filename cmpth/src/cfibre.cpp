@@ -48,7 +48,7 @@ extern "C" {
         return name(CMPTH_EXPAND_PARAMS_TO_ARGS(num, __VA_ARGS__)); \
     }
 
-CMPTH_IO_BYPASS_FUNCS(D)
+CMPTH_IO_BYPASS_FUNCS(D, /*dummy*/)
 
 #undef D
 
@@ -58,8 +58,8 @@ CMPTH_IO_BYPASS_FUNCS(D)
         return p.execute_##name({ CMPTH_EXPAND_PARAMS_TO_ARGS(num, __VA_ARGS__) }); \
     }
 
-CMPTH_IO_SETUP_FUNCS(D)
-CMPTH_IO_DELEGATED_FUNCS(D)
+CMPTH_IO_SETUP_FUNCS(D, /*dummy*/)
+CMPTH_IO_DELEGATED_FUNCS(D, /*dummy*/)
 
 #undef D
 
