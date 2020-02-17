@@ -99,27 +99,16 @@ struct mpi_based_rma<mecom2::rma_itf_id_t::UCT, P>
     template <typename Coll>
     explicit mpi_based_rma(mpi_facade_type& /*mf*/, Coll& coll)
     {
-        const auto procs_per_node =
-            static_cast<mefdn::size_t>(get_procs_per_node());
-        
-        #if 1
         const char* const tl_name = get_uct_tl_name();
         const char* const dev_name = get_uct_dev_name();
 
-        #else
-        // TODO
-        #if 1
-        const char tl_name[] = "rc_mlx5";
-        #else
-        const char tl_name[] = "rc_verbs";
-        #endif
-        #if 1
+        #if 0
+        const auto procs_per_node =
+            static_cast<mefdn::size_t>(get_procs_per_node());
+        
         const auto hca_num = coll.this_proc_id() % procs_per_node;
         const auto dev_name_str = fmt::format("mlx5_{}:1", hca_num);
         const auto dev_name = dev_name_str.c_str();
-        #else
-        const char dev_name[] = "mlx5_0:1";
-        #endif
         #endif
         
         MEFDN_LOG_DEBUG(
