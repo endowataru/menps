@@ -12,6 +12,7 @@
 #include <functional>
 #include <iterator>
 #include <array>
+#include <algorithm>
 
 // Macros
 
@@ -485,6 +486,11 @@ struct parallel_unsequenced_policy { };
 // <exception>
 
 using std::exception;
+
+// <algorithm>
+
+using std::min;
+using std::max;
 
 
 template <typename T, typename U>
