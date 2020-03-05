@@ -48,7 +48,6 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(MEFDN_ENABLE_ASSERT "Enable assertion explicitly" OFF)
 option(MEFDN_ENABLE_LOG "Enable logging explicitly" OFF)
 option(MEFDN_PROFILER_USE_GPROF "Use Gprof" OFF)
-option(MEFDN_PROFILER_USE_GPERFTOOLS "Use Gperftools" OFF)
 option(MEFDN_LOGGER_USE_LOCK "Use lock in logger" ON)
 option(MEFDN_ENABLE_EXPONENTIAL_BACKOFF "Use exponential backoff" OFF)
 option(MEFDN_DISABLE_ALIGN_CHECK_SIZE "Disable size check in mefdn::align_*_nocheck" ON)
@@ -270,7 +269,6 @@ int main() { return 0; }
 message(STATUS "Generate menps/mefdn/config.h ...")
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 message(STATUS "MEFDN_PROFILER_USE_GPROF=${MEFDN_PROFILER_USE_GPROF}")
-message(STATUS "MEFDN_PROFILER_USE_GPERFTOOLS=${MEFDN_PROFILER_USE_GPERFTOOLS}")
 message(STATUS "MEFDN_CXX_STANDARD=${MEFDN_CXX_STANDARD}")
 message(STATUS "MEFDN_DISABLE_ALIGN_CHECK_SIZE=${MEFDN_DISABLE_ALIGN_CHECK_SIZE}")
 
@@ -278,10 +276,6 @@ message(STATUS "MEFDN_DISABLE_ALIGN_CHECK_SIZE=${MEFDN_DISABLE_ALIGN_CHECK_SIZE}
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/menps/mefdn/config.h)
-
-if (MEFDN_PROFILER_USE_GPERFTOOLS)
-    target_link_libraries(mefdn profiler)
-endif()
 
 
 # mefdn : SHARED/STATIC target
