@@ -7,7 +7,6 @@
 #include <menps/mecom2/rma/rma_typed_allocator.hpp>
 #include <menps/mecom2/rma/rma_private_heap_alloc.hpp>
 #include <menps/mecom2/rma/basic_unique_public_ptr.hpp>
-#include <menps/mefdn/memory/distance_in_bytes.hpp>
 
 namespace menps {
 namespace mecom2 {

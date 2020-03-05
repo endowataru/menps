@@ -505,6 +505,13 @@ force_integer_cast(const U& value) noexcept {
     return reinterpret_cast<T>(value);
 }
 
+// TODO: Make this function constexpr
+inline fdn::ptrdiff_t distance_in_bytes(void* const first, void* const last) {
+    const auto f = reinterpret_cast<fdn::intptr_t>(first);
+    const auto l = reinterpret_cast<fdn::intptr_t>(last);
+    return static_cast<fdn::ptrdiff_t>(l - f);
+}
+
 } // namespace fdn
 
 } // namespace cmpth
